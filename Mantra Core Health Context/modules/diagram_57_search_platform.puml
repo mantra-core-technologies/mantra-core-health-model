@@ -1,0 +1,405 @@
+@startuml SALUD_Module_57_search_platform
+title Module 57 — Search and Operational Index Projections\n(OpenSearch-compatible indices)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+note as BIZ_search_platform
+  BUSINESS PURPOSE
+  Provides full-text, faceted, geospatial and operational search projections. Search documents are derived copies, never the authoritative source.
+  Clinical search uses preauthorized, redacted projections with tenant, patient, purpose-of-use and principal filters.
+end note
+
+entity "directory.tenants" as directory_tenants <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "profiles.patient_profiles" as profiles_patient_profiles <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "authz.policies" as authz_policies <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "polyglot_storage.collection_definitions" as polyglot_collection_definitions <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity search_index_templates <<OPENSEARCH_INDEX>> {
+  * template_code : keyword <<PK>>
+  * index_pattern : keyword
+  * version : integer
+  * shard_count : integer
+  * replica_count : integer
+  * refresh_interval : keyword
+  * lifecycle_policy : keyword
+  * mappings : flattened
+  * settings : flattened
+}
+
+entity provider_directory_search_docs <<OPENSEARCH_INDEX>> {
+  * _id : keyword <<PK>>
+  * tenant_id : keyword
+  * source_entity_id : keyword
+  * source_version : long
+  * lifecycle_state : keyword
+  * updated_at : date
+  * routing_key : keyword
+  * practitioner_profile_id : keyword
+  * display_name : text+keyword
+  * specialties : nested
+  * services : nested
+  * organizations : nested
+    languages : keyword[]
+    geo : geo_point
+    rating_summary : object
+    accepting_new_patients : boolean
+}
+
+entity organization_directory_search_docs <<OPENSEARCH_INDEX>> {
+  * _id : keyword <<PK>>
+  * tenant_id : keyword
+  * source_entity_id : keyword
+  * source_version : long
+  * lifecycle_state : keyword
+  * updated_at : date
+  * routing_key : keyword
+  * organization_id : keyword
+  * display_name : text+keyword
+  * organization_type : keyword
+  * services : nested
+  * locations : nested
+    geo : geo_point
+    accreditation_codes : keyword[]
+}
+
+entity terminology_search_docs <<OPENSEARCH_INDEX>> {
+  * _id : keyword <<PK>>
+  * tenant_id : keyword
+  * source_entity_id : keyword
+  * source_version : long
+  * lifecycle_state : keyword
+  * updated_at : date
+  * routing_key : keyword
+  * concept_id : keyword
+  * code_system : keyword
+  * code : keyword
+  * preferred_display : text+keyword
+  * synonyms : text[]
+  * language : keyword
+  * semantic_tags : keyword[]
+}
+
+entity medication_catalog_search_docs <<OPENSEARCH_INDEX>> {
+  * _id : keyword <<PK>>
+  * tenant_id : keyword
+  * source_entity_id : keyword
+  * source_version : long
+  * lifecycle_state : keyword
+  * updated_at : date
+  * routing_key : keyword
+  * medication_id : keyword
+  * generic_name : text+keyword
+    brand_names : text[]
+  * ingredient_codes : keyword[]
+  * dosage_forms : keyword[]
+  * strengths : nested
+    manufacturer : keyword
+    searchable_terms : text
+}
+
+entity education_content_search_docs <<OPENSEARCH_INDEX>> {
+  * _id : keyword <<PK>>
+  * tenant_id : keyword
+  * source_entity_id : keyword
+  * source_version : long
+  * lifecycle_state : keyword
+  * updated_at : date
+  * routing_key : keyword
+  * content_id : keyword
+  * title : text+keyword
+  * summary : text
+  * body_text : text
+  * locale : keyword
+  * topic_codes : keyword[]
+  * audience_codes : keyword[]
+  * publication_at : date
+}
+
+entity community_content_search_docs <<OPENSEARCH_INDEX>> {
+  * _id : keyword <<PK>>
+  * tenant_id : keyword
+  * source_entity_id : keyword
+  * source_version : long
+  * lifecycle_state : keyword
+  * updated_at : date
+  * routing_key : keyword
+  * post_id : keyword
+  * author_profile_id : keyword
+  * title : text
+  * body_text : text
+  * tags : keyword[]
+  * moderation_state : keyword
+  * visibility_scope : keyword
+  * published_at : date
+}
+
+entity contract_search_docs <<OPENSEARCH_INDEX>> {
+  * _id : keyword <<PK>>
+  * tenant_id : keyword
+  * source_entity_id : keyword
+  * source_version : long
+  * lifecycle_state : keyword
+  * updated_at : date
+  * routing_key : keyword
+  * contract_id : keyword
+  * contract_number : keyword
+  * title : text+keyword
+  * party_names : text[]
+  * contract_type : keyword
+  * status : keyword
+  * effective_from : date
+    effective_to : date
+  * obligation_summary : nested
+}
+
+entity crm_activity_search_docs <<OPENSEARCH_INDEX>> {
+  * _id : keyword <<PK>>
+  * tenant_id : keyword
+  * source_entity_id : keyword
+  * source_version : long
+  * lifecycle_state : keyword
+  * updated_at : date
+  * routing_key : keyword
+  * activity_id : keyword
+  * activity_type : keyword
+  * subject : text+keyword
+  * account_ids : keyword[]
+  * contact_ids : keyword[]
+  * opportunity_ids : keyword[]
+  * contract_ids : keyword[]
+  * owner_user_ids : keyword[]
+  * activity_at : date
+  * status : keyword
+}
+
+entity authorized_patient_record_search_docs <<OPENSEARCH_INDEX>> {
+  * _id : keyword <<PK>>
+  * tenant_id : keyword
+  * source_entity_id : keyword
+  * source_version : long
+  * lifecycle_state : keyword
+  * updated_at : date
+  * routing_key : keyword
+  * patient_profile_id : keyword
+  * clinical_resource_id : keyword
+  * resource_type : keyword
+  * event_at : date
+  * title_redacted : text
+  * summary_redacted : text
+  * terminology_codes : keyword[]
+  * security_labels : keyword[]
+  * purpose_of_use_codes : keyword[]
+  * allowed_principal_ids : keyword[]
+  * authz_projection_version : keyword
+}
+
+entity technical_log_search_docs <<OPENSEARCH_INDEX>> {
+  * _id : keyword <<PK>>
+  * tenant_id : keyword
+  * source_entity_id : keyword
+  * source_version : long
+  * lifecycle_state : keyword
+  * updated_at : date
+  * routing_key : keyword
+  * service_name : keyword
+  * environment : keyword
+  * severity : keyword
+  * trace_id : keyword
+  * correlation_id : keyword
+  * message : text
+  * event_at : date
+    attributes : flattened
+}
+
+entity audit_event_search_docs <<OPENSEARCH_INDEX>> {
+  * _id : keyword <<PK>>
+  * tenant_id : keyword
+  * source_entity_id : keyword
+  * source_version : long
+  * lifecycle_state : keyword
+  * updated_at : date
+  * routing_key : keyword
+  * audit_event_id : keyword
+  * actor_id : keyword
+  * action_code : keyword
+  * target_type : keyword
+  * target_id : keyword
+  * purpose_of_use : keyword
+  * outcome : keyword
+  * occurred_at : date
+    searchable_metadata : flattened
+}
+
+entity ads_insight_search_docs <<OPENSEARCH_INDEX>> {
+  * _id : keyword <<PK>>
+  * tenant_id : keyword
+  * source_entity_id : keyword
+  * source_version : long
+  * lifecycle_state : keyword
+  * updated_at : date
+  * routing_key : keyword
+  * ad_account_id : keyword
+  * campaign_id : keyword
+  * ad_set_id : keyword
+  * ad_id : keyword
+  * metric_date : date
+  * breakdowns : flattened
+  * metrics : flattened
+}
+
+
+search_index_templates -- provider_directory_search_docs : templates
+search_index_templates -- authorized_patient_record_search_docs : templates
+directory_tenants -- authorized_patient_record_search_docs : routes
+profiles_patient_profiles -- authorized_patient_record_search_docs : subject
+authz_policies -- authorized_patient_record_search_docs : projects fields
+polyglot_collection_definitions -- search_index_templates : governs
+
+package "Physical Indexes and Access Patterns" {
+entity "INDEXES · search_index_templates" as idxset_search_index_templates <<INDEX_SET>> {
+  UK uq_template_code_version : (template_code keyword, version integer)
+  PATTERN index_pattern : exact managed pattern
+  ALIAS write_alias : one active write index per dataset
+}
+
+search_index_templates .. idxset_search_index_templates : indexed by
+
+entity "INDEXES · provider_directory_search_docs" as idxset_provider_directory_search_docs <<INDEX_SET>> {
+  ROUTING route_provider_tenant : tenant_id
+  KEYWORD kw_provider_ids : practitioner_profile_id, organization ids, specialty codes
+  TEXT text_provider_name_service : display_name, specialties.display, services.display analyzer=multilingual
+  GEO geo_provider : geo geo_point
+  SORT sort_provider : rating_summary.average DESC, display_name.keyword ASC
+}
+
+provider_directory_search_docs .. idxset_provider_directory_search_docs : indexed by
+
+entity "INDEXES · organization_directory_search_docs" as idxset_organization_directory_search_docs <<INDEX_SET>> {
+  ROUTING route_org_tenant : tenant_id
+  TEXT text_org_name_service : display_name, services.display analyzer=multilingual
+  KEYWORD kw_org_filters : organization_type, accreditation_codes, lifecycle_state
+  GEO geo_org : geo geo_point
+}
+
+organization_directory_search_docs .. idxset_organization_directory_search_docs : indexed by
+
+entity "INDEXES · terminology_search_docs" as idxset_terminology_search_docs <<INDEX_SET>> {
+  ROUTING route_terminology_tenant : tenant_id
+  UK uq_terminology_concept : tenant_id, concept_id
+  TEXT text_term_display_synonym : preferred_display, synonyms analyzer=language
+  KEYWORD kw_term_exact : code_system, code, semantic_tags, language
+  PREFIX prefix_term_code : code edge_ngram
+}
+
+terminology_search_docs .. idxset_terminology_search_docs : indexed by
+
+entity "INDEXES · medication_catalog_search_docs" as idxset_medication_catalog_search_docs <<INDEX_SET>> {
+  ROUTING route_medication_tenant : tenant_id
+  TEXT text_medication_names : generic_name, brand_names, searchable_terms analyzer=multilingual
+  KEYWORD kw_medication_filters : ingredient_codes, dosage_forms, manufacturer, lifecycle_state
+  NESTED nested_strengths : strengths
+}
+
+medication_catalog_search_docs .. idxset_medication_catalog_search_docs : indexed by
+
+entity "INDEXES · education_content_search_docs" as idxset_education_content_search_docs <<INDEX_SET>> {
+  ROUTING route_education_tenant : tenant_id
+  TEXT text_education : title boost=4, summary boost=2, body_text
+  KEYWORD kw_education_filters : locale, topic_codes, audience_codes, lifecycle_state
+  DATE sort_education_publication : publication_at DESC
+}
+
+education_content_search_docs .. idxset_education_content_search_docs : indexed by
+
+entity "INDEXES · community_content_search_docs" as idxset_community_content_search_docs <<INDEX_SET>> {
+  ROUTING route_community_tenant : tenant_id
+  TEXT text_community : title boost=3, body_text
+  KEYWORD kw_community_filters : tags, moderation_state, visibility_scope
+  DATE sort_community_published : published_at DESC
+}
+
+community_content_search_docs .. idxset_community_content_search_docs : indexed by
+
+entity "INDEXES · contract_search_docs" as idxset_contract_search_docs <<INDEX_SET>> {
+  ROUTING route_contract_tenant : tenant_id
+  TEXT text_contract : title, party_names, obligation_summary.description
+  KEYWORD kw_contract_filters : contract_number, contract_type, status
+  DATE range_contract_effective : effective_from, effective_to
+  NESTED nested_contract_obligations : obligation_summary
+}
+
+contract_search_docs .. idxset_contract_search_docs : indexed by
+
+entity "INDEXES · crm_activity_search_docs" as idxset_crm_activity_search_docs <<INDEX_SET>> {
+  ROUTING route_crm_tenant : tenant_id
+  TEXT text_crm_activity_subject : subject
+  KEYWORD kw_crm_relations : account_ids, contact_ids, opportunity_ids, contract_ids, owner_user_ids
+  DATE sort_crm_activity : activity_at DESC
+}
+
+crm_activity_search_docs .. idxset_crm_activity_search_docs : indexed by
+
+entity "INDEXES · authorized_patient_record_search_docs" as idxset_authorized_patient_record_search_docs <<INDEX_SET>> {
+  ROUTING route_patient_tenant : tenant_id
+  FILTER filter_patient_authz : tenant_id + patient_profile_id + purpose_of_use_codes + allowed_principal_ids
+  TEXT text_patient_redacted : title_redacted boost=3, summary_redacted
+  KEYWORD kw_patient_codes : resource_type, terminology_codes, security_labels
+  DATE sort_patient_event : event_at DESC
+  POLICY no_raw_phi : only preauthorized redacted projection
+}
+
+authorized_patient_record_search_docs .. idxset_authorized_patient_record_search_docs : indexed by
+
+entity "INDEXES · technical_log_search_docs" as idxset_technical_log_search_docs <<INDEX_SET>> {
+  ROUTING route_log_service_day : service_name + event day
+  TEXT text_log_message : message
+  KEYWORD kw_log_filters : tenant_id, environment, severity, trace_id, correlation_id
+  DATE sort_log_event : event_at DESC
+  LIFECYCLE ilm_logs : rollover by size/day and retention policy
+}
+
+technical_log_search_docs .. idxset_technical_log_search_docs : indexed by
+
+entity "INDEXES · audit_event_search_docs" as idxset_audit_event_search_docs <<INDEX_SET>> {
+  ROUTING route_audit_tenant_month : tenant_id + event month
+  KEYWORD kw_audit_filters : actor_id, action_code, target_type, target_id, purpose_of_use, outcome
+  DATE sort_audit_occurred : occurred_at DESC
+  LIFECYCLE ilm_audit : retention from legal policy, no silent deletion
+}
+
+audit_event_search_docs .. idxset_audit_event_search_docs : indexed by
+
+entity "INDEXES · ads_insight_search_docs" as idxset_ads_insight_search_docs <<INDEX_SET>> {
+  ROUTING route_ads_account : tenant_id + ad_account_id
+  KEYWORD kw_ads_dimensions : campaign_id, ad_set_id, ad_id
+  DATE sort_ads_metric : metric_date DESC
+  FLATTENED flat_ads_breakdowns_metrics : breakdowns, metrics
+}
+
+ads_insight_search_docs .. idxset_ads_insight_search_docs : indexed by
+
+}
+
+
+note as INDEX_POLICY_search_platform
+  INDEX AND ACCESS-PATTERN POLICY
+  - Tenant routing is mandatory for every business index.
+  - Index aliases and templates permit zero-downtime reindexing and schema evolution.
+  - Raw sensitive notes, credentials, payment secrets and unrestricted PHI are forbidden from search indices.
+  - Search results are re-authorized at request time; document-level fields are not trusted as the only control.
+end note
+
+@enduml

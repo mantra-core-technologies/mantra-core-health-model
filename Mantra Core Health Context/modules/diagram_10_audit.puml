@@ -1,0 +1,3233 @@
+@startuml SALUD_Module_10_audit
+title Module 10 — Audit, Provenance and Version Histories\n(schema: audit)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_10_audit.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_10_audit
+  Provides append-only security/privacy evidence, data-access accounting, data
+  subject request tracking and the core identity/governance history tables.
+  Domain-specific histories are split into Modules 10D and 10E.
+end note
+
+entity audit_log <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * user_id : uuid <<FK>>
+    tenant_id : uuid <<FK>>
+    branch_id : uuid <<FK>>
+  * action : varchar
+  * entity : varchar
+    entity_id : uuid
+  * outcome_concept_id : uuid <<FK>>
+    ip : inet
+    device_id : uuid <<FK>>
+    previous_hash : varchar
+  * record_hash : varchar
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+entity data_access_log <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * user_id : uuid <<FK>>
+    patient_profile_id : uuid <<FK>>
+    tenant_id : uuid <<FK>>
+    purpose : varchar
+    legal_basis_concept_id : uuid <<FK>>
+    resource_type : varchar
+    resource_id : uuid
+  * action_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+entity dsar_requests {
+  * id : uuid <<PK>>
+  --
+  * user_id : uuid <<FK>>
+  * type_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    jurisdiction_concept_id : uuid <<FK>>
+  * requested_at : timestamptz
+    completed_at : timestamptz
+    result_file_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity users_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * user_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity tenants_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity patient_profiles_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * patient_profile_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity health_practitioner_profiles_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * health_practitioner_profile_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity professional_credentials_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * professional_credential_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity jurisdiction_authorizations_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * jurisdiction_authorization_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity consents_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * consent_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+note as IMMUTABILITY_diagram_10_audit
+  Audit and history records are append-only. Runtime roles cannot UPDATE or
+  DELETE them. Corrections are new records linked to the prior evidence.
+end note
+
+note as POLYMORPHIC_diagram_10_audit
+  Generic target references are validated through system_ops.entity_registry
+  and never accepted directly from untrusted client input.
+end note
+
+
+note as HISTORY_CONTRACT_diagram_10_audit
+  UNIFORM HISTORY CONTRACT
+  Each history table uses a singular source FK, revision_no, valid_from/valid_to,
+  data_snapshot and recorded_at. The physical model must enforce UNIQUE(source_id,
+  revision_no), valid_to > valid_from when present, and append-only permissions.
+end note
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_10b_audit_health_extensions.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_10b_audit_health_extensions
+  BUSINESS PURPOSE
+  Complements diagram_10_audit with history and append-only evidence for
+  patient identity, workforce assignments, facilities, diagnostic assets,
+  public profiles and moderation. Immutable clinical-note/file versions do
+  not need snapshot history; their creation and access remain audited.
+end note
+
+entity patient_identity_links_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * patient_identity_link_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity practitioner_role_assignments_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * practitioner_role_assignment_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity practice_sites_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * practice_site_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity clinical_units_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * clinical_unit_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity care_spaces_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * care_space_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity diagnostic_reports_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * diagnostic_report_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity imaging_studies_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * imaging_study_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity public_profiles_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * public_profile_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity social_posts_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * social_post_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity service_reviews_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * service_review_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity moderation_events <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * target_type_concept_id : uuid <<FK>>
+  * target_id : uuid
+  * action_concept_id : uuid <<FK>>
+    reason_concept_id : uuid <<FK>>
+    policy_version : varchar
+    evidence_json : jsonb
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity patient_content_access_log <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * patient_profile_id : uuid <<FK>>
+  * resource_type_concept_id : uuid <<FK>>
+  * resource_id : uuid
+    resource_version_id : uuid
+  * action_concept_id : uuid <<FK>>
+  * purpose_of_use_concept_id : uuid <<FK>>
+    decision_concept_id : uuid <<FK>>
+    policy_version : varchar
+    request_id : uuid
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+note as HASH_CHAIN_diagram_10b_audit_health_extensions
+  TAMPER EVIDENCE
+  Production physical design should hash-chain or externally seal audit
+  batches, replicate them to immutable storage and enforce separate write
+  credentials. Audit evidence must not be editable by application admins.
+end note
+
+note as HISTORY_CONTRACT_diagram_10b_audit_health_extensions
+  UNIFORM HISTORY CONTRACT
+  Each history table uses a singular source FK, revision_no, valid_from/valid_to,
+  data_snapshot and recorded_at. The physical model must enforce UNIQUE(source_id,
+  revision_no), valid_to > valid_from when present, and append-only permissions.
+end note
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_10c_external_ecosystem_audit.puml
+' ------------------------------------------------------------------------------
+entity organization_affiliations_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * organization_affiliation_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity diagnostic_study_prices_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * diagnostic_study_price_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity pharmacy_product_prices_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * pharmacy_product_price_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity pharmacy_inventory_access_log <<LOG>> {
+  * id : uuid <<PK>>
+  * pharmacy_id : uuid <<FK>>
+  * actor_user_id : uuid <<FK>>
+  * action_concept_id : uuid <<FK>>
+    target_type_concept_id : uuid <<FK>>
+    target_id : uuid
+    purpose_of_use_concept_id : uuid <<FK>>
+    outcome_concept_id : uuid <<FK>>
+    occurred_at : timestamptz
+    correlation_id : uuid
+}
+entity insurance_decision_access_log <<LOG>> {
+  * id : uuid <<PK>>
+  * insurance_carrier_id : uuid <<FK>>
+  * actor_user_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+    claim_id : uuid <<FK>>
+    authorization_request_id : uuid <<FK>>
+  * action_concept_id : uuid <<FK>>
+  * purpose_of_use_concept_id : uuid <<FK>>
+  * outcome_concept_id : uuid <<FK>>
+  * occurred_at : timestamptz
+}
+entity identity_verification_access_log <<LOG>> {
+  * id : uuid <<PK>>
+  * verification_case_id : uuid <<FK>>
+  * actor_user_id : uuid <<FK>>
+  * action_concept_id : uuid <<FK>>
+    evidence_type_concept_id : uuid <<FK>>
+    data_disclosed_value_set_id : uuid <<FK>>
+  * purpose_of_use_concept_id : uuid <<FK>>
+  * outcome_concept_id : uuid <<FK>>
+  * occurred_at : timestamptz
+}
+entity delegated_access_audit_log <<LOG>> {
+  * id : uuid <<PK>>
+  * delegate_user_id : uuid <<FK>>
+  * delegating_practitioner_profile_id : uuid <<FK>>
+    delegated_assignment_id : uuid <<FK>>
+    patient_profile_id : uuid <<FK>>
+    resource_type_concept_id : uuid <<FK>>
+    resource_id : uuid
+  * action_concept_id : uuid <<FK>>
+  * outcome_concept_id : uuid <<FK>>
+  * occurred_at : timestamptz
+}
+entity analytics_governance_log <<LOG>> {
+  * id : uuid <<PK>>
+  * actor_user_id : uuid <<FK>>
+  * action_concept_id : uuid <<FK>>
+    purpose_definition_id : uuid <<FK>>
+    export_reference : varchar
+    affected_subject_count : bigint
+    query_hash : varchar
+  * approval_status_concept_id : uuid <<FK>>
+  * occurred_at : timestamptz
+}
+
+note as IMMUTABLE_diagram_10c_external_ecosystem_audit
+  All tables in this diagram are append-only. They are partitioned by time,
+  protected from UPDATE/DELETE by runtime roles and retained according to the
+  stricter of legal, contractual, security and litigation-hold requirements.
+end note
+
+note as HISTORY_CONTRACT_diagram_10c_external_ecosystem_audit
+  UNIFORM HISTORY CONTRACT
+  Each history table uses a singular source FK, revision_no, valid_from/valid_to,
+  data_snapshot and recorded_at. The physical model must enforce UNIQUE(source_id,
+  revision_no), valid_to > valid_from when present, and append-only permissions.
+end note
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_10d_clinical_histories.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_10d_clinical_histories
+  Keeps immutable before/after evidence for clinically or operationally material
+  records without mixing those histories into the core security audit diagram.
+end note
+
+entity conditions_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * condition_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity allergy_intolerances_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * allergy_intolerance_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity medication_requests_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * medication_request_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity practices_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * practice_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity clinical_note_headers_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * clinical_note_header_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity care_plans_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * care_plan_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity document_records_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * document_record_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity care_teams_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * care_team_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity referrals_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * referral_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity clinical_alerts_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * clinical_alert_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity cds_rules_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * cds_rule_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity order_sets_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * order_set_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+note as RULE_diagram_10d_clinical_histories
+  History rows store identifiers, operation, actor, timestamp, reason,
+  correlation/trace identifiers and redacted snapshots or hashes according to
+  data classification. They are not a replacement for clinical version tables.
+end note
+
+
+note as HISTORY_CONTRACT_diagram_10d_clinical_histories
+  UNIFORM HISTORY CONTRACT
+  Each history table uses a singular source FK, revision_no, valid_from/valid_to,
+  data_snapshot and recorded_at. The physical model must enforce UNIQUE(source_id,
+  revision_no), valid_to > valid_from when present, and append-only permissions.
+end note
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_10e_integration_financial_histories.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_10e_integration_financial_histories
+  Preserves evidence for connection configuration, message processing and
+  financial master records. Immutable ledgers and exchange attempts remain in
+  their source schemas and are referenced, not duplicated.
+end note
+
+entity provider_connections_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * provider_connection_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity integration_endpoints_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * integration_endpoint_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity outbound_messages_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * outbound_message_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity inbound_messages_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * inbound_message_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity message_retries_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * message_retry_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity accounts_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * account_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity journal_transactions_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * journal_transaction_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity assets_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * asset_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity liabilities_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * liability_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity invoices_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * invoice_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity bills_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * bill_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity insurance_claims_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * insurance_claim_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+note as RULE_diagram_10e_integration_financial_histories
+  Secrets, raw tokens, payment credentials and full external payloads are never
+  embedded in history snapshots. Store secret-manager references, hashes and
+  governed file references instead.
+end note
+
+
+note as HISTORY_CONTRACT_diagram_10e_integration_financial_histories
+  UNIFORM HISTORY CONTRACT
+  Each history table uses a singular source FK, revision_no, valid_from/valid_to,
+  data_snapshot and recorded_at. The physical model must enforce UNIQUE(source_id,
+  revision_no), valid_to > valid_from when present, and append-only permissions.
+end note
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_10f_new_domain_histories.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_10f_new_domain_histories
+  BUSINESS PURPOSE
+  Provides one consistent SCD-style audit history contract for mutable
+  configuration and master data introduced by modules 35 through 39.
+end note
+
+entity message_templates_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * message_template_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity provider_channel_configs_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * provider_channel_config_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity event_subscriptions_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * event_subscription_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity test_suites_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * test_suite_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity test_cases_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * test_case_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity trackable_subjects_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * trackable_subject_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity shipments_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * shipment_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity contracts_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * contract_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity employment_records_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * employment_record_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity departments_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * department_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity positions_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * position_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity report_definitions_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * report_definition_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity report_schedules_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * report_schedule_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+note as DEP_diagram_10f_new_domain_histories
+  Source records live in their owning schemas. operation_concept_id and
+  change_reason_concept_id resolve through terminology.catalog_concepts.
+  Append-only LOG/IMMUTABLE records remain their own evidence and are not
+  duplicated as snapshot histories.
+end note
+
+note as HISTORY_CONTRACT_diagram_10f_new_domain_histories
+  The physical model must enforce UNIQUE(source_id, revision_no), valid_to >
+  valid_from when present, append-only permissions and registry coverage in
+  system_ops.entity_registry for every table with has_history=true.
+end note
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_10g_identity_commerce_growth_histories.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_10g_identity_commerce_growth_histories
+  BUSINESS PURPOSE
+  Completes the audit-history coverage for mutable identity-provider,
+  scheduling, payment and advertising configuration from modules 40 through 43.
+end note
+
+entity identity_providers_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * identity_provider_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity provider_protocol_configs_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * provider_protocol_config_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity provider_tenant_bindings_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * provider_tenant_binding_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity federated_identities_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * federated_identity_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity schedule_templates_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * schedule_template_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity booking_policies_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * booking_policy_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity appointment_bookings_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * appointment_booking_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity payment_methods_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * payment_method_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity payment_intents_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * payment_intent_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity payment_transactions_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * payment_transaction_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity payouts_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * payout_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity ad_accounts_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * ad_account_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity campaigns_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * campaign_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity ad_sets_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * ad_set_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity ads_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * ad_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity ad_creatives_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * ad_creative_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity custom_audiences_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * custom_audience_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+note as DEP_diagram_10g_identity_commerce_growth_histories
+  Source records live in their owning schemas. operation_concept_id and
+  change_reason_concept_id resolve through terminology.catalog_concepts.
+  Append-only LOG/IMMUTABLE records remain their own evidence and are not
+  duplicated as snapshot histories.
+end note
+
+note as HISTORY_CONTRACT_diagram_10g_identity_commerce_growth_histories
+  The physical model must enforce UNIQUE(source_id, revision_no), valid_to >
+  valid_from when present, append-only permissions and registry coverage in
+  system_ops.entity_registry for every table with has_history=true.
+end note
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_10h_ecosystem_extension_histories.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_10h_ecosystem_extension_histories
+  BUSINESS PURPOSE
+  SCD-2 versioned history for the mutable master/config tables added by the client-driven
+  robustness expansion: advanced payments (42B), deep advertising (43C/43D), the expanded
+  social graph & moderation (19B/19C), medical education (47), the multi-agent automation
+  layer (48), internal CRM (49), marketing (50) and loyalty/promotions (51). Append-only
+  <<LOG>> tables (wallet_ledger_entries, points_ledger_entries, agent_run_steps,
+  marketing_touchpoints, rule_executions, message_receipts, lesson_progress, etc.) are their
+  own evidence and are NOT duplicated. Keep in sync with system_ops.entity_registry.has_history.
+end note
+
+entity wallets_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * wallets_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity subscription_plans_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * subscription_plans_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity subscriptions_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * subscriptions_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity connected_accounts_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * connected_accounts_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity payment_mandates_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * payment_mandates_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity product_catalogs_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * product_catalogs_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity catalog_products_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * catalog_products_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity product_sets_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * product_sets_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity automated_rules_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * automated_rules_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity custom_conversions_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * custom_conversions_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity ad_experiments_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * ad_experiments_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity comments_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * comments_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity groups_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * groups_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity topics_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * topics_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity conversations_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * conversations_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity verified_badges_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * verified_badges_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity moderation_decisions_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * moderation_decisions_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity courses_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * courses_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity course_versions_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * course_versions_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity enrollments_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * enrollments_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity certificates_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * certificates_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity agents_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * agents_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity agent_versions_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * agent_versions_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity workflows_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * workflows_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity guardrail_policies_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * guardrail_policies_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity record_automations_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * record_automations_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity crm_accounts_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * crm_accounts_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity contacts_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * contacts_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity opportunities_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * opportunities_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity partnerships_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * partnerships_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity partnership_agreements_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * partnership_agreements_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity segments_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * segments_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity marketing_campaigns_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * marketing_campaigns_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity journeys_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * journeys_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity loyalty_programs_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * loyalty_programs_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity loyalty_memberships_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * loyalty_memberships_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity promotions_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * promotions_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity coupons_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * coupons_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity referral_programs_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * referral_programs_id : uuid <<FK>>
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+note as DEP_diagram_10h_ecosystem_extension_histories
+  Connects to other modules via the base tables in modules 42B/43C/43D/19B/19C/47/48/49/50/51
+  (source schemas) and terminology.catalog_concepts (operation/change_reason). data_snapshot
+  holds the full prior row image as jsonb.
+end note
+note as HARDENING_diagram_10h_ecosystem_extension_histories
+  REC 3.4 — history rows are append-only; UNIQUE(<base>_id, row_version); index (<base>_id,
+  valid_from DESC). Populate via AFTER UPDATE/DELETE triggers on the source tables. A CI check
+  must assert entity_registry.has_history=true <=> a matching audit.*_history exists.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · audit_log" as idxset_audit_log <<INDEX_SET>> {
+  PK pk_audit_log : (id) UNIQUE BTREE
+  IX ix_audit_log_user_id : (user_id) BTREE
+  IX ix_audit_log_tenant_id : (tenant_id) BTREE
+  IX ix_audit_log_branch_id : (branch_id) BTREE
+  IX ix_audit_log_outcome_concept_id : (outcome_concept_id) BTREE
+  IX ix_audit_log_device_id : (device_id) BTREE
+  IX ix_audit_log_recorded_by_user_id : (recorded_by_user_id) BTREE
+  IX ix_audit_log_tenant_id_recorded_at : (tenant_id, recorded_at DESC) BTREE
+  BRIN brin_audit_log_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+audit_log .. idxset_audit_log : indexed by
+
+entity "INDEXES · data_access_log" as idxset_data_access_log <<INDEX_SET>> {
+  PK pk_data_access_log : (id) UNIQUE BTREE
+  IX ix_data_access_log_user_id : (user_id) BTREE
+  IX ix_data_access_log_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_data_access_log_tenant_id : (tenant_id) BTREE
+  IX ix_data_access_log_legal_basis_concept_id : (legal_basis_concept_id) BTREE
+  IX ix_data_access_log_action_concept_id : (action_concept_id) BTREE
+  IX ix_data_access_log_recorded_by_user_id : (recorded_by_user_id) BTREE
+  IX ix_data_access_log_tenant_id_recorded_at : (tenant_id, recorded_at DESC) BTREE
+  IX ix_data_access_log_patient_profile_id_recorded_at : (tenant_id, patient_profile_id, recorded_at DESC) BTREE
+  BRIN brin_data_access_log_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+data_access_log .. idxset_data_access_log : indexed by
+
+entity "INDEXES · dsar_requests" as idxset_dsar_requests <<INDEX_SET>> {
+  PK pk_dsar_requests : (id) UNIQUE BTREE
+  IX ix_dsar_requests_user_id : (user_id) BTREE
+  IX ix_dsar_requests_type_concept_id : (type_concept_id) BTREE
+  IX ix_dsar_requests_status_concept_id : (status_concept_id) BTREE
+  IX ix_dsar_requests_jurisdiction_concept_id : (jurisdiction_concept_id) BTREE
+  IX ix_dsar_requests_result_file_id : (result_file_id) BTREE
+  IX ix_dsar_requests_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_dsar_requests_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+dsar_requests .. idxset_dsar_requests : indexed by
+
+entity "INDEXES · users_history" as idxset_users_history <<INDEX_SET>> {
+  PK pk_users_history : (history_id) UNIQUE BTREE
+  IX ix_users_history_user_id : (user_id) BTREE
+  IX ix_users_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_users_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_users_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_users_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+users_history .. idxset_users_history : indexed by
+
+entity "INDEXES · tenants_history" as idxset_tenants_history <<INDEX_SET>> {
+  PK pk_tenants_history : (history_id) UNIQUE BTREE
+  IX ix_tenants_history_tenant_id : (tenant_id) BTREE
+  IX ix_tenants_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_tenants_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_tenants_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  IX ix_tenants_history_tenant_id_recorded_at : (tenant_id, recorded_at DESC) BTREE
+  BRIN brin_tenants_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+tenants_history .. idxset_tenants_history : indexed by
+
+entity "INDEXES · patient_profiles_history" as idxset_patient_profiles_history <<INDEX_SET>> {
+  PK pk_patient_profiles_history : (history_id) UNIQUE BTREE
+  IX ix_patient_profiles_history_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_patient_profiles_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_patient_profiles_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_patient_profiles_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  IX ix_patient_profiles_history_patient_profile_id_recorded_at : (patient_profile_id, recorded_at DESC) BTREE
+  BRIN brin_patient_profiles_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+patient_profiles_history .. idxset_patient_profiles_history : indexed by
+
+entity "INDEXES · health_practitioner_profiles_history" as idxset_health_practitioner_profiles_history <<INDEX_SET>> {
+  PK pk_health_practitioner_profiles_history : (history_id) UNIQUE BTREE
+  IX ix_health_practitioner_profiles_history_health_practit_622f20f2 : (health_practitioner_profile_id) BTREE
+  IX ix_health_practitioner_profiles_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_health_practitioner_profiles_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_health_practitioner_profiles_history_change_reason__55227d17 : (change_reason_concept_id) BTREE
+  BRIN brin_health_practitioner_profiles_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+health_practitioner_profiles_history .. idxset_health_practitioner_profiles_history : indexed by
+
+entity "INDEXES · professional_credentials_history" as idxset_professional_credentials_history <<INDEX_SET>> {
+  PK pk_professional_credentials_history : (history_id) UNIQUE BTREE
+  IX ix_professional_credentials_history_professional_credential_id : (professional_credential_id) BTREE
+  IX ix_professional_credentials_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_professional_credentials_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_professional_credentials_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_professional_credentials_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+professional_credentials_history .. idxset_professional_credentials_history : indexed by
+
+entity "INDEXES · jurisdiction_authorizations_history" as idxset_jurisdiction_authorizations_history <<INDEX_SET>> {
+  PK pk_jurisdiction_authorizations_history : (history_id) UNIQUE BTREE
+  IX ix_jurisdiction_authorizations_history_jurisdiction_au_831b1b79 : (jurisdiction_authorization_id) BTREE
+  IX ix_jurisdiction_authorizations_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_jurisdiction_authorizations_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_jurisdiction_authorizations_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  GIST gist_jurisdiction_authorizations_history_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+  BRIN brin_jurisdiction_authorizations_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+jurisdiction_authorizations_history .. idxset_jurisdiction_authorizations_history : indexed by
+
+entity "INDEXES · consents_history" as idxset_consents_history <<INDEX_SET>> {
+  PK pk_consents_history : (history_id) UNIQUE BTREE
+  IX ix_consents_history_consent_id : (consent_id) BTREE
+  IX ix_consents_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_consents_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_consents_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  GIST gist_consents_history_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+  BRIN brin_consents_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+consents_history .. idxset_consents_history : indexed by
+
+entity "INDEXES · patient_identity_links_history" as idxset_patient_identity_links_history <<INDEX_SET>> {
+  PK pk_patient_identity_links_history : (history_id) UNIQUE BTREE
+  IX ix_patient_identity_links_history_patient_identity_link_id : (patient_identity_link_id) BTREE
+  IX ix_patient_identity_links_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_patient_identity_links_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_patient_identity_links_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_patient_identity_links_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+patient_identity_links_history .. idxset_patient_identity_links_history : indexed by
+
+entity "INDEXES · practitioner_role_assignments_history" as idxset_practitioner_role_assignments_history <<INDEX_SET>> {
+  PK pk_practitioner_role_assignments_history : (history_id) UNIQUE BTREE
+  IX ix_practitioner_role_assignments_history_practitioner__3c54201b : (practitioner_role_assignment_id) BTREE
+  IX ix_practitioner_role_assignments_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_practitioner_role_assignments_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_practitioner_role_assignments_history_change_reason_fd6e8399 : (change_reason_concept_id) BTREE
+  GIST gist_practitioner_role_assignments_history_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+  BRIN brin_practitioner_role_assignments_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+practitioner_role_assignments_history .. idxset_practitioner_role_assignments_history : indexed by
+
+entity "INDEXES · practice_sites_history" as idxset_practice_sites_history <<INDEX_SET>> {
+  PK pk_practice_sites_history : (history_id) UNIQUE BTREE
+  IX ix_practice_sites_history_practice_site_id : (practice_site_id) BTREE
+  IX ix_practice_sites_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_practice_sites_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_practice_sites_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_practice_sites_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+practice_sites_history .. idxset_practice_sites_history : indexed by
+
+entity "INDEXES · clinical_units_history" as idxset_clinical_units_history <<INDEX_SET>> {
+  PK pk_clinical_units_history : (history_id) UNIQUE BTREE
+  IX ix_clinical_units_history_clinical_unit_id : (clinical_unit_id) BTREE
+  IX ix_clinical_units_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_clinical_units_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_clinical_units_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_clinical_units_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+clinical_units_history .. idxset_clinical_units_history : indexed by
+
+entity "INDEXES · care_spaces_history" as idxset_care_spaces_history <<INDEX_SET>> {
+  PK pk_care_spaces_history : (history_id) UNIQUE BTREE
+  IX ix_care_spaces_history_care_space_id : (care_space_id) BTREE
+  IX ix_care_spaces_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_care_spaces_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_care_spaces_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_care_spaces_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+care_spaces_history .. idxset_care_spaces_history : indexed by
+
+entity "INDEXES · diagnostic_reports_history" as idxset_diagnostic_reports_history <<INDEX_SET>> {
+  PK pk_diagnostic_reports_history : (history_id) UNIQUE BTREE
+  IX ix_diagnostic_reports_history_diagnostic_report_id : (diagnostic_report_id) BTREE
+  IX ix_diagnostic_reports_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_diagnostic_reports_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_diagnostic_reports_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_diagnostic_reports_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+diagnostic_reports_history .. idxset_diagnostic_reports_history : indexed by
+
+entity "INDEXES · imaging_studies_history" as idxset_imaging_studies_history <<INDEX_SET>> {
+  PK pk_imaging_studies_history : (history_id) UNIQUE BTREE
+  IX ix_imaging_studies_history_imaging_study_id : (imaging_study_id) BTREE
+  IX ix_imaging_studies_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_imaging_studies_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_imaging_studies_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_imaging_studies_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+imaging_studies_history .. idxset_imaging_studies_history : indexed by
+
+entity "INDEXES · public_profiles_history" as idxset_public_profiles_history <<INDEX_SET>> {
+  PK pk_public_profiles_history : (history_id) UNIQUE BTREE
+  IX ix_public_profiles_history_public_profile_id : (public_profile_id) BTREE
+  IX ix_public_profiles_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_public_profiles_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_public_profiles_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_public_profiles_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+public_profiles_history .. idxset_public_profiles_history : indexed by
+
+entity "INDEXES · social_posts_history" as idxset_social_posts_history <<INDEX_SET>> {
+  PK pk_social_posts_history : (history_id) UNIQUE BTREE
+  IX ix_social_posts_history_social_post_id : (social_post_id) BTREE
+  IX ix_social_posts_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_social_posts_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_social_posts_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_social_posts_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+social_posts_history .. idxset_social_posts_history : indexed by
+
+entity "INDEXES · service_reviews_history" as idxset_service_reviews_history <<INDEX_SET>> {
+  PK pk_service_reviews_history : (history_id) UNIQUE BTREE
+  IX ix_service_reviews_history_service_review_id : (service_review_id) BTREE
+  IX ix_service_reviews_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_service_reviews_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_service_reviews_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_service_reviews_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+service_reviews_history .. idxset_service_reviews_history : indexed by
+
+entity "INDEXES · moderation_events" as idxset_moderation_events <<INDEX_SET>> {
+  PK pk_moderation_events : (id) UNIQUE BTREE
+  IX ix_moderation_events_target_type_concept_id : (target_type_concept_id) BTREE
+  IX ix_moderation_events_action_concept_id : (action_concept_id) BTREE
+  IX ix_moderation_events_reason_concept_id : (reason_concept_id) BTREE
+  IX ix_moderation_events_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_moderation_events_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+moderation_events .. idxset_moderation_events : indexed by
+
+entity "INDEXES · patient_content_access_log" as idxset_patient_content_access_log <<INDEX_SET>> {
+  PK pk_patient_content_access_log : (id) UNIQUE BTREE
+  IX ix_patient_content_access_log_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_patient_content_access_log_resource_type_concept_id : (resource_type_concept_id) BTREE
+  IX ix_patient_content_access_log_action_concept_id : (action_concept_id) BTREE
+  IX ix_patient_content_access_log_purpose_of_use_concept_id : (purpose_of_use_concept_id) BTREE
+  IX ix_patient_content_access_log_decision_concept_id : (decision_concept_id) BTREE
+  IX ix_patient_content_access_log_recorded_by_user_id : (recorded_by_user_id) BTREE
+  IX ix_patient_content_access_log_patient_profile_id_recorded_at : (patient_profile_id, recorded_at DESC) BTREE
+  BRIN brin_patient_content_access_log_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+patient_content_access_log .. idxset_patient_content_access_log : indexed by
+
+entity "INDEXES · organization_affiliations_history" as idxset_organization_affiliations_history <<INDEX_SET>> {
+  PK pk_organization_affiliations_history : (history_id) UNIQUE BTREE
+  IX ix_organization_affiliations_history_organization_affi_157652c3 : (organization_affiliation_id) BTREE
+  IX ix_organization_affiliations_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_organization_affiliations_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_organization_affiliations_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_organization_affiliations_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+organization_affiliations_history .. idxset_organization_affiliations_history : indexed by
+
+entity "INDEXES · diagnostic_study_prices_history" as idxset_diagnostic_study_prices_history <<INDEX_SET>> {
+  PK pk_diagnostic_study_prices_history : (history_id) UNIQUE BTREE
+  IX ix_diagnostic_study_prices_history_diagnostic_study_price_id : (diagnostic_study_price_id) BTREE
+  IX ix_diagnostic_study_prices_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_diagnostic_study_prices_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_diagnostic_study_prices_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  GIST gist_diagnostic_study_prices_history_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+  BRIN brin_diagnostic_study_prices_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+diagnostic_study_prices_history .. idxset_diagnostic_study_prices_history : indexed by
+
+entity "INDEXES · pharmacy_product_prices_history" as idxset_pharmacy_product_prices_history <<INDEX_SET>> {
+  PK pk_pharmacy_product_prices_history : (history_id) UNIQUE BTREE
+  IX ix_pharmacy_product_prices_history_pharmacy_product_price_id : (pharmacy_product_price_id) BTREE
+  IX ix_pharmacy_product_prices_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_pharmacy_product_prices_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_pharmacy_product_prices_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  GIST gist_pharmacy_product_prices_history_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+  BRIN brin_pharmacy_product_prices_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+pharmacy_product_prices_history .. idxset_pharmacy_product_prices_history : indexed by
+
+entity "INDEXES · pharmacy_inventory_access_log" as idxset_pharmacy_inventory_access_log <<INDEX_SET>> {
+  PK pk_pharmacy_inventory_access_log : (id) UNIQUE BTREE
+  IX ix_pharmacy_inventory_access_log_pharmacy_id : (pharmacy_id) BTREE
+  IX ix_pharmacy_inventory_access_log_actor_user_id : (actor_user_id) BTREE
+  IX ix_pharmacy_inventory_access_log_action_concept_id : (action_concept_id) BTREE
+  IX ix_pharmacy_inventory_access_log_target_type_concept_id : (target_type_concept_id) BTREE
+  IX ix_pharmacy_inventory_access_log_purpose_of_use_concept_id : (purpose_of_use_concept_id) BTREE
+  IX ix_pharmacy_inventory_access_log_outcome_concept_id : (outcome_concept_id) BTREE
+  BRIN brin_pharmacy_inventory_access_log_occurred_at : (occurred_at) BRIN pages_per_range=128
+}
+
+pharmacy_inventory_access_log .. idxset_pharmacy_inventory_access_log : indexed by
+
+entity "INDEXES · insurance_decision_access_log" as idxset_insurance_decision_access_log <<INDEX_SET>> {
+  PK pk_insurance_decision_access_log : (id) UNIQUE BTREE
+  IX ix_insurance_decision_access_log_insurance_carrier_id : (insurance_carrier_id) BTREE
+  IX ix_insurance_decision_access_log_actor_user_id : (actor_user_id) BTREE
+  IX ix_insurance_decision_access_log_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_insurance_decision_access_log_claim_id : (claim_id) BTREE
+  IX ix_insurance_decision_access_log_authorization_request_id : (authorization_request_id) BTREE
+  IX ix_insurance_decision_access_log_action_concept_id : (action_concept_id) BTREE
+  IX ix_insurance_decision_access_log_purpose_of_use_concept_id : (purpose_of_use_concept_id) BTREE
+  IX ix_insurance_decision_access_log_outcome_concept_id : (outcome_concept_id) BTREE
+  IX ix_insurance_decision_access_log_patient_profile_id_occurred_at : (patient_profile_id, occurred_at DESC) BTREE
+  BRIN brin_insurance_decision_access_log_occurred_at : (occurred_at) BRIN pages_per_range=128
+}
+
+insurance_decision_access_log .. idxset_insurance_decision_access_log : indexed by
+
+entity "INDEXES · identity_verification_access_log" as idxset_identity_verification_access_log <<INDEX_SET>> {
+  PK pk_identity_verification_access_log : (id) UNIQUE BTREE
+  IX ix_identity_verification_access_log_verification_case_id : (verification_case_id) BTREE
+  IX ix_identity_verification_access_log_actor_user_id : (actor_user_id) BTREE
+  IX ix_identity_verification_access_log_action_concept_id : (action_concept_id) BTREE
+  IX ix_identity_verification_access_log_evidence_type_concept_id : (evidence_type_concept_id) BTREE
+  IX ix_identity_verification_access_log_data_disclosed_value_set_id : (data_disclosed_value_set_id) BTREE
+  IX ix_identity_verification_access_log_purpose_of_use_concept_id : (purpose_of_use_concept_id) BTREE
+  IX ix_identity_verification_access_log_outcome_concept_id : (outcome_concept_id) BTREE
+  BRIN brin_identity_verification_access_log_occurred_at : (occurred_at) BRIN pages_per_range=128
+}
+
+identity_verification_access_log .. idxset_identity_verification_access_log : indexed by
+
+entity "INDEXES · delegated_access_audit_log" as idxset_delegated_access_audit_log <<INDEX_SET>> {
+  PK pk_delegated_access_audit_log : (id) UNIQUE BTREE
+  IX ix_delegated_access_audit_log_delegate_user_id : (delegate_user_id) BTREE
+  IX ix_delegated_access_audit_log_delegating_practitioner__a08f34c4 : (delegating_practitioner_profile_id) BTREE
+  IX ix_delegated_access_audit_log_delegated_assignment_id : (delegated_assignment_id) BTREE
+  IX ix_delegated_access_audit_log_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_delegated_access_audit_log_resource_type_concept_id : (resource_type_concept_id) BTREE
+  IX ix_delegated_access_audit_log_action_concept_id : (action_concept_id) BTREE
+  IX ix_delegated_access_audit_log_outcome_concept_id : (outcome_concept_id) BTREE
+  IX ix_delegated_access_audit_log_patient_profile_id_occurred_at : (patient_profile_id, occurred_at DESC) BTREE
+  BRIN brin_delegated_access_audit_log_occurred_at : (occurred_at) BRIN pages_per_range=128
+}
+
+delegated_access_audit_log .. idxset_delegated_access_audit_log : indexed by
+
+entity "INDEXES · analytics_governance_log" as idxset_analytics_governance_log <<INDEX_SET>> {
+  PK pk_analytics_governance_log : (id) UNIQUE BTREE
+  IX ix_analytics_governance_log_actor_user_id : (actor_user_id) BTREE
+  IX ix_analytics_governance_log_action_concept_id : (action_concept_id) BTREE
+  IX ix_analytics_governance_log_purpose_definition_id : (purpose_definition_id) BTREE
+  IX ix_analytics_governance_log_approval_status_concept_id : (approval_status_concept_id) BTREE
+  BRIN brin_analytics_governance_log_occurred_at : (occurred_at) BRIN pages_per_range=128
+}
+
+analytics_governance_log .. idxset_analytics_governance_log : indexed by
+
+entity "INDEXES · conditions_history" as idxset_conditions_history <<INDEX_SET>> {
+  PK pk_conditions_history : (history_id) UNIQUE BTREE
+  IX ix_conditions_history_condition_id : (condition_id) BTREE
+  IX ix_conditions_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_conditions_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_conditions_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_conditions_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+conditions_history .. idxset_conditions_history : indexed by
+
+entity "INDEXES · allergy_intolerances_history" as idxset_allergy_intolerances_history <<INDEX_SET>> {
+  PK pk_allergy_intolerances_history : (history_id) UNIQUE BTREE
+  IX ix_allergy_intolerances_history_allergy_intolerance_id : (allergy_intolerance_id) BTREE
+  IX ix_allergy_intolerances_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_allergy_intolerances_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_allergy_intolerances_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_allergy_intolerances_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+allergy_intolerances_history .. idxset_allergy_intolerances_history : indexed by
+
+entity "INDEXES · medication_requests_history" as idxset_medication_requests_history <<INDEX_SET>> {
+  PK pk_medication_requests_history : (history_id) UNIQUE BTREE
+  IX ix_medication_requests_history_medication_request_id : (medication_request_id) BTREE
+  IX ix_medication_requests_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_medication_requests_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_medication_requests_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_medication_requests_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+medication_requests_history .. idxset_medication_requests_history : indexed by
+
+entity "INDEXES · practices_history" as idxset_practices_history <<INDEX_SET>> {
+  PK pk_practices_history : (history_id) UNIQUE BTREE
+  IX ix_practices_history_practice_id : (practice_id) BTREE
+  IX ix_practices_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_practices_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_practices_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_practices_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+practices_history .. idxset_practices_history : indexed by
+
+entity "INDEXES · clinical_note_headers_history" as idxset_clinical_note_headers_history <<INDEX_SET>> {
+  PK pk_clinical_note_headers_history : (history_id) UNIQUE BTREE
+  IX ix_clinical_note_headers_history_clinical_note_header_id : (clinical_note_header_id) BTREE
+  IX ix_clinical_note_headers_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_clinical_note_headers_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_clinical_note_headers_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_clinical_note_headers_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+clinical_note_headers_history .. idxset_clinical_note_headers_history : indexed by
+
+entity "INDEXES · care_plans_history" as idxset_care_plans_history <<INDEX_SET>> {
+  PK pk_care_plans_history : (history_id) UNIQUE BTREE
+  IX ix_care_plans_history_care_plan_id : (care_plan_id) BTREE
+  IX ix_care_plans_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_care_plans_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_care_plans_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_care_plans_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+care_plans_history .. idxset_care_plans_history : indexed by
+
+entity "INDEXES · document_records_history" as idxset_document_records_history <<INDEX_SET>> {
+  PK pk_document_records_history : (history_id) UNIQUE BTREE
+  IX ix_document_records_history_document_record_id : (document_record_id) BTREE
+  IX ix_document_records_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_document_records_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_document_records_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_document_records_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+document_records_history .. idxset_document_records_history : indexed by
+
+entity "INDEXES · care_teams_history" as idxset_care_teams_history <<INDEX_SET>> {
+  PK pk_care_teams_history : (history_id) UNIQUE BTREE
+  IX ix_care_teams_history_care_team_id : (care_team_id) BTREE
+  IX ix_care_teams_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_care_teams_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_care_teams_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_care_teams_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+care_teams_history .. idxset_care_teams_history : indexed by
+
+entity "INDEXES · referrals_history" as idxset_referrals_history <<INDEX_SET>> {
+  PK pk_referrals_history : (history_id) UNIQUE BTREE
+  IX ix_referrals_history_referral_id : (referral_id) BTREE
+  IX ix_referrals_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_referrals_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_referrals_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_referrals_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+referrals_history .. idxset_referrals_history : indexed by
+
+entity "INDEXES · clinical_alerts_history" as idxset_clinical_alerts_history <<INDEX_SET>> {
+  PK pk_clinical_alerts_history : (history_id) UNIQUE BTREE
+  IX ix_clinical_alerts_history_clinical_alert_id : (clinical_alert_id) BTREE
+  IX ix_clinical_alerts_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_clinical_alerts_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_clinical_alerts_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_clinical_alerts_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+clinical_alerts_history .. idxset_clinical_alerts_history : indexed by
+
+entity "INDEXES · cds_rules_history" as idxset_cds_rules_history <<INDEX_SET>> {
+  PK pk_cds_rules_history : (history_id) UNIQUE BTREE
+  IX ix_cds_rules_history_cds_rule_id : (cds_rule_id) BTREE
+  IX ix_cds_rules_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_cds_rules_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_cds_rules_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_cds_rules_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+cds_rules_history .. idxset_cds_rules_history : indexed by
+
+entity "INDEXES · order_sets_history" as idxset_order_sets_history <<INDEX_SET>> {
+  PK pk_order_sets_history : (history_id) UNIQUE BTREE
+  IX ix_order_sets_history_order_set_id : (order_set_id) BTREE
+  IX ix_order_sets_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_order_sets_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_order_sets_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_order_sets_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+order_sets_history .. idxset_order_sets_history : indexed by
+
+entity "INDEXES · provider_connections_history" as idxset_provider_connections_history <<INDEX_SET>> {
+  PK pk_provider_connections_history : (history_id) UNIQUE BTREE
+  IX ix_provider_connections_history_provider_connection_id : (provider_connection_id) BTREE
+  IX ix_provider_connections_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_provider_connections_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_provider_connections_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_provider_connections_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+provider_connections_history .. idxset_provider_connections_history : indexed by
+
+entity "INDEXES · integration_endpoints_history" as idxset_integration_endpoints_history <<INDEX_SET>> {
+  PK pk_integration_endpoints_history : (history_id) UNIQUE BTREE
+  IX ix_integration_endpoints_history_integration_endpoint_id : (integration_endpoint_id) BTREE
+  IX ix_integration_endpoints_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_integration_endpoints_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_integration_endpoints_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_integration_endpoints_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+integration_endpoints_history .. idxset_integration_endpoints_history : indexed by
+
+entity "INDEXES · outbound_messages_history" as idxset_outbound_messages_history <<INDEX_SET>> {
+  PK pk_outbound_messages_history : (history_id) UNIQUE BTREE
+  IX ix_outbound_messages_history_outbound_message_id : (outbound_message_id) BTREE
+  IX ix_outbound_messages_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_outbound_messages_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_outbound_messages_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_outbound_messages_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+outbound_messages_history .. idxset_outbound_messages_history : indexed by
+
+entity "INDEXES · inbound_messages_history" as idxset_inbound_messages_history <<INDEX_SET>> {
+  PK pk_inbound_messages_history : (history_id) UNIQUE BTREE
+  IX ix_inbound_messages_history_inbound_message_id : (inbound_message_id) BTREE
+  IX ix_inbound_messages_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_inbound_messages_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_inbound_messages_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_inbound_messages_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+inbound_messages_history .. idxset_inbound_messages_history : indexed by
+
+entity "INDEXES · message_retries_history" as idxset_message_retries_history <<INDEX_SET>> {
+  PK pk_message_retries_history : (history_id) UNIQUE BTREE
+  IX ix_message_retries_history_message_retry_id : (message_retry_id) BTREE
+  IX ix_message_retries_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_message_retries_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_message_retries_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_message_retries_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+message_retries_history .. idxset_message_retries_history : indexed by
+
+entity "INDEXES · accounts_history" as idxset_accounts_history <<INDEX_SET>> {
+  PK pk_accounts_history : (history_id) UNIQUE BTREE
+  IX ix_accounts_history_account_id : (account_id) BTREE
+  IX ix_accounts_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_accounts_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_accounts_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_accounts_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+accounts_history .. idxset_accounts_history : indexed by
+
+entity "INDEXES · journal_transactions_history" as idxset_journal_transactions_history <<INDEX_SET>> {
+  PK pk_journal_transactions_history : (history_id) UNIQUE BTREE
+  IX ix_journal_transactions_history_journal_transaction_id : (journal_transaction_id) BTREE
+  IX ix_journal_transactions_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_journal_transactions_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_journal_transactions_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_journal_transactions_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+journal_transactions_history .. idxset_journal_transactions_history : indexed by
+
+entity "INDEXES · assets_history" as idxset_assets_history <<INDEX_SET>> {
+  PK pk_assets_history : (history_id) UNIQUE BTREE
+  IX ix_assets_history_asset_id : (asset_id) BTREE
+  IX ix_assets_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_assets_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_assets_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_assets_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+assets_history .. idxset_assets_history : indexed by
+
+entity "INDEXES · liabilities_history" as idxset_liabilities_history <<INDEX_SET>> {
+  PK pk_liabilities_history : (history_id) UNIQUE BTREE
+  IX ix_liabilities_history_liability_id : (liability_id) BTREE
+  IX ix_liabilities_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_liabilities_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_liabilities_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_liabilities_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+liabilities_history .. idxset_liabilities_history : indexed by
+
+entity "INDEXES · invoices_history" as idxset_invoices_history <<INDEX_SET>> {
+  PK pk_invoices_history : (history_id) UNIQUE BTREE
+  IX ix_invoices_history_invoice_id : (invoice_id) BTREE
+  IX ix_invoices_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_invoices_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_invoices_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_invoices_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+invoices_history .. idxset_invoices_history : indexed by
+
+entity "INDEXES · bills_history" as idxset_bills_history <<INDEX_SET>> {
+  PK pk_bills_history : (history_id) UNIQUE BTREE
+  IX ix_bills_history_bill_id : (bill_id) BTREE
+  IX ix_bills_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_bills_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_bills_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_bills_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+bills_history .. idxset_bills_history : indexed by
+
+entity "INDEXES · insurance_claims_history" as idxset_insurance_claims_history <<INDEX_SET>> {
+  PK pk_insurance_claims_history : (history_id) UNIQUE BTREE
+  IX ix_insurance_claims_history_insurance_claim_id : (insurance_claim_id) BTREE
+  IX ix_insurance_claims_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_insurance_claims_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_insurance_claims_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_insurance_claims_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+insurance_claims_history .. idxset_insurance_claims_history : indexed by
+
+entity "INDEXES · message_templates_history" as idxset_message_templates_history <<INDEX_SET>> {
+  PK pk_message_templates_history : (history_id) UNIQUE BTREE
+  IX ix_message_templates_history_message_template_id : (message_template_id) BTREE
+  IX ix_message_templates_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_message_templates_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_message_templates_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_message_templates_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+message_templates_history .. idxset_message_templates_history : indexed by
+
+entity "INDEXES · provider_channel_configs_history" as idxset_provider_channel_configs_history <<INDEX_SET>> {
+  PK pk_provider_channel_configs_history : (history_id) UNIQUE BTREE
+  IX ix_provider_channel_configs_history_provider_channel_config_id : (provider_channel_config_id) BTREE
+  IX ix_provider_channel_configs_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_provider_channel_configs_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_provider_channel_configs_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_provider_channel_configs_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+provider_channel_configs_history .. idxset_provider_channel_configs_history : indexed by
+
+entity "INDEXES · event_subscriptions_history" as idxset_event_subscriptions_history <<INDEX_SET>> {
+  PK pk_event_subscriptions_history : (history_id) UNIQUE BTREE
+  IX ix_event_subscriptions_history_event_subscription_id : (event_subscription_id) BTREE
+  IX ix_event_subscriptions_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_event_subscriptions_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_event_subscriptions_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_event_subscriptions_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+event_subscriptions_history .. idxset_event_subscriptions_history : indexed by
+
+entity "INDEXES · test_suites_history" as idxset_test_suites_history <<INDEX_SET>> {
+  PK pk_test_suites_history : (history_id) UNIQUE BTREE
+  IX ix_test_suites_history_test_suite_id : (test_suite_id) BTREE
+  IX ix_test_suites_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_test_suites_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_test_suites_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_test_suites_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+test_suites_history .. idxset_test_suites_history : indexed by
+
+entity "INDEXES · test_cases_history" as idxset_test_cases_history <<INDEX_SET>> {
+  PK pk_test_cases_history : (history_id) UNIQUE BTREE
+  IX ix_test_cases_history_test_case_id : (test_case_id) BTREE
+  IX ix_test_cases_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_test_cases_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_test_cases_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_test_cases_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+test_cases_history .. idxset_test_cases_history : indexed by
+
+entity "INDEXES · trackable_subjects_history" as idxset_trackable_subjects_history <<INDEX_SET>> {
+  PK pk_trackable_subjects_history : (history_id) UNIQUE BTREE
+  IX ix_trackable_subjects_history_trackable_subject_id : (trackable_subject_id) BTREE
+  IX ix_trackable_subjects_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_trackable_subjects_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_trackable_subjects_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_trackable_subjects_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+trackable_subjects_history .. idxset_trackable_subjects_history : indexed by
+
+entity "INDEXES · shipments_history" as idxset_shipments_history <<INDEX_SET>> {
+  PK pk_shipments_history : (history_id) UNIQUE BTREE
+  IX ix_shipments_history_shipment_id : (shipment_id) BTREE
+  IX ix_shipments_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_shipments_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_shipments_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_shipments_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+shipments_history .. idxset_shipments_history : indexed by
+
+entity "INDEXES · contracts_history" as idxset_contracts_history <<INDEX_SET>> {
+  PK pk_contracts_history : (history_id) UNIQUE BTREE
+  IX ix_contracts_history_contract_id : (contract_id) BTREE
+  IX ix_contracts_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_contracts_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_contracts_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_contracts_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+contracts_history .. idxset_contracts_history : indexed by
+
+entity "INDEXES · employment_records_history" as idxset_employment_records_history <<INDEX_SET>> {
+  PK pk_employment_records_history : (history_id) UNIQUE BTREE
+  IX ix_employment_records_history_employment_record_id : (employment_record_id) BTREE
+  IX ix_employment_records_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_employment_records_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_employment_records_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_employment_records_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+employment_records_history .. idxset_employment_records_history : indexed by
+
+entity "INDEXES · departments_history" as idxset_departments_history <<INDEX_SET>> {
+  PK pk_departments_history : (history_id) UNIQUE BTREE
+  IX ix_departments_history_department_id : (department_id) BTREE
+  IX ix_departments_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_departments_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_departments_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_departments_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+departments_history .. idxset_departments_history : indexed by
+
+entity "INDEXES · positions_history" as idxset_positions_history <<INDEX_SET>> {
+  PK pk_positions_history : (history_id) UNIQUE BTREE
+  IX ix_positions_history_position_id : (position_id) BTREE
+  IX ix_positions_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_positions_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_positions_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_positions_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+positions_history .. idxset_positions_history : indexed by
+
+entity "INDEXES · report_definitions_history" as idxset_report_definitions_history <<INDEX_SET>> {
+  PK pk_report_definitions_history : (history_id) UNIQUE BTREE
+  IX ix_report_definitions_history_report_definition_id : (report_definition_id) BTREE
+  IX ix_report_definitions_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_report_definitions_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_report_definitions_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_report_definitions_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+report_definitions_history .. idxset_report_definitions_history : indexed by
+
+entity "INDEXES · report_schedules_history" as idxset_report_schedules_history <<INDEX_SET>> {
+  PK pk_report_schedules_history : (history_id) UNIQUE BTREE
+  IX ix_report_schedules_history_report_schedule_id : (report_schedule_id) BTREE
+  IX ix_report_schedules_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_report_schedules_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_report_schedules_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  GIST gist_report_schedules_history_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+  BRIN brin_report_schedules_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+report_schedules_history .. idxset_report_schedules_history : indexed by
+
+entity "INDEXES · identity_providers_history" as idxset_identity_providers_history <<INDEX_SET>> {
+  PK pk_identity_providers_history : (history_id) UNIQUE BTREE
+  IX ix_identity_providers_history_identity_provider_id : (identity_provider_id) BTREE
+  IX ix_identity_providers_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_identity_providers_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_identity_providers_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_identity_providers_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+identity_providers_history .. idxset_identity_providers_history : indexed by
+
+entity "INDEXES · provider_protocol_configs_history" as idxset_provider_protocol_configs_history <<INDEX_SET>> {
+  PK pk_provider_protocol_configs_history : (history_id) UNIQUE BTREE
+  IX ix_provider_protocol_configs_history_provider_protocol_c117b009 : (provider_protocol_config_id) BTREE
+  IX ix_provider_protocol_configs_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_provider_protocol_configs_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_provider_protocol_configs_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_provider_protocol_configs_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+provider_protocol_configs_history .. idxset_provider_protocol_configs_history : indexed by
+
+entity "INDEXES · provider_tenant_bindings_history" as idxset_provider_tenant_bindings_history <<INDEX_SET>> {
+  PK pk_provider_tenant_bindings_history : (history_id) UNIQUE BTREE
+  IX ix_provider_tenant_bindings_history_provider_tenant_binding_id : (provider_tenant_binding_id) BTREE
+  IX ix_provider_tenant_bindings_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_provider_tenant_bindings_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_provider_tenant_bindings_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_provider_tenant_bindings_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+provider_tenant_bindings_history .. idxset_provider_tenant_bindings_history : indexed by
+
+entity "INDEXES · federated_identities_history" as idxset_federated_identities_history <<INDEX_SET>> {
+  PK pk_federated_identities_history : (history_id) UNIQUE BTREE
+  IX ix_federated_identities_history_federated_identity_id : (federated_identity_id) BTREE
+  IX ix_federated_identities_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_federated_identities_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_federated_identities_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_federated_identities_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+federated_identities_history .. idxset_federated_identities_history : indexed by
+
+entity "INDEXES · schedule_templates_history" as idxset_schedule_templates_history <<INDEX_SET>> {
+  PK pk_schedule_templates_history : (history_id) UNIQUE BTREE
+  IX ix_schedule_templates_history_schedule_template_id : (schedule_template_id) BTREE
+  IX ix_schedule_templates_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_schedule_templates_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_schedule_templates_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  GIST gist_schedule_templates_history_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+  BRIN brin_schedule_templates_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+schedule_templates_history .. idxset_schedule_templates_history : indexed by
+
+entity "INDEXES · booking_policies_history" as idxset_booking_policies_history <<INDEX_SET>> {
+  PK pk_booking_policies_history : (history_id) UNIQUE BTREE
+  IX ix_booking_policies_history_booking_policy_id : (booking_policy_id) BTREE
+  IX ix_booking_policies_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_booking_policies_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_booking_policies_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_booking_policies_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+booking_policies_history .. idxset_booking_policies_history : indexed by
+
+entity "INDEXES · appointment_bookings_history" as idxset_appointment_bookings_history <<INDEX_SET>> {
+  PK pk_appointment_bookings_history : (history_id) UNIQUE BTREE
+  IX ix_appointment_bookings_history_appointment_booking_id : (appointment_booking_id) BTREE
+  IX ix_appointment_bookings_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_appointment_bookings_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_appointment_bookings_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  GIST gist_appointment_bookings_history_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+  BRIN brin_appointment_bookings_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+appointment_bookings_history .. idxset_appointment_bookings_history : indexed by
+
+entity "INDEXES · payment_methods_history" as idxset_payment_methods_history <<INDEX_SET>> {
+  PK pk_payment_methods_history : (history_id) UNIQUE BTREE
+  IX ix_payment_methods_history_payment_method_id : (payment_method_id) BTREE
+  IX ix_payment_methods_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_payment_methods_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_payment_methods_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_payment_methods_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+payment_methods_history .. idxset_payment_methods_history : indexed by
+
+entity "INDEXES · payment_intents_history" as idxset_payment_intents_history <<INDEX_SET>> {
+  PK pk_payment_intents_history : (history_id) UNIQUE BTREE
+  IX ix_payment_intents_history_payment_intent_id : (payment_intent_id) BTREE
+  IX ix_payment_intents_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_payment_intents_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_payment_intents_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_payment_intents_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+payment_intents_history .. idxset_payment_intents_history : indexed by
+
+entity "INDEXES · payment_transactions_history" as idxset_payment_transactions_history <<INDEX_SET>> {
+  PK pk_payment_transactions_history : (history_id) UNIQUE BTREE
+  IX ix_payment_transactions_history_payment_transaction_id : (payment_transaction_id) BTREE
+  IX ix_payment_transactions_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_payment_transactions_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_payment_transactions_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_payment_transactions_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+payment_transactions_history .. idxset_payment_transactions_history : indexed by
+
+entity "INDEXES · payouts_history" as idxset_payouts_history <<INDEX_SET>> {
+  PK pk_payouts_history : (history_id) UNIQUE BTREE
+  IX ix_payouts_history_payout_id : (payout_id) BTREE
+  IX ix_payouts_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_payouts_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_payouts_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_payouts_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+payouts_history .. idxset_payouts_history : indexed by
+
+entity "INDEXES · ad_accounts_history" as idxset_ad_accounts_history <<INDEX_SET>> {
+  PK pk_ad_accounts_history : (history_id) UNIQUE BTREE
+  IX ix_ad_accounts_history_ad_account_id : (ad_account_id) BTREE
+  IX ix_ad_accounts_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_ad_accounts_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_ad_accounts_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_ad_accounts_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+ad_accounts_history .. idxset_ad_accounts_history : indexed by
+
+entity "INDEXES · campaigns_history" as idxset_campaigns_history <<INDEX_SET>> {
+  PK pk_campaigns_history : (history_id) UNIQUE BTREE
+  IX ix_campaigns_history_campaign_id : (campaign_id) BTREE
+  IX ix_campaigns_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_campaigns_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_campaigns_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_campaigns_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+campaigns_history .. idxset_campaigns_history : indexed by
+
+entity "INDEXES · ad_sets_history" as idxset_ad_sets_history <<INDEX_SET>> {
+  PK pk_ad_sets_history : (history_id) UNIQUE BTREE
+  IX ix_ad_sets_history_ad_set_id : (ad_set_id) BTREE
+  IX ix_ad_sets_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_ad_sets_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_ad_sets_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_ad_sets_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+ad_sets_history .. idxset_ad_sets_history : indexed by
+
+entity "INDEXES · ads_history" as idxset_ads_history <<INDEX_SET>> {
+  PK pk_ads_history : (history_id) UNIQUE BTREE
+  IX ix_ads_history_ad_id : (ad_id) BTREE
+  IX ix_ads_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_ads_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_ads_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_ads_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+ads_history .. idxset_ads_history : indexed by
+
+entity "INDEXES · ad_creatives_history" as idxset_ad_creatives_history <<INDEX_SET>> {
+  PK pk_ad_creatives_history : (history_id) UNIQUE BTREE
+  IX ix_ad_creatives_history_ad_creative_id : (ad_creative_id) BTREE
+  IX ix_ad_creatives_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_ad_creatives_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_ad_creatives_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_ad_creatives_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+ad_creatives_history .. idxset_ad_creatives_history : indexed by
+
+entity "INDEXES · custom_audiences_history" as idxset_custom_audiences_history <<INDEX_SET>> {
+  PK pk_custom_audiences_history : (history_id) UNIQUE BTREE
+  IX ix_custom_audiences_history_custom_audience_id : (custom_audience_id) BTREE
+  IX ix_custom_audiences_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_custom_audiences_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_custom_audiences_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_custom_audiences_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+custom_audiences_history .. idxset_custom_audiences_history : indexed by
+
+entity "INDEXES · wallets_history" as idxset_wallets_history <<INDEX_SET>> {
+  PK pk_wallets_history : (history_id) UNIQUE BTREE
+  IX ix_wallets_history_wallets_id : (wallets_id) BTREE
+  IX ix_wallets_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_wallets_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_wallets_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_wallets_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+wallets_history .. idxset_wallets_history : indexed by
+
+entity "INDEXES · subscription_plans_history" as idxset_subscription_plans_history <<INDEX_SET>> {
+  PK pk_subscription_plans_history : (history_id) UNIQUE BTREE
+  IX ix_subscription_plans_history_subscription_plans_id : (subscription_plans_id) BTREE
+  IX ix_subscription_plans_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_subscription_plans_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_subscription_plans_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_subscription_plans_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+subscription_plans_history .. idxset_subscription_plans_history : indexed by
+
+entity "INDEXES · subscriptions_history" as idxset_subscriptions_history <<INDEX_SET>> {
+  PK pk_subscriptions_history : (history_id) UNIQUE BTREE
+  IX ix_subscriptions_history_subscriptions_id : (subscriptions_id) BTREE
+  IX ix_subscriptions_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_subscriptions_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_subscriptions_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_subscriptions_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+subscriptions_history .. idxset_subscriptions_history : indexed by
+
+entity "INDEXES · connected_accounts_history" as idxset_connected_accounts_history <<INDEX_SET>> {
+  PK pk_connected_accounts_history : (history_id) UNIQUE BTREE
+  IX ix_connected_accounts_history_connected_accounts_id : (connected_accounts_id) BTREE
+  IX ix_connected_accounts_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_connected_accounts_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_connected_accounts_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_connected_accounts_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+connected_accounts_history .. idxset_connected_accounts_history : indexed by
+
+entity "INDEXES · payment_mandates_history" as idxset_payment_mandates_history <<INDEX_SET>> {
+  PK pk_payment_mandates_history : (history_id) UNIQUE BTREE
+  IX ix_payment_mandates_history_payment_mandates_id : (payment_mandates_id) BTREE
+  IX ix_payment_mandates_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_payment_mandates_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_payment_mandates_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_payment_mandates_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+payment_mandates_history .. idxset_payment_mandates_history : indexed by
+
+entity "INDEXES · product_catalogs_history" as idxset_product_catalogs_history <<INDEX_SET>> {
+  PK pk_product_catalogs_history : (history_id) UNIQUE BTREE
+  IX ix_product_catalogs_history_product_catalogs_id : (product_catalogs_id) BTREE
+  IX ix_product_catalogs_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_product_catalogs_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_product_catalogs_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_product_catalogs_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+product_catalogs_history .. idxset_product_catalogs_history : indexed by
+
+entity "INDEXES · catalog_products_history" as idxset_catalog_products_history <<INDEX_SET>> {
+  PK pk_catalog_products_history : (history_id) UNIQUE BTREE
+  IX ix_catalog_products_history_catalog_products_id : (catalog_products_id) BTREE
+  IX ix_catalog_products_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_catalog_products_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_catalog_products_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_catalog_products_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+catalog_products_history .. idxset_catalog_products_history : indexed by
+
+entity "INDEXES · product_sets_history" as idxset_product_sets_history <<INDEX_SET>> {
+  PK pk_product_sets_history : (history_id) UNIQUE BTREE
+  IX ix_product_sets_history_product_sets_id : (product_sets_id) BTREE
+  IX ix_product_sets_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_product_sets_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_product_sets_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_product_sets_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+product_sets_history .. idxset_product_sets_history : indexed by
+
+entity "INDEXES · automated_rules_history" as idxset_automated_rules_history <<INDEX_SET>> {
+  PK pk_automated_rules_history : (history_id) UNIQUE BTREE
+  IX ix_automated_rules_history_automated_rules_id : (automated_rules_id) BTREE
+  IX ix_automated_rules_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_automated_rules_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_automated_rules_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_automated_rules_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+automated_rules_history .. idxset_automated_rules_history : indexed by
+
+entity "INDEXES · custom_conversions_history" as idxset_custom_conversions_history <<INDEX_SET>> {
+  PK pk_custom_conversions_history : (history_id) UNIQUE BTREE
+  IX ix_custom_conversions_history_custom_conversions_id : (custom_conversions_id) BTREE
+  IX ix_custom_conversions_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_custom_conversions_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_custom_conversions_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_custom_conversions_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+custom_conversions_history .. idxset_custom_conversions_history : indexed by
+
+entity "INDEXES · ad_experiments_history" as idxset_ad_experiments_history <<INDEX_SET>> {
+  PK pk_ad_experiments_history : (history_id) UNIQUE BTREE
+  IX ix_ad_experiments_history_ad_experiments_id : (ad_experiments_id) BTREE
+  IX ix_ad_experiments_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_ad_experiments_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_ad_experiments_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_ad_experiments_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+ad_experiments_history .. idxset_ad_experiments_history : indexed by
+
+entity "INDEXES · comments_history" as idxset_comments_history <<INDEX_SET>> {
+  PK pk_comments_history : (history_id) UNIQUE BTREE
+  IX ix_comments_history_comments_id : (comments_id) BTREE
+  IX ix_comments_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_comments_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_comments_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_comments_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+comments_history .. idxset_comments_history : indexed by
+
+entity "INDEXES · groups_history" as idxset_groups_history <<INDEX_SET>> {
+  PK pk_groups_history : (history_id) UNIQUE BTREE
+  IX ix_groups_history_groups_id : (groups_id) BTREE
+  IX ix_groups_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_groups_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_groups_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_groups_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+groups_history .. idxset_groups_history : indexed by
+
+entity "INDEXES · topics_history" as idxset_topics_history <<INDEX_SET>> {
+  PK pk_topics_history : (history_id) UNIQUE BTREE
+  IX ix_topics_history_topics_id : (topics_id) BTREE
+  IX ix_topics_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_topics_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_topics_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_topics_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+topics_history .. idxset_topics_history : indexed by
+
+entity "INDEXES · conversations_history" as idxset_conversations_history <<INDEX_SET>> {
+  PK pk_conversations_history : (history_id) UNIQUE BTREE
+  IX ix_conversations_history_conversations_id : (conversations_id) BTREE
+  IX ix_conversations_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_conversations_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_conversations_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_conversations_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+conversations_history .. idxset_conversations_history : indexed by
+
+entity "INDEXES · verified_badges_history" as idxset_verified_badges_history <<INDEX_SET>> {
+  PK pk_verified_badges_history : (history_id) UNIQUE BTREE
+  IX ix_verified_badges_history_verified_badges_id : (verified_badges_id) BTREE
+  IX ix_verified_badges_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_verified_badges_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_verified_badges_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_verified_badges_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+verified_badges_history .. idxset_verified_badges_history : indexed by
+
+entity "INDEXES · moderation_decisions_history" as idxset_moderation_decisions_history <<INDEX_SET>> {
+  PK pk_moderation_decisions_history : (history_id) UNIQUE BTREE
+  IX ix_moderation_decisions_history_moderation_decisions_id : (moderation_decisions_id) BTREE
+  IX ix_moderation_decisions_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_moderation_decisions_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_moderation_decisions_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_moderation_decisions_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+moderation_decisions_history .. idxset_moderation_decisions_history : indexed by
+
+entity "INDEXES · courses_history" as idxset_courses_history <<INDEX_SET>> {
+  PK pk_courses_history : (history_id) UNIQUE BTREE
+  IX ix_courses_history_courses_id : (courses_id) BTREE
+  IX ix_courses_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_courses_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_courses_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_courses_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+courses_history .. idxset_courses_history : indexed by
+
+entity "INDEXES · course_versions_history" as idxset_course_versions_history <<INDEX_SET>> {
+  PK pk_course_versions_history : (history_id) UNIQUE BTREE
+  IX ix_course_versions_history_course_versions_id : (course_versions_id) BTREE
+  IX ix_course_versions_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_course_versions_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_course_versions_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_course_versions_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+course_versions_history .. idxset_course_versions_history : indexed by
+
+entity "INDEXES · enrollments_history" as idxset_enrollments_history <<INDEX_SET>> {
+  PK pk_enrollments_history : (history_id) UNIQUE BTREE
+  IX ix_enrollments_history_enrollments_id : (enrollments_id) BTREE
+  IX ix_enrollments_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_enrollments_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_enrollments_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_enrollments_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+enrollments_history .. idxset_enrollments_history : indexed by
+
+entity "INDEXES · certificates_history" as idxset_certificates_history <<INDEX_SET>> {
+  PK pk_certificates_history : (history_id) UNIQUE BTREE
+  IX ix_certificates_history_certificates_id : (certificates_id) BTREE
+  IX ix_certificates_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_certificates_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_certificates_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_certificates_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+certificates_history .. idxset_certificates_history : indexed by
+
+entity "INDEXES · agents_history" as idxset_agents_history <<INDEX_SET>> {
+  PK pk_agents_history : (history_id) UNIQUE BTREE
+  IX ix_agents_history_agents_id : (agents_id) BTREE
+  IX ix_agents_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_agents_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_agents_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_agents_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+agents_history .. idxset_agents_history : indexed by
+
+entity "INDEXES · agent_versions_history" as idxset_agent_versions_history <<INDEX_SET>> {
+  PK pk_agent_versions_history : (history_id) UNIQUE BTREE
+  IX ix_agent_versions_history_agent_versions_id : (agent_versions_id) BTREE
+  IX ix_agent_versions_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_agent_versions_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_agent_versions_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_agent_versions_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+agent_versions_history .. idxset_agent_versions_history : indexed by
+
+entity "INDEXES · workflows_history" as idxset_workflows_history <<INDEX_SET>> {
+  PK pk_workflows_history : (history_id) UNIQUE BTREE
+  IX ix_workflows_history_workflows_id : (workflows_id) BTREE
+  IX ix_workflows_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_workflows_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_workflows_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_workflows_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+workflows_history .. idxset_workflows_history : indexed by
+
+entity "INDEXES · guardrail_policies_history" as idxset_guardrail_policies_history <<INDEX_SET>> {
+  PK pk_guardrail_policies_history : (history_id) UNIQUE BTREE
+  IX ix_guardrail_policies_history_guardrail_policies_id : (guardrail_policies_id) BTREE
+  IX ix_guardrail_policies_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_guardrail_policies_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_guardrail_policies_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_guardrail_policies_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+guardrail_policies_history .. idxset_guardrail_policies_history : indexed by
+
+entity "INDEXES · record_automations_history" as idxset_record_automations_history <<INDEX_SET>> {
+  PK pk_record_automations_history : (history_id) UNIQUE BTREE
+  IX ix_record_automations_history_record_automations_id : (record_automations_id) BTREE
+  IX ix_record_automations_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_record_automations_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_record_automations_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_record_automations_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+record_automations_history .. idxset_record_automations_history : indexed by
+
+entity "INDEXES · crm_accounts_history" as idxset_crm_accounts_history <<INDEX_SET>> {
+  PK pk_crm_accounts_history : (history_id) UNIQUE BTREE
+  IX ix_crm_accounts_history_crm_accounts_id : (crm_accounts_id) BTREE
+  IX ix_crm_accounts_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_crm_accounts_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_crm_accounts_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_crm_accounts_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+crm_accounts_history .. idxset_crm_accounts_history : indexed by
+
+entity "INDEXES · contacts_history" as idxset_contacts_history <<INDEX_SET>> {
+  PK pk_contacts_history : (history_id) UNIQUE BTREE
+  IX ix_contacts_history_contacts_id : (contacts_id) BTREE
+  IX ix_contacts_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_contacts_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_contacts_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_contacts_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+contacts_history .. idxset_contacts_history : indexed by
+
+entity "INDEXES · opportunities_history" as idxset_opportunities_history <<INDEX_SET>> {
+  PK pk_opportunities_history : (history_id) UNIQUE BTREE
+  IX ix_opportunities_history_opportunities_id : (opportunities_id) BTREE
+  IX ix_opportunities_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_opportunities_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_opportunities_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_opportunities_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+opportunities_history .. idxset_opportunities_history : indexed by
+
+entity "INDEXES · partnerships_history" as idxset_partnerships_history <<INDEX_SET>> {
+  PK pk_partnerships_history : (history_id) UNIQUE BTREE
+  IX ix_partnerships_history_partnerships_id : (partnerships_id) BTREE
+  IX ix_partnerships_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_partnerships_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_partnerships_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_partnerships_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+partnerships_history .. idxset_partnerships_history : indexed by
+
+entity "INDEXES · partnership_agreements_history" as idxset_partnership_agreements_history <<INDEX_SET>> {
+  PK pk_partnership_agreements_history : (history_id) UNIQUE BTREE
+  IX ix_partnership_agreements_history_partnership_agreements_id : (partnership_agreements_id) BTREE
+  IX ix_partnership_agreements_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_partnership_agreements_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_partnership_agreements_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  GIST gist_partnership_agreements_history_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+  BRIN brin_partnership_agreements_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+partnership_agreements_history .. idxset_partnership_agreements_history : indexed by
+
+entity "INDEXES · segments_history" as idxset_segments_history <<INDEX_SET>> {
+  PK pk_segments_history : (history_id) UNIQUE BTREE
+  IX ix_segments_history_segments_id : (segments_id) BTREE
+  IX ix_segments_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_segments_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_segments_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_segments_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+segments_history .. idxset_segments_history : indexed by
+
+entity "INDEXES · marketing_campaigns_history" as idxset_marketing_campaigns_history <<INDEX_SET>> {
+  PK pk_marketing_campaigns_history : (history_id) UNIQUE BTREE
+  IX ix_marketing_campaigns_history_marketing_campaigns_id : (marketing_campaigns_id) BTREE
+  IX ix_marketing_campaigns_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_marketing_campaigns_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_marketing_campaigns_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_marketing_campaigns_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+marketing_campaigns_history .. idxset_marketing_campaigns_history : indexed by
+
+entity "INDEXES · journeys_history" as idxset_journeys_history <<INDEX_SET>> {
+  PK pk_journeys_history : (history_id) UNIQUE BTREE
+  IX ix_journeys_history_journeys_id : (journeys_id) BTREE
+  IX ix_journeys_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_journeys_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_journeys_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_journeys_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+journeys_history .. idxset_journeys_history : indexed by
+
+entity "INDEXES · loyalty_programs_history" as idxset_loyalty_programs_history <<INDEX_SET>> {
+  PK pk_loyalty_programs_history : (history_id) UNIQUE BTREE
+  IX ix_loyalty_programs_history_loyalty_programs_id : (loyalty_programs_id) BTREE
+  IX ix_loyalty_programs_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_loyalty_programs_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_loyalty_programs_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_loyalty_programs_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+loyalty_programs_history .. idxset_loyalty_programs_history : indexed by
+
+entity "INDEXES · loyalty_memberships_history" as idxset_loyalty_memberships_history <<INDEX_SET>> {
+  PK pk_loyalty_memberships_history : (history_id) UNIQUE BTREE
+  IX ix_loyalty_memberships_history_loyalty_memberships_id : (loyalty_memberships_id) BTREE
+  IX ix_loyalty_memberships_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_loyalty_memberships_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_loyalty_memberships_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  GIST gist_loyalty_memberships_history_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+  BRIN brin_loyalty_memberships_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+loyalty_memberships_history .. idxset_loyalty_memberships_history : indexed by
+
+entity "INDEXES · promotions_history" as idxset_promotions_history <<INDEX_SET>> {
+  PK pk_promotions_history : (history_id) UNIQUE BTREE
+  IX ix_promotions_history_promotions_id : (promotions_id) BTREE
+  IX ix_promotions_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_promotions_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_promotions_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_promotions_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+promotions_history .. idxset_promotions_history : indexed by
+
+entity "INDEXES · coupons_history" as idxset_coupons_history <<INDEX_SET>> {
+  PK pk_coupons_history : (history_id) UNIQUE BTREE
+  IX ix_coupons_history_coupons_id : (coupons_id) BTREE
+  IX ix_coupons_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_coupons_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_coupons_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_coupons_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+coupons_history .. idxset_coupons_history : indexed by
+
+entity "INDEXES · referral_programs_history" as idxset_referral_programs_history <<INDEX_SET>> {
+  PK pk_referral_programs_history : (history_id) UNIQUE BTREE
+  IX ix_referral_programs_history_referral_programs_id : (referral_programs_id) BTREE
+  IX ix_referral_programs_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_referral_programs_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_referral_programs_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_referral_programs_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+referral_programs_history .. idxset_referral_programs_history : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

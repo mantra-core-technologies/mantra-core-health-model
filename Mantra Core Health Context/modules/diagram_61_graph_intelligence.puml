@@ -1,0 +1,308 @@
+@startuml SALUD_Module_61_graph_intelligence
+title Module 61 — Graph Projections for Relationships, Referrals and Risk\n(property graph database projection)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+note as BIZ_graph_intelligence
+  BUSINESS PURPOSE
+  Supports multi-hop relationship analysis for referrals, organizational networks, counterparties, fraud, delegated access and lineage.
+  The graph is optional and derived. PostgreSQL remains canonical for identities, contracts, claims, payments and clinical records.
+end note
+
+entity "directory.tenants" as directory_tenants <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "profiles.persons" as profiles_persons <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "profiles.patient_profiles" as profiles_patient_profiles <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "directory.organizations" as directory_organizations <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "erp.business_partners" as erp_business_partners <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity graph_nodes <<GRAPH_COLLECTION>> {
+  * node_id : uuid <<PK>>
+  * tenant_id : uuid
+  * node_type : varchar
+  * source_entity_type : varchar
+  * source_entity_id : uuid
+  * source_version : bigint
+  * display_label_redacted : varchar
+  * properties : map
+  * security_labels : varchar[]
+  * lifecycle_state : varchar
+  * updated_at : timestamptz
+}
+
+entity graph_node_identifiers <<GRAPH_COLLECTION>> {
+  * id : uuid <<PK>>
+  * node_id : uuid
+  * identifier_system : varchar
+  * identifier_value_hash : varchar
+  * identifier_type : varchar
+  * is_primary : boolean
+}
+
+entity graph_edges <<GRAPH_COLLECTION>> {
+  * edge_id : uuid <<PK>>
+  * tenant_id : uuid
+  * from_node_id : uuid
+  * to_node_id : uuid
+  * relationship_type : varchar
+  * directionality : varchar
+  * effective_from : timestamptz
+    effective_to : timestamptz
+  * confidence_score : double
+  * source_entity_type : varchar
+  * source_entity_id : uuid
+  * properties : map
+  * lifecycle_state : varchar
+}
+
+entity graph_edge_evidence <<GRAPH_COLLECTION>> {
+  * id : uuid <<PK>>
+  * edge_id : uuid
+  * evidence_type : varchar
+  * source_reference : varchar
+  * evidence_hash : varchar
+  * observed_at : timestamptz
+  * confidence_delta : double
+}
+
+entity graph_access_scopes <<GRAPH_COLLECTION>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * scope_code : varchar
+  * allowed_node_types : varchar[]
+  * allowed_relationship_types : varchar[]
+  * purpose_of_use_codes : varchar[]
+  * max_hops : smallint
+  * requires_patient_context : boolean
+  * state : varchar
+}
+
+entity graph_projection_definitions <<GRAPH_COLLECTION>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * code : varchar
+  * source_dataset_codes : varchar[]
+  * node_mapping_rules : map
+  * edge_mapping_rules : map
+  * projection_version : varchar
+  * state : varchar
+}
+
+entity graph_projection_runs <<GRAPH_COLLECTION>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * graph_projection_definition_id : uuid
+  * status : varchar
+  * source_checkpoint : varchar
+  * nodes_written : bigint
+  * edges_written : bigint
+  * started_at : timestamptz
+  * completed_at : timestamptz
+}
+
+entity graph_risk_scores <<GRAPH_COLLECTION>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * node_id : uuid
+  * risk_type : varchar
+  * score : double
+  * model_version : varchar
+  * explanation_redacted : text
+  * calculated_at : timestamptz
+  * expires_at : timestamptz
+}
+
+entity graph_path_cache <<GRAPH_COLLECTION>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * start_node_id : uuid
+  * end_node_id : uuid
+  * relationship_filter_hash : varchar
+  * max_hops : smallint
+  * path_nodes : uuid[]
+  * path_edges : uuid[]
+  * calculated_at : timestamptz
+  * expires_at : timestamptz
+}
+
+entity graph_communities <<GRAPH_COLLECTION>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * community_type : varchar
+  * algorithm_version : varchar
+  * member_node_ids : uuid[]
+  * score : double
+  * calculated_at : timestamptz
+}
+
+entity graph_rule_definitions <<GRAPH_COLLECTION>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * code : varchar
+  * rule_type : varchar
+  * traversal_expression : text
+  * severity : varchar
+  * state : varchar
+  * version : varchar
+}
+
+entity graph_rule_hits <<GRAPH_COLLECTION>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * graph_rule_definition_id : uuid
+  * primary_node_id : uuid
+  * related_node_ids : uuid[]
+  * evidence_edge_ids : uuid[]
+  * status : varchar
+  * detected_at : timestamptz
+  * resolved_at : timestamptz
+}
+
+entity graph_deletion_jobs <<GRAPH_COLLECTION>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * source_entity_type : varchar
+  * source_entity_id : uuid
+  * status : varchar
+  * nodes_deleted : integer
+  * edges_deleted : integer
+  * requested_at : timestamptz
+  * verified_at : timestamptz
+}
+
+
+graph_nodes -- graph_node_identifiers : identified by
+graph_nodes -- graph_edges : from/to
+graph_edges -- graph_edge_evidence : supported by
+graph_projection_definitions -- graph_projection_runs : runs
+graph_nodes -- graph_risk_scores : scored
+graph_nodes -- graph_path_cache : paths
+graph_rule_definitions -- graph_rule_hits : detects
+profiles_persons -- graph_nodes : projects
+directory_organizations -- graph_nodes : projects
+erp_business_partners -- graph_nodes : projects
+
+package "Physical Indexes and Access Patterns" {
+entity "INDEXES · graph_nodes" as idxset_graph_nodes <<INDEX_SET>> {
+  CONSTRAINT uq_graph_node_source : tenant_id + source_entity_type + source_entity_id UNIQUE
+  INDEX ix_graph_node_type_state : tenant_id + node_type + lifecycle_state
+  FULLTEXT ft_graph_node_label : display_label_redacted
+  LOOKUP lookup_graph_node_id : node_id
+}
+
+graph_nodes .. idxset_graph_nodes : indexed by
+
+entity "INDEXES · graph_node_identifiers" as idxset_graph_node_identifiers <<INDEX_SET>> {
+  CONSTRAINT uq_graph_identifier : node_id + identifier_system + identifier_value_hash UNIQUE
+  INDEX ix_graph_identifier_hash : identifier_system + identifier_value_hash
+}
+
+graph_node_identifiers .. idxset_graph_node_identifiers : indexed by
+
+entity "INDEXES · graph_edges" as idxset_graph_edges <<INDEX_SET>> {
+  CONSTRAINT uq_graph_edge_source : tenant_id + source_entity_type + source_entity_id + relationship_type UNIQUE
+  INDEX ix_graph_edge_out : tenant_id + from_node_id + relationship_type + effective_from DESC
+  INDEX ix_graph_edge_in : tenant_id + to_node_id + relationship_type + effective_from DESC
+  INDEX ix_graph_edge_active : tenant_id + relationship_type + lifecycle_state
+}
+
+graph_edges .. idxset_graph_edges : indexed by
+
+entity "INDEXES · graph_edge_evidence" as idxset_graph_edge_evidence <<INDEX_SET>> {
+  CONSTRAINT uq_graph_edge_evidence_hash : edge_id + evidence_hash UNIQUE
+  INDEX ix_graph_edge_evidence_time : edge_id + observed_at DESC
+}
+
+graph_edge_evidence .. idxset_graph_edge_evidence : indexed by
+
+entity "INDEXES · graph_access_scopes" as idxset_graph_access_scopes <<INDEX_SET>> {
+  CONSTRAINT uq_graph_scope_code : tenant_id + scope_code UNIQUE
+  INDEX ix_graph_scope_state : tenant_id + state
+}
+
+graph_access_scopes .. idxset_graph_access_scopes : indexed by
+
+entity "INDEXES · graph_projection_definitions" as idxset_graph_projection_definitions <<INDEX_SET>> {
+  CONSTRAINT uq_graph_projection_version : tenant_id + code + projection_version UNIQUE
+  INDEX ix_graph_projection_state : tenant_id + state
+}
+
+graph_projection_definitions .. idxset_graph_projection_definitions : indexed by
+
+entity "INDEXES · graph_projection_runs" as idxset_graph_projection_runs <<INDEX_SET>> {
+  INDEX ix_graph_projection_run_status : tenant_id + status + started_at ASC
+  INDEX ix_graph_projection_run_definition : graph_projection_definition_id + started_at DESC
+}
+
+graph_projection_runs .. idxset_graph_projection_runs : indexed by
+
+entity "INDEXES · graph_risk_scores" as idxset_graph_risk_scores <<INDEX_SET>> {
+  CONSTRAINT uq_graph_risk_node_type_model : tenant_id + node_id + risk_type + model_version UNIQUE
+  INDEX ix_graph_risk_high : tenant_id + risk_type + score DESC
+  TTL ttl_graph_risk : expires_at
+}
+
+graph_risk_scores .. idxset_graph_risk_scores : indexed by
+
+entity "INDEXES · graph_path_cache" as idxset_graph_path_cache <<INDEX_SET>> {
+  CONSTRAINT uq_graph_path_cache : tenant_id + start_node_id + end_node_id + relationship_filter_hash + max_hops UNIQUE
+  TTL ttl_graph_path : expires_at
+}
+
+graph_path_cache .. idxset_graph_path_cache : indexed by
+
+entity "INDEXES · graph_communities" as idxset_graph_communities <<INDEX_SET>> {
+  CONSTRAINT uq_graph_community_algorithm : tenant_id + community_type + algorithm_version + id UNIQUE
+  INDEX ix_graph_community_member : member_node_ids MULTIVALUE
+}
+
+graph_communities .. idxset_graph_communities : indexed by
+
+entity "INDEXES · graph_rule_definitions" as idxset_graph_rule_definitions <<INDEX_SET>> {
+  CONSTRAINT uq_graph_rule_version : tenant_id + code + version UNIQUE
+  INDEX ix_graph_rule_state : tenant_id + state + severity
+}
+
+graph_rule_definitions .. idxset_graph_rule_definitions : indexed by
+
+entity "INDEXES · graph_rule_hits" as idxset_graph_rule_hits <<INDEX_SET>> {
+  INDEX ix_graph_rule_hit_status : tenant_id + status + detected_at ASC
+  INDEX ix_graph_rule_hit_node : tenant_id + primary_node_id + detected_at DESC
+}
+
+graph_rule_hits .. idxset_graph_rule_hits : indexed by
+
+entity "INDEXES · graph_deletion_jobs" as idxset_graph_deletion_jobs <<INDEX_SET>> {
+  INDEX ix_graph_delete_status : tenant_id + status + requested_at ASC
+  CONSTRAINT uq_graph_delete_source_active : tenant_id + source_entity_type + source_entity_id + status
+}
+
+graph_deletion_jobs .. idxset_graph_deletion_jobs : indexed by
+
+}
+
+
+note as INDEX_POLICY_graph_intelligence
+  INDEX AND ACCESS-PATTERN POLICY
+  - Every node and edge maps back to a canonical source entity and version.
+  - Graph access scopes constrain node types, relationship types, purpose and maximum traversal depth.
+  - Sensitive identifiers are hashed or omitted; display labels are redacted.
+  - Deletion and source-version changes are propagated through projection jobs.
+end note
+
+@enduml

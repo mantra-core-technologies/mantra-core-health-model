@@ -1,0 +1,12 @@
+# Dependencias de terceros de salud-db/ (defecto 2 del PR #28 del vault, 2026-08-13).
+# Instalar con:  pip install -r salud-db/requirements.txt
+#
+# Quién usa qué:
+#   psycopg   load_seeds.py (import de módulo) y, por él, rebuild_stack.py
+#   pymongo   load_seeds.py (import perezoso en load_mongo)
+#   redis     load_seeds.py (import perezoso en load_redis)
+# OpenSearch y MinIO se hablan por HTTP con urllib.request: sin cliente propio.
+# Los generadores (gen_*.py, check_ddl_sources.py, fix_vault_fk.py) son stdlib puro.
+psycopg[binary]
+pymongo
+redis

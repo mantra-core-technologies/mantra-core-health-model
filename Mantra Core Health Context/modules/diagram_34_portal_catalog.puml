@@ -1,0 +1,283 @@
+@startuml SALUD_Module_34_portal_catalog
+title Module 34 — Portal Catalogue, Navigation and UX State Boundaries
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+actor "System Administrator" as SysAdmin
+actor "ERP / Finance User" as ERPUser
+actor "Infrastructure Administrator" as InfraAdmin
+actor "Hospital Operator" as HospitalAdmin
+actor "Diagnostic Unit Operator" as DiagAdmin
+actor "Pharmacy Operator" as PharmacyAdmin
+actor Doctor
+actor Patient
+actor "Insurer Administrator" as InsurerAdmin
+actor Broker
+actor "Public Visitor" as Visitor
+actor "Educator / Learner" as EducationUser
+actor "CRM / Marketing User" as GrowthUser
+
+rectangle "Public Experience" {
+  usecase "Provider and service discovery" as PUB1
+  usecase "Public profile, prices and reviews" as PUB2
+  usecase "Sign in / registration / recovery" as PUB3
+}
+
+rectangle "Patient Portal" {
+  usecase "Health home dashboard" as PAT1
+  usecase "Appointments and availability" as PAT2
+  usecase "Timeline, records and results" as PAT3
+  usecase "Medications and orders" as PAT4
+  usecase "Billing, claims and payments" as PAT5
+  usecase "Privacy and consent center" as PAT6
+  usecase "Notifications and secure access" as PAT7
+}
+
+rectangle "Doctor Workspace" {
+  usecase "Daily agenda and patient queue" as DOC1
+  usecase "Encounter workspace" as DOC2
+  usecase "Versioned notes and chart" as DOC3
+  usecase "Order entry and prescribing" as DOC4
+  usecase "Result inbox and acknowledgment" as DOC5
+  usecase "Delegates and scope" as DOC6
+  usecase "Professional public profile" as DOC7
+}
+
+rectangle "Hospital / Infrastructure" {
+  usecase "Sites, departments, units and spaces" as INF1
+  usecase "Bed and capacity board" as INF2
+  usecase "Workforce, shifts and attendance" as INF3
+  usecase "Operational incidents and maintenance" as INF4
+  usecase "Delegated users and permissions" as INF5
+}
+
+rectangle "Diagnostic Unit Portal" {
+  usecase "Diagnostic worklist" as DIA1
+  usecase "Specimens, studies and devices" as DIA2
+  usecase "Verification and result release" as DIA3
+  usecase "Catalog, specialists and public prices" as DIA4
+  usecase "Quality control and evidence" as DIA5
+}
+
+rectangle "Pharmacy Portal" {
+  usecase "Catalog, pricing and availability" as PHA1
+  usecase "Inventory, lots and expiry risk" as PHA2
+  usecase "Reservations and dispensing queue" as PHA3
+  usecase "Purchasing and stock counts" as PHA4
+  usecase "Covered dispensing and reconciliation" as PHA5
+}
+
+rectangle "Insurance Portal" {
+  usecase "Eligibility and coverage" as INS1
+  usecase "Authorization queue" as INS2
+  usecase "Claims and adjudication" as INS3
+  usecase "Appeals, reversals and reconciliation" as INS4
+  usecase "Provider network performance" as INS5
+}
+
+rectangle "Broker Portal" {
+  usecase "Client portfolio" as BRO1
+  usecase "Coverage and renewal pipeline" as BRO2
+  usecase "Carrier agreements" as BRO3
+  usecase "Commission statements" as BRO4
+}
+
+rectangle "ERP / Finance" {
+  usecase "Financial dashboard" as ERP1
+  usecase "General ledger and subledgers" as ERP2
+  usecase "Receivables and payables" as ERP3
+  usecase "Cash, settlements and reconciliation" as ERP4
+  usecase "Inventory valuation and procurement" as ERP5
+  usecase "Reports and exports" as ERP6
+}
+
+rectangle "System Administration" {
+  usecase "Tenant and identity verification" as ADM1
+  usecase "Security and audit operations" as ADM2
+  usecase "Integrations and credentials" as ADM3
+  usecase "Terminology and dynamic enums" as ADM4
+  usecase "Context, automation and workers" as ADM5
+  usecase "Platform health and releases" as ADM6
+}
+
+rectangle "Education" {
+  usecase "Course and content administration" as EDU1
+  usecase "Enrollment and learning path" as EDU2
+  usecase "Assessment, certificate and CME" as EDU3
+}
+
+rectangle "CRM / Marketing" {
+  usecase "Accounts, contacts and pipeline" as GRO1
+  usecase "Segments, campaigns and journeys" as GRO2
+  usecase "Attribution, promotions and loyalty" as GRO3
+}
+
+Visitor --> PUB1
+Visitor --> PUB2
+Visitor --> PUB3
+Patient --> PAT1
+Patient --> PAT2
+Patient --> PAT3
+Patient --> PAT4
+Patient --> PAT5
+Patient --> PAT6
+Patient --> PAT7
+Doctor --> DOC1
+Doctor --> DOC2
+Doctor --> DOC3
+Doctor --> DOC4
+Doctor --> DOC5
+Doctor --> DOC6
+Doctor --> DOC7
+InfraAdmin --> INF1
+InfraAdmin --> INF3
+InfraAdmin --> INF4
+InfraAdmin --> INF5
+HospitalAdmin --> INF1
+HospitalAdmin --> INF2
+HospitalAdmin --> INF3
+DiagAdmin --> DIA1
+DiagAdmin --> DIA2
+DiagAdmin --> DIA3
+DiagAdmin --> DIA4
+DiagAdmin --> DIA5
+PharmacyAdmin --> PHA1
+PharmacyAdmin --> PHA2
+PharmacyAdmin --> PHA3
+PharmacyAdmin --> PHA4
+PharmacyAdmin --> PHA5
+InsurerAdmin --> INS1
+InsurerAdmin --> INS2
+InsurerAdmin --> INS3
+InsurerAdmin --> INS4
+InsurerAdmin --> INS5
+Broker --> BRO1
+Broker --> BRO2
+Broker --> BRO3
+Broker --> BRO4
+ERPUser --> ERP1
+ERPUser --> ERP2
+ERPUser --> ERP3
+ERPUser --> ERP4
+ERPUser --> ERP5
+ERPUser --> ERP6
+SysAdmin --> ADM1
+SysAdmin --> ADM2
+SysAdmin --> ADM3
+SysAdmin --> ADM4
+SysAdmin --> ADM5
+SysAdmin --> ADM6
+EducationUser --> EDU1
+EducationUser --> EDU2
+EducationUser --> EDU3
+GrowthUser --> GRO1
+GrowthUser --> GRO2
+GrowthUser --> GRO3
+
+
+rectangle "Cloud / System Operations" {
+  usecase "Service health, SLO and error budget" as OPS1
+  usecase "Incident command and communications" as OPS2
+  usecase "Change calendar and readiness reviews" as OPS3
+  usecase "Runbooks, resilience and capacity" as OPS4
+}
+
+rectangle "Advertising Operations" {
+  usecase "Campaign delivery and insights" as ADS1
+  usecase "Conversion quality and deduplication" as ADS2
+  usecase "Lead inbox and CRM delivery" as ADS3
+  usecase "Policy review and health-data firewall" as ADS4
+}
+
+rectangle "Payment Gateway Operations" {
+  usecase "Debt registration and checkout" as PAY1
+  usecase "Callback and status verification" as PAY2
+  usecase "Receipts, invoices and cancellation" as PAY3
+  usecase "Provider reconciliation" as PAY4
+}
+
+rectangle "Health Data Center" {
+  usecase "Source ingestion and FHIR validation" as HDC1
+  usecase "Patient identity resolution" as HDC2
+  usecase "Longitudinal clinical record" as HDC3
+  usecase "Quality, provenance and lineage" as HDC4
+  usecase "Controlled export and de-identification" as HDC5
+}
+
+rectangle "Interventions and Operating Room" {
+  usecase "Procedure case and OR schedule" as SUR1
+  usecase "Preoperative clearance and safety checklist" as SUR2
+  usecase "Anesthesia and operative record" as SUR3
+  usecase "Implants, specimens and complications" as SUR4
+  usecase "Recovery, follow-up and outcomes" as SUR5
+}
+
+SysAdmin --> OPS1
+SysAdmin --> OPS2
+SysAdmin --> OPS3
+SysAdmin --> OPS4
+GrowthUser --> ADS1
+GrowthUser --> ADS2
+GrowthUser --> ADS3
+GrowthUser --> ADS4
+ERPUser --> PAY1
+ERPUser --> PAY2
+ERPUser --> PAY3
+ERPUser --> PAY4
+SysAdmin --> HDC1
+SysAdmin --> HDC2
+SysAdmin --> HDC4
+Doctor --> HDC3
+Patient --> HDC3
+HospitalAdmin --> SUR1
+Doctor --> SUR2
+Doctor --> SUR3
+Doctor --> SUR4
+Doctor --> SUR5
+
+rectangle "Required UX states for every protected route" as STATES {
+  usecase "Route authorization pending" as S1
+  usecase "Loading / skeleton" as S2
+  usecase "Empty with next action" as S3
+  usecase "Validation or conflict" as S4
+  usecase "Forbidden / purpose denied" as S5
+  usecase "Not found without data leakage" as S6
+  usecase "Stale data / refresh" as S7
+  usecase "Offline / retry" as S8
+  usecase "Unexpected error + request ID" as S9
+}
+
+PAT1 ..> STATES
+DOC1 ..> STATES
+INF1 ..> STATES
+DIA1 ..> STATES
+PHA1 ..> STATES
+INS1 ..> STATES
+ERP1 ..> STATES
+ADM1 ..> STATES
+SUR1 ..> STATES
+HDC1 ..> STATES
+PAY1 ..> STATES
+ADS1 ..> STATES
+OPS1 ..> STATES
+
+note bottom
+  FRONTEND RULES
+  - Portal names are product surfaces, never blanket database roles.
+  - Every route binds to permission, tenant/patient scope, purpose of use and field mask.
+  - Protected routes resolve authentication and role context before requesting sensitive data.
+  - URL state is used for shareable filters; server state is not duplicated in global stores.
+  - Lists use specialized picking/projection endpoints and cursor pagination.
+  - Destructive actions require explicit confirmation, idempotency and conflict handling.
+  - Responsive designs preserve task priority; mobile never hides required safety information.
+  - Accessibility, keyboard operation, focus restoration and reduced motion are mandatory.
+end note
+
+note as INDEX_SCOPE
+  INDEX SCOPE
+  This module is architectural/use-case/deployment documentation and has no
+  owned relational tables. Physical indexes are declared in the owning data modules.
+end note
+
+@enduml

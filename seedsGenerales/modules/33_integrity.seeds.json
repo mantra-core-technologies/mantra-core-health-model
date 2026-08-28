@@ -1,0 +1,281 @@
+{
+  "$schema": "../schemas/module-seed.schema.json",
+  "module": {
+    "number": 33,
+    "code": "integrity",
+    "title": "Concurrency, Constraints and Integrity Matrix",
+    "source_file": "modules/diagram_33_integrity.puml",
+    "source_sha256": "48ba1d341bcf54e26b31c1e3ec9f6cf00a20d12ec9eb9814be03b445915f7b9f",
+    "source_model_version": "4.0.9",
+    "requested_release_label": "4.0.9",
+    "business_purpose": "Datos de arranque y escenarios sintéticos profundos para Concurrency, Constraints and Integrity Matrix.",
+    "seed_revision": "2.5.0-v4.1.4"
+  },
+  "environment_policy": {
+    "boot": {
+      "allowed_environments": [
+        "production",
+        "development",
+        "test",
+        "staging"
+      ],
+      "execution_order": 1,
+      "idempotency": "upsert_by_stable_natural_key_or_deterministic_uuid",
+      "contains_credentials": false,
+      "contains_real_personal_data": false
+    },
+    "mock": {
+      "allowed_environments": [
+        "development",
+        "test",
+        "qa",
+        "staging"
+      ],
+      "blocked_environments": [
+        "production"
+      ],
+      "execution_order": 2,
+      "hard_fail_when_node_env_production": true,
+      "synthetic_data_domain": "example.invalid",
+      "contains_real_personal_data": false
+    }
+  },
+  "boot": {
+    "load_order": [],
+    "record_count": 0,
+    "records": {
+      "inventory_stock_positions": [],
+      "inventory_ledger_entries": [],
+      "inventory_reservations": [],
+      "diagnostic_study_prices": [],
+      "patient_coverages": [],
+      "claim_adjudication_versions": [],
+      "identity_verification_attempts": [],
+      "user_activity_events": [],
+      "practitioner_delegate_assignments": [],
+      "appointments": [],
+      "claim_appeal_decisions": [],
+      "claim_reversals": [],
+      "coordination_of_benefits": []
+    },
+    "entity_seed_policies": [
+      {
+        "entity": "inventory_stock_positions",
+        "stereotype": "REFERENCE_ONLY",
+        "boot_seeded": false,
+        "mock_seeded": false,
+        "rationale": "REFERENCE_ONLY: pertenece a otro módulo y no se inserta desde este archivo.",
+        "required_fields": [],
+        "unique_fields": [],
+        "primary_key_fields": []
+      },
+      {
+        "entity": "inventory_ledger_entries",
+        "stereotype": "IMMUTABLE, REFERENCE_ONLY",
+        "boot_seeded": false,
+        "mock_seeded": false,
+        "rationale": "REFERENCE_ONLY: pertenece a otro módulo y no se inserta desde este archivo.",
+        "required_fields": [],
+        "unique_fields": [],
+        "primary_key_fields": []
+      },
+      {
+        "entity": "inventory_reservations",
+        "stereotype": "REFERENCE_ONLY",
+        "boot_seeded": false,
+        "mock_seeded": false,
+        "rationale": "REFERENCE_ONLY: pertenece a otro módulo y no se inserta desde este archivo.",
+        "required_fields": [],
+        "unique_fields": [],
+        "primary_key_fields": []
+      },
+      {
+        "entity": "diagnostic_study_prices",
+        "stereotype": "VERSIONED, REFERENCE_ONLY",
+        "boot_seeded": false,
+        "mock_seeded": false,
+        "rationale": "REFERENCE_ONLY: pertenece a otro módulo y no se inserta desde este archivo.",
+        "required_fields": [],
+        "unique_fields": [],
+        "primary_key_fields": []
+      },
+      {
+        "entity": "patient_coverages",
+        "stereotype": "REFERENCE_ONLY",
+        "boot_seeded": false,
+        "mock_seeded": false,
+        "rationale": "REFERENCE_ONLY: pertenece a otro módulo y no se inserta desde este archivo.",
+        "required_fields": [],
+        "unique_fields": [],
+        "primary_key_fields": []
+      },
+      {
+        "entity": "claim_adjudication_versions",
+        "stereotype": "IMMUTABLE, REFERENCE_ONLY",
+        "boot_seeded": false,
+        "mock_seeded": false,
+        "rationale": "REFERENCE_ONLY: pertenece a otro módulo y no se inserta desde este archivo.",
+        "required_fields": [],
+        "unique_fields": [],
+        "primary_key_fields": []
+      },
+      {
+        "entity": "identity_verification_attempts",
+        "stereotype": "REFERENCE_ONLY",
+        "boot_seeded": false,
+        "mock_seeded": false,
+        "rationale": "REFERENCE_ONLY: pertenece a otro módulo y no se inserta desde este archivo.",
+        "required_fields": [],
+        "unique_fields": [],
+        "primary_key_fields": []
+      },
+      {
+        "entity": "user_activity_events",
+        "stereotype": "APPEND_ONLY, REFERENCE_ONLY",
+        "boot_seeded": false,
+        "mock_seeded": false,
+        "rationale": "REFERENCE_ONLY: pertenece a otro módulo y no se inserta desde este archivo.",
+        "required_fields": [],
+        "unique_fields": [],
+        "primary_key_fields": []
+      },
+      {
+        "entity": "practitioner_delegate_assignments",
+        "stereotype": "REFERENCE_ONLY",
+        "boot_seeded": false,
+        "mock_seeded": false,
+        "rationale": "REFERENCE_ONLY: pertenece a otro módulo y no se inserta desde este archivo.",
+        "required_fields": [],
+        "unique_fields": [],
+        "primary_key_fields": []
+      },
+      {
+        "entity": "appointments",
+        "stereotype": "REFERENCE_ONLY",
+        "boot_seeded": false,
+        "mock_seeded": false,
+        "rationale": "REFERENCE_ONLY: pertenece a otro módulo y no se inserta desde este archivo.",
+        "required_fields": [],
+        "unique_fields": [],
+        "primary_key_fields": []
+      },
+      {
+        "entity": "claim_appeal_decisions",
+        "stereotype": "IMMUTABLE, REFERENCE_ONLY",
+        "boot_seeded": false,
+        "mock_seeded": false,
+        "rationale": "REFERENCE_ONLY: pertenece a otro módulo y no se inserta desde este archivo.",
+        "required_fields": [],
+        "unique_fields": [],
+        "primary_key_fields": []
+      },
+      {
+        "entity": "claim_reversals",
+        "stereotype": "IMMUTABLE, REFERENCE_ONLY",
+        "boot_seeded": false,
+        "mock_seeded": false,
+        "rationale": "REFERENCE_ONLY: pertenece a otro módulo y no se inserta desde este archivo.",
+        "required_fields": [],
+        "unique_fields": [],
+        "primary_key_fields": []
+      },
+      {
+        "entity": "coordination_of_benefits",
+        "stereotype": "VERSIONED, REFERENCE_ONLY",
+        "boot_seeded": false,
+        "mock_seeded": false,
+        "rationale": "REFERENCE_ONLY: pertenece a otro módulo y no se inserta desde este archivo.",
+        "required_fields": [],
+        "unique_fields": [],
+        "primary_key_fields": []
+      }
+    ],
+    "summary": {
+      "record_count": 0,
+      "entity_count": 0,
+      "populated_entity_count": 0,
+      "scenario_count": null,
+      "seed_revision": "2.0.0-enhanced"
+    },
+    "production_policy": {
+      "safe_for_production": true,
+      "contains_business_transactions": false,
+      "contains_real_personal_data": false,
+      "contains_embedded_secrets": false,
+      "upsert_required": true,
+      "stable_identity_required": true,
+      "empty_boot_is_intentional": true,
+      "empty_reason": "El módulo no posee catálogos o configuración global segura; sus registros nacen del onboarding, la operación clínica o transacciones reales."
+    }
+  },
+  "mock": {
+    "load_order": [],
+    "record_count": 0,
+    "records": {
+      "inventory_stock_positions": [],
+      "inventory_ledger_entries": [],
+      "inventory_reservations": [],
+      "diagnostic_study_prices": [],
+      "patient_coverages": [],
+      "claim_adjudication_versions": [],
+      "identity_verification_attempts": [],
+      "user_activity_events": [],
+      "practitioner_delegate_assignments": [],
+      "appointments": [],
+      "claim_appeal_decisions": [],
+      "claim_reversals": [],
+      "coordination_of_benefits": []
+    },
+    "summary": {
+      "record_count": 0,
+      "entity_count": 0,
+      "populated_entity_count": 0,
+      "scenario_count": 8,
+      "seed_revision": "2.0.0-enhanced"
+    },
+    "scenario_coverage": {
+      "happy_path": true,
+      "validation_error": true,
+      "permission_denied": true,
+      "idempotent_retry": true,
+      "reversal_or_cancellation": true,
+      "audit_trace": true,
+      "synthetic_only": true,
+      "production_hard_fail_required": true
+    }
+  },
+  "integrity_contract": {
+    "stable_ids": true,
+    "timestamps_are_deterministic": true,
+    "secrets_must_be_injected_externally": true,
+    "mock_must_fail_in_production": true,
+    "views_are_never_inserted": true,
+    "reference_only_entities_are_never_inserted_by_this_module": true
+  },
+  "quality_profile": {
+    "revision": "2.0.0-enhanced",
+    "strategy": "domain-aware deterministic catalogs plus connected synthetic scenarios",
+    "boot_scope": "catálogos, políticas, plantillas y configuración segura sin transacciones empresariales ficticias",
+    "mock_scope": "escenarios enlazados de éxito, error, borde, reversión, auditoría y recuperación",
+    "quality_gates": [
+      "UUID determinístico",
+      "idempotencia por clave estable",
+      "sin secretos",
+      "mock prohibido en producción",
+      "campos obligatorios presentes",
+      "FK resolubles",
+      "fechas coherentes",
+      "valores de dominio no genéricos"
+    ],
+    "scenario_catalog": [
+      "concurrencia optimista",
+      "unicidad de identidad",
+      "balance contable",
+      "idempotencia de pago",
+      "custodia clínica",
+      "retención legal",
+      "deduplicación de evento",
+      "consistencia de proyección"
+    ]
+  }
+}

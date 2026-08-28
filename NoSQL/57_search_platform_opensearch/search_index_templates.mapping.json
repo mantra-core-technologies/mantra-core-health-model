@@ -1,0 +1,33 @@
+{
+  "mappings": {
+    "properties": {
+      "template_code": {
+        "type": "keyword"
+      },
+      "index_pattern": {
+        "type": "keyword"
+      },
+      "version": {
+        "type": "integer"
+      },
+      "shard_count": {
+        "type": "integer"
+      },
+      "replica_count": {
+        "type": "integer"
+      },
+      "refresh_interval": {
+        "type": "keyword"
+      },
+      "lifecycle_policy": {
+        "type": "keyword"
+      },
+      "mappings": {
+        "type": "flat_object"
+      },
+      "settings": {
+        "type": "flat_object"
+      }
+    }
+  }
+}

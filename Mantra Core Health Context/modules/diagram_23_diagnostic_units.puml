@@ -1,0 +1,389 @@
+@startuml SALUD_Module_23_diagnostic_units
+title Module 23 — Diagnostic Units, Studies, Specialists and Prices\n(schema: diagnostic_units)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_23_diagnostic_units.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_23_diagnostic_units
+  BUSINESS PURPOSE
+  Gives a diagnostic unit a first-class identity, its own governance boundary,
+  professionals, specialties, study catalog, public profile and versioned prices.
+  Clinical results remain in diagnostics; this module describes the provider
+  and the services it offers to patients, doctors and insurers.
+end note
+
+entity diagnostic_units {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK,UK>>
+    practice_id : uuid <<FK>>
+    primary_practice_site_id : uuid <<FK>>
+  * code : varchar <<UK>>
+  * name : varchar
+  * diagnostic_unit_type_concept_id : uuid <<FK>>
+    ownership_type_concept_id : uuid <<FK>>
+    public_profile_id : uuid <<FK>>
+    accepts_external_orders : boolean
+    walk_in_available : boolean
+    home_collection_available : boolean
+  * verification_status_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity diagnostic_unit_sites {
+  * id : uuid <<PK>>
+  --
+  * diagnostic_unit_id : uuid <<FK>>
+  * practice_site_id : uuid <<FK>>
+  * site_role_concept_id : uuid <<FK>>
+    accession_prefix : varchar
+    sample_collection_available : boolean
+    imaging_available : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity diagnostic_unit_specialties {
+  * id : uuid <<PK>>
+  --
+  * diagnostic_unit_id : uuid <<FK>>
+  * specialty_concept_id : uuid <<FK>>
+    is_primary : boolean
+    verification_status_concept_id : uuid <<FK>>
+    valid_from : date
+    valid_to : date
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity diagnostic_unit_practitioner_assignments {
+  * id : uuid <<PK>>
+  --
+  * diagnostic_unit_id : uuid <<FK>>
+  * practitioner_role_assignment_id : uuid <<FK>>
+    diagnostic_unit_site_id : uuid <<FK>>
+    specialty_concept_id : uuid <<FK>>
+    assignment_role_concept_id : uuid <<FK>>
+    may_validate_results : boolean
+    may_sign_reports : boolean
+    valid_from : date
+    valid_to : date
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity diagnostic_study_offerings {
+  * id : uuid <<PK>>
+  --
+  * diagnostic_unit_id : uuid <<FK>>
+    diagnostic_unit_site_id : uuid <<FK>>
+  * study_code : varchar
+  * study_concept_id : uuid <<FK>>
+    modality_concept_id : uuid <<FK>>
+    body_site_concept_id : uuid <<FK>>
+    specimen_type_concept_id : uuid <<FK>>
+  * display_name : varchar
+    description : text
+    preparation_instructions : text
+    expected_duration_minutes : integer
+    expected_turnaround_minutes : integer
+    requires_medical_order : boolean
+    requires_prior_authorization : boolean
+    home_collection_eligible : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity diagnostic_study_components {
+  * id : uuid <<PK>>
+  --
+  * parent_offering_id : uuid <<FK>>
+  * component_offering_id : uuid <<FK>>
+  * component_role_concept_id : uuid <<FK>>
+    quantity : numeric
+    ordinal : integer
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+
+entity diagnostic_price_schedules {
+  * id : uuid <<PK>>
+  --
+  * diagnostic_unit_id : uuid <<FK>>
+    diagnostic_unit_site_id : uuid <<FK>>
+  * code : varchar
+  * price_schedule_type_concept_id : uuid <<FK>>
+    insurer_tenant_id : uuid <<FK>>
+    broker_tenant_id : uuid <<FK>>
+    currency_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+    public_visibility : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity diagnostic_study_prices <<VERSIONED>> {
+  * id : uuid <<PK>>
+  --
+  * price_schedule_id : uuid <<FK>>
+  * diagnostic_study_offering_id : uuid <<FK>>
+  * version_number : integer
+  * base_amount : numeric
+    patient_amount : numeric
+    insurer_amount : numeric
+    tax_amount : numeric
+    discount_factor : numeric
+    pricing_rule_json : jsonb
+  * effective_from : timestamptz
+    effective_to : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+entity diagnostic_equipment {
+  * id : uuid <<PK>>
+  --
+  * diagnostic_unit_site_id : uuid <<FK>>
+  * equipment_type_concept_id : uuid <<FK>>
+    manufacturer : varchar
+    model : varchar
+    serial_number : varchar
+    modality_concept_id : uuid <<FK>>
+    last_calibration_at : timestamptz
+    next_calibration_due_at : timestamptz
+  * operational_status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity diagnostic_unit_accreditations {
+  * id : uuid <<PK>>
+  --
+  * diagnostic_unit_id : uuid <<FK>>
+    diagnostic_unit_site_id : uuid <<FK>>
+  * accreditation_concept_id : uuid <<FK>>
+    accreditation_number : varchar
+    issuer_tenant_id : uuid <<FK>>
+    valid_from : date
+    valid_to : date
+    evidence_file_id : uuid <<FK>>
+  * verification_status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+diagnostic_units ||--o{ diagnostic_unit_sites
+diagnostic_units ||--o{ diagnostic_unit_specialties
+diagnostic_units ||--o{ diagnostic_unit_practitioner_assignments
+diagnostic_units ||--o{ diagnostic_study_offerings
+diagnostic_units ||--o{ diagnostic_price_schedules
+diagnostic_units ||--o{ diagnostic_unit_accreditations
+diagnostic_unit_sites ||--o{ diagnostic_equipment
+diagnostic_study_offerings ||--o{ diagnostic_study_components : parent
+diagnostic_price_schedules ||--o{ diagnostic_study_prices
+diagnostic_study_offerings ||--o{ diagnostic_study_prices
+
+note as PUBLIC_diagram_23_diagnostic_units
+  PUBLIC PATIENT PROFILE
+  The public projection includes verified identity, sites, specialties,
+  practitioners, studies, preparation, turnaround, current public prices,
+  accessibility, ratings and booking links. It excludes contracts, internal
+  cost, insurer rules, equipment serials, credentials and clinical PHI.
+end note
+
+note as PRICE_diagram_23_diagnostic_units
+  PRICE RULES
+  Prices are append-only versions with effective periods. A published amount
+  is never overwritten. Overlapping active prices for the same schedule and
+  offering are rejected by a database exclusion constraint.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · diagnostic_units" as idxset_diagnostic_units <<INDEX_SET>> {
+  PK pk_diagnostic_units : (id) UNIQUE BTREE
+  UK uq_diagnostic_units_tenant_id_code : (tenant_id, code) UNIQUE BTREE
+  IX ix_diagnostic_units_tenant_id : (tenant_id) BTREE
+  IX ix_diagnostic_units_practice_id : (practice_id) BTREE
+  IX ix_diagnostic_units_primary_practice_site_id : (primary_practice_site_id) BTREE
+  IX ix_diagnostic_units_diagnostic_unit_type_concept_id : (diagnostic_unit_type_concept_id) BTREE
+  IX ix_diagnostic_units_ownership_type_concept_id : (ownership_type_concept_id) BTREE
+  IX ix_diagnostic_units_public_profile_id : (public_profile_id) BTREE
+  IX ix_diagnostic_units_verification_status_concept_id : (verification_status_concept_id) BTREE
+  IX ix_diagnostic_units_status_concept_id : (status_concept_id) BTREE
+  IX ix_diagnostic_units_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_diagnostic_units_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_diagnostic_units_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  GIN gin_diagnostic_units_search : to_tsvector('simple', concat_ws(' ', name, code)) GIN
+}
+
+diagnostic_units .. idxset_diagnostic_units : indexed by
+
+entity "INDEXES · diagnostic_unit_sites" as idxset_diagnostic_unit_sites <<INDEX_SET>> {
+  PK pk_diagnostic_unit_sites : (id) UNIQUE BTREE
+  IX ix_diagnostic_unit_sites_diagnostic_unit_id : (diagnostic_unit_id) BTREE
+  IX ix_diagnostic_unit_sites_practice_site_id : (practice_site_id) BTREE
+  IX ix_diagnostic_unit_sites_site_role_concept_id : (site_role_concept_id) BTREE
+  IX ix_diagnostic_unit_sites_status_concept_id : (status_concept_id) BTREE
+  IX ix_diagnostic_unit_sites_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_diagnostic_unit_sites_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+diagnostic_unit_sites .. idxset_diagnostic_unit_sites : indexed by
+
+entity "INDEXES · diagnostic_unit_specialties" as idxset_diagnostic_unit_specialties <<INDEX_SET>> {
+  PK pk_diagnostic_unit_specialties : (id) UNIQUE BTREE
+  IX ix_diagnostic_unit_specialties_diagnostic_unit_id : (diagnostic_unit_id) BTREE
+  IX ix_diagnostic_unit_specialties_specialty_concept_id : (specialty_concept_id) BTREE
+  IX ix_diagnostic_unit_specialties_verification_status_concept_id : (verification_status_concept_id) BTREE
+  IX ix_diagnostic_unit_specialties_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_diagnostic_unit_specialties_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+diagnostic_unit_specialties .. idxset_diagnostic_unit_specialties : indexed by
+
+entity "INDEXES · diagnostic_unit_practitioner_assignments" as idxset_diagnostic_unit_practitioner_assignments <<INDEX_SET>> {
+  PK pk_diagnostic_unit_practitioner_assignments : (id) UNIQUE BTREE
+  IX ix_diagnostic_unit_practitioner_assignments_diagnostic_unit_id : (diagnostic_unit_id) BTREE
+  IX ix_diagnostic_unit_practitioner_assignments_practition_04f3585e : (practitioner_role_assignment_id) BTREE
+  IX ix_diagnostic_unit_practitioner_assignments_diagnostic_cf1d7558 : (diagnostic_unit_site_id) BTREE
+  IX ix_diagnostic_unit_practitioner_assignments_specialty__966d7ef4 : (specialty_concept_id) BTREE
+  IX ix_diagnostic_unit_practitioner_assignments_assignment_7bb2e764 : (assignment_role_concept_id) BTREE
+  IX ix_diagnostic_unit_practitioner_assignments_status_concept_id : (status_concept_id) BTREE
+  IX ix_diagnostic_unit_practitioner_assignments_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_diagnostic_unit_practitioner_assignments_updated_by_user_id : (updated_by_user_id) BTREE
+  GIST gist_diagnostic_unit_practitioner_assignments_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+}
+
+diagnostic_unit_practitioner_assignments .. idxset_diagnostic_unit_practitioner_assignments : indexed by
+
+entity "INDEXES · diagnostic_study_offerings" as idxset_diagnostic_study_offerings <<INDEX_SET>> {
+  PK pk_diagnostic_study_offerings : (id) UNIQUE BTREE
+  IX ix_diagnostic_study_offerings_diagnostic_unit_id : (diagnostic_unit_id) BTREE
+  IX ix_diagnostic_study_offerings_diagnostic_unit_site_id : (diagnostic_unit_site_id) BTREE
+  IX ix_diagnostic_study_offerings_study_concept_id : (study_concept_id) BTREE
+  IX ix_diagnostic_study_offerings_modality_concept_id : (modality_concept_id) BTREE
+  IX ix_diagnostic_study_offerings_body_site_concept_id : (body_site_concept_id) BTREE
+  IX ix_diagnostic_study_offerings_specimen_type_concept_id : (specimen_type_concept_id) BTREE
+  IX ix_diagnostic_study_offerings_status_concept_id : (status_concept_id) BTREE
+  IX ix_diagnostic_study_offerings_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_diagnostic_study_offerings_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_diagnostic_study_offerings_search : to_tsvector('simple', concat_ws(' ', display_name, description)) GIN
+}
+
+diagnostic_study_offerings .. idxset_diagnostic_study_offerings : indexed by
+
+entity "INDEXES · diagnostic_study_components" as idxset_diagnostic_study_components <<INDEX_SET>> {
+  PK pk_diagnostic_study_components : (id) UNIQUE BTREE
+  IX ix_diagnostic_study_components_parent_offering_id : (parent_offering_id) BTREE
+  IX ix_diagnostic_study_components_component_offering_id : (component_offering_id) BTREE
+  IX ix_diagnostic_study_components_component_role_concept_id : (component_role_concept_id) BTREE
+  IX ix_diagnostic_study_components_created_by_user_id : (created_by_user_id) BTREE
+}
+
+diagnostic_study_components .. idxset_diagnostic_study_components : indexed by
+
+entity "INDEXES · diagnostic_price_schedules" as idxset_diagnostic_price_schedules <<INDEX_SET>> {
+  PK pk_diagnostic_price_schedules : (id) UNIQUE BTREE
+  IX ix_diagnostic_price_schedules_diagnostic_unit_id : (diagnostic_unit_id) BTREE
+  IX ix_diagnostic_price_schedules_diagnostic_unit_site_id : (diagnostic_unit_site_id) BTREE
+  IX ix_diagnostic_price_schedules_price_schedule_type_concept_id : (price_schedule_type_concept_id) BTREE
+  IX ix_diagnostic_price_schedules_insurer_tenant_id : (insurer_tenant_id) BTREE
+  IX ix_diagnostic_price_schedules_broker_tenant_id : (broker_tenant_id) BTREE
+  IX ix_diagnostic_price_schedules_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_diagnostic_price_schedules_status_concept_id : (status_concept_id) BTREE
+  IX ix_diagnostic_price_schedules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_diagnostic_price_schedules_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_diagnostic_price_schedules_search : to_tsvector('simple', concat_ws(' ', code)) GIN
+  GIST gist_diagnostic_price_schedules_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+}
+
+diagnostic_price_schedules .. idxset_diagnostic_price_schedules : indexed by
+
+entity "INDEXES · diagnostic_study_prices" as idxset_diagnostic_study_prices <<INDEX_SET>> {
+  PK pk_diagnostic_study_prices : (id) UNIQUE BTREE
+  IX ix_diagnostic_study_prices_price_schedule_id : (price_schedule_id) BTREE
+  IX ix_diagnostic_study_prices_diagnostic_study_offering_id : (diagnostic_study_offering_id) BTREE
+  IX ix_diagnostic_study_prices_status_concept_id : (status_concept_id) BTREE
+  IX ix_diagnostic_study_prices_recorded_by_user_id : (recorded_by_user_id) BTREE
+  UK uq_diagnostic_study_prices_price_schedule_id_version_number : (price_schedule_id, version_number) UNIQUE BTREE
+}
+
+diagnostic_study_prices .. idxset_diagnostic_study_prices : indexed by
+
+entity "INDEXES · diagnostic_equipment" as idxset_diagnostic_equipment <<INDEX_SET>> {
+  PK pk_diagnostic_equipment : (id) UNIQUE BTREE
+  IX ix_diagnostic_equipment_diagnostic_unit_site_id : (diagnostic_unit_site_id) BTREE
+  IX ix_diagnostic_equipment_equipment_type_concept_id : (equipment_type_concept_id) BTREE
+  IX ix_diagnostic_equipment_modality_concept_id : (modality_concept_id) BTREE
+  IX ix_diagnostic_equipment_operational_status_concept_id : (operational_status_concept_id) BTREE
+  IX ix_diagnostic_equipment_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_diagnostic_equipment_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+diagnostic_equipment .. idxset_diagnostic_equipment : indexed by
+
+entity "INDEXES · diagnostic_unit_accreditations" as idxset_diagnostic_unit_accreditations <<INDEX_SET>> {
+  PK pk_diagnostic_unit_accreditations : (id) UNIQUE BTREE
+  IX ix_diagnostic_unit_accreditations_diagnostic_unit_id : (diagnostic_unit_id) BTREE
+  IX ix_diagnostic_unit_accreditations_diagnostic_unit_site_id : (diagnostic_unit_site_id) BTREE
+  IX ix_diagnostic_unit_accreditations_accreditation_concept_id : (accreditation_concept_id) BTREE
+  IX ix_diagnostic_unit_accreditations_issuer_tenant_id : (issuer_tenant_id) BTREE
+  IX ix_diagnostic_unit_accreditations_evidence_file_id : (evidence_file_id) BTREE
+  IX ix_diagnostic_unit_accreditations_verification_status__7e3d4f65 : (verification_status_concept_id) BTREE
+  IX ix_diagnostic_unit_accreditations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_diagnostic_unit_accreditations_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+diagnostic_unit_accreditations .. idxset_diagnostic_unit_accreditations : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

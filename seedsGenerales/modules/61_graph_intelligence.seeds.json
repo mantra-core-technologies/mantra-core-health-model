@@ -1,0 +1,4270 @@
+{
+  "$schema": "../schemas/module-seed.schema.json",
+  "module": {
+    "number": 61,
+    "code": "graph_intelligence",
+    "title": "Graph Projections for Relationships, Referrals and Risk",
+    "source_file": "modules/diagram_61_graph_intelligence.puml",
+    "source_sha256": "65bad3aab8fbf1405035bc8188ec76ac4f05dc7a22668e12ade779c030566864",
+    "source_model_version": "4.0.9",
+    "requested_release_label": "4.0.9",
+    "business_purpose": "Supports multi-hop relationship analysis for referrals, organizational networks, counterparties, fraud, delegated access and lineage. The graph is optional and derived. PostgreSQL remains canonical for identities, contracts, claims, payments and clinical records.",
+    "seed_revision": "2.5.0-v4.1.4"
+  },
+  "environment_policy": {
+    "boot": {
+      "allowed_environments": [
+        "production",
+        "development",
+        "test",
+        "staging"
+      ],
+      "execution_order": 1,
+      "idempotency": "upsert_by_stable_natural_key_or_deterministic_uuid",
+      "contains_credentials": false,
+      "contains_real_personal_data": false
+    },
+    "mock": {
+      "allowed_environments": [
+        "development",
+        "test",
+        "qa",
+        "staging"
+      ],
+      "blocked_environments": [
+        "production"
+      ],
+      "execution_order": 2,
+      "hard_fail_when_node_env_production": true,
+      "synthetic_data_domain": "example.invalid",
+      "contains_real_personal_data": false
+    }
+  },
+  "boot": {
+    "load_order": [
+      "graph_access_scopes",
+      "graph_projection_definitions",
+      "graph_rule_definitions"
+    ],
+    "record_count": 30,
+    "records": {
+      "directory_tenants": [],
+      "profiles_persons": [],
+      "profiles_patient_profiles": [],
+      "directory_organizations": [],
+      "erp_business_partners": [],
+      "graph_nodes": [],
+      "graph_node_identifiers": [],
+      "graph_edges": [],
+      "graph_edge_evidence": [],
+      "graph_access_scopes": [
+        {
+          "id": "f160a76f-9d1d-556f-a411-728d69c878dc",
+          "tenant_id": "8368b919-b77e-57c7-a5c2-55a69767c622",
+          "scope_code": "CORE",
+          "allowed_node_types": [
+            "CORE"
+          ],
+          "allowed_relationship_types": [
+            "CORE"
+          ],
+          "purpose_of_use_codes": [
+            "CORE"
+          ],
+          "max_hops": 1,
+          "requires_patient_context": true,
+          "state": "ACTIVE"
+        },
+        {
+          "id": "7c7873d1-ddeb-59e1-98bc-6921f7b49af3",
+          "tenant_id": "8368b919-b77e-57c7-a5c2-55a69767c622",
+          "scope_code": "STANDARD",
+          "allowed_node_types": [
+            "STANDARD"
+          ],
+          "allowed_relationship_types": [
+            "STANDARD"
+          ],
+          "purpose_of_use_codes": [
+            "STANDARD"
+          ],
+          "max_hops": 2,
+          "requires_patient_context": false,
+          "state": "ACTIVE"
+        },
+        {
+          "id": "281a2921-1f79-5aec-9c48-65734a6ff2e6",
+          "tenant_id": "38cea556-60d8-5cd6-bf04-fda1c3bd60e9",
+          "scope_code": "EXTENDED",
+          "allowed_node_types": [
+            "EXTENDED"
+          ],
+          "allowed_relationship_types": [
+            "EXTENDED"
+          ],
+          "purpose_of_use_codes": [
+            "EXTENDED"
+          ],
+          "max_hops": 3,
+          "requires_patient_context": true,
+          "state": "ACTIVE"
+        },
+        {
+          "id": "5177def0-1839-500b-a7db-47f3bbe1f0b6",
+          "tenant_id": "2685710f-a035-556e-b099-d05ef89ce61d",
+          "scope_code": "RESTRICTED",
+          "allowed_node_types": [
+            "RESTRICTED"
+          ],
+          "allowed_relationship_types": [
+            "RESTRICTED"
+          ],
+          "purpose_of_use_codes": [
+            "RESTRICTED"
+          ],
+          "max_hops": 4,
+          "requires_patient_context": false,
+          "state": "ACTIVE"
+        },
+        {
+          "id": "259697e7-ec8d-53c7-889f-248d0c5e89a0",
+          "tenant_id": "3d50fab1-fdc6-5a6d-85b9-b8246203296b",
+          "scope_code": "INTERNATIONAL",
+          "allowed_node_types": [
+            "INTERNATIONAL"
+          ],
+          "allowed_relationship_types": [
+            "INTERNATIONAL"
+          ],
+          "purpose_of_use_codes": [
+            "INTERNATIONAL"
+          ],
+          "max_hops": 5,
+          "requires_patient_context": true,
+          "state": "ACTIVE"
+        },
+        {
+          "id": "9179fb0a-8abd-5bae-98f6-e957f8136e63",
+          "tenant_id": "4cdc6fb2-d927-51c2-9853-6005dcee2222",
+          "scope_code": "DISABLED_TEMPLATE",
+          "allowed_node_types": [
+            "DISABLED_TEMPLATE"
+          ],
+          "allowed_relationship_types": [
+            "DISABLED_TEMPLATE"
+          ],
+          "purpose_of_use_codes": [
+            "DISABLED_TEMPLATE"
+          ],
+          "max_hops": 6,
+          "requires_patient_context": false,
+          "state": "ACTIVE"
+        },
+        {
+          "id": "1b9e096c-8be9-5988-a6cb-3a6d40ad55da",
+          "tenant_id": "b962a4cd-0836-514e-bb7e-4b9fbe9dfb16",
+          "scope_code": "GRAPH_ACCESS_SCOPES_07",
+          "allowed_node_types": [
+            "CORE"
+          ],
+          "allowed_relationship_types": [
+            "CORE"
+          ],
+          "purpose_of_use_codes": [
+            "CORE"
+          ],
+          "max_hops": 7,
+          "requires_patient_context": true,
+          "state": "ACTIVE"
+        },
+        {
+          "id": "43dcc741-e10d-5b60-a119-4fda7197b4ac",
+          "tenant_id": "2033cf59-4e74-54b6-91cd-4f62f8a06105",
+          "scope_code": "GRAPH_ACCESS_SCOPES_08",
+          "allowed_node_types": [
+            "STANDARD"
+          ],
+          "allowed_relationship_types": [
+            "STANDARD"
+          ],
+          "purpose_of_use_codes": [
+            "STANDARD"
+          ],
+          "max_hops": 8,
+          "requires_patient_context": false,
+          "state": "ACTIVE"
+        },
+        {
+          "id": "7b7d03dd-6b73-53ad-aea1-942ef4da42a0",
+          "tenant_id": "8368b919-b77e-57c7-a5c2-55a69767c622",
+          "scope_code": "CORE_008",
+          "allowed_node_types": [
+            "CORE"
+          ],
+          "allowed_relationship_types": [
+            "CORE"
+          ],
+          "purpose_of_use_codes": [
+            "CORE"
+          ],
+          "max_hops": 1,
+          "requires_patient_context": true,
+          "state": "rejected"
+        },
+        {
+          "id": "6f6805a6-002e-5e48-a772-1762989ffcf5",
+          "tenant_id": "8368b919-b77e-57c7-a5c2-55a69767c622",
+          "scope_code": "STANDARD_009",
+          "allowed_node_types": [
+            "STANDARD"
+          ],
+          "allowed_relationship_types": [
+            "STANDARD"
+          ],
+          "purpose_of_use_codes": [
+            "STANDARD"
+          ],
+          "max_hops": 2,
+          "requires_patient_context": false,
+          "state": "retrying"
+        }
+      ],
+      "graph_projection_definitions": [
+        {
+          "id": "67a93df3-adf0-55b4-bded-605e173cf25d",
+          "tenant_id": "8368b919-b77e-57c7-a5c2-55a69767c622",
+          "code": "CORE",
+          "source_dataset_codes": [
+            "CORE"
+          ],
+          "node_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 0,
+            "ref": "13d03531-f5fb-56b0-b47c-a9f26fa04a13",
+            "status": "active",
+            "amount": 120.0,
+            "currency": "BOB",
+            "occurred_at": "2026-04-06T06:09:00Z"
+          },
+          "edge_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 0,
+            "ref": "13d03531-f5fb-56b0-b47c-a9f26fa04a13",
+            "status": "active",
+            "amount": 120.0,
+            "currency": "BOB",
+            "occurred_at": "2026-04-06T06:09:00Z"
+          },
+          "projection_version": "1.0.0",
+          "state": "ACTIVE"
+        },
+        {
+          "id": "78f8bd36-9dbc-5ef3-8e8f-04917965116f",
+          "tenant_id": "8368b919-b77e-57c7-a5c2-55a69767c622",
+          "code": "STANDARD",
+          "source_dataset_codes": [
+            "STANDARD"
+          ],
+          "node_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 1,
+            "ref": "0bf995cd-aeff-5428-af48-ed52bacb7da5",
+            "status": "pending",
+            "amount": 257.25,
+            "currency": "BOB",
+            "occurred_at": "2026-11-17T19:26:00Z"
+          },
+          "edge_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 1,
+            "ref": "0bf995cd-aeff-5428-af48-ed52bacb7da5",
+            "status": "pending",
+            "amount": 257.25,
+            "currency": "BOB",
+            "occurred_at": "2026-11-17T19:26:00Z"
+          },
+          "projection_version": "1.0.0",
+          "state": "ACTIVE"
+        },
+        {
+          "id": "5e9a2cad-6ec2-5e51-bd06-4224829abcc9",
+          "tenant_id": "38cea556-60d8-5cd6-bf04-fda1c3bd60e9",
+          "code": "EXTENDED",
+          "source_dataset_codes": [
+            "EXTENDED"
+          ],
+          "node_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 2,
+            "ref": "c9fbfdb2-d161-5ffe-9e40-0e49e2e48a95",
+            "status": "in_progress",
+            "amount": 394.5,
+            "currency": "BOB",
+            "occurred_at": "2026-06-01T08:43:00Z"
+          },
+          "edge_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 2,
+            "ref": "c9fbfdb2-d161-5ffe-9e40-0e49e2e48a95",
+            "status": "in_progress",
+            "amount": 394.5,
+            "currency": "BOB",
+            "occurred_at": "2026-06-01T08:43:00Z"
+          },
+          "projection_version": "1.0.0",
+          "state": "ACTIVE"
+        },
+        {
+          "id": "a9b1de8d-2b6c-5c9e-86b3-30e1d19817b3",
+          "tenant_id": "2685710f-a035-556e-b099-d05ef89ce61d",
+          "code": "RESTRICTED",
+          "source_dataset_codes": [
+            "RESTRICTED"
+          ],
+          "node_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 3,
+            "ref": "dee9254f-566d-526d-930a-8a286a833a19",
+            "status": "completed",
+            "amount": 531.75,
+            "currency": "BOB",
+            "occurred_at": "2026-01-12T21:00:00Z"
+          },
+          "edge_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 3,
+            "ref": "dee9254f-566d-526d-930a-8a286a833a19",
+            "status": "completed",
+            "amount": 531.75,
+            "currency": "BOB",
+            "occurred_at": "2026-01-12T21:00:00Z"
+          },
+          "projection_version": "1.0.0",
+          "state": "ACTIVE"
+        },
+        {
+          "id": "dc82b60d-0cd0-5471-8317-29bb2133dda0",
+          "tenant_id": "3d50fab1-fdc6-5a6d-85b9-b8246203296b",
+          "code": "INTERNATIONAL",
+          "source_dataset_codes": [
+            "INTERNATIONAL"
+          ],
+          "node_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 4,
+            "ref": "c8473a96-dc8e-55dc-a606-d0853658ddf4",
+            "status": "failed",
+            "amount": 668.0,
+            "currency": "BOB",
+            "occurred_at": "2026-08-23T10:17:00Z"
+          },
+          "edge_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 4,
+            "ref": "c8473a96-dc8e-55dc-a606-d0853658ddf4",
+            "status": "failed",
+            "amount": 668.0,
+            "currency": "BOB",
+            "occurred_at": "2026-08-23T10:17:00Z"
+          },
+          "projection_version": "1.0.0",
+          "state": "ACTIVE"
+        },
+        {
+          "id": "8d2565e2-9603-5da5-80f1-caf575f91a04",
+          "tenant_id": "4cdc6fb2-d927-51c2-9853-6005dcee2222",
+          "code": "DISABLED_TEMPLATE",
+          "source_dataset_codes": [
+            "DISABLED_TEMPLATE"
+          ],
+          "node_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 5,
+            "ref": "874451ec-6bde-5ec1-96e1-bb8a176863c5",
+            "status": "cancelled",
+            "amount": 805.25,
+            "currency": "BOB",
+            "occurred_at": "2026-03-07T23:34:00Z"
+          },
+          "edge_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 5,
+            "ref": "874451ec-6bde-5ec1-96e1-bb8a176863c5",
+            "status": "cancelled",
+            "amount": 805.25,
+            "currency": "BOB",
+            "occurred_at": "2026-03-07T23:34:00Z"
+          },
+          "projection_version": "1.0.0",
+          "state": "ACTIVE"
+        },
+        {
+          "id": "117f15c3-f2cb-5e37-b72a-c41334b902ec",
+          "tenant_id": "b962a4cd-0836-514e-bb7e-4b9fbe9dfb16",
+          "code": "GRAPH_PROJECTION_DEFINITIONS_07",
+          "source_dataset_codes": [
+            "CORE"
+          ],
+          "node_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 6,
+            "ref": "7c8a06b6-2256-5fac-b32d-8c64fd439c8d",
+            "status": "on_hold",
+            "amount": 942.5,
+            "currency": "BOB",
+            "occurred_at": "2026-10-18T12:51:00Z"
+          },
+          "edge_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 6,
+            "ref": "7c8a06b6-2256-5fac-b32d-8c64fd439c8d",
+            "status": "on_hold",
+            "amount": 942.5,
+            "currency": "BOB",
+            "occurred_at": "2026-10-18T12:51:00Z"
+          },
+          "projection_version": "1.0.0",
+          "state": "ACTIVE"
+        },
+        {
+          "id": "0e0de533-798d-567e-9c44-fc2fb1adbea0",
+          "tenant_id": "2033cf59-4e74-54b6-91cd-4f62f8a06105",
+          "code": "GRAPH_PROJECTION_DEFINITIONS_08",
+          "source_dataset_codes": [
+            "STANDARD"
+          ],
+          "node_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 7,
+            "ref": "6e51f233-bf38-5e62-9917-4421127c3f9f",
+            "status": "approved",
+            "amount": 179.75,
+            "currency": "BOB",
+            "occurred_at": "2026-05-02T01:08:00Z"
+          },
+          "edge_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 7,
+            "ref": "6e51f233-bf38-5e62-9917-4421127c3f9f",
+            "status": "approved",
+            "amount": 179.75,
+            "currency": "BOB",
+            "occurred_at": "2026-05-02T01:08:00Z"
+          },
+          "projection_version": "1.0.0",
+          "state": "ACTIVE"
+        },
+        {
+          "id": "b30e9555-3eb4-5b48-bfed-3b0867daabd5",
+          "tenant_id": "8368b919-b77e-57c7-a5c2-55a69767c622",
+          "code": "CORE_008",
+          "source_dataset_codes": [
+            "CORE"
+          ],
+          "node_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 8,
+            "ref": "8f3dee43-7014-5e0d-acae-7cffa6b4e00a",
+            "status": "rejected",
+            "amount": 316.0,
+            "currency": "BOB",
+            "occurred_at": "2026-12-13T14:25:00Z"
+          },
+          "edge_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 8,
+            "ref": "8f3dee43-7014-5e0d-acae-7cffa6b4e00a",
+            "status": "rejected",
+            "amount": 316.0,
+            "currency": "BOB",
+            "occurred_at": "2026-12-13T14:25:00Z"
+          },
+          "projection_version": "1.0.0",
+          "state": "rejected"
+        },
+        {
+          "id": "7e044ec5-3e4e-5213-9326-8c45650305a6",
+          "tenant_id": "8368b919-b77e-57c7-a5c2-55a69767c622",
+          "code": "STANDARD_009",
+          "source_dataset_codes": [
+            "STANDARD"
+          ],
+          "node_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 9,
+            "ref": "e66c7e49-1132-50bc-b0e3-e6147d5a8044",
+            "status": "retrying",
+            "amount": 453.25,
+            "currency": "BOB",
+            "occurred_at": "2026-07-24T03:42:00Z"
+          },
+          "edge_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 9,
+            "ref": "e66c7e49-1132-50bc-b0e3-e6147d5a8044",
+            "status": "retrying",
+            "amount": 453.25,
+            "currency": "BOB",
+            "occurred_at": "2026-07-24T03:42:00Z"
+          },
+          "projection_version": "1.0.0",
+          "state": "retrying"
+        }
+      ],
+      "graph_projection_runs": [],
+      "graph_risk_scores": [],
+      "graph_path_cache": [],
+      "graph_communities": [],
+      "graph_rule_definitions": [
+        {
+          "id": "c7871934-8c22-5e3c-9481-b7dde257fdc1",
+          "tenant_id": "8368b919-b77e-57c7-a5c2-55a69767c622",
+          "code": "CORE",
+          "rule_type": "core_rule_type",
+          "traversal_expression": "core_traversal_expression",
+          "severity": "MEDIUM",
+          "state": "ACTIVE",
+          "version": "1.0.0"
+        },
+        {
+          "id": "0bc3a67b-1bea-5b5a-999f-7b072e621a4e",
+          "tenant_id": "8368b919-b77e-57c7-a5c2-55a69767c622",
+          "code": "STANDARD",
+          "rule_type": "standard_rule_type",
+          "traversal_expression": "standard_traversal_expression",
+          "severity": "MEDIUM",
+          "state": "ACTIVE",
+          "version": "1.0.1"
+        },
+        {
+          "id": "bd61ece0-7709-52af-98d4-931dade7cef4",
+          "tenant_id": "38cea556-60d8-5cd6-bf04-fda1c3bd60e9",
+          "code": "EXTENDED",
+          "rule_type": "extended_rule_type",
+          "traversal_expression": "extended_traversal_expression",
+          "severity": "MEDIUM",
+          "state": "ACTIVE",
+          "version": "1.0.2"
+        },
+        {
+          "id": "01d39a8a-3480-5c60-a6e2-f4f397b43680",
+          "tenant_id": "2685710f-a035-556e-b099-d05ef89ce61d",
+          "code": "RESTRICTED",
+          "rule_type": "restricted_rule_type",
+          "traversal_expression": "restricted_traversal_expression",
+          "severity": "MEDIUM",
+          "state": "ACTIVE",
+          "version": "1.0.3"
+        },
+        {
+          "id": "524d4320-7a38-518b-8f89-18bed6bb3cfd",
+          "tenant_id": "3d50fab1-fdc6-5a6d-85b9-b8246203296b",
+          "code": "INTERNATIONAL",
+          "rule_type": "international_rule_type",
+          "traversal_expression": "international_traversal_expression",
+          "severity": "MEDIUM",
+          "state": "ACTIVE",
+          "version": "1.0.4"
+        },
+        {
+          "id": "e46f979a-3022-545c-8452-f943744ff731",
+          "tenant_id": "4cdc6fb2-d927-51c2-9853-6005dcee2222",
+          "code": "DISABLED_TEMPLATE",
+          "rule_type": "disabled_template_rule_type",
+          "traversal_expression": "disabled_template_traversal_expression",
+          "severity": "MEDIUM",
+          "state": "ACTIVE",
+          "version": "1.0.5"
+        },
+        {
+          "id": "c518842b-eabd-5b4a-ae3f-f07e8f050af0",
+          "tenant_id": "b962a4cd-0836-514e-bb7e-4b9fbe9dfb16",
+          "code": "GRAPH_RULE_DEFINITIONS_07",
+          "rule_type": "core_rule_type",
+          "traversal_expression": "core_traversal_expression",
+          "severity": "MEDIUM",
+          "state": "ACTIVE",
+          "version": "1.0.6"
+        },
+        {
+          "id": "39e9bc01-05e5-5721-aaba-cdca22bf71db",
+          "tenant_id": "2033cf59-4e74-54b6-91cd-4f62f8a06105",
+          "code": "GRAPH_RULE_DEFINITIONS_08",
+          "rule_type": "standard_rule_type",
+          "traversal_expression": "standard_traversal_expression",
+          "severity": "MEDIUM",
+          "state": "ACTIVE",
+          "version": "1.0.7"
+        },
+        {
+          "id": "13400f04-6450-51f5-8449-4e32abe493c4",
+          "tenant_id": "8368b919-b77e-57c7-a5c2-55a69767c622",
+          "code": "CORE_008",
+          "rule_type": "core_rule_type",
+          "traversal_expression": "core_traversal_expression",
+          "severity": "MEDIUM",
+          "state": "rejected",
+          "version": "1.0.0"
+        },
+        {
+          "id": "8526064c-1061-54a9-8d6b-0d4bd775aefd",
+          "tenant_id": "8368b919-b77e-57c7-a5c2-55a69767c622",
+          "code": "STANDARD_009",
+          "rule_type": "standard_rule_type",
+          "traversal_expression": "standard_traversal_expression",
+          "severity": "MEDIUM",
+          "state": "retrying",
+          "version": "1.0.1"
+        }
+      ],
+      "graph_rule_hits": [],
+      "graph_deletion_jobs": []
+    },
+    "entity_seed_policies": [
+      {
+        "entity": "directory_tenants",
+        "stereotype": "REFERENCE_ONLY",
+        "boot_seeded": false,
+        "mock_seeded": false,
+        "rationale": "REFERENCE_ONLY: pertenece a otro módulo y no se inserta desde este archivo.",
+        "required_fields": [
+          "id"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "profiles_persons",
+        "stereotype": "REFERENCE_ONLY",
+        "boot_seeded": false,
+        "mock_seeded": false,
+        "rationale": "REFERENCE_ONLY: pertenece a otro módulo y no se inserta desde este archivo.",
+        "required_fields": [
+          "id"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "profiles_patient_profiles",
+        "stereotype": "REFERENCE_ONLY",
+        "boot_seeded": false,
+        "mock_seeded": false,
+        "rationale": "REFERENCE_ONLY: pertenece a otro módulo y no se inserta desde este archivo.",
+        "required_fields": [
+          "id"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "directory_organizations",
+        "stereotype": "REFERENCE_ONLY",
+        "boot_seeded": false,
+        "mock_seeded": false,
+        "rationale": "REFERENCE_ONLY: pertenece a otro módulo y no se inserta desde este archivo.",
+        "required_fields": [
+          "id"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "erp_business_partners",
+        "stereotype": "REFERENCE_ONLY",
+        "boot_seeded": false,
+        "mock_seeded": false,
+        "rationale": "REFERENCE_ONLY: pertenece a otro módulo y no se inserta desde este archivo.",
+        "required_fields": [
+          "id"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "graph_nodes",
+        "stereotype": "GRAPH_COLLECTION",
+        "boot_seeded": false,
+        "mock_seeded": true,
+        "rationale": "Entidad transaccional o dependiente del tenant: no se inventan registros de producción.",
+        "required_fields": [
+          "node_id",
+          "tenant_id",
+          "node_type",
+          "source_entity_type",
+          "source_entity_id",
+          "source_version",
+          "display_label_redacted",
+          "properties",
+          "security_labels",
+          "lifecycle_state",
+          "updated_at"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "node_id"
+        ]
+      },
+      {
+        "entity": "graph_node_identifiers",
+        "stereotype": "GRAPH_COLLECTION",
+        "boot_seeded": false,
+        "mock_seeded": true,
+        "rationale": "Entidad transaccional o dependiente del tenant: no se inventan registros de producción.",
+        "required_fields": [
+          "id",
+          "node_id",
+          "identifier_system",
+          "identifier_value_hash",
+          "identifier_type",
+          "is_primary"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "graph_edges",
+        "stereotype": "GRAPH_COLLECTION",
+        "boot_seeded": false,
+        "mock_seeded": true,
+        "rationale": "Entidad transaccional o dependiente del tenant: no se inventan registros de producción.",
+        "required_fields": [
+          "edge_id",
+          "tenant_id",
+          "from_node_id",
+          "to_node_id",
+          "relationship_type",
+          "directionality",
+          "effective_from",
+          "confidence_score",
+          "source_entity_type",
+          "source_entity_id",
+          "properties",
+          "lifecycle_state"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "edge_id"
+        ]
+      },
+      {
+        "entity": "graph_edge_evidence",
+        "stereotype": "GRAPH_COLLECTION",
+        "boot_seeded": false,
+        "mock_seeded": true,
+        "rationale": "Entidad transaccional o dependiente del tenant: no se inventan registros de producción.",
+        "required_fields": [
+          "id",
+          "edge_id",
+          "evidence_type",
+          "source_reference",
+          "evidence_hash",
+          "observed_at",
+          "confidence_delta"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "graph_access_scopes",
+        "stereotype": "GRAPH_COLLECTION",
+        "boot_seeded": true,
+        "mock_seeded": true,
+        "rationale": "Catálogo/configuración mínima segura y determinística para prod y dev.",
+        "required_fields": [
+          "id",
+          "tenant_id",
+          "scope_code",
+          "allowed_node_types",
+          "allowed_relationship_types",
+          "purpose_of_use_codes",
+          "max_hops",
+          "requires_patient_context",
+          "state"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "graph_projection_definitions",
+        "stereotype": "GRAPH_COLLECTION",
+        "boot_seeded": true,
+        "mock_seeded": true,
+        "rationale": "Catálogo/configuración mínima segura y determinística para prod y dev.",
+        "required_fields": [
+          "id",
+          "tenant_id",
+          "code",
+          "source_dataset_codes",
+          "node_mapping_rules",
+          "edge_mapping_rules",
+          "projection_version",
+          "state"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "graph_projection_runs",
+        "stereotype": "GRAPH_COLLECTION",
+        "boot_seeded": false,
+        "mock_seeded": true,
+        "rationale": "Entidad transaccional o dependiente del tenant: no se inventan registros de producción.",
+        "required_fields": [
+          "id",
+          "tenant_id",
+          "graph_projection_definition_id",
+          "status",
+          "source_checkpoint",
+          "nodes_written",
+          "edges_written",
+          "started_at",
+          "completed_at"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "graph_risk_scores",
+        "stereotype": "GRAPH_COLLECTION",
+        "boot_seeded": false,
+        "mock_seeded": true,
+        "rationale": "Entidad transaccional o dependiente del tenant: no se inventan registros de producción.",
+        "required_fields": [
+          "id",
+          "tenant_id",
+          "node_id",
+          "risk_type",
+          "score",
+          "model_version",
+          "explanation_redacted",
+          "calculated_at",
+          "expires_at"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "graph_path_cache",
+        "stereotype": "GRAPH_COLLECTION",
+        "boot_seeded": false,
+        "mock_seeded": true,
+        "rationale": "Entidad transaccional o dependiente del tenant: no se inventan registros de producción.",
+        "required_fields": [
+          "id",
+          "tenant_id",
+          "start_node_id",
+          "end_node_id",
+          "relationship_filter_hash",
+          "max_hops",
+          "path_nodes",
+          "path_edges",
+          "calculated_at",
+          "expires_at"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "graph_communities",
+        "stereotype": "GRAPH_COLLECTION",
+        "boot_seeded": false,
+        "mock_seeded": true,
+        "rationale": "Entidad transaccional o dependiente del tenant: no se inventan registros de producción.",
+        "required_fields": [
+          "id",
+          "tenant_id",
+          "community_type",
+          "algorithm_version",
+          "member_node_ids",
+          "score",
+          "calculated_at"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "graph_rule_definitions",
+        "stereotype": "GRAPH_COLLECTION",
+        "boot_seeded": true,
+        "mock_seeded": true,
+        "rationale": "Catálogo/configuración mínima segura y determinística para prod y dev.",
+        "required_fields": [
+          "id",
+          "tenant_id",
+          "code",
+          "rule_type",
+          "traversal_expression",
+          "severity",
+          "state",
+          "version"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "graph_rule_hits",
+        "stereotype": "GRAPH_COLLECTION",
+        "boot_seeded": false,
+        "mock_seeded": true,
+        "rationale": "Entidad transaccional o dependiente del tenant: no se inventan registros de producción.",
+        "required_fields": [
+          "id",
+          "tenant_id",
+          "graph_rule_definition_id",
+          "primary_node_id",
+          "related_node_ids",
+          "evidence_edge_ids",
+          "status",
+          "detected_at",
+          "resolved_at"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "graph_deletion_jobs",
+        "stereotype": "GRAPH_COLLECTION",
+        "boot_seeded": false,
+        "mock_seeded": true,
+        "rationale": "Entidad transaccional o dependiente del tenant: no se inventan registros de producción.",
+        "required_fields": [
+          "id",
+          "tenant_id",
+          "source_entity_type",
+          "source_entity_id",
+          "status",
+          "nodes_deleted",
+          "edges_deleted",
+          "requested_at",
+          "verified_at"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      }
+    ],
+    "summary": {
+      "record_count": 30,
+      "entity_count": 3,
+      "populated_entity_count": 3,
+      "scenario_count": null,
+      "seed_revision": "2.0.0-enhanced"
+    },
+    "production_policy": {
+      "safe_for_production": true,
+      "contains_business_transactions": false,
+      "contains_real_personal_data": false,
+      "contains_embedded_secrets": false,
+      "upsert_required": true,
+      "stable_identity_required": true,
+      "empty_boot_is_intentional": false,
+      "empty_reason": null
+    }
+  },
+  "mock": {
+    "load_order": [
+      "graph_nodes",
+      "graph_node_identifiers",
+      "graph_edges",
+      "graph_edge_evidence",
+      "graph_access_scopes",
+      "graph_projection_definitions",
+      "graph_projection_runs",
+      "graph_risk_scores",
+      "graph_path_cache",
+      "graph_communities",
+      "graph_rule_definitions",
+      "graph_rule_hits",
+      "graph_deletion_jobs"
+    ],
+    "record_count": 208,
+    "records": {
+      "directory_tenants": [],
+      "profiles_persons": [],
+      "profiles_patient_profiles": [],
+      "directory_organizations": [],
+      "erp_business_partners": [],
+      "graph_nodes": [
+        {
+          "node_id": "d6a46ece-38b3-5453-88ba-f7ead31b9c0d",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "node_type": "GRAPH_NODES_01",
+          "source_entity_type": "GRAPH_NODES_01",
+          "source_entity_id": "be66b54c-811e-5824-bb1d-4ca15a33be41",
+          "source_version": 1,
+          "display_label_redacted": "Graph nodes — relación paciente-profesional 01",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_nodes",
+            "seq": 0,
+            "ref": "d6be4523-17e6-5ad0-acb0-87f09882457e",
+            "status": "active",
+            "amount": 120.0,
+            "currency": "BOB",
+            "occurred_at": "2026-04-06T06:09:00Z"
+          },
+          "security_labels": [
+            "Graph nodes — relación paciente-profesional 01"
+          ],
+          "lifecycle_state": "ACTIVE",
+          "updated_at": "2026-09-03T08:25:00Z"
+        },
+        {
+          "node_id": "0c50ce2b-7d03-5374-98bc-db115552ff7b",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "node_type": "GRAPH_NODES_02",
+          "source_entity_type": "GRAPH_NODES_02",
+          "source_entity_id": "be66b54c-811e-5824-bb1d-4ca15a33be41",
+          "source_version": 1,
+          "display_label_redacted": "Graph nodes — red de organización 02",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_nodes",
+            "seq": 1,
+            "ref": "c8529fb2-4db9-5e03-93e7-2b2c9208ebae",
+            "status": "pending",
+            "amount": 257.25,
+            "currency": "BOB",
+            "occurred_at": "2026-11-17T19:26:00Z"
+          },
+          "security_labels": [
+            "Graph nodes — red de organización 02"
+          ],
+          "lifecycle_state": "DRAFT",
+          "updated_at": "2026-09-08T08:37:00Z"
+        },
+        {
+          "node_id": "66bbcb78-2aaa-5f56-af6d-3bb57c43eb52",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "node_type": "GRAPH_NODES_03",
+          "source_entity_type": "GRAPH_NODES_03",
+          "source_entity_id": "be66b54c-811e-5824-bb1d-4ca15a33be41",
+          "source_version": 3,
+          "display_label_redacted": "Graph nodes — beneficiario-aseguradora 03",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_nodes",
+            "seq": 2,
+            "ref": "af2e02c1-d9a9-5291-9e64-cf2e9c6d2d04",
+            "status": "in_progress",
+            "amount": 394.5,
+            "currency": "BOB",
+            "occurred_at": "2026-06-01T08:43:00Z"
+          },
+          "security_labels": [
+            "Graph nodes — beneficiario-aseguradora 03"
+          ],
+          "lifecycle_state": "ACTIVE",
+          "updated_at": "2026-09-13T08:49:00Z"
+        },
+        {
+          "node_id": "5db3c043-946c-56a6-ae3d-2d2ff3a1e2f5",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "node_type": "GRAPH_NODES_04",
+          "source_entity_type": "GRAPH_NODES_04",
+          "source_entity_id": "be66b54c-811e-5824-bb1d-4ca15a33be41",
+          "source_version": 4,
+          "display_label_redacted": "Graph nodes — proveedor-contrato 04",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_nodes",
+            "seq": 3,
+            "ref": "aa36901c-0956-541e-9b94-0109560184aa",
+            "status": "completed",
+            "amount": 531.75,
+            "currency": "BOB",
+            "occurred_at": "2026-01-12T21:00:00Z"
+          },
+          "security_labels": [
+            "Graph nodes — proveedor-contrato 04"
+          ],
+          "lifecycle_state": "DRAFT",
+          "updated_at": "2026-09-18T09:01:00Z"
+        },
+        {
+          "node_id": "646ddb0e-a2dd-5fb2-b94f-2770b42acaa7",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "node_type": "GRAPH_NODES_05",
+          "source_entity_type": "GRAPH_NODES_05",
+          "source_entity_id": "be66b54c-811e-5824-bb1d-4ca15a33be41",
+          "source_version": 5,
+          "display_label_redacted": "Graph nodes — riesgo de fraude 05",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_nodes",
+            "seq": 4,
+            "ref": "7b02c6d7-b25e-593e-9fca-0666dcf674fb",
+            "status": "failed",
+            "amount": 668.0,
+            "currency": "BOB",
+            "occurred_at": "2026-08-23T10:17:00Z"
+          },
+          "security_labels": [
+            "Graph nodes — riesgo de fraude 05"
+          ],
+          "lifecycle_state": "ACTIVE",
+          "updated_at": "2026-09-23T09:13:00Z"
+        },
+        {
+          "node_id": "7f07cd55-e5c5-58fc-814d-3b17aa5426f1",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "node_type": "GRAPH_NODES_06",
+          "source_entity_type": "GRAPH_NODES_06",
+          "source_entity_id": "be66b54c-811e-5824-bb1d-4ca15a33be41",
+          "source_version": 6,
+          "display_label_redacted": "Graph nodes — ruta de acceso 06",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_nodes",
+            "seq": 5,
+            "ref": "a98ba63d-fba0-5844-99bb-00ed0138a324",
+            "status": "cancelled",
+            "amount": 805.25,
+            "currency": "BOB",
+            "occurred_at": "2026-03-07T23:34:00Z"
+          },
+          "security_labels": [
+            "Graph nodes — ruta de acceso 06"
+          ],
+          "lifecycle_state": "DRAFT",
+          "updated_at": "2026-09-28T09:25:00Z"
+        },
+        {
+          "node_id": "4cc23ef9-6115-5ded-9bb2-d5ba63ec25f0",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "node_type": "GRAPH_NODES_07",
+          "source_entity_type": "GRAPH_NODES_07",
+          "source_entity_id": "be66b54c-811e-5824-bb1d-4ca15a33be41",
+          "source_version": 7,
+          "display_label_redacted": "Graph nodes — comunidad clínica 07",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_nodes",
+            "seq": 6,
+            "ref": "38842c97-ec77-5086-8b6f-297cf0b799d1",
+            "status": "on_hold",
+            "amount": 942.5,
+            "currency": "BOB",
+            "occurred_at": "2026-10-18T12:51:00Z"
+          },
+          "security_labels": [
+            "Graph nodes — comunidad clínica 07"
+          ],
+          "lifecycle_state": "ACTIVE",
+          "updated_at": "2026-10-03T09:37:00Z"
+        },
+        {
+          "node_id": "4187ec72-b778-52ee-9cd0-2528690c73a5",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "node_type": "GRAPH_NODES_08",
+          "source_entity_type": "GRAPH_NODES_08",
+          "source_entity_id": "be66b54c-811e-5824-bb1d-4ca15a33be41",
+          "source_version": 8,
+          "display_label_redacted": "Graph nodes — eliminación de nodo 08",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_nodes",
+            "seq": 7,
+            "ref": "700621fa-6633-59c9-9962-e9f35e5d680b",
+            "status": "approved",
+            "amount": 179.75,
+            "currency": "BOB",
+            "occurred_at": "2026-05-02T01:08:00Z"
+          },
+          "security_labels": [
+            "Graph nodes — eliminación de nodo 08"
+          ],
+          "lifecycle_state": "DRAFT",
+          "updated_at": "2026-10-08T09:49:00Z"
+        },
+        {
+          "node_id": "d6a46ece-38b3-5453-88ba-f7ead31b9c0d",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "node_type": "GRAPH_NODES_01",
+          "source_entity_type": "GRAPH_NODES_01_01",
+          "source_entity_id": "be66b54c-811e-5824-bb1d-4ca15a33be41",
+          "source_version": 1,
+          "display_label_redacted": "Graph nodes (caso 08)",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_nodes",
+            "seq": 8,
+            "ref": "d14e4be2-c823-5515-bcb2-b9c1924fe77a",
+            "status": "rejected",
+            "amount": 316.0,
+            "currency": "BOB",
+            "occurred_at": "2026-12-13T14:25:00Z"
+          },
+          "security_labels": [
+            "Graph nodes (caso 08)"
+          ],
+          "lifecycle_state": "rejected",
+          "updated_at": "2026-12-13T14:25:00Z"
+        },
+        {
+          "node_id": "0c50ce2b-7d03-5374-98bc-db115552ff7b",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "node_type": "GRAPH_NODES_02",
+          "source_entity_type": "GRAPH_NODES_02_01",
+          "source_entity_id": "be66b54c-811e-5824-bb1d-4ca15a33be41",
+          "source_version": 1,
+          "display_label_redacted": "Graph nodes (caso 09)",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_nodes",
+            "seq": 9,
+            "ref": "7fbc68fb-dcc8-5af9-9572-0c8c0f16d8d7",
+            "status": "retrying",
+            "amount": 453.25,
+            "currency": "BOB",
+            "occurred_at": "2026-07-24T03:42:00Z"
+          },
+          "security_labels": [
+            "Graph nodes (caso 09)"
+          ],
+          "lifecycle_state": "retrying",
+          "updated_at": "2026-07-24T03:42:00Z"
+        },
+        {
+          "node_id": "66bbcb78-2aaa-5f56-af6d-3bb57c43eb52",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "node_type": "GRAPH_NODES_03",
+          "source_entity_type": "GRAPH_NODES_03_01",
+          "source_entity_id": "be66b54c-811e-5824-bb1d-4ca15a33be41",
+          "source_version": 3,
+          "display_label_redacted": "Graph nodes (caso 10)",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_nodes",
+            "seq": 10,
+            "ref": "6a28ed23-9132-513b-bcc6-91c9a4dc651d",
+            "status": "active",
+            "amount": 590.5,
+            "currency": "BOB",
+            "occurred_at": "2026-02-08T16:59:00Z"
+          },
+          "security_labels": [
+            "Graph nodes (caso 10)"
+          ],
+          "lifecycle_state": "active",
+          "updated_at": "2026-02-08T16:59:00Z"
+        },
+        {
+          "node_id": "5db3c043-946c-56a6-ae3d-2d2ff3a1e2f5",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "node_type": "GRAPH_NODES_04",
+          "source_entity_type": "GRAPH_NODES_04_01",
+          "source_entity_id": "be66b54c-811e-5824-bb1d-4ca15a33be41",
+          "source_version": 4,
+          "display_label_redacted": "Graph nodes (caso 11)",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_nodes",
+            "seq": 11,
+            "ref": "351201ad-4ab9-5573-ba34-d098d621201c",
+            "status": "pending",
+            "amount": 727.75,
+            "currency": "BOB",
+            "occurred_at": "2026-09-19T05:16:00Z"
+          },
+          "security_labels": [
+            "Graph nodes (caso 11)"
+          ],
+          "lifecycle_state": "pending",
+          "updated_at": "2026-09-19T05:16:00Z"
+        },
+        {
+          "node_id": "646ddb0e-a2dd-5fb2-b94f-2770b42acaa7",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "node_type": "GRAPH_NODES_05",
+          "source_entity_type": "GRAPH_NODES_05_01",
+          "source_entity_id": "be66b54c-811e-5824-bb1d-4ca15a33be41",
+          "source_version": 5,
+          "display_label_redacted": "Graph nodes (caso 12)",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_nodes",
+            "seq": 12,
+            "ref": "409d4acd-3309-5a66-811d-a0818a4e78ff",
+            "status": "in_progress",
+            "amount": 864.0,
+            "currency": "BOB",
+            "occurred_at": "2026-04-03T18:33:00Z"
+          },
+          "security_labels": [
+            "Graph nodes (caso 12)"
+          ],
+          "lifecycle_state": "in_progress",
+          "updated_at": "2026-04-03T18:33:00Z"
+        },
+        {
+          "node_id": "7f07cd55-e5c5-58fc-814d-3b17aa5426f1",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "node_type": "GRAPH_NODES_06",
+          "source_entity_type": "GRAPH_NODES_06_01",
+          "source_entity_id": "be66b54c-811e-5824-bb1d-4ca15a33be41",
+          "source_version": 6,
+          "display_label_redacted": "Graph nodes (caso 13)",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_nodes",
+            "seq": 13,
+            "ref": "39d55b19-e59c-5a5d-a3af-7b3d2e6d4d43",
+            "status": "completed",
+            "amount": 1001.25,
+            "currency": "BOB",
+            "occurred_at": "2026-11-14T07:50:00Z"
+          },
+          "security_labels": [
+            "Graph nodes (caso 13)"
+          ],
+          "lifecycle_state": "completed",
+          "updated_at": "2026-11-14T07:50:00Z"
+        },
+        {
+          "node_id": "4cc23ef9-6115-5ded-9bb2-d5ba63ec25f0",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "node_type": "GRAPH_NODES_07",
+          "source_entity_type": "GRAPH_NODES_07_01",
+          "source_entity_id": "be66b54c-811e-5824-bb1d-4ca15a33be41",
+          "source_version": 7,
+          "display_label_redacted": "Graph nodes (caso 14)",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_nodes",
+            "seq": 14,
+            "ref": "02114d45-65c6-5394-8bde-fc44a5028821",
+            "status": "failed",
+            "amount": 238.5,
+            "currency": "BOB",
+            "occurred_at": "2026-06-25T20:07:00Z"
+          },
+          "security_labels": [
+            "Graph nodes (caso 14)"
+          ],
+          "lifecycle_state": "failed",
+          "updated_at": "2026-06-25T20:07:00Z"
+        },
+        {
+          "node_id": "4187ec72-b778-52ee-9cd0-2528690c73a5",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "node_type": "GRAPH_NODES_08",
+          "source_entity_type": "GRAPH_NODES_08_01",
+          "source_entity_id": "be66b54c-811e-5824-bb1d-4ca15a33be41",
+          "source_version": 8,
+          "display_label_redacted": "Graph nodes (caso 15)",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_nodes",
+            "seq": 15,
+            "ref": "0570f9bf-dc41-5fbf-a59e-71140a984c1a",
+            "status": "cancelled",
+            "amount": 375.75,
+            "currency": "BOB",
+            "occurred_at": "2026-01-09T09:24:00Z"
+          },
+          "security_labels": [
+            "Graph nodes (caso 15)"
+          ],
+          "lifecycle_state": "cancelled",
+          "updated_at": "2026-01-09T09:24:00Z"
+        }
+      ],
+      "graph_node_identifiers": [
+        {
+          "id": "53c98ab6-6ad0-58e0-b8bc-c67d97393e15",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "identifier_system": "Graph node identifiers — relación paciente-profesional 01",
+          "identifier_value_hash": "70b9afe33ae3ea703667bed76f4c86811037f5ee426aa247a5265458a1ad7bd3",
+          "identifier_type": "GRAPH_NODE_IDENTIFIERS_01",
+          "is_primary": true
+        },
+        {
+          "id": "07393ad5-0352-5560-a86d-6518c685c074",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "identifier_system": "Graph node identifiers — red de organización 02",
+          "identifier_value_hash": "e721362e42e2af404dc1778013cf72ea11ea4778dcd65f8292a67c1f65b9bc88",
+          "identifier_type": "GRAPH_NODE_IDENTIFIERS_02",
+          "is_primary": true
+        },
+        {
+          "id": "79b81f51-fc58-5bab-ab40-ed83e938cfdd",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "identifier_system": "Graph node identifiers — beneficiario-aseguradora 03",
+          "identifier_value_hash": "24d390d46bb3cf2d14a4ce6c9e1d33b3a259204db2826326dc3f6d2ba7ad9de0",
+          "identifier_type": "GRAPH_NODE_IDENTIFIERS_03",
+          "is_primary": true
+        },
+        {
+          "id": "f9ba77c2-17bb-52df-b779-30f7989ec847",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "identifier_system": "Graph node identifiers — proveedor-contrato 04",
+          "identifier_value_hash": "9fd1b2a22f76219c18420885e1cf63a3c17ddc382bafd4c18cc77cdf7ef115ef",
+          "identifier_type": "GRAPH_NODE_IDENTIFIERS_04",
+          "is_primary": true
+        },
+        {
+          "id": "51bf3b37-1c01-5a9d-88d3-06d6a3710677",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "identifier_system": "Graph node identifiers — riesgo de fraude 05",
+          "identifier_value_hash": "bf773083beb32a5be99e495f6431ab5eeacc88dcf4564f8190151076546c0367",
+          "identifier_type": "GRAPH_NODE_IDENTIFIERS_05",
+          "is_primary": true
+        },
+        {
+          "id": "984da3be-a5fc-5c24-abbe-88689f534405",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "identifier_system": "Graph node identifiers — ruta de acceso 06",
+          "identifier_value_hash": "104d727d25065da65bb02737562e72aa9377dd05e360f48679081305667eb228",
+          "identifier_type": "GRAPH_NODE_IDENTIFIERS_06",
+          "is_primary": false
+        },
+        {
+          "id": "5a6d6fa2-bc3d-537d-b9ab-ae47b58942ff",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "identifier_system": "Graph node identifiers — comunidad clínica 07",
+          "identifier_value_hash": "c6220cfde88042146862517954062a6621434e59bc6c4c4e36fb1ae5ffbc44f2",
+          "identifier_type": "GRAPH_NODE_IDENTIFIERS_07",
+          "is_primary": true
+        },
+        {
+          "id": "bd823f5a-bd74-5e0b-92e2-e08c95db2f6e",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "identifier_system": "Graph node identifiers — eliminación de nodo 08",
+          "identifier_value_hash": "08c4d50382ca2acb9c0cf5838d5d298d6ae4eac5a21a08d62cedc68baa780c72",
+          "identifier_type": "GRAPH_NODE_IDENTIFIERS_08",
+          "is_primary": true
+        },
+        {
+          "id": "38e13281-8d91-5da8-8ecc-f0ada17f349a",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "identifier_system": "Graph node identifiers — relación paciente-profesional 01",
+          "identifier_value_hash": "70b9afe33ae3ea703667bed76f4c86811037f5ee426aa247a5265458a1ad7bd3_01",
+          "identifier_type": "GRAPH_NODE_IDENTIFIERS_01",
+          "is_primary": true
+        },
+        {
+          "id": "528f8ec2-6e01-583c-9721-cd4ae2c629be",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "identifier_system": "Graph node identifiers — red de organización 02",
+          "identifier_value_hash": "e721362e42e2af404dc1778013cf72ea11ea4778dcd65f8292a67c1f65b9bc88_01",
+          "identifier_type": "GRAPH_NODE_IDENTIFIERS_02",
+          "is_primary": false
+        },
+        {
+          "id": "2c1abd54-e591-5bb4-963b-fb69e2d07c3d",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "identifier_system": "Graph node identifiers — beneficiario-aseguradora 03",
+          "identifier_value_hash": "24d390d46bb3cf2d14a4ce6c9e1d33b3a259204db2826326dc3f6d2ba7ad9de0_01",
+          "identifier_type": "GRAPH_NODE_IDENTIFIERS_03",
+          "is_primary": true
+        },
+        {
+          "id": "6ffaa5d0-3eae-52a4-87b7-d01a16886156",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "identifier_system": "Graph node identifiers — proveedor-contrato 04",
+          "identifier_value_hash": "9fd1b2a22f76219c18420885e1cf63a3c17ddc382bafd4c18cc77cdf7ef115ef_01",
+          "identifier_type": "GRAPH_NODE_IDENTIFIERS_04",
+          "is_primary": false
+        },
+        {
+          "id": "fa594f6e-1d2d-5b1a-99d9-846486ef75aa",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "identifier_system": "Graph node identifiers — riesgo de fraude 05",
+          "identifier_value_hash": "bf773083beb32a5be99e495f6431ab5eeacc88dcf4564f8190151076546c0367_01",
+          "identifier_type": "GRAPH_NODE_IDENTIFIERS_05",
+          "is_primary": true
+        },
+        {
+          "id": "5e940603-7305-5fa0-b00d-cee7ba7b6bd7",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "identifier_system": "Graph node identifiers — ruta de acceso 06",
+          "identifier_value_hash": "104d727d25065da65bb02737562e72aa9377dd05e360f48679081305667eb228_01",
+          "identifier_type": "GRAPH_NODE_IDENTIFIERS_06",
+          "is_primary": false
+        },
+        {
+          "id": "68e9da34-373c-5481-9122-549aa25d0eec",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "identifier_system": "Graph node identifiers — comunidad clínica 07",
+          "identifier_value_hash": "c6220cfde88042146862517954062a6621434e59bc6c4c4e36fb1ae5ffbc44f2_01",
+          "identifier_type": "GRAPH_NODE_IDENTIFIERS_07",
+          "is_primary": true
+        },
+        {
+          "id": "bc10ac17-945a-51e4-bb85-b7ddd007b53e",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "identifier_system": "Graph node identifiers — eliminación de nodo 08",
+          "identifier_value_hash": "08c4d50382ca2acb9c0cf5838d5d298d6ae4eac5a21a08d62cedc68baa780c72_01",
+          "identifier_type": "GRAPH_NODE_IDENTIFIERS_08",
+          "is_primary": false
+        }
+      ],
+      "graph_edges": [
+        {
+          "edge_id": "856df38e-eb2f-58bc-b189-08cd50f3ea38",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "from_node_id": "472976ab-b9ee-59ca-af48-f389adb322ce",
+          "to_node_id": "de4287fe-3fa3-58b5-8528-059404e8fea1",
+          "relationship_type": "GRAPH_EDGES_01",
+          "directionality": "Graph edges — relación paciente-profesional 01",
+          "effective_from": "2026-06-01T18:11:00Z",
+          "effective_to": "2026-06-01T18:11:00Z",
+          "confidence_score": 0.55,
+          "source_entity_type": "GRAPH_EDGES_01",
+          "source_entity_id": "90ff6f8f-03d3-502e-afc4-cae2c23561b9",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_edges",
+            "seq": 0,
+            "ref": "29b67c30-371a-5db6-9439-bc7c2bac4ebb",
+            "status": "active",
+            "amount": 120.0,
+            "currency": "BOB",
+            "occurred_at": "2026-04-06T06:09:00Z"
+          },
+          "lifecycle_state": "ACTIVE"
+        },
+        {
+          "edge_id": "3a0f3d8e-0f5a-55aa-8aaa-14e32ec693b9",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "from_node_id": "472976ab-b9ee-59ca-af48-f389adb322ce",
+          "to_node_id": "de4287fe-3fa3-58b5-8528-059404e8fea1",
+          "relationship_type": "GRAPH_EDGES_02",
+          "directionality": "Graph edges — red de organización 02",
+          "effective_from": "2026-06-01T18:12:00Z",
+          "effective_to": "2026-06-01T18:12:00Z",
+          "confidence_score": 0.595,
+          "source_entity_type": "GRAPH_EDGES_02",
+          "source_entity_id": "90ff6f8f-03d3-502e-afc4-cae2c23561b9",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_edges",
+            "seq": 1,
+            "ref": "3f0ee711-bc8d-5ac3-b730-cc7e265e9b9f",
+            "status": "pending",
+            "amount": 257.25,
+            "currency": "BOB",
+            "occurred_at": "2026-11-17T19:26:00Z"
+          },
+          "lifecycle_state": "DRAFT"
+        },
+        {
+          "edge_id": "b2c94415-c864-5ceb-9d4f-3ce0adca06c8",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "from_node_id": "472976ab-b9ee-59ca-af48-f389adb322ce",
+          "to_node_id": "de4287fe-3fa3-58b5-8528-059404e8fea1",
+          "relationship_type": "GRAPH_EDGES_03",
+          "directionality": "Graph edges — beneficiario-aseguradora 03",
+          "effective_from": "2026-06-01T18:11:00Z",
+          "effective_to": "2026-06-01T18:11:00Z",
+          "confidence_score": 0.64,
+          "source_entity_type": "GRAPH_EDGES_03",
+          "source_entity_id": "90ff6f8f-03d3-502e-afc4-cae2c23561b9",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_edges",
+            "seq": 2,
+            "ref": "86160ee7-6f06-5719-a669-37bd4ae221c0",
+            "status": "in_progress",
+            "amount": 394.5,
+            "currency": "BOB",
+            "occurred_at": "2026-06-01T08:43:00Z"
+          },
+          "lifecycle_state": "ACTIVE"
+        },
+        {
+          "edge_id": "aa6d1742-1f37-5d66-9efb-efbb67d2c5a1",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "from_node_id": "472976ab-b9ee-59ca-af48-f389adb322ce",
+          "to_node_id": "de4287fe-3fa3-58b5-8528-059404e8fea1",
+          "relationship_type": "GRAPH_EDGES_04",
+          "directionality": "Graph edges — proveedor-contrato 04",
+          "effective_from": "2026-06-01T18:12:00Z",
+          "effective_to": "2026-06-01T18:12:00Z",
+          "confidence_score": 0.685,
+          "source_entity_type": "GRAPH_EDGES_04",
+          "source_entity_id": "90ff6f8f-03d3-502e-afc4-cae2c23561b9",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_edges",
+            "seq": 3,
+            "ref": "75e235de-fa4d-5f25-b315-e7beab525b16",
+            "status": "completed",
+            "amount": 531.75,
+            "currency": "BOB",
+            "occurred_at": "2026-01-12T21:00:00Z"
+          },
+          "lifecycle_state": "DRAFT"
+        },
+        {
+          "edge_id": "77a4ca2a-4453-5ae3-a544-ec687beda226",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "from_node_id": "472976ab-b9ee-59ca-af48-f389adb322ce",
+          "to_node_id": "de4287fe-3fa3-58b5-8528-059404e8fea1",
+          "relationship_type": "GRAPH_EDGES_05",
+          "directionality": "Graph edges — riesgo de fraude 05",
+          "effective_from": "2026-06-01T18:11:00Z",
+          "effective_to": "2026-06-01T18:11:00Z",
+          "confidence_score": 0.73,
+          "source_entity_type": "GRAPH_EDGES_05",
+          "source_entity_id": "90ff6f8f-03d3-502e-afc4-cae2c23561b9",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_edges",
+            "seq": 4,
+            "ref": "f43bfd8c-f155-53c2-aac2-f843538dcb8a",
+            "status": "failed",
+            "amount": 668.0,
+            "currency": "BOB",
+            "occurred_at": "2026-08-23T10:17:00Z"
+          },
+          "lifecycle_state": "ACTIVE"
+        },
+        {
+          "edge_id": "43bf6e23-a284-5f38-a605-eeb0e2d31106",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "from_node_id": "472976ab-b9ee-59ca-af48-f389adb322ce",
+          "to_node_id": "de4287fe-3fa3-58b5-8528-059404e8fea1",
+          "relationship_type": "GRAPH_EDGES_06",
+          "directionality": "Graph edges — ruta de acceso 06",
+          "effective_from": "2026-06-01T18:12:00Z",
+          "effective_to": "2026-06-01T18:12:00Z",
+          "confidence_score": 0.775,
+          "source_entity_type": "GRAPH_EDGES_06",
+          "source_entity_id": "90ff6f8f-03d3-502e-afc4-cae2c23561b9",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_edges",
+            "seq": 5,
+            "ref": "e2d6ca83-9c9e-5b11-9075-c6c5c5db110b",
+            "status": "cancelled",
+            "amount": 805.25,
+            "currency": "BOB",
+            "occurred_at": "2026-03-07T23:34:00Z"
+          },
+          "lifecycle_state": "DRAFT"
+        },
+        {
+          "edge_id": "5008a008-bee1-5dd8-a7e5-02180e1c86c7",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "from_node_id": "472976ab-b9ee-59ca-af48-f389adb322ce",
+          "to_node_id": "de4287fe-3fa3-58b5-8528-059404e8fea1",
+          "relationship_type": "GRAPH_EDGES_07",
+          "directionality": "Graph edges — comunidad clínica 07",
+          "effective_from": "2026-06-01T18:11:00Z",
+          "effective_to": "2026-06-01T18:11:00Z",
+          "confidence_score": 0.82,
+          "source_entity_type": "GRAPH_EDGES_07",
+          "source_entity_id": "90ff6f8f-03d3-502e-afc4-cae2c23561b9",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_edges",
+            "seq": 6,
+            "ref": "e4e8baab-f409-5abc-bc8c-ae233a4d37b7",
+            "status": "on_hold",
+            "amount": 942.5,
+            "currency": "BOB",
+            "occurred_at": "2026-10-18T12:51:00Z"
+          },
+          "lifecycle_state": "ACTIVE"
+        },
+        {
+          "edge_id": "842622dc-90b3-58aa-bae7-f3e694cecaa2",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "from_node_id": "472976ab-b9ee-59ca-af48-f389adb322ce",
+          "to_node_id": "de4287fe-3fa3-58b5-8528-059404e8fea1",
+          "relationship_type": "GRAPH_EDGES_08",
+          "directionality": "Graph edges — eliminación de nodo 08",
+          "effective_from": "2026-06-01T18:12:00Z",
+          "effective_to": "2026-06-01T18:12:00Z",
+          "confidence_score": 0.865,
+          "source_entity_type": "GRAPH_EDGES_08",
+          "source_entity_id": "90ff6f8f-03d3-502e-afc4-cae2c23561b9",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_edges",
+            "seq": 7,
+            "ref": "d158c7fe-6093-558a-bb3c-b28de0d5aa96",
+            "status": "approved",
+            "amount": 179.75,
+            "currency": "BOB",
+            "occurred_at": "2026-05-02T01:08:00Z"
+          },
+          "lifecycle_state": "DRAFT"
+        },
+        {
+          "edge_id": "856df38e-eb2f-58bc-b189-08cd50f3ea38",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "from_node_id": "472976ab-b9ee-59ca-af48-f389adb322ce",
+          "to_node_id": "de4287fe-3fa3-58b5-8528-059404e8fea1",
+          "relationship_type": "GRAPH_EDGES_01_01",
+          "directionality": "Graph edges — relación paciente-profesional 01",
+          "effective_from": "2026-12-13T14:25:00Z",
+          "effective_to": "2026-12-13T14:25:00Z",
+          "confidence_score": 196.55,
+          "source_entity_type": "GRAPH_EDGES_01",
+          "source_entity_id": "90ff6f8f-03d3-502e-afc4-cae2c23561b9",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_edges",
+            "seq": 8,
+            "ref": "2392d059-222a-5d40-bbe0-8c7aeccb710a",
+            "status": "rejected",
+            "amount": 316.0,
+            "currency": "BOB",
+            "occurred_at": "2026-12-13T14:25:00Z"
+          },
+          "lifecycle_state": "rejected"
+        },
+        {
+          "edge_id": "3a0f3d8e-0f5a-55aa-8aaa-14e32ec693b9",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "from_node_id": "472976ab-b9ee-59ca-af48-f389adb322ce",
+          "to_node_id": "de4287fe-3fa3-58b5-8528-059404e8fea1",
+          "relationship_type": "GRAPH_EDGES_02_01",
+          "directionality": "Graph edges — red de organización 02",
+          "effective_from": "2026-07-24T03:42:00Z",
+          "effective_to": "2026-07-24T03:42:00Z",
+          "confidence_score": 333.85,
+          "source_entity_type": "GRAPH_EDGES_02",
+          "source_entity_id": "90ff6f8f-03d3-502e-afc4-cae2c23561b9",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_edges",
+            "seq": 9,
+            "ref": "2352c41e-8bbe-55a5-a7f7-67ccbdd94ddd",
+            "status": "retrying",
+            "amount": 453.25,
+            "currency": "BOB",
+            "occurred_at": "2026-07-24T03:42:00Z"
+          },
+          "lifecycle_state": "retrying"
+        },
+        {
+          "edge_id": "b2c94415-c864-5ceb-9d4f-3ce0adca06c8",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "from_node_id": "472976ab-b9ee-59ca-af48-f389adb322ce",
+          "to_node_id": "de4287fe-3fa3-58b5-8528-059404e8fea1",
+          "relationship_type": "GRAPH_EDGES_03_01",
+          "directionality": "Graph edges — beneficiario-aseguradora 03",
+          "effective_from": "2026-02-08T16:59:00Z",
+          "effective_to": "2026-02-08T16:59:00Z",
+          "confidence_score": 471.14,
+          "source_entity_type": "GRAPH_EDGES_03",
+          "source_entity_id": "90ff6f8f-03d3-502e-afc4-cae2c23561b9",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_edges",
+            "seq": 10,
+            "ref": "a5fe175f-ef6b-504d-9309-b864f4a4d8a5",
+            "status": "active",
+            "amount": 590.5,
+            "currency": "BOB",
+            "occurred_at": "2026-02-08T16:59:00Z"
+          },
+          "lifecycle_state": "active"
+        },
+        {
+          "edge_id": "aa6d1742-1f37-5d66-9efb-efbb67d2c5a1",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "from_node_id": "472976ab-b9ee-59ca-af48-f389adb322ce",
+          "to_node_id": "de4287fe-3fa3-58b5-8528-059404e8fea1",
+          "relationship_type": "GRAPH_EDGES_04_01",
+          "directionality": "Graph edges — proveedor-contrato 04",
+          "effective_from": "2026-09-19T05:16:00Z",
+          "effective_to": "2026-09-19T05:16:00Z",
+          "confidence_score": 608.43,
+          "source_entity_type": "GRAPH_EDGES_04",
+          "source_entity_id": "90ff6f8f-03d3-502e-afc4-cae2c23561b9",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_edges",
+            "seq": 11,
+            "ref": "1ad9a7d5-75d5-5ecc-87e8-3ac3fa41fd09",
+            "status": "pending",
+            "amount": 727.75,
+            "currency": "BOB",
+            "occurred_at": "2026-09-19T05:16:00Z"
+          },
+          "lifecycle_state": "pending"
+        },
+        {
+          "edge_id": "77a4ca2a-4453-5ae3-a544-ec687beda226",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "from_node_id": "472976ab-b9ee-59ca-af48-f389adb322ce",
+          "to_node_id": "de4287fe-3fa3-58b5-8528-059404e8fea1",
+          "relationship_type": "GRAPH_EDGES_05_01",
+          "directionality": "Graph edges — riesgo de fraude 05",
+          "effective_from": "2026-04-03T18:33:00Z",
+          "effective_to": "2026-04-03T18:33:00Z",
+          "confidence_score": 744.73,
+          "source_entity_type": "GRAPH_EDGES_05",
+          "source_entity_id": "90ff6f8f-03d3-502e-afc4-cae2c23561b9",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_edges",
+            "seq": 12,
+            "ref": "22f00dd6-af5d-52e8-8c7e-d0bd84716afa",
+            "status": "in_progress",
+            "amount": 864.0,
+            "currency": "BOB",
+            "occurred_at": "2026-04-03T18:33:00Z"
+          },
+          "lifecycle_state": "in_progress"
+        },
+        {
+          "edge_id": "43bf6e23-a284-5f38-a605-eeb0e2d31106",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "from_node_id": "472976ab-b9ee-59ca-af48-f389adb322ce",
+          "to_node_id": "de4287fe-3fa3-58b5-8528-059404e8fea1",
+          "relationship_type": "GRAPH_EDGES_06_01",
+          "directionality": "Graph edges — ruta de acceso 06",
+          "effective_from": "2026-11-14T07:50:00Z",
+          "effective_to": "2026-11-14T07:50:00Z",
+          "confidence_score": 882.02,
+          "source_entity_type": "GRAPH_EDGES_06",
+          "source_entity_id": "90ff6f8f-03d3-502e-afc4-cae2c23561b9",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_edges",
+            "seq": 13,
+            "ref": "c6ca08f1-167c-5991-8210-7b93521592dc",
+            "status": "completed",
+            "amount": 1001.25,
+            "currency": "BOB",
+            "occurred_at": "2026-11-14T07:50:00Z"
+          },
+          "lifecycle_state": "completed"
+        },
+        {
+          "edge_id": "5008a008-bee1-5dd8-a7e5-02180e1c86c7",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "from_node_id": "472976ab-b9ee-59ca-af48-f389adb322ce",
+          "to_node_id": "de4287fe-3fa3-58b5-8528-059404e8fea1",
+          "relationship_type": "GRAPH_EDGES_07_01",
+          "directionality": "Graph edges — comunidad clínica 07",
+          "effective_from": "2026-06-25T20:07:00Z",
+          "effective_to": "2026-06-25T20:07:00Z",
+          "confidence_score": 119.32,
+          "source_entity_type": "GRAPH_EDGES_07",
+          "source_entity_id": "90ff6f8f-03d3-502e-afc4-cae2c23561b9",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_edges",
+            "seq": 14,
+            "ref": "3185f58d-e925-5f3e-bd44-1a46fb9327bd",
+            "status": "failed",
+            "amount": 238.5,
+            "currency": "BOB",
+            "occurred_at": "2026-06-25T20:07:00Z"
+          },
+          "lifecycle_state": "failed"
+        },
+        {
+          "edge_id": "842622dc-90b3-58aa-bae7-f3e694cecaa2",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "from_node_id": "472976ab-b9ee-59ca-af48-f389adb322ce",
+          "to_node_id": "de4287fe-3fa3-58b5-8528-059404e8fea1",
+          "relationship_type": "GRAPH_EDGES_08_01",
+          "directionality": "Graph edges — eliminación de nodo 08",
+          "effective_from": "2026-01-09T09:24:00Z",
+          "effective_to": "2026-01-09T09:24:00Z",
+          "confidence_score": 256.62,
+          "source_entity_type": "GRAPH_EDGES_08",
+          "source_entity_id": "90ff6f8f-03d3-502e-afc4-cae2c23561b9",
+          "properties": {
+            "module": "graph_intelligence",
+            "entity": "graph_edges",
+            "seq": 15,
+            "ref": "77ccd17d-cc2f-5bdb-b862-fd4df2288787",
+            "status": "cancelled",
+            "amount": 375.75,
+            "currency": "BOB",
+            "occurred_at": "2026-01-09T09:24:00Z"
+          },
+          "lifecycle_state": "cancelled"
+        }
+      ],
+      "graph_edge_evidence": [
+        {
+          "id": "d3d4f11e-e353-5a9f-a914-ac89210650df",
+          "edge_id": "249caaae-0056-5141-acee-dd6bde517a89",
+          "evidence_type": "GRAPH_EDGE_EVIDENCE_01",
+          "source_reference": "Graph edge evidence — relación paciente-profesional 01",
+          "evidence_hash": "f939ed4ed50e0869e988529cf27beb6a7df664126efca100ce68c5c53892eec8",
+          "observed_at": "2026-09-03T08:26:00Z",
+          "confidence_delta": 0.55
+        },
+        {
+          "id": "a499c65d-80ee-5a15-be3d-32195c4e5e7d",
+          "edge_id": "249caaae-0056-5141-acee-dd6bde517a89",
+          "evidence_type": "GRAPH_EDGE_EVIDENCE_02",
+          "source_reference": "Graph edge evidence — red de organización 02",
+          "evidence_hash": "c59351ac7cd3a1780370bae18dc8e45f00cd331dec414a829bf49a7da1f812cd",
+          "observed_at": "2026-09-08T08:37:00Z",
+          "confidence_delta": 0.595
+        },
+        {
+          "id": "7dc1a844-20a9-5996-8031-974d9f50ab56",
+          "edge_id": "249caaae-0056-5141-acee-dd6bde517a89",
+          "evidence_type": "GRAPH_EDGE_EVIDENCE_03",
+          "source_reference": "Graph edge evidence — beneficiario-aseguradora 03",
+          "evidence_hash": "99ee16ce2f6263176387b4febae12d1ebae2331ec81e828d386de00be7811166",
+          "observed_at": "2026-09-13T08:48:00Z",
+          "confidence_delta": 0.64
+        },
+        {
+          "id": "e2be6bca-04d9-5ef2-91c8-78993bfa06ba",
+          "edge_id": "249caaae-0056-5141-acee-dd6bde517a89",
+          "evidence_type": "GRAPH_EDGE_EVIDENCE_04",
+          "source_reference": "Graph edge evidence — proveedor-contrato 04",
+          "evidence_hash": "c6830b07b8ce977c3e31e06453ece10188ea9ce25c6655f373df0dd170b74c53",
+          "observed_at": "2026-09-18T08:59:00Z",
+          "confidence_delta": 0.685
+        },
+        {
+          "id": "47fb298d-2a7e-5f6a-85dd-4a9d82f4443a",
+          "edge_id": "249caaae-0056-5141-acee-dd6bde517a89",
+          "evidence_type": "GRAPH_EDGE_EVIDENCE_05",
+          "source_reference": "Graph edge evidence — riesgo de fraude 05",
+          "evidence_hash": "a4222ea5e36ab1596190736dc65cce9f037bf315015a341cbbc1a9f6b4dcd466",
+          "observed_at": "2026-09-23T09:10:00Z",
+          "confidence_delta": 0.73
+        },
+        {
+          "id": "3bd5c9dd-ce29-526c-aef8-2021e41a9fd1",
+          "edge_id": "249caaae-0056-5141-acee-dd6bde517a89",
+          "evidence_type": "GRAPH_EDGE_EVIDENCE_06",
+          "source_reference": "Graph edge evidence — ruta de acceso 06",
+          "evidence_hash": "0ebdfe1995215f869afdeb862d709df0f75fcc42e6512f0d6aa50eb5d1a658d2",
+          "observed_at": "2026-09-28T09:21:00Z",
+          "confidence_delta": 0.775
+        },
+        {
+          "id": "8b468c7f-d0a8-5fd0-98cf-3f892dc7248e",
+          "edge_id": "249caaae-0056-5141-acee-dd6bde517a89",
+          "evidence_type": "GRAPH_EDGE_EVIDENCE_07",
+          "source_reference": "Graph edge evidence — comunidad clínica 07",
+          "evidence_hash": "537665fc4dc98b1568a5a044fd89b7b1ce31c97d30ce37917c30c50060e5b348",
+          "observed_at": "2026-10-03T09:32:00Z",
+          "confidence_delta": 0.82
+        },
+        {
+          "id": "fa881678-8796-5282-9f76-63cc8fd97146",
+          "edge_id": "249caaae-0056-5141-acee-dd6bde517a89",
+          "evidence_type": "GRAPH_EDGE_EVIDENCE_08",
+          "source_reference": "Graph edge evidence — eliminación de nodo 08",
+          "evidence_hash": "0dec0a6e80c20f7fbd2ea56f555af2fe7856474ae9edbf42ea62c1d5756801bc",
+          "observed_at": "2026-10-08T09:43:00Z",
+          "confidence_delta": 0.865
+        },
+        {
+          "id": "220dca67-661a-5cca-8e74-85b97697f667",
+          "edge_id": "249caaae-0056-5141-acee-dd6bde517a89",
+          "evidence_type": "GRAPH_EDGE_EVIDENCE_01",
+          "source_reference": "Graph edge evidence — relación paciente-profesional 01",
+          "evidence_hash": "f939ed4ed50e0869e988529cf27beb6a7df664126efca100ce68c5c53892eec8_01",
+          "observed_at": "2026-12-13T14:25:00Z",
+          "confidence_delta": 0.55
+        },
+        {
+          "id": "809f35d7-dc0f-5b54-ae86-8c55531603fc",
+          "edge_id": "249caaae-0056-5141-acee-dd6bde517a89",
+          "evidence_type": "GRAPH_EDGE_EVIDENCE_02",
+          "source_reference": "Graph edge evidence — red de organización 02",
+          "evidence_hash": "c59351ac7cd3a1780370bae18dc8e45f00cd331dec414a829bf49a7da1f812cd_01",
+          "observed_at": "2026-07-24T03:42:00Z",
+          "confidence_delta": 0.595
+        },
+        {
+          "id": "421b7c31-bbbd-5b03-a924-0901360111dd",
+          "edge_id": "249caaae-0056-5141-acee-dd6bde517a89",
+          "evidence_type": "GRAPH_EDGE_EVIDENCE_03",
+          "source_reference": "Graph edge evidence — beneficiario-aseguradora 03",
+          "evidence_hash": "99ee16ce2f6263176387b4febae12d1ebae2331ec81e828d386de00be7811166_01",
+          "observed_at": "2026-02-08T16:59:00Z",
+          "confidence_delta": 0.64
+        },
+        {
+          "id": "6187d1f3-c64b-578f-a8ed-192f7f14e62c",
+          "edge_id": "249caaae-0056-5141-acee-dd6bde517a89",
+          "evidence_type": "GRAPH_EDGE_EVIDENCE_04",
+          "source_reference": "Graph edge evidence — proveedor-contrato 04",
+          "evidence_hash": "c6830b07b8ce977c3e31e06453ece10188ea9ce25c6655f373df0dd170b74c53_01",
+          "observed_at": "2026-09-19T05:16:00Z",
+          "confidence_delta": 0.685
+        },
+        {
+          "id": "5273bd14-a265-5f5f-ab0f-1914c287af76",
+          "edge_id": "249caaae-0056-5141-acee-dd6bde517a89",
+          "evidence_type": "GRAPH_EDGE_EVIDENCE_05",
+          "source_reference": "Graph edge evidence — riesgo de fraude 05",
+          "evidence_hash": "a4222ea5e36ab1596190736dc65cce9f037bf315015a341cbbc1a9f6b4dcd466_01",
+          "observed_at": "2026-04-03T18:33:00Z",
+          "confidence_delta": 0.73
+        },
+        {
+          "id": "f023e5a2-a4ea-587f-b292-e3fbb22cc47d",
+          "edge_id": "249caaae-0056-5141-acee-dd6bde517a89",
+          "evidence_type": "GRAPH_EDGE_EVIDENCE_06",
+          "source_reference": "Graph edge evidence — ruta de acceso 06",
+          "evidence_hash": "0ebdfe1995215f869afdeb862d709df0f75fcc42e6512f0d6aa50eb5d1a658d2_01",
+          "observed_at": "2026-11-14T07:50:00Z",
+          "confidence_delta": 0.775
+        },
+        {
+          "id": "a9796335-50c6-5cb5-95d2-007a763a26df",
+          "edge_id": "249caaae-0056-5141-acee-dd6bde517a89",
+          "evidence_type": "GRAPH_EDGE_EVIDENCE_07",
+          "source_reference": "Graph edge evidence — comunidad clínica 07",
+          "evidence_hash": "537665fc4dc98b1568a5a044fd89b7b1ce31c97d30ce37917c30c50060e5b348_01",
+          "observed_at": "2026-06-25T20:07:00Z",
+          "confidence_delta": 0.82
+        },
+        {
+          "id": "737561fb-bc19-5c5c-9e18-ebc43928215b",
+          "edge_id": "249caaae-0056-5141-acee-dd6bde517a89",
+          "evidence_type": "GRAPH_EDGE_EVIDENCE_08",
+          "source_reference": "Graph edge evidence — eliminación de nodo 08",
+          "evidence_hash": "0dec0a6e80c20f7fbd2ea56f555af2fe7856474ae9edbf42ea62c1d5756801bc_01",
+          "observed_at": "2026-01-09T09:24:00Z",
+          "confidence_delta": 0.865
+        }
+      ],
+      "graph_access_scopes": [
+        {
+          "id": "6036d6df-2d17-5e84-a008-c33d1e4a4228",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "scope_code": "GRAPH_ACCESS_SCOPES_01",
+          "allowed_node_types": [
+            "MOCK_001"
+          ],
+          "allowed_relationship_types": [
+            "MOCK_001"
+          ],
+          "purpose_of_use_codes": [
+            "MOCK_001"
+          ],
+          "max_hops": 1,
+          "requires_patient_context": true,
+          "state": "ACTIVE"
+        },
+        {
+          "id": "c0271c54-dc2e-54ec-b5be-d32b0e066fc2",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "scope_code": "GRAPH_ACCESS_SCOPES_02",
+          "allowed_node_types": [
+            "MOCK_002"
+          ],
+          "allowed_relationship_types": [
+            "MOCK_002"
+          ],
+          "purpose_of_use_codes": [
+            "MOCK_002"
+          ],
+          "max_hops": 2,
+          "requires_patient_context": false,
+          "state": "DRAFT"
+        },
+        {
+          "id": "36641aeb-2589-5422-bf9a-9f5b0d7be20e",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "scope_code": "GRAPH_ACCESS_SCOPES_03",
+          "allowed_node_types": [
+            "MOCK_001"
+          ],
+          "allowed_relationship_types": [
+            "MOCK_001"
+          ],
+          "purpose_of_use_codes": [
+            "MOCK_001"
+          ],
+          "max_hops": 3,
+          "requires_patient_context": true,
+          "state": "ACTIVE"
+        },
+        {
+          "id": "37089d21-f121-5bd7-9e02-84cf17994ef4",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "scope_code": "GRAPH_ACCESS_SCOPES_04",
+          "allowed_node_types": [
+            "MOCK_002"
+          ],
+          "allowed_relationship_types": [
+            "MOCK_002"
+          ],
+          "purpose_of_use_codes": [
+            "MOCK_002"
+          ],
+          "max_hops": 4,
+          "requires_patient_context": false,
+          "state": "DRAFT"
+        },
+        {
+          "id": "1ebf98d8-aa64-513b-ba2a-b5452a62111e",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "scope_code": "GRAPH_ACCESS_SCOPES_05",
+          "allowed_node_types": [
+            "MOCK_001"
+          ],
+          "allowed_relationship_types": [
+            "MOCK_001"
+          ],
+          "purpose_of_use_codes": [
+            "MOCK_001"
+          ],
+          "max_hops": 5,
+          "requires_patient_context": true,
+          "state": "ACTIVE"
+        },
+        {
+          "id": "ab4cc84c-92c2-532b-8c8f-884e5ea3a3ef",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "scope_code": "GRAPH_ACCESS_SCOPES_06",
+          "allowed_node_types": [
+            "MOCK_002"
+          ],
+          "allowed_relationship_types": [
+            "MOCK_002"
+          ],
+          "purpose_of_use_codes": [
+            "MOCK_002"
+          ],
+          "max_hops": 6,
+          "requires_patient_context": false,
+          "state": "DRAFT"
+        },
+        {
+          "id": "7cd35cad-1884-5276-9ee9-95c46dce2e78",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "scope_code": "GRAPH_ACCESS_SCOPES_07",
+          "allowed_node_types": [
+            "MOCK_001"
+          ],
+          "allowed_relationship_types": [
+            "MOCK_001"
+          ],
+          "purpose_of_use_codes": [
+            "MOCK_001"
+          ],
+          "max_hops": 7,
+          "requires_patient_context": true,
+          "state": "ACTIVE"
+        },
+        {
+          "id": "b87b249d-dcb8-5000-ae99-f3ff15dab8e5",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "scope_code": "GRAPH_ACCESS_SCOPES_08",
+          "allowed_node_types": [
+            "MOCK_002"
+          ],
+          "allowed_relationship_types": [
+            "MOCK_002"
+          ],
+          "purpose_of_use_codes": [
+            "MOCK_002"
+          ],
+          "max_hops": 8,
+          "requires_patient_context": false,
+          "state": "DRAFT"
+        },
+        {
+          "id": "665e8e4e-5c11-5135-a753-0425bfc43600",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "scope_code": "GRAPH_ACCESS_SCOPES_008",
+          "allowed_node_types": [
+            "MOCK_001"
+          ],
+          "allowed_relationship_types": [
+            "MOCK_001"
+          ],
+          "purpose_of_use_codes": [
+            "MOCK_001"
+          ],
+          "max_hops": 1,
+          "requires_patient_context": true,
+          "state": "rejected"
+        },
+        {
+          "id": "97ab08a1-df62-5f8d-9fcf-d4e56d05cdd0",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "scope_code": "GRAPH_ACCESS_SCOPES_009",
+          "allowed_node_types": [
+            "MOCK_002"
+          ],
+          "allowed_relationship_types": [
+            "MOCK_002"
+          ],
+          "purpose_of_use_codes": [
+            "MOCK_002"
+          ],
+          "max_hops": 2,
+          "requires_patient_context": false,
+          "state": "retrying"
+        },
+        {
+          "id": "6fa3e1bf-168a-577d-af83-983d5dd212ce",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "scope_code": "GRAPH_ACCESS_SCOPES_010",
+          "allowed_node_types": [
+            "MOCK_001"
+          ],
+          "allowed_relationship_types": [
+            "MOCK_001"
+          ],
+          "purpose_of_use_codes": [
+            "MOCK_001"
+          ],
+          "max_hops": 3,
+          "requires_patient_context": true,
+          "state": "active"
+        },
+        {
+          "id": "df9236f9-4bac-532c-9c7f-e3939a4f4055",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "scope_code": "GRAPH_ACCESS_SCOPES_011",
+          "allowed_node_types": [
+            "MOCK_002"
+          ],
+          "allowed_relationship_types": [
+            "MOCK_002"
+          ],
+          "purpose_of_use_codes": [
+            "MOCK_002"
+          ],
+          "max_hops": 4,
+          "requires_patient_context": false,
+          "state": "pending"
+        },
+        {
+          "id": "ff82f50c-17b5-5e3b-a388-2966250638ec",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "scope_code": "GRAPH_ACCESS_SCOPES_012",
+          "allowed_node_types": [
+            "MOCK_001"
+          ],
+          "allowed_relationship_types": [
+            "MOCK_001"
+          ],
+          "purpose_of_use_codes": [
+            "MOCK_001"
+          ],
+          "max_hops": 5,
+          "requires_patient_context": true,
+          "state": "in_progress"
+        },
+        {
+          "id": "e1a0b255-48ad-5ea5-9e37-f98aba2edc4b",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "scope_code": "GRAPH_ACCESS_SCOPES_013",
+          "allowed_node_types": [
+            "MOCK_002"
+          ],
+          "allowed_relationship_types": [
+            "MOCK_002"
+          ],
+          "purpose_of_use_codes": [
+            "MOCK_002"
+          ],
+          "max_hops": 6,
+          "requires_patient_context": false,
+          "state": "completed"
+        },
+        {
+          "id": "d82e7f43-88ec-577c-b2e0-f667e0d2ae8c",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "scope_code": "GRAPH_ACCESS_SCOPES_014",
+          "allowed_node_types": [
+            "MOCK_001"
+          ],
+          "allowed_relationship_types": [
+            "MOCK_001"
+          ],
+          "purpose_of_use_codes": [
+            "MOCK_001"
+          ],
+          "max_hops": 7,
+          "requires_patient_context": true,
+          "state": "failed"
+        },
+        {
+          "id": "1d6c4744-fc07-57ff-a498-376ddeef0880",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "scope_code": "GRAPH_ACCESS_SCOPES_015",
+          "allowed_node_types": [
+            "MOCK_002"
+          ],
+          "allowed_relationship_types": [
+            "MOCK_002"
+          ],
+          "purpose_of_use_codes": [
+            "MOCK_002"
+          ],
+          "max_hops": 8,
+          "requires_patient_context": false,
+          "state": "cancelled"
+        }
+      ],
+      "graph_projection_definitions": [
+        {
+          "id": "8a278cb0-5dfb-5d6b-aaf9-5309c460d697",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "code": "GRAPH_PROJECTION_DEFINITIONS_01",
+          "source_dataset_codes": [
+            "MOCK_001"
+          ],
+          "node_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 0,
+            "ref": "13d03531-f5fb-56b0-b47c-a9f26fa04a13",
+            "status": "active",
+            "amount": 120.0,
+            "currency": "BOB",
+            "occurred_at": "2026-04-06T06:09:00Z"
+          },
+          "edge_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 0,
+            "ref": "13d03531-f5fb-56b0-b47c-a9f26fa04a13",
+            "status": "active",
+            "amount": 120.0,
+            "currency": "BOB",
+            "occurred_at": "2026-04-06T06:09:00Z"
+          },
+          "projection_version": "1.0.0",
+          "state": "ACTIVE"
+        },
+        {
+          "id": "5bb5a7ce-7b2a-5283-9ed7-0fcdeac4a39b",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "code": "GRAPH_PROJECTION_DEFINITIONS_02",
+          "source_dataset_codes": [
+            "MOCK_002"
+          ],
+          "node_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 1,
+            "ref": "0bf995cd-aeff-5428-af48-ed52bacb7da5",
+            "status": "pending",
+            "amount": 257.25,
+            "currency": "BOB",
+            "occurred_at": "2026-11-17T19:26:00Z"
+          },
+          "edge_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 1,
+            "ref": "0bf995cd-aeff-5428-af48-ed52bacb7da5",
+            "status": "pending",
+            "amount": 257.25,
+            "currency": "BOB",
+            "occurred_at": "2026-11-17T19:26:00Z"
+          },
+          "projection_version": "1.0.0",
+          "state": "DRAFT"
+        },
+        {
+          "id": "2fac9d37-5e6e-5531-a9f8-e0de4b682d15",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "code": "GRAPH_PROJECTION_DEFINITIONS_03",
+          "source_dataset_codes": [
+            "MOCK_001"
+          ],
+          "node_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 2,
+            "ref": "c9fbfdb2-d161-5ffe-9e40-0e49e2e48a95",
+            "status": "in_progress",
+            "amount": 394.5,
+            "currency": "BOB",
+            "occurred_at": "2026-06-01T08:43:00Z"
+          },
+          "edge_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 2,
+            "ref": "c9fbfdb2-d161-5ffe-9e40-0e49e2e48a95",
+            "status": "in_progress",
+            "amount": 394.5,
+            "currency": "BOB",
+            "occurred_at": "2026-06-01T08:43:00Z"
+          },
+          "projection_version": "1.0.0",
+          "state": "ACTIVE"
+        },
+        {
+          "id": "16d3ae48-6a2d-5cda-a9d8-2de64a1c18f8",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "code": "GRAPH_PROJECTION_DEFINITIONS_04",
+          "source_dataset_codes": [
+            "MOCK_002"
+          ],
+          "node_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 3,
+            "ref": "dee9254f-566d-526d-930a-8a286a833a19",
+            "status": "completed",
+            "amount": 531.75,
+            "currency": "BOB",
+            "occurred_at": "2026-01-12T21:00:00Z"
+          },
+          "edge_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 3,
+            "ref": "dee9254f-566d-526d-930a-8a286a833a19",
+            "status": "completed",
+            "amount": 531.75,
+            "currency": "BOB",
+            "occurred_at": "2026-01-12T21:00:00Z"
+          },
+          "projection_version": "1.0.0",
+          "state": "DRAFT"
+        },
+        {
+          "id": "4e6ba616-7cd0-50ae-9e2b-516dbf3fb4c9",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "code": "GRAPH_PROJECTION_DEFINITIONS_05",
+          "source_dataset_codes": [
+            "MOCK_001"
+          ],
+          "node_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 4,
+            "ref": "c8473a96-dc8e-55dc-a606-d0853658ddf4",
+            "status": "failed",
+            "amount": 668.0,
+            "currency": "BOB",
+            "occurred_at": "2026-08-23T10:17:00Z"
+          },
+          "edge_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 4,
+            "ref": "c8473a96-dc8e-55dc-a606-d0853658ddf4",
+            "status": "failed",
+            "amount": 668.0,
+            "currency": "BOB",
+            "occurred_at": "2026-08-23T10:17:00Z"
+          },
+          "projection_version": "1.0.0",
+          "state": "ACTIVE"
+        },
+        {
+          "id": "2cec38e0-11be-50b4-8b29-649b225afb2b",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "code": "GRAPH_PROJECTION_DEFINITIONS_06",
+          "source_dataset_codes": [
+            "MOCK_002"
+          ],
+          "node_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 5,
+            "ref": "874451ec-6bde-5ec1-96e1-bb8a176863c5",
+            "status": "cancelled",
+            "amount": 805.25,
+            "currency": "BOB",
+            "occurred_at": "2026-03-07T23:34:00Z"
+          },
+          "edge_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 5,
+            "ref": "874451ec-6bde-5ec1-96e1-bb8a176863c5",
+            "status": "cancelled",
+            "amount": 805.25,
+            "currency": "BOB",
+            "occurred_at": "2026-03-07T23:34:00Z"
+          },
+          "projection_version": "1.0.0",
+          "state": "DRAFT"
+        },
+        {
+          "id": "04bbf325-9240-587f-83c0-223bc85b2ea3",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "code": "GRAPH_PROJECTION_DEFINITIONS_07",
+          "source_dataset_codes": [
+            "MOCK_001"
+          ],
+          "node_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 6,
+            "ref": "7c8a06b6-2256-5fac-b32d-8c64fd439c8d",
+            "status": "on_hold",
+            "amount": 942.5,
+            "currency": "BOB",
+            "occurred_at": "2026-10-18T12:51:00Z"
+          },
+          "edge_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 6,
+            "ref": "7c8a06b6-2256-5fac-b32d-8c64fd439c8d",
+            "status": "on_hold",
+            "amount": 942.5,
+            "currency": "BOB",
+            "occurred_at": "2026-10-18T12:51:00Z"
+          },
+          "projection_version": "1.0.0",
+          "state": "ACTIVE"
+        },
+        {
+          "id": "3765e34d-a9d8-5b8c-9a8f-19bd2692b8d9",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "code": "GRAPH_PROJECTION_DEFINITIONS_08",
+          "source_dataset_codes": [
+            "MOCK_002"
+          ],
+          "node_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 7,
+            "ref": "6e51f233-bf38-5e62-9917-4421127c3f9f",
+            "status": "approved",
+            "amount": 179.75,
+            "currency": "BOB",
+            "occurred_at": "2026-05-02T01:08:00Z"
+          },
+          "edge_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 7,
+            "ref": "6e51f233-bf38-5e62-9917-4421127c3f9f",
+            "status": "approved",
+            "amount": 179.75,
+            "currency": "BOB",
+            "occurred_at": "2026-05-02T01:08:00Z"
+          },
+          "projection_version": "1.0.0",
+          "state": "DRAFT"
+        },
+        {
+          "id": "9a7c14a2-59f2-5246-9508-9c8bba5211cb",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "code": "GRAPH_PROJECTION_DEFINITIONS_008",
+          "source_dataset_codes": [
+            "MOCK_001"
+          ],
+          "node_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 8,
+            "ref": "8f3dee43-7014-5e0d-acae-7cffa6b4e00a",
+            "status": "rejected",
+            "amount": 316.0,
+            "currency": "BOB",
+            "occurred_at": "2026-12-13T14:25:00Z"
+          },
+          "edge_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 8,
+            "ref": "8f3dee43-7014-5e0d-acae-7cffa6b4e00a",
+            "status": "rejected",
+            "amount": 316.0,
+            "currency": "BOB",
+            "occurred_at": "2026-12-13T14:25:00Z"
+          },
+          "projection_version": "1.0.0",
+          "state": "rejected"
+        },
+        {
+          "id": "0dcd4737-eb30-5885-a803-d975f29b7ddd",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "code": "GRAPH_PROJECTION_DEFINITIONS_009",
+          "source_dataset_codes": [
+            "MOCK_002"
+          ],
+          "node_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 9,
+            "ref": "e66c7e49-1132-50bc-b0e3-e6147d5a8044",
+            "status": "retrying",
+            "amount": 453.25,
+            "currency": "BOB",
+            "occurred_at": "2026-07-24T03:42:00Z"
+          },
+          "edge_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 9,
+            "ref": "e66c7e49-1132-50bc-b0e3-e6147d5a8044",
+            "status": "retrying",
+            "amount": 453.25,
+            "currency": "BOB",
+            "occurred_at": "2026-07-24T03:42:00Z"
+          },
+          "projection_version": "1.0.0",
+          "state": "retrying"
+        },
+        {
+          "id": "7daca7de-5815-5396-ab16-4ebaba4ff902",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "code": "GRAPH_PROJECTION_DEFINITIONS_010",
+          "source_dataset_codes": [
+            "MOCK_001"
+          ],
+          "node_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 10,
+            "ref": "dc3bb287-d4f1-529d-9905-cef3f4e3b894",
+            "status": "active",
+            "amount": 590.5,
+            "currency": "BOB",
+            "occurred_at": "2026-02-08T16:59:00Z"
+          },
+          "edge_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 10,
+            "ref": "dc3bb287-d4f1-529d-9905-cef3f4e3b894",
+            "status": "active",
+            "amount": 590.5,
+            "currency": "BOB",
+            "occurred_at": "2026-02-08T16:59:00Z"
+          },
+          "projection_version": "1.0.0",
+          "state": "active"
+        },
+        {
+          "id": "d3a11ed8-99df-5832-b7c7-8c3e0c8f8406",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "code": "GRAPH_PROJECTION_DEFINITIONS_011",
+          "source_dataset_codes": [
+            "MOCK_002"
+          ],
+          "node_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 11,
+            "ref": "269121fb-b7fc-5e96-abcb-3d821c59864d",
+            "status": "pending",
+            "amount": 727.75,
+            "currency": "BOB",
+            "occurred_at": "2026-09-19T05:16:00Z"
+          },
+          "edge_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 11,
+            "ref": "269121fb-b7fc-5e96-abcb-3d821c59864d",
+            "status": "pending",
+            "amount": 727.75,
+            "currency": "BOB",
+            "occurred_at": "2026-09-19T05:16:00Z"
+          },
+          "projection_version": "1.0.0",
+          "state": "pending"
+        },
+        {
+          "id": "0df21bc6-23dd-5e8f-9d9b-aee6bdd095af",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "code": "GRAPH_PROJECTION_DEFINITIONS_012",
+          "source_dataset_codes": [
+            "MOCK_001"
+          ],
+          "node_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 12,
+            "ref": "216925ac-96fc-5de3-b989-93e723a58369",
+            "status": "in_progress",
+            "amount": 864.0,
+            "currency": "BOB",
+            "occurred_at": "2026-04-03T18:33:00Z"
+          },
+          "edge_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 12,
+            "ref": "216925ac-96fc-5de3-b989-93e723a58369",
+            "status": "in_progress",
+            "amount": 864.0,
+            "currency": "BOB",
+            "occurred_at": "2026-04-03T18:33:00Z"
+          },
+          "projection_version": "1.0.0",
+          "state": "in_progress"
+        },
+        {
+          "id": "725c9140-ea2a-557b-be5e-5c503bf41df2",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "code": "GRAPH_PROJECTION_DEFINITIONS_013",
+          "source_dataset_codes": [
+            "MOCK_002"
+          ],
+          "node_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 13,
+            "ref": "1a1e5ed2-8bcd-5a0f-9c25-76233268c4c0",
+            "status": "completed",
+            "amount": 1001.25,
+            "currency": "BOB",
+            "occurred_at": "2026-11-14T07:50:00Z"
+          },
+          "edge_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 13,
+            "ref": "1a1e5ed2-8bcd-5a0f-9c25-76233268c4c0",
+            "status": "completed",
+            "amount": 1001.25,
+            "currency": "BOB",
+            "occurred_at": "2026-11-14T07:50:00Z"
+          },
+          "projection_version": "1.0.0",
+          "state": "completed"
+        },
+        {
+          "id": "508b2135-686f-5482-903a-337b353fb1ae",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "code": "GRAPH_PROJECTION_DEFINITIONS_014",
+          "source_dataset_codes": [
+            "MOCK_001"
+          ],
+          "node_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 14,
+            "ref": "98b687ed-f9b6-5f4d-a016-1768b242bb13",
+            "status": "failed",
+            "amount": 238.5,
+            "currency": "BOB",
+            "occurred_at": "2026-06-25T20:07:00Z"
+          },
+          "edge_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 14,
+            "ref": "98b687ed-f9b6-5f4d-a016-1768b242bb13",
+            "status": "failed",
+            "amount": 238.5,
+            "currency": "BOB",
+            "occurred_at": "2026-06-25T20:07:00Z"
+          },
+          "projection_version": "1.0.0",
+          "state": "failed"
+        },
+        {
+          "id": "fea61b37-9abe-5df8-98ed-3ade1c4f754e",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "code": "GRAPH_PROJECTION_DEFINITIONS_015",
+          "source_dataset_codes": [
+            "MOCK_002"
+          ],
+          "node_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 15,
+            "ref": "ff357088-f178-53bf-a73d-ed187e54a70d",
+            "status": "cancelled",
+            "amount": 375.75,
+            "currency": "BOB",
+            "occurred_at": "2026-01-09T09:24:00Z"
+          },
+          "edge_mapping_rules": {
+            "module": "graph_intelligence",
+            "entity": "graph_projection_definitions",
+            "seq": 15,
+            "ref": "ff357088-f178-53bf-a73d-ed187e54a70d",
+            "status": "cancelled",
+            "amount": 375.75,
+            "currency": "BOB",
+            "occurred_at": "2026-01-09T09:24:00Z"
+          },
+          "projection_version": "1.0.0",
+          "state": "cancelled"
+        }
+      ],
+      "graph_projection_runs": [
+        {
+          "id": "ca6b151f-1061-5c67-9e24-b9c0450654da",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "graph_projection_definition_id": "ebf2a9c0-902a-5a66-b8ef-f868b7f158b0",
+          "status": "ACTIVE",
+          "source_checkpoint": "Graph projection runs — relación paciente-profesional 01",
+          "nodes_written": 1,
+          "edges_written": 1,
+          "started_at": "2026-09-03T08:47:00Z",
+          "completed_at": "2026-09-03T10:47:00Z"
+        },
+        {
+          "id": "1acaf7f3-5208-5bab-aeb0-38adf3f939ed",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "graph_projection_definition_id": "ebf2a9c0-902a-5a66-b8ef-f868b7f158b0",
+          "status": "DRAFT",
+          "source_checkpoint": "Graph projection runs — red de organización 02",
+          "nodes_written": 2,
+          "edges_written": 2,
+          "started_at": "2026-09-08T08:58:00Z",
+          "completed_at": "2026-09-08T11:58:00Z"
+        },
+        {
+          "id": "5aa96a8f-f4f4-56cc-b41d-d0aac5d000bc",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "graph_projection_definition_id": "ebf2a9c0-902a-5a66-b8ef-f868b7f158b0",
+          "status": "ACTIVE",
+          "source_checkpoint": "Graph projection runs — beneficiario-aseguradora 03",
+          "nodes_written": 3,
+          "edges_written": 3,
+          "started_at": "2026-09-13T09:09:00Z",
+          "completed_at": "2026-09-13T13:09:00Z"
+        },
+        {
+          "id": "12e1d5cf-eda2-53d9-8e1b-e33e23c5290d",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "graph_projection_definition_id": "ebf2a9c0-902a-5a66-b8ef-f868b7f158b0",
+          "status": "DRAFT",
+          "source_checkpoint": "Graph projection runs — proveedor-contrato 04",
+          "nodes_written": 4,
+          "edges_written": 4,
+          "started_at": "2026-09-18T09:20:00Z",
+          "completed_at": "2026-09-18T14:20:00Z"
+        },
+        {
+          "id": "e66766de-d7c5-511a-aa46-22b0499d59e5",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "graph_projection_definition_id": "ebf2a9c0-902a-5a66-b8ef-f868b7f158b0",
+          "status": "ACTIVE",
+          "source_checkpoint": "Graph projection runs — riesgo de fraude 05",
+          "nodes_written": 5,
+          "edges_written": 5,
+          "started_at": "2026-09-23T09:31:00Z",
+          "completed_at": "2026-09-23T15:31:00Z"
+        },
+        {
+          "id": "f63cfb2b-12e5-549c-8590-81614785f58e",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "graph_projection_definition_id": "ebf2a9c0-902a-5a66-b8ef-f868b7f158b0",
+          "status": "DRAFT",
+          "source_checkpoint": "Graph projection runs — ruta de acceso 06",
+          "nodes_written": 6,
+          "edges_written": 6,
+          "started_at": "2026-09-28T09:42:00Z",
+          "completed_at": "2026-09-28T11:42:00Z"
+        },
+        {
+          "id": "5f4bf4d1-d0f3-54fe-9433-80fedb5c4f64",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "graph_projection_definition_id": "ebf2a9c0-902a-5a66-b8ef-f868b7f158b0",
+          "status": "ACTIVE",
+          "source_checkpoint": "Graph projection runs — comunidad clínica 07",
+          "nodes_written": 7,
+          "edges_written": 7,
+          "started_at": "2026-10-03T09:53:00Z",
+          "completed_at": "2026-10-03T12:53:00Z"
+        },
+        {
+          "id": "b22faf58-f8f5-551d-b5f5-b04702770615",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "graph_projection_definition_id": "ebf2a9c0-902a-5a66-b8ef-f868b7f158b0",
+          "status": "DRAFT",
+          "source_checkpoint": "Graph projection runs — eliminación de nodo 08",
+          "nodes_written": 8,
+          "edges_written": 8,
+          "started_at": "2026-10-08T10:04:00Z",
+          "completed_at": "2026-10-08T14:04:00Z"
+        },
+        {
+          "id": "d74ba6d7-182b-5496-bc91-cc54547ed719",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "graph_projection_definition_id": "ebf2a9c0-902a-5a66-b8ef-f868b7f158b0",
+          "status": "rejected",
+          "source_checkpoint": "Graph projection runs — relación paciente-profesional 01",
+          "nodes_written": 1,
+          "edges_written": 1,
+          "started_at": "2026-12-13T14:25:00Z",
+          "completed_at": "2026-12-13T14:25:00Z"
+        },
+        {
+          "id": "ea2b24d9-8d9b-5d7b-9dff-942e58de65f8",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "graph_projection_definition_id": "ebf2a9c0-902a-5a66-b8ef-f868b7f158b0",
+          "status": "retrying",
+          "source_checkpoint": "Graph projection runs — red de organización 02",
+          "nodes_written": 2,
+          "edges_written": 2,
+          "started_at": "2026-07-24T03:42:00Z",
+          "completed_at": "2026-07-24T03:42:00Z"
+        },
+        {
+          "id": "948b49b6-5692-5826-932c-fea12b91356a",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "graph_projection_definition_id": "ebf2a9c0-902a-5a66-b8ef-f868b7f158b0",
+          "status": "active",
+          "source_checkpoint": "Graph projection runs — beneficiario-aseguradora 03",
+          "nodes_written": 3,
+          "edges_written": 3,
+          "started_at": "2026-02-08T16:59:00Z",
+          "completed_at": "2026-02-08T16:59:00Z"
+        },
+        {
+          "id": "101eb972-9eca-5b03-b3c3-7b88ccf3c609",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "graph_projection_definition_id": "ebf2a9c0-902a-5a66-b8ef-f868b7f158b0",
+          "status": "pending",
+          "source_checkpoint": "Graph projection runs — proveedor-contrato 04",
+          "nodes_written": 4,
+          "edges_written": 4,
+          "started_at": "2026-09-19T05:16:00Z",
+          "completed_at": "2026-09-19T05:16:00Z"
+        },
+        {
+          "id": "1fd97d4f-38a7-5602-8d67-537b885c2c50",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "graph_projection_definition_id": "ebf2a9c0-902a-5a66-b8ef-f868b7f158b0",
+          "status": "in_progress",
+          "source_checkpoint": "Graph projection runs — riesgo de fraude 05",
+          "nodes_written": 5,
+          "edges_written": 5,
+          "started_at": "2026-04-03T18:33:00Z",
+          "completed_at": "2026-04-03T18:33:00Z"
+        },
+        {
+          "id": "b461742c-7422-5329-a5cd-67aae06a4665",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "graph_projection_definition_id": "ebf2a9c0-902a-5a66-b8ef-f868b7f158b0",
+          "status": "completed",
+          "source_checkpoint": "Graph projection runs — ruta de acceso 06",
+          "nodes_written": 6,
+          "edges_written": 6,
+          "started_at": "2026-11-14T07:50:00Z",
+          "completed_at": "2026-11-14T07:50:00Z"
+        },
+        {
+          "id": "0a11a350-e98c-5f52-b1f5-29f15d49e0cd",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "graph_projection_definition_id": "ebf2a9c0-902a-5a66-b8ef-f868b7f158b0",
+          "status": "failed",
+          "source_checkpoint": "Graph projection runs — comunidad clínica 07",
+          "nodes_written": 7,
+          "edges_written": 7,
+          "started_at": "2026-06-25T20:07:00Z",
+          "completed_at": "2026-06-25T20:07:00Z"
+        },
+        {
+          "id": "483f103f-35cc-5896-92e2-0149ca37fe9a",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "graph_projection_definition_id": "ebf2a9c0-902a-5a66-b8ef-f868b7f158b0",
+          "status": "cancelled",
+          "source_checkpoint": "Graph projection runs — eliminación de nodo 08",
+          "nodes_written": 8,
+          "edges_written": 8,
+          "started_at": "2026-01-09T09:24:00Z",
+          "completed_at": "2026-01-09T09:24:00Z"
+        }
+      ],
+      "graph_risk_scores": [
+        {
+          "id": "7e7081fe-0794-500f-baa2-8c7a827efc6f",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "risk_type": "GRAPH_RISK_SCORES_01",
+          "score": 0.55,
+          "model_version": "1.0.0",
+          "explanation_redacted": "Graph risk scores — relación paciente-profesional 01",
+          "calculated_at": "2026-09-03T08:54:00Z",
+          "expires_at": "2026-09-03T10:54:00Z"
+        },
+        {
+          "id": "5ffae753-87b6-52b7-8c34-5f2a6b3f43ba",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "risk_type": "GRAPH_RISK_SCORES_02",
+          "score": 0.595,
+          "model_version": "1.0.0",
+          "explanation_redacted": "Graph risk scores — red de organización 02",
+          "calculated_at": "2026-09-08T09:05:00Z",
+          "expires_at": "2026-09-08T12:05:00Z"
+        },
+        {
+          "id": "26470fab-9da8-5847-b8f3-da54420ae254",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "risk_type": "GRAPH_RISK_SCORES_03",
+          "score": 0.64,
+          "model_version": "1.0.0",
+          "explanation_redacted": "Graph risk scores — beneficiario-aseguradora 03",
+          "calculated_at": "2026-09-13T09:16:00Z",
+          "expires_at": "2026-09-13T13:16:00Z"
+        },
+        {
+          "id": "78ab7938-faf7-5559-b1f4-4d87148014ef",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "risk_type": "GRAPH_RISK_SCORES_04",
+          "score": 0.685,
+          "model_version": "1.0.0",
+          "explanation_redacted": "Graph risk scores — proveedor-contrato 04",
+          "calculated_at": "2026-09-18T09:27:00Z",
+          "expires_at": "2026-09-18T14:27:00Z"
+        },
+        {
+          "id": "a5700f35-faef-5838-a740-fcd03eabcf6c",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "risk_type": "GRAPH_RISK_SCORES_05",
+          "score": 0.73,
+          "model_version": "1.0.0",
+          "explanation_redacted": "Graph risk scores — riesgo de fraude 05",
+          "calculated_at": "2026-09-23T09:38:00Z",
+          "expires_at": "2026-09-23T15:38:00Z"
+        },
+        {
+          "id": "a947db05-ea57-556e-a9ff-eea069c78e9d",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "risk_type": "GRAPH_RISK_SCORES_06",
+          "score": 0.775,
+          "model_version": "1.0.0",
+          "explanation_redacted": "Graph risk scores — ruta de acceso 06",
+          "calculated_at": "2026-09-28T09:49:00Z",
+          "expires_at": "2026-09-28T11:49:00Z"
+        },
+        {
+          "id": "a79432a9-a9cd-563d-836f-c5f397a55dd9",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "risk_type": "GRAPH_RISK_SCORES_07",
+          "score": 0.82,
+          "model_version": "1.0.0",
+          "explanation_redacted": "Graph risk scores — comunidad clínica 07",
+          "calculated_at": "2026-10-03T10:00:00Z",
+          "expires_at": "2026-10-03T13:00:00Z"
+        },
+        {
+          "id": "fc6f220b-471c-56ae-82ff-5799e4084a73",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "risk_type": "GRAPH_RISK_SCORES_08",
+          "score": 0.865,
+          "model_version": "1.0.0",
+          "explanation_redacted": "Graph risk scores — eliminación de nodo 08",
+          "calculated_at": "2026-10-08T10:11:00Z",
+          "expires_at": "2026-10-08T14:11:00Z"
+        },
+        {
+          "id": "8e7a17fe-437a-5b70-b0f6-4a9e6d6679a1",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "risk_type": "GRAPH_RISK_SCORES_01",
+          "score": 196.55,
+          "model_version": "1.0.0_01",
+          "explanation_redacted": "Graph risk scores — relación paciente-profesional 01",
+          "calculated_at": "2026-12-13T14:25:00Z",
+          "expires_at": "2026-12-13T14:25:00Z"
+        },
+        {
+          "id": "7d7e7ba4-f4a9-55ab-bf61-73d22a24a5a4",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "risk_type": "GRAPH_RISK_SCORES_02",
+          "score": 333.85,
+          "model_version": "1.0.0_01",
+          "explanation_redacted": "Graph risk scores — red de organización 02",
+          "calculated_at": "2026-07-24T03:42:00Z",
+          "expires_at": "2026-07-24T03:42:00Z"
+        },
+        {
+          "id": "df27ccdd-3284-5225-ad5a-db169d6440d3",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "risk_type": "GRAPH_RISK_SCORES_03",
+          "score": 471.14,
+          "model_version": "1.0.0_01",
+          "explanation_redacted": "Graph risk scores — beneficiario-aseguradora 03",
+          "calculated_at": "2026-02-08T16:59:00Z",
+          "expires_at": "2026-02-08T16:59:00Z"
+        },
+        {
+          "id": "4b8282fc-8de2-5ad6-92f2-3ea9105197e6",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "risk_type": "GRAPH_RISK_SCORES_04",
+          "score": 608.43,
+          "model_version": "1.0.0_01",
+          "explanation_redacted": "Graph risk scores — proveedor-contrato 04",
+          "calculated_at": "2026-09-19T05:16:00Z",
+          "expires_at": "2026-09-19T05:16:00Z"
+        },
+        {
+          "id": "b8095974-0d3e-5070-83b3-8214f9532f6d",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "risk_type": "GRAPH_RISK_SCORES_05",
+          "score": 744.73,
+          "model_version": "1.0.0_01",
+          "explanation_redacted": "Graph risk scores — riesgo de fraude 05",
+          "calculated_at": "2026-04-03T18:33:00Z",
+          "expires_at": "2026-04-03T18:33:00Z"
+        },
+        {
+          "id": "a0873611-4b7d-592c-bb4e-7a8ccdc367ef",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "risk_type": "GRAPH_RISK_SCORES_06",
+          "score": 882.02,
+          "model_version": "1.0.0_01",
+          "explanation_redacted": "Graph risk scores — ruta de acceso 06",
+          "calculated_at": "2026-11-14T07:50:00Z",
+          "expires_at": "2026-11-14T07:50:00Z"
+        },
+        {
+          "id": "638bedb8-0a9e-5068-bfb8-15a36fdae75f",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "risk_type": "GRAPH_RISK_SCORES_07",
+          "score": 119.32,
+          "model_version": "1.0.0_01",
+          "explanation_redacted": "Graph risk scores — comunidad clínica 07",
+          "calculated_at": "2026-06-25T20:07:00Z",
+          "expires_at": "2026-06-25T20:07:00Z"
+        },
+        {
+          "id": "af7dbbf2-d899-587b-9440-905119f6d0bc",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "node_id": "e7060ca6-6a68-5489-9e84-03812a86491b",
+          "risk_type": "GRAPH_RISK_SCORES_08",
+          "score": 256.62,
+          "model_version": "1.0.0_01",
+          "explanation_redacted": "Graph risk scores — eliminación de nodo 08",
+          "calculated_at": "2026-01-09T09:24:00Z",
+          "expires_at": "2026-01-09T09:24:00Z"
+        }
+      ],
+      "graph_path_cache": [
+        {
+          "id": "92465e2a-f145-5d93-9c3c-bf09c2fe62cf",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "start_node_id": "b7601b0f-951d-52c3-9a3d-8af316815382",
+          "end_node_id": "d6703605-ebb6-5bce-ad10-4b6736351779",
+          "relationship_filter_hash": "5792b16b688b74c47441aa03d2dd704e11868581163fe3149ade10caf2e1cc2b",
+          "max_hops": 1,
+          "path_nodes": [
+            "46b46f4d-99ff-5c3a-b125-7eea695e46e4"
+          ],
+          "path_edges": [
+            "140a05cc-6b85-5609-83d2-d39319756933"
+          ],
+          "calculated_at": "2026-09-03T09:01:00Z",
+          "expires_at": "2026-09-03T11:01:00Z"
+        },
+        {
+          "id": "0f50db51-fb00-519e-a522-91405d603068",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "start_node_id": "b7601b0f-951d-52c3-9a3d-8af316815382",
+          "end_node_id": "d6703605-ebb6-5bce-ad10-4b6736351779",
+          "relationship_filter_hash": "7f28a0991845f0636ed8f94de88b40d3841f927b23ed0775e56ce812ed2e45ef",
+          "max_hops": 2,
+          "path_nodes": [
+            "51a6a495-6709-57ef-ab07-0b130fa3d099"
+          ],
+          "path_edges": [
+            "84946d35-6d85-5454-9da9-2a9eab314b68"
+          ],
+          "calculated_at": "2026-09-08T09:12:00Z",
+          "expires_at": "2026-09-08T12:12:00Z"
+        },
+        {
+          "id": "132119b7-7c86-5c03-a033-e445e7213144",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "start_node_id": "b7601b0f-951d-52c3-9a3d-8af316815382",
+          "end_node_id": "d6703605-ebb6-5bce-ad10-4b6736351779",
+          "relationship_filter_hash": "ee2b02576c1ab9fb29536a5df49bfc4116837311c3a8e4ab0aeafbd01e4cbccb",
+          "max_hops": 3,
+          "path_nodes": [
+            "46b46f4d-99ff-5c3a-b125-7eea695e46e4"
+          ],
+          "path_edges": [
+            "140a05cc-6b85-5609-83d2-d39319756933"
+          ],
+          "calculated_at": "2026-09-13T09:23:00Z",
+          "expires_at": "2026-09-13T13:23:00Z"
+        },
+        {
+          "id": "c814bc16-268e-5dbe-9984-6b4a11ffb4a5",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "start_node_id": "b7601b0f-951d-52c3-9a3d-8af316815382",
+          "end_node_id": "d6703605-ebb6-5bce-ad10-4b6736351779",
+          "relationship_filter_hash": "e6b37e356be0a5a8b19b24636b9ae7f61e7f7e07669267a7ddc4e9befd7b613a",
+          "max_hops": 4,
+          "path_nodes": [
+            "51a6a495-6709-57ef-ab07-0b130fa3d099"
+          ],
+          "path_edges": [
+            "84946d35-6d85-5454-9da9-2a9eab314b68"
+          ],
+          "calculated_at": "2026-09-18T09:34:00Z",
+          "expires_at": "2026-09-18T14:34:00Z"
+        },
+        {
+          "id": "9f8e9bd1-f19f-5586-aa45-67b4197c3212",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "start_node_id": "b7601b0f-951d-52c3-9a3d-8af316815382",
+          "end_node_id": "d6703605-ebb6-5bce-ad10-4b6736351779",
+          "relationship_filter_hash": "e54e0e530a7955e1a9464ec969b7f04e5d5e17a91139ae8d2dcc5b699fb3ad2b",
+          "max_hops": 5,
+          "path_nodes": [
+            "46b46f4d-99ff-5c3a-b125-7eea695e46e4"
+          ],
+          "path_edges": [
+            "140a05cc-6b85-5609-83d2-d39319756933"
+          ],
+          "calculated_at": "2026-09-23T09:45:00Z",
+          "expires_at": "2026-09-23T15:45:00Z"
+        },
+        {
+          "id": "56be2d19-8364-5894-9f48-c1702edca646",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "start_node_id": "b7601b0f-951d-52c3-9a3d-8af316815382",
+          "end_node_id": "d6703605-ebb6-5bce-ad10-4b6736351779",
+          "relationship_filter_hash": "fe7620c4ba4b9248ea30f27283365ce81fa3102ae4f15888d32580cbe45a998b",
+          "max_hops": 6,
+          "path_nodes": [
+            "51a6a495-6709-57ef-ab07-0b130fa3d099"
+          ],
+          "path_edges": [
+            "84946d35-6d85-5454-9da9-2a9eab314b68"
+          ],
+          "calculated_at": "2026-09-28T09:56:00Z",
+          "expires_at": "2026-09-28T11:56:00Z"
+        },
+        {
+          "id": "4b1576e5-561b-5627-a652-3d28c47501d1",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "start_node_id": "b7601b0f-951d-52c3-9a3d-8af316815382",
+          "end_node_id": "d6703605-ebb6-5bce-ad10-4b6736351779",
+          "relationship_filter_hash": "1beef8ce0b4600c50b9ba1d681ecb64efd0b402800ec9e29f44be06681d4dabb",
+          "max_hops": 7,
+          "path_nodes": [
+            "46b46f4d-99ff-5c3a-b125-7eea695e46e4"
+          ],
+          "path_edges": [
+            "140a05cc-6b85-5609-83d2-d39319756933"
+          ],
+          "calculated_at": "2026-10-03T10:07:00Z",
+          "expires_at": "2026-10-03T13:07:00Z"
+        },
+        {
+          "id": "b9878a6e-6450-52b4-9d26-04fe4be5f498",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "start_node_id": "b7601b0f-951d-52c3-9a3d-8af316815382",
+          "end_node_id": "d6703605-ebb6-5bce-ad10-4b6736351779",
+          "relationship_filter_hash": "a58921e7681e29592ee736cb1319ab0f31e2ba541fd107158aa88e01695a2f99",
+          "max_hops": 8,
+          "path_nodes": [
+            "51a6a495-6709-57ef-ab07-0b130fa3d099"
+          ],
+          "path_edges": [
+            "84946d35-6d85-5454-9da9-2a9eab314b68"
+          ],
+          "calculated_at": "2026-10-08T10:18:00Z",
+          "expires_at": "2026-10-08T14:18:00Z"
+        },
+        {
+          "id": "426255f3-bb6e-5da6-b8db-4c3241cd0aac",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "start_node_id": "b7601b0f-951d-52c3-9a3d-8af316815382",
+          "end_node_id": "d6703605-ebb6-5bce-ad10-4b6736351779",
+          "relationship_filter_hash": "5792b16b688b74c47441aa03d2dd704e11868581163fe3149ade10caf2e1cc2b",
+          "max_hops": 2,
+          "path_nodes": [
+            "46b46f4d-99ff-5c3a-b125-7eea695e46e4"
+          ],
+          "path_edges": [
+            "140a05cc-6b85-5609-83d2-d39319756933"
+          ],
+          "calculated_at": "2026-12-13T14:25:00Z",
+          "expires_at": "2026-12-13T14:25:00Z"
+        },
+        {
+          "id": "ae4b2824-c06c-561d-b729-8f7433971026",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "start_node_id": "b7601b0f-951d-52c3-9a3d-8af316815382",
+          "end_node_id": "d6703605-ebb6-5bce-ad10-4b6736351779",
+          "relationship_filter_hash": "7f28a0991845f0636ed8f94de88b40d3841f927b23ed0775e56ce812ed2e45ef",
+          "max_hops": 3,
+          "path_nodes": [
+            "51a6a495-6709-57ef-ab07-0b130fa3d099"
+          ],
+          "path_edges": [
+            "84946d35-6d85-5454-9da9-2a9eab314b68"
+          ],
+          "calculated_at": "2026-07-24T03:42:00Z",
+          "expires_at": "2026-07-24T03:42:00Z"
+        },
+        {
+          "id": "16d0c51d-56de-5993-b970-f93f35e6f003",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "start_node_id": "b7601b0f-951d-52c3-9a3d-8af316815382",
+          "end_node_id": "d6703605-ebb6-5bce-ad10-4b6736351779",
+          "relationship_filter_hash": "ee2b02576c1ab9fb29536a5df49bfc4116837311c3a8e4ab0aeafbd01e4cbccb",
+          "max_hops": 4,
+          "path_nodes": [
+            "46b46f4d-99ff-5c3a-b125-7eea695e46e4"
+          ],
+          "path_edges": [
+            "140a05cc-6b85-5609-83d2-d39319756933"
+          ],
+          "calculated_at": "2026-02-08T16:59:00Z",
+          "expires_at": "2026-02-08T16:59:00Z"
+        },
+        {
+          "id": "84698eb9-dc5e-52c1-a9a5-7a89ff840757",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "start_node_id": "b7601b0f-951d-52c3-9a3d-8af316815382",
+          "end_node_id": "d6703605-ebb6-5bce-ad10-4b6736351779",
+          "relationship_filter_hash": "e6b37e356be0a5a8b19b24636b9ae7f61e7f7e07669267a7ddc4e9befd7b613a",
+          "max_hops": 5,
+          "path_nodes": [
+            "51a6a495-6709-57ef-ab07-0b130fa3d099"
+          ],
+          "path_edges": [
+            "84946d35-6d85-5454-9da9-2a9eab314b68"
+          ],
+          "calculated_at": "2026-09-19T05:16:00Z",
+          "expires_at": "2026-09-19T05:16:00Z"
+        },
+        {
+          "id": "99846982-c869-53c1-8381-daaf516e9d80",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "start_node_id": "b7601b0f-951d-52c3-9a3d-8af316815382",
+          "end_node_id": "d6703605-ebb6-5bce-ad10-4b6736351779",
+          "relationship_filter_hash": "e54e0e530a7955e1a9464ec969b7f04e5d5e17a91139ae8d2dcc5b699fb3ad2b",
+          "max_hops": 6,
+          "path_nodes": [
+            "46b46f4d-99ff-5c3a-b125-7eea695e46e4"
+          ],
+          "path_edges": [
+            "140a05cc-6b85-5609-83d2-d39319756933"
+          ],
+          "calculated_at": "2026-04-03T18:33:00Z",
+          "expires_at": "2026-04-03T18:33:00Z"
+        },
+        {
+          "id": "f91375e0-c7ff-5646-9095-e29558a2ffd3",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "start_node_id": "b7601b0f-951d-52c3-9a3d-8af316815382",
+          "end_node_id": "d6703605-ebb6-5bce-ad10-4b6736351779",
+          "relationship_filter_hash": "fe7620c4ba4b9248ea30f27283365ce81fa3102ae4f15888d32580cbe45a998b",
+          "max_hops": 7,
+          "path_nodes": [
+            "51a6a495-6709-57ef-ab07-0b130fa3d099"
+          ],
+          "path_edges": [
+            "84946d35-6d85-5454-9da9-2a9eab314b68"
+          ],
+          "calculated_at": "2026-11-14T07:50:00Z",
+          "expires_at": "2026-11-14T07:50:00Z"
+        },
+        {
+          "id": "2f6cf874-80de-5b53-b380-7793e8f1ea43",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "start_node_id": "b7601b0f-951d-52c3-9a3d-8af316815382",
+          "end_node_id": "d6703605-ebb6-5bce-ad10-4b6736351779",
+          "relationship_filter_hash": "1beef8ce0b4600c50b9ba1d681ecb64efd0b402800ec9e29f44be06681d4dabb",
+          "max_hops": 8,
+          "path_nodes": [
+            "46b46f4d-99ff-5c3a-b125-7eea695e46e4"
+          ],
+          "path_edges": [
+            "140a05cc-6b85-5609-83d2-d39319756933"
+          ],
+          "calculated_at": "2026-06-25T20:07:00Z",
+          "expires_at": "2026-06-25T20:07:00Z"
+        },
+        {
+          "id": "68efb78c-9ce6-56be-90ce-296405b162ee",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "start_node_id": "b7601b0f-951d-52c3-9a3d-8af316815382",
+          "end_node_id": "d6703605-ebb6-5bce-ad10-4b6736351779",
+          "relationship_filter_hash": "a58921e7681e29592ee736cb1319ab0f31e2ba541fd107158aa88e01695a2f99",
+          "max_hops": 9,
+          "path_nodes": [
+            "51a6a495-6709-57ef-ab07-0b130fa3d099"
+          ],
+          "path_edges": [
+            "84946d35-6d85-5454-9da9-2a9eab314b68"
+          ],
+          "calculated_at": "2026-01-09T09:24:00Z",
+          "expires_at": "2026-01-09T09:24:00Z"
+        }
+      ],
+      "graph_communities": [
+        {
+          "id": "10b0b8c7-7741-5c7c-8c66-e0d5eb8599f9",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "community_type": "GRAPH_COMMUNITIES_01",
+          "algorithm_version": "1.0.0",
+          "member_node_ids": [
+            "1e21f826-079f-55e4-84c3-fc2bd786e58b"
+          ],
+          "score": 0.55,
+          "calculated_at": "2026-09-03T09:08:00Z"
+        },
+        {
+          "id": "2ec8d35c-4f45-529e-b04a-d739886444e4",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "community_type": "GRAPH_COMMUNITIES_02",
+          "algorithm_version": "1.0.0",
+          "member_node_ids": [
+            "ba0f5056-19c3-5a1d-a6a9-3a0add37545b"
+          ],
+          "score": 0.595,
+          "calculated_at": "2026-09-08T09:19:00Z"
+        },
+        {
+          "id": "4f66a2e0-814f-57f3-acc2-e6bef3e062af",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "community_type": "GRAPH_COMMUNITIES_03",
+          "algorithm_version": "1.0.0",
+          "member_node_ids": [
+            "1e21f826-079f-55e4-84c3-fc2bd786e58b"
+          ],
+          "score": 0.64,
+          "calculated_at": "2026-09-13T09:30:00Z"
+        },
+        {
+          "id": "1884f057-ba33-52b9-8773-30488d356243",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "community_type": "GRAPH_COMMUNITIES_04",
+          "algorithm_version": "1.0.0",
+          "member_node_ids": [
+            "ba0f5056-19c3-5a1d-a6a9-3a0add37545b"
+          ],
+          "score": 0.685,
+          "calculated_at": "2026-09-18T09:41:00Z"
+        },
+        {
+          "id": "eccb1641-a5e9-509c-a47d-ed7d626256e3",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "community_type": "GRAPH_COMMUNITIES_05",
+          "algorithm_version": "1.0.0",
+          "member_node_ids": [
+            "1e21f826-079f-55e4-84c3-fc2bd786e58b"
+          ],
+          "score": 0.73,
+          "calculated_at": "2026-09-23T09:52:00Z"
+        },
+        {
+          "id": "72e1792c-babc-578c-adc8-6f82d0c751bd",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "community_type": "GRAPH_COMMUNITIES_06",
+          "algorithm_version": "1.0.0",
+          "member_node_ids": [
+            "ba0f5056-19c3-5a1d-a6a9-3a0add37545b"
+          ],
+          "score": 0.775,
+          "calculated_at": "2026-09-28T10:03:00Z"
+        },
+        {
+          "id": "a9c30e0a-8cf1-58a5-a1d8-3476044e15ca",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "community_type": "GRAPH_COMMUNITIES_07",
+          "algorithm_version": "1.0.0",
+          "member_node_ids": [
+            "1e21f826-079f-55e4-84c3-fc2bd786e58b"
+          ],
+          "score": 0.82,
+          "calculated_at": "2026-10-03T10:14:00Z"
+        },
+        {
+          "id": "01662d05-8b5a-53a5-94d0-a7b704c080cb",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "community_type": "GRAPH_COMMUNITIES_08",
+          "algorithm_version": "1.0.0",
+          "member_node_ids": [
+            "ba0f5056-19c3-5a1d-a6a9-3a0add37545b"
+          ],
+          "score": 0.865,
+          "calculated_at": "2026-10-08T10:25:00Z"
+        },
+        {
+          "id": "86573959-f3c1-5590-a7bc-1660a7db5fa4",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "community_type": "GRAPH_COMMUNITIES_01",
+          "algorithm_version": "1.0.0",
+          "member_node_ids": [
+            "1e21f826-079f-55e4-84c3-fc2bd786e58b"
+          ],
+          "score": 196.55,
+          "calculated_at": "2026-12-13T14:25:00Z"
+        },
+        {
+          "id": "7d1a52c7-78d7-595b-a705-290b134faa6a",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "community_type": "GRAPH_COMMUNITIES_02",
+          "algorithm_version": "1.0.0",
+          "member_node_ids": [
+            "ba0f5056-19c3-5a1d-a6a9-3a0add37545b"
+          ],
+          "score": 333.85,
+          "calculated_at": "2026-07-24T03:42:00Z"
+        },
+        {
+          "id": "2eef3a07-b136-5a84-8904-01f0706e7a9d",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "community_type": "GRAPH_COMMUNITIES_03",
+          "algorithm_version": "1.0.0",
+          "member_node_ids": [
+            "1e21f826-079f-55e4-84c3-fc2bd786e58b"
+          ],
+          "score": 471.14,
+          "calculated_at": "2026-02-08T16:59:00Z"
+        },
+        {
+          "id": "9616d2e6-eafd-5713-8c19-896e58f83ec6",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "community_type": "GRAPH_COMMUNITIES_04",
+          "algorithm_version": "1.0.0",
+          "member_node_ids": [
+            "ba0f5056-19c3-5a1d-a6a9-3a0add37545b"
+          ],
+          "score": 608.43,
+          "calculated_at": "2026-09-19T05:16:00Z"
+        },
+        {
+          "id": "c22cf4e7-4b2c-59bc-8993-2a177b1af5ba",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "community_type": "GRAPH_COMMUNITIES_05",
+          "algorithm_version": "1.0.0",
+          "member_node_ids": [
+            "1e21f826-079f-55e4-84c3-fc2bd786e58b"
+          ],
+          "score": 744.73,
+          "calculated_at": "2026-04-03T18:33:00Z"
+        },
+        {
+          "id": "ce01d472-6388-58b4-83fc-5cb8345783f1",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "community_type": "GRAPH_COMMUNITIES_06",
+          "algorithm_version": "1.0.0",
+          "member_node_ids": [
+            "ba0f5056-19c3-5a1d-a6a9-3a0add37545b"
+          ],
+          "score": 882.02,
+          "calculated_at": "2026-11-14T07:50:00Z"
+        },
+        {
+          "id": "b68bcf80-28bd-5e61-95af-adfaf31ade45",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "community_type": "GRAPH_COMMUNITIES_07",
+          "algorithm_version": "1.0.0",
+          "member_node_ids": [
+            "1e21f826-079f-55e4-84c3-fc2bd786e58b"
+          ],
+          "score": 119.32,
+          "calculated_at": "2026-06-25T20:07:00Z"
+        },
+        {
+          "id": "b97bdc73-fe52-56a2-a301-0b8facc14ed3",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "community_type": "GRAPH_COMMUNITIES_08",
+          "algorithm_version": "1.0.0",
+          "member_node_ids": [
+            "ba0f5056-19c3-5a1d-a6a9-3a0add37545b"
+          ],
+          "score": 256.62,
+          "calculated_at": "2026-01-09T09:24:00Z"
+        }
+      ],
+      "graph_rule_definitions": [
+        {
+          "id": "0a2a8003-98da-5cfd-9021-ef1ee5b95b50",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "code": "GRAPH_RULE_DEFINITIONS_01",
+          "rule_type": "GRAPH_RULE_DEFINITIONS_01",
+          "traversal_expression": "Graph rule definitions — relación paciente-profesional 01",
+          "severity": "MEDIUM",
+          "state": "ACTIVE",
+          "version": "1.0.0"
+        },
+        {
+          "id": "63d37e81-e5aa-54ea-9eac-a9e8301b9e05",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "code": "GRAPH_RULE_DEFINITIONS_02",
+          "rule_type": "GRAPH_RULE_DEFINITIONS_02",
+          "traversal_expression": "Graph rule definitions — red de organización 02",
+          "severity": "MEDIUM",
+          "state": "DRAFT",
+          "version": "1.0.1"
+        },
+        {
+          "id": "d2b22b72-36bf-55b1-a588-a1d2c7683918",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "code": "GRAPH_RULE_DEFINITIONS_03",
+          "rule_type": "GRAPH_RULE_DEFINITIONS_03",
+          "traversal_expression": "Graph rule definitions — beneficiario-aseguradora 03",
+          "severity": "MEDIUM",
+          "state": "ACTIVE",
+          "version": "1.0.2"
+        },
+        {
+          "id": "da2a745e-7296-5690-b6b7-e1a14faa02f4",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "code": "GRAPH_RULE_DEFINITIONS_04",
+          "rule_type": "GRAPH_RULE_DEFINITIONS_04",
+          "traversal_expression": "Graph rule definitions — proveedor-contrato 04",
+          "severity": "MEDIUM",
+          "state": "DRAFT",
+          "version": "1.0.3"
+        },
+        {
+          "id": "eafc12b3-5fcd-50d3-814d-8c634c53a4da",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "code": "GRAPH_RULE_DEFINITIONS_05",
+          "rule_type": "GRAPH_RULE_DEFINITIONS_05",
+          "traversal_expression": "Graph rule definitions — riesgo de fraude 05",
+          "severity": "MEDIUM",
+          "state": "ACTIVE",
+          "version": "1.0.4"
+        },
+        {
+          "id": "66f95a0a-9fa9-56d8-884b-bc9bc0edacdc",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "code": "GRAPH_RULE_DEFINITIONS_06",
+          "rule_type": "GRAPH_RULE_DEFINITIONS_06",
+          "traversal_expression": "Graph rule definitions — ruta de acceso 06",
+          "severity": "MEDIUM",
+          "state": "DRAFT",
+          "version": "1.0.5"
+        },
+        {
+          "id": "98e82471-2534-5dcc-9df3-ce0cd709799b",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "code": "GRAPH_RULE_DEFINITIONS_07",
+          "rule_type": "GRAPH_RULE_DEFINITIONS_07",
+          "traversal_expression": "Graph rule definitions — comunidad clínica 07",
+          "severity": "MEDIUM",
+          "state": "ACTIVE",
+          "version": "1.0.6"
+        },
+        {
+          "id": "6dec8a10-b9c0-595e-88b1-41acc9b310ee",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "code": "GRAPH_RULE_DEFINITIONS_08",
+          "rule_type": "GRAPH_RULE_DEFINITIONS_08",
+          "traversal_expression": "Graph rule definitions — eliminación de nodo 08",
+          "severity": "MEDIUM",
+          "state": "DRAFT",
+          "version": "1.0.7"
+        },
+        {
+          "id": "cf336249-01b6-571a-a875-4e0c4b6fbdbd",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "code": "GRAPH_RULE_DEFINITIONS_008",
+          "rule_type": "GRAPH_RULE_DEFINITIONS_01",
+          "traversal_expression": "Graph rule definitions — relación paciente-profesional 01",
+          "severity": "MEDIUM",
+          "state": "rejected",
+          "version": "1.0.0"
+        },
+        {
+          "id": "d3dcecef-b3eb-5aa1-8cd0-d27f536b9c2a",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "code": "GRAPH_RULE_DEFINITIONS_009",
+          "rule_type": "GRAPH_RULE_DEFINITIONS_02",
+          "traversal_expression": "Graph rule definitions — red de organización 02",
+          "severity": "MEDIUM",
+          "state": "retrying",
+          "version": "1.0.1"
+        },
+        {
+          "id": "b69575ea-75ad-5248-aa39-8c36c003bb9c",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "code": "GRAPH_RULE_DEFINITIONS_010",
+          "rule_type": "GRAPH_RULE_DEFINITIONS_03",
+          "traversal_expression": "Graph rule definitions — beneficiario-aseguradora 03",
+          "severity": "MEDIUM",
+          "state": "active",
+          "version": "1.0.2"
+        },
+        {
+          "id": "37e76f77-f8db-5ce5-a227-ccd782b7802b",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "code": "GRAPH_RULE_DEFINITIONS_011",
+          "rule_type": "GRAPH_RULE_DEFINITIONS_04",
+          "traversal_expression": "Graph rule definitions — proveedor-contrato 04",
+          "severity": "MEDIUM",
+          "state": "pending",
+          "version": "1.0.3"
+        },
+        {
+          "id": "e8a059d9-1bf3-5772-bea2-854959acba56",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "code": "GRAPH_RULE_DEFINITIONS_012",
+          "rule_type": "GRAPH_RULE_DEFINITIONS_05",
+          "traversal_expression": "Graph rule definitions — riesgo de fraude 05",
+          "severity": "MEDIUM",
+          "state": "in_progress",
+          "version": "1.0.4"
+        },
+        {
+          "id": "83db15e8-7b1c-5ff5-9cf5-2c9fe114571e",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "code": "GRAPH_RULE_DEFINITIONS_013",
+          "rule_type": "GRAPH_RULE_DEFINITIONS_06",
+          "traversal_expression": "Graph rule definitions — ruta de acceso 06",
+          "severity": "MEDIUM",
+          "state": "completed",
+          "version": "1.0.5"
+        },
+        {
+          "id": "59f3c05b-9e09-5d75-a1e2-b5ad7fbd79c3",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "code": "GRAPH_RULE_DEFINITIONS_014",
+          "rule_type": "GRAPH_RULE_DEFINITIONS_07",
+          "traversal_expression": "Graph rule definitions — comunidad clínica 07",
+          "severity": "MEDIUM",
+          "state": "failed",
+          "version": "1.0.6"
+        },
+        {
+          "id": "1971dcb1-bd2e-5203-8d77-1db17961fc5b",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "code": "GRAPH_RULE_DEFINITIONS_015",
+          "rule_type": "GRAPH_RULE_DEFINITIONS_08",
+          "traversal_expression": "Graph rule definitions — eliminación de nodo 08",
+          "severity": "MEDIUM",
+          "state": "cancelled",
+          "version": "1.0.7"
+        }
+      ],
+      "graph_rule_hits": [
+        {
+          "id": "7bec1ca9-6825-5834-9a32-ade5bd5b8a71",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "graph_rule_definition_id": "9025f07f-2872-5634-a974-d6348537febd",
+          "primary_node_id": "5c233ad5-5b16-533a-b2df-8a3cb17d16e1",
+          "related_node_ids": [
+            "f2ad8c31-6aa8-56d2-948e-2e5ab7da9e28"
+          ],
+          "evidence_edge_ids": [
+            "3bd0f2ab-be09-5985-b40e-bfd2aeba1b38"
+          ],
+          "status": "ACTIVE",
+          "detected_at": "2026-09-03T09:22:00Z",
+          "resolved_at": "2026-09-03T11:22:00Z"
+        },
+        {
+          "id": "fb3c22f0-ed3f-5f01-9bbf-400ea7f25e82",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "graph_rule_definition_id": "9025f07f-2872-5634-a974-d6348537febd",
+          "primary_node_id": "5c233ad5-5b16-533a-b2df-8a3cb17d16e1",
+          "related_node_ids": [
+            "57104483-2a13-5b9c-a7ec-d61810c34c09"
+          ],
+          "evidence_edge_ids": [
+            "cd8e4a25-a5f7-5749-9693-60ef3c603fa0"
+          ],
+          "status": "DRAFT",
+          "detected_at": "2026-09-08T09:33:00Z",
+          "resolved_at": "2026-09-08T12:33:00Z"
+        },
+        {
+          "id": "90bbbc7c-d37e-5bc2-9e2a-95eb9b3854d4",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "graph_rule_definition_id": "9025f07f-2872-5634-a974-d6348537febd",
+          "primary_node_id": "5c233ad5-5b16-533a-b2df-8a3cb17d16e1",
+          "related_node_ids": [
+            "f2ad8c31-6aa8-56d2-948e-2e5ab7da9e28"
+          ],
+          "evidence_edge_ids": [
+            "3bd0f2ab-be09-5985-b40e-bfd2aeba1b38"
+          ],
+          "status": "ACTIVE",
+          "detected_at": "2026-09-13T09:44:00Z",
+          "resolved_at": "2026-09-13T13:44:00Z"
+        },
+        {
+          "id": "f4f3d2cd-cb57-5c20-adae-24ae719fb3df",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "graph_rule_definition_id": "9025f07f-2872-5634-a974-d6348537febd",
+          "primary_node_id": "5c233ad5-5b16-533a-b2df-8a3cb17d16e1",
+          "related_node_ids": [
+            "57104483-2a13-5b9c-a7ec-d61810c34c09"
+          ],
+          "evidence_edge_ids": [
+            "cd8e4a25-a5f7-5749-9693-60ef3c603fa0"
+          ],
+          "status": "DRAFT",
+          "detected_at": "2026-09-18T09:55:00Z",
+          "resolved_at": "2026-09-18T14:55:00Z"
+        },
+        {
+          "id": "99397152-78da-5ce3-b010-4103da6b62b9",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "graph_rule_definition_id": "9025f07f-2872-5634-a974-d6348537febd",
+          "primary_node_id": "5c233ad5-5b16-533a-b2df-8a3cb17d16e1",
+          "related_node_ids": [
+            "f2ad8c31-6aa8-56d2-948e-2e5ab7da9e28"
+          ],
+          "evidence_edge_ids": [
+            "3bd0f2ab-be09-5985-b40e-bfd2aeba1b38"
+          ],
+          "status": "ACTIVE",
+          "detected_at": "2026-09-23T10:06:00Z",
+          "resolved_at": "2026-09-23T16:06:00Z"
+        },
+        {
+          "id": "d94a87ce-75c2-59c8-9b23-83589d313b2c",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "graph_rule_definition_id": "9025f07f-2872-5634-a974-d6348537febd",
+          "primary_node_id": "5c233ad5-5b16-533a-b2df-8a3cb17d16e1",
+          "related_node_ids": [
+            "57104483-2a13-5b9c-a7ec-d61810c34c09"
+          ],
+          "evidence_edge_ids": [
+            "cd8e4a25-a5f7-5749-9693-60ef3c603fa0"
+          ],
+          "status": "DRAFT",
+          "detected_at": "2026-09-28T10:17:00Z",
+          "resolved_at": "2026-09-28T12:17:00Z"
+        },
+        {
+          "id": "2f1e3d78-79d1-54c3-96a7-fd1a69b4b17c",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "graph_rule_definition_id": "9025f07f-2872-5634-a974-d6348537febd",
+          "primary_node_id": "5c233ad5-5b16-533a-b2df-8a3cb17d16e1",
+          "related_node_ids": [
+            "f2ad8c31-6aa8-56d2-948e-2e5ab7da9e28"
+          ],
+          "evidence_edge_ids": [
+            "3bd0f2ab-be09-5985-b40e-bfd2aeba1b38"
+          ],
+          "status": "ACTIVE",
+          "detected_at": "2026-10-03T10:28:00Z",
+          "resolved_at": "2026-10-03T13:28:00Z"
+        },
+        {
+          "id": "7e47df15-4692-5c31-ade7-d675e79f7670",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "graph_rule_definition_id": "9025f07f-2872-5634-a974-d6348537febd",
+          "primary_node_id": "5c233ad5-5b16-533a-b2df-8a3cb17d16e1",
+          "related_node_ids": [
+            "57104483-2a13-5b9c-a7ec-d61810c34c09"
+          ],
+          "evidence_edge_ids": [
+            "cd8e4a25-a5f7-5749-9693-60ef3c603fa0"
+          ],
+          "status": "DRAFT",
+          "detected_at": "2026-10-08T10:39:00Z",
+          "resolved_at": "2026-10-08T14:39:00Z"
+        },
+        {
+          "id": "55e7286d-f994-5045-849d-79e8a13c57ec",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "graph_rule_definition_id": "9025f07f-2872-5634-a974-d6348537febd",
+          "primary_node_id": "5c233ad5-5b16-533a-b2df-8a3cb17d16e1",
+          "related_node_ids": [
+            "f2ad8c31-6aa8-56d2-948e-2e5ab7da9e28"
+          ],
+          "evidence_edge_ids": [
+            "3bd0f2ab-be09-5985-b40e-bfd2aeba1b38"
+          ],
+          "status": "rejected",
+          "detected_at": "2026-12-13T14:25:00Z",
+          "resolved_at": "2026-12-13T14:25:00Z"
+        },
+        {
+          "id": "2ad54497-9d1f-58b1-8c3a-288dc63403b2",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "graph_rule_definition_id": "9025f07f-2872-5634-a974-d6348537febd",
+          "primary_node_id": "5c233ad5-5b16-533a-b2df-8a3cb17d16e1",
+          "related_node_ids": [
+            "57104483-2a13-5b9c-a7ec-d61810c34c09"
+          ],
+          "evidence_edge_ids": [
+            "cd8e4a25-a5f7-5749-9693-60ef3c603fa0"
+          ],
+          "status": "retrying",
+          "detected_at": "2026-07-24T03:42:00Z",
+          "resolved_at": "2026-07-24T03:42:00Z"
+        },
+        {
+          "id": "49c6de11-12a3-52d4-9c30-bc7acf7b0164",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "graph_rule_definition_id": "9025f07f-2872-5634-a974-d6348537febd",
+          "primary_node_id": "5c233ad5-5b16-533a-b2df-8a3cb17d16e1",
+          "related_node_ids": [
+            "f2ad8c31-6aa8-56d2-948e-2e5ab7da9e28"
+          ],
+          "evidence_edge_ids": [
+            "3bd0f2ab-be09-5985-b40e-bfd2aeba1b38"
+          ],
+          "status": "active",
+          "detected_at": "2026-02-08T16:59:00Z",
+          "resolved_at": "2026-02-08T16:59:00Z"
+        },
+        {
+          "id": "054ae712-eb69-528f-9e9d-b694a2341f4e",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "graph_rule_definition_id": "9025f07f-2872-5634-a974-d6348537febd",
+          "primary_node_id": "5c233ad5-5b16-533a-b2df-8a3cb17d16e1",
+          "related_node_ids": [
+            "57104483-2a13-5b9c-a7ec-d61810c34c09"
+          ],
+          "evidence_edge_ids": [
+            "cd8e4a25-a5f7-5749-9693-60ef3c603fa0"
+          ],
+          "status": "pending",
+          "detected_at": "2026-09-19T05:16:00Z",
+          "resolved_at": "2026-09-19T05:16:00Z"
+        },
+        {
+          "id": "467194c6-bc0e-5303-b376-9ac9d5e11326",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "graph_rule_definition_id": "9025f07f-2872-5634-a974-d6348537febd",
+          "primary_node_id": "5c233ad5-5b16-533a-b2df-8a3cb17d16e1",
+          "related_node_ids": [
+            "f2ad8c31-6aa8-56d2-948e-2e5ab7da9e28"
+          ],
+          "evidence_edge_ids": [
+            "3bd0f2ab-be09-5985-b40e-bfd2aeba1b38"
+          ],
+          "status": "in_progress",
+          "detected_at": "2026-04-03T18:33:00Z",
+          "resolved_at": "2026-04-03T18:33:00Z"
+        },
+        {
+          "id": "06580c9b-f5f0-5524-9b54-858fc9e11d48",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "graph_rule_definition_id": "9025f07f-2872-5634-a974-d6348537febd",
+          "primary_node_id": "5c233ad5-5b16-533a-b2df-8a3cb17d16e1",
+          "related_node_ids": [
+            "57104483-2a13-5b9c-a7ec-d61810c34c09"
+          ],
+          "evidence_edge_ids": [
+            "cd8e4a25-a5f7-5749-9693-60ef3c603fa0"
+          ],
+          "status": "completed",
+          "detected_at": "2026-11-14T07:50:00Z",
+          "resolved_at": "2026-11-14T07:50:00Z"
+        },
+        {
+          "id": "7614dfe9-f568-5e71-bd1d-4b4afe9a75cc",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "graph_rule_definition_id": "9025f07f-2872-5634-a974-d6348537febd",
+          "primary_node_id": "5c233ad5-5b16-533a-b2df-8a3cb17d16e1",
+          "related_node_ids": [
+            "f2ad8c31-6aa8-56d2-948e-2e5ab7da9e28"
+          ],
+          "evidence_edge_ids": [
+            "3bd0f2ab-be09-5985-b40e-bfd2aeba1b38"
+          ],
+          "status": "failed",
+          "detected_at": "2026-06-25T20:07:00Z",
+          "resolved_at": "2026-06-25T20:07:00Z"
+        },
+        {
+          "id": "f9058d68-63a0-59ef-adec-9060b35d5749",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "graph_rule_definition_id": "9025f07f-2872-5634-a974-d6348537febd",
+          "primary_node_id": "5c233ad5-5b16-533a-b2df-8a3cb17d16e1",
+          "related_node_ids": [
+            "57104483-2a13-5b9c-a7ec-d61810c34c09"
+          ],
+          "evidence_edge_ids": [
+            "cd8e4a25-a5f7-5749-9693-60ef3c603fa0"
+          ],
+          "status": "cancelled",
+          "detected_at": "2026-01-09T09:24:00Z",
+          "resolved_at": "2026-01-09T09:24:00Z"
+        }
+      ],
+      "graph_deletion_jobs": [
+        {
+          "id": "897d828a-1fdb-5989-b4e1-0096fb0e3ec1",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "source_entity_type": "GRAPH_DELETION_JOBS_01",
+          "source_entity_id": "f6d2710f-d025-5e9a-baf1-19f315c4248d",
+          "status": "ACTIVE",
+          "nodes_deleted": 1,
+          "edges_deleted": 1,
+          "requested_at": "2026-09-03T09:29:00Z",
+          "verified_at": "2026-09-03T09:29:00Z"
+        },
+        {
+          "id": "c2f25874-e40e-5a56-bfe1-8156323ad47e",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "source_entity_type": "GRAPH_DELETION_JOBS_02",
+          "source_entity_id": "f6d2710f-d025-5e9a-baf1-19f315c4248d",
+          "status": "DRAFT",
+          "nodes_deleted": 2,
+          "edges_deleted": 2,
+          "requested_at": "2026-09-08T09:40:00Z",
+          "verified_at": "2026-09-08T09:40:00Z"
+        },
+        {
+          "id": "ab92a7d6-233c-5cd0-9c66-20d6db593de6",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "source_entity_type": "GRAPH_DELETION_JOBS_03",
+          "source_entity_id": "f6d2710f-d025-5e9a-baf1-19f315c4248d",
+          "status": "ACTIVE",
+          "nodes_deleted": 3,
+          "edges_deleted": 3,
+          "requested_at": "2026-09-13T09:51:00Z",
+          "verified_at": "2026-09-13T09:51:00Z"
+        },
+        {
+          "id": "e5dcc155-c927-52b0-badc-e144dc71b390",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "source_entity_type": "GRAPH_DELETION_JOBS_04",
+          "source_entity_id": "f6d2710f-d025-5e9a-baf1-19f315c4248d",
+          "status": "DRAFT",
+          "nodes_deleted": 4,
+          "edges_deleted": 4,
+          "requested_at": "2026-09-18T10:02:00Z",
+          "verified_at": "2026-09-18T10:02:00Z"
+        },
+        {
+          "id": "f7815b3e-571c-52b1-91f6-6d237e0c65d6",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "source_entity_type": "GRAPH_DELETION_JOBS_05",
+          "source_entity_id": "f6d2710f-d025-5e9a-baf1-19f315c4248d",
+          "status": "ACTIVE",
+          "nodes_deleted": 5,
+          "edges_deleted": 5,
+          "requested_at": "2026-09-23T10:13:00Z",
+          "verified_at": "2026-09-23T10:13:00Z"
+        },
+        {
+          "id": "09d3e22b-2286-5d82-b3f3-49961b35c322",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "source_entity_type": "GRAPH_DELETION_JOBS_06",
+          "source_entity_id": "f6d2710f-d025-5e9a-baf1-19f315c4248d",
+          "status": "DRAFT",
+          "nodes_deleted": 6,
+          "edges_deleted": 6,
+          "requested_at": "2026-09-28T10:24:00Z",
+          "verified_at": "2026-09-28T10:24:00Z"
+        },
+        {
+          "id": "ca5bd2df-b871-531d-94e4-82e6d8f65460",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "source_entity_type": "GRAPH_DELETION_JOBS_07",
+          "source_entity_id": "f6d2710f-d025-5e9a-baf1-19f315c4248d",
+          "status": "ACTIVE",
+          "nodes_deleted": 7,
+          "edges_deleted": 7,
+          "requested_at": "2026-10-03T10:35:00Z",
+          "verified_at": "2026-10-03T10:35:00Z"
+        },
+        {
+          "id": "09178399-d6be-5c38-9356-eb074dd2ab13",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "source_entity_type": "GRAPH_DELETION_JOBS_08",
+          "source_entity_id": "f6d2710f-d025-5e9a-baf1-19f315c4248d",
+          "status": "DRAFT",
+          "nodes_deleted": 8,
+          "edges_deleted": 8,
+          "requested_at": "2026-10-08T10:46:00Z",
+          "verified_at": "2026-10-08T10:46:00Z"
+        },
+        {
+          "id": "db7d99b1-ea8c-5c6c-848e-02b32ce092f3",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "source_entity_type": "GRAPH_DELETION_JOBS_01",
+          "source_entity_id": "f6d2710f-d025-5e9a-baf1-19f315c4248d",
+          "status": "rejected",
+          "nodes_deleted": 1,
+          "edges_deleted": 1,
+          "requested_at": "2026-12-13T14:25:00Z",
+          "verified_at": "2026-12-13T14:25:00Z"
+        },
+        {
+          "id": "646c0db4-6cbc-5808-93cc-daa4c74a708e",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "source_entity_type": "GRAPH_DELETION_JOBS_02",
+          "source_entity_id": "f6d2710f-d025-5e9a-baf1-19f315c4248d",
+          "status": "retrying",
+          "nodes_deleted": 2,
+          "edges_deleted": 2,
+          "requested_at": "2026-07-24T03:42:00Z",
+          "verified_at": "2026-07-24T03:42:00Z"
+        },
+        {
+          "id": "314d88ae-f71a-5978-9741-771a3a8456f5",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "source_entity_type": "GRAPH_DELETION_JOBS_03",
+          "source_entity_id": "f6d2710f-d025-5e9a-baf1-19f315c4248d",
+          "status": "active",
+          "nodes_deleted": 3,
+          "edges_deleted": 3,
+          "requested_at": "2026-02-08T16:59:00Z",
+          "verified_at": "2026-02-08T16:59:00Z"
+        },
+        {
+          "id": "7397403f-79db-50f5-91e2-fd717eda67be",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "source_entity_type": "GRAPH_DELETION_JOBS_04",
+          "source_entity_id": "f6d2710f-d025-5e9a-baf1-19f315c4248d",
+          "status": "pending",
+          "nodes_deleted": 4,
+          "edges_deleted": 4,
+          "requested_at": "2026-09-19T05:16:00Z",
+          "verified_at": "2026-09-19T05:16:00Z"
+        },
+        {
+          "id": "4f619d81-3aa5-5614-8d96-9bffe0683c02",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "source_entity_type": "GRAPH_DELETION_JOBS_05",
+          "source_entity_id": "f6d2710f-d025-5e9a-baf1-19f315c4248d",
+          "status": "in_progress",
+          "nodes_deleted": 5,
+          "edges_deleted": 5,
+          "requested_at": "2026-04-03T18:33:00Z",
+          "verified_at": "2026-04-03T18:33:00Z"
+        },
+        {
+          "id": "eb0c4e75-5b4d-52e9-9f80-95675836044e",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "source_entity_type": "GRAPH_DELETION_JOBS_06",
+          "source_entity_id": "f6d2710f-d025-5e9a-baf1-19f315c4248d",
+          "status": "completed",
+          "nodes_deleted": 6,
+          "edges_deleted": 6,
+          "requested_at": "2026-11-14T07:50:00Z",
+          "verified_at": "2026-11-14T07:50:00Z"
+        },
+        {
+          "id": "6ba14993-0dcf-5330-9c0e-9d1b55c7c672",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "source_entity_type": "GRAPH_DELETION_JOBS_07",
+          "source_entity_id": "f6d2710f-d025-5e9a-baf1-19f315c4248d",
+          "status": "failed",
+          "nodes_deleted": 7,
+          "edges_deleted": 7,
+          "requested_at": "2026-06-25T20:07:00Z",
+          "verified_at": "2026-06-25T20:07:00Z"
+        },
+        {
+          "id": "1b1e4a22-0f70-5e6e-8954-30f908adbea3",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "source_entity_type": "GRAPH_DELETION_JOBS_08",
+          "source_entity_id": "f6d2710f-d025-5e9a-baf1-19f315c4248d",
+          "status": "cancelled",
+          "nodes_deleted": 8,
+          "edges_deleted": 8,
+          "requested_at": "2026-01-09T09:24:00Z",
+          "verified_at": "2026-01-09T09:24:00Z"
+        }
+      ]
+    },
+    "summary": {
+      "record_count": 208,
+      "entity_count": 13,
+      "populated_entity_count": 13,
+      "scenario_count": 8,
+      "seed_revision": "2.0.0-enhanced"
+    },
+    "scenario_coverage": {
+      "happy_path": true,
+      "validation_error": true,
+      "permission_denied": true,
+      "idempotent_retry": true,
+      "reversal_or_cancellation": true,
+      "audit_trace": true,
+      "synthetic_only": true,
+      "production_hard_fail_required": true
+    }
+  },
+  "integrity_contract": {
+    "stable_ids": true,
+    "timestamps_are_deterministic": true,
+    "secrets_must_be_injected_externally": true,
+    "mock_must_fail_in_production": true,
+    "views_are_never_inserted": true,
+    "reference_only_entities_are_never_inserted_by_this_module": true
+  },
+  "quality_profile": {
+    "revision": "2.0.0-enhanced",
+    "strategy": "domain-aware deterministic catalogs plus connected synthetic scenarios",
+    "boot_scope": "catálogos, políticas, plantillas y configuración segura sin transacciones empresariales ficticias",
+    "mock_scope": "escenarios enlazados de éxito, error, borde, reversión, auditoría y recuperación",
+    "quality_gates": [
+      "UUID determinístico",
+      "idempotencia por clave estable",
+      "sin secretos",
+      "mock prohibido en producción",
+      "campos obligatorios presentes",
+      "FK resolubles",
+      "fechas coherentes",
+      "valores de dominio no genéricos"
+    ],
+    "scenario_catalog": [
+      "relación paciente-profesional",
+      "red de organización",
+      "beneficiario-aseguradora",
+      "proveedor-contrato",
+      "riesgo de fraude",
+      "ruta de acceso",
+      "comunidad clínica",
+      "eliminación de nodo"
+    ]
+  }
+}

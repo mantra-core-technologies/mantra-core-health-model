@@ -1,0 +1,270 @@
+@startuml SALUD_Module_29_delegated_access
+title Module 29 — Delegated Access and Scoped Infrastructure Users\n(schema: delegated_access)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_29_delegated_access.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_29_delegated_access
+  BUSINESS PURPOSE
+  Lets hospitals, offices, nursing facilities, diagnostic units and pharmacies
+  associate additional users and lets doctors delegate limited work to
+  secretaries, assistants, nurses or billing staff without sharing credentials.
+end note
+
+entity organization_user_assignments {
+  * id : uuid <<PK>>
+  --
+  * tenant_membership_id : uuid <<FK>>
+    practice_id : uuid <<FK>>
+    practice_site_id : uuid <<FK>>
+    clinical_unit_id : uuid <<FK>>
+    care_space_id : uuid <<FK>>
+    diagnostic_unit_id : uuid <<FK>>
+    pharmacy_id : uuid <<FK>>
+  * assignment_role_concept_id : uuid <<FK>>
+  * access_scope_concept_id : uuid <<FK>>
+    supervisor_user_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity delegated_permission_sets {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+  * delegate_type_concept_id : uuid <<FK>>
+    description : text
+  * status_concept_id : uuid <<FK>>
+  * version_number : integer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity delegated_permission_set_items {
+  * id : uuid <<PK>>
+  --
+  * delegated_permission_set_id : uuid <<FK>>
+  * permission_id : uuid <<FK>>
+    constraint_json : jsonb
+    requires_step_up_authentication : boolean
+  * created_at : timestamptz
+}
+
+entity practitioner_delegate_assignments {
+  * id : uuid <<PK>>
+  --
+  * practitioner_role_assignment_id : uuid <<FK>>
+  * delegate_user_assignment_id : uuid <<FK>>
+  * delegated_permission_set_id : uuid <<FK>>
+  * delegate_role_concept_id : uuid <<FK>>
+    patient_scope_concept_id : uuid <<FK>>
+    appointment_scope_concept_id : uuid <<FK>>
+    may_view_clinical_content : boolean
+    may_edit_drafts : boolean
+    may_sign_clinical_content : boolean
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity delegated_access_grants {
+  * id : uuid <<PK>>
+  --
+  * practitioner_delegate_assignment_id : uuid <<FK>>
+  * grant_type_concept_id : uuid <<FK>>
+  * purpose_of_use_concept_id : uuid <<FK>>
+    patient_profile_id : uuid <<FK>>
+    encounter_id : uuid <<FK>>
+    resource_type_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+    approved_by_user_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity delegated_access_approval_requests {
+  * id : uuid <<PK>>
+  --
+  * practitioner_delegate_assignment_id : uuid <<FK>>
+  * requested_permission_id : uuid <<FK>>
+    patient_profile_id : uuid <<FK>>
+    encounter_id : uuid <<FK>>
+    reason_text : text
+    requested_at : timestamptz
+    decided_at : timestamptz
+    decided_by_user_id : uuid <<FK>>
+  * decision_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity delegation_events <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * practitioner_delegate_assignment_id : uuid <<FK>>
+  * event_type_concept_id : uuid <<FK>>
+    actor_user_id : uuid <<FK>>
+    target_user_id : uuid <<FK>>
+    reason_concept_id : uuid <<FK>>
+    previous_state_hash : varchar
+    new_state_hash : varchar
+  * occurred_at : timestamptz
+  * created_at : timestamptz
+}
+
+organization_user_assignments ||--o{ practitioner_delegate_assignments
+practitioner_delegate_assignments ||--o{ delegated_access_grants
+practitioner_delegate_assignments ||--o{ delegated_access_approval_requests
+practitioner_delegate_assignments ||--o{ delegation_events
+delegated_permission_sets ||--o{ delegated_permission_set_items
+delegated_permission_sets ||--o{ practitioner_delegate_assignments
+
+note as CONTROL_diagram_29_delegated_access
+  NON-NEGOTIABLE CONTROLS
+  - No credential sharing or impersonation.
+  - The effective actor and delegating practitioner are both audited.
+  - Delegates cannot sign clinical notes or prescriptions unless a separate
+    jurisdiction-approved professional role explicitly permits it.
+  - Grants expire, can be revoked immediately and are evaluated per purpose.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · organization_user_assignments" as idxset_organization_user_assignments <<INDEX_SET>> {
+  PK pk_organization_user_assignments : (id) UNIQUE BTREE
+  IX ix_organization_user_assignments_tenant_membership_id : (tenant_membership_id) BTREE
+  IX ix_organization_user_assignments_practice_id : (practice_id) BTREE
+  IX ix_organization_user_assignments_practice_site_id : (practice_site_id) BTREE
+  IX ix_organization_user_assignments_clinical_unit_id : (clinical_unit_id) BTREE
+  IX ix_organization_user_assignments_care_space_id : (care_space_id) BTREE
+  IX ix_organization_user_assignments_diagnostic_unit_id : (diagnostic_unit_id) BTREE
+  IX ix_organization_user_assignments_pharmacy_id : (pharmacy_id) BTREE
+  IX ix_organization_user_assignments_assignment_role_concept_id : (assignment_role_concept_id) BTREE
+  IX ix_organization_user_assignments_access_scope_concept_id : (access_scope_concept_id) BTREE
+  IX ix_organization_user_assignments_supervisor_user_id : (supervisor_user_id) BTREE
+  IX ix_organization_user_assignments_status_concept_id : (status_concept_id) BTREE
+  IX ix_organization_user_assignments_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_organization_user_assignments_updated_by_user_id : (updated_by_user_id) BTREE
+  GIST gist_organization_user_assignments_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+}
+
+organization_user_assignments .. idxset_organization_user_assignments : indexed by
+
+entity "INDEXES · delegated_permission_sets" as idxset_delegated_permission_sets <<INDEX_SET>> {
+  PK pk_delegated_permission_sets : (id) UNIQUE BTREE
+  IX ix_delegated_permission_sets_tenant_id : (tenant_id) BTREE
+  IX ix_delegated_permission_sets_delegate_type_concept_id : (delegate_type_concept_id) BTREE
+  IX ix_delegated_permission_sets_status_concept_id : (status_concept_id) BTREE
+  IX ix_delegated_permission_sets_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_delegated_permission_sets_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_delegated_permission_sets_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+delegated_permission_sets .. idxset_delegated_permission_sets : indexed by
+
+entity "INDEXES · delegated_permission_set_items" as idxset_delegated_permission_set_items <<INDEX_SET>> {
+  PK pk_delegated_permission_set_items : (id) UNIQUE BTREE
+  IX ix_delegated_permission_set_items_delegated_permission_set_id : (delegated_permission_set_id) BTREE
+  IX ix_delegated_permission_set_items_permission_id : (permission_id) BTREE
+}
+
+delegated_permission_set_items .. idxset_delegated_permission_set_items : indexed by
+
+entity "INDEXES · practitioner_delegate_assignments" as idxset_practitioner_delegate_assignments <<INDEX_SET>> {
+  PK pk_practitioner_delegate_assignments : (id) UNIQUE BTREE
+  IX ix_practitioner_delegate_assignments_practitioner_role_5ab23b12 : (practitioner_role_assignment_id) BTREE
+  IX ix_practitioner_delegate_assignments_delegate_user_ass_52dcb36c : (delegate_user_assignment_id) BTREE
+  IX ix_practitioner_delegate_assignments_delegated_permiss_e45e3818 : (delegated_permission_set_id) BTREE
+  IX ix_practitioner_delegate_assignments_delegate_role_concept_id : (delegate_role_concept_id) BTREE
+  IX ix_practitioner_delegate_assignments_patient_scope_concept_id : (patient_scope_concept_id) BTREE
+  IX ix_practitioner_delegate_assignments_appointment_scope_692488ef : (appointment_scope_concept_id) BTREE
+  IX ix_practitioner_delegate_assignments_status_concept_id : (status_concept_id) BTREE
+  IX ix_practitioner_delegate_assignments_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_practitioner_delegate_assignments_updated_by_user_id : (updated_by_user_id) BTREE
+  GIST gist_practitioner_delegate_assignments_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+}
+
+practitioner_delegate_assignments .. idxset_practitioner_delegate_assignments : indexed by
+
+entity "INDEXES · delegated_access_grants" as idxset_delegated_access_grants <<INDEX_SET>> {
+  PK pk_delegated_access_grants : (id) UNIQUE BTREE
+  IX ix_delegated_access_grants_practitioner_delegate_assignment_id : (practitioner_delegate_assignment_id) BTREE
+  IX ix_delegated_access_grants_grant_type_concept_id : (grant_type_concept_id) BTREE
+  IX ix_delegated_access_grants_purpose_of_use_concept_id : (purpose_of_use_concept_id) BTREE
+  IX ix_delegated_access_grants_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_delegated_access_grants_encounter_id : (encounter_id) BTREE
+  IX ix_delegated_access_grants_resource_type_concept_id : (resource_type_concept_id) BTREE
+  IX ix_delegated_access_grants_approved_by_user_id : (approved_by_user_id) BTREE
+  IX ix_delegated_access_grants_status_concept_id : (status_concept_id) BTREE
+  IX ix_delegated_access_grants_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_delegated_access_grants_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_delegated_access_grants_patient_profile_id_updated_at : (patient_profile_id, updated_at DESC) BTREE
+}
+
+delegated_access_grants .. idxset_delegated_access_grants : indexed by
+
+entity "INDEXES · delegated_access_approval_requests" as idxset_delegated_access_approval_requests <<INDEX_SET>> {
+  PK pk_delegated_access_approval_requests : (id) UNIQUE BTREE
+  IX ix_delegated_access_approval_requests_practitioner_del_01d90a86 : (practitioner_delegate_assignment_id) BTREE
+  IX ix_delegated_access_approval_requests_requested_permission_id : (requested_permission_id) BTREE
+  IX ix_delegated_access_approval_requests_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_delegated_access_approval_requests_encounter_id : (encounter_id) BTREE
+  IX ix_delegated_access_approval_requests_decided_by_user_id : (decided_by_user_id) BTREE
+  IX ix_delegated_access_approval_requests_decision_concept_id : (decision_concept_id) BTREE
+  IX ix_delegated_access_approval_requests_status_concept_id : (status_concept_id) BTREE
+  IX ix_delegated_access_approval_requests_patient_profile__beb5e078 : (patient_profile_id, created_at DESC) BTREE
+}
+
+delegated_access_approval_requests .. idxset_delegated_access_approval_requests : indexed by
+
+entity "INDEXES · delegation_events" as idxset_delegation_events <<INDEX_SET>> {
+  PK pk_delegation_events : (id) UNIQUE BTREE
+  IX ix_delegation_events_practitioner_delegate_assignment_id : (practitioner_delegate_assignment_id) BTREE
+  IX ix_delegation_events_event_type_concept_id : (event_type_concept_id) BTREE
+  IX ix_delegation_events_actor_user_id : (actor_user_id) BTREE
+  IX ix_delegation_events_target_user_id : (target_user_id) BTREE
+  IX ix_delegation_events_reason_concept_id : (reason_concept_id) BTREE
+  BRIN brin_delegation_events_created_at : (created_at) BRIN pages_per_range=128
+}
+
+delegation_events .. idxset_delegation_events : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

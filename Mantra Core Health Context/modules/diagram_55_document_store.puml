@@ -1,0 +1,484 @@
+@startuml SALUD_Module_55_document_store
+title Module 55 — Document Store for FHIR, Variable Payloads and Versioned Snapshots\n(MongoDB-compatible document collections)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+note as BIZ_document_store
+  BUSINESS PURPOSE
+  Stores variable, versioned and externally shaped documents without replacing relational clinical, financial or authorization sources of truth.
+  Every PHI-bearing document carries tenant, patient, classification, encryption, retention and lineage metadata.
+end note
+
+entity "directory.tenants" as directory_tenants <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "profiles.patient_profiles" as profiles_patient_profiles <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "health_data.canonical_health_resources" as health_data_canonical_resources <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "common.files" as common_files <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "polyglot_storage.collection_definitions" as polyglot_collection_definitions <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity document_envelopes <<MONGODB_COLLECTION>> {
+  * _id : objectId <<PK>>
+  * document_id : uuid
+  * tenant_id : uuid
+    patient_profile_id : uuid
+  * schema_version : varchar
+  * source_system : varchar
+    external_id : varchar
+  * content_hash : varchar
+  * contains_phi : boolean
+  * encryption_profile_code : varchar
+  * created_at : datetime
+    updated_at : datetime
+    expires_at : datetime
+  * retention_class : varchar
+  * document_type : varchar
+  * lifecycle_state : varchar
+  * payload_ref : object
+    security_labels : array<object>
+    purpose_restrictions : array<object>
+    lineage : object
+}
+
+entity document_version_documents <<MONGODB_COLLECTION>> {
+  * _id : objectId <<PK>>
+  * document_id : uuid
+  * tenant_id : uuid
+    patient_profile_id : uuid
+  * schema_version : varchar
+  * source_system : varchar
+    external_id : varchar
+  * content_hash : varchar
+  * contains_phi : boolean
+  * encryption_profile_code : varchar
+  * created_at : datetime
+    updated_at : datetime
+    expires_at : datetime
+  * retention_class : varchar
+  * logical_document_id : uuid
+  * version_number : integer
+    supersedes_version_id : uuid
+  * change_type : varchar
+  * payload : object
+    provenance : object
+}
+
+entity fhir_resource_documents <<MONGODB_COLLECTION>> {
+  * _id : objectId <<PK>>
+  * document_id : uuid
+  * tenant_id : uuid
+    patient_profile_id : uuid
+  * schema_version : varchar
+  * source_system : varchar
+    external_id : varchar
+  * content_hash : varchar
+  * contains_phi : boolean
+  * encryption_profile_code : varchar
+  * created_at : datetime
+    updated_at : datetime
+    expires_at : datetime
+  * retention_class : varchar
+  * resource_type : varchar
+  * logical_id : varchar
+  * fhir_version : varchar
+  * version_id : varchar
+  * last_updated_at : datetime
+    encounter_id : uuid
+    profile_urls : array<string>
+    identifiers : array<object>
+    references : array<object>
+  * resource : object
+}
+
+entity fhir_bundle_documents <<MONGODB_COLLECTION>> {
+  * _id : objectId <<PK>>
+  * document_id : uuid
+  * tenant_id : uuid
+    patient_profile_id : uuid
+  * schema_version : varchar
+  * source_system : varchar
+    external_id : varchar
+  * content_hash : varchar
+  * contains_phi : boolean
+  * encryption_profile_code : varchar
+  * created_at : datetime
+    updated_at : datetime
+    expires_at : datetime
+  * retention_class : varchar
+  * bundle_type : varchar
+  * bundle_identifier : varchar
+  * entry_count : integer
+    patient_profile_ids : array<uuid>
+    source_batch_id : uuid
+  * bundle : object
+}
+
+entity external_payload_documents <<MONGODB_COLLECTION>> {
+  * _id : objectId <<PK>>
+  * document_id : uuid
+  * tenant_id : uuid
+    patient_profile_id : uuid
+  * schema_version : varchar
+  * source_system : varchar
+    external_id : varchar
+  * content_hash : varchar
+  * contains_phi : boolean
+  * encryption_profile_code : varchar
+  * created_at : datetime
+    updated_at : datetime
+    expires_at : datetime
+  * retention_class : varchar
+  * integration_contract_id : uuid
+  * operation_code : varchar
+  * direction : varchar
+  * correlation_id : varchar
+    request_metadata : object
+    response_metadata : object
+  * payload : object
+    transport_headers_redacted : object
+}
+
+entity webhook_payload_documents <<MONGODB_COLLECTION>> {
+  * _id : objectId <<PK>>
+  * document_id : uuid
+  * tenant_id : uuid
+    patient_profile_id : uuid
+  * schema_version : varchar
+  * source_system : varchar
+    external_id : varchar
+  * content_hash : varchar
+  * contains_phi : boolean
+  * encryption_profile_code : varchar
+  * created_at : datetime
+    updated_at : datetime
+    expires_at : datetime
+  * retention_class : varchar
+  * provider_code : varchar
+  * event_type : varchar
+  * provider_event_id : varchar
+  * received_at : datetime
+  * verification_status : varchar
+    signature_metadata : object
+  * payload : object
+    processing_outcome : object
+}
+
+entity dynamic_form_snapshot_documents <<MONGODB_COLLECTION>> {
+  * _id : objectId <<PK>>
+  * document_id : uuid
+  * tenant_id : uuid
+    patient_profile_id : uuid
+  * schema_version : varchar
+  * source_system : varchar
+    external_id : varchar
+  * content_hash : varchar
+  * contains_phi : boolean
+  * encryption_profile_code : varchar
+  * created_at : datetime
+    updated_at : datetime
+    expires_at : datetime
+  * retention_class : varchar
+  * form_definition_id : uuid
+  * form_version : varchar
+  * response_id : uuid
+    encounter_id : uuid
+  * answers : array<object>
+    computed_fields : object
+    validation_result : object
+}
+
+entity context_documents <<MONGODB_COLLECTION>> {
+  * _id : objectId <<PK>>
+  * document_id : uuid
+  * tenant_id : uuid
+    patient_profile_id : uuid
+  * schema_version : varchar
+  * source_system : varchar
+    external_id : varchar
+  * content_hash : varchar
+  * contains_phi : boolean
+  * encryption_profile_code : varchar
+  * created_at : datetime
+    updated_at : datetime
+    expires_at : datetime
+  * retention_class : varchar
+  * context_scope : varchar
+  * country_code : char(2)
+    organization_id : uuid
+  * context_code : varchar
+  * effective_from : datetime
+    effective_to : datetime
+  * facts : object
+    sources : array<object>
+}
+
+entity workflow_definition_documents <<MONGODB_COLLECTION>> {
+  * _id : objectId <<PK>>
+  * document_id : uuid
+  * tenant_id : uuid
+    patient_profile_id : uuid
+  * schema_version : varchar
+  * source_system : varchar
+    external_id : varchar
+  * content_hash : varchar
+  * contains_phi : boolean
+  * encryption_profile_code : varchar
+  * created_at : datetime
+    updated_at : datetime
+    expires_at : datetime
+  * retention_class : varchar
+  * workflow_code : varchar
+  * workflow_version : varchar
+  * trigger_definition : object
+  * nodes : array<object>
+  * edges : array<object>
+  * guards : array<object>
+    compensation_rules : array<object>
+}
+
+entity ai_execution_documents <<MONGODB_COLLECTION>> {
+  * _id : objectId <<PK>>
+  * document_id : uuid
+  * tenant_id : uuid
+    patient_profile_id : uuid
+  * schema_version : varchar
+  * source_system : varchar
+    external_id : varchar
+  * content_hash : varchar
+  * contains_phi : boolean
+  * encryption_profile_code : varchar
+  * created_at : datetime
+    updated_at : datetime
+    expires_at : datetime
+  * retention_class : varchar
+  * agent_definition_id : uuid
+  * execution_id : uuid
+  * model_provider : varchar
+  * model_id : varchar
+  * model_version : varchar
+    prompt_version_id : uuid
+    input_redacted : object
+    retrieved_context : array<object>
+    output_redacted : object
+    token_usage : object
+    latency_ms : integer
+    evaluation_summary : object
+}
+
+entity cms_content_documents <<MONGODB_COLLECTION>> {
+  * _id : objectId <<PK>>
+  * document_id : uuid
+  * tenant_id : uuid
+    patient_profile_id : uuid
+  * schema_version : varchar
+  * source_system : varchar
+    external_id : varchar
+  * content_hash : varchar
+  * contains_phi : boolean
+  * encryption_profile_code : varchar
+  * created_at : datetime
+    updated_at : datetime
+    expires_at : datetime
+  * retention_class : varchar
+  * content_type : varchar
+  * slug : varchar
+  * locale : varchar
+  * publication_state : varchar
+    author_user_id : uuid
+  * title : varchar
+    summary : text
+  * body_blocks : array<object>
+    seo_metadata : object
+    publication_window : object
+}
+
+entity document_quarantine_documents <<MONGODB_COLLECTION>> {
+  * _id : objectId <<PK>>
+  * document_id : uuid
+  * tenant_id : uuid
+    patient_profile_id : uuid
+  * schema_version : varchar
+  * source_system : varchar
+    external_id : varchar
+  * content_hash : varchar
+  * contains_phi : boolean
+  * encryption_profile_code : varchar
+  * created_at : datetime
+    updated_at : datetime
+    expires_at : datetime
+  * retention_class : varchar
+  * original_collection : varchar
+  * quarantine_reason : varchar
+  * validation_errors : array<object>
+  * original_payload : object
+    remediation_state : varchar
+    remediated_document_id : uuid
+}
+
+entity document_schema_registry <<MONGODB_COLLECTION>> {
+  * _id : objectId <<PK>>
+  * document_id : uuid
+  * tenant_id : uuid
+    patient_profile_id : uuid
+  * schema_version : varchar
+  * source_system : varchar
+    external_id : varchar
+  * content_hash : varchar
+  * contains_phi : boolean
+  * encryption_profile_code : varchar
+  * created_at : datetime
+    updated_at : datetime
+    expires_at : datetime
+  * retention_class : varchar
+  * collection_code : varchar
+  * governed_schema_version : varchar
+  * json_schema : object
+  * compatibility_mode : varchar
+  * state : varchar
+}
+
+
+directory_tenants -- document_envelopes : partitions
+profiles_patient_profiles -- fhir_resource_documents : subject
+health_data_canonical_resources -- fhir_resource_documents : canonical link
+document_envelopes -- document_version_documents : versions
+document_schema_registry -- document_envelopes : validates
+polyglot_collection_definitions -- document_schema_registry : governs
+document_quarantine_documents -- document_envelopes : remediates
+common_files -- external_payload_documents : large payload reference
+
+package "Physical Indexes and Access Patterns" {
+entity "INDEXES · document_envelopes" as idxset_document_envelopes <<INDEX_SET>> {
+  UK uq_doc_tenant_id : (tenant_id ASC, document_id ASC) UNIQUE
+  IX ix_doc_tenant_type_updated : (tenant_id ASC, document_type ASC, updated_at DESC)
+  IX ix_doc_patient_updated : (tenant_id ASC, patient_profile_id ASC, updated_at DESC) PARTIAL patient_profile_id exists
+  IX ix_doc_external : (tenant_id ASC, source_system ASC, external_id ASC) PARTIAL external_id exists
+  TTL ttl_doc_expiry : (expires_at ASC) expireAfterSeconds=0 PARTIAL expires_at exists
+}
+
+document_envelopes .. idxset_document_envelopes : indexed by
+
+entity "INDEXES · document_version_documents" as idxset_document_version_documents <<INDEX_SET>> {
+  UK uq_docver_logical_version : (tenant_id ASC, logical_document_id ASC, version_number ASC) UNIQUE
+  IX ix_docver_logical_created : (tenant_id ASC, logical_document_id ASC, created_at DESC)
+  IX ix_docver_hash : (tenant_id ASC, content_hash ASC)
+}
+
+document_version_documents .. idxset_document_version_documents : indexed by
+
+entity "INDEXES · fhir_resource_documents" as idxset_fhir_resource_documents <<INDEX_SET>> {
+  UK uq_fhir_logical_version : (tenant_id ASC, resource_type ASC, logical_id ASC, version_id ASC) UNIQUE
+  IX ix_fhir_patient_updated : (tenant_id ASC, patient_profile_id ASC, last_updated_at DESC)
+  IX ix_fhir_encounter_type : (tenant_id ASC, encounter_id ASC, resource_type ASC) PARTIAL encounter_id exists
+  MK ix_fhir_identifiers : (tenant_id ASC, identifiers.system ASC, identifiers.value ASC) MULTIKEY
+  MK ix_fhir_references : (tenant_id ASC, references.reference ASC) MULTIKEY
+}
+
+fhir_resource_documents .. idxset_fhir_resource_documents : indexed by
+
+entity "INDEXES · fhir_bundle_documents" as idxset_fhir_bundle_documents <<INDEX_SET>> {
+  UK uq_fhir_bundle_identifier : (tenant_id ASC, bundle_identifier ASC) UNIQUE
+  IX ix_fhir_bundle_batch : (tenant_id ASC, source_batch_id ASC, created_at DESC)
+  MK ix_fhir_bundle_patients : (tenant_id ASC, patient_profile_ids ASC) MULTIKEY
+}
+
+fhir_bundle_documents .. idxset_fhir_bundle_documents : indexed by
+
+entity "INDEXES · external_payload_documents" as idxset_external_payload_documents <<INDEX_SET>> {
+  UK uq_ext_payload_correlation : (tenant_id ASC, integration_contract_id ASC, correlation_id ASC, direction ASC) UNIQUE
+  IX ix_ext_payload_operation_created : (tenant_id ASC, operation_code ASC, created_at DESC)
+  TTL ttl_ext_payload_expiry : (expires_at ASC) expireAfterSeconds=0 PARTIAL expires_at exists
+}
+
+external_payload_documents .. idxset_external_payload_documents : indexed by
+
+entity "INDEXES · webhook_payload_documents" as idxset_webhook_payload_documents <<INDEX_SET>> {
+  UK uq_webhook_provider_event : (tenant_id ASC, provider_code ASC, provider_event_id ASC) UNIQUE
+  IX ix_webhook_type_received : (tenant_id ASC, event_type ASC, received_at DESC)
+  IX ix_webhook_verification : (tenant_id ASC, verification_status ASC, received_at ASC)
+}
+
+webhook_payload_documents .. idxset_webhook_payload_documents : indexed by
+
+entity "INDEXES · dynamic_form_snapshot_documents" as idxset_dynamic_form_snapshot_documents <<INDEX_SET>> {
+  UK uq_form_snapshot_response_version : (tenant_id ASC, response_id ASC, schema_version ASC) UNIQUE
+  IX ix_form_snapshot_patient : (tenant_id ASC, patient_profile_id ASC, created_at DESC)
+  IX ix_form_snapshot_encounter : (tenant_id ASC, encounter_id ASC, created_at DESC) PARTIAL encounter_id exists
+}
+
+dynamic_form_snapshot_documents .. idxset_dynamic_form_snapshot_documents : indexed by
+
+entity "INDEXES · context_documents" as idxset_context_documents <<INDEX_SET>> {
+  UK uq_context_scope_code_effective : (tenant_id ASC, context_scope ASC, context_code ASC, effective_from ASC) UNIQUE
+  IX ix_context_country_effective : (country_code ASC, effective_from DESC)
+  IX ix_context_org_effective : (tenant_id ASC, organization_id ASC, effective_from DESC) PARTIAL organization_id exists
+}
+
+context_documents .. idxset_context_documents : indexed by
+
+entity "INDEXES · workflow_definition_documents" as idxset_workflow_definition_documents <<INDEX_SET>> {
+  UK uq_workflow_code_version : (tenant_id ASC, workflow_code ASC, workflow_version ASC) UNIQUE
+  IX ix_workflow_state_updated : (tenant_id ASC, lifecycle_state ASC, updated_at DESC)
+  MK ix_workflow_nodes_type : (tenant_id ASC, nodes.type ASC) MULTIKEY
+}
+
+workflow_definition_documents .. idxset_workflow_definition_documents : indexed by
+
+entity "INDEXES · ai_execution_documents" as idxset_ai_execution_documents <<INDEX_SET>> {
+  UK uq_ai_execution : (tenant_id ASC, execution_id ASC) UNIQUE
+  IX ix_ai_agent_created : (tenant_id ASC, agent_definition_id ASC, created_at DESC)
+  IX ix_ai_model_created : (tenant_id ASC, model_provider ASC, model_id ASC, created_at DESC)
+  TTL ttl_ai_expiry : (expires_at ASC) expireAfterSeconds=0 PARTIAL expires_at exists
+}
+
+ai_execution_documents .. idxset_ai_execution_documents : indexed by
+
+entity "INDEXES · cms_content_documents" as idxset_cms_content_documents <<INDEX_SET>> {
+  UK uq_cms_slug_locale : (tenant_id ASC, slug ASC, locale ASC) UNIQUE
+  IX ix_cms_type_state_window : (tenant_id ASC, content_type ASC, publication_state ASC, publication_window.start_at ASC)
+  TEXT text_cms_content : (title TEXT, summary TEXT, body_blocks.text TEXT) language=locale
+}
+
+cms_content_documents .. idxset_cms_content_documents : indexed by
+
+entity "INDEXES · document_quarantine_documents" as idxset_document_quarantine_documents <<INDEX_SET>> {
+  IX ix_quarantine_reason_state : (tenant_id ASC, quarantine_reason ASC, remediation_state ASC, created_at ASC)
+  IX ix_quarantine_original : (tenant_id ASC, original_collection ASC, created_at DESC)
+  TTL ttl_quarantine_expiry : (expires_at ASC) expireAfterSeconds=0 PARTIAL expires_at exists
+}
+
+document_quarantine_documents .. idxset_document_quarantine_documents : indexed by
+
+entity "INDEXES · document_schema_registry" as idxset_document_schema_registry <<INDEX_SET>> {
+  UK uq_schema_collection_version : (tenant_id ASC, collection_code ASC, governed_schema_version ASC) UNIQUE
+  IX ix_schema_collection_state : (tenant_id ASC, collection_code ASC, lifecycle_state ASC)
+}
+
+document_schema_registry .. idxset_document_schema_registry : indexed by
+
+}
+
+
+note as INDEX_POLICY_document_store
+  INDEX AND ACCESS-PATTERN POLICY
+  - Compound indexes always begin with tenant_id for isolation and predictable routing.
+  - TTL indexes apply only to explicitly ephemeral documents; legal/clinical records are never expired by accident.
+  - Unique provider-event and correlation indexes make webhook and integration ingestion idempotent.
+  - Field-level encryption is mandatory for sensitive paths defined by the governing encryption profile.
+end note
+
+@enduml

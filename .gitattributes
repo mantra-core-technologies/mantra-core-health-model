@@ -1,0 +1,42 @@
+# =========================================================================
+# Normalización de fin de línea — portabilidad Mac / Windows / Linux.
+# Mismo criterio que `mantra-core-health-api/.gitattributes`: el modelo se
+# edita en Windows y en Mac, y su DDL lo consume un contenedor Linux.
+# Sin esto, un checkout en Windows trae CRLF y rompe los scripts que corren
+# dentro de los contenedores (error tipo "bash\r: not found").
+# =========================================================================
+
+# Por defecto: Git normaliza a LF en el repo y respeta el SO al hacer checkout.
+* text=auto eol=lf
+
+# Archivos que SIEMPRE deben ser LF (los lee Linux, dentro de un contenedor
+# o en el runner de CI).
+*.sql       text eol=lf
+*.sh        text eol=lf
+*.bash      text eol=lf
+*.py        text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.json      text eol=lf
+*.puml      text eol=lf
+.env        text eol=lf
+.env.*      text eol=lf
+Dockerfile  text eol=lf
+
+# Scripts específicos de Windows: mantener CRLF.
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+*.ps1       text eol=crlf
+
+# Binarios: nunca tocar el contenido.
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.ico       binary
+*.svg       text eol=lf
+*.pdf       binary
+*.zip       binary
+*.gz        binary
+*.xlsx      binary
+*.docx      binary

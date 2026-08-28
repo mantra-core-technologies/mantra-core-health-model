@@ -1,0 +1,54 @@
+{
+  "mappings": {
+    "properties": {
+      "tenant_id": {
+        "type": "keyword"
+      },
+      "source_entity_id": {
+        "type": "keyword"
+      },
+      "source_version": {
+        "type": "long"
+      },
+      "lifecycle_state": {
+        "type": "keyword"
+      },
+      "updated_at": {
+        "type": "date"
+      },
+      "routing_key": {
+        "type": "keyword"
+      },
+      "activity_id": {
+        "type": "keyword"
+      },
+      "activity_type": {
+        "type": "keyword"
+      },
+      "subject": {
+        "type": "text"
+      },
+      "account_ids": {
+        "type": "keyword"
+      },
+      "contact_ids": {
+        "type": "keyword"
+      },
+      "opportunity_ids": {
+        "type": "keyword"
+      },
+      "contract_ids": {
+        "type": "keyword"
+      },
+      "owner_user_ids": {
+        "type": "keyword"
+      },
+      "activity_at": {
+        "type": "date"
+      },
+      "status": {
+        "type": "keyword"
+      }
+    }
+  }
+}

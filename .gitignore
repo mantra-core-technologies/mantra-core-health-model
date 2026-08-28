@@ -1,0 +1,29 @@
+# ============================================================================
+#  mantra-core-health-model — qué NO se versiona acá
+# ============================================================================
+
+# --- Corpus MeSH: 501 MB que viajan por Release, no por clone ---------------
+# `seedsProd/modules/` son los shards del corpus (máx 20,7 MB c/u). Su metadata
+# —checksums.json, load-plan.json, schemas, sources, licenses, README— SÍ se
+# versiona: con eso se verifica la descarga. Ver el README.
+/seedsProd/modules/
+
+# --- Intercambio por zip: el workflow que este repo viene a reemplazar ------
+*.zip
+*.tar.gz
+
+# --- Generados por Python ---------------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# --- Local de cada máquina --------------------------------------------------
+.env
+.env.local
+
+# --- Sistema operativo ------------------------------------------------------
+.DS_Store
+__MACOSX/
+Thumbs.db
+desktop.ini

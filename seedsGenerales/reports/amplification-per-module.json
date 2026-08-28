@@ -1,0 +1,386 @@
+[
+  {
+    "module": "platform",
+    "boot": 0,
+    "mock": 0,
+    "entities_amplified": 0
+  },
+  {
+    "module": "iam",
+    "boot": 20,
+    "mock": 124,
+    "entities_amplified": 10
+  },
+  {
+    "module": "common",
+    "boot": 0,
+    "mock": 112,
+    "entities_amplified": 7
+  },
+  {
+    "module": "terminology",
+    "boot": 1701,
+    "mock": 180,
+    "entities_amplified": 18
+  },
+  {
+    "module": "directory",
+    "boot": 20,
+    "mock": 64,
+    "entities_amplified": 6
+  },
+  {
+    "module": "profiles",
+    "boot": 0,
+    "mock": 288,
+    "entities_amplified": 18
+  },
+  {
+    "module": "authz",
+    "boot": 385,
+    "mock": 160,
+    "entities_amplified": 12
+  },
+  {
+    "module": "consent",
+    "boot": 20,
+    "mock": 160,
+    "entities_amplified": 12
+  },
+  {
+    "module": "clinical",
+    "boot": 0,
+    "mock": 336,
+    "entities_amplified": 21
+  },
+  {
+    "module": "forms",
+    "boot": 90,
+    "mock": 256,
+    "entities_amplified": 25
+  },
+  {
+    "module": "audit",
+    "boot": 0,
+    "mock": 1968,
+    "entities_amplified": 123
+  },
+  {
+    "module": "system_ops",
+    "boot": 110,
+    "mock": 384,
+    "entities_amplified": 34
+  },
+  {
+    "module": "integrations",
+    "boot": 40,
+    "mock": 160,
+    "entities_amplified": 14
+  },
+  {
+    "module": "geo",
+    "boot": 0,
+    "mock": 96,
+    "entities_amplified": 6
+  },
+  {
+    "module": "practice",
+    "boot": 60,
+    "mock": 176,
+    "entities_amplified": 17
+  },
+  {
+    "module": "chart",
+    "boot": 20,
+    "mock": 176,
+    "entities_amplified": 13
+  },
+  {
+    "module": "accounting",
+    "boot": 110,
+    "mock": 671,
+    "entities_amplified": 49
+  },
+  {
+    "module": "billing",
+    "boot": 20,
+    "mock": 316,
+    "entities_amplified": 21
+  },
+  {
+    "module": "clinical_ext",
+    "boot": 50,
+    "mock": 192,
+    "entities_amplified": 17
+  },
+  {
+    "module": "community",
+    "boot": 20,
+    "mock": 528,
+    "entities_amplified": 35
+  },
+  {
+    "module": "diagnostics",
+    "boot": 10,
+    "mock": 576,
+    "entities_amplified": 37
+  },
+  {
+    "module": "deployment",
+    "boot": 0,
+    "mock": 0,
+    "entities_amplified": 0
+  },
+  {
+    "module": "organization_extensions",
+    "boot": 0,
+    "mock": 80,
+    "entities_amplified": 5
+  },
+  {
+    "module": "diagnostic_units",
+    "boot": 0,
+    "mock": 160,
+    "entities_amplified": 10
+  },
+  {
+    "module": "pharmacy",
+    "boot": 0,
+    "mock": 144,
+    "entities_amplified": 9
+  },
+  {
+    "module": "pharmacy_inventory",
+    "boot": 0,
+    "mock": 304,
+    "entities_amplified": 19
+  },
+  {
+    "module": "insurance",
+    "boot": 0,
+    "mock": 456,
+    "entities_amplified": 29
+  },
+  {
+    "module": "identity_assurance",
+    "boot": 30,
+    "mock": 176,
+    "entities_amplified": 14
+  },
+  {
+    "module": "telemetry",
+    "boot": 50,
+    "mock": 224,
+    "entities_amplified": 19
+  },
+  {
+    "module": "delegated_access",
+    "boot": 20,
+    "mock": 112,
+    "entities_amplified": 9
+  },
+  {
+    "module": "read_models",
+    "boot": 110,
+    "mock": 208,
+    "entities_amplified": 24
+  },
+  {
+    "module": "integration_contracts",
+    "boot": 30,
+    "mock": 144,
+    "entities_amplified": 12
+  },
+  {
+    "module": "workflow",
+    "boot": 240,
+    "mock": 128,
+    "entities_amplified": 10
+  },
+  {
+    "module": "integrity",
+    "boot": 0,
+    "mock": 0,
+    "entities_amplified": 0
+  },
+  {
+    "module": "portal_catalog",
+    "boot": 0,
+    "mock": 0,
+    "entities_amplified": 0
+  },
+  {
+    "module": "messaging",
+    "boot": 68,
+    "mock": 294,
+    "entities_amplified": 19
+  },
+  {
+    "module": "qa_lab",
+    "boot": 60,
+    "mock": 208,
+    "entities_amplified": 19
+  },
+  {
+    "module": "tracking",
+    "boot": 20,
+    "mock": 128,
+    "entities_amplified": 10
+  },
+  {
+    "module": "erp",
+    "boot": 20,
+    "mock": 816,
+    "entities_amplified": 51
+  },
+  {
+    "module": "reporting",
+    "boot": 92,
+    "mock": 192,
+    "entities_amplified": 20
+  },
+  {
+    "module": "auth_providers",
+    "boot": 50,
+    "mock": 144,
+    "entities_amplified": 14
+  },
+  {
+    "module": "scheduling",
+    "boot": 10,
+    "mock": 224,
+    "entities_amplified": 15
+  },
+  {
+    "module": "payments",
+    "boot": 90,
+    "mock": 738,
+    "entities_amplified": 56
+  },
+  {
+    "module": "ads",
+    "boot": 40,
+    "mock": 1168,
+    "entities_amplified": 75
+  },
+  {
+    "module": "health_context",
+    "boot": 30,
+    "mock": 160,
+    "entities_amplified": 13
+  },
+  {
+    "module": "system_context",
+    "boot": 62,
+    "mock": 144,
+    "entities_amplified": 14
+  },
+  {
+    "module": "platform_ops",
+    "boot": 225,
+    "mock": 608,
+    "entities_amplified": 53
+  },
+  {
+    "module": "education",
+    "boot": 0,
+    "mock": 240,
+    "entities_amplified": 15
+  },
+  {
+    "module": "automation",
+    "boot": 100,
+    "mock": 256,
+    "entities_amplified": 26
+  },
+  {
+    "module": "crm",
+    "boot": 40,
+    "mock": 492,
+    "entities_amplified": 35
+  },
+  {
+    "module": "marketing",
+    "boot": 40,
+    "mock": 176,
+    "entities_amplified": 15
+  },
+  {
+    "module": "promotions",
+    "boot": 70,
+    "mock": 176,
+    "entities_amplified": 18
+  },
+  {
+    "module": "health_data",
+    "boot": 100,
+    "mock": 544,
+    "entities_amplified": 44
+  },
+  {
+    "module": "procedures_perioperative",
+    "boot": 0,
+    "mock": 560,
+    "entities_amplified": 35
+  },
+  {
+    "module": "polyglot_storage",
+    "boot": 231,
+    "mock": 320,
+    "entities_amplified": 32
+  },
+  {
+    "module": "document_store",
+    "boot": 0,
+    "mock": 208,
+    "entities_amplified": 13
+  },
+  {
+    "module": "redis_runtime",
+    "boot": 0,
+    "mock": 224,
+    "entities_amplified": 14
+  },
+  {
+    "module": "search_platform",
+    "boot": 12,
+    "mock": 208,
+    "entities_amplified": 13
+  },
+  {
+    "module": "time_series",
+    "boot": 0,
+    "mock": 192,
+    "entities_amplified": 12
+  },
+  {
+    "module": "vector_rag",
+    "boot": 40,
+    "mock": 224,
+    "entities_amplified": 18
+  },
+  {
+    "module": "object_storage",
+    "boot": 10,
+    "mock": 272,
+    "entities_amplified": 18
+  },
+  {
+    "module": "graph_intelligence",
+    "boot": 30,
+    "mock": 208,
+    "entities_amplified": 16
+  },
+  {
+    "module": "cross_store_consistency",
+    "boot": 40,
+    "mock": 320,
+    "entities_amplified": 24
+  },
+  {
+    "module": "lakehouse",
+    "boot": 100,
+    "mock": 286,
+    "entities_amplified": 28
+  }
+]

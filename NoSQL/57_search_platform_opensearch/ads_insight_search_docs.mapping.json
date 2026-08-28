@@ -1,0 +1,45 @@
+{
+  "mappings": {
+    "properties": {
+      "tenant_id": {
+        "type": "keyword"
+      },
+      "source_entity_id": {
+        "type": "keyword"
+      },
+      "source_version": {
+        "type": "long"
+      },
+      "lifecycle_state": {
+        "type": "keyword"
+      },
+      "updated_at": {
+        "type": "date"
+      },
+      "routing_key": {
+        "type": "keyword"
+      },
+      "ad_account_id": {
+        "type": "keyword"
+      },
+      "campaign_id": {
+        "type": "keyword"
+      },
+      "ad_set_id": {
+        "type": "keyword"
+      },
+      "ad_id": {
+        "type": "keyword"
+      },
+      "metric_date": {
+        "type": "date"
+      },
+      "breakdowns": {
+        "type": "flat_object"
+      },
+      "metrics": {
+        "type": "flat_object"
+      }
+    }
+  }
+}

@@ -1,0 +1,350 @@
+@startuml SALUD_Module_59_vector_rag
+title Module 59 — Vector Search, RAG Evidence and Embedding Governance\n(vector database / pgvector-compatible model)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+note as BIZ_vector_rag
+  BUSINESS PURPOSE
+  Stores governed embeddings and retrieval evidence for protocols, policies, education, support and carefully approved clinical contexts.
+  Embeddings are derived data. Source documents, consent, access policies and deletion propagation remain authoritative elsewhere.
+end note
+
+entity "directory.tenants" as directory_tenants <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "common.files" as common_files <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "consent.consent_directives" as consent_directives <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "automation.agent_definitions" as automation_agents <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity vector_collections <<VECTOR_STORE>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * code : varchar
+  * name : varchar
+  * dimension : integer
+  * distance_metric : varchar
+  * embedding_model_version_id : uuid
+  * contains_phi : boolean
+  * access_policy_id : uuid
+  * lifecycle_state : varchar
+  * created_at : timestamptz
+}
+
+entity vector_documents <<VECTOR_STORE>> {
+  * id : uuid <<PK>>
+  * vector_collection_id : uuid
+  * source_document_id : uuid
+  * source_version_id : uuid
+  * document_type : varchar
+  * language : varchar
+  * title : varchar
+  * content_hash : varchar
+  * contains_phi : boolean
+  * patient_profile_id : uuid
+  * security_labels : varchar[]
+  * purpose_of_use_codes : varchar[]
+  * lifecycle_state : varchar
+  * created_at : timestamptz
+}
+
+entity vector_chunks <<VECTOR_STORE>> {
+  * id : uuid <<PK>>
+  * vector_document_id : uuid
+  * chunk_number : integer
+  * chunk_text_redacted : text
+  * token_count : integer
+  * chunk_hash : varchar
+  * section_path : varchar
+  * metadata : jsonb
+  * created_at : timestamptz
+}
+
+entity vector_embeddings <<VECTOR_STORE>> {
+  * id : uuid <<PK>>
+  * vector_chunk_id : uuid
+  * embedding_model_version_id : uuid
+  * embedding : vector
+  * embedding_hash : varchar
+  * generated_at : timestamptz
+  * lifecycle_state : varchar
+}
+
+entity embedding_model_versions <<VECTOR_STORE>> {
+  * id : uuid <<PK>>
+  * provider_code : varchar
+  * model_id : varchar
+  * model_version : varchar
+  * dimension : integer
+  * distance_metric : varchar
+  * tokenizer_version : varchar
+  * approved_for_phi : boolean
+  approved_at : timestamptz
+  retired_at : timestamptz
+}
+
+entity embedding_jobs <<VECTOR_STORE>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * vector_collection_id : uuid
+  * job_type : varchar
+  * source_scope : jsonb
+  * requested_by_user_id : uuid
+  * status : varchar
+  * total_chunks : integer
+  * completed_chunks : integer
+  * failed_chunks : integer
+  * created_at : timestamptz
+  * completed_at : timestamptz
+}
+
+entity rag_access_policies <<VECTOR_STORE>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * code : varchar
+  * allowed_principal_types : varchar[]
+  * allowed_purpose_codes : varchar[]
+  * allowed_security_labels : varchar[]
+  * patient_scope_required : boolean
+  * consent_required : boolean
+  * field_redaction_profile : varchar
+  * state : varchar
+}
+
+entity vector_tenant_bindings <<VECTOR_STORE>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * vector_collection_id : uuid
+  * namespace : varchar
+  * encryption_profile_code : varchar
+  * state : varchar
+}
+
+entity retrieval_sessions <<VECTOR_STORE>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * principal_id : uuid
+  * agent_id : uuid
+  * purpose_of_use_code : varchar
+  * patient_profile_id : uuid
+  * consent_directive_id : uuid
+  * query_text_redacted : text
+  * query_hash : varchar
+  * started_at : timestamptz
+  * completed_at : timestamptz
+  * status : varchar
+}
+
+entity retrieval_candidates <<VECTOR_STORE>> {
+  * id : uuid <<PK>>
+  * retrieval_session_id : uuid
+  * vector_chunk_id : uuid
+  * rank : integer
+  * vector_score : double
+  * lexical_score : double
+  * reranker_score : double
+  * authorization_decision : varchar
+  * selected : boolean
+}
+
+entity retrieval_evidence <<VECTOR_STORE>> {
+  * id : uuid <<PK>>
+  * retrieval_session_id : uuid
+  * vector_chunk_id : uuid
+  * citation_number : integer
+  * quoted_text_redacted : text
+  * source_uri : varchar
+  * source_version_id : uuid
+  * evidence_hash : varchar
+}
+
+entity retrieval_feedback_events <<VECTOR_STORE>> {
+  * id : uuid <<PK>>
+  * retrieval_session_id : uuid
+  * principal_id : uuid
+  * feedback_type : varchar
+  * relevance_score : smallint
+  * safety_issue_code : varchar
+    comment_redacted : text
+  * created_at : timestamptz
+}
+
+entity vector_deletion_jobs <<VECTOR_STORE>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * patient_profile_id : uuid
+  * source_document_id : uuid
+  * deletion_reason : varchar
+  * status : varchar
+  * requested_at : timestamptz
+  * verified_at : timestamptz
+}
+
+entity vector_reconciliation_runs <<VECTOR_STORE>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * vector_collection_id : uuid
+  * canonical_manifest_hash : varchar
+  * vector_manifest_hash : varchar
+  * missing_count : integer
+  * orphan_count : integer
+  * mismatched_count : integer
+  * status : varchar
+  * started_at : timestamptz
+  * completed_at : timestamptz
+}
+
+
+vector_collections -- vector_documents : contains
+vector_documents -- vector_chunks : chunks
+vector_chunks -- vector_embeddings : embedded as
+embedding_model_versions -- vector_embeddings : produces
+rag_access_policies -- vector_collections : protects
+directory_tenants -- vector_tenant_bindings : binds
+retrieval_sessions -- retrieval_candidates : ranks
+retrieval_candidates -- retrieval_evidence : cites
+consent_directives -- retrieval_sessions : authorizes when required
+automation_agents -- retrieval_sessions : requests
+common_files -- vector_documents : source
+
+package "Physical Indexes and Access Patterns" {
+entity "INDEXES · vector_collections" as idxset_vector_collections <<INDEX_SET>> {
+  PK pk_vector_collections : (id)
+  UK uq_vector_collection_tenant_code : (tenant_id, code)
+  IX ix_vector_collection_state : (tenant_id, lifecycle_state)
+}
+
+vector_collections .. idxset_vector_collections : indexed by
+
+entity "INDEXES · vector_documents" as idxset_vector_documents <<INDEX_SET>> {
+  PK pk_vector_documents : (id)
+  UK uq_vector_doc_source_version : (vector_collection_id, source_document_id, source_version_id)
+  IX ix_vector_doc_patient : (vector_collection_id, patient_profile_id, created_at DESC) PARTIAL patient_profile_id not null
+  GIN gin_vector_doc_labels : (security_labels, purpose_of_use_codes)
+}
+
+vector_documents .. idxset_vector_documents : indexed by
+
+entity "INDEXES · vector_chunks" as idxset_vector_chunks <<INDEX_SET>> {
+  PK pk_vector_chunks : (id)
+  UK uq_vector_chunk_number : (vector_document_id, chunk_number)
+  UK uq_vector_chunk_hash : (vector_document_id, chunk_hash)
+  GIN gin_vector_chunk_metadata : (metadata) jsonb_path_ops
+}
+
+vector_chunks .. idxset_vector_chunks : indexed by
+
+entity "INDEXES · vector_embeddings" as idxset_vector_embeddings <<INDEX_SET>> {
+  PK pk_vector_embeddings : (id)
+  UK uq_vector_embedding_chunk_model : (vector_chunk_id, embedding_model_version_id)
+  HNSW hnsw_vector_embedding : (embedding distance_metric) m=16 ef_construction=128
+  IX ix_vector_embedding_state : (lifecycle_state, generated_at DESC)
+}
+
+vector_embeddings .. idxset_vector_embeddings : indexed by
+
+entity "INDEXES · embedding_model_versions" as idxset_embedding_model_versions <<INDEX_SET>> {
+  PK pk_embedding_model_versions : (id)
+  UK uq_embedding_model_version : (provider_code, model_id, model_version)
+  IX ix_embedding_model_approval : (approved_for_phi, retired_at)
+}
+
+embedding_model_versions .. idxset_embedding_model_versions : indexed by
+
+entity "INDEXES · embedding_jobs" as idxset_embedding_jobs <<INDEX_SET>> {
+  PK pk_embedding_jobs : (id)
+  IX ix_embedding_jobs_tenant_status : (tenant_id, status, created_at ASC)
+  IX ix_embedding_jobs_collection : (vector_collection_id, created_at DESC)
+}
+
+embedding_jobs .. idxset_embedding_jobs : indexed by
+
+entity "INDEXES · rag_access_policies" as idxset_rag_access_policies <<INDEX_SET>> {
+  PK pk_rag_access_policies : (id)
+  UK uq_rag_policy_tenant_code : (tenant_id, code)
+  GIN gin_rag_policy_purposes : (allowed_purpose_codes)
+  GIN gin_rag_policy_labels : (allowed_security_labels)
+}
+
+rag_access_policies .. idxset_rag_access_policies : indexed by
+
+entity "INDEXES · vector_tenant_bindings" as idxset_vector_tenant_bindings <<INDEX_SET>> {
+  PK pk_vector_tenant_bindings : (id)
+  UK uq_vector_binding_tenant_collection : (tenant_id, vector_collection_id)
+  UK uq_vector_binding_namespace : (namespace)
+}
+
+vector_tenant_bindings .. idxset_vector_tenant_bindings : indexed by
+
+entity "INDEXES · retrieval_sessions" as idxset_retrieval_sessions <<INDEX_SET>> {
+  PK pk_retrieval_sessions : (id)
+  IX ix_retrieval_session_principal : (tenant_id, principal_id, started_at DESC)
+  IX ix_retrieval_session_patient : (tenant_id, patient_profile_id, started_at DESC) PARTIAL patient_profile_id not null
+  IX ix_retrieval_session_hash : (tenant_id, query_hash, started_at DESC)
+}
+
+retrieval_sessions .. idxset_retrieval_sessions : indexed by
+
+entity "INDEXES · retrieval_candidates" as idxset_retrieval_candidates <<INDEX_SET>> {
+  PK pk_retrieval_candidates : (id)
+  UK uq_retrieval_candidate_rank : (retrieval_session_id, rank)
+  UK uq_retrieval_candidate_chunk : (retrieval_session_id, vector_chunk_id)
+  IX ix_retrieval_candidate_selected : (retrieval_session_id, selected, rank)
+}
+
+retrieval_candidates .. idxset_retrieval_candidates : indexed by
+
+entity "INDEXES · retrieval_evidence" as idxset_retrieval_evidence <<INDEX_SET>> {
+  PK pk_retrieval_evidence : (id)
+  UK uq_retrieval_evidence_citation : (retrieval_session_id, citation_number)
+  UK uq_retrieval_evidence_hash : (retrieval_session_id, evidence_hash)
+}
+
+retrieval_evidence .. idxset_retrieval_evidence : indexed by
+
+entity "INDEXES · retrieval_feedback_events" as idxset_retrieval_feedback_events <<INDEX_SET>> {
+  PK pk_retrieval_feedback_events : (id)
+  IX ix_retrieval_feedback_session : (retrieval_session_id, created_at DESC)
+  IX ix_retrieval_feedback_safety : (safety_issue_code, created_at DESC) PARTIAL safety_issue_code not null
+}
+
+retrieval_feedback_events .. idxset_retrieval_feedback_events : indexed by
+
+entity "INDEXES · vector_deletion_jobs" as idxset_vector_deletion_jobs <<INDEX_SET>> {
+  PK pk_vector_deletion_jobs : (id)
+  IX ix_vector_delete_tenant_status : (tenant_id, status, requested_at ASC)
+  IX ix_vector_delete_patient : (tenant_id, patient_profile_id) PARTIAL patient_profile_id not null
+}
+
+vector_deletion_jobs .. idxset_vector_deletion_jobs : indexed by
+
+entity "INDEXES · vector_reconciliation_runs" as idxset_vector_reconciliation_runs <<INDEX_SET>> {
+  PK pk_vector_reconciliation_runs : (id)
+  IX ix_vector_reconcile_collection_time : (vector_collection_id, started_at DESC)
+  IX ix_vector_reconcile_status : (tenant_id, status, started_at ASC)
+}
+
+vector_reconciliation_runs .. idxset_vector_reconciliation_runs : indexed by
+
+}
+
+
+note as INDEX_POLICY_vector_rag
+  INDEX AND ACCESS-PATTERN POLICY
+  - Vector indexes are always combined with tenant, patient, purpose and security-label filters.
+  - PHI collections require a model explicitly approved for PHI and a consent/purpose policy where applicable.
+  - Retrieval evidence preserves source version and hash so generated answers remain auditable.
+  - Deletion and re-embedding jobs propagate source changes; stale embeddings are not silently retained.
+end note
+
+@enduml

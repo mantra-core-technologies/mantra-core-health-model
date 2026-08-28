@@ -1,0 +1,792 @@
+@startuml SALUD_Module_17_billing
+title Module 17 — Billing, Receivables, Payables and Financial Planning\n(schema: billing)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_17_billing.puml
+' ------------------------------------------------------------------------------
+
+entity "erp.business_partners" as erp_business_partners <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "erp.contracts" as erp_contracts <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "erp.contract_line_items" as erp_contract_line_items <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "erp.purchase_orders" as erp_purchase_orders <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "erp.purchase_order_items" as erp_purchase_order_items <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "erp.goods_receipt_items" as erp_goods_receipt_items <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "erp.service_entry_items" as erp_service_entry_items <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "erp.sales_orders" as erp_sales_orders <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "erp.sales_order_items" as erp_sales_order_items <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "accounting.subledger_accounts" as accounting_subledger_accounts <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "accounting.open_items" as accounting_open_items <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "accounting.clearing_documents" as accounting_clearing_documents <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "accounting.clearing_items" as accounting_clearing_items <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "accounting.company_bank_accounts" as accounting_company_bank_accounts <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "payments.payment_transactions" as payments_payment_transactions <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+
+note as BIZ_diagram_17_billing
+  Manages service billing, invoices, patient statements, vendor bills and
+  payment records. Insurance adjudication and analytical projections are
+  separated into Module 17B and the dedicated insurance schema.
+end note
+
+entity service_catalog {
+  * id : uuid <<PK>>
+  --
+  * practice_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+    service_concept_id : uuid <<FK>>
+  * default_price : numeric
+    currency_concept_id : uuid <<FK>>
+    tax_code_id : uuid <<FK>>
+    income_account_id : uuid <<FK>>
+  * is_active : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity invoices {
+  * id : uuid <<PK>>
+  --
+  * practice_id : uuid <<FK>>
+  * invoice_number : varchar <<UK>>
+  * patient_profile_id : uuid <<FK>>
+    encounter_id : uuid <<FK>>
+  * issue_date : date
+    due_date : date
+  * status_concept_id : uuid <<FK>>
+    subtotal : numeric
+    tax_total : numeric
+    discount_total : numeric
+    total : numeric
+    paid_total : numeric
+    balance : numeric
+    currency_concept_id : uuid <<FK>>
+    customer_business_partner_id : uuid <<FK>>
+    customer_subledger_account_id : uuid <<FK>>
+    contract_id : uuid <<FK>>
+    sales_order_id : uuid <<FK>>
+    transaction_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity invoice_lines {
+  * id : uuid <<PK>>
+  --
+  * invoice_id : uuid <<FK>>
+    service_id : uuid <<FK>>
+    description : varchar
+  * quantity : numeric
+  * unit_price : numeric
+    discount : numeric
+    tax_code_id : uuid <<FK>>
+    tax_amount : numeric
+    line_total : numeric
+    income_account_id : uuid <<FK>>
+    cost_center_id : uuid <<FK>>
+    contract_line_item_id : uuid <<FK>>
+    sales_order_item_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity payments_received {
+  * id : uuid <<PK>>
+  --
+  * practice_id : uuid <<FK>>
+    invoice_id : uuid <<FK>>
+    patient_profile_id : uuid <<FK>>
+  * amount : numeric
+  * method_concept_id : uuid <<FK>>
+    received_at : timestamptz
+    reference : varchar
+    payment_transaction_id : uuid <<FK>>
+    clearing_document_id : uuid <<FK>>
+    company_bank_account_id : uuid <<FK>>
+    transaction_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity patient_statements {
+  * id : uuid <<PK>>
+  --
+  * practice_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+  * period_start : date
+  * period_end : date
+    opening_balance : numeric
+    charges : numeric
+    payments : numeric
+    closing_balance : numeric
+    generated_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity vendors {
+  * id : uuid <<PK>>
+  --
+  * practice_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+    tax_id : varchar
+    business_partner_id : uuid <<FK>>
+    supplier_subledger_account_id : uuid <<FK>>
+    contact_json : jsonb
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity bills {
+  * id : uuid <<PK>>
+  --
+  * practice_id : uuid <<FK>>
+  * vendor_id : uuid <<FK>>
+  * bill_number : varchar
+  * issue_date : date
+    due_date : date
+  * status_concept_id : uuid <<FK>>
+    subtotal : numeric
+    tax_total : numeric
+    total : numeric
+    paid_total : numeric
+    balance : numeric
+    currency_concept_id : uuid <<FK>>
+    supplier_business_partner_id : uuid <<FK>>
+    supplier_subledger_account_id : uuid <<FK>>
+    contract_id : uuid <<FK>>
+    purchase_order_id : uuid <<FK>>
+    transaction_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity bill_lines {
+  * id : uuid <<PK>>
+  --
+  * bill_id : uuid <<FK>>
+    description : varchar
+  * quantity : numeric
+  * unit_price : numeric
+    tax_amount : numeric
+    line_total : numeric
+    expense_account_id : uuid <<FK>>
+    cost_center_id : uuid <<FK>>
+    contract_line_item_id : uuid <<FK>>
+    purchase_order_item_id : uuid <<FK>>
+    goods_receipt_item_id : uuid <<FK>>
+    service_entry_item_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity payments_made {
+  * id : uuid <<PK>>
+  --
+  * practice_id : uuid <<FK>>
+    bill_id : uuid <<FK>>
+    vendor_id : uuid <<FK>>
+  * amount : numeric
+  * method_concept_id : uuid <<FK>>
+    paid_at : timestamptz
+    payment_transaction_id : uuid <<FK>>
+    clearing_document_id : uuid <<FK>>
+    company_bank_account_id : uuid <<FK>>
+    transaction_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+invoices ||--o{ invoice_lines
+service_catalog |o--o{ invoice_lines
+invoices ||--o{ payments_received
+vendors ||--o{ bills
+bills ||--o{ bill_lines
+bills ||--o{ payments_made
+
+note as POSTING_diagram_17_billing
+  Financial documents are operational records. Final accounting effects are
+  posted to the append-only accounting ledger using stable source identifiers.
+end note
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_17b_financial_planning.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_17b_financial_planning
+  Keeps planning/reporting concerns separate and documents the controlled bridge
+  from the earlier billing claim model to the richer insurance domain.
+end note
+
+entity insurance_claims <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity reimbursements {
+  * id : uuid <<PK>>
+  --
+  * claim_id : uuid <<FK>>
+  * amount : numeric
+    received_at : timestamptz
+    transaction_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity tax_codes {
+  * id : uuid <<PK>>
+  --
+  * practice_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+  * tax_type_concept_id : uuid <<FK>>
+  * rate_percent : numeric
+    jurisdiction_concept_id : uuid <<FK>>
+    account_id : uuid <<FK>>
+  * is_active : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity tax_periods {
+  * id : uuid <<PK>>
+  --
+  * practice_id : uuid <<FK>>
+  * code : varchar
+  * start_date : date
+  * end_date : date
+  * status_concept_id : uuid <<FK>>
+    filed_at : timestamptz
+    total_due : numeric
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity budgets {
+  * id : uuid <<PK>>
+  --
+  * practice_id : uuid <<FK>>
+    fiscal_year_id : uuid <<FK>>
+  * name : varchar
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity budget_lines {
+  * id : uuid <<PK>>
+  --
+  * budget_id : uuid <<FK>>
+  * account_id : uuid <<FK>>
+    cost_center_id : uuid <<FK>>
+    fiscal_period_id : uuid <<FK>>
+  * amount : numeric
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+
+entity financial_kpi_snapshots <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * practice_id : uuid <<FK>>
+    fiscal_period_id : uuid <<FK>>
+  * kpi_code : varchar
+  * value_numeric : numeric
+    dimension_json : jsonb
+    computed_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+entity receivables_aging_view <<VIEW>> {
+  --
+    practice_id : uuid
+    patient_profile_id : uuid
+    invoice_id : uuid
+    balance : numeric
+    days_overdue : integer
+    bucket : varchar
+}
+
+insurance_claims ||--o{ reimbursements
+budgets ||--o{ budget_lines
+
+note as MIGRATION_diagram_17b_financial_planning
+  billing.insurance_claims is retained only as a compatibility/financial posting
+  bridge. New eligibility, prior authorization, claim and adjudication workflows
+  use insurance.*. No dual source of truth is permitted.
+end note
+
+note as VIEWS_diagram_17b_financial_planning
+  financial_kpi_snapshots and receivables_aging_view are read projections. Their
+  definitions, owners, refresh cadence and source dependencies are registered in
+  the portal/read-model catalogue.
+end note
+
+note as CLAIM_OWNERSHIP
+  CLAIM OWNERSHIP
+  insurance.insurance_claims and insurance.insurance_claim_lines in Module 26 are
+  canonical. Billing references claim IDs for invoices and reimbursements but does
+  not own a second claim aggregate or a competing claim lifecycle.
+end note
+
+
+entity receivable_payment_allocations {
+  * id : uuid <<PK>>
+  --
+  * payment_received_id : uuid <<FK>>
+  * invoice_id : uuid <<FK>>
+  open_item_id : uuid <<FK>>
+  clearing_item_id : uuid <<FK>>
+  * allocated_amount : numeric
+  discount_amount : numeric
+  write_off_amount : numeric
+  currency_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+}
+
+entity payable_payment_allocations {
+  * id : uuid <<PK>>
+  --
+  * payment_made_id : uuid <<FK>>
+  * bill_id : uuid <<FK>>
+  open_item_id : uuid <<FK>>
+  clearing_item_id : uuid <<FK>>
+  * allocated_amount : numeric
+  discount_amount : numeric
+  withholding_amount : numeric
+  currency_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+}
+
+entity billing_document_links {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  invoice_id : uuid <<FK>>
+  bill_id : uuid <<FK>>
+  contract_id : uuid <<FK>>
+  sales_order_id : uuid <<FK>>
+  purchase_order_id : uuid <<FK>>
+  claim_id : uuid <<FK>>
+  encounter_id : uuid <<FK>>
+  * relation_type_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+}
+
+entity dunning_runs {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * run_number : varchar
+  run_date : date
+  dunning_level_concept_id : uuid <<FK>>
+  company_bank_account_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+}
+
+entity dunning_items {
+  * id : uuid <<PK>>
+  --
+  * dunning_run_id : uuid <<FK>>
+  * invoice_id : uuid <<FK>>
+  open_item_id : uuid <<FK>>
+  business_partner_id : uuid <<FK>>
+  outstanding_amount : numeric
+  currency_concept_id : uuid <<FK>>
+  days_overdue : integer
+  dunning_fee : numeric
+  notice_file_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+
+erp_business_partners |o--o{ vendors
+accounting_subledger_accounts |o--o{ vendors
+accounting_subledger_accounts |o--o{ invoices
+accounting_subledger_accounts |o--o{ bills
+erp_business_partners |o--o{ invoices : customer
+erp_business_partners |o--o{ bills : supplier
+erp_contracts |o--o{ invoices
+erp_contracts |o--o{ bills
+erp_sales_orders |o--o{ invoices
+erp_purchase_orders |o--o{ bills
+erp_contract_line_items |o--o{ invoice_lines
+erp_sales_order_items |o--o{ invoice_lines
+erp_contract_line_items |o--o{ bill_lines
+erp_purchase_order_items |o--o{ bill_lines
+erp_goods_receipt_items |o--o{ bill_lines
+erp_service_entry_items |o--o{ bill_lines
+payments_payment_transactions |o--o{ payments_received
+payments_payment_transactions |o--o{ payments_made
+accounting_clearing_documents |o--o{ payments_received
+accounting_clearing_documents |o--o{ payments_made
+accounting_company_bank_accounts |o--o{ payments_received
+accounting_company_bank_accounts |o--o{ payments_made
+payments_received ||--o{ receivable_payment_allocations
+invoices ||--o{ receivable_payment_allocations
+accounting_open_items |o--o{ receivable_payment_allocations
+accounting_clearing_items |o--o{ receivable_payment_allocations
+payments_made ||--o{ payable_payment_allocations
+bills ||--o{ payable_payment_allocations
+accounting_open_items |o--o{ payable_payment_allocations
+accounting_clearing_items |o--o{ payable_payment_allocations
+dunning_runs ||--o{ dunning_items
+invoices ||--o{ dunning_items
+erp_business_partners |o--o{ dunning_items
+
+note as BILLING_CLEARING_MODEL
+  Payments are no longer constrained to one invoice/bill. Allocation tables support
+  partial, combined and residual clearing while accounting.open_items remains the
+  canonical subledger balance. Bills and invoice lines connect explicitly to contract,
+  order and receipt/service evidence for end-to-end document flow and three-way match.
+end note
+
+package "Physical Indexes" {
+entity "INDEXES · receivable_payment_allocations" as idxset_receivable_payment_allocations <<INDEX_SET>> {
+  PK pk_receivable_payment_allocations : (id) UNIQUE BTREE
+  UK uq_receivable_payment_allocations_payment_received_id__c1caeee3 : (payment_received_id, invoice_id, open_item_id) UNIQUE BTREE
+  IX ix_receivable_payment_allocations_payment_received_id : (payment_received_id) BTREE
+  IX ix_receivable_payment_allocations_invoice_id : (invoice_id) BTREE
+  IX ix_receivable_payment_allocations_open_item_id : (open_item_id) BTREE
+  IX ix_receivable_payment_allocations_clearing_item_id : (clearing_item_id) BTREE
+  IX ix_receivable_payment_allocations_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_receivable_payment_allocations_created_by_user_id : (created_by_user_id) BTREE
+}
+
+receivable_payment_allocations .. idxset_receivable_payment_allocations : indexed by
+
+entity "INDEXES · payable_payment_allocations" as idxset_payable_payment_allocations <<INDEX_SET>> {
+  PK pk_payable_payment_allocations : (id) UNIQUE BTREE
+  UK uq_payable_payment_allocations_payment_made_id_bill_id_3897742e : (payment_made_id, bill_id, open_item_id) UNIQUE BTREE
+  IX ix_payable_payment_allocations_payment_made_id : (payment_made_id) BTREE
+  IX ix_payable_payment_allocations_bill_id : (bill_id) BTREE
+  IX ix_payable_payment_allocations_open_item_id : (open_item_id) BTREE
+  IX ix_payable_payment_allocations_clearing_item_id : (clearing_item_id) BTREE
+  IX ix_payable_payment_allocations_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_payable_payment_allocations_created_by_user_id : (created_by_user_id) BTREE
+}
+
+payable_payment_allocations .. idxset_payable_payment_allocations : indexed by
+
+entity "INDEXES · billing_document_links" as idxset_billing_document_links <<INDEX_SET>> {
+  PK pk_billing_document_links : (id) UNIQUE BTREE
+  IX ix_billing_document_links_tenant_id : (tenant_id) BTREE
+  IX ix_billing_document_links_invoice_id : (invoice_id) BTREE
+  IX ix_billing_document_links_bill_id : (bill_id) BTREE
+  IX ix_billing_document_links_contract_id : (contract_id) BTREE
+  IX ix_billing_document_links_sales_order_id : (sales_order_id) BTREE
+  IX ix_billing_document_links_purchase_order_id : (purchase_order_id) BTREE
+  IX ix_billing_document_links_claim_id : (claim_id) BTREE
+  IX ix_billing_document_links_encounter_id : (encounter_id) BTREE
+  IX ix_billing_document_links_relation_type_concept_id : (relation_type_concept_id) BTREE
+  IX ix_billing_document_links_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_billing_document_links_tenant_relation_created : (tenant_id, relation_type_concept_id, created_at DESC) BTREE
+  BRIN brin_billing_document_links_created_at : (created_at) BRIN pages_per_range=128
+}
+
+billing_document_links .. idxset_billing_document_links : indexed by
+
+entity "INDEXES · dunning_runs" as idxset_dunning_runs <<INDEX_SET>> {
+  PK pk_dunning_runs : (id) UNIQUE BTREE
+  UK uq_dunning_runs_tenant_id_run_number : (tenant_id, run_number) UNIQUE BTREE
+  IX ix_dunning_runs_tenant_id : (tenant_id) BTREE
+  IX ix_dunning_runs_dunning_level_concept_id : (dunning_level_concept_id) BTREE
+  IX ix_dunning_runs_company_bank_account_id : (company_bank_account_id) BTREE
+  IX ix_dunning_runs_status_concept_id : (status_concept_id) BTREE
+  IX ix_dunning_runs_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_dunning_runs_tenant_status_date : (tenant_id, status_concept_id, run_date DESC) BTREE
+}
+
+dunning_runs .. idxset_dunning_runs : indexed by
+
+entity "INDEXES · dunning_items" as idxset_dunning_items <<INDEX_SET>> {
+  PK pk_dunning_items : (id) UNIQUE BTREE
+  UK uq_dunning_items_dunning_run_id_invoice_id : (dunning_run_id, invoice_id) UNIQUE BTREE
+  IX ix_dunning_items_dunning_run_id : (dunning_run_id) BTREE
+  IX ix_dunning_items_invoice_id : (invoice_id) BTREE
+  IX ix_dunning_items_open_item_id : (open_item_id) BTREE
+  IX ix_dunning_items_business_partner_id : (business_partner_id) BTREE
+  IX ix_dunning_items_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_dunning_items_notice_file_id : (notice_file_id) BTREE
+  IX ix_dunning_items_status_concept_id : (status_concept_id) BTREE
+  IX ix_dunning_items_status_overdue : (status_concept_id, days_overdue DESC) BTREE
+}
+
+dunning_items .. idxset_dunning_items : indexed by
+
+entity "INDEXES · service_catalog" as idxset_service_catalog <<INDEX_SET>> {
+  PK pk_service_catalog : (id) UNIQUE BTREE
+  IX ix_service_catalog_practice_id : (practice_id) BTREE
+  IX ix_service_catalog_service_concept_id : (service_concept_id) BTREE
+  IX ix_service_catalog_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_service_catalog_tax_code_id : (tax_code_id) BTREE
+  IX ix_service_catalog_income_account_id : (income_account_id) BTREE
+  IX ix_service_catalog_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_service_catalog_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+service_catalog .. idxset_service_catalog : indexed by
+
+entity "INDEXES · invoices" as idxset_invoices <<INDEX_SET>> {
+  PK pk_invoices : (id) UNIQUE BTREE
+  UK uq_invoices_invoice_number : (invoice_number) UNIQUE BTREE
+  IX ix_invoices_practice_id : (practice_id) BTREE
+  IX ix_invoices_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_invoices_encounter_id : (encounter_id) BTREE
+  IX ix_invoices_status_concept_id : (status_concept_id) BTREE
+  IX ix_invoices_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_invoices_customer_business_partner_id : (customer_business_partner_id) BTREE
+  IX ix_invoices_customer_subledger_account_id : (customer_subledger_account_id) BTREE
+  IX ix_invoices_contract_id : (contract_id) BTREE
+  IX ix_invoices_sales_order_id : (sales_order_id) BTREE
+  IX ix_invoices_transaction_id : (transaction_id) BTREE
+  IX ix_invoices_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_invoices_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_invoices_patient_profile_id_updated_at : (patient_profile_id, updated_at DESC) BTREE
+}
+
+invoices .. idxset_invoices : indexed by
+
+entity "INDEXES · invoice_lines" as idxset_invoice_lines <<INDEX_SET>> {
+  PK pk_invoice_lines : (id) UNIQUE BTREE
+  IX ix_invoice_lines_invoice_id : (invoice_id) BTREE
+  IX ix_invoice_lines_service_id : (service_id) BTREE
+  IX ix_invoice_lines_tax_code_id : (tax_code_id) BTREE
+  IX ix_invoice_lines_income_account_id : (income_account_id) BTREE
+  IX ix_invoice_lines_cost_center_id : (cost_center_id) BTREE
+  IX ix_invoice_lines_contract_line_item_id : (contract_line_item_id) BTREE
+  IX ix_invoice_lines_sales_order_item_id : (sales_order_item_id) BTREE
+  IX ix_invoice_lines_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_invoice_lines_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+invoice_lines .. idxset_invoice_lines : indexed by
+
+entity "INDEXES · payments_received" as idxset_payments_received <<INDEX_SET>> {
+  PK pk_payments_received : (id) UNIQUE BTREE
+  IX ix_payments_received_practice_id : (practice_id) BTREE
+  IX ix_payments_received_invoice_id : (invoice_id) BTREE
+  IX ix_payments_received_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_payments_received_method_concept_id : (method_concept_id) BTREE
+  IX ix_payments_received_transaction_id : (transaction_id) BTREE
+  IX ix_payments_received_payment_transaction_id : (payment_transaction_id) BTREE
+  IX ix_payments_received_clearing_document_id : (clearing_document_id) BTREE
+  IX ix_payments_received_company_bank_account_id : (company_bank_account_id) BTREE
+  IX ix_payments_received_status_concept_id : (status_concept_id) BTREE
+  IX ix_payments_received_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_payments_received_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_payments_received_patient_profile_id_updated_at : (patient_profile_id, updated_at DESC) BTREE
+}
+
+payments_received .. idxset_payments_received : indexed by
+
+entity "INDEXES · patient_statements" as idxset_patient_statements <<INDEX_SET>> {
+  PK pk_patient_statements : (id) UNIQUE BTREE
+  IX ix_patient_statements_practice_id : (practice_id) BTREE
+  IX ix_patient_statements_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_patient_statements_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_patient_statements_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_patient_statements_patient_profile_id_updated_at : (patient_profile_id, updated_at DESC) BTREE
+}
+
+patient_statements .. idxset_patient_statements : indexed by
+
+entity "INDEXES · vendors" as idxset_vendors <<INDEX_SET>> {
+  PK pk_vendors : (id) UNIQUE BTREE
+  IX ix_vendors_practice_id : (practice_id) BTREE
+  IX ix_vendors_status_concept_id : (status_concept_id) BTREE
+  IX ix_vendors_business_partner_id : (business_partner_id) BTREE
+  IX ix_vendors_supplier_subledger_account_id : (supplier_subledger_account_id) BTREE
+  IX ix_vendors_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_vendors_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+vendors .. idxset_vendors : indexed by
+
+entity "INDEXES · bills" as idxset_bills <<INDEX_SET>> {
+  PK pk_bills : (id) UNIQUE BTREE
+  IX ix_bills_practice_id : (practice_id) BTREE
+  IX ix_bills_vendor_id : (vendor_id) BTREE
+  IX ix_bills_status_concept_id : (status_concept_id) BTREE
+  IX ix_bills_transaction_id : (transaction_id) BTREE
+  IX ix_bills_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_bills_supplier_business_partner_id : (supplier_business_partner_id) BTREE
+  IX ix_bills_supplier_subledger_account_id : (supplier_subledger_account_id) BTREE
+  IX ix_bills_contract_id : (contract_id) BTREE
+  IX ix_bills_purchase_order_id : (purchase_order_id) BTREE
+  IX ix_bills_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_bills_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+bills .. idxset_bills : indexed by
+
+entity "INDEXES · bill_lines" as idxset_bill_lines <<INDEX_SET>> {
+  PK pk_bill_lines : (id) UNIQUE BTREE
+  IX ix_bill_lines_bill_id : (bill_id) BTREE
+  IX ix_bill_lines_expense_account_id : (expense_account_id) BTREE
+  IX ix_bill_lines_cost_center_id : (cost_center_id) BTREE
+  IX ix_bill_lines_contract_line_item_id : (contract_line_item_id) BTREE
+  IX ix_bill_lines_purchase_order_item_id : (purchase_order_item_id) BTREE
+  IX ix_bill_lines_goods_receipt_item_id : (goods_receipt_item_id) BTREE
+  IX ix_bill_lines_service_entry_item_id : (service_entry_item_id) BTREE
+  IX ix_bill_lines_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_bill_lines_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+bill_lines .. idxset_bill_lines : indexed by
+
+entity "INDEXES · payments_made" as idxset_payments_made <<INDEX_SET>> {
+  PK pk_payments_made : (id) UNIQUE BTREE
+  IX ix_payments_made_practice_id : (practice_id) BTREE
+  IX ix_payments_made_bill_id : (bill_id) BTREE
+  IX ix_payments_made_vendor_id : (vendor_id) BTREE
+  IX ix_payments_made_method_concept_id : (method_concept_id) BTREE
+  IX ix_payments_made_transaction_id : (transaction_id) BTREE
+  IX ix_payments_made_payment_transaction_id : (payment_transaction_id) BTREE
+  IX ix_payments_made_clearing_document_id : (clearing_document_id) BTREE
+  IX ix_payments_made_company_bank_account_id : (company_bank_account_id) BTREE
+  IX ix_payments_made_status_concept_id : (status_concept_id) BTREE
+  IX ix_payments_made_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_payments_made_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+payments_made .. idxset_payments_made : indexed by
+
+entity "INDEXES · reimbursements" as idxset_reimbursements <<INDEX_SET>> {
+  PK pk_reimbursements : (id) UNIQUE BTREE
+  IX ix_reimbursements_claim_id : (claim_id) BTREE
+  IX ix_reimbursements_transaction_id : (transaction_id) BTREE
+  IX ix_reimbursements_status_concept_id : (status_concept_id) BTREE
+  IX ix_reimbursements_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_reimbursements_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+reimbursements .. idxset_reimbursements : indexed by
+
+entity "INDEXES · tax_codes" as idxset_tax_codes <<INDEX_SET>> {
+  PK pk_tax_codes : (id) UNIQUE BTREE
+  IX ix_tax_codes_practice_id : (practice_id) BTREE
+  IX ix_tax_codes_tax_type_concept_id : (tax_type_concept_id) BTREE
+  IX ix_tax_codes_jurisdiction_concept_id : (jurisdiction_concept_id) BTREE
+  IX ix_tax_codes_account_id : (account_id) BTREE
+  IX ix_tax_codes_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_tax_codes_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+tax_codes .. idxset_tax_codes : indexed by
+
+entity "INDEXES · tax_periods" as idxset_tax_periods <<INDEX_SET>> {
+  PK pk_tax_periods : (id) UNIQUE BTREE
+  IX ix_tax_periods_practice_id : (practice_id) BTREE
+  IX ix_tax_periods_status_concept_id : (status_concept_id) BTREE
+  IX ix_tax_periods_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_tax_periods_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+tax_periods .. idxset_tax_periods : indexed by
+
+entity "INDEXES · budgets" as idxset_budgets <<INDEX_SET>> {
+  PK pk_budgets : (id) UNIQUE BTREE
+  IX ix_budgets_practice_id : (practice_id) BTREE
+  IX ix_budgets_fiscal_year_id : (fiscal_year_id) BTREE
+  IX ix_budgets_status_concept_id : (status_concept_id) BTREE
+  IX ix_budgets_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_budgets_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+budgets .. idxset_budgets : indexed by
+
+entity "INDEXES · budget_lines" as idxset_budget_lines <<INDEX_SET>> {
+  PK pk_budget_lines : (id) UNIQUE BTREE
+  IX ix_budget_lines_budget_id : (budget_id) BTREE
+  IX ix_budget_lines_account_id : (account_id) BTREE
+  IX ix_budget_lines_cost_center_id : (cost_center_id) BTREE
+  IX ix_budget_lines_fiscal_period_id : (fiscal_period_id) BTREE
+  IX ix_budget_lines_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_budget_lines_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+budget_lines .. idxset_budget_lines : indexed by
+
+entity "INDEXES · financial_kpi_snapshots" as idxset_financial_kpi_snapshots <<INDEX_SET>> {
+  PK pk_financial_kpi_snapshots : (id) UNIQUE BTREE
+  IX ix_financial_kpi_snapshots_practice_id : (practice_id) BTREE
+  IX ix_financial_kpi_snapshots_fiscal_period_id : (fiscal_period_id) BTREE
+  IX ix_financial_kpi_snapshots_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_financial_kpi_snapshots_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+financial_kpi_snapshots .. idxset_financial_kpi_snapshots : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml
+

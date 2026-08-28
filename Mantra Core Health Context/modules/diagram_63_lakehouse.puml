@@ -1,0 +1,417 @@
+@startuml SALUD_Module_63_lakehouse
+title Module 63 — Lakehouse, Analytical Data Products and Research Releases\n(object storage + table-format analytics catalog)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+note as BIZ_lakehouse
+  BUSINESS PURPOSE
+  Separates raw, standardized, curated and research-ready data while preserving lineage, quality contracts, de-identification and controlled release.
+  Operational databases are not queried as an ad hoc warehouse; transformations are explicit, versioned and reproducible.
+end note
+
+entity "directory.tenants" as directory_tenants <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "health_data.health_ingestion_batches" as health_data_ingestion_batches <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "health_data.health_deidentification_runs" as health_data_deidentification_runs <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "common.files" as common_files <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity data_lake_zones <<LAKEHOUSE_CATALOG>> {
+  * id : uuid <<PK>>
+  * code : varchar
+  * name : varchar
+  * zone_type : varchar
+  * namespace_id : uuid
+  * encryption_profile_code : varchar
+  * retention_policy_code : varchar
+  * state : varchar
+}
+
+entity lakehouse_catalogs <<LAKEHOUSE_CATALOG>> {
+  * id : uuid <<PK>>
+  * code : varchar
+  * catalog_type : varchar
+  * metastore_uri : varchar
+  * default_format : varchar
+  * default_compression : varchar
+  * state : varchar
+}
+
+entity data_products <<LAKEHOUSE_CATALOG>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * code : varchar
+  * name : varchar
+  * owner_team_id : uuid
+  * business_purpose : text
+  * classification_code : varchar
+  * contains_phi : boolean
+  * lifecycle_state : varchar
+}
+
+entity data_product_versions <<LAKEHOUSE_CATALOG>> {
+  * id : uuid <<PK>>
+  * data_product_id : uuid
+  * version : varchar
+  * contract_schema_json : jsonb
+  * quality_slo_json : jsonb
+  * effective_from : timestamptz
+    effective_to : timestamptz
+  * state : varchar
+}
+
+entity lakehouse_datasets <<LAKEHOUSE_CATALOG>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * data_product_version_id : uuid
+  * data_lake_zone_id : uuid
+  * lakehouse_catalog_id : uuid
+  * database_name : varchar
+  * table_name : varchar
+  * storage_format : varchar
+  * partition_spec_json : jsonb
+  * source_dataset_code : varchar
+  * lifecycle_state : varchar
+}
+
+entity lakehouse_schema_versions <<LAKEHOUSE_CATALOG>> {
+  * id : uuid <<PK>>
+  * lakehouse_dataset_id : uuid
+  * schema_version : integer
+  * schema_json : jsonb
+  * schema_fingerprint : varchar
+  * compatibility_mode : varchar
+  * effective_from : timestamptz
+}
+
+entity lakehouse_partitions <<LAKEHOUSE_CATALOG>> {
+  * id : uuid <<PK>>
+  * lakehouse_dataset_id : uuid
+  * partition_spec_hash : varchar
+  * partition_values_json : jsonb
+  * record_count : bigint
+  * size_bytes : bigint
+  * min_event_at : timestamptz
+  * max_event_at : timestamptz
+  * state : varchar
+}
+
+entity lakehouse_files <<LAKEHOUSE_CATALOG>> {
+  * id : uuid <<PK>>
+  * lakehouse_partition_id : uuid
+  * object_manifest_id : uuid
+  * file_format : varchar
+  * row_count : bigint
+  * size_bytes : bigint
+  * content_hash : varchar
+  * min_max_statistics_json : jsonb
+  * created_at : timestamptz
+}
+
+entity transformation_definitions <<LAKEHOUSE_CATALOG>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * code : varchar
+  * version : varchar
+  * engine : varchar
+  * source_dataset_ids : uuid[]
+  * target_dataset_id : uuid
+  * transformation_ref : varchar
+  * state : varchar
+}
+
+entity transformation_runs <<LAKEHOUSE_CATALOG>> {
+  * id : uuid <<PK>>
+  * transformation_definition_id : uuid
+  * tenant_id : uuid
+  * source_checkpoint : varchar
+  * status : varchar
+  * input_record_count : bigint
+  * output_record_count : bigint
+  * rejected_record_count : bigint
+  * started_at : timestamptz
+  * completed_at : timestamptz
+}
+
+entity lakehouse_quality_rules <<LAKEHOUSE_CATALOG>> {
+  * id : uuid <<PK>>
+  * data_product_version_id : uuid
+  * rule_code : varchar
+  * dimension : varchar
+  * expression : text
+  * severity : varchar
+  * threshold : numeric
+  * state : varchar
+}
+
+entity lakehouse_quality_runs <<LAKEHOUSE_CATALOG>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * lakehouse_dataset_id : uuid
+  * transformation_run_id : uuid
+  * status : varchar
+  * evaluated_record_count : bigint
+  * failed_record_count : bigint
+  * started_at : timestamptz
+  * completed_at : timestamptz
+}
+
+entity lakehouse_quality_issues <<LAKEHOUSE_CATALOG>> {
+  * id : uuid <<PK>>
+  * lakehouse_quality_run_id : uuid
+  * lakehouse_quality_rule_id : uuid
+  * partition_id : uuid
+  * issue_count : bigint
+  * sample_object_manifest_id : uuid
+  * status : varchar
+  * detected_at : timestamptz
+}
+
+entity lakehouse_lineage_edges <<LAKEHOUSE_CATALOG>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * source_dataset_id : uuid
+  * target_dataset_id : uuid
+  * transformation_run_id : uuid
+  * source_partition_id : uuid
+  * target_partition_id : uuid
+  * recorded_at : timestamptz
+}
+
+entity research_projects <<LAKEHOUSE_CATALOG>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * code : varchar
+  * title : varchar
+  * protocol_reference : varchar
+  * principal_investigator_id : uuid
+  * ethics_approval_reference : varchar
+  * approved_from : date
+  * approved_to : date
+  * state : varchar
+}
+
+entity cohort_definitions <<LAKEHOUSE_CATALOG>> {
+  * id : uuid <<PK>>
+  * research_project_id : uuid
+  * code : varchar
+  * version : varchar
+  * inclusion_expression : text
+  * exclusion_expression : text
+  * deidentification_profile_id : uuid
+  * state : varchar
+}
+
+entity dataset_release_requests <<LAKEHOUSE_CATALOG>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * research_project_id : uuid
+  * data_product_version_id : uuid
+  * cohort_definition_id : uuid
+  * purpose_of_use_code : varchar
+  * requested_by_user_id : uuid
+  * requested_at : timestamptz
+  * status : varchar
+}
+
+entity dataset_release_manifests <<LAKEHOUSE_CATALOG>> {
+  * id : uuid <<PK>>
+  * dataset_release_request_id : uuid
+  * deidentification_run_id : uuid
+  * object_manifest_id : uuid
+  * schema_version : varchar
+  * record_count : bigint
+  * content_hash : varchar
+  * expires_at : timestamptz
+  * created_at : timestamptz
+}
+
+
+data_lake_zones -- lakehouse_datasets : hosts
+lakehouse_catalogs -- lakehouse_datasets : catalogs
+data_products -- data_product_versions : versions
+data_product_versions -- lakehouse_datasets : implemented by
+lakehouse_datasets -- lakehouse_schema_versions : schemas
+lakehouse_datasets -- lakehouse_partitions : partitions
+lakehouse_partitions -- lakehouse_files : files
+transformation_definitions -- transformation_runs : runs
+transformation_runs -- lakehouse_lineage_edges : records lineage
+data_product_versions -- lakehouse_quality_rules : quality contract
+lakehouse_quality_runs -- lakehouse_quality_issues : finds
+research_projects -- cohort_definitions : defines
+dataset_release_requests -- dataset_release_manifests : releases
+
+package "Physical Indexes and Access Patterns" {
+entity "INDEXES · data_lake_zones" as idxset_data_lake_zones <<INDEX_SET>> {
+  PK pk_data_lake_zones : (id)
+  UK uq_data_lake_zone_code : (code)
+  IX ix_data_lake_zone_type_state : (zone_type, state)
+}
+
+data_lake_zones .. idxset_data_lake_zones : indexed by
+
+entity "INDEXES · lakehouse_catalogs" as idxset_lakehouse_catalogs <<INDEX_SET>> {
+  PK pk_lakehouse_catalogs : (id)
+  UK uq_lakehouse_catalog_code : (code)
+  IX ix_lakehouse_catalog_state : (state, catalog_type)
+}
+
+lakehouse_catalogs .. idxset_lakehouse_catalogs : indexed by
+
+entity "INDEXES · data_products" as idxset_data_products <<INDEX_SET>> {
+  PK pk_data_products : (id)
+  UK uq_data_product_tenant_code : (tenant_id, code)
+  IX ix_data_product_owner_state : (owner_team_id, lifecycle_state)
+}
+
+data_products .. idxset_data_products : indexed by
+
+entity "INDEXES · data_product_versions" as idxset_data_product_versions <<INDEX_SET>> {
+  PK pk_data_product_versions : (id)
+  UK uq_data_product_version : (data_product_id, version)
+  IX ix_data_product_version_effective : (data_product_id, effective_from DESC)
+  GIN gin_data_product_quality_slo : (quality_slo_json) jsonb_path_ops
+}
+
+data_product_versions .. idxset_data_product_versions : indexed by
+
+entity "INDEXES · lakehouse_datasets" as idxset_lakehouse_datasets <<INDEX_SET>> {
+  PK pk_lakehouse_datasets : (id)
+  UK uq_lakehouse_dataset_table : (lakehouse_catalog_id, database_name, table_name)
+  IX ix_lakehouse_dataset_product : (data_product_version_id, lifecycle_state)
+  GIN gin_lakehouse_partition_spec : (partition_spec_json) jsonb_path_ops
+}
+
+lakehouse_datasets .. idxset_lakehouse_datasets : indexed by
+
+entity "INDEXES · lakehouse_schema_versions" as idxset_lakehouse_schema_versions <<INDEX_SET>> {
+  PK pk_lakehouse_schema_versions : (id)
+  UK uq_lakehouse_schema_version : (lakehouse_dataset_id, schema_version)
+  UK uq_lakehouse_schema_fingerprint : (lakehouse_dataset_id, schema_fingerprint)
+  GIN gin_lakehouse_schema_json : (schema_json) jsonb_path_ops
+}
+
+lakehouse_schema_versions .. idxset_lakehouse_schema_versions : indexed by
+
+entity "INDEXES · lakehouse_partitions" as idxset_lakehouse_partitions <<INDEX_SET>> {
+  PK pk_lakehouse_partitions : (id)
+  UK uq_lakehouse_partition_hash : (lakehouse_dataset_id, partition_spec_hash)
+  IX ix_lakehouse_partition_time : (lakehouse_dataset_id, max_event_at DESC)
+  GIN gin_lakehouse_partition_values : (partition_values_json) jsonb_path_ops
+}
+
+lakehouse_partitions .. idxset_lakehouse_partitions : indexed by
+
+entity "INDEXES · lakehouse_files" as idxset_lakehouse_files <<INDEX_SET>> {
+  PK pk_lakehouse_files : (id)
+  UK uq_lakehouse_file_object : (lakehouse_partition_id, object_manifest_id)
+  UK uq_lakehouse_file_hash : (lakehouse_partition_id, content_hash)
+  IX ix_lakehouse_file_created : (lakehouse_partition_id, created_at DESC)
+}
+
+lakehouse_files .. idxset_lakehouse_files : indexed by
+
+entity "INDEXES · transformation_definitions" as idxset_transformation_definitions <<INDEX_SET>> {
+  PK pk_transformation_definitions : (id)
+  UK uq_transformation_version : (tenant_id, code, version)
+  IX ix_transformation_target_state : (target_dataset_id, state)
+}
+
+transformation_definitions .. idxset_transformation_definitions : indexed by
+
+entity "INDEXES · transformation_runs" as idxset_transformation_runs <<INDEX_SET>> {
+  PK pk_transformation_runs : (id)
+  IX ix_transformation_run_status : (tenant_id, status, started_at ASC)
+  IX ix_transformation_run_definition : (transformation_definition_id, started_at DESC)
+}
+
+transformation_runs .. idxset_transformation_runs : indexed by
+
+entity "INDEXES · lakehouse_quality_rules" as idxset_lakehouse_quality_rules <<INDEX_SET>> {
+  PK pk_lakehouse_quality_rules : (id)
+  UK uq_lakehouse_quality_rule : (data_product_version_id, rule_code)
+  IX ix_lakehouse_quality_rule_state : (state, severity)
+}
+
+lakehouse_quality_rules .. idxset_lakehouse_quality_rules : indexed by
+
+entity "INDEXES · lakehouse_quality_runs" as idxset_lakehouse_quality_runs <<INDEX_SET>> {
+  PK pk_lakehouse_quality_runs : (id)
+  IX ix_lakehouse_quality_run_dataset : (lakehouse_dataset_id, started_at DESC)
+  IX ix_lakehouse_quality_run_status : (tenant_id, status, started_at ASC)
+}
+
+lakehouse_quality_runs .. idxset_lakehouse_quality_runs : indexed by
+
+entity "INDEXES · lakehouse_quality_issues" as idxset_lakehouse_quality_issues <<INDEX_SET>> {
+  PK pk_lakehouse_quality_issues : (id)
+  IX ix_lakehouse_quality_issue_run : (lakehouse_quality_run_id, status)
+  IX ix_lakehouse_quality_issue_rule : (lakehouse_quality_rule_id, detected_at DESC)
+}
+
+lakehouse_quality_issues .. idxset_lakehouse_quality_issues : indexed by
+
+entity "INDEXES · lakehouse_lineage_edges" as idxset_lakehouse_lineage_edges <<INDEX_SET>> {
+  PK pk_lakehouse_lineage_edges : (id)
+  IX ix_lakehouse_lineage_source : (source_dataset_id, source_partition_id, recorded_at DESC)
+  IX ix_lakehouse_lineage_target : (target_dataset_id, target_partition_id, recorded_at DESC)
+}
+
+lakehouse_lineage_edges .. idxset_lakehouse_lineage_edges : indexed by
+
+entity "INDEXES · research_projects" as idxset_research_projects <<INDEX_SET>> {
+  PK pk_research_projects : (id)
+  UK uq_research_project_tenant_code : (tenant_id, code)
+  IX ix_research_project_state_period : (state, approved_to)
+}
+
+research_projects .. idxset_research_projects : indexed by
+
+entity "INDEXES · cohort_definitions" as idxset_cohort_definitions <<INDEX_SET>> {
+  PK pk_cohort_definitions : (id)
+  UK uq_cohort_definition_version : (research_project_id, code, version)
+  IX ix_cohort_definition_state : (research_project_id, state)
+}
+
+cohort_definitions .. idxset_cohort_definitions : indexed by
+
+entity "INDEXES · dataset_release_requests" as idxset_dataset_release_requests <<INDEX_SET>> {
+  PK pk_dataset_release_requests : (id)
+  IX ix_dataset_release_status : (tenant_id, status, requested_at ASC)
+  IX ix_dataset_release_project : (research_project_id, requested_at DESC)
+}
+
+dataset_release_requests .. idxset_dataset_release_requests : indexed by
+
+entity "INDEXES · dataset_release_manifests" as idxset_dataset_release_manifests <<INDEX_SET>> {
+  PK pk_dataset_release_manifests : (id)
+  UK uq_dataset_release_manifest_request : (dataset_release_request_id)
+  UK uq_dataset_release_manifest_hash : (content_hash)
+  IX ix_dataset_release_expiry : (expires_at)
+}
+
+dataset_release_manifests .. idxset_dataset_release_manifests : indexed by
+
+}
+
+
+note as INDEX_POLICY_lakehouse
+  INDEX AND ACCESS-PATTERN POLICY
+  - Every dataset has an owner, schema version, quality contract, partition specification and source lineage.
+  - PHI data products require controlled purpose, de-identification and release approval.
+  - Files are immutable; corrections create new partitions or snapshots with lineage.
+  - Research releases expire and point to a verifiable manifest and de-identification run.
+end note
+
+@enduml

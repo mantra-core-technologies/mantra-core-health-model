@@ -1,0 +1,385 @@
+@startuml SALUD_Module_27_identity_assurance
+title Module 27 — Identity Proofing, Assertions and Fraud Controls\n(schema: identity_assurance)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_27_identity_assurance.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_27_identity_assurance
+  BUSINESS PURPOSE
+  Verifies patients, practitioners, representatives and organization operators
+  against authoritative ministries, civil registries, professional boards and
+  government data platforms. Generic integration retries remain in integrations;
+  these tables preserve identity-specific evidence, checks and decisions.
+end note
+
+entity identity_authorities {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * authority_code : varchar <<UK>>
+  * name : varchar
+  * authority_type_concept_id : uuid <<FK>>
+    jurisdiction_concept_id : uuid <<FK>>
+    assurance_framework_concept_id : uuid <<FK>>
+  * verification_status_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity identity_authority_endpoints {
+  * id : uuid <<PK>>
+  --
+  * identity_authority_id : uuid <<FK>>
+  * integration_endpoint_id : uuid <<FK>>
+  * capability_concept_id : uuid <<FK>>
+    assurance_level_concept_id : uuid <<FK>>
+    request_contract_version : varchar
+    response_contract_version : varchar
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity identity_verification_policies {
+  * id : uuid <<PK>>
+  --
+  * policy_code : varchar <<UK>>
+  * subject_type_concept_id : uuid <<FK>>
+  * transaction_risk_concept_id : uuid <<FK>>
+  * required_identity_assurance_level_concept_id : uuid <<FK>>
+    required_authenticator_assurance_level_concept_id : uuid <<FK>>
+    required_federation_assurance_level_concept_id : uuid <<FK>>
+    evidence_requirements_json : jsonb
+    fraud_controls_json : jsonb
+  * version_number : integer
+  * effective_from : timestamptz
+    effective_to : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+
+entity identity_verification_cases {
+  * id : uuid <<PK>>
+  --
+  * subject_type_concept_id : uuid <<FK>>
+  * subject_entity_id : uuid
+  * identity_verification_policy_id : uuid <<FK>>
+    requested_assurance_level_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    risk_score : numeric
+    opened_at : timestamptz
+    completed_at : timestamptz
+    expires_at : timestamptz
+    correlation_id : uuid
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity identity_evidence_records {
+  * id : uuid <<PK>>
+  --
+  * identity_verification_case_id : uuid <<FK>>
+  * evidence_type_concept_id : uuid <<FK>>
+    issuer_authority_id : uuid <<FK>>
+    evidence_identifier_hash : varchar
+    evidence_file_id : uuid <<FK>>
+    encrypted_evidence_reference : text
+    evidence_quality_concept_id : uuid <<FK>>
+    issued_at : timestamptz
+    expires_at : timestamptz
+    collected_under_consent_id : uuid <<FK>>
+  * verification_status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+
+entity identity_verification_attempts {
+  * id : uuid <<PK>>
+  --
+  * identity_verification_case_id : uuid <<FK>>
+  * identity_authority_endpoint_id : uuid <<FK>>
+  * attempt_number : integer
+    request_message_id : uuid <<FK>>
+    response_message_id : uuid <<FK>>
+    idempotency_key : varchar
+    started_at : timestamptz
+    completed_at : timestamptz
+  * outcome_concept_id : uuid <<FK>>
+    technical_error_code : varchar
+    retry_eligible : boolean
+  * created_at : timestamptz
+}
+
+entity identity_checks {
+  * id : uuid <<PK>>
+  --
+  * identity_verification_case_id : uuid <<FK>>
+  * check_type_concept_id : uuid <<FK>>
+    authority_id : uuid <<FK>>
+    required : boolean
+    check_sequence : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity identity_check_results <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * identity_check_id : uuid <<FK>>
+  * result_version : integer
+  * result_concept_id : uuid <<FK>>
+    match_score : numeric
+    discrepancy_codes_json : jsonb
+    source_response_hash : varchar
+    supersedes_result_id : uuid <<FK>>
+  * checked_at : timestamptz
+    checked_by_actor_type_concept_id : uuid <<FK>>
+    checked_by_actor_id : uuid
+}
+
+entity identity_assertions <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * identity_verification_case_id : uuid <<FK>>
+  * issuer_identity_authority_id : uuid <<FK>>
+  * subject_type_concept_id : uuid <<FK>>
+  * subject_entity_id : uuid
+  * assertion_type_concept_id : uuid <<FK>>
+  * assurance_level_concept_id : uuid <<FK>>
+    assertion_identifier : varchar
+    assertion_hash : varchar
+    issued_at : timestamptz
+    expires_at : timestamptz
+    revoked_at : timestamptz
+    revocation_reason_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity identity_fraud_signals <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * identity_verification_case_id : uuid <<FK>>
+  * signal_type_concept_id : uuid <<FK>>
+  * severity_concept_id : uuid <<FK>>
+    confidence_score : numeric
+    source_concept_id : uuid <<FK>>
+    evidence_reference : varchar
+    detected_at : timestamptz
+    resolved_at : timestamptz
+  * resolution_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity identity_manual_review_cases {
+  * id : uuid <<PK>>
+  --
+  * identity_verification_case_id : uuid <<FK>>
+  * review_reason_concept_id : uuid <<FK>>
+    assigned_to_user_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    opened_at : timestamptz
+    decided_at : timestamptz
+    decision_concept_id : uuid <<FK>>
+    decision_reason : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+identity_authorities ||--o{ identity_authority_endpoints
+identity_verification_policies ||--o{ identity_verification_cases
+identity_verification_cases ||--o{ identity_evidence_records
+identity_verification_cases ||--o{ identity_verification_attempts
+identity_verification_cases ||--o{ identity_checks
+identity_checks ||--o{ identity_check_results
+identity_verification_cases ||--o{ identity_assertions
+identity_verification_cases ||--o{ identity_fraud_signals
+identity_verification_cases ||--o{ identity_manual_review_cases
+
+note as PRIVACY_diagram_27_identity_assurance
+  MINIMIZATION AND FRAUD SAFETY
+  Store hashes, references and normalized claims instead of unrestricted raw
+  documents. Separate biometric templates from operational records. Record
+  authority, evidence quality, assurance level, legal basis, discrepancies,
+  manual review and revocation. Never treat a successful API call as identity.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · identity_authorities" as idxset_identity_authorities <<INDEX_SET>> {
+  PK pk_identity_authorities : (id) UNIQUE BTREE
+  UK uq_identity_authorities_authority_code : (authority_code) UNIQUE BTREE
+  IX ix_identity_authorities_tenant_id : (tenant_id) BTREE
+  IX ix_identity_authorities_authority_type_concept_id : (authority_type_concept_id) BTREE
+  IX ix_identity_authorities_jurisdiction_concept_id : (jurisdiction_concept_id) BTREE
+  IX ix_identity_authorities_assurance_framework_concept_id : (assurance_framework_concept_id) BTREE
+  IX ix_identity_authorities_verification_status_concept_id : (verification_status_concept_id) BTREE
+  IX ix_identity_authorities_status_concept_id : (status_concept_id) BTREE
+  IX ix_identity_authorities_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_identity_authorities_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_identity_authorities_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+identity_authorities .. idxset_identity_authorities : indexed by
+
+entity "INDEXES · identity_authority_endpoints" as idxset_identity_authority_endpoints <<INDEX_SET>> {
+  PK pk_identity_authority_endpoints : (id) UNIQUE BTREE
+  IX ix_identity_authority_endpoints_identity_authority_id : (identity_authority_id) BTREE
+  IX ix_identity_authority_endpoints_integration_endpoint_id : (integration_endpoint_id) BTREE
+  IX ix_identity_authority_endpoints_capability_concept_id : (capability_concept_id) BTREE
+  IX ix_identity_authority_endpoints_assurance_level_concept_id : (assurance_level_concept_id) BTREE
+  IX ix_identity_authority_endpoints_status_concept_id : (status_concept_id) BTREE
+  IX ix_identity_authority_endpoints_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_identity_authority_endpoints_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+identity_authority_endpoints .. idxset_identity_authority_endpoints : indexed by
+
+entity "INDEXES · identity_verification_policies" as idxset_identity_verification_policies <<INDEX_SET>> {
+  PK pk_identity_verification_policies : (id) UNIQUE BTREE
+  UK uq_identity_verification_policies_policy_code : (policy_code) UNIQUE BTREE
+  IX ix_identity_verification_policies_subject_type_concept_id : (subject_type_concept_id) BTREE
+  IX ix_identity_verification_policies_transaction_risk_concept_id : (transaction_risk_concept_id) BTREE
+  IX ix_identity_verification_policies_required_identity_as_c2e6ce75 : (required_identity_assurance_level_concept_id) BTREE
+  IX ix_identity_verification_policies_required_authenticat_2f8a398a : (required_authenticator_assurance_level_concept_id) BTREE
+  IX ix_identity_verification_policies_required_federation__a44c44f2 : (required_federation_assurance_level_concept_id) BTREE
+  IX ix_identity_verification_policies_status_concept_id : (status_concept_id) BTREE
+  IX ix_identity_verification_policies_created_by_user_id : (created_by_user_id) BTREE
+}
+
+identity_verification_policies .. idxset_identity_verification_policies : indexed by
+
+entity "INDEXES · identity_verification_cases" as idxset_identity_verification_cases <<INDEX_SET>> {
+  PK pk_identity_verification_cases : (id) UNIQUE BTREE
+  IX ix_identity_verification_cases_subject_type_concept_id : (subject_type_concept_id) BTREE
+  IX ix_identity_verification_cases_identity_verification_policy_id : (identity_verification_policy_id) BTREE
+  IX ix_identity_verification_cases_requested_assurance_lev_ebd923e4 : (requested_assurance_level_concept_id) BTREE
+  IX ix_identity_verification_cases_status_concept_id : (status_concept_id) BTREE
+  IX ix_identity_verification_cases_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_identity_verification_cases_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+identity_verification_cases .. idxset_identity_verification_cases : indexed by
+
+entity "INDEXES · identity_evidence_records" as idxset_identity_evidence_records <<INDEX_SET>> {
+  PK pk_identity_evidence_records : (id) UNIQUE BTREE
+  IX ix_identity_evidence_records_identity_verification_case_id : (identity_verification_case_id) BTREE
+  IX ix_identity_evidence_records_evidence_type_concept_id : (evidence_type_concept_id) BTREE
+  IX ix_identity_evidence_records_issuer_authority_id : (issuer_authority_id) BTREE
+  IX ix_identity_evidence_records_evidence_file_id : (evidence_file_id) BTREE
+  IX ix_identity_evidence_records_evidence_quality_concept_id : (evidence_quality_concept_id) BTREE
+  IX ix_identity_evidence_records_collected_under_consent_id : (collected_under_consent_id) BTREE
+  IX ix_identity_evidence_records_verification_status_concept_id : (verification_status_concept_id) BTREE
+  IX ix_identity_evidence_records_created_by_user_id : (created_by_user_id) BTREE
+}
+
+identity_evidence_records .. idxset_identity_evidence_records : indexed by
+
+entity "INDEXES · identity_verification_attempts" as idxset_identity_verification_attempts <<INDEX_SET>> {
+  PK pk_identity_verification_attempts : (id) UNIQUE BTREE
+  IX ix_identity_verification_attempts_identity_verification_case_id : (identity_verification_case_id) BTREE
+  IX ix_identity_verification_attempts_identity_authority_e_96e7ce47 : (identity_authority_endpoint_id) BTREE
+  IX ix_identity_verification_attempts_request_message_id : (request_message_id) BTREE
+  IX ix_identity_verification_attempts_response_message_id : (response_message_id) BTREE
+  IX ix_identity_verification_attempts_outcome_concept_id : (outcome_concept_id) BTREE
+  UK uq_identity_verification_attempts_identity_verificatio_905f086b : (identity_verification_case_id, attempt_number) UNIQUE BTREE
+  UK uq_identity_verification_attempts_idempotency : (idempotency_key) UNIQUE BTREE
+}
+
+identity_verification_attempts .. idxset_identity_verification_attempts : indexed by
+
+entity "INDEXES · identity_checks" as idxset_identity_checks <<INDEX_SET>> {
+  PK pk_identity_checks : (id) UNIQUE BTREE
+  IX ix_identity_checks_identity_verification_case_id : (identity_verification_case_id) BTREE
+  IX ix_identity_checks_check_type_concept_id : (check_type_concept_id) BTREE
+  IX ix_identity_checks_authority_id : (authority_id) BTREE
+  IX ix_identity_checks_status_concept_id : (status_concept_id) BTREE
+  IX ix_identity_checks_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_identity_checks_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+identity_checks .. idxset_identity_checks : indexed by
+
+entity "INDEXES · identity_check_results" as idxset_identity_check_results <<INDEX_SET>> {
+  PK pk_identity_check_results : (id) UNIQUE BTREE
+  IX ix_identity_check_results_identity_check_id : (identity_check_id) BTREE
+  IX ix_identity_check_results_result_concept_id : (result_concept_id) BTREE
+  IX ix_identity_check_results_supersedes_result_id : (supersedes_result_id) BTREE
+  IX ix_identity_check_results_checked_by_actor_type_concept_id : (checked_by_actor_type_concept_id) BTREE
+}
+
+identity_check_results .. idxset_identity_check_results : indexed by
+
+entity "INDEXES · identity_assertions" as idxset_identity_assertions <<INDEX_SET>> {
+  PK pk_identity_assertions : (id) UNIQUE BTREE
+  IX ix_identity_assertions_identity_verification_case_id : (identity_verification_case_id) BTREE
+  IX ix_identity_assertions_issuer_identity_authority_id : (issuer_identity_authority_id) BTREE
+  IX ix_identity_assertions_subject_type_concept_id : (subject_type_concept_id) BTREE
+  IX ix_identity_assertions_assertion_type_concept_id : (assertion_type_concept_id) BTREE
+  IX ix_identity_assertions_assurance_level_concept_id : (assurance_level_concept_id) BTREE
+  IX ix_identity_assertions_revocation_reason_concept_id : (revocation_reason_concept_id) BTREE
+  BRIN brin_identity_assertions_created_at : (created_at) BRIN pages_per_range=128
+}
+
+identity_assertions .. idxset_identity_assertions : indexed by
+
+entity "INDEXES · identity_fraud_signals" as idxset_identity_fraud_signals <<INDEX_SET>> {
+  PK pk_identity_fraud_signals : (id) UNIQUE BTREE
+  IX ix_identity_fraud_signals_identity_verification_case_id : (identity_verification_case_id) BTREE
+  IX ix_identity_fraud_signals_signal_type_concept_id : (signal_type_concept_id) BTREE
+  IX ix_identity_fraud_signals_severity_concept_id : (severity_concept_id) BTREE
+  IX ix_identity_fraud_signals_source_concept_id : (source_concept_id) BTREE
+  IX ix_identity_fraud_signals_resolution_concept_id : (resolution_concept_id) BTREE
+  BRIN brin_identity_fraud_signals_created_at : (created_at) BRIN pages_per_range=128
+}
+
+identity_fraud_signals .. idxset_identity_fraud_signals : indexed by
+
+entity "INDEXES · identity_manual_review_cases" as idxset_identity_manual_review_cases <<INDEX_SET>> {
+  PK pk_identity_manual_review_cases : (id) UNIQUE BTREE
+  IX ix_identity_manual_review_cases_identity_verification_case_id : (identity_verification_case_id) BTREE
+  IX ix_identity_manual_review_cases_review_reason_concept_id : (review_reason_concept_id) BTREE
+  IX ix_identity_manual_review_cases_assigned_to_user_id : (assigned_to_user_id) BTREE
+  IX ix_identity_manual_review_cases_status_concept_id : (status_concept_id) BTREE
+  IX ix_identity_manual_review_cases_decision_concept_id : (decision_concept_id) BTREE
+  IX ix_identity_manual_review_cases_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_identity_manual_review_cases_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+identity_manual_review_cases .. idxset_identity_manual_review_cases : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

@@ -1,0 +1,2527 @@
+@startuml SALUD_Module_43_ads
+title Module 43 — Advertising, Assets, Delivery, Commerce and Optimization\n(schema: ads)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_43_ads.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_43_ads
+  BUSINESS PURPOSE
+  Models business managers, partner sharing, ad accounts and the campaign hierarchy
+  campaign -> ad set -> ad -> creative. Assets, audiences, targeting and pixels are
+  separated into module 43A; delivery, insights and billing remain in module 43B.
+end note
+
+entity business_managers {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * name : varchar
+  * external_business_ref : varchar <<UK>>
+  * owner_user_id : uuid <<FK>>
+    vertical_concept_id : uuid <<FK>>
+    primary_country_concept_id : uuid <<FK>>
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity ad_partners {
+  * id : uuid <<PK>>
+  --
+  * name : varchar
+  * partner_type_concept_id : uuid <<FK>>
+    external_partner_ref : varchar
+    tenant_id : uuid <<FK>>
+    contact_json : jsonb
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity partner_relationships {
+  * id : uuid <<PK>>
+  --
+  * business_manager_id : uuid <<FK>>
+  * partner_id : uuid <<FK>>
+  * relationship_type_concept_id : uuid <<FK>>
+    permissions_json : jsonb
+    shared_asset_scope_json : jsonb
+  * status_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity ad_accounts {
+  * id : uuid <<PK>>
+  --
+  * business_manager_id : uuid <<FK>>
+  * name : varchar
+  * external_account_ref : varchar <<UK>>
+  * currency_concept_id : uuid <<FK>>
+    time_zone : varchar
+  * account_status_concept_id : uuid <<FK>>
+    spend_cap_amount : numeric
+    amount_spent : numeric
+    funding_payment_method_id : uuid <<FK>>
+    disable_reason_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity ad_account_users {
+  * id : uuid <<PK>>
+  --
+  * ad_account_id : uuid <<FK>>
+    user_id : uuid <<FK>>
+    partner_id : uuid <<FK>>
+  * role_concept_id : uuid <<FK>>
+    tasks_json : jsonb
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity campaigns {
+  * id : uuid <<PK>>
+  --
+  * ad_account_id : uuid <<FK>>
+  * name : varchar
+  * objective_concept_id : uuid <<FK>>
+  * buying_type_concept_id : uuid <<FK>>
+    special_ad_categories_json : jsonb
+    daily_budget : numeric
+    lifetime_budget : numeric
+    spend_cap : numeric
+    bid_strategy_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    effective_status_concept_id : uuid <<FK>>
+    start_at : timestamptz
+    stop_at : timestamptz
+    external_campaign_ref : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity ad_sets {
+  * id : uuid <<PK>>
+  --
+  * campaign_id : uuid <<FK>>
+  * name : varchar
+  * optimization_goal_concept_id : uuid <<FK>>
+  * billing_event_concept_id : uuid <<FK>>
+    bid_amount : numeric
+    bid_strategy_concept_id : uuid <<FK>>
+    daily_budget : numeric
+    lifetime_budget : numeric
+    targeting_spec_id : uuid <<FK>>
+    promoted_object_json : jsonb
+    pacing_type_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    effective_status_concept_id : uuid <<FK>>
+    start_at : timestamptz
+    end_at : timestamptz
+    external_adset_ref : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity ads {
+  * id : uuid <<PK>>
+  --
+  * ad_set_id : uuid <<FK>>
+  * name : varchar
+  * creative_id : uuid <<FK>>
+    tracking_specs_json : jsonb
+    conversion_domain : varchar
+  * status_concept_id : uuid <<FK>>
+    effective_status_concept_id : uuid <<FK>>
+    review_feedback_json : jsonb
+    external_ad_ref : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity ad_creatives {
+  * id : uuid <<PK>>
+  --
+  * ad_account_id : uuid <<FK>>
+  * name : varchar
+  * format_concept_id : uuid <<FK>>
+    body : text
+    call_to_action_concept_id : uuid <<FK>>
+    link_url : text
+    display_url : varchar
+    object_story_json : jsonb
+    primary_media_file_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+business_managers ||--o{ ad_accounts
+business_managers ||--o{ partner_relationships
+ad_partners ||--o{ partner_relationships
+ad_accounts ||--o{ ad_account_users
+ad_accounts ||--o{ campaigns
+campaigns ||--o{ ad_sets
+ad_sets ||--o{ ads
+ad_creatives ||--o{ ads
+ad_accounts ||--o{ ad_creatives
+
+note as DEP_diagram_43_ads
+  Connects to directory.tenants, iam.users, payments.payment_methods and
+  terminology.catalog_concepts. External platform identifiers are synchronization
+  references, not local primary keys.
+end note
+
+note as REC_ADS_PRIVACY_diagram_43_ads
+  Advertising is consent-gated and isolated from clinical PHI. Campaign configuration,
+  partner permissions and creative text must never become a covert clinical dataset.
+end note
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_43a_ads_assets_targeting.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_43a_ads_assets_targeting
+  BUSINESS PURPOSE
+  Completes the advertising object graph with creative media, governed audiences,
+  targeting specifications, placements and tracking pixels. Measurement and billing
+  remain in module 43B.
+end note
+
+
+
+
+
+
+entity creative_assets {
+  * id : uuid <<PK>>
+  --
+  * ad_creative_id : uuid <<FK>>
+  * asset_type_concept_id : uuid <<FK>>
+    file_id : uuid <<FK>>
+    external_asset_ref : varchar
+    hash : varchar
+    width : integer
+    height : integer
+    duration_s : integer
+    ordinal : integer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity custom_audiences {
+  * id : uuid <<PK>>
+  --
+  * ad_account_id : uuid <<FK>>
+  * name : varchar
+  * audience_type_concept_id : uuid <<FK>>
+    subtype_concept_id : uuid <<FK>>
+    source_concept_id : uuid <<FK>>
+    rule_json : jsonb
+    lookalike_source_audience_id : uuid <<FK>>
+    lookalike_spec_json : jsonb
+    approximate_count : bigint
+    data_source_pixel_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    external_audience_ref : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity targeting_specs {
+  * id : uuid <<PK>>
+  --
+  * ad_account_id : uuid <<FK>>
+    name : varchar
+    geo_locations_json : jsonb
+    excluded_geo_locations_json : jsonb
+    age_min : integer
+    age_max : integer
+    genders_json : jsonb
+    interests_json : jsonb
+    behaviors_json : jsonb
+    demographics_json : jsonb
+    custom_audience_ids_json : jsonb
+    excluded_custom_audience_ids_json : jsonb
+    locales_json : jsonb
+    device_platforms_json : jsonb
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity ad_placements {
+  * id : uuid <<PK>>
+  --
+  * ad_set_id : uuid <<FK>>
+  * platform_concept_id : uuid <<FK>>
+  * position_concept_id : uuid <<FK>>
+    device_concept_id : uuid <<FK>>
+    is_enabled : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity tracking_pixels {
+  * id : uuid <<PK>>
+  --
+  * business_manager_id : uuid <<FK>>
+    ad_account_id : uuid <<FK>>
+  * name : varchar
+  * pixel_code : varchar <<UK>>
+    external_pixel_ref : varchar
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+ad_creatives ||--o{ creative_assets
+ad_accounts ||--o{ custom_audiences
+custom_audiences |o--o{ custom_audiences : lookalike
+ad_accounts ||--o{ targeting_specs
+targeting_specs |o--o{ ad_sets
+ad_sets ||--o{ ad_placements
+business_managers ||--o{ tracking_pixels
+tracking_pixels |o--o{ custom_audiences
+
+note as DEP_diagram_43a_ads_assets_targeting
+  Creative media references common.files. Provider synchronization uses integrations
+  and messaging. Delivery status, insights, conversion events and invoices live in 43B.
+end note
+
+note as REC_ADS_PRIVACY_diagram_43a_ads_assets_targeting
+  Audience source data must be consented, hashed or pseudonymized and purpose-limited.
+  Clinical PHI is prohibited in audiences, pixels, targeting rules and creative assets.
+end note
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_43b_ads_delivery.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_43b_ads_delivery
+  BUSINESS PURPOSE
+  The measurement and money side of advertising: per-entity delivery status,
+  time-series insights (impressions, clicks, spend, reach, conversions), server-side
+  pixel/conversion events with attribution, and ad-account billing (spend charges,
+  invoices, budget schedules). Insights and spend are append-only or derived and
+  reconcile to accounting via module 42 payments. Shares schema `ads` with module 43.
+end note
+
+
+
+
+
+
+entity delivery_status_snapshots <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * ad_account_id : uuid <<FK>>
+  * entity_type_concept_id : uuid <<FK>>
+  * entity_ref_id : uuid
+  * effective_status_concept_id : uuid <<FK>>
+    review_status_concept_id : uuid <<FK>>
+    issues_json : jsonb
+    captured_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity insights_daily <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * ad_account_id : uuid <<FK>>
+  * entity_type_concept_id : uuid <<FK>>
+  * entity_ref_id : uuid
+  * stat_date : date
+    impressions : bigint
+    reach : bigint
+    clicks : bigint
+    unique_clicks : bigint
+    spend : numeric
+    currency_concept_id : uuid <<FK>>
+    conversions : bigint
+    conversion_value : numeric
+    ctr : numeric
+    cpc : numeric
+    cpm : numeric
+    frequency : numeric
+    video_views : bigint
+    breakdown_json : jsonb
+    source_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity attribution_settings {
+  * id : uuid <<PK>>
+  --
+  * ad_account_id : uuid <<FK>>
+  * click_window_days : integer
+  * view_window_days : integer
+    attribution_model_concept_id : uuid <<FK>>
+    is_default : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity pixel_events <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * pixel_id : uuid <<FK>>
+  * event_name : varchar
+  * event_source_concept_id : uuid <<FK>>
+    event_source_url : text
+    action_source_concept_id : uuid <<FK>>
+    user_data_hash_json : jsonb
+    custom_data_json : jsonb
+    value_amount : numeric
+    currency_concept_id : uuid <<FK>>
+    event_id : varchar
+    dedupe_key : varchar
+    occurred_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity conversion_attributions <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * pixel_event_id : uuid <<FK>>
+    ad_ref_id : uuid
+    campaign_ref_id : uuid
+  * attribution_type_concept_id : uuid <<FK>>
+    attributed_value : numeric
+    currency_concept_id : uuid <<FK>>
+    attributed_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity budget_schedules {
+  * id : uuid <<PK>>
+  --
+  * entity_type_concept_id : uuid <<FK>>
+  * entity_ref_id : uuid
+  * budget_type_concept_id : uuid <<FK>>
+  * amount : numeric
+  * currency_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity ad_billing_events <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * ad_account_id : uuid <<FK>>
+  * billing_event_type_concept_id : uuid <<FK>>
+  * amount : numeric
+  * currency_concept_id : uuid <<FK>>
+    period_start : date
+    period_end : date
+    external_billing_ref : varchar
+    occurred_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity ad_invoices {
+  * id : uuid <<PK>>
+  --
+  * ad_account_id : uuid <<FK>>
+  * invoice_number : varchar <<UK>>
+  * period_start : date
+  * period_end : date
+    subtotal : numeric
+    tax_total : numeric
+    total : numeric
+    currency_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    payment_intent_id : uuid <<FK>>
+    issued_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity ad_invoice_lines {
+  * id : uuid <<PK>>
+  --
+  * ad_invoice_id : uuid <<FK>>
+  * campaign_ref_id : uuid
+    description : varchar
+    impressions : bigint
+    clicks : bigint
+  * amount : numeric
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+ad_accounts ||--o{ delivery_status_snapshots
+ad_accounts ||--o{ insights_daily
+ad_accounts ||--o{ attribution_settings
+tracking_pixels ||--o{ pixel_events
+pixel_events ||--o{ conversion_attributions
+ad_accounts ||--o{ budget_schedules
+ad_accounts ||--o{ ad_billing_events
+ad_accounts ||--o{ ad_invoices
+ad_invoices ||--o{ ad_invoice_lines
+
+note as DEP_diagram_43b_ads_delivery
+  Connects to other modules via:
+  ads (module 43) anchors, payments.payment_intents (ad_invoices.payment_intent_id),
+  accounting.journal_transactions (spend posting), directory.tenants,
+  terminology.catalog_concepts. Ingestion of insights/billing from Meta/partner APIs
+  runs through integrations (module 12/31) and the messaging outbox (module 35).
+end note
+
+note as REC_ADS_DELIVERY_diagram_43b_ads_delivery
+  DERIVED + APPEND-ONLY
+  insights_daily / delivery_status_snapshots / pixel_events / ad_billing_events are
+  append-only (<<LOG>>). ads.ad_accounts.amount_spent and campaign spend are DERIVED
+  from insights_daily / ad_billing_events (REC 3.3 — maintain by rollup, reconcile).
+  (entity_type,entity_ref_id) is polymorphic across account/campaign/ad_set/ad —
+  constrain via value_set. ad_invoices reconcile to billing + accounting via payments.
+end note
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_43c_ads_commerce_catalog.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_43c_ads_commerce_catalog
+  BUSINESS PURPOSE
+  Commerce advertising in the Meta / Delivery-Hero style: product catalogs and feeds,
+  rule-based product sets, dynamic ads that auto-generate creative per product, collection
+  and carousel formats, and catalog-driven retargeting. Lets a pharmacy, diagnostic unit
+  or delivery partner promote an inventory of products/services that stays in sync with a
+  source feed, with per-product availability, price and localized fields — the foundation
+  advertising-at-scale operators expect. No clinical PHI enters catalogs or creatives.
+end note
+
+
+
+
+
+entity product_catalogs {
+  * id : uuid <<PK>>
+  --
+  * business_manager_id : uuid <<FK>>
+  * name : varchar
+  * vertical_concept_id : uuid <<FK>>
+    default_currency_concept_id : uuid <<FK>>
+    item_count : integer
+    external_catalog_ref : varchar
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity catalog_feeds {
+  * id : uuid <<PK>>
+  --
+  * product_catalog_id : uuid <<FK>>
+  * name : varchar
+  * feed_source_concept_id : uuid <<FK>>
+    feed_url : text
+    schedule_cron : varchar
+    file_id : uuid <<FK>>
+    last_run_at : timestamptz
+    last_status_concept_id : uuid <<FK>>
+    total_items : integer
+    error_count : integer
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity catalog_products {
+  * id : uuid <<PK>>
+  --
+  * product_catalog_id : uuid <<FK>>
+  * retailer_product_id : varchar
+  * title : varchar
+    description : text
+  * availability_concept_id : uuid <<FK>>
+  * condition_concept_id : uuid <<FK>>
+    price : numeric
+    sale_price : numeric
+    currency_concept_id : uuid <<FK>>
+    brand : varchar
+    category_concept_id : uuid <<FK>>
+    image_url : text
+    link_url : text
+    source_product_type : varchar
+    source_product_ref_id : uuid
+    gtin : varchar
+    custom_labels_json : jsonb
+    inventory_count : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity product_localizations {
+  * id : uuid <<PK>>
+  --
+  * catalog_product_id : uuid <<FK>>
+  * language_concept_id : uuid <<FK>>
+    country_concept_id : uuid <<FK>>
+    description : text
+    price : numeric
+    currency_concept_id : uuid <<FK>>
+    image_url : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity product_sets {
+  * id : uuid <<PK>>
+  --
+  * product_catalog_id : uuid <<FK>>
+  * name : varchar
+    filter_json : jsonb
+    is_dynamic : boolean
+    product_count : integer
+    external_set_ref : varchar
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity product_set_members {
+  * id : uuid <<PK>>
+  --
+  * product_set_id : uuid <<FK>>
+  * catalog_product_id : uuid <<FK>>
+    added_by_rule : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity dynamic_ad_templates {
+  * id : uuid <<PK>>
+  --
+  * ad_account_id : uuid <<FK>>
+  * product_set_id : uuid <<FK>>
+  * name : varchar
+  * format_concept_id : uuid <<FK>>
+    title_template : varchar
+    description_template : text
+    call_to_action_concept_id : uuid <<FK>>
+    creative_id : uuid <<FK>>
+    template_json : jsonb
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity collection_ads {
+  * id : uuid <<PK>>
+  --
+  * ad_account_id : uuid <<FK>>
+  * name : varchar
+  * layout_concept_id : uuid <<FK>>
+    hero_creative_id : uuid <<FK>>
+    product_set_id : uuid <<FK>>
+    instant_experience_json : jsonb
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity feed_run_logs <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * catalog_feed_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    items_read : integer
+    items_upserted : integer
+    items_errored : integer
+    error_sample_json : jsonb
+    started_at : timestamptz
+    finished_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+product_catalogs ||--o{ catalog_feeds
+product_catalogs ||--o{ catalog_products
+catalog_products ||--o{ product_localizations
+product_catalogs ||--o{ product_sets
+product_sets ||--o{ product_set_members
+catalog_products ||--o{ product_set_members
+product_sets ||--o{ dynamic_ad_templates
+ad_accounts ||--o{ dynamic_ad_templates
+ad_accounts ||--o{ collection_ads
+product_sets |o--o{ collection_ads
+catalog_feeds ||--o{ feed_run_logs
+ad_creatives |o--o{ dynamic_ad_templates
+
+note as DEP_diagram_43c_ads_commerce_catalog
+  Connects to other modules via:
+  ads (43/43a) anchors (business_managers, ad_accounts, ad_sets, ad_creatives),
+  common.files (feed file), pharmacy.pharmacy_products / organization_extensions
+  (source_product_ref via (source_product_type, source_product_ref_id)),
+  directory.tenants, terminology.catalog_concepts.
+end note
+
+note as REC_ADS_PRIVACY_diagram_43c_ads_commerce_catalog
+  PRIVACY
+  Catalogs are commercial product data only — NEVER clinical PHI. source_product_ref links
+  a marketing product to an operational SKU/service; no patient data flows here. Dynamic
+  ads render per product at delivery; retargeting uses hashed pixel signals (module 43d).
+end note
+
+note as REC_DERIVED_diagram_43c_ads_commerce_catalog
+  REC 3.3 — DERIVED
+  product_catalogs.item_count, product_sets.product_count and catalog_feeds.total_items are
+  DERIVED counters maintained by trigger from catalog_products / product_set_members.
+  Rule-based product_sets recompute membership on feed run (added_by_rule=true rows).
+end note
+
+note as HARDENING_diagram_43c_ads_commerce_catalog
+  REC 3.4 — HARDENING (enforce at DDL)
+  - catalog_products: UNIQUE(product_catalog_id, retailer_product_id); index on availability.
+  - product_set_members: UNIQUE(product_set_id, catalog_product_id).
+  - product_localizations: UNIQUE(catalog_product_id, language_concept_id, country_concept_id).
+  - feed_run_logs: append-only; PARTITION BY recorded_at; retention.
+  - (source_product_type, source_product_ref_id) polymorphic -> value_set + trigger.
+end note
+
+note as VALUE_SETS_diagram_43c_ads_commerce_catalog
+  VALUE SETS (bind *_concept_id; do not hardcode)
+  vertical->vs_ad_vertical{pharmacy,diagnostics,clinic,delivery,retail,services};
+  feed_source->vs_feed_source{url_scheduled,file_upload,api,inventory_sync};
+  availability->vs_product_availability{in_stock,out_of_stock,preorder,discontinued};
+  condition->vs_product_condition{new,refurbished,used};
+  format->vs_dynamic_format{single,carousel,collection,story};
+  layout->vs_collection_layout{grid,storefront,lookbook};
+  call_to_action->vs_cta{shop_now,order_now,book_now,learn_more,sign_up};
+  status/state->vs_lifecycle_state.
+end note
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_43d_ads_optimization.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_43d_ads_optimization
+  BUSINESS PURPOSE
+  The optimization and measurement sophistication a Meta / Delivery-Hero advertiser
+  expects, beyond the base object graph and delivery insights (43/43a/43b). Adds saved
+  audiences and lookalike specs, automated rules (auto-pause/scale/notify), A/B split
+  tests and campaign-budget-optimization experiments, custom conversions and value rules,
+  offline/CAPI conversion uploads with match reporting, attribution windows, frequency
+  capping, and brand-lift studies. All measurement is consent-gated and PHI-free.
+end note
+
+
+
+
+
+
+entity saved_audiences {
+  * id : uuid <<PK>>
+  --
+  * ad_account_id : uuid <<FK>>
+  * name : varchar
+    targeting_spec_json : jsonb
+    approximate_reach : bigint
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity lookalike_specs {
+  * id : uuid <<PK>>
+  --
+  * ad_account_id : uuid <<FK>>
+  * source_audience_id : uuid <<FK>>
+  * country_concept_id : uuid <<FK>>
+  * ratio_percent : numeric
+    similarity_concept_id : uuid <<FK>>
+    generated_audience_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity automated_rules {
+  * id : uuid <<PK>>
+  --
+  * ad_account_id : uuid <<FK>>
+  * name : varchar
+  * scope_concept_id : uuid <<FK>>
+    entity_filter_json : jsonb
+  * condition_json : jsonb
+  * action_concept_id : uuid <<FK>>
+    action_params_json : jsonb
+  * evaluation_schedule_concept_id : uuid <<FK>>
+    is_enabled : boolean
+    last_evaluated_at : timestamptz
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity rule_executions <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * automated_rule_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    entities_evaluated : integer
+    entities_affected : integer
+    actions_json : jsonb
+    error_text : text
+    evaluated_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity ad_experiments {
+  * id : uuid <<PK>>
+  --
+  * ad_account_id : uuid <<FK>>
+  * name : varchar
+  * experiment_type_concept_id : uuid <<FK>>
+  * objective_metric_concept_id : uuid <<FK>>
+    hypothesis : text
+    holdout_percent : numeric
+    start_at : timestamptz
+    end_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+    winner_variant_id : uuid <<FK>>
+    confidence_level : numeric
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity experiment_variants {
+  * id : uuid <<PK>>
+  --
+  * ad_experiment_id : uuid <<FK>>
+  * name : varchar
+  * variant_ref_type : varchar
+  * variant_ref_id : uuid
+    traffic_split_percent : numeric
+    is_control : boolean
+    result_metric_value : numeric
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity custom_conversions {
+  * id : uuid <<PK>>
+  --
+  * ad_account_id : uuid <<FK>>
+    pixel_id : uuid <<FK>>
+  * name : varchar
+  * conversion_category_concept_id : uuid <<FK>>
+    rule_json : jsonb
+    default_value : numeric
+    currency_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity offline_conversion_sets {
+  * id : uuid <<PK>>
+  --
+  * ad_account_id : uuid <<FK>>
+  * name : varchar
+  * upload_source_concept_id : uuid <<FK>>
+    total_events : integer
+    matched_events : integer
+    match_rate : numeric
+    attributed_value : numeric
+    file_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    uploaded_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity offline_conversion_events <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * offline_conversion_set_id : uuid <<FK>>
+  * event_name : varchar
+    event_time : timestamptz
+    match_keys_hash_json : jsonb
+    value_amount : numeric
+    currency_concept_id : uuid <<FK>>
+    order_ref : varchar
+    is_matched : boolean
+    attributed_campaign_ref_id : uuid
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity frequency_caps {
+  * id : uuid <<PK>>
+  --
+  * scope_concept_id : uuid <<FK>>
+  * scope_ref_id : uuid
+  * max_impressions : integer
+  * time_window_concept_id : uuid <<FK>>
+    window_count : integer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity brand_lift_studies {
+  * id : uuid <<PK>>
+  --
+  * ad_account_id : uuid <<FK>>
+  * campaign_id : uuid <<FK>>
+  * name : varchar
+  * metric_concept_id : uuid <<FK>>
+    poll_question : text
+    lift_percent : numeric
+    confidence : numeric
+    start_at : timestamptz
+    end_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+ad_accounts ||--o{ saved_audiences
+ad_accounts ||--o{ lookalike_specs
+custom_audiences |o--o{ lookalike_specs
+ad_accounts ||--o{ automated_rules
+automated_rules ||--o{ rule_executions
+ad_accounts ||--o{ ad_experiments
+ad_experiments ||--o{ experiment_variants
+ad_accounts ||--o{ custom_conversions
+tracking_pixels |o--o{ custom_conversions
+ad_accounts ||--o{ offline_conversion_sets
+offline_conversion_sets ||--o{ offline_conversion_events
+ad_accounts ||--o{ frequency_caps
+ad_accounts ||--o{ brand_lift_studies
+campaigns |o--o{ brand_lift_studies
+
+note as DEP_diagram_43d_ads_optimization
+  Connects to other modules via:
+  ads (43/43a/43b) anchors (ad_accounts, campaigns, ad_sets, ads, tracking_pixels,
+  custom_audiences, insights_daily), common.files (offline upload), directory.tenants,
+  terminology.catalog_concepts. Automated-rule actions mutate campaigns/ad_sets/ads and
+  are journaled to audit; execution runs through the messaging queue (module 35).
+end note
+
+note as REC_ADS_PRIVACY_diagram_43d_ads_optimization
+  PRIVACY & CONSENT
+  offline_conversion_events store only HASHED match keys (never raw PII/PHI). Custom/offline
+  conversions and brand-lift are consent-gated (telemetry consent). No clinical data enters
+  advertising measurement (ADR public/community PHI isolation).
+end note
+
+note as REC_DERIVED_diagram_43d_ads_optimization
+  REC 3.3 — DERIVED
+  experiment/variant result metrics, offline_conversion_sets.match_rate/matched_events and
+  brand_lift_studies.lift_percent are DERIVED from insights/events; recompute on refresh.
+  automated_rules.last_evaluated_at set by the scheduler; rule_executions is append-only.
+end note
+
+note as HARDENING_diagram_43d_ads_optimization
+  REC 3.4 — HARDENING (enforce at DDL)
+  - rule_executions / offline_conversion_events: append-only; PARTITION BY recorded_at; retention.
+  - experiment_variants: CHECK SUM(traffic_split_percent)=100 per experiment (trigger);
+    exactly one is_control=true.
+  - frequency_caps: UNIQUE(scope_concept_id, scope_ref_id, time_window_concept_id).
+  - custom_conversions: UNIQUE(ad_account_id, name).
+  - (variant_ref_type,variant_ref_id) & (scope_concept_id,scope_ref_id) polymorphic -> value_set + trigger.
+end note
+
+note as VALUE_SETS_diagram_43d_ads_optimization
+  VALUE SETS (bind *_concept_id; do not hardcode)
+  scope->vs_ad_entity_scope{account,campaign,ad_set,ad};
+  action->vs_rule_action{pause,activate,adjust_budget,adjust_bid,notify,rotate_creative};
+  evaluation_schedule->vs_rule_schedule{continuous,hourly,daily};
+  experiment_type->vs_experiment_type{ab_split,cbo,lift,creative,audience};
+  objective_metric/metric->vs_ad_metric{cpa,roas,ctr,cpc,cpm,conversion_rate,reach,awareness,intent};
+  similarity->vs_lookalike_similarity{balanced,reach,similarity};
+  conversion_category->vs_conversion_category{purchase,lead,booking,add_to_cart,signup,contact};
+  upload_source->vs_offline_source{file_upload,api,pos,crm};
+  time_window->vs_time_window{hour,day,week,lifetime};
+  status/state->vs_lifecycle_state.
+end note
+
+entity ad_platform_connections {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * business_manager_id : uuid <<FK>>
+    ad_account_id : uuid <<FK>>
+  * platform_concept_id : uuid <<FK>>
+  * connection_name : varchar
+  * credential_id : uuid <<FK>>
+    api_version : varchar
+    external_business_id : varchar
+    external_ad_account_id : varchar
+    webhook_verification_secret_id : uuid <<FK>>
+    token_expires_at : timestamptz
+    last_successful_sync_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity ad_identity_assets {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * platform_connection_id : uuid <<FK>>
+  * identity_type_concept_id : uuid <<FK>>
+  * external_identity_id : varchar
+  * display_name : varchar
+    username : varchar
+    profile_url : varchar
+    metadata_json : jsonb
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity ad_identity_asset_assignments {
+  * id : uuid <<PK>>
+  --
+  * ad_identity_asset_id : uuid <<FK>>
+  * assignable_type_concept_id : uuid <<FK>>
+  * assignable_id : uuid
+  * assignment_role_concept_id : uuid <<FK>>
+  * effective_from : timestamptz
+    effective_to : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity conversion_datasets {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * ad_account_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+  * dataset_type_concept_id : uuid <<FK>>
+    external_dataset_id : varchar
+    data_use_case_concept_id : uuid <<FK>>
+    default_attribution_setting_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity dataset_connections {
+  * id : uuid <<PK>>
+  --
+  * conversion_dataset_id : uuid <<FK>>
+  * platform_connection_id : uuid <<FK>>
+    tracking_pixel_id : uuid <<FK>>
+  * connection_type_concept_id : uuid <<FK>>
+    external_connection_id : varchar
+    test_event_code_secret_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity server_conversion_events <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * conversion_dataset_id : uuid <<FK>>
+  * event_name : varchar
+  * event_id : varchar
+  * event_time : timestamptz
+  * action_source_concept_id : uuid <<FK>>
+    event_source_url : varchar
+    external_order_id : varchar
+    payment_transaction_id : uuid <<FK>>
+    crm_lead_id : uuid <<FK>>
+    crm_opportunity_id : uuid <<FK>>
+    consent_directive_id : uuid <<FK>>
+    data_processing_options_json : jsonb
+    test_event_code_used : boolean
+  * processing_status_concept_id : uuid <<FK>>
+    blocked_reason_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity conversion_event_user_data {
+  * id : uuid <<PK>>
+  --
+  * server_conversion_event_id : uuid <<FK>>
+    external_user_id_hash : varchar
+    email_hash_sha256 : varchar
+    phone_hash_sha256 : varchar
+    first_name_hash_sha256 : varchar
+    last_name_hash_sha256 : varchar
+    city_hash_sha256 : varchar
+    country_code_hash_sha256 : varchar
+    client_ip_address_encrypted : text
+    client_user_agent_encrypted : text
+    click_id : varchar
+    browser_id : varchar
+  * created_at : timestamptz
+}
+
+entity conversion_event_custom_data {
+  * id : uuid <<PK>>
+  --
+  * server_conversion_event_id : uuid <<FK>>
+    currency_code : char(3)
+    value_amount : numeric(20,6)
+    content_ids_json : jsonb
+    content_type : varchar
+    contents_json : jsonb
+    num_items : integer
+    order_id : varchar
+    custom_properties_json : jsonb
+  * created_at : timestamptz
+}
+
+entity conversion_event_delivery_attempts <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * server_conversion_event_id : uuid <<FK>>
+  * platform_connection_id : uuid <<FK>>
+  * attempt_number : integer
+  * attempted_at : timestamptz
+  * result_concept_id : uuid <<FK>>
+    http_status : integer
+    external_trace_id : varchar
+    response_json_redacted : jsonb
+    retry_at : timestamptz
+    error_code : varchar
+  * created_at : timestamptz
+}
+
+entity conversion_event_deduplication {
+  * id : uuid <<PK>>
+  --
+  * conversion_dataset_id : uuid <<FK>>
+  * event_name : varchar
+  * event_id : varchar
+    browser_event_reference : varchar
+    server_conversion_event_id : uuid <<FK>>
+  * first_seen_at : timestamptz
+    last_seen_at : timestamptz
+  * duplicate_count : integer
+  * resolution_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity dataset_quality_snapshots <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * conversion_dataset_id : uuid <<FK>>
+  * measured_at : timestamptz
+    event_match_quality_score : numeric(8,4)
+    deduplicated_event_percent : numeric(8,4)
+    rejected_event_percent : numeric(8,4)
+    freshness_seconds : bigint
+    diagnostics_json : jsonb
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity lead_forms {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * ad_account_id : uuid <<FK>>
+    ad_identity_asset_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+    external_form_id : varchar
+  * form_type_concept_id : uuid <<FK>>
+    privacy_policy_url : varchar
+    completion_message : text
+    destination_crm_pipeline_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity lead_form_questions {
+  * id : uuid <<PK>>
+  --
+  * lead_form_id : uuid <<FK>>
+  * question_key : varchar
+  * question_type_concept_id : uuid <<FK>>
+  * label : varchar
+    options_json : jsonb
+  * display_order : integer
+  * is_required : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity lead_submissions <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * lead_form_id : uuid <<FK>>
+    ad_id : uuid <<FK>>
+    ad_set_id : uuid <<FK>>
+    campaign_id : uuid <<FK>>
+  * external_lead_id : varchar
+  * submitted_at : timestamptz
+    crm_lead_id : uuid <<FK>>
+    consent_directive_id : uuid <<FK>>
+  * processing_status_concept_id : uuid <<FK>>
+    raw_payload_hash : varchar
+    source_ip_hash : varchar
+  * created_at : timestamptz
+}
+
+entity lead_answers {
+  * id : uuid <<PK>>
+  --
+  * lead_submission_id : uuid <<FK>>
+  * lead_form_question_id : uuid <<FK>>
+    answer_text_encrypted : text
+    answer_json_encrypted : text
+    normalized_value_hash : varchar
+  * created_at : timestamptz
+}
+
+entity lead_delivery_events <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * lead_submission_id : uuid <<FK>>
+  * destination_type_concept_id : uuid <<FK>>
+    destination_reference : varchar
+  * attempted_at : timestamptz
+  * attempt_number : integer
+  * result_concept_id : uuid <<FK>>
+    response_reference : varchar
+    retry_at : timestamptz
+  * created_at : timestamptz
+}
+
+entity insight_metric_definitions {
+  * id : uuid <<PK>>
+  --
+  * platform_concept_id : uuid <<FK>>
+  * metric_code : varchar
+  * name : varchar
+  * data_type_concept_id : uuid <<FK>>
+    aggregation_concept_id : uuid <<FK>>
+    description : text
+    is_estimated : boolean
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity insight_breakdown_definitions {
+  * id : uuid <<PK>>
+  --
+  * platform_concept_id : uuid <<FK>>
+  * breakdown_code : varchar
+  * name : varchar
+    compatible_metrics_json : jsonb
+    privacy_threshold_json : jsonb
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity insight_query_runs <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * ad_account_id : uuid <<FK>>
+  * platform_connection_id : uuid <<FK>>
+  * requested_at : timestamptz
+    date_start : date
+    date_end : date
+    object_level_concept_id : uuid <<FK>>
+    metric_codes_json : jsonb
+    breakdown_codes_json : jsonb
+    filtering_json : jsonb
+  * status_concept_id : uuid <<FK>>
+    external_report_id : varchar
+    completed_at : timestamptz
+    row_count : bigint
+  * created_at : timestamptz
+}
+
+entity insight_fact_rows <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * insight_query_run_id : uuid <<FK>>
+  * fact_date : date
+  * object_type_concept_id : uuid <<FK>>
+  * external_object_id : varchar
+    campaign_id : uuid <<FK>>
+    ad_set_id : uuid <<FK>>
+    ad_id : uuid <<FK>>
+    dimensions_json : jsonb
+  * metrics_json : jsonb
+  * created_at : timestamptz
+}
+
+entity ad_review_events <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * ad_id : uuid <<FK>>
+  * occurred_at : timestamptz
+  * review_event_type_concept_id : uuid <<FK>>
+  * review_status_concept_id : uuid <<FK>>
+    external_review_id : varchar
+    reasons_json : jsonb
+    source_payload_hash : varchar
+  * created_at : timestamptz
+}
+
+entity ad_policy_violations {
+  * id : uuid <<PK>>
+  --
+  * ad_id : uuid <<FK>>
+    ad_review_event_id : uuid <<FK>>
+  * policy_code : varchar
+  * policy_category_concept_id : uuid <<FK>>
+  * severity_concept_id : uuid <<FK>>
+    explanation : text
+  * status_concept_id : uuid <<FK>>
+    detected_at : timestamptz
+    resolved_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity ad_policy_appeals {
+  * id : uuid <<PK>>
+  --
+  * ad_policy_violation_id : uuid <<FK>>
+  * submitted_at : timestamptz
+    submitted_by_user_id : uuid <<FK>>
+  * appeal_reason : text
+    evidence_file_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    external_appeal_id : varchar
+    decided_at : timestamptz
+    decision_reason : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity adset_learning_snapshots <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * ad_set_id : uuid <<FK>>
+  * measured_at : timestamptz
+  * learning_status_concept_id : uuid <<FK>>
+    optimization_events_count : bigint
+    estimated_learning_exit_at : timestamptz
+    limited_reason_concept_id : uuid <<FK>>
+    recommendations_json : jsonb
+  * created_at : timestamptz
+}
+
+entity ad_event_data_policies {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+  * jurisdiction_concept_id : uuid <<FK>>
+  * purpose_of_use_concept_id : uuid <<FK>>
+    requires_consent : boolean
+    consent_scope_concept_id : uuid <<FK>>
+  * default_action_concept_id : uuid <<FK>>
+    prohibited_data_classes_json : jsonb
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity ad_event_field_rules {
+  * id : uuid <<PK>>
+  --
+  * ad_event_data_policy_id : uuid <<FK>>
+  * event_name_pattern : varchar
+  * field_path : varchar
+  * action_concept_id : uuid <<FK>>
+    transformation_concept_id : uuid <<FK>>
+    rationale : text
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity blocked_ad_events <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * ad_event_data_policy_id : uuid <<FK>>
+    source_event_reference : varchar
+  * event_name : varchar
+  * blocked_at : timestamptz
+  * reason_concept_id : uuid <<FK>>
+    blocked_field_paths_json : jsonb
+    payload_hash : varchar
+    review_status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity external_ad_object_snapshots <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * platform_connection_id : uuid <<FK>>
+  * object_type_concept_id : uuid <<FK>>
+  * external_object_id : varchar
+  * external_updated_at : timestamptz
+  * snapshot_at : timestamptz
+  * payload_json : jsonb
+  * payload_hash : varchar
+  * created_at : timestamptz
+}
+
+entity ad_sync_runs <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * platform_connection_id : uuid <<FK>>
+  * sync_direction_concept_id : uuid <<FK>>
+  * object_type_concept_id : uuid <<FK>>
+  * started_at : timestamptz
+    ended_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+    objects_read : bigint
+    objects_written : bigint
+    objects_failed : bigint
+    error_summary_json : jsonb
+  * created_at : timestamptz
+}
+
+entity ad_sync_checkpoints {
+  * id : uuid <<PK>>
+  --
+  * platform_connection_id : uuid <<FK>>
+  * object_type_concept_id : uuid <<FK>>
+  * checkpoint_key : varchar
+    checkpoint_value_encrypted : text
+  * checkpoint_at : timestamptz
+  * row_version : integer
+  * updated_at : timestamptz
+}
+
+business_managers ||--o{ ad_platform_connections
+ad_accounts ||--o{ ad_platform_connections
+ad_platform_connections ||--o{ ad_identity_assets
+ad_identity_assets ||--o{ ad_identity_asset_assignments
+ad_accounts ||--o{ conversion_datasets
+conversion_datasets ||--o{ dataset_connections
+ad_platform_connections ||--o{ dataset_connections
+conversion_datasets ||--o{ server_conversion_events
+server_conversion_events ||--o| conversion_event_user_data
+server_conversion_events ||--o| conversion_event_custom_data
+server_conversion_events ||--o{ conversion_event_delivery_attempts
+conversion_datasets ||--o{ conversion_event_deduplication
+conversion_datasets ||--o{ dataset_quality_snapshots
+ad_accounts ||--o{ lead_forms
+lead_forms ||--o{ lead_form_questions
+lead_forms ||--o{ lead_submissions
+lead_submissions ||--o{ lead_answers
+lead_submissions ||--o{ lead_delivery_events
+insight_query_runs ||--o{ insight_fact_rows
+ads ||--o{ ad_review_events
+ads ||--o{ ad_policy_violations
+ad_policy_violations ||--o{ ad_policy_appeals
+ad_sets ||--o{ adset_learning_snapshots
+ad_event_data_policies ||--o{ ad_event_field_rules
+ad_event_data_policies ||--o{ blocked_ad_events
+ad_platform_connections ||--o{ external_ad_object_snapshots
+ad_platform_connections ||--o{ ad_sync_runs
+ad_platform_connections ||--o{ ad_sync_checkpoints
+
+note right of server_conversion_events
+  META-LIKE CONVERSION PIPELINE
+  Browser and server events use the same event_name + event_id for deduplication.
+  Delivery is asynchronous, retryable and observable; raw access tokens never live here.
+end note
+
+note right of ad_event_data_policies
+  HEALTH DATA FIREWALL
+  Advertising integrations use an explicit allowlist, purpose of use and consent check.
+  Diagnosis, procedure, laboratory/image results and free clinical text are prohibited.
+  Blocked payloads retain only hashes and field paths for auditable remediation.
+end note
+
+package "Physical Indexes" {
+entity "INDEXES · business_managers" as idxset_business_managers <<INDEX_SET>> {
+  PK pk_business_managers : (id) UNIQUE BTREE
+  UK uq_business_managers_external_business_ref : (external_business_ref) UNIQUE BTREE
+  IX ix_business_managers_tenant_id : (tenant_id) BTREE
+  IX ix_business_managers_owner_user_id : (owner_user_id) BTREE
+  IX ix_business_managers_vertical_concept_id : (vertical_concept_id) BTREE
+  IX ix_business_managers_primary_country_concept_id : (primary_country_concept_id) BTREE
+  IX ix_business_managers_state_concept_id : (state_concept_id) BTREE
+  IX ix_business_managers_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_business_managers_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_business_managers_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+  GIN gin_business_managers_search : to_tsvector('simple', concat_ws(' ', name)) GIN
+}
+
+business_managers .. idxset_business_managers : indexed by
+
+entity "INDEXES · ad_partners" as idxset_ad_partners <<INDEX_SET>> {
+  PK pk_ad_partners : (id) UNIQUE BTREE
+  IX ix_ad_partners_partner_type_concept_id : (partner_type_concept_id) BTREE
+  IX ix_ad_partners_tenant_id : (tenant_id) BTREE
+  IX ix_ad_partners_state_concept_id : (state_concept_id) BTREE
+  IX ix_ad_partners_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_ad_partners_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_ad_partners_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+  GIN gin_ad_partners_search : to_tsvector('simple', concat_ws(' ', name)) GIN
+}
+
+ad_partners .. idxset_ad_partners : indexed by
+
+entity "INDEXES · partner_relationships" as idxset_partner_relationships <<INDEX_SET>> {
+  PK pk_partner_relationships : (id) UNIQUE BTREE
+  IX ix_partner_relationships_business_manager_id : (business_manager_id) BTREE
+  IX ix_partner_relationships_partner_id : (partner_id) BTREE
+  IX ix_partner_relationships_relationship_type_concept_id : (relationship_type_concept_id) BTREE
+  IX ix_partner_relationships_status_concept_id : (status_concept_id) BTREE
+  IX ix_partner_relationships_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_partner_relationships_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+partner_relationships .. idxset_partner_relationships : indexed by
+
+entity "INDEXES · ad_accounts" as idxset_ad_accounts <<INDEX_SET>> {
+  PK pk_ad_accounts : (id) UNIQUE BTREE
+  UK uq_ad_accounts_external_account_ref : (external_account_ref) UNIQUE BTREE
+  IX ix_ad_accounts_business_manager_id : (business_manager_id) BTREE
+  IX ix_ad_accounts_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_ad_accounts_account_status_concept_id : (account_status_concept_id) BTREE
+  IX ix_ad_accounts_funding_payment_method_id : (funding_payment_method_id) BTREE
+  IX ix_ad_accounts_disable_reason_concept_id : (disable_reason_concept_id) BTREE
+  IX ix_ad_accounts_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_ad_accounts_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_ad_accounts_search : to_tsvector('simple', concat_ws(' ', name)) GIN
+}
+
+ad_accounts .. idxset_ad_accounts : indexed by
+
+entity "INDEXES · ad_account_users" as idxset_ad_account_users <<INDEX_SET>> {
+  PK pk_ad_account_users : (id) UNIQUE BTREE
+  IX ix_ad_account_users_ad_account_id : (ad_account_id) BTREE
+  IX ix_ad_account_users_user_id : (user_id) BTREE
+  IX ix_ad_account_users_partner_id : (partner_id) BTREE
+  IX ix_ad_account_users_role_concept_id : (role_concept_id) BTREE
+  IX ix_ad_account_users_status_concept_id : (status_concept_id) BTREE
+  IX ix_ad_account_users_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_ad_account_users_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+ad_account_users .. idxset_ad_account_users : indexed by
+
+entity "INDEXES · campaigns" as idxset_campaigns <<INDEX_SET>> {
+  PK pk_campaigns : (id) UNIQUE BTREE
+  IX ix_campaigns_ad_account_id : (ad_account_id) BTREE
+  IX ix_campaigns_objective_concept_id : (objective_concept_id) BTREE
+  IX ix_campaigns_buying_type_concept_id : (buying_type_concept_id) BTREE
+  IX ix_campaigns_bid_strategy_concept_id : (bid_strategy_concept_id) BTREE
+  IX ix_campaigns_status_concept_id : (status_concept_id) BTREE
+  IX ix_campaigns_effective_status_concept_id : (effective_status_concept_id) BTREE
+  IX ix_campaigns_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_campaigns_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_campaigns_search : to_tsvector('simple', concat_ws(' ', name)) GIN
+}
+
+campaigns .. idxset_campaigns : indexed by
+
+entity "INDEXES · ad_sets" as idxset_ad_sets <<INDEX_SET>> {
+  PK pk_ad_sets : (id) UNIQUE BTREE
+  IX ix_ad_sets_campaign_id : (campaign_id) BTREE
+  IX ix_ad_sets_optimization_goal_concept_id : (optimization_goal_concept_id) BTREE
+  IX ix_ad_sets_billing_event_concept_id : (billing_event_concept_id) BTREE
+  IX ix_ad_sets_bid_strategy_concept_id : (bid_strategy_concept_id) BTREE
+  IX ix_ad_sets_targeting_spec_id : (targeting_spec_id) BTREE
+  IX ix_ad_sets_pacing_type_concept_id : (pacing_type_concept_id) BTREE
+  IX ix_ad_sets_status_concept_id : (status_concept_id) BTREE
+  IX ix_ad_sets_effective_status_concept_id : (effective_status_concept_id) BTREE
+  IX ix_ad_sets_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_ad_sets_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_ad_sets_search : to_tsvector('simple', concat_ws(' ', name)) GIN
+}
+
+ad_sets .. idxset_ad_sets : indexed by
+
+entity "INDEXES · ads" as idxset_ads <<INDEX_SET>> {
+  PK pk_ads : (id) UNIQUE BTREE
+  IX ix_ads_ad_set_id : (ad_set_id) BTREE
+  IX ix_ads_creative_id : (creative_id) BTREE
+  IX ix_ads_status_concept_id : (status_concept_id) BTREE
+  IX ix_ads_effective_status_concept_id : (effective_status_concept_id) BTREE
+  IX ix_ads_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_ads_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_ads_search : to_tsvector('simple', concat_ws(' ', name)) GIN
+}
+
+ads .. idxset_ads : indexed by
+
+entity "INDEXES · ad_creatives" as idxset_ad_creatives <<INDEX_SET>> {
+  PK pk_ad_creatives : (id) UNIQUE BTREE
+  IX ix_ad_creatives_ad_account_id : (ad_account_id) BTREE
+  IX ix_ad_creatives_format_concept_id : (format_concept_id) BTREE
+  IX ix_ad_creatives_call_to_action_concept_id : (call_to_action_concept_id) BTREE
+  IX ix_ad_creatives_primary_media_file_id : (primary_media_file_id) BTREE
+  IX ix_ad_creatives_status_concept_id : (status_concept_id) BTREE
+  IX ix_ad_creatives_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_ad_creatives_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_ad_creatives_search : to_tsvector('simple', concat_ws(' ', name)) GIN
+}
+
+ad_creatives .. idxset_ad_creatives : indexed by
+
+entity "INDEXES · creative_assets" as idxset_creative_assets <<INDEX_SET>> {
+  PK pk_creative_assets : (id) UNIQUE BTREE
+  IX ix_creative_assets_ad_creative_id : (ad_creative_id) BTREE
+  IX ix_creative_assets_asset_type_concept_id : (asset_type_concept_id) BTREE
+  IX ix_creative_assets_file_id : (file_id) BTREE
+  IX ix_creative_assets_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_creative_assets_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+creative_assets .. idxset_creative_assets : indexed by
+
+entity "INDEXES · custom_audiences" as idxset_custom_audiences <<INDEX_SET>> {
+  PK pk_custom_audiences : (id) UNIQUE BTREE
+  IX ix_custom_audiences_ad_account_id : (ad_account_id) BTREE
+  IX ix_custom_audiences_audience_type_concept_id : (audience_type_concept_id) BTREE
+  IX ix_custom_audiences_subtype_concept_id : (subtype_concept_id) BTREE
+  IX ix_custom_audiences_source_concept_id : (source_concept_id) BTREE
+  IX ix_custom_audiences_lookalike_source_audience_id : (lookalike_source_audience_id) BTREE
+  IX ix_custom_audiences_data_source_pixel_id : (data_source_pixel_id) BTREE
+  IX ix_custom_audiences_status_concept_id : (status_concept_id) BTREE
+  IX ix_custom_audiences_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_custom_audiences_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_custom_audiences_search : to_tsvector('simple', concat_ws(' ', name)) GIN
+}
+
+custom_audiences .. idxset_custom_audiences : indexed by
+
+entity "INDEXES · targeting_specs" as idxset_targeting_specs <<INDEX_SET>> {
+  PK pk_targeting_specs : (id) UNIQUE BTREE
+  IX ix_targeting_specs_ad_account_id : (ad_account_id) BTREE
+  IX ix_targeting_specs_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_targeting_specs_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_targeting_specs_search : to_tsvector('simple', concat_ws(' ', name)) GIN
+}
+
+targeting_specs .. idxset_targeting_specs : indexed by
+
+entity "INDEXES · ad_placements" as idxset_ad_placements <<INDEX_SET>> {
+  PK pk_ad_placements : (id) UNIQUE BTREE
+  IX ix_ad_placements_ad_set_id : (ad_set_id) BTREE
+  IX ix_ad_placements_platform_concept_id : (platform_concept_id) BTREE
+  IX ix_ad_placements_position_concept_id : (position_concept_id) BTREE
+  IX ix_ad_placements_device_concept_id : (device_concept_id) BTREE
+  IX ix_ad_placements_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_ad_placements_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+ad_placements .. idxset_ad_placements : indexed by
+
+entity "INDEXES · tracking_pixels" as idxset_tracking_pixels <<INDEX_SET>> {
+  PK pk_tracking_pixels : (id) UNIQUE BTREE
+  UK uq_tracking_pixels_pixel_code : (pixel_code) UNIQUE BTREE
+  IX ix_tracking_pixels_business_manager_id : (business_manager_id) BTREE
+  IX ix_tracking_pixels_ad_account_id : (ad_account_id) BTREE
+  IX ix_tracking_pixels_state_concept_id : (state_concept_id) BTREE
+  IX ix_tracking_pixels_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_tracking_pixels_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_tracking_pixels_search : to_tsvector('simple', concat_ws(' ', name)) GIN
+}
+
+tracking_pixels .. idxset_tracking_pixels : indexed by
+
+entity "INDEXES · delivery_status_snapshots" as idxset_delivery_status_snapshots <<INDEX_SET>> {
+  PK pk_delivery_status_snapshots : (id) UNIQUE BTREE
+  IX ix_delivery_status_snapshots_ad_account_id : (ad_account_id) BTREE
+  IX ix_delivery_status_snapshots_entity_type_concept_id : (entity_type_concept_id) BTREE
+  IX ix_delivery_status_snapshots_effective_status_concept_id : (effective_status_concept_id) BTREE
+  IX ix_delivery_status_snapshots_review_status_concept_id : (review_status_concept_id) BTREE
+  IX ix_delivery_status_snapshots_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_delivery_status_snapshots_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+delivery_status_snapshots .. idxset_delivery_status_snapshots : indexed by
+
+entity "INDEXES · insights_daily" as idxset_insights_daily <<INDEX_SET>> {
+  PK pk_insights_daily : (id) UNIQUE BTREE
+  IX ix_insights_daily_ad_account_id : (ad_account_id) BTREE
+  IX ix_insights_daily_entity_type_concept_id : (entity_type_concept_id) BTREE
+  IX ix_insights_daily_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_insights_daily_source_concept_id : (source_concept_id) BTREE
+  IX ix_insights_daily_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_insights_daily_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+insights_daily .. idxset_insights_daily : indexed by
+
+entity "INDEXES · attribution_settings" as idxset_attribution_settings <<INDEX_SET>> {
+  PK pk_attribution_settings : (id) UNIQUE BTREE
+  IX ix_attribution_settings_ad_account_id : (ad_account_id) BTREE
+  IX ix_attribution_settings_attribution_model_concept_id : (attribution_model_concept_id) BTREE
+  IX ix_attribution_settings_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_attribution_settings_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+attribution_settings .. idxset_attribution_settings : indexed by
+
+entity "INDEXES · pixel_events" as idxset_pixel_events <<INDEX_SET>> {
+  PK pk_pixel_events : (id) UNIQUE BTREE
+  IX ix_pixel_events_pixel_id : (pixel_id) BTREE
+  IX ix_pixel_events_event_source_concept_id : (event_source_concept_id) BTREE
+  IX ix_pixel_events_action_source_concept_id : (action_source_concept_id) BTREE
+  IX ix_pixel_events_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_pixel_events_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_pixel_events_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+pixel_events .. idxset_pixel_events : indexed by
+
+entity "INDEXES · conversion_attributions" as idxset_conversion_attributions <<INDEX_SET>> {
+  PK pk_conversion_attributions : (id) UNIQUE BTREE
+  IX ix_conversion_attributions_pixel_event_id : (pixel_event_id) BTREE
+  IX ix_conversion_attributions_attribution_type_concept_id : (attribution_type_concept_id) BTREE
+  IX ix_conversion_attributions_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_conversion_attributions_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_conversion_attributions_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+conversion_attributions .. idxset_conversion_attributions : indexed by
+
+entity "INDEXES · budget_schedules" as idxset_budget_schedules <<INDEX_SET>> {
+  PK pk_budget_schedules : (id) UNIQUE BTREE
+  IX ix_budget_schedules_entity_type_concept_id : (entity_type_concept_id) BTREE
+  IX ix_budget_schedules_budget_type_concept_id : (budget_type_concept_id) BTREE
+  IX ix_budget_schedules_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_budget_schedules_status_concept_id : (status_concept_id) BTREE
+  IX ix_budget_schedules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_budget_schedules_updated_by_user_id : (updated_by_user_id) BTREE
+  GIST gist_budget_schedules_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+}
+
+budget_schedules .. idxset_budget_schedules : indexed by
+
+entity "INDEXES · ad_billing_events" as idxset_ad_billing_events <<INDEX_SET>> {
+  PK pk_ad_billing_events : (id) UNIQUE BTREE
+  IX ix_ad_billing_events_ad_account_id : (ad_account_id) BTREE
+  IX ix_ad_billing_events_billing_event_type_concept_id : (billing_event_type_concept_id) BTREE
+  IX ix_ad_billing_events_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_ad_billing_events_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_ad_billing_events_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+ad_billing_events .. idxset_ad_billing_events : indexed by
+
+entity "INDEXES · ad_invoices" as idxset_ad_invoices <<INDEX_SET>> {
+  PK pk_ad_invoices : (id) UNIQUE BTREE
+  UK uq_ad_invoices_invoice_number : (invoice_number) UNIQUE BTREE
+  IX ix_ad_invoices_ad_account_id : (ad_account_id) BTREE
+  IX ix_ad_invoices_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_ad_invoices_status_concept_id : (status_concept_id) BTREE
+  IX ix_ad_invoices_payment_intent_id : (payment_intent_id) BTREE
+  IX ix_ad_invoices_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_ad_invoices_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+ad_invoices .. idxset_ad_invoices : indexed by
+
+entity "INDEXES · ad_invoice_lines" as idxset_ad_invoice_lines <<INDEX_SET>> {
+  PK pk_ad_invoice_lines : (id) UNIQUE BTREE
+  IX ix_ad_invoice_lines_ad_invoice_id : (ad_invoice_id) BTREE
+  IX ix_ad_invoice_lines_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_ad_invoice_lines_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_ad_invoice_lines_search : to_tsvector('simple', concat_ws(' ', description)) GIN
+}
+
+ad_invoice_lines .. idxset_ad_invoice_lines : indexed by
+
+entity "INDEXES · product_catalogs" as idxset_product_catalogs <<INDEX_SET>> {
+  PK pk_product_catalogs : (id) UNIQUE BTREE
+  IX ix_product_catalogs_business_manager_id : (business_manager_id) BTREE
+  IX ix_product_catalogs_vertical_concept_id : (vertical_concept_id) BTREE
+  IX ix_product_catalogs_default_currency_concept_id : (default_currency_concept_id) BTREE
+  IX ix_product_catalogs_state_concept_id : (state_concept_id) BTREE
+  IX ix_product_catalogs_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_product_catalogs_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_product_catalogs_search : to_tsvector('simple', concat_ws(' ', name)) GIN
+}
+
+product_catalogs .. idxset_product_catalogs : indexed by
+
+entity "INDEXES · catalog_feeds" as idxset_catalog_feeds <<INDEX_SET>> {
+  PK pk_catalog_feeds : (id) UNIQUE BTREE
+  IX ix_catalog_feeds_product_catalog_id : (product_catalog_id) BTREE
+  IX ix_catalog_feeds_feed_source_concept_id : (feed_source_concept_id) BTREE
+  IX ix_catalog_feeds_file_id : (file_id) BTREE
+  IX ix_catalog_feeds_last_status_concept_id : (last_status_concept_id) BTREE
+  IX ix_catalog_feeds_state_concept_id : (state_concept_id) BTREE
+  IX ix_catalog_feeds_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_catalog_feeds_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_catalog_feeds_search : to_tsvector('simple', concat_ws(' ', name)) GIN
+}
+
+catalog_feeds .. idxset_catalog_feeds : indexed by
+
+entity "INDEXES · catalog_products" as idxset_catalog_products <<INDEX_SET>> {
+  PK pk_catalog_products : (id) UNIQUE BTREE
+  IX ix_catalog_products_product_catalog_id : (product_catalog_id) BTREE
+  IX ix_catalog_products_availability_concept_id : (availability_concept_id) BTREE
+  IX ix_catalog_products_condition_concept_id : (condition_concept_id) BTREE
+  IX ix_catalog_products_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_catalog_products_category_concept_id : (category_concept_id) BTREE
+  IX ix_catalog_products_status_concept_id : (status_concept_id) BTREE
+  IX ix_catalog_products_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_catalog_products_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_catalog_products_search : to_tsvector('simple', concat_ws(' ', title, description)) GIN
+}
+
+catalog_products .. idxset_catalog_products : indexed by
+
+entity "INDEXES · product_localizations" as idxset_product_localizations <<INDEX_SET>> {
+  PK pk_product_localizations : (id) UNIQUE BTREE
+  IX ix_product_localizations_catalog_product_id : (catalog_product_id) BTREE
+  IX ix_product_localizations_language_concept_id : (language_concept_id) BTREE
+  IX ix_product_localizations_country_concept_id : (country_concept_id) BTREE
+  IX ix_product_localizations_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_product_localizations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_product_localizations_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_product_localizations_search : to_tsvector('simple', concat_ws(' ', description)) GIN
+}
+
+product_localizations .. idxset_product_localizations : indexed by
+
+entity "INDEXES · product_sets" as idxset_product_sets <<INDEX_SET>> {
+  PK pk_product_sets : (id) UNIQUE BTREE
+  IX ix_product_sets_product_catalog_id : (product_catalog_id) BTREE
+  IX ix_product_sets_state_concept_id : (state_concept_id) BTREE
+  IX ix_product_sets_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_product_sets_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_product_sets_search : to_tsvector('simple', concat_ws(' ', name)) GIN
+}
+
+product_sets .. idxset_product_sets : indexed by
+
+entity "INDEXES · product_set_members" as idxset_product_set_members <<INDEX_SET>> {
+  PK pk_product_set_members : (id) UNIQUE BTREE
+  IX ix_product_set_members_product_set_id : (product_set_id) BTREE
+  IX ix_product_set_members_catalog_product_id : (catalog_product_id) BTREE
+  IX ix_product_set_members_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_product_set_members_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+product_set_members .. idxset_product_set_members : indexed by
+
+entity "INDEXES · dynamic_ad_templates" as idxset_dynamic_ad_templates <<INDEX_SET>> {
+  PK pk_dynamic_ad_templates : (id) UNIQUE BTREE
+  IX ix_dynamic_ad_templates_ad_account_id : (ad_account_id) BTREE
+  IX ix_dynamic_ad_templates_product_set_id : (product_set_id) BTREE
+  IX ix_dynamic_ad_templates_format_concept_id : (format_concept_id) BTREE
+  IX ix_dynamic_ad_templates_call_to_action_concept_id : (call_to_action_concept_id) BTREE
+  IX ix_dynamic_ad_templates_creative_id : (creative_id) BTREE
+  IX ix_dynamic_ad_templates_status_concept_id : (status_concept_id) BTREE
+  IX ix_dynamic_ad_templates_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_dynamic_ad_templates_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_dynamic_ad_templates_search : to_tsvector('simple', concat_ws(' ', name)) GIN
+}
+
+dynamic_ad_templates .. idxset_dynamic_ad_templates : indexed by
+
+entity "INDEXES · collection_ads" as idxset_collection_ads <<INDEX_SET>> {
+  PK pk_collection_ads : (id) UNIQUE BTREE
+  IX ix_collection_ads_ad_account_id : (ad_account_id) BTREE
+  IX ix_collection_ads_layout_concept_id : (layout_concept_id) BTREE
+  IX ix_collection_ads_hero_creative_id : (hero_creative_id) BTREE
+  IX ix_collection_ads_product_set_id : (product_set_id) BTREE
+  IX ix_collection_ads_status_concept_id : (status_concept_id) BTREE
+  IX ix_collection_ads_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_collection_ads_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_collection_ads_search : to_tsvector('simple', concat_ws(' ', name)) GIN
+}
+
+collection_ads .. idxset_collection_ads : indexed by
+
+entity "INDEXES · feed_run_logs" as idxset_feed_run_logs <<INDEX_SET>> {
+  PK pk_feed_run_logs : (id) UNIQUE BTREE
+  IX ix_feed_run_logs_catalog_feed_id : (catalog_feed_id) BTREE
+  IX ix_feed_run_logs_status_concept_id : (status_concept_id) BTREE
+  IX ix_feed_run_logs_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_feed_run_logs_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+feed_run_logs .. idxset_feed_run_logs : indexed by
+
+entity "INDEXES · saved_audiences" as idxset_saved_audiences <<INDEX_SET>> {
+  PK pk_saved_audiences : (id) UNIQUE BTREE
+  IX ix_saved_audiences_ad_account_id : (ad_account_id) BTREE
+  IX ix_saved_audiences_status_concept_id : (status_concept_id) BTREE
+  IX ix_saved_audiences_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_saved_audiences_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_saved_audiences_search : to_tsvector('simple', concat_ws(' ', name)) GIN
+}
+
+saved_audiences .. idxset_saved_audiences : indexed by
+
+entity "INDEXES · lookalike_specs" as idxset_lookalike_specs <<INDEX_SET>> {
+  PK pk_lookalike_specs : (id) UNIQUE BTREE
+  IX ix_lookalike_specs_ad_account_id : (ad_account_id) BTREE
+  IX ix_lookalike_specs_source_audience_id : (source_audience_id) BTREE
+  IX ix_lookalike_specs_country_concept_id : (country_concept_id) BTREE
+  IX ix_lookalike_specs_similarity_concept_id : (similarity_concept_id) BTREE
+  IX ix_lookalike_specs_generated_audience_id : (generated_audience_id) BTREE
+  IX ix_lookalike_specs_status_concept_id : (status_concept_id) BTREE
+  IX ix_lookalike_specs_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_lookalike_specs_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+lookalike_specs .. idxset_lookalike_specs : indexed by
+
+entity "INDEXES · automated_rules" as idxset_automated_rules <<INDEX_SET>> {
+  PK pk_automated_rules : (id) UNIQUE BTREE
+  IX ix_automated_rules_ad_account_id : (ad_account_id) BTREE
+  IX ix_automated_rules_scope_concept_id : (scope_concept_id) BTREE
+  IX ix_automated_rules_action_concept_id : (action_concept_id) BTREE
+  IX ix_automated_rules_evaluation_schedule_concept_id : (evaluation_schedule_concept_id) BTREE
+  IX ix_automated_rules_state_concept_id : (state_concept_id) BTREE
+  IX ix_automated_rules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_automated_rules_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_automated_rules_search : to_tsvector('simple', concat_ws(' ', name)) GIN
+}
+
+automated_rules .. idxset_automated_rules : indexed by
+
+entity "INDEXES · rule_executions" as idxset_rule_executions <<INDEX_SET>> {
+  PK pk_rule_executions : (id) UNIQUE BTREE
+  IX ix_rule_executions_automated_rule_id : (automated_rule_id) BTREE
+  IX ix_rule_executions_status_concept_id : (status_concept_id) BTREE
+  IX ix_rule_executions_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_rule_executions_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+rule_executions .. idxset_rule_executions : indexed by
+
+entity "INDEXES · ad_experiments" as idxset_ad_experiments <<INDEX_SET>> {
+  PK pk_ad_experiments : (id) UNIQUE BTREE
+  IX ix_ad_experiments_ad_account_id : (ad_account_id) BTREE
+  IX ix_ad_experiments_experiment_type_concept_id : (experiment_type_concept_id) BTREE
+  IX ix_ad_experiments_objective_metric_concept_id : (objective_metric_concept_id) BTREE
+  IX ix_ad_experiments_status_concept_id : (status_concept_id) BTREE
+  IX ix_ad_experiments_winner_variant_id : (winner_variant_id) BTREE
+  IX ix_ad_experiments_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_ad_experiments_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_ad_experiments_search : to_tsvector('simple', concat_ws(' ', name)) GIN
+}
+
+ad_experiments .. idxset_ad_experiments : indexed by
+
+entity "INDEXES · experiment_variants" as idxset_experiment_variants <<INDEX_SET>> {
+  PK pk_experiment_variants : (id) UNIQUE BTREE
+  IX ix_experiment_variants_ad_experiment_id : (ad_experiment_id) BTREE
+  IX ix_experiment_variants_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_experiment_variants_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_experiment_variants_search : to_tsvector('simple', concat_ws(' ', name)) GIN
+}
+
+experiment_variants .. idxset_experiment_variants : indexed by
+
+entity "INDEXES · custom_conversions" as idxset_custom_conversions <<INDEX_SET>> {
+  PK pk_custom_conversions : (id) UNIQUE BTREE
+  IX ix_custom_conversions_ad_account_id : (ad_account_id) BTREE
+  IX ix_custom_conversions_pixel_id : (pixel_id) BTREE
+  IX ix_custom_conversions_conversion_category_concept_id : (conversion_category_concept_id) BTREE
+  IX ix_custom_conversions_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_custom_conversions_status_concept_id : (status_concept_id) BTREE
+  IX ix_custom_conversions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_custom_conversions_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_custom_conversions_search : to_tsvector('simple', concat_ws(' ', name)) GIN
+}
+
+custom_conversions .. idxset_custom_conversions : indexed by
+
+entity "INDEXES · offline_conversion_sets" as idxset_offline_conversion_sets <<INDEX_SET>> {
+  PK pk_offline_conversion_sets : (id) UNIQUE BTREE
+  IX ix_offline_conversion_sets_ad_account_id : (ad_account_id) BTREE
+  IX ix_offline_conversion_sets_upload_source_concept_id : (upload_source_concept_id) BTREE
+  IX ix_offline_conversion_sets_file_id : (file_id) BTREE
+  IX ix_offline_conversion_sets_status_concept_id : (status_concept_id) BTREE
+  IX ix_offline_conversion_sets_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_offline_conversion_sets_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_offline_conversion_sets_search : to_tsvector('simple', concat_ws(' ', name)) GIN
+}
+
+offline_conversion_sets .. idxset_offline_conversion_sets : indexed by
+
+entity "INDEXES · offline_conversion_events" as idxset_offline_conversion_events <<INDEX_SET>> {
+  PK pk_offline_conversion_events : (id) UNIQUE BTREE
+  IX ix_offline_conversion_events_offline_conversion_set_id : (offline_conversion_set_id) BTREE
+  IX ix_offline_conversion_events_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_offline_conversion_events_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_offline_conversion_events_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+offline_conversion_events .. idxset_offline_conversion_events : indexed by
+
+entity "INDEXES · frequency_caps" as idxset_frequency_caps <<INDEX_SET>> {
+  PK pk_frequency_caps : (id) UNIQUE BTREE
+  IX ix_frequency_caps_scope_concept_id : (scope_concept_id) BTREE
+  IX ix_frequency_caps_time_window_concept_id : (time_window_concept_id) BTREE
+  IX ix_frequency_caps_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_frequency_caps_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+frequency_caps .. idxset_frequency_caps : indexed by
+
+entity "INDEXES · brand_lift_studies" as idxset_brand_lift_studies <<INDEX_SET>> {
+  PK pk_brand_lift_studies : (id) UNIQUE BTREE
+  IX ix_brand_lift_studies_ad_account_id : (ad_account_id) BTREE
+  IX ix_brand_lift_studies_campaign_id : (campaign_id) BTREE
+  IX ix_brand_lift_studies_metric_concept_id : (metric_concept_id) BTREE
+  IX ix_brand_lift_studies_status_concept_id : (status_concept_id) BTREE
+  IX ix_brand_lift_studies_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_brand_lift_studies_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_brand_lift_studies_search : to_tsvector('simple', concat_ws(' ', name)) GIN
+}
+
+brand_lift_studies .. idxset_brand_lift_studies : indexed by
+
+entity "INDEXES · ad_platform_connections" as idxset_ad_platform_connections <<INDEX_SET>> {
+  PK pk_ad_platform_connections : (id) UNIQUE BTREE
+  IX ix_ad_platform_connections_tenant_id : (tenant_id) BTREE
+  IX ix_ad_platform_connections_business_manager_id : (business_manager_id) BTREE
+  IX ix_ad_platform_connections_ad_account_id : (ad_account_id) BTREE
+  IX ix_ad_platform_connections_platform_concept_id : (platform_concept_id) BTREE
+  IX ix_ad_platform_connections_credential_id : (credential_id) BTREE
+  IX ix_ad_platform_connections_external_business_id : (external_business_id) BTREE
+  IX ix_ad_platform_connections_external_ad_account_id : (external_ad_account_id) BTREE
+  IX ix_ad_platform_connections_webhook_verification_secret_id : (webhook_verification_secret_id) BTREE
+  IX ix_ad_platform_connections_status_concept_id : (status_concept_id) BTREE
+  IX ix_ad_platform_connections_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_ad_platform_connections_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_ad_platform_connections_tenant_status : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  UK uk_ad_platform_connections_tenant_platform_external : (tenant_id, platform_concept_id, external_ad_account_id) UNIQUE BTREE
+}
+
+ad_platform_connections .. idxset_ad_platform_connections : indexed by
+
+entity "INDEXES · ad_identity_assets" as idxset_ad_identity_assets <<INDEX_SET>> {
+  PK pk_ad_identity_assets : (id) UNIQUE BTREE
+  IX ix_ad_identity_assets_tenant_id : (tenant_id) BTREE
+  IX ix_ad_identity_assets_platform_connection_id : (platform_connection_id) BTREE
+  IX ix_ad_identity_assets_identity_type_concept_id : (identity_type_concept_id) BTREE
+  IX ix_ad_identity_assets_external_identity_id : (external_identity_id) BTREE
+  IX ix_ad_identity_assets_status_concept_id : (status_concept_id) BTREE
+  IX ix_ad_identity_assets_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_ad_identity_assets_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_ad_identity_assets_tenant_status : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  UK uk_ad_identity_assets_connection_external : (platform_connection_id, identity_type_concept_id, external_identity_id) UNIQUE BTREE
+}
+
+ad_identity_assets .. idxset_ad_identity_assets : indexed by
+
+entity "INDEXES · ad_identity_asset_assignments" as idxset_ad_identity_asset_assignments <<INDEX_SET>> {
+  PK pk_ad_identity_asset_assignments : (id) UNIQUE BTREE
+  IX ix_ad_identity_asset_assignments_ad_identity_asset_id : (ad_identity_asset_id) BTREE
+  IX ix_ad_identity_asset_assignments_assignable_type_concept_id : (assignable_type_concept_id) BTREE
+  IX ix_ad_identity_asset_assignments_assignable_id : (assignable_id) BTREE
+  IX ix_ad_identity_asset_assignments_assignment_role_concept_id : (assignment_role_concept_id) BTREE
+  IX ix_ad_identity_asset_assignments_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_ad_identity_asset_assignments_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_ad_identity_assignments_target : (assignable_type_concept_id, assignable_id, effective_to) BTREE
+}
+
+ad_identity_asset_assignments .. idxset_ad_identity_asset_assignments : indexed by
+
+entity "INDEXES · conversion_datasets" as idxset_conversion_datasets <<INDEX_SET>> {
+  PK pk_conversion_datasets : (id) UNIQUE BTREE
+  IX ix_conversion_datasets_tenant_id : (tenant_id) BTREE
+  IX ix_conversion_datasets_ad_account_id : (ad_account_id) BTREE
+  IX ix_conversion_datasets_dataset_type_concept_id : (dataset_type_concept_id) BTREE
+  IX ix_conversion_datasets_external_dataset_id : (external_dataset_id) BTREE
+  IX ix_conversion_datasets_data_use_case_concept_id : (data_use_case_concept_id) BTREE
+  IX ix_conversion_datasets_default_attribution_setting_id : (default_attribution_setting_id) BTREE
+  IX ix_conversion_datasets_status_concept_id : (status_concept_id) BTREE
+  IX ix_conversion_datasets_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_conversion_datasets_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_conversion_datasets_tenant_status : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  UK uk_conversion_datasets_account_code : (ad_account_id, code) UNIQUE BTREE
+  UK uk_conversion_datasets_external : (ad_account_id, external_dataset_id) UNIQUE BTREE
+}
+
+conversion_datasets .. idxset_conversion_datasets : indexed by
+
+entity "INDEXES · dataset_connections" as idxset_dataset_connections <<INDEX_SET>> {
+  PK pk_dataset_connections : (id) UNIQUE BTREE
+  IX ix_dataset_connections_conversion_dataset_id : (conversion_dataset_id) BTREE
+  IX ix_dataset_connections_platform_connection_id : (platform_connection_id) BTREE
+  IX ix_dataset_connections_tracking_pixel_id : (tracking_pixel_id) BTREE
+  IX ix_dataset_connections_connection_type_concept_id : (connection_type_concept_id) BTREE
+  IX ix_dataset_connections_external_connection_id : (external_connection_id) BTREE
+  IX ix_dataset_connections_test_event_code_secret_id : (test_event_code_secret_id) BTREE
+  IX ix_dataset_connections_status_concept_id : (status_concept_id) BTREE
+  IX ix_dataset_connections_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_dataset_connections_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_dataset_connections_dataset_type : (conversion_dataset_id, connection_type_concept_id, platform_connection_id) UNIQUE BTREE
+}
+
+dataset_connections .. idxset_dataset_connections : indexed by
+
+entity "INDEXES · server_conversion_events" as idxset_server_conversion_events <<INDEX_SET>> {
+  PK pk_server_conversion_events : (id) UNIQUE BTREE
+  IX ix_server_conversion_events_tenant_id : (tenant_id) BTREE
+  IX ix_server_conversion_events_conversion_dataset_id : (conversion_dataset_id) BTREE
+  IX ix_server_conversion_events_event_id : (event_id) BTREE
+  IX ix_server_conversion_events_action_source_concept_id : (action_source_concept_id) BTREE
+  IX ix_server_conversion_events_external_order_id : (external_order_id) BTREE
+  IX ix_server_conversion_events_payment_transaction_id : (payment_transaction_id) BTREE
+  IX ix_server_conversion_events_crm_lead_id : (crm_lead_id) BTREE
+  IX ix_server_conversion_events_crm_opportunity_id : (crm_opportunity_id) BTREE
+  IX ix_server_conversion_events_consent_directive_id : (consent_directive_id) BTREE
+  IX ix_server_conversion_events_processing_status_concept_id : (processing_status_concept_id) BTREE
+  IX ix_server_conversion_events_blocked_reason_concept_id : (blocked_reason_concept_id) BTREE
+  IX ix_server_conversion_events_tenant_created : (tenant_id, created_at DESC) BTREE
+  BRIN brin_server_conversion_events_created_at : (created_at) BRIN pages_per_range=128
+  UK uk_server_conversion_events_dataset_event : (conversion_dataset_id, event_name, event_id) UNIQUE BTREE
+  IX ix_server_conversion_events_order : (tenant_id, external_order_id) BTREE
+}
+
+server_conversion_events .. idxset_server_conversion_events : indexed by
+
+entity "INDEXES · conversion_event_user_data" as idxset_conversion_event_user_data <<INDEX_SET>> {
+  PK pk_conversion_event_user_data : (id) UNIQUE BTREE
+  IX ix_conversion_event_user_data_server_conversion_event_id : (server_conversion_event_id) BTREE
+  IX ix_conversion_event_user_data_click_id : (click_id) BTREE
+  IX ix_conversion_event_user_data_browser_id : (browser_id) BTREE
+  UK uk_conversion_event_user_data_event : (server_conversion_event_id) UNIQUE BTREE
+}
+
+conversion_event_user_data .. idxset_conversion_event_user_data : indexed by
+
+entity "INDEXES · conversion_event_custom_data" as idxset_conversion_event_custom_data <<INDEX_SET>> {
+  PK pk_conversion_event_custom_data : (id) UNIQUE BTREE
+  IX ix_conversion_event_custom_data_server_conversion_event_id : (server_conversion_event_id) BTREE
+  IX ix_conversion_event_custom_data_order_id : (order_id) BTREE
+  UK uk_conversion_event_custom_data_event : (server_conversion_event_id) UNIQUE BTREE
+}
+
+conversion_event_custom_data .. idxset_conversion_event_custom_data : indexed by
+
+entity "INDEXES · conversion_event_delivery_attempts" as idxset_conversion_event_delivery_attempts <<INDEX_SET>> {
+  PK pk_conversion_event_delivery_attempts : (id) UNIQUE BTREE
+  IX ix_conversion_event_delivery_attempts_server_conversio_755102a2 : (server_conversion_event_id) BTREE
+  IX ix_conversion_event_delivery_attempts_platform_connection_id : (platform_connection_id) BTREE
+  IX ix_conversion_event_delivery_attempts_result_concept_id : (result_concept_id) BTREE
+  IX ix_conversion_event_delivery_attempts_external_trace_id : (external_trace_id) BTREE
+  BRIN brin_conversion_event_delivery_attempts_created_at : (created_at) BRIN pages_per_range=128
+  UK uk_conversion_delivery_attempt_event_attempt : (server_conversion_event_id, platform_connection_id, attempt_number) UNIQUE BTREE
+}
+
+conversion_event_delivery_attempts .. idxset_conversion_event_delivery_attempts : indexed by
+
+entity "INDEXES · conversion_event_deduplication" as idxset_conversion_event_deduplication <<INDEX_SET>> {
+  PK pk_conversion_event_deduplication : (id) UNIQUE BTREE
+  IX ix_conversion_event_deduplication_conversion_dataset_id : (conversion_dataset_id) BTREE
+  IX ix_conversion_event_deduplication_event_id : (event_id) BTREE
+  IX ix_conversion_event_deduplication_server_conversion_event_id : (server_conversion_event_id) BTREE
+  IX ix_conversion_event_deduplication_resolution_concept_id : (resolution_concept_id) BTREE
+  UK uk_conversion_event_dedup_key : (conversion_dataset_id, event_name, event_id) UNIQUE BTREE
+}
+
+conversion_event_deduplication .. idxset_conversion_event_deduplication : indexed by
+
+entity "INDEXES · dataset_quality_snapshots" as idxset_dataset_quality_snapshots <<INDEX_SET>> {
+  PK pk_dataset_quality_snapshots : (id) UNIQUE BTREE
+  IX ix_dataset_quality_snapshots_conversion_dataset_id : (conversion_dataset_id) BTREE
+  IX ix_dataset_quality_snapshots_status_concept_id : (status_concept_id) BTREE
+  BRIN brin_dataset_quality_snapshots_created_at : (created_at) BRIN pages_per_range=128
+}
+
+dataset_quality_snapshots .. idxset_dataset_quality_snapshots : indexed by
+
+entity "INDEXES · lead_forms" as idxset_lead_forms <<INDEX_SET>> {
+  PK pk_lead_forms : (id) UNIQUE BTREE
+  IX ix_lead_forms_tenant_id : (tenant_id) BTREE
+  IX ix_lead_forms_ad_account_id : (ad_account_id) BTREE
+  IX ix_lead_forms_ad_identity_asset_id : (ad_identity_asset_id) BTREE
+  IX ix_lead_forms_external_form_id : (external_form_id) BTREE
+  IX ix_lead_forms_form_type_concept_id : (form_type_concept_id) BTREE
+  IX ix_lead_forms_destination_crm_pipeline_id : (destination_crm_pipeline_id) BTREE
+  IX ix_lead_forms_status_concept_id : (status_concept_id) BTREE
+  IX ix_lead_forms_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_lead_forms_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_lead_forms_tenant_status : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  UK uk_lead_forms_account_code : (ad_account_id, code) UNIQUE BTREE
+  UK uk_lead_forms_external : (ad_account_id, external_form_id) UNIQUE BTREE
+}
+
+lead_forms .. idxset_lead_forms : indexed by
+
+entity "INDEXES · lead_form_questions" as idxset_lead_form_questions <<INDEX_SET>> {
+  PK pk_lead_form_questions : (id) UNIQUE BTREE
+  IX ix_lead_form_questions_lead_form_id : (lead_form_id) BTREE
+  IX ix_lead_form_questions_question_type_concept_id : (question_type_concept_id) BTREE
+  IX ix_lead_form_questions_status_concept_id : (status_concept_id) BTREE
+  IX ix_lead_form_questions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_lead_form_questions_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_lead_form_questions_form_key : (lead_form_id, question_key) UNIQUE BTREE
+}
+
+lead_form_questions .. idxset_lead_form_questions : indexed by
+
+entity "INDEXES · lead_submissions" as idxset_lead_submissions <<INDEX_SET>> {
+  PK pk_lead_submissions : (id) UNIQUE BTREE
+  IX ix_lead_submissions_tenant_id : (tenant_id) BTREE
+  IX ix_lead_submissions_lead_form_id : (lead_form_id) BTREE
+  IX ix_lead_submissions_ad_id : (ad_id) BTREE
+  IX ix_lead_submissions_ad_set_id : (ad_set_id) BTREE
+  IX ix_lead_submissions_campaign_id : (campaign_id) BTREE
+  IX ix_lead_submissions_external_lead_id : (external_lead_id) BTREE
+  IX ix_lead_submissions_crm_lead_id : (crm_lead_id) BTREE
+  IX ix_lead_submissions_consent_directive_id : (consent_directive_id) BTREE
+  IX ix_lead_submissions_processing_status_concept_id : (processing_status_concept_id) BTREE
+  IX ix_lead_submissions_tenant_created : (tenant_id, created_at DESC) BTREE
+  BRIN brin_lead_submissions_created_at : (created_at) BRIN pages_per_range=128
+  UK uk_lead_submissions_form_external : (lead_form_id, external_lead_id) UNIQUE BTREE
+  IX ix_lead_submissions_tenant_submitted : (tenant_id, submitted_at DESC) BTREE
+}
+
+lead_submissions .. idxset_lead_submissions : indexed by
+
+entity "INDEXES · lead_answers" as idxset_lead_answers <<INDEX_SET>> {
+  PK pk_lead_answers : (id) UNIQUE BTREE
+  IX ix_lead_answers_lead_submission_id : (lead_submission_id) BTREE
+  IX ix_lead_answers_lead_form_question_id : (lead_form_question_id) BTREE
+  UK uk_lead_answers_submission_question : (lead_submission_id, lead_form_question_id) UNIQUE BTREE
+}
+
+lead_answers .. idxset_lead_answers : indexed by
+
+entity "INDEXES · lead_delivery_events" as idxset_lead_delivery_events <<INDEX_SET>> {
+  PK pk_lead_delivery_events : (id) UNIQUE BTREE
+  IX ix_lead_delivery_events_lead_submission_id : (lead_submission_id) BTREE
+  IX ix_lead_delivery_events_destination_type_concept_id : (destination_type_concept_id) BTREE
+  IX ix_lead_delivery_events_result_concept_id : (result_concept_id) BTREE
+  BRIN brin_lead_delivery_events_created_at : (created_at) BRIN pages_per_range=128
+  UK uk_lead_delivery_submission_attempt : (lead_submission_id, destination_type_concept_id, attempt_number) UNIQUE BTREE
+}
+
+lead_delivery_events .. idxset_lead_delivery_events : indexed by
+
+entity "INDEXES · insight_metric_definitions" as idxset_insight_metric_definitions <<INDEX_SET>> {
+  PK pk_insight_metric_definitions : (id) UNIQUE BTREE
+  IX ix_insight_metric_definitions_platform_concept_id : (platform_concept_id) BTREE
+  IX ix_insight_metric_definitions_data_type_concept_id : (data_type_concept_id) BTREE
+  IX ix_insight_metric_definitions_aggregation_concept_id : (aggregation_concept_id) BTREE
+  IX ix_insight_metric_definitions_state_concept_id : (state_concept_id) BTREE
+  IX ix_insight_metric_definitions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_insight_metric_definitions_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_insight_metric_definitions_platform_code : (platform_concept_id, metric_code) UNIQUE BTREE
+}
+
+insight_metric_definitions .. idxset_insight_metric_definitions : indexed by
+
+entity "INDEXES · insight_breakdown_definitions" as idxset_insight_breakdown_definitions <<INDEX_SET>> {
+  PK pk_insight_breakdown_definitions : (id) UNIQUE BTREE
+  IX ix_insight_breakdown_definitions_platform_concept_id : (platform_concept_id) BTREE
+  IX ix_insight_breakdown_definitions_state_concept_id : (state_concept_id) BTREE
+  IX ix_insight_breakdown_definitions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_insight_breakdown_definitions_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_insight_breakdown_platform_code : (platform_concept_id, breakdown_code) UNIQUE BTREE
+}
+
+insight_breakdown_definitions .. idxset_insight_breakdown_definitions : indexed by
+
+entity "INDEXES · insight_query_runs" as idxset_insight_query_runs <<INDEX_SET>> {
+  PK pk_insight_query_runs : (id) UNIQUE BTREE
+  IX ix_insight_query_runs_tenant_id : (tenant_id) BTREE
+  IX ix_insight_query_runs_ad_account_id : (ad_account_id) BTREE
+  IX ix_insight_query_runs_platform_connection_id : (platform_connection_id) BTREE
+  IX ix_insight_query_runs_object_level_concept_id : (object_level_concept_id) BTREE
+  IX ix_insight_query_runs_status_concept_id : (status_concept_id) BTREE
+  IX ix_insight_query_runs_external_report_id : (external_report_id) BTREE
+  IX ix_insight_query_runs_tenant_status : (tenant_id, status_concept_id, created_at DESC) BTREE
+  BRIN brin_insight_query_runs_created_at : (created_at) BRIN pages_per_range=128
+}
+
+insight_query_runs .. idxset_insight_query_runs : indexed by
+
+entity "INDEXES · insight_fact_rows" as idxset_insight_fact_rows <<INDEX_SET>> {
+  PK pk_insight_fact_rows : (id) UNIQUE BTREE
+  IX ix_insight_fact_rows_insight_query_run_id : (insight_query_run_id) BTREE
+  IX ix_insight_fact_rows_object_type_concept_id : (object_type_concept_id) BTREE
+  IX ix_insight_fact_rows_external_object_id : (external_object_id) BTREE
+  IX ix_insight_fact_rows_campaign_id : (campaign_id) BTREE
+  IX ix_insight_fact_rows_ad_set_id : (ad_set_id) BTREE
+  IX ix_insight_fact_rows_ad_id : (ad_id) BTREE
+  BRIN brin_insight_fact_rows_created_at : (created_at) BRIN pages_per_range=128
+  IX ix_insight_fact_rows_query_date : (insight_query_run_id, fact_date, external_object_id) BTREE
+}
+
+insight_fact_rows .. idxset_insight_fact_rows : indexed by
+
+entity "INDEXES · ad_review_events" as idxset_ad_review_events <<INDEX_SET>> {
+  PK pk_ad_review_events : (id) UNIQUE BTREE
+  IX ix_ad_review_events_ad_id : (ad_id) BTREE
+  IX ix_ad_review_events_review_event_type_concept_id : (review_event_type_concept_id) BTREE
+  IX ix_ad_review_events_review_status_concept_id : (review_status_concept_id) BTREE
+  IX ix_ad_review_events_external_review_id : (external_review_id) BTREE
+  BRIN brin_ad_review_events_occurred_at : (occurred_at) BRIN pages_per_range=128
+}
+
+ad_review_events .. idxset_ad_review_events : indexed by
+
+entity "INDEXES · ad_policy_violations" as idxset_ad_policy_violations <<INDEX_SET>> {
+  PK pk_ad_policy_violations : (id) UNIQUE BTREE
+  IX ix_ad_policy_violations_ad_id : (ad_id) BTREE
+  IX ix_ad_policy_violations_ad_review_event_id : (ad_review_event_id) BTREE
+  IX ix_ad_policy_violations_policy_category_concept_id : (policy_category_concept_id) BTREE
+  IX ix_ad_policy_violations_severity_concept_id : (severity_concept_id) BTREE
+  IX ix_ad_policy_violations_status_concept_id : (status_concept_id) BTREE
+  IX ix_ad_policy_violations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_ad_policy_violations_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+ad_policy_violations .. idxset_ad_policy_violations : indexed by
+
+entity "INDEXES · ad_policy_appeals" as idxset_ad_policy_appeals <<INDEX_SET>> {
+  PK pk_ad_policy_appeals : (id) UNIQUE BTREE
+  IX ix_ad_policy_appeals_ad_policy_violation_id : (ad_policy_violation_id) BTREE
+  IX ix_ad_policy_appeals_submitted_by_user_id : (submitted_by_user_id) BTREE
+  IX ix_ad_policy_appeals_evidence_file_id : (evidence_file_id) BTREE
+  IX ix_ad_policy_appeals_status_concept_id : (status_concept_id) BTREE
+  IX ix_ad_policy_appeals_external_appeal_id : (external_appeal_id) BTREE
+  IX ix_ad_policy_appeals_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_ad_policy_appeals_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+ad_policy_appeals .. idxset_ad_policy_appeals : indexed by
+
+entity "INDEXES · adset_learning_snapshots" as idxset_adset_learning_snapshots <<INDEX_SET>> {
+  PK pk_adset_learning_snapshots : (id) UNIQUE BTREE
+  IX ix_adset_learning_snapshots_ad_set_id : (ad_set_id) BTREE
+  IX ix_adset_learning_snapshots_learning_status_concept_id : (learning_status_concept_id) BTREE
+  IX ix_adset_learning_snapshots_limited_reason_concept_id : (limited_reason_concept_id) BTREE
+  BRIN brin_adset_learning_snapshots_created_at : (created_at) BRIN pages_per_range=128
+}
+
+adset_learning_snapshots .. idxset_adset_learning_snapshots : indexed by
+
+entity "INDEXES · ad_event_data_policies" as idxset_ad_event_data_policies <<INDEX_SET>> {
+  PK pk_ad_event_data_policies : (id) UNIQUE BTREE
+  IX ix_ad_event_data_policies_tenant_id : (tenant_id) BTREE
+  IX ix_ad_event_data_policies_jurisdiction_concept_id : (jurisdiction_concept_id) BTREE
+  IX ix_ad_event_data_policies_purpose_of_use_concept_id : (purpose_of_use_concept_id) BTREE
+  IX ix_ad_event_data_policies_consent_scope_concept_id : (consent_scope_concept_id) BTREE
+  IX ix_ad_event_data_policies_default_action_concept_id : (default_action_concept_id) BTREE
+  IX ix_ad_event_data_policies_state_concept_id : (state_concept_id) BTREE
+  IX ix_ad_event_data_policies_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_ad_event_data_policies_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_ad_event_data_policies_tenant_created : (tenant_id, created_at DESC) BTREE
+  UK uk_ad_event_data_policies_tenant_code : (tenant_id, code) UNIQUE BTREE
+}
+
+ad_event_data_policies .. idxset_ad_event_data_policies : indexed by
+
+entity "INDEXES · ad_event_field_rules" as idxset_ad_event_field_rules <<INDEX_SET>> {
+  PK pk_ad_event_field_rules : (id) UNIQUE BTREE
+  IX ix_ad_event_field_rules_ad_event_data_policy_id : (ad_event_data_policy_id) BTREE
+  IX ix_ad_event_field_rules_action_concept_id : (action_concept_id) BTREE
+  IX ix_ad_event_field_rules_transformation_concept_id : (transformation_concept_id) BTREE
+  IX ix_ad_event_field_rules_state_concept_id : (state_concept_id) BTREE
+  IX ix_ad_event_field_rules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_ad_event_field_rules_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_ad_event_field_rules_policy_event_field : (ad_event_data_policy_id, event_name_pattern, field_path) UNIQUE BTREE
+}
+
+ad_event_field_rules .. idxset_ad_event_field_rules : indexed by
+
+entity "INDEXES · blocked_ad_events" as idxset_blocked_ad_events <<INDEX_SET>> {
+  PK pk_blocked_ad_events : (id) UNIQUE BTREE
+  IX ix_blocked_ad_events_tenant_id : (tenant_id) BTREE
+  IX ix_blocked_ad_events_ad_event_data_policy_id : (ad_event_data_policy_id) BTREE
+  IX ix_blocked_ad_events_reason_concept_id : (reason_concept_id) BTREE
+  IX ix_blocked_ad_events_review_status_concept_id : (review_status_concept_id) BTREE
+  IX ix_blocked_ad_events_tenant_created : (tenant_id, created_at DESC) BTREE
+  BRIN brin_blocked_ad_events_created_at : (created_at) BRIN pages_per_range=128
+}
+
+blocked_ad_events .. idxset_blocked_ad_events : indexed by
+
+entity "INDEXES · external_ad_object_snapshots" as idxset_external_ad_object_snapshots <<INDEX_SET>> {
+  PK pk_external_ad_object_snapshots : (id) UNIQUE BTREE
+  IX ix_external_ad_object_snapshots_platform_connection_id : (platform_connection_id) BTREE
+  IX ix_external_ad_object_snapshots_object_type_concept_id : (object_type_concept_id) BTREE
+  IX ix_external_ad_object_snapshots_external_object_id : (external_object_id) BTREE
+  BRIN brin_external_ad_object_snapshots_created_at : (created_at) BRIN pages_per_range=128
+  UK uk_external_ad_snapshots_version : (platform_connection_id, object_type_concept_id, external_object_id, external_updated_at) UNIQUE BTREE
+}
+
+external_ad_object_snapshots .. idxset_external_ad_object_snapshots : indexed by
+
+entity "INDEXES · ad_sync_runs" as idxset_ad_sync_runs <<INDEX_SET>> {
+  PK pk_ad_sync_runs : (id) UNIQUE BTREE
+  IX ix_ad_sync_runs_platform_connection_id : (platform_connection_id) BTREE
+  IX ix_ad_sync_runs_sync_direction_concept_id : (sync_direction_concept_id) BTREE
+  IX ix_ad_sync_runs_object_type_concept_id : (object_type_concept_id) BTREE
+  IX ix_ad_sync_runs_status_concept_id : (status_concept_id) BTREE
+  BRIN brin_ad_sync_runs_created_at : (created_at) BRIN pages_per_range=128
+}
+
+ad_sync_runs .. idxset_ad_sync_runs : indexed by
+
+entity "INDEXES · ad_sync_checkpoints" as idxset_ad_sync_checkpoints <<INDEX_SET>> {
+  PK pk_ad_sync_checkpoints : (id) UNIQUE BTREE
+  IX ix_ad_sync_checkpoints_platform_connection_id : (platform_connection_id) BTREE
+  IX ix_ad_sync_checkpoints_object_type_concept_id : (object_type_concept_id) BTREE
+  UK uk_ad_sync_checkpoints_connection_object_key : (platform_connection_id, object_type_concept_id, checkpoint_key) UNIQUE BTREE
+}
+
+ad_sync_checkpoints .. idxset_ad_sync_checkpoints : indexed by
+
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

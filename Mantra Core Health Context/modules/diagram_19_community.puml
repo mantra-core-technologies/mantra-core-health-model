@@ -1,0 +1,1349 @@
+@startuml SALUD_Module_19_community
+title Module 19 — Public Profiles, Social Graph, Messaging and Moderation\n(schema: community)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_19_community.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_19_community
+  BUSINESS PURPOSE
+  A delivery-platform-style discovery and reputation layer for practitioners,
+  practices, hospitals, diagnostic units, pharmacies, clinics and care sites.
+  Insurers and brokers may have public information profiles only when product
+  policy enables them. Public content is isolated
+  from the clinical record. Reviews can be encounter-verified without making
+  encounter identifiers public.
+end note
+
+entity public_profiles {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * target_type_concept_id : uuid <<FK>>
+  * target_id : uuid
+  * slug : varchar <<UK>>
+  * display_name : varchar
+    headline : varchar
+    biography : text
+    avatar_file_id : uuid <<FK>>
+    cover_file_id : uuid <<FK>>
+    verification_status_concept_id : uuid <<FK>>
+    visibility_concept_id : uuid <<FK>>
+    accepts_reviews : boolean
+    comments_default_enabled : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity social_posts {
+  * id : uuid <<PK>>
+  --
+  * author_public_profile_id : uuid <<FK>>
+  * post_type_concept_id : uuid <<FK>>
+  * body_text : text
+    visibility_concept_id : uuid <<FK>>
+    comments_enabled : boolean
+  * health_data_screening_status_concept_id : uuid <<FK>>
+  * moderation_status_concept_id : uuid <<FK>>
+  * publication_status_concept_id : uuid <<FK>>
+    published_at : timestamptz
+    edited_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity post_media {
+  * id : uuid <<PK>>
+  --
+  * post_id : uuid <<FK>>
+  * file_id : uuid <<FK>>
+  * media_role_concept_id : uuid <<FK>>
+    alt_text : varchar
+    ordinal : integer
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+entity service_reviews {
+  * id : uuid <<PK>>
+  --
+  * target_public_profile_id : uuid <<FK>>
+  * reviewer_patient_profile_id : uuid <<FK>>
+    verified_encounter_id : uuid <<FK>>
+  * overall_rating : smallint
+    review_text : text
+    reviewer_display_mode_concept_id : uuid <<FK>>
+  * verification_status_concept_id : uuid <<FK>>
+  * moderation_status_concept_id : uuid <<FK>>
+  * publication_status_concept_id : uuid <<FK>>
+    published_at : timestamptz
+    edited_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity review_dimension_scores {
+  * id : uuid <<PK>>
+  --
+  * review_id : uuid <<FK>>
+  * dimension_concept_id : uuid <<FK>>
+  * score : smallint
+  * created_at : timestamptz
+}
+entity review_responses {
+  * id : uuid <<PK>>
+  --
+  * review_id : uuid <<FK>>
+  * responder_public_profile_id : uuid <<FK>>
+  * response_text : text
+  * moderation_status_concept_id : uuid <<FK>>
+    published_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity content_reports {
+  * id : uuid <<PK>>
+  --
+  * reporter_user_id : uuid <<FK>>
+  * target_type_concept_id : uuid <<FK>>
+  * target_id : uuid
+  * reason_concept_id : uuid <<FK>>
+    detail_text : text
+  * status_concept_id : uuid <<FK>>
+    assigned_moderator_user_id : uuid <<FK>>
+    resolved_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+}
+entity rating_aggregates <<MATERIALIZED_VIEW>> {
+  --
+    target_public_profile_id : uuid
+    review_count : bigint
+    verified_review_count : bigint
+    overall_average : numeric
+    dimension_averages_json : jsonb
+    calculated_at : timestamptz
+}
+
+public_profiles ||--o{ social_posts
+public_profiles ||--o{ service_reviews
+social_posts ||--o{ post_media
+service_reviews ||--o{ review_dimension_scores
+service_reviews ||--o{ review_responses
+
+note as REVIEW_RULES_diagram_19_community
+  TRUST & SAFETY RULES
+  - CHECK overall_rating and dimension score between 1 and 5.
+  - One active verified review per patient + target + completed encounter,
+    unless an explicit repeat-review policy exists.
+  - The public API exposes verified=true, never encounter_id.
+  - Moderation, appeals, rate limits, abuse detection and immutable evidence
+    are mandatory. Aggregate ratings exclude rejected/spam reviews.
+end note
+
+note as PHI_BOUNDARY_diagram_19_community
+  PHI BOUNDARY
+  Posts/comments/reviews must never contain identifiable patient health data.
+  Consent is not used as a shortcut to publish PHI in the social domain.
+  De-identified educational material requires a separate approved workflow,
+  re-identification risk review and immutable moderation evidence.
+end note
+
+note as POLY_RULES_diagram_19_community
+  OWNERSHIP INTEGRITY
+  public_profiles.(target_type_concept_id,target_id) is restricted to approved
+  practitioner, practice, site, hospital, diagnostic unit, pharmacy or approved
+  organization types and validated against entity_registry. Specialized public
+  projections expose verified services and current public prices, not internal
+  contracts, stock cost, claim rules or clinical records. A comment has exactly one author identity: user or public
+  profile. A review target is always one public profile.
+end note
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_19b_community_social_graph.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_19b_community_social_graph
+  BUSINESS PURPOSE
+  Brings the community layer up to the depth a real social platform requires, beyond
+  simple posts and star reviews. Adds a generic, threaded commenting system usable on any
+  commentable entity (posts, reviews, courses, groups), typed reactions, @mentions,
+  hashtags and topics, interest/topic follows, groups/communities with membership and
+  roles, shares/reposts and bookmarks, an addressable home/feed timeline with ranking
+  inputs, and polls. Uses canonical generic comments, reactions and social_follows for posts,
+  reviews, courses, groups, topics and profiles. PHI-free by design.
+end note
+
+
+
+
+entity comments {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * author_profile_id : uuid <<FK>>
+  * commentable_type_concept_id : uuid <<FK>>
+  * commentable_ref_id : uuid
+    parent_comment_id : uuid <<FK>>
+    root_comment_id : uuid <<FK>>
+    thread_depth : integer
+  * body_text : text
+    body_richtext_json : jsonb
+    reply_count : integer
+    reaction_count : integer
+    is_edited : boolean
+    edited_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity reactions {
+  * id : uuid <<PK>>
+  --
+  * actor_profile_id : uuid <<FK>>
+  * reactable_type_concept_id : uuid <<FK>>
+  * reactable_ref_id : uuid
+  * reaction_type_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity mentions {
+  * id : uuid <<PK>>
+  --
+  * source_type_concept_id : uuid <<FK>>
+  * source_ref_id : uuid
+  * mentioned_profile_id : uuid <<FK>>
+    offset_start : integer
+    offset_end : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity hashtags {
+  * id : uuid <<PK>>
+  --
+  * tag : varchar <<UK>>
+    normalized_tag : varchar
+    usage_count : bigint
+    topic_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity topics {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * name : varchar
+    parent_topic_id : uuid <<FK>>
+    specialty_concept_id : uuid <<FK>>
+    follower_count : bigint
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity content_hashtags {
+  * id : uuid <<PK>>
+  --
+  * hashtag_id : uuid <<FK>>
+  * content_type_concept_id : uuid <<FK>>
+  * content_ref_id : uuid
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity groups {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * slug : varchar <<UK>>
+  * name : varchar
+    description : text
+  * visibility_concept_id : uuid <<FK>>
+  * group_type_concept_id : uuid <<FK>>
+    topic_id : uuid <<FK>>
+    owner_profile_id : uuid <<FK>>
+    cover_file_id : uuid <<FK>>
+    member_count : integer
+    post_count : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity group_members {
+  * id : uuid <<PK>>
+  --
+  * group_id : uuid <<FK>>
+  * member_profile_id : uuid <<FK>>
+  * member_role_concept_id : uuid <<FK>>
+  * join_status_concept_id : uuid <<FK>>
+    joined_at : timestamptz
+    invited_by_profile_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity post_shares {
+  * id : uuid <<PK>>
+  --
+  * post_id : uuid <<FK>>
+  * sharer_profile_id : uuid <<FK>>
+  * share_type_concept_id : uuid <<FK>>
+    quote_text : text
+    target_group_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity bookmarks {
+  * id : uuid <<PK>>
+  --
+  * profile_id : uuid <<FK>>
+  * bookmarkable_type_concept_id : uuid <<FK>>
+  * bookmarkable_ref_id : uuid
+    collection_name : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity feed_items {
+  * id : uuid <<PK>>
+  --
+  * owner_profile_id : uuid <<FK>>
+  * item_type_concept_id : uuid <<FK>>
+  * source_type_concept_id : uuid <<FK>>
+  * source_ref_id : uuid
+  * origin_concept_id : uuid <<FK>>
+    rank_score : numeric
+    is_seen : boolean
+    is_hidden : boolean
+    surfaced_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity polls {
+  * id : uuid <<PK>>
+  --
+  * post_id : uuid <<FK>>
+  * question : varchar
+  * allows_multiple : boolean
+    closes_at : timestamptz
+    total_votes : bigint
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity poll_options {
+  * id : uuid <<PK>>
+  --
+  * poll_id : uuid <<FK>>
+  * label : varchar
+    ordinal : integer
+    vote_count : bigint
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity poll_votes {
+  * id : uuid <<PK>>
+  --
+  * poll_id : uuid <<FK>>
+  * poll_option_id : uuid <<FK>>
+  * voter_profile_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+comments |o--o{ comments : replies
+comments ||--o{ mentions
+social_posts ||--o{ comments
+public_profiles ||--o{ comments
+public_profiles ||--o{ reactions
+topics |o--o{ topics : parent
+topics ||--o{ hashtags
+hashtags ||--o{ content_hashtags
+groups ||--o{ group_members
+groups ||--o{ post_shares
+social_posts ||--o{ post_shares
+public_profiles ||--o{ bookmarks
+public_profiles ||--o{ feed_items
+social_posts ||--o{ polls
+polls ||--o{ poll_options
+polls ||--o{ poll_votes
+poll_options ||--o{ poll_votes
+
+note as DEP_diagram_19b_community_social_graph
+  Connects to other modules via:
+  community (module 19) anchors (social_posts, public_profiles, post_comments,
+  post_reactions, profile_follows), profiles.patient_profiles/health_practitioner_profiles
+  (author_profile_id resolves to a public_profile), common.files (group cover), directory.tenants,
+  terminology.catalog_concepts. Notifications for mentions/replies flow through messaging (35).
+end note
+
+note as PHI_BOUNDARY_diagram_19b_community_social_graph
+  NO CLINICAL PHI in community. Comments, reactions, groups and feed are public/social
+  content only. commentable/reactable targets are social objects; never patient records.
+end note
+
+note as REC_DERIVED_diagram_19b_community_social_graph
+  REC 3.3 — DERIVED COUNTERS
+  comments.reply_count/reaction_count, hashtags.usage_count, topics.follower_count,
+  groups.member_count/post_count, polls.total_votes and poll_options.vote_count are DERIVED
+  counters maintained by trigger. feed_items.rank_score is recomputed by the ranking pipeline.
+end note
+
+note as HARDENING_diagram_19b_community_social_graph
+  REC 3.4 — HARDENING (enforce at DDL)
+  - reactions: UNIQUE(actor_profile_id, reactable_type_concept_id, reactable_ref_id) (one reaction/actor/object; type is updatable).
+  - poll_votes: UNIQUE(poll_id, poll_option_id, voter_profile_id); enforce single-choice when NOT allows_multiple.
+  - group_members: UNIQUE(group_id, member_profile_id).
+  - topic_follows / bookmarks: UNIQUE on (follower/profile, target).
+  - content_hashtags: UNIQUE(hashtag_id, content_type_concept_id, content_ref_id).
+  - comments: index (commentable_type_concept_id, commentable_ref_id, created_at);
+    all polymorphic (*_type_concept_id,*_ref_id) -> value_set + trigger.
+end note
+
+note as VALUE_SETS_diagram_19b_community_social_graph
+  VALUE SETS (bind *_concept_id; do not hardcode)
+  commentable_type/reactable_type/bookmarkable_type->vs_social_object{post,comment,review,course,group,profile};
+  reaction_type->vs_reaction_type{like,love,celebrate,support,insightful,curious};
+  followable_type->vs_followable{topic,hashtag,group,profile};
+  visibility->vs_group_visibility{public,private,secret};
+  group_type->vs_group_type{community,professional,condition_support,practice};
+  member_role->vs_group_member_role{owner,admin,moderator,member};
+  join_status->vs_join_status{pending,active,banned,left};
+  share_type->vs_share_type{repost,quote,external};
+  item_type->vs_feed_item_type{post,share,comment,poll,recommendation};
+  origin->vs_feed_origin{following,topic,group,suggested,promoted};
+  status/state->vs_lifecycle_state.
+end note
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_19c_community_messaging_moderation.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_19c_community_messaging_moderation
+  BUSINESS PURPOSE
+  The interaction and trust-&-safety half of a real social platform: private direct
+  messaging (1:1 and group conversations with receipts), an in-app social notification
+  inbox, verified badges for professionals/organizations, user blocking, and a full
+  moderation pipeline — queues, decisions, strikes and appeals — layered on the existing
+  content_reports. Keeps social messaging strictly separate from clinical messaging
+  (secure clinical comms remain in clinical/messaging). PHI-free.
+end note
+
+
+
+
+entity conversations {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * conversation_type_concept_id : uuid <<FK>>
+    group_id : uuid <<FK>>
+    last_message_at : timestamptz
+    message_count : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity conversation_participants {
+  * id : uuid <<PK>>
+  --
+  * conversation_id : uuid <<FK>>
+  * participant_profile_id : uuid <<FK>>
+  * role_concept_id : uuid <<FK>>
+    joined_at : timestamptz
+    last_read_message_id : uuid <<FK>>
+    muted_until : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity direct_messages {
+  * id : uuid <<PK>>
+  --
+  * conversation_id : uuid <<FK>>
+  * sender_profile_id : uuid <<FK>>
+    reply_to_message_id : uuid <<FK>>
+  * content_type_concept_id : uuid <<FK>>
+    body_text : text
+    attachment_file_id : uuid <<FK>>
+    is_edited : boolean
+    deleted_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+    sent_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity message_receipts <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * direct_message_id : uuid <<FK>>
+  * recipient_profile_id : uuid <<FK>>
+  * receipt_type_concept_id : uuid <<FK>>
+    occurred_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity social_notifications {
+  * id : uuid <<PK>>
+  --
+  * recipient_profile_id : uuid <<FK>>
+  * notification_type_concept_id : uuid <<FK>>
+    actor_profile_id : uuid <<FK>>
+  * source_type_concept_id : uuid <<FK>>
+  * source_ref_id : uuid
+    preview_text : varchar
+    is_read : boolean
+    read_at : timestamptz
+    notification_request_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity verified_badges {
+  * id : uuid <<PK>>
+  --
+  * subject_type_concept_id : uuid <<FK>>
+  * subject_ref_id : uuid
+  * badge_type_concept_id : uuid <<FK>>
+  * verification_method_concept_id : uuid <<FK>>
+    verified_by_user_id : uuid <<FK>>
+    evidence_ref : varchar
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity user_blocks {
+  * id : uuid <<PK>>
+  --
+  * blocker_profile_id : uuid <<FK>>
+  * blocked_profile_id : uuid <<FK>>
+    reason_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity moderation_queue {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * content_type_concept_id : uuid <<FK>>
+  * content_ref_id : uuid
+  * source_concept_id : uuid <<FK>>
+    content_report_id : uuid <<FK>>
+    priority_concept_id : uuid <<FK>>
+    ml_score : numeric
+    assigned_to_user_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    queued_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity moderation_decisions {
+  * id : uuid <<PK>>
+  --
+  * moderation_queue_id : uuid <<FK>>
+  * decision_concept_id : uuid <<FK>>
+  * policy_concept_id : uuid <<FK>>
+    rationale_text : text
+    action_taken_concept_id : uuid <<FK>>
+  * decided_by_user_id : uuid <<FK>>
+    decided_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity moderation_strikes {
+  * id : uuid <<PK>>
+  --
+  * subject_profile_id : uuid <<FK>>
+  * moderation_decision_id : uuid <<FK>>
+  * severity_concept_id : uuid <<FK>>
+    points : integer
+    expires_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity moderation_appeals {
+  * id : uuid <<PK>>
+  --
+  * moderation_decision_id : uuid <<FK>>
+  * appellant_profile_id : uuid <<FK>>
+  * reason_text : text
+  * status_concept_id : uuid <<FK>>
+    reviewed_by_user_id : uuid <<FK>>
+    resolution_concept_id : uuid <<FK>>
+    resolved_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+conversations ||--o{ conversation_participants
+conversations ||--o{ direct_messages
+direct_messages ||--o{ message_receipts
+public_profiles ||--o{ social_notifications
+public_profiles ||--o{ verified_badges
+public_profiles ||--o{ user_blocks
+content_reports |o--o{ moderation_queue
+moderation_queue ||--o{ moderation_decisions
+moderation_decisions ||--o{ moderation_strikes
+moderation_decisions ||--o{ moderation_appeals
+public_profiles ||--o{ moderation_strikes
+
+note as DEP_diagram_19c_community_messaging_moderation
+  Connects to other modules via:
+  community (module 19) anchors (content_reports, public_profiles, social_posts, comments, reactions, social_follows),
+  messaging.notification_requests (social_notifications.notification_request_id fan-out),
+  identity_assurance (verified_badges evidence), common.files (attachments),
+  directory.tenants, terminology.catalog_concepts.
+end note
+
+note as PHI_BOUNDARY_diagram_19c_community_messaging_moderation
+  SOCIAL, NOT CLINICAL. Direct messaging here is social/consumer messaging. Secure clinical
+  communication and patient notifications stay in clinical/messaging. No PHI in DMs, moderation
+  records or notifications.
+end note
+
+note as REC_DERIVED_diagram_19c_community_messaging_moderation
+  REC 3.3 — DERIVED
+  conversations.message_count/last_message_at and moderation_strikes point totals are DERIVED
+  (trigger). message_receipts is append-only; read state derives from the latest receipt.
+end note
+
+note as HARDENING_diagram_19c_community_messaging_moderation
+  REC 3.4 — HARDENING (enforce at DDL)
+  - conversation_participants: UNIQUE(conversation_id, participant_profile_id).
+  - user_blocks: UNIQUE(blocker_profile_id, blocked_profile_id); CHECK blocker <> blocked.
+  - verified_badges: partial UNIQUE(subject_type_concept_id, subject_ref_id, badge_type_concept_id) WHERE status='active'.
+  - message_receipts: append-only; PARTITION BY recorded_at; UNIQUE(direct_message_id, recipient_profile_id, receipt_type_concept_id).
+  - moderation_appeals: one open appeal per decision (partial UNIQUE WHERE status='open').
+  - polymorphic (*_type_concept_id,*_ref_id) -> value_set + trigger.
+end note
+
+note as VALUE_SETS_diagram_19c_community_messaging_moderation
+  VALUE SETS (bind *_concept_id; do not hardcode)
+  conversation_type->vs_conversation_type{direct,group};
+  participant role->vs_conv_role{owner,admin,member};
+  content_type(dm)->vs_dm_content{text,image,file,voice,system};
+  receipt_type->vs_receipt_type{delivered,read};
+  notification_type->vs_social_notification{follow,mention,reply,reaction,share,group_invite,badge};
+  source_type->vs_social_object{post,comment,review,course,group,profile};
+  badge_type->vs_badge_type{verified_professional,verified_organization,top_contributor};
+  verification_method->vs_verification_method{credential,manual,domain,document};
+  moderation content_type->vs_moderatable{post,comment,review,message,profile,group};
+  moderation source->vs_moderation_source{user_report,ml_filter,proactive,appeal};
+  decision->vs_moderation_decision{approved,removed,restricted,warned,escalated};
+  action_taken->vs_moderation_action{none,remove_content,mute,suspend,ban,shadow_limit};
+  strike severity->vs_strike_severity{minor,major,severe};
+  appeal resolution->vs_appeal_resolution{upheld,overturned,partial};
+  status/state->vs_lifecycle_state.
+end note
+
+entity social_follows {
+  * id : uuid <<PK>>
+  --
+  * follower_profile_id : uuid <<FK>>
+  * followable_type_concept_id : uuid <<FK>>
+  * followable_ref_id : uuid
+  * status_concept_id : uuid <<FK>>
+    notification_level_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+public_profiles ||--o{ social_follows : follower
+
+
+note as CANONICAL_SOCIAL_OBJECTS
+  CANONICAL SOCIAL OBJECTS
+  comments, reactions and social_follows are the only writable interaction tables.
+  Legacy post_comments, post_reactions, profile_follows and topic_follows are removed.
+  Polymorphic targets are restricted by closed value sets plus entity_registry validation.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · public_profiles" as idxset_public_profiles <<INDEX_SET>> {
+  PK pk_public_profiles : (id) UNIQUE BTREE
+  UK uq_public_profiles_slug : (slug) UNIQUE BTREE
+  IX ix_public_profiles_tenant_id : (tenant_id) BTREE
+  IX ix_public_profiles_target_type_concept_id : (target_type_concept_id) BTREE
+  IX ix_public_profiles_avatar_file_id : (avatar_file_id) BTREE
+  IX ix_public_profiles_cover_file_id : (cover_file_id) BTREE
+  IX ix_public_profiles_verification_status_concept_id : (verification_status_concept_id) BTREE
+  IX ix_public_profiles_visibility_concept_id : (visibility_concept_id) BTREE
+  IX ix_public_profiles_status_concept_id : (status_concept_id) BTREE
+  IX ix_public_profiles_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_public_profiles_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_public_profiles_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  GIN gin_public_profiles_search : to_tsvector('simple', concat_ws(' ', display_name, headline)) GIN
+}
+
+public_profiles .. idxset_public_profiles : indexed by
+
+entity "INDEXES · social_posts" as idxset_social_posts <<INDEX_SET>> {
+  PK pk_social_posts : (id) UNIQUE BTREE
+  IX ix_social_posts_author_public_profile_id : (author_public_profile_id) BTREE
+  IX ix_social_posts_post_type_concept_id : (post_type_concept_id) BTREE
+  IX ix_social_posts_visibility_concept_id : (visibility_concept_id) BTREE
+  IX ix_social_posts_health_data_screening_status_concept_id : (health_data_screening_status_concept_id) BTREE
+  IX ix_social_posts_moderation_status_concept_id : (moderation_status_concept_id) BTREE
+  IX ix_social_posts_publication_status_concept_id : (publication_status_concept_id) BTREE
+  IX ix_social_posts_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_social_posts_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_social_posts_search : to_tsvector('simple', concat_ws(' ', body_text)) GIN
+  IX ix_social_posts_profile_publication : (author_public_profile_id, publication_status_concept_id, published_at DESC) BTREE
+}
+
+social_posts .. idxset_social_posts : indexed by
+
+entity "INDEXES · post_media" as idxset_post_media <<INDEX_SET>> {
+  PK pk_post_media : (id) UNIQUE BTREE
+  IX ix_post_media_post_id : (post_id) BTREE
+  IX ix_post_media_file_id : (file_id) BTREE
+  IX ix_post_media_media_role_concept_id : (media_role_concept_id) BTREE
+  IX ix_post_media_created_by_user_id : (created_by_user_id) BTREE
+}
+
+post_media .. idxset_post_media : indexed by
+
+entity "INDEXES · service_reviews" as idxset_service_reviews <<INDEX_SET>> {
+  PK pk_service_reviews : (id) UNIQUE BTREE
+  IX ix_service_reviews_target_public_profile_id : (target_public_profile_id) BTREE
+  IX ix_service_reviews_reviewer_patient_profile_id : (reviewer_patient_profile_id) BTREE
+  IX ix_service_reviews_verified_encounter_id : (verified_encounter_id) BTREE
+  IX ix_service_reviews_reviewer_display_mode_concept_id : (reviewer_display_mode_concept_id) BTREE
+  IX ix_service_reviews_verification_status_concept_id : (verification_status_concept_id) BTREE
+  IX ix_service_reviews_moderation_status_concept_id : (moderation_status_concept_id) BTREE
+  IX ix_service_reviews_publication_status_concept_id : (publication_status_concept_id) BTREE
+  IX ix_service_reviews_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_service_reviews_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_service_reviews_search : to_tsvector('simple', concat_ws(' ', review_text)) GIN
+  UK uq_service_reviews_verified_encounter : (reviewer_patient_profile_id, target_public_profile_id, verified_encounter_id) UNIQUE BTREE WHERE verified_encounter_id IS NOT NULL
+}
+
+service_reviews .. idxset_service_reviews : indexed by
+
+entity "INDEXES · review_dimension_scores" as idxset_review_dimension_scores <<INDEX_SET>> {
+  PK pk_review_dimension_scores : (id) UNIQUE BTREE
+  IX ix_review_dimension_scores_review_id : (review_id) BTREE
+  IX ix_review_dimension_scores_dimension_concept_id : (dimension_concept_id) BTREE
+}
+
+review_dimension_scores .. idxset_review_dimension_scores : indexed by
+
+entity "INDEXES · review_responses" as idxset_review_responses <<INDEX_SET>> {
+  PK pk_review_responses : (id) UNIQUE BTREE
+  IX ix_review_responses_review_id : (review_id) BTREE
+  IX ix_review_responses_responder_public_profile_id : (responder_public_profile_id) BTREE
+  IX ix_review_responses_moderation_status_concept_id : (moderation_status_concept_id) BTREE
+  IX ix_review_responses_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_review_responses_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+review_responses .. idxset_review_responses : indexed by
+
+entity "INDEXES · content_reports" as idxset_content_reports <<INDEX_SET>> {
+  PK pk_content_reports : (id) UNIQUE BTREE
+  IX ix_content_reports_reporter_user_id : (reporter_user_id) BTREE
+  IX ix_content_reports_target_type_concept_id : (target_type_concept_id) BTREE
+  IX ix_content_reports_reason_concept_id : (reason_concept_id) BTREE
+  IX ix_content_reports_status_concept_id : (status_concept_id) BTREE
+  IX ix_content_reports_assigned_moderator_user_id : (assigned_moderator_user_id) BTREE
+}
+
+content_reports .. idxset_content_reports : indexed by
+
+entity "INDEXES · rating_aggregates" as idxset_rating_aggregates <<INDEX_SET>> {
+  UK uq_rating_aggregates_target : (target_public_profile_id) UNIQUE BTREE
+}
+
+rating_aggregates .. idxset_rating_aggregates : indexed by
+
+entity "INDEXES · comments" as idxset_comments <<INDEX_SET>> {
+  PK pk_comments : (id) UNIQUE BTREE
+  IX ix_comments_tenant_id : (tenant_id) BTREE
+  IX ix_comments_author_profile_id : (author_profile_id) BTREE
+  IX ix_comments_commentable_type_concept_id : (commentable_type_concept_id) BTREE
+  IX ix_comments_parent_comment_id : (parent_comment_id) BTREE
+  IX ix_comments_root_comment_id : (root_comment_id) BTREE
+  IX ix_comments_status_concept_id : (status_concept_id) BTREE
+  IX ix_comments_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_comments_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_comments_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  GIN gin_comments_search : to_tsvector('simple', concat_ws(' ', body_text)) GIN
+  IX ix_comments_thread : (commentable_type_concept_id, commentable_ref_id, root_comment_id, created_at) BTREE
+}
+
+comments .. idxset_comments : indexed by
+
+entity "INDEXES · reactions" as idxset_reactions <<INDEX_SET>> {
+  PK pk_reactions : (id) UNIQUE BTREE
+  IX ix_reactions_actor_profile_id : (actor_profile_id) BTREE
+  IX ix_reactions_reactable_type_concept_id : (reactable_type_concept_id) BTREE
+  IX ix_reactions_reaction_type_concept_id : (reaction_type_concept_id) BTREE
+  IX ix_reactions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_reactions_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_reactions_actor_target_type : (actor_profile_id, reactable_type_concept_id, reactable_ref_id, reaction_type_concept_id) UNIQUE BTREE
+}
+
+reactions .. idxset_reactions : indexed by
+
+entity "INDEXES · mentions" as idxset_mentions <<INDEX_SET>> {
+  PK pk_mentions : (id) UNIQUE BTREE
+  IX ix_mentions_source_type_concept_id : (source_type_concept_id) BTREE
+  IX ix_mentions_mentioned_profile_id : (mentioned_profile_id) BTREE
+  IX ix_mentions_status_concept_id : (status_concept_id) BTREE
+  IX ix_mentions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_mentions_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+mentions .. idxset_mentions : indexed by
+
+entity "INDEXES · hashtags" as idxset_hashtags <<INDEX_SET>> {
+  PK pk_hashtags : (id) UNIQUE BTREE
+  UK uq_hashtags_tag : (tag) UNIQUE BTREE
+  IX ix_hashtags_topic_id : (topic_id) BTREE
+  IX ix_hashtags_status_concept_id : (status_concept_id) BTREE
+  IX ix_hashtags_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_hashtags_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+hashtags .. idxset_hashtags : indexed by
+
+entity "INDEXES · topics" as idxset_topics <<INDEX_SET>> {
+  PK pk_topics : (id) UNIQUE BTREE
+  UK uq_topics_code : (code) UNIQUE BTREE
+  IX ix_topics_parent_topic_id : (parent_topic_id) BTREE
+  IX ix_topics_specialty_concept_id : (specialty_concept_id) BTREE
+  IX ix_topics_status_concept_id : (status_concept_id) BTREE
+  IX ix_topics_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_topics_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_topics_search : to_tsvector('simple', concat_ws(' ', name, code)) GIN
+}
+
+topics .. idxset_topics : indexed by
+
+entity "INDEXES · content_hashtags" as idxset_content_hashtags <<INDEX_SET>> {
+  PK pk_content_hashtags : (id) UNIQUE BTREE
+  IX ix_content_hashtags_hashtag_id : (hashtag_id) BTREE
+  IX ix_content_hashtags_content_type_concept_id : (content_type_concept_id) BTREE
+  IX ix_content_hashtags_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_content_hashtags_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+content_hashtags .. idxset_content_hashtags : indexed by
+
+entity "INDEXES · groups" as idxset_groups <<INDEX_SET>> {
+  PK pk_groups : (id) UNIQUE BTREE
+  UK uq_groups_slug : (slug) UNIQUE BTREE
+  IX ix_groups_tenant_id : (tenant_id) BTREE
+  IX ix_groups_visibility_concept_id : (visibility_concept_id) BTREE
+  IX ix_groups_group_type_concept_id : (group_type_concept_id) BTREE
+  IX ix_groups_topic_id : (topic_id) BTREE
+  IX ix_groups_owner_profile_id : (owner_profile_id) BTREE
+  IX ix_groups_cover_file_id : (cover_file_id) BTREE
+  IX ix_groups_status_concept_id : (status_concept_id) BTREE
+  IX ix_groups_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_groups_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_groups_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  GIN gin_groups_search : to_tsvector('simple', concat_ws(' ', name, description)) GIN
+}
+
+groups .. idxset_groups : indexed by
+
+entity "INDEXES · group_members" as idxset_group_members <<INDEX_SET>> {
+  PK pk_group_members : (id) UNIQUE BTREE
+  IX ix_group_members_group_id : (group_id) BTREE
+  IX ix_group_members_member_profile_id : (member_profile_id) BTREE
+  IX ix_group_members_member_role_concept_id : (member_role_concept_id) BTREE
+  IX ix_group_members_join_status_concept_id : (join_status_concept_id) BTREE
+  IX ix_group_members_invited_by_profile_id : (invited_by_profile_id) BTREE
+  IX ix_group_members_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_group_members_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+group_members .. idxset_group_members : indexed by
+
+entity "INDEXES · post_shares" as idxset_post_shares <<INDEX_SET>> {
+  PK pk_post_shares : (id) UNIQUE BTREE
+  IX ix_post_shares_post_id : (post_id) BTREE
+  IX ix_post_shares_sharer_profile_id : (sharer_profile_id) BTREE
+  IX ix_post_shares_share_type_concept_id : (share_type_concept_id) BTREE
+  IX ix_post_shares_target_group_id : (target_group_id) BTREE
+  IX ix_post_shares_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_post_shares_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+post_shares .. idxset_post_shares : indexed by
+
+entity "INDEXES · bookmarks" as idxset_bookmarks <<INDEX_SET>> {
+  PK pk_bookmarks : (id) UNIQUE BTREE
+  IX ix_bookmarks_profile_id : (profile_id) BTREE
+  IX ix_bookmarks_bookmarkable_type_concept_id : (bookmarkable_type_concept_id) BTREE
+  IX ix_bookmarks_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_bookmarks_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+bookmarks .. idxset_bookmarks : indexed by
+
+entity "INDEXES · feed_items" as idxset_feed_items <<INDEX_SET>> {
+  PK pk_feed_items : (id) UNIQUE BTREE
+  IX ix_feed_items_owner_profile_id : (owner_profile_id) BTREE
+  IX ix_feed_items_item_type_concept_id : (item_type_concept_id) BTREE
+  IX ix_feed_items_source_type_concept_id : (source_type_concept_id) BTREE
+  IX ix_feed_items_origin_concept_id : (origin_concept_id) BTREE
+  IX ix_feed_items_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_feed_items_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+feed_items .. idxset_feed_items : indexed by
+
+entity "INDEXES · polls" as idxset_polls <<INDEX_SET>> {
+  PK pk_polls : (id) UNIQUE BTREE
+  IX ix_polls_post_id : (post_id) BTREE
+  IX ix_polls_status_concept_id : (status_concept_id) BTREE
+  IX ix_polls_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_polls_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+polls .. idxset_polls : indexed by
+
+entity "INDEXES · poll_options" as idxset_poll_options <<INDEX_SET>> {
+  PK pk_poll_options : (id) UNIQUE BTREE
+  IX ix_poll_options_poll_id : (poll_id) BTREE
+  IX ix_poll_options_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_poll_options_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+poll_options .. idxset_poll_options : indexed by
+
+entity "INDEXES · poll_votes" as idxset_poll_votes <<INDEX_SET>> {
+  PK pk_poll_votes : (id) UNIQUE BTREE
+  IX ix_poll_votes_poll_id : (poll_id) BTREE
+  IX ix_poll_votes_poll_option_id : (poll_option_id) BTREE
+  IX ix_poll_votes_voter_profile_id : (voter_profile_id) BTREE
+  IX ix_poll_votes_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_poll_votes_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+poll_votes .. idxset_poll_votes : indexed by
+
+entity "INDEXES · conversations" as idxset_conversations <<INDEX_SET>> {
+  PK pk_conversations : (id) UNIQUE BTREE
+  IX ix_conversations_tenant_id : (tenant_id) BTREE
+  IX ix_conversations_conversation_type_concept_id : (conversation_type_concept_id) BTREE
+  IX ix_conversations_group_id : (group_id) BTREE
+  IX ix_conversations_status_concept_id : (status_concept_id) BTREE
+  IX ix_conversations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_conversations_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_conversations_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+conversations .. idxset_conversations : indexed by
+
+entity "INDEXES · conversation_participants" as idxset_conversation_participants <<INDEX_SET>> {
+  PK pk_conversation_participants : (id) UNIQUE BTREE
+  IX ix_conversation_participants_conversation_id : (conversation_id) BTREE
+  IX ix_conversation_participants_participant_profile_id : (participant_profile_id) BTREE
+  IX ix_conversation_participants_role_concept_id : (role_concept_id) BTREE
+  IX ix_conversation_participants_last_read_message_id : (last_read_message_id) BTREE
+  IX ix_conversation_participants_status_concept_id : (status_concept_id) BTREE
+  IX ix_conversation_participants_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_conversation_participants_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+conversation_participants .. idxset_conversation_participants : indexed by
+
+entity "INDEXES · direct_messages" as idxset_direct_messages <<INDEX_SET>> {
+  PK pk_direct_messages : (id) UNIQUE BTREE
+  IX ix_direct_messages_conversation_id : (conversation_id) BTREE
+  IX ix_direct_messages_sender_profile_id : (sender_profile_id) BTREE
+  IX ix_direct_messages_reply_to_message_id : (reply_to_message_id) BTREE
+  IX ix_direct_messages_content_type_concept_id : (content_type_concept_id) BTREE
+  IX ix_direct_messages_attachment_file_id : (attachment_file_id) BTREE
+  IX ix_direct_messages_status_concept_id : (status_concept_id) BTREE
+  IX ix_direct_messages_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_direct_messages_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_direct_messages_search : to_tsvector('simple', concat_ws(' ', body_text)) GIN
+}
+
+direct_messages .. idxset_direct_messages : indexed by
+
+entity "INDEXES · message_receipts" as idxset_message_receipts <<INDEX_SET>> {
+  PK pk_message_receipts : (id) UNIQUE BTREE
+  IX ix_message_receipts_direct_message_id : (direct_message_id) BTREE
+  IX ix_message_receipts_recipient_profile_id : (recipient_profile_id) BTREE
+  IX ix_message_receipts_receipt_type_concept_id : (receipt_type_concept_id) BTREE
+  IX ix_message_receipts_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_message_receipts_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+message_receipts .. idxset_message_receipts : indexed by
+
+entity "INDEXES · social_notifications" as idxset_social_notifications <<INDEX_SET>> {
+  PK pk_social_notifications : (id) UNIQUE BTREE
+  IX ix_social_notifications_recipient_profile_id : (recipient_profile_id) BTREE
+  IX ix_social_notifications_notification_type_concept_id : (notification_type_concept_id) BTREE
+  IX ix_social_notifications_actor_profile_id : (actor_profile_id) BTREE
+  IX ix_social_notifications_source_type_concept_id : (source_type_concept_id) BTREE
+  IX ix_social_notifications_notification_request_id : (notification_request_id) BTREE
+  IX ix_social_notifications_status_concept_id : (status_concept_id) BTREE
+  IX ix_social_notifications_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_social_notifications_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+social_notifications .. idxset_social_notifications : indexed by
+
+entity "INDEXES · verified_badges" as idxset_verified_badges <<INDEX_SET>> {
+  PK pk_verified_badges : (id) UNIQUE BTREE
+  IX ix_verified_badges_subject_type_concept_id : (subject_type_concept_id) BTREE
+  IX ix_verified_badges_badge_type_concept_id : (badge_type_concept_id) BTREE
+  IX ix_verified_badges_verification_method_concept_id : (verification_method_concept_id) BTREE
+  IX ix_verified_badges_verified_by_user_id : (verified_by_user_id) BTREE
+  IX ix_verified_badges_status_concept_id : (status_concept_id) BTREE
+  IX ix_verified_badges_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_verified_badges_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+verified_badges .. idxset_verified_badges : indexed by
+
+entity "INDEXES · user_blocks" as idxset_user_blocks <<INDEX_SET>> {
+  PK pk_user_blocks : (id) UNIQUE BTREE
+  IX ix_user_blocks_blocker_profile_id : (blocker_profile_id) BTREE
+  IX ix_user_blocks_blocked_profile_id : (blocked_profile_id) BTREE
+  IX ix_user_blocks_reason_concept_id : (reason_concept_id) BTREE
+  IX ix_user_blocks_status_concept_id : (status_concept_id) BTREE
+  IX ix_user_blocks_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_user_blocks_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+user_blocks .. idxset_user_blocks : indexed by
+
+entity "INDEXES · moderation_queue" as idxset_moderation_queue <<INDEX_SET>> {
+  PK pk_moderation_queue : (id) UNIQUE BTREE
+  IX ix_moderation_queue_tenant_id : (tenant_id) BTREE
+  IX ix_moderation_queue_content_type_concept_id : (content_type_concept_id) BTREE
+  IX ix_moderation_queue_source_concept_id : (source_concept_id) BTREE
+  IX ix_moderation_queue_content_report_id : (content_report_id) BTREE
+  IX ix_moderation_queue_priority_concept_id : (priority_concept_id) BTREE
+  IX ix_moderation_queue_assigned_to_user_id : (assigned_to_user_id) BTREE
+  IX ix_moderation_queue_status_concept_id : (status_concept_id) BTREE
+  IX ix_moderation_queue_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_moderation_queue_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_moderation_queue_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+moderation_queue .. idxset_moderation_queue : indexed by
+
+entity "INDEXES · moderation_decisions" as idxset_moderation_decisions <<INDEX_SET>> {
+  PK pk_moderation_decisions : (id) UNIQUE BTREE
+  IX ix_moderation_decisions_moderation_queue_id : (moderation_queue_id) BTREE
+  IX ix_moderation_decisions_decision_concept_id : (decision_concept_id) BTREE
+  IX ix_moderation_decisions_policy_concept_id : (policy_concept_id) BTREE
+  IX ix_moderation_decisions_action_taken_concept_id : (action_taken_concept_id) BTREE
+  IX ix_moderation_decisions_decided_by_user_id : (decided_by_user_id) BTREE
+  IX ix_moderation_decisions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_moderation_decisions_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+moderation_decisions .. idxset_moderation_decisions : indexed by
+
+entity "INDEXES · moderation_strikes" as idxset_moderation_strikes <<INDEX_SET>> {
+  PK pk_moderation_strikes : (id) UNIQUE BTREE
+  IX ix_moderation_strikes_subject_profile_id : (subject_profile_id) BTREE
+  IX ix_moderation_strikes_moderation_decision_id : (moderation_decision_id) BTREE
+  IX ix_moderation_strikes_severity_concept_id : (severity_concept_id) BTREE
+  IX ix_moderation_strikes_status_concept_id : (status_concept_id) BTREE
+  IX ix_moderation_strikes_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_moderation_strikes_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+moderation_strikes .. idxset_moderation_strikes : indexed by
+
+entity "INDEXES · moderation_appeals" as idxset_moderation_appeals <<INDEX_SET>> {
+  PK pk_moderation_appeals : (id) UNIQUE BTREE
+  IX ix_moderation_appeals_moderation_decision_id : (moderation_decision_id) BTREE
+  IX ix_moderation_appeals_appellant_profile_id : (appellant_profile_id) BTREE
+  IX ix_moderation_appeals_status_concept_id : (status_concept_id) BTREE
+  IX ix_moderation_appeals_reviewed_by_user_id : (reviewed_by_user_id) BTREE
+  IX ix_moderation_appeals_resolution_concept_id : (resolution_concept_id) BTREE
+  IX ix_moderation_appeals_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_moderation_appeals_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+moderation_appeals .. idxset_moderation_appeals : indexed by
+
+entity "INDEXES · social_follows" as idxset_social_follows <<INDEX_SET>> {
+  PK pk_social_follows : (id) UNIQUE BTREE
+  IX ix_social_follows_follower_profile_id : (follower_profile_id) BTREE
+  IX ix_social_follows_followable_type_concept_id : (followable_type_concept_id) BTREE
+  IX ix_social_follows_status_concept_id : (status_concept_id) BTREE
+  IX ix_social_follows_notification_level_concept_id : (notification_level_concept_id) BTREE
+  IX ix_social_follows_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_social_follows_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_social_follows_actor_target : (follower_profile_id, followable_type_concept_id, followable_ref_id) UNIQUE BTREE
+}
+
+social_follows .. idxset_social_follows : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+
+' ===== v4.0.2 (agenda profesional / prestigio / bloqueos / buzon) =====
+
+entity prestige_scores {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * subject_type_concept_id : uuid <<FK>>
+  * subject_ref_id : uuid
+    public_profile_id : uuid <<FK>>
+  * total_points : numeric
+    level_concept_id : uuid <<FK>>
+    rank_position : integer
+    last_award_id : uuid <<FK>>
+    calculated_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity prestige_awards <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * subject_type_concept_id : uuid <<FK>>
+  * subject_ref_id : uuid
+    public_profile_id : uuid <<FK>>
+  * direction_concept_id : uuid <<FK>>
+  * points : numeric
+  * reason_concept_id : uuid <<FK>>
+    note : varchar
+  * awarded_by_user_id : uuid <<FK>>
+    source_type : varchar
+    source_ref_id : uuid
+    balance_after : numeric
+  * idempotency_key : varchar <<UK>>
+    occurred_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+entity feedback_tickets {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * ticket_number : varchar <<UK>>
+  * reporter_user_id : uuid <<FK>>
+    reporter_type_concept_id : uuid <<FK>>
+  * category_concept_id : uuid <<FK>>
+  * subject : varchar
+    description : text
+    severity_concept_id : uuid <<FK>>
+    channel_concept_id : uuid <<FK>>
+    related_ref_type : varchar
+    related_ref_id : uuid
+    assigned_to_user_id : uuid <<FK>>
+    resolution : text
+    opened_at : timestamptz
+    resolved_at : timestamptz
+    closed_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity feedback_ticket_comments {
+  * id : uuid <<PK>>
+  --
+  * feedback_ticket_id : uuid <<FK>>
+  * author_user_id : uuid <<FK>>
+  * body : text
+    is_internal : boolean
+    visibility_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity feedback_ticket_events <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * feedback_ticket_id : uuid <<FK>>
+  * revision_no : integer
+    from_status_concept_id : uuid <<FK>>
+  * to_status_concept_id : uuid <<FK>>
+  * event_type_concept_id : uuid <<FK>>
+    note : varchar
+    changed_by_user_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+' ===== v4.0.2 (agenda profesional / prestigio / bloqueos / buzon) ===== (index sets)
+
+entity "INDEXES · prestige_scores" as idxset_prestige_scores <<INDEX_SET>> {
+  PK pk_prestige_scores : (id) UNIQUE BTREE
+  UK uk_prestige_scores_subject : (tenant_id, subject_type_concept_id, subject_ref_id) UNIQUE BTREE
+  IX ix_prestige_scores_public_profile_id : (public_profile_id) BTREE
+  IX ix_prestige_scores_level_concept_id : (level_concept_id) BTREE
+  IX ix_prestige_scores_total_points : (tenant_id, total_points) BTREE
+}
+prestige_scores .. idxset_prestige_scores : indexed by
+
+entity "INDEXES · prestige_awards" as idxset_prestige_awards <<INDEX_SET>> {
+  PK pk_prestige_awards : (id) UNIQUE BTREE
+  UK uk_prestige_awards_idempotency_key : (idempotency_key) UNIQUE BTREE
+  IX ix_prestige_awards_subject : (tenant_id, subject_type_concept_id, subject_ref_id) BTREE
+  IX ix_prestige_awards_public_profile_id : (public_profile_id) BTREE
+  IX ix_prestige_awards_awarded_by_user_id : (awarded_by_user_id) BTREE
+  IX ix_prestige_awards_reason_concept_id : (reason_concept_id) BTREE
+  IX ix_prestige_awards_recorded_at : (recorded_at) BTREE
+}
+prestige_awards .. idxset_prestige_awards : indexed by
+
+entity "INDEXES · feedback_tickets" as idxset_feedback_tickets <<INDEX_SET>> {
+  PK pk_feedback_tickets : (id) UNIQUE BTREE
+  UK uk_feedback_tickets_ticket_number : (tenant_id, ticket_number) UNIQUE BTREE
+  IX ix_feedback_tickets_reporter_user_id : (reporter_user_id) BTREE
+  IX ix_feedback_tickets_category_concept_id : (category_concept_id) BTREE
+  IX ix_feedback_tickets_status_concept_id : (tenant_id, status_concept_id) BTREE
+  IX ix_feedback_tickets_severity_concept_id : (severity_concept_id) BTREE
+  IX ix_feedback_tickets_assigned_to_user_id : (assigned_to_user_id) BTREE
+  IX ix_feedback_tickets_opened_at : (opened_at) BTREE
+}
+feedback_tickets .. idxset_feedback_tickets : indexed by
+
+entity "INDEXES · feedback_ticket_comments" as idxset_feedback_ticket_comments <<INDEX_SET>> {
+  PK pk_feedback_ticket_comments : (id) UNIQUE BTREE
+  IX ix_feedback_ticket_comments_feedback_ticket_id : (feedback_ticket_id) BTREE
+  IX ix_feedback_ticket_comments_author_user_id : (author_user_id) BTREE
+  IX ix_feedback_ticket_comments_created_at : (created_at) BTREE
+}
+feedback_ticket_comments .. idxset_feedback_ticket_comments : indexed by
+
+entity "INDEXES · feedback_ticket_events" as idxset_feedback_ticket_events <<INDEX_SET>> {
+  PK pk_feedback_ticket_events : (history_id) UNIQUE BTREE
+  IX ix_feedback_ticket_events_feedback_ticket_id : (feedback_ticket_id) BTREE
+  UK uk_feedback_ticket_events_revision : (feedback_ticket_id, revision_no) UNIQUE BTREE
+  IX ix_feedback_ticket_events_to_status_concept_id : (to_status_concept_id) BTREE
+  IX ix_feedback_ticket_events_recorded_at : (recorded_at) BTREE
+}
+feedback_ticket_events .. idxset_feedback_ticket_events : indexed by
+
+' ===== v4.0.2 (agenda profesional / prestigio / bloqueos / buzon) ===== (relaciones)
+
+feedback_ticket_comments ||--o{ feedback_tickets
+
+feedback_ticket_events ||--o{ feedback_tickets
+
+prestige_awards ||--o{ prestige_scores
+
+public_profiles ||--o{ prestige_awards
+
+public_profiles ||--o{ prestige_scores
+
+@enduml
+

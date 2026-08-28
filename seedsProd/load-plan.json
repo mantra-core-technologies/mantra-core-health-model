@@ -1,0 +1,22 @@
+{
+  "mode": "deployment_job",
+  "api_startup_load": false,
+  "batch_size": 5000,
+  "transaction_scope": "one_json_shard",
+  "retry_policy": {
+    "max_attempts": 3,
+    "only_transient_errors": true
+  },
+  "idempotency": {
+    "key": "shard_sha256",
+    "row_identity": "deterministic_uuid5"
+  },
+  "post_load": [
+    "verify_declared_counts",
+    "verify_foreign_keys",
+    "ANALYZE terminology.catalog_concepts",
+    "ANALYZE terminology.concept_designations",
+    "ANALYZE terminology.concept_relationships",
+    "ANALYZE terminology.concept_maps"
+  ]
+}

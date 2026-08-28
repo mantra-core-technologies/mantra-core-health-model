@@ -1,0 +1,299 @@
+@startuml SALUD_Module_02_common
+title Module 02 — Shared Identifiers, Contacts, Addresses and Files\n(schema: common)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_02_common.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_02_common
+  BUSINESS PURPOSE
+  Reusable official identifiers, contact channels, international addresses
+  and a storage-provider-neutral file catalog. Medical files are logical
+  records with immutable content versions and explicit links to patients,
+  reports, notes, studies, posts or financial records.
+end note
+
+entity identifiers {
+  * id : uuid <<PK>>
+  --
+  * owner_type_concept_id : uuid <<FK>>
+  * owner_id : uuid
+    use_concept_id : uuid <<FK>>
+  * type_concept_id : uuid <<FK>>
+    system : text
+  * value : varchar
+    issuer_country_concept_id : uuid <<FK>>
+  ' + v4.1.4 — departamento de expedición del documento (la «extensión» del carnet
+  ' boliviano: SC, LP, CB…). Dato INFORMATIVO del registro: no participa del login
+  ' ni de la unicidad del documento, por eso es nullable y no entra en ninguna UK.
+  ' Value set: vs_administrative_area (los 9 departamentos), el mismo catálogo que
+  ' addresses.administrative_area_concept_id referencia por convención.
+  ' Se llamó `issuing_` hasta el 21/08: dos carriles declararon esta misma columna
+  ' con nombres distintos —el otro, ya en `dev`, la escribió `issuer_`— y se
+  ' unificó en el nombre que el código ya usaba, para no arrastrar el conflicto.
+    issuer_administrative_area_concept_id : uuid <<FK>>
+    assigner_tenant_id : uuid <<FK>>
+    valid_from : date
+    valid_to : date
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity contact_points {
+  * id : uuid <<PK>>
+  --
+  * owner_type_concept_id : uuid <<FK>>
+  * owner_id : uuid
+  * system_concept_id : uuid <<FK>>
+  * value : varchar
+    use_concept_id : uuid <<FK>>
+    rank : integer
+    verified : boolean
+    valid_from : date
+    valid_to : date
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity addresses {
+  * id : uuid <<PK>>
+  --
+  * owner_type_concept_id : uuid <<FK>>
+  * owner_id : uuid
+    use_concept_id : uuid <<FK>>
+    type_concept_id : uuid <<FK>>
+    lines : varchar
+    city : varchar
+    administrative_area_concept_id : uuid <<FK>>
+  ' + v4.1.5 — municipio. `administrative_area_concept_id` sigue siendo el
+  ' departamento; éste es el nivel de detalle que `city` (texto libre) no puede
+  ' garantizar consistente. Value set: vs_bo_municipality (340 municipios).
+    municipality_concept_id : uuid <<FK>>
+    postal_code : varchar
+  * country_concept_id : uuid <<FK>>
+    latitude : numeric
+    longitude : numeric
+    valid_from : date
+    valid_to : date
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity files {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * category_concept_id : uuid <<FK>>
+    original_name : varchar
+  * sensitivity_concept_id : uuid <<FK>>
+  * lifecycle_status_concept_id : uuid <<FK>>
+    current_version_id : uuid <<FK>>
+    retention_class_concept_id : uuid <<FK>>
+    legal_hold_until : timestamptz
+    deleted_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity file_versions <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * file_id : uuid <<FK>>
+  * version_number : integer
+  * storage_provider_concept_id : uuid <<FK>>
+  * storage_region_concept_id : uuid <<FK>>
+    bucket_or_container : varchar
+    object_key : text
+    object_version : varchar
+  * storage_uri : text
+    external_source_uri : text
+  * mime_type : varchar
+  * size_bytes : bigint
+  * checksum_algorithm_concept_id : uuid <<FK>>
+  * content_hash : varchar
+  * encryption_status_concept_id : uuid <<FK>>
+    encryption_key_reference : varchar
+  * malware_scan_status_concept_id : uuid <<FK>>
+    integrity_status_concept_id : uuid <<FK>>
+    uploaded_at : timestamptz
+    verified_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity file_links {
+  * id : uuid <<PK>>
+  --
+  * file_id : uuid <<FK>>
+  * owner_type_concept_id : uuid <<FK>>
+  * owner_id : uuid
+  * link_role_concept_id : uuid <<FK>>
+    visibility_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity file_derivatives {
+  * id : uuid <<PK>>
+  --
+  * source_file_version_id : uuid <<FK>>
+  * derivative_file_version_id : uuid <<FK>>
+  * derivative_type_concept_id : uuid <<FK>>
+    generation_profile : varchar
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+
+files ||--o{ file_versions
+files ||--o{ file_links
+file_versions ||--o{ file_derivatives : source
+file_versions ||--o{ file_derivatives : derivative
+
+note as FILE_SECURITY_diagram_02_common
+  FILE SECURITY RULES
+  - storage_uri is a stable internal URI (object://, dicomweb://, xds://),
+    not a public or expiring signed URL.
+  - Signed download URLs are generated after authorization, consent and
+    purpose-of-use checks; never persist them in business tables.
+  - file_versions are immutable and checksum-verified. Replacements create
+    a new version; deletion follows retention, legal hold and audit policy.
+end note
+
+note as REC_POLY_COMMON_diagram_02_common
+  POLYMORPHIC OWNERSHIP
+  identifiers/contact_points/addresses and file_links use
+  (owner_type_concept_id, owner_id). Enforce a closed owner-type value set,
+  entity_registry validation trigger and scheduled orphan detection.
+end note
+
+note as REC_GEO_COMMON_diagram_02_common
+  GEODATA TYPES
+  Use PostGIS geography(Point,4326) in the physical model for proximity and
+  containment. Keep numeric latitude/longitude only as display copies.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · identifiers" as idxset_identifiers <<INDEX_SET>> {
+  PK pk_identifiers : (id) UNIQUE BTREE
+  IX ix_identifiers_owner_type_concept_id : (owner_type_concept_id) BTREE
+  IX ix_identifiers_use_concept_id : (use_concept_id) BTREE
+  IX ix_identifiers_type_concept_id : (type_concept_id) BTREE
+  IX ix_identifiers_issuer_country_concept_id : (issuer_country_concept_id) BTREE
+  IX ix_identifiers_issuer_administrative_area_concept_id : (issuer_administrative_area_concept_id) BTREE
+  IX ix_identifiers_assigner_tenant_id : (assigner_tenant_id) BTREE
+  IX ix_identifiers_state_concept_id : (state_concept_id) BTREE
+  IX ix_identifiers_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_identifiers_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+identifiers .. idxset_identifiers : indexed by
+
+entity "INDEXES · contact_points" as idxset_contact_points <<INDEX_SET>> {
+  PK pk_contact_points : (id) UNIQUE BTREE
+  IX ix_contact_points_owner_type_concept_id : (owner_type_concept_id) BTREE
+  IX ix_contact_points_system_concept_id : (system_concept_id) BTREE
+  IX ix_contact_points_use_concept_id : (use_concept_id) BTREE
+  IX ix_contact_points_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_contact_points_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+contact_points .. idxset_contact_points : indexed by
+
+entity "INDEXES · addresses" as idxset_addresses <<INDEX_SET>> {
+  PK pk_addresses : (id) UNIQUE BTREE
+  IX ix_addresses_owner_type_concept_id : (owner_type_concept_id) BTREE
+  IX ix_addresses_use_concept_id : (use_concept_id) BTREE
+  IX ix_addresses_type_concept_id : (type_concept_id) BTREE
+  IX ix_addresses_administrative_area_concept_id : (administrative_area_concept_id) BTREE
+  IX ix_addresses_municipality_concept_id : (municipality_concept_id) BTREE
+  IX ix_addresses_country_concept_id : (country_concept_id) BTREE
+  IX ix_addresses_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_addresses_updated_by_user_id : (updated_by_user_id) BTREE
+  GIST gist_addresses_location : geography_point GIST
+}
+
+addresses .. idxset_addresses : indexed by
+
+entity "INDEXES · files" as idxset_files <<INDEX_SET>> {
+  PK pk_files : (id) UNIQUE BTREE
+  IX ix_files_tenant_id : (tenant_id) BTREE
+  IX ix_files_category_concept_id : (category_concept_id) BTREE
+  IX ix_files_sensitivity_concept_id : (sensitivity_concept_id) BTREE
+  IX ix_files_lifecycle_status_concept_id : (lifecycle_status_concept_id) BTREE
+  IX ix_files_current_version_id : (current_version_id) BTREE
+  IX ix_files_retention_class_concept_id : (retention_class_concept_id) BTREE
+  IX ix_files_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_files_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_files_tenant_id_lifecycle_status_concept_id : (tenant_id, lifecycle_status_concept_id, updated_at DESC) BTREE
+}
+
+files .. idxset_files : indexed by
+
+entity "INDEXES · file_versions" as idxset_file_versions <<INDEX_SET>> {
+  PK pk_file_versions : (id) UNIQUE BTREE
+  IX ix_file_versions_file_id : (file_id) BTREE
+  IX ix_file_versions_storage_provider_concept_id : (storage_provider_concept_id) BTREE
+  IX ix_file_versions_storage_region_concept_id : (storage_region_concept_id) BTREE
+  IX ix_file_versions_checksum_algorithm_concept_id : (checksum_algorithm_concept_id) BTREE
+  IX ix_file_versions_encryption_status_concept_id : (encryption_status_concept_id) BTREE
+  IX ix_file_versions_malware_scan_status_concept_id : (malware_scan_status_concept_id) BTREE
+  IX ix_file_versions_integrity_status_concept_id : (integrity_status_concept_id) BTREE
+  IX ix_file_versions_recorded_by_user_id : (recorded_by_user_id) BTREE
+  UK uq_file_versions_file_id_version_number : (file_id, version_number) UNIQUE BTREE
+  BRIN brin_file_versions_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+file_versions .. idxset_file_versions : indexed by
+
+entity "INDEXES · file_links" as idxset_file_links <<INDEX_SET>> {
+  PK pk_file_links : (id) UNIQUE BTREE
+  IX ix_file_links_file_id : (file_id) BTREE
+  IX ix_file_links_owner_type_concept_id : (owner_type_concept_id) BTREE
+  IX ix_file_links_link_role_concept_id : (link_role_concept_id) BTREE
+  IX ix_file_links_visibility_concept_id : (visibility_concept_id) BTREE
+  IX ix_file_links_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_file_links_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+file_links .. idxset_file_links : indexed by
+
+entity "INDEXES · file_derivatives" as idxset_file_derivatives <<INDEX_SET>> {
+  PK pk_file_derivatives : (id) UNIQUE BTREE
+  IX ix_file_derivatives_source_file_version_id : (source_file_version_id) BTREE
+  IX ix_file_derivatives_derivative_file_version_id : (derivative_file_version_id) BTREE
+  IX ix_file_derivatives_derivative_type_concept_id : (derivative_type_concept_id) BTREE
+  IX ix_file_derivatives_created_by_user_id : (created_by_user_id) BTREE
+}
+
+file_derivatives .. idxset_file_derivatives : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

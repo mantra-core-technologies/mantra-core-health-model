@@ -1,0 +1,1986 @@
+@startuml SALUD_Module_38_erp
+title Module 38 — Internal ERP, Contracts, HR and Organization\n(schema: erp)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_38_erp.puml
+' ------------------------------------------------------------------------------
+
+entity "accounting.accounts" as accounting_accounts <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "accounting.cost_centers" as accounting_cost_centers <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "accounting.profit_centers" as accounting_profit_centers <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "accounting.assets" as accounting_assets <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "accounting.liabilities" as accounting_liabilities <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "accounting.journal_transactions" as accounting_journal_transactions <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "billing.bills" as billing_bills <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "billing.bill_lines" as billing_bill_lines <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "billing.invoices" as billing_invoices <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "payments.payment_transactions" as payments_payment_transactions <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "crm.opportunities" as crm_opportunities <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "workflow.workflow_instances" as workflow_instances <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "pharmacy_inventory.inventory_ledger_entries" as pharmacy_inventory_ledger_entries <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+
+entity employees {
+  * id : uuid <<PK>>
+  --
+  * practice_id : uuid <<FK>>
+    person_user_id : uuid <<FK>>
+  * full_name : varchar
+    role_concept_id : uuid <<FK>>
+    hire_date : date
+    base_salary : numeric
+    currency_concept_id : uuid <<FK>>
+    payment_method_concept_id : uuid <<FK>>
+    business_partner_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+note as BIZ_diagram_38_erp
+  BUSINESS PURPOSE
+  Tenant-level enterprise resource management that complements the per-practice
+  accounting subledgers (module 16/16B). Adds the organizational backbone: a general
+  contract registry (employment, service, vendor, lease, partnership) with parties,
+  lines, milestones and documents; and human-resources structure — departments,
+  positions, employment records, assignments, time-off and performance — hung off the
+  existing payroll employee master in accounting. Assets, payroll runs and vendors
+  already modelled in accounting/billing are referenced, not duplicated.
+end note
+
+entity vendors <<external>> {
+  .. defined in module 17 billing ..
+  * id : uuid <<PK>>
+}
+
+entity departments {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+    parent_department_id : uuid <<FK>>
+    manager_employee_id : uuid <<FK>>
+    cost_center_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity positions {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * code : varchar
+  * title : varchar
+    department_id : uuid <<FK>>
+    job_family_concept_id : uuid <<FK>>
+    grade_concept_id : uuid <<FK>>
+    is_managerial : boolean
+    headcount_budget : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity employment_records {
+  * id : uuid <<PK>>
+  --
+  * employee_id : uuid <<FK>>
+  * tenant_id : uuid <<FK>>
+    position_id : uuid <<FK>>
+    department_id : uuid <<FK>>
+  * employment_type_concept_id : uuid <<FK>>
+    manager_employee_id : uuid <<FK>>
+  * start_date : date
+    end_date : date
+    fte_ratio : numeric
+    base_salary : numeric
+    currency_concept_id : uuid <<FK>>
+    contract_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity employee_assignments {
+  * id : uuid <<PK>>
+  --
+  * employment_record_id : uuid <<FK>>
+  * assignment_type_concept_id : uuid <<FK>>
+    practice_id : uuid <<FK>>
+    branch_id : uuid <<FK>>
+    department_id : uuid <<FK>>
+    allocation_percent : numeric
+    valid_from : date
+    valid_to : date
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity time_off_requests {
+  * id : uuid <<PK>>
+  --
+  * employee_id : uuid <<FK>>
+  * leave_type_concept_id : uuid <<FK>>
+  * start_date : date
+  * end_date : date
+    hours : numeric
+    reason : varchar
+    approver_user_id : uuid <<FK>>
+    approved_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity performance_reviews {
+  * id : uuid <<PK>>
+  --
+  * employee_id : uuid <<FK>>
+    reviewer_employee_id : uuid <<FK>>
+  * period_start : date
+  * period_end : date
+    rating_concept_id : uuid <<FK>>
+    score : numeric
+    summary_text : text
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity contracts {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * contract_number : varchar <<UK>>
+  * contract_type_concept_id : uuid <<FK>>
+  * title : varchar
+    description : text
+  * counterparty_type_concept_id : uuid <<FK>>
+    counterparty_ref_type : varchar
+    counterparty_ref_id : uuid
+    counterparty_name : varchar
+  * start_date : date
+    end_date : date
+    renewal_type_concept_id : uuid <<FK>>
+    notice_period_days : integer
+    total_value : numeric
+    currency_concept_id : uuid <<FK>>
+    governing_jurisdiction_concept_id : uuid <<FK>>
+    owner_user_id : uuid <<FK>>
+    primary_business_partner_id : uuid <<FK>>
+    current_version_id : uuid <<FK>>
+    parent_contract_id : uuid <<FK>>
+    master_agreement_id : uuid <<FK>>
+    owning_department_id : uuid <<FK>>
+    owning_cost_center_id : uuid <<FK>>
+    owning_profit_center_id : uuid <<FK>>
+    approval_status_concept_id : uuid <<FK>>
+    signature_status_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity contract_parties {
+  * id : uuid <<PK>>
+  --
+  * contract_id : uuid <<FK>>
+  * party_role_concept_id : uuid <<FK>>
+  * party_type_concept_id : uuid <<FK>>
+    party_ref_type : varchar
+    party_ref_id : uuid
+    party_name : varchar
+    signatory_user_id : uuid <<FK>>
+    signed_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity contract_line_items {
+  * id : uuid <<PK>>
+  --
+  * contract_id : uuid <<FK>>
+  * description : varchar
+    service_concept_id : uuid <<FK>>
+    quantity : numeric
+    unit_price : numeric
+    currency_concept_id : uuid <<FK>>
+    recurrence_concept_id : uuid <<FK>>
+    account_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity contract_milestones {
+  * id : uuid <<PK>>
+  --
+  * contract_id : uuid <<FK>>
+  * name : varchar
+    due_date : date
+    amount : numeric
+    currency_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    completed_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity contract_documents {
+  * id : uuid <<PK>>
+  --
+  * contract_id : uuid <<FK>>
+  * document_type_concept_id : uuid <<FK>>
+  * file_id : uuid <<FK>>
+    version : integer
+    is_signed : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+departments |o--o{ departments : parent
+departments ||--o{ positions
+employees ||--o{ employment_records
+positions |o--o{ employment_records
+departments |o--o{ employment_records
+employment_records ||--o{ employee_assignments
+employees ||--o{ time_off_requests
+employees ||--o{ performance_reviews
+contracts ||--o{ contract_parties
+contracts ||--o{ contract_line_items
+contracts ||--o{ contract_milestones
+contracts ||--o{ contract_documents
+contracts |o--o{ employment_records
+
+note as DEP_diagram_38_erp
+  Connects to other modules via:
+  directory.tenants, directory.branches, iam.users, practice.practices,
+  accounting.employees, accounting.cost_centers, accounting.accounts,
+  billing.vendors, common.files, terminology.catalog_concepts.
+end note
+
+note as REC_POLY_ERP_diagram_38_erp
+  REC 3.1 — POLYMORPHIC COUNTERPARTIES (no DB-level FK)
+  contracts.(counterparty_ref_type,counterparty_ref_id) and
+  contract_parties.(party_ref_type,party_ref_id) reference patients, tenants,
+  vendors, employees or partners; constrain *_type to a closed value_set and
+  validate via trigger. Payroll amounts remain authoritative in accounting.
+end note
+
+
+entity business_partners {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * partner_number : varchar
+  * partner_category_concept_id : uuid <<FK>>
+  * display_name : varchar
+  legal_name : varchar
+  tax_id : varchar
+  country_concept_id : uuid <<FK>>
+  linked_tenant_id : uuid <<FK>>
+  linked_person_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity business_partner_roles {
+  * id : uuid <<PK>>
+  --
+  * business_partner_id : uuid <<FK>>
+  * role_concept_id : uuid <<FK>>
+  company_code_tenant_id : uuid <<FK>>
+  valid_from : date
+  valid_to : date
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity business_partner_relationships {
+  * id : uuid <<PK>>
+  --
+  * source_business_partner_id : uuid <<FK>>
+  * target_business_partner_id : uuid <<FK>>
+  * relationship_type_concept_id : uuid <<FK>>
+  valid_from : date
+  valid_to : date
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity business_partner_tax_registrations {
+  * id : uuid <<PK>>
+  --
+  * business_partner_id : uuid <<FK>>
+  * tax_type_concept_id : uuid <<FK>>
+  * tax_number : varchar
+  country_concept_id : uuid <<FK>>
+  valid_from : date
+  valid_to : date
+  is_primary : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity business_partner_bank_accounts {
+  * id : uuid <<PK>>
+  --
+  * business_partner_id : uuid <<FK>>
+  * bank_name : varchar
+  ' + v4.0.4
+    account_holder_name : varchar
+    account_holder_tax_id : varchar
+  bank_identifier_code : varchar
+  iban_masked : varchar
+  account_number_hash : varchar
+  currency_concept_id : uuid <<FK>>
+  is_primary : boolean
+  verification_status_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity projects {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * project_number : varchar
+  * name : varchar
+  project_type_concept_id : uuid <<FK>>
+  responsible_employee_id : uuid <<FK>>
+  department_id : uuid <<FK>>
+  cost_center_id : uuid <<FK>>
+  profit_center_id : uuid <<FK>>
+  start_date : date
+  end_date : date
+  budget_amount : numeric
+  currency_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity wbs_elements {
+  * id : uuid <<PK>>
+  --
+  * project_id : uuid <<FK>>
+  parent_wbs_element_id : uuid <<FK>>
+  * wbs_code : varchar
+  * name : varchar
+  cost_center_id : uuid <<FK>>
+  profit_center_id : uuid <<FK>>
+  responsible_employee_id : uuid <<FK>>
+  start_date : date
+  end_date : date
+  budget_amount : numeric
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity purchase_requisitions {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * requisition_number : varchar
+  requester_employee_id : uuid <<FK>>
+  requesting_department_id : uuid <<FK>>
+  project_id : uuid <<FK>>
+  wbs_element_id : uuid <<FK>>
+  required_by_date : date
+  approval_status_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity purchase_requisition_items {
+  * id : uuid <<PK>>
+  --
+  * purchase_requisition_id : uuid <<FK>>
+  * line_number : integer
+  item_type_concept_id : uuid <<FK>>
+  description : varchar
+  product_ref_type : varchar
+  product_ref_id : uuid
+  quantity : numeric
+  unit_concept_id : uuid <<FK>>
+  estimated_unit_price : numeric
+  currency_concept_id : uuid <<FK>>
+  cost_center_id : uuid <<FK>>
+  profit_center_id : uuid <<FK>>
+  project_id : uuid <<FK>>
+  wbs_element_id : uuid <<FK>>
+  asset_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity purchase_orders {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * purchase_order_number : varchar
+  * supplier_business_partner_id : uuid <<FK>>
+  contract_id : uuid <<FK>>
+  purchase_requisition_id : uuid <<FK>>
+  ordering_department_id : uuid <<FK>>
+  buyer_employee_id : uuid <<FK>>
+  order_date : date
+  expected_delivery_date : date
+  currency_concept_id : uuid <<FK>>
+  payment_terms_concept_id : uuid <<FK>>
+  incoterm_concept_id : uuid <<FK>>
+  approval_status_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity purchase_order_items {
+  * id : uuid <<PK>>
+  --
+  * purchase_order_id : uuid <<FK>>
+  * line_number : integer
+  purchase_requisition_item_id : uuid <<FK>>
+  contract_line_item_id : uuid <<FK>>
+  item_type_concept_id : uuid <<FK>>
+  description : varchar
+  product_ref_type : varchar
+  product_ref_id : uuid
+  quantity : numeric
+  unit_concept_id : uuid <<FK>>
+  unit_price : numeric
+  tax_code_id : uuid <<FK>>
+  expense_account_id : uuid <<FK>>
+  inventory_account_id : uuid <<FK>>
+  asset_id : uuid <<FK>>
+  cost_center_id : uuid <<FK>>
+  profit_center_id : uuid <<FK>>
+  project_id : uuid <<FK>>
+  wbs_element_id : uuid <<FK>>
+  branch_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity goods_receipts {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * receipt_number : varchar
+  * purchase_order_id : uuid <<FK>>
+  receiving_branch_id : uuid <<FK>>
+  received_by_employee_id : uuid <<FK>>
+  received_at : timestamptz
+  supplier_delivery_reference : varchar
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity goods_receipt_items {
+  * id : uuid <<PK>>
+  --
+  * goods_receipt_id : uuid <<FK>>
+  * purchase_order_item_id : uuid <<FK>>
+  * line_number : integer
+  received_quantity : numeric
+  accepted_quantity : numeric
+  rejected_quantity : numeric
+  inventory_ledger_entry_id : uuid <<FK>>
+  asset_id : uuid <<FK>>
+  quality_status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity service_entry_sheets {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * sheet_number : varchar
+  * purchase_order_id : uuid <<FK>>
+  supplier_business_partner_id : uuid <<FK>>
+  performed_from : date
+  performed_to : date
+  accepted_by_employee_id : uuid <<FK>>
+  approval_status_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity service_entry_items {
+  * id : uuid <<PK>>
+  --
+  * service_entry_sheet_id : uuid <<FK>>
+  * purchase_order_item_id : uuid <<FK>>
+  * line_number : integer
+  accepted_quantity : numeric
+  accepted_amount : numeric
+  currency_concept_id : uuid <<FK>>
+  cost_center_id : uuid <<FK>>
+  profit_center_id : uuid <<FK>>
+  project_id : uuid <<FK>>
+  wbs_element_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity invoice_match_runs {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * bill_id : uuid <<FK>>
+  * match_type_concept_id : uuid <<FK>>
+  purchase_order_id : uuid <<FK>>
+  run_at : timestamptz
+  matched_amount : numeric
+  variance_amount : numeric
+  currency_concept_id : uuid <<FK>>
+  result_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+}
+
+entity invoice_match_items {
+  * id : uuid <<PK>>
+  --
+  * invoice_match_run_id : uuid <<FK>>
+  * bill_line_id : uuid <<FK>>
+  purchase_order_item_id : uuid <<FK>>
+  goods_receipt_item_id : uuid <<FK>>
+  service_entry_item_id : uuid <<FK>>
+  invoice_quantity : numeric
+  ordered_quantity : numeric
+  received_quantity : numeric
+  invoice_amount : numeric
+  ordered_amount : numeric
+  variance_quantity : numeric
+  variance_amount : numeric
+  tolerance_rule_concept_id : uuid <<FK>>
+  result_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+}
+
+entity sales_orders {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * sales_order_number : varchar
+  * customer_business_partner_id : uuid <<FK>>
+  contract_id : uuid <<FK>>
+  opportunity_id : uuid <<FK>>
+  order_date : date
+  requested_service_date : date
+  currency_concept_id : uuid <<FK>>
+  payment_terms_concept_id : uuid <<FK>>
+  owner_employee_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity sales_order_items {
+  * id : uuid <<PK>>
+  --
+  * sales_order_id : uuid <<FK>>
+  * line_number : integer
+  contract_line_item_id : uuid <<FK>>
+  service_ref_type : varchar
+  service_ref_id : uuid
+  description : varchar
+  quantity : numeric
+  unit_price : numeric
+  tax_code_id : uuid <<FK>>
+  income_account_id : uuid <<FK>>
+  cost_center_id : uuid <<FK>>
+  profit_center_id : uuid <<FK>>
+  project_id : uuid <<FK>>
+  wbs_element_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity enterprise_document_flow {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * predecessor_type_concept_id : uuid <<FK>>
+  * predecessor_id : uuid
+  * successor_type_concept_id : uuid <<FK>>
+  * successor_id : uuid
+  * relation_type_concept_id : uuid <<FK>>
+  quantity : numeric
+  amount : numeric
+  currency_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+}
+
+entity contract_versions {
+  * id : uuid <<PK>>
+  --
+  * contract_id : uuid <<FK>>
+  * version_number : integer
+  * version_type_concept_id : uuid <<FK>>
+  effective_from : date
+  effective_to : date
+  summary_text : text
+  main_document_file_id : uuid <<FK>>
+  content_hash : varchar
+  approved_at : timestamptz
+  approved_by_user_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+}
+
+entity contract_amendments {
+  * id : uuid <<PK>>
+  --
+  * contract_id : uuid <<FK>>
+  * base_version_id : uuid <<FK>>
+  resulting_version_id : uuid <<FK>>
+  * amendment_type_concept_id : uuid <<FK>>
+  reason_text : text
+  effective_date : date
+  requested_by_user_id : uuid <<FK>>
+  approved_by_user_id : uuid <<FK>>
+  approved_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity contract_clauses {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * clause_code : varchar
+  * title : varchar
+  * clause_type_concept_id : uuid <<FK>>
+  default_text : text
+  risk_level_concept_id : uuid <<FK>>
+  requires_approval : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity contract_clause_instances {
+  * id : uuid <<PK>>
+  --
+  * contract_version_id : uuid <<FK>>
+  * contract_clause_id : uuid <<FK>>
+  ordinal : integer
+  rendered_text : text
+  deviation_type_concept_id : uuid <<FK>>
+  approval_required : boolean
+  approved_by_user_id : uuid <<FK>>
+  approved_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity contract_obligations {
+  * id : uuid <<PK>>
+  --
+  * contract_id : uuid <<FK>>
+  contract_version_id : uuid <<FK>>
+  contract_clause_instance_id : uuid <<FK>>
+  * obligation_type_concept_id : uuid <<FK>>
+  * title : varchar
+  description : text
+  responsible_business_partner_id : uuid <<FK>>
+  responsible_user_id : uuid <<FK>>
+  due_date : date
+  recurrence_rule : varchar
+  financial_amount : numeric
+  currency_concept_id : uuid <<FK>>
+  evidence_required : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity contract_obligation_events {
+  * id : uuid <<PK>>
+  --
+  * contract_obligation_id : uuid <<FK>>
+  * event_type_concept_id : uuid <<FK>>
+  event_at : timestamptz
+  evidence_file_id : uuid <<FK>>
+  outcome_concept_id : uuid <<FK>>
+  notes : text
+  recorded_by_user_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity contract_renewals {
+  * id : uuid <<PK>>
+  --
+  * contract_id : uuid <<FK>>
+  * renewal_type_concept_id : uuid <<FK>>
+  notice_due_date : date
+  renewal_effective_date : date
+  new_end_date : date
+  proposed_value : numeric
+  currency_concept_id : uuid <<FK>>
+  initiated_by_user_id : uuid <<FK>>
+  decision_by_user_id : uuid <<FK>>
+  decision_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity contract_terminations {
+  * id : uuid <<PK>>
+  --
+  * contract_id : uuid <<FK>>
+  * termination_type_concept_id : uuid <<FK>>
+  notice_date : date
+  effective_date : date
+  reason_text : text
+  initiated_by_user_id : uuid <<FK>>
+  approved_by_user_id : uuid <<FK>>
+  approved_at : timestamptz
+  settlement_amount : numeric
+  currency_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity contract_team_members {
+  * id : uuid <<PK>>
+  --
+  * contract_id : uuid <<FK>>
+  * user_id : uuid <<FK>>
+  * team_role_concept_id : uuid <<FK>>
+  responsibility_scope_concept_id : uuid <<FK>>
+  valid_from : date
+  valid_to : date
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+}
+
+entity contract_approval_requests {
+  * id : uuid <<PK>>
+  --
+  * contract_id : uuid <<FK>>
+  contract_version_id : uuid <<FK>>
+  contract_amendment_id : uuid <<FK>>
+  * approval_type_concept_id : uuid <<FK>>
+  requested_by_user_id : uuid <<FK>>
+  requested_at : timestamptz
+  due_at : timestamptz
+  workflow_instance_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity contract_approval_steps {
+  * id : uuid <<PK>>
+  --
+  * contract_approval_request_id : uuid <<FK>>
+  * step_number : integer
+  approver_user_id : uuid <<FK>>
+  approver_team_role_concept_id : uuid <<FK>>
+  decision_concept_id : uuid <<FK>>
+  decision_at : timestamptz
+  comments : text
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity contract_object_assignments {
+  * id : uuid <<PK>>
+  --
+  * contract_id : uuid <<FK>>
+  contract_line_item_id : uuid <<FK>>
+  * assignment_role_concept_id : uuid <<FK>>
+  business_partner_id : uuid <<FK>>
+  asset_id : uuid <<FK>>
+  liability_id : uuid <<FK>>
+  project_id : uuid <<FK>>
+  wbs_element_id : uuid <<FK>>
+  cost_center_id : uuid <<FK>>
+  profit_center_id : uuid <<FK>>
+  purchase_order_id : uuid <<FK>>
+  sales_order_id : uuid <<FK>>
+  employee_id : uuid <<FK>>
+  practice_id : uuid <<FK>>
+  branch_id : uuid <<FK>>
+  valid_from : date
+  valid_to : date
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity contract_accounting_terms {
+  * id : uuid <<PK>>
+  --
+  * contract_id : uuid <<FK>>
+  contract_line_item_id : uuid <<FK>>
+  * accounting_treatment_concept_id : uuid <<FK>>
+  expense_account_id : uuid <<FK>>
+  revenue_account_id : uuid <<FK>>
+  accrual_account_id : uuid <<FK>>
+  asset_account_id : uuid <<FK>>
+  liability_account_id : uuid <<FK>>
+  cost_center_id : uuid <<FK>>
+  profit_center_id : uuid <<FK>>
+  tax_code_id : uuid <<FK>>
+  effective_from : date
+  effective_to : date
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity contract_payment_schedules {
+  * id : uuid <<PK>>
+  --
+  * contract_id : uuid <<FK>>
+  contract_line_item_id : uuid <<FK>>
+  contract_obligation_id : uuid <<FK>>
+  * installment_number : integer
+  due_date : date
+  amount : numeric
+  currency_concept_id : uuid <<FK>>
+  payment_direction_concept_id : uuid <<FK>>
+  invoice_id : uuid <<FK>>
+  bill_id : uuid <<FK>>
+  payment_transaction_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity lease_contracts {
+  * id : uuid <<PK>>
+  --
+  * contract_id : uuid <<FK>>
+  * lease_role_concept_id : uuid <<FK>>
+  * commencement_date : date
+  end_date : date
+  discount_rate : numeric
+  accounting_principle_concept_id : uuid <<FK>>
+  currency_concept_id : uuid <<FK>>
+  short_term_exemption : boolean
+  low_value_exemption : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity lease_objects {
+  * id : uuid <<PK>>
+  --
+  * lease_contract_id : uuid <<FK>>
+  * object_type_concept_id : uuid <<FK>>
+  description : varchar
+  source_asset_id : uuid <<FK>>
+  branch_id : uuid <<FK>>
+  quantity : numeric
+  unit_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity lease_cash_flows {
+  * id : uuid <<PK>>
+  --
+  * lease_contract_id : uuid <<FK>>
+  lease_object_id : uuid <<FK>>
+  * flow_type_concept_id : uuid <<FK>>
+  due_date : date
+  amount : numeric
+  currency_concept_id : uuid <<FK>>
+  index_reference_concept_id : uuid <<FK>>
+  is_fixed : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity lease_valuations {
+  * id : uuid <<PK>>
+  --
+  * lease_contract_id : uuid <<FK>>
+  * valuation_date : date
+  accounting_principle_concept_id : uuid <<FK>>
+  right_of_use_asset_value : numeric
+  lease_liability_value : numeric
+  interest_expense : numeric
+  depreciation_expense : numeric
+  currency_concept_id : uuid <<FK>>
+  journal_transaction_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+}
+
+entity lease_accounting_links {
+  * id : uuid <<PK>>
+  --
+  * lease_contract_id : uuid <<FK>>
+  lease_object_id : uuid <<FK>>
+  * right_of_use_asset_id : uuid <<FK>>
+  * lease_liability_id : uuid <<FK>>
+  right_of_use_asset_account_id : uuid <<FK>>
+  lease_liability_account_id : uuid <<FK>>
+  interest_expense_account_id : uuid <<FK>>
+  depreciation_expense_account_id : uuid <<FK>>
+  valid_from : date
+  valid_to : date
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+
+business_partners ||--o{ business_partner_roles
+business_partners ||--o{ business_partner_relationships : source
+business_partners ||--o{ business_partner_relationships : target
+business_partners ||--o{ business_partner_tax_registrations
+business_partners ||--o{ business_partner_bank_accounts
+business_partners |o--o{ employees
+projects ||--o{ wbs_elements
+wbs_elements |o--o{ wbs_elements : parent
+employees |o--o{ projects
+accounting_cost_centers |o--o{ projects
+accounting_profit_centers |o--o{ projects
+purchase_requisitions ||--o{ purchase_requisition_items
+purchase_requisitions |o--o{ purchase_orders
+business_partners ||--o{ purchase_orders : supplier
+contracts |o--o{ purchase_orders
+purchase_orders ||--o{ purchase_order_items
+purchase_requisition_items |o--o{ purchase_order_items
+contract_line_items |o--o{ purchase_order_items
+purchase_orders ||--o{ goods_receipts
+goods_receipts ||--o{ goods_receipt_items
+purchase_order_items ||--o{ goods_receipt_items
+pharmacy_inventory_ledger_entries |o--o{ goods_receipt_items
+purchase_orders ||--o{ service_entry_sheets
+service_entry_sheets ||--o{ service_entry_items
+purchase_order_items ||--o{ service_entry_items
+billing_bills ||--o{ invoice_match_runs
+purchase_orders |o--o{ invoice_match_runs
+invoice_match_runs ||--o{ invoice_match_items
+billing_bill_lines ||--o{ invoice_match_items
+purchase_order_items |o--o{ invoice_match_items
+goods_receipt_items |o--o{ invoice_match_items
+service_entry_items |o--o{ invoice_match_items
+business_partners ||--o{ sales_orders : customer
+contracts |o--o{ sales_orders
+crm_opportunities |o--o{ sales_orders
+sales_orders ||--o{ sales_order_items
+contract_line_items |o--o{ sales_order_items
+contracts ||--o{ contract_versions
+contracts ||--o{ contract_amendments
+contract_versions ||--o{ contract_amendments : base/result
+contract_clauses ||--o{ contract_clause_instances
+contract_versions ||--o{ contract_clause_instances
+contracts ||--o{ contract_obligations
+contract_versions |o--o{ contract_obligations
+contract_clause_instances |o--o{ contract_obligations
+contract_obligations ||--o{ contract_obligation_events
+contracts ||--o{ contract_renewals
+contracts ||--o{ contract_terminations
+contracts ||--o{ contract_team_members
+contracts ||--o{ contract_approval_requests
+contract_versions |o--o{ contract_approval_requests
+contract_amendments |o--o{ contract_approval_requests
+contract_approval_requests ||--o{ contract_approval_steps
+contracts ||--o{ contract_object_assignments
+contract_line_items |o--o{ contract_object_assignments
+business_partners |o--o{ contract_object_assignments
+accounting_assets |o--o{ contract_object_assignments
+accounting_liabilities |o--o{ contract_object_assignments
+projects |o--o{ contract_object_assignments
+wbs_elements |o--o{ contract_object_assignments
+accounting_cost_centers |o--o{ contract_object_assignments
+accounting_profit_centers |o--o{ contract_object_assignments
+purchase_orders |o--o{ contract_object_assignments
+sales_orders |o--o{ contract_object_assignments
+employees |o--o{ contract_object_assignments
+contracts ||--o{ contract_accounting_terms
+contract_line_items |o--o{ contract_accounting_terms
+contracts ||--o{ contract_payment_schedules
+contract_line_items |o--o{ contract_payment_schedules
+contract_obligations |o--o{ contract_payment_schedules
+billing_invoices |o--o{ contract_payment_schedules
+billing_bills |o--o{ contract_payment_schedules
+payments_payment_transactions |o--o{ contract_payment_schedules
+contracts ||--|| lease_contracts
+lease_contracts ||--o{ lease_objects
+lease_contracts ||--o{ lease_cash_flows
+lease_objects |o--o{ lease_cash_flows
+lease_contracts ||--o{ lease_valuations
+accounting_journal_transactions |o--o{ lease_valuations
+lease_contracts ||--o{ lease_accounting_links
+lease_objects |o--o{ lease_accounting_links
+accounting_assets ||--o{ lease_accounting_links : RoU asset
+accounting_liabilities ||--o{ lease_accounting_links : lease liability
+
+note as SAP_ERP_ASSOCIATION_MODEL
+  SAP-ALIGNED END-TO-END DOCUMENT FLOW
+  Business Partner -> Contract -> Requisition -> Purchase Order -> Goods/Service Receipt
+  -> Supplier Bill -> Three-way match -> Payment/Clearing -> Journal/Asset/Liability.
+  The same Business Partner may hold customer, supplier, employee, insurer or partner roles.
+  Contracts retain versions, clauses, obligations, approvals, amendments, renewals,
+  terminations, object assignments, payment schedules and lease accounting links.
+end note
+
+package "Physical Indexes" {
+entity "INDEXES · business_partners" as idxset_business_partners <<INDEX_SET>> {
+  PK pk_business_partners : (id) UNIQUE BTREE
+  UK uq_business_partners_tenant_id_partner_number : (tenant_id, partner_number) UNIQUE BTREE
+  IX ix_business_partners_tenant_id : (tenant_id) BTREE
+  IX ix_business_partners_partner_category_concept_id : (partner_category_concept_id) BTREE
+  IX ix_business_partners_country_concept_id : (country_concept_id) BTREE
+  IX ix_business_partners_linked_tenant_id : (linked_tenant_id) BTREE
+  IX ix_business_partners_linked_person_id : (linked_person_id) BTREE
+  IX ix_business_partners_status_concept_id : (status_concept_id) BTREE
+  IX ix_business_partners_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_business_partners_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_business_partners_tenant_status_updated : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  GIN gin_business_partners_search : to_tsvector('simple', concat_ws(' ', partner_number, display_name, legal_name, tax_id)) GIN
+}
+
+business_partners .. idxset_business_partners : indexed by
+
+entity "INDEXES · business_partner_roles" as idxset_business_partner_roles <<INDEX_SET>> {
+  PK pk_business_partner_roles : (id) UNIQUE BTREE
+  UK uq_business_partner_roles_business_partner_id_role_con_4a8deccf : (business_partner_id, role_concept_id, company_code_tenant_id, valid_from) UNIQUE BTREE
+  IX ix_business_partner_roles_business_partner_id : (business_partner_id) BTREE
+  IX ix_business_partner_roles_role_concept_id : (role_concept_id) BTREE
+  IX ix_business_partner_roles_company_code_tenant_id : (company_code_tenant_id) BTREE
+  IX ix_business_partner_roles_status_concept_id : (status_concept_id) BTREE
+  IX ix_business_partner_roles_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_business_partner_roles_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+business_partner_roles .. idxset_business_partner_roles : indexed by
+
+entity "INDEXES · business_partner_relationships" as idxset_business_partner_relationships <<INDEX_SET>> {
+  PK pk_business_partner_relationships : (id) UNIQUE BTREE
+  IX ix_business_partner_relationships_source_business_partner_id : (source_business_partner_id) BTREE
+  IX ix_business_partner_relationships_target_business_partner_id : (target_business_partner_id) BTREE
+  IX ix_business_partner_relationships_relationship_type_concept_id : (relationship_type_concept_id) BTREE
+  IX ix_business_partner_relationships_status_concept_id : (status_concept_id) BTREE
+  IX ix_business_partner_relationships_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_business_partner_relationships_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_business_partner_relationships_source_type_valid : (source_business_partner_id, relationship_type_concept_id, valid_from) BTREE
+}
+
+business_partner_relationships .. idxset_business_partner_relationships : indexed by
+
+entity "INDEXES · business_partner_tax_registrations" as idxset_business_partner_tax_registrations <<INDEX_SET>> {
+  PK pk_business_partner_tax_registrations : (id) UNIQUE BTREE
+  UK uq_business_partner_tax_registrations_business_partner_91eeddc3 : (business_partner_id, tax_type_concept_id, tax_number) UNIQUE BTREE
+  IX ix_business_partner_tax_registrations_business_partner_id : (business_partner_id) BTREE
+  IX ix_business_partner_tax_registrations_tax_type_concept_id : (tax_type_concept_id) BTREE
+  IX ix_business_partner_tax_registrations_country_concept_id : (country_concept_id) BTREE
+  IX ix_business_partner_tax_registrations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_business_partner_tax_registrations_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+business_partner_tax_registrations .. idxset_business_partner_tax_registrations : indexed by
+
+entity "INDEXES · business_partner_bank_accounts" as idxset_business_partner_bank_accounts <<INDEX_SET>> {
+  PK pk_business_partner_bank_accounts : (id) UNIQUE BTREE
+  UK uq_business_partner_bank_accounts_business_partner_id__0b2a44a3 : (business_partner_id, account_number_hash) UNIQUE BTREE
+  IX ix_business_partner_bank_accounts_business_partner_id : (business_partner_id) BTREE
+  IX ix_business_partner_bank_accounts_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_business_partner_bank_accounts_verification_status__14f1d2aa : (verification_status_concept_id) BTREE
+  IX ix_business_partner_bank_accounts_status_concept_id : (status_concept_id) BTREE
+  IX ix_business_partner_bank_accounts_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_business_partner_bank_accounts_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+business_partner_bank_accounts .. idxset_business_partner_bank_accounts : indexed by
+
+entity "INDEXES · projects" as idxset_projects <<INDEX_SET>> {
+  PK pk_projects : (id) UNIQUE BTREE
+  UK uq_projects_tenant_id_project_number : (tenant_id, project_number) UNIQUE BTREE
+  IX ix_projects_tenant_id : (tenant_id) BTREE
+  IX ix_projects_project_type_concept_id : (project_type_concept_id) BTREE
+  IX ix_projects_responsible_employee_id : (responsible_employee_id) BTREE
+  IX ix_projects_department_id : (department_id) BTREE
+  IX ix_projects_cost_center_id : (cost_center_id) BTREE
+  IX ix_projects_profit_center_id : (profit_center_id) BTREE
+  IX ix_projects_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_projects_status_concept_id : (status_concept_id) BTREE
+  IX ix_projects_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_projects_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_projects_search : to_tsvector('simple', concat_ws(' ', project_number, name)) GIN
+}
+
+projects .. idxset_projects : indexed by
+
+entity "INDEXES · wbs_elements" as idxset_wbs_elements <<INDEX_SET>> {
+  PK pk_wbs_elements : (id) UNIQUE BTREE
+  UK uq_wbs_elements_project_id_wbs_code : (project_id, wbs_code) UNIQUE BTREE
+  IX ix_wbs_elements_project_id : (project_id) BTREE
+  IX ix_wbs_elements_parent_wbs_element_id : (parent_wbs_element_id) BTREE
+  IX ix_wbs_elements_cost_center_id : (cost_center_id) BTREE
+  IX ix_wbs_elements_profit_center_id : (profit_center_id) BTREE
+  IX ix_wbs_elements_responsible_employee_id : (responsible_employee_id) BTREE
+  IX ix_wbs_elements_status_concept_id : (status_concept_id) BTREE
+  IX ix_wbs_elements_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_wbs_elements_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_wbs_elements_search : to_tsvector('simple', concat_ws(' ', wbs_code, name)) GIN
+}
+
+wbs_elements .. idxset_wbs_elements : indexed by
+
+entity "INDEXES · purchase_requisitions" as idxset_purchase_requisitions <<INDEX_SET>> {
+  PK pk_purchase_requisitions : (id) UNIQUE BTREE
+  UK uq_purchase_requisitions_tenant_id_requisition_number : (tenant_id, requisition_number) UNIQUE BTREE
+  IX ix_purchase_requisitions_tenant_id : (tenant_id) BTREE
+  IX ix_purchase_requisitions_requester_employee_id : (requester_employee_id) BTREE
+  IX ix_purchase_requisitions_requesting_department_id : (requesting_department_id) BTREE
+  IX ix_purchase_requisitions_project_id : (project_id) BTREE
+  IX ix_purchase_requisitions_wbs_element_id : (wbs_element_id) BTREE
+  IX ix_purchase_requisitions_approval_status_concept_id : (approval_status_concept_id) BTREE
+  IX ix_purchase_requisitions_status_concept_id : (status_concept_id) BTREE
+  IX ix_purchase_requisitions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_purchase_requisitions_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_purchase_requisitions_tenant_status_updated : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  GIN gin_purchase_requisitions_search : to_tsvector('simple', concat_ws(' ', requisition_number)) GIN
+}
+
+purchase_requisitions .. idxset_purchase_requisitions : indexed by
+
+entity "INDEXES · purchase_requisition_items" as idxset_purchase_requisition_items <<INDEX_SET>> {
+  PK pk_purchase_requisition_items : (id) UNIQUE BTREE
+  UK uq_purchase_requisition_items_purchase_requisition_id__283ecf3d : (purchase_requisition_id, line_number) UNIQUE BTREE
+  IX ix_purchase_requisition_items_purchase_requisition_id : (purchase_requisition_id) BTREE
+  IX ix_purchase_requisition_items_item_type_concept_id : (item_type_concept_id) BTREE
+  IX ix_purchase_requisition_items_unit_concept_id : (unit_concept_id) BTREE
+  IX ix_purchase_requisition_items_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_purchase_requisition_items_cost_center_id : (cost_center_id) BTREE
+  IX ix_purchase_requisition_items_profit_center_id : (profit_center_id) BTREE
+  IX ix_purchase_requisition_items_project_id : (project_id) BTREE
+  IX ix_purchase_requisition_items_wbs_element_id : (wbs_element_id) BTREE
+  IX ix_purchase_requisition_items_asset_id : (asset_id) BTREE
+  IX ix_purchase_requisition_items_status_concept_id : (status_concept_id) BTREE
+  IX ix_purchase_requisition_items_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_purchase_requisition_items_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+purchase_requisition_items .. idxset_purchase_requisition_items : indexed by
+
+entity "INDEXES · purchase_orders" as idxset_purchase_orders <<INDEX_SET>> {
+  PK pk_purchase_orders : (id) UNIQUE BTREE
+  UK uq_purchase_orders_tenant_id_purchase_order_number : (tenant_id, purchase_order_number) UNIQUE BTREE
+  IX ix_purchase_orders_tenant_id : (tenant_id) BTREE
+  IX ix_purchase_orders_supplier_business_partner_id : (supplier_business_partner_id) BTREE
+  IX ix_purchase_orders_contract_id : (contract_id) BTREE
+  IX ix_purchase_orders_purchase_requisition_id : (purchase_requisition_id) BTREE
+  IX ix_purchase_orders_ordering_department_id : (ordering_department_id) BTREE
+  IX ix_purchase_orders_buyer_employee_id : (buyer_employee_id) BTREE
+  IX ix_purchase_orders_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_purchase_orders_payment_terms_concept_id : (payment_terms_concept_id) BTREE
+  IX ix_purchase_orders_incoterm_concept_id : (incoterm_concept_id) BTREE
+  IX ix_purchase_orders_approval_status_concept_id : (approval_status_concept_id) BTREE
+  IX ix_purchase_orders_status_concept_id : (status_concept_id) BTREE
+  IX ix_purchase_orders_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_purchase_orders_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_purchase_orders_tenant_status_updated : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  GIN gin_purchase_orders_search : to_tsvector('simple', concat_ws(' ', purchase_order_number)) GIN
+}
+
+purchase_orders .. idxset_purchase_orders : indexed by
+
+entity "INDEXES · purchase_order_items" as idxset_purchase_order_items <<INDEX_SET>> {
+  PK pk_purchase_order_items : (id) UNIQUE BTREE
+  UK uq_purchase_order_items_purchase_order_id_line_number : (purchase_order_id, line_number) UNIQUE BTREE
+  IX ix_purchase_order_items_purchase_order_id : (purchase_order_id) BTREE
+  IX ix_purchase_order_items_purchase_requisition_item_id : (purchase_requisition_item_id) BTREE
+  IX ix_purchase_order_items_contract_line_item_id : (contract_line_item_id) BTREE
+  IX ix_purchase_order_items_item_type_concept_id : (item_type_concept_id) BTREE
+  IX ix_purchase_order_items_unit_concept_id : (unit_concept_id) BTREE
+  IX ix_purchase_order_items_tax_code_id : (tax_code_id) BTREE
+  IX ix_purchase_order_items_expense_account_id : (expense_account_id) BTREE
+  IX ix_purchase_order_items_inventory_account_id : (inventory_account_id) BTREE
+  IX ix_purchase_order_items_asset_id : (asset_id) BTREE
+  IX ix_purchase_order_items_cost_center_id : (cost_center_id) BTREE
+  IX ix_purchase_order_items_profit_center_id : (profit_center_id) BTREE
+  IX ix_purchase_order_items_project_id : (project_id) BTREE
+  IX ix_purchase_order_items_wbs_element_id : (wbs_element_id) BTREE
+  IX ix_purchase_order_items_branch_id : (branch_id) BTREE
+  IX ix_purchase_order_items_status_concept_id : (status_concept_id) BTREE
+  IX ix_purchase_order_items_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_purchase_order_items_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+purchase_order_items .. idxset_purchase_order_items : indexed by
+
+entity "INDEXES · goods_receipts" as idxset_goods_receipts <<INDEX_SET>> {
+  PK pk_goods_receipts : (id) UNIQUE BTREE
+  UK uq_goods_receipts_tenant_id_receipt_number : (tenant_id, receipt_number) UNIQUE BTREE
+  IX ix_goods_receipts_tenant_id : (tenant_id) BTREE
+  IX ix_goods_receipts_purchase_order_id : (purchase_order_id) BTREE
+  IX ix_goods_receipts_receiving_branch_id : (receiving_branch_id) BTREE
+  IX ix_goods_receipts_received_by_employee_id : (received_by_employee_id) BTREE
+  IX ix_goods_receipts_status_concept_id : (status_concept_id) BTREE
+  IX ix_goods_receipts_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_goods_receipts_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_goods_receipts_tenant_status_updated : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  GIN gin_goods_receipts_search : to_tsvector('simple', concat_ws(' ', receipt_number)) GIN
+}
+
+goods_receipts .. idxset_goods_receipts : indexed by
+
+entity "INDEXES · goods_receipt_items" as idxset_goods_receipt_items <<INDEX_SET>> {
+  PK pk_goods_receipt_items : (id) UNIQUE BTREE
+  UK uq_goods_receipt_items_goods_receipt_id_line_number : (goods_receipt_id, line_number) UNIQUE BTREE
+  IX ix_goods_receipt_items_goods_receipt_id : (goods_receipt_id) BTREE
+  IX ix_goods_receipt_items_purchase_order_item_id : (purchase_order_item_id) BTREE
+  IX ix_goods_receipt_items_inventory_ledger_entry_id : (inventory_ledger_entry_id) BTREE
+  IX ix_goods_receipt_items_asset_id : (asset_id) BTREE
+  IX ix_goods_receipt_items_quality_status_concept_id : (quality_status_concept_id) BTREE
+  IX ix_goods_receipt_items_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_goods_receipt_items_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+goods_receipt_items .. idxset_goods_receipt_items : indexed by
+
+entity "INDEXES · service_entry_sheets" as idxset_service_entry_sheets <<INDEX_SET>> {
+  PK pk_service_entry_sheets : (id) UNIQUE BTREE
+  UK uq_service_entry_sheets_tenant_id_sheet_number : (tenant_id, sheet_number) UNIQUE BTREE
+  IX ix_service_entry_sheets_tenant_id : (tenant_id) BTREE
+  IX ix_service_entry_sheets_purchase_order_id : (purchase_order_id) BTREE
+  IX ix_service_entry_sheets_supplier_business_partner_id : (supplier_business_partner_id) BTREE
+  IX ix_service_entry_sheets_accepted_by_employee_id : (accepted_by_employee_id) BTREE
+  IX ix_service_entry_sheets_approval_status_concept_id : (approval_status_concept_id) BTREE
+  IX ix_service_entry_sheets_status_concept_id : (status_concept_id) BTREE
+  IX ix_service_entry_sheets_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_service_entry_sheets_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_service_entry_sheets_tenant_status_updated : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  GIN gin_service_entry_sheets_search : to_tsvector('simple', concat_ws(' ', sheet_number)) GIN
+}
+
+service_entry_sheets .. idxset_service_entry_sheets : indexed by
+
+entity "INDEXES · service_entry_items" as idxset_service_entry_items <<INDEX_SET>> {
+  PK pk_service_entry_items : (id) UNIQUE BTREE
+  UK uq_service_entry_items_service_entry_sheet_id_line_number : (service_entry_sheet_id, line_number) UNIQUE BTREE
+  IX ix_service_entry_items_service_entry_sheet_id : (service_entry_sheet_id) BTREE
+  IX ix_service_entry_items_purchase_order_item_id : (purchase_order_item_id) BTREE
+  IX ix_service_entry_items_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_service_entry_items_cost_center_id : (cost_center_id) BTREE
+  IX ix_service_entry_items_profit_center_id : (profit_center_id) BTREE
+  IX ix_service_entry_items_project_id : (project_id) BTREE
+  IX ix_service_entry_items_wbs_element_id : (wbs_element_id) BTREE
+  IX ix_service_entry_items_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_service_entry_items_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+service_entry_items .. idxset_service_entry_items : indexed by
+
+entity "INDEXES · invoice_match_runs" as idxset_invoice_match_runs <<INDEX_SET>> {
+  PK pk_invoice_match_runs : (id) UNIQUE BTREE
+  IX ix_invoice_match_runs_tenant_id : (tenant_id) BTREE
+  IX ix_invoice_match_runs_bill_id : (bill_id) BTREE
+  IX ix_invoice_match_runs_match_type_concept_id : (match_type_concept_id) BTREE
+  IX ix_invoice_match_runs_purchase_order_id : (purchase_order_id) BTREE
+  IX ix_invoice_match_runs_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_invoice_match_runs_result_concept_id : (result_concept_id) BTREE
+  IX ix_invoice_match_runs_status_concept_id : (status_concept_id) BTREE
+  IX ix_invoice_match_runs_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_invoice_match_runs_tenant_status_run : (tenant_id, status_concept_id, run_at DESC) BTREE
+}
+
+invoice_match_runs .. idxset_invoice_match_runs : indexed by
+
+entity "INDEXES · invoice_match_items" as idxset_invoice_match_items <<INDEX_SET>> {
+  PK pk_invoice_match_items : (id) UNIQUE BTREE
+  UK uq_invoice_match_items_invoice_match_run_id_bill_line_id : (invoice_match_run_id, bill_line_id) UNIQUE BTREE
+  IX ix_invoice_match_items_invoice_match_run_id : (invoice_match_run_id) BTREE
+  IX ix_invoice_match_items_bill_line_id : (bill_line_id) BTREE
+  IX ix_invoice_match_items_purchase_order_item_id : (purchase_order_item_id) BTREE
+  IX ix_invoice_match_items_goods_receipt_item_id : (goods_receipt_item_id) BTREE
+  IX ix_invoice_match_items_service_entry_item_id : (service_entry_item_id) BTREE
+  IX ix_invoice_match_items_tolerance_rule_concept_id : (tolerance_rule_concept_id) BTREE
+  IX ix_invoice_match_items_result_concept_id : (result_concept_id) BTREE
+  IX ix_invoice_match_items_created_by_user_id : (created_by_user_id) BTREE
+}
+
+invoice_match_items .. idxset_invoice_match_items : indexed by
+
+entity "INDEXES · sales_orders" as idxset_sales_orders <<INDEX_SET>> {
+  PK pk_sales_orders : (id) UNIQUE BTREE
+  UK uq_sales_orders_tenant_id_sales_order_number : (tenant_id, sales_order_number) UNIQUE BTREE
+  IX ix_sales_orders_tenant_id : (tenant_id) BTREE
+  IX ix_sales_orders_customer_business_partner_id : (customer_business_partner_id) BTREE
+  IX ix_sales_orders_contract_id : (contract_id) BTREE
+  IX ix_sales_orders_opportunity_id : (opportunity_id) BTREE
+  IX ix_sales_orders_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_sales_orders_payment_terms_concept_id : (payment_terms_concept_id) BTREE
+  IX ix_sales_orders_owner_employee_id : (owner_employee_id) BTREE
+  IX ix_sales_orders_status_concept_id : (status_concept_id) BTREE
+  IX ix_sales_orders_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_sales_orders_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_sales_orders_tenant_status_updated : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  GIN gin_sales_orders_search : to_tsvector('simple', concat_ws(' ', sales_order_number)) GIN
+}
+
+sales_orders .. idxset_sales_orders : indexed by
+
+entity "INDEXES · sales_order_items" as idxset_sales_order_items <<INDEX_SET>> {
+  PK pk_sales_order_items : (id) UNIQUE BTREE
+  UK uq_sales_order_items_sales_order_id_line_number : (sales_order_id, line_number) UNIQUE BTREE
+  IX ix_sales_order_items_sales_order_id : (sales_order_id) BTREE
+  IX ix_sales_order_items_contract_line_item_id : (contract_line_item_id) BTREE
+  IX ix_sales_order_items_tax_code_id : (tax_code_id) BTREE
+  IX ix_sales_order_items_income_account_id : (income_account_id) BTREE
+  IX ix_sales_order_items_cost_center_id : (cost_center_id) BTREE
+  IX ix_sales_order_items_profit_center_id : (profit_center_id) BTREE
+  IX ix_sales_order_items_project_id : (project_id) BTREE
+  IX ix_sales_order_items_wbs_element_id : (wbs_element_id) BTREE
+  IX ix_sales_order_items_status_concept_id : (status_concept_id) BTREE
+  IX ix_sales_order_items_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_sales_order_items_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+sales_order_items .. idxset_sales_order_items : indexed by
+
+entity "INDEXES · enterprise_document_flow" as idxset_enterprise_document_flow <<INDEX_SET>> {
+  PK pk_enterprise_document_flow : (id) UNIQUE BTREE
+  UK uq_enterprise_document_flow_predecessor_type_concept_i_24f1d8d4 : (predecessor_type_concept_id, predecessor_id, successor_type_concept_id, successor_id, relation_type_concept_id) UNIQUE BTREE
+  IX ix_enterprise_document_flow_tenant_id : (tenant_id) BTREE
+  IX ix_enterprise_document_flow_predecessor_type_concept_id : (predecessor_type_concept_id) BTREE
+  IX ix_enterprise_document_flow_successor_type_concept_id : (successor_type_concept_id) BTREE
+  IX ix_enterprise_document_flow_relation_type_concept_id : (relation_type_concept_id) BTREE
+  IX ix_enterprise_document_flow_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_enterprise_document_flow_created_by_user_id : (created_by_user_id) BTREE
+  BRIN brin_enterprise_document_flow_created_at : (created_at) BRIN pages_per_range=128
+}
+
+enterprise_document_flow .. idxset_enterprise_document_flow : indexed by
+
+entity "INDEXES · contract_versions" as idxset_contract_versions <<INDEX_SET>> {
+  PK pk_contract_versions : (id) UNIQUE BTREE
+  UK uq_contract_versions_contract_id_version_number : (contract_id, version_number) UNIQUE BTREE
+  IX ix_contract_versions_contract_id : (contract_id) BTREE
+  IX ix_contract_versions_version_type_concept_id : (version_type_concept_id) BTREE
+  IX ix_contract_versions_main_document_file_id : (main_document_file_id) BTREE
+  IX ix_contract_versions_approved_by_user_id : (approved_by_user_id) BTREE
+  IX ix_contract_versions_status_concept_id : (status_concept_id) BTREE
+  IX ix_contract_versions_created_by_user_id : (created_by_user_id) BTREE
+}
+
+contract_versions .. idxset_contract_versions : indexed by
+
+entity "INDEXES · contract_amendments" as idxset_contract_amendments <<INDEX_SET>> {
+  PK pk_contract_amendments : (id) UNIQUE BTREE
+  IX ix_contract_amendments_contract_id : (contract_id) BTREE
+  IX ix_contract_amendments_base_version_id : (base_version_id) BTREE
+  IX ix_contract_amendments_resulting_version_id : (resulting_version_id) BTREE
+  IX ix_contract_amendments_amendment_type_concept_id : (amendment_type_concept_id) BTREE
+  IX ix_contract_amendments_requested_by_user_id : (requested_by_user_id) BTREE
+  IX ix_contract_amendments_approved_by_user_id : (approved_by_user_id) BTREE
+  IX ix_contract_amendments_status_concept_id : (status_concept_id) BTREE
+  IX ix_contract_amendments_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_contract_amendments_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_contract_amendments_contract_status_effective : (contract_id, status_concept_id, effective_date) BTREE
+}
+
+contract_amendments .. idxset_contract_amendments : indexed by
+
+entity "INDEXES · contract_clauses" as idxset_contract_clauses <<INDEX_SET>> {
+  PK pk_contract_clauses : (id) UNIQUE BTREE
+  UK uq_contract_clauses_tenant_id_clause_code : (tenant_id, clause_code) UNIQUE BTREE
+  IX ix_contract_clauses_tenant_id : (tenant_id) BTREE
+  IX ix_contract_clauses_clause_type_concept_id : (clause_type_concept_id) BTREE
+  IX ix_contract_clauses_risk_level_concept_id : (risk_level_concept_id) BTREE
+  IX ix_contract_clauses_status_concept_id : (status_concept_id) BTREE
+  IX ix_contract_clauses_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_contract_clauses_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_contract_clauses_search : to_tsvector('simple', concat_ws(' ', clause_code, title)) GIN
+}
+
+contract_clauses .. idxset_contract_clauses : indexed by
+
+entity "INDEXES · contract_clause_instances" as idxset_contract_clause_instances <<INDEX_SET>> {
+  PK pk_contract_clause_instances : (id) UNIQUE BTREE
+  UK uq_contract_clause_instances_contract_version_id_contr_91a0f87f : (contract_version_id, contract_clause_id, ordinal) UNIQUE BTREE
+  IX ix_contract_clause_instances_contract_version_id : (contract_version_id) BTREE
+  IX ix_contract_clause_instances_contract_clause_id : (contract_clause_id) BTREE
+  IX ix_contract_clause_instances_deviation_type_concept_id : (deviation_type_concept_id) BTREE
+  IX ix_contract_clause_instances_approved_by_user_id : (approved_by_user_id) BTREE
+  IX ix_contract_clause_instances_status_concept_id : (status_concept_id) BTREE
+  IX ix_contract_clause_instances_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_contract_clause_instances_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+contract_clause_instances .. idxset_contract_clause_instances : indexed by
+
+entity "INDEXES · contract_obligations" as idxset_contract_obligations <<INDEX_SET>> {
+  PK pk_contract_obligations : (id) UNIQUE BTREE
+  IX ix_contract_obligations_contract_id : (contract_id) BTREE
+  IX ix_contract_obligations_contract_version_id : (contract_version_id) BTREE
+  IX ix_contract_obligations_contract_clause_instance_id : (contract_clause_instance_id) BTREE
+  IX ix_contract_obligations_obligation_type_concept_id : (obligation_type_concept_id) BTREE
+  IX ix_contract_obligations_responsible_business_partner_id : (responsible_business_partner_id) BTREE
+  IX ix_contract_obligations_responsible_user_id : (responsible_user_id) BTREE
+  IX ix_contract_obligations_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_contract_obligations_status_concept_id : (status_concept_id) BTREE
+  IX ix_contract_obligations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_contract_obligations_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_contract_obligations_contract_status_due : (contract_id, status_concept_id, due_date) BTREE
+  IX ix_contract_obligations_responsible_status_due : (responsible_user_id, status_concept_id, due_date) BTREE
+  GIN gin_contract_obligations_search : to_tsvector('simple', concat_ws(' ', title)) GIN
+}
+
+contract_obligations .. idxset_contract_obligations : indexed by
+
+entity "INDEXES · contract_obligation_events" as idxset_contract_obligation_events <<INDEX_SET>> {
+  PK pk_contract_obligation_events : (id) UNIQUE BTREE
+  IX ix_contract_obligation_events_contract_obligation_id : (contract_obligation_id) BTREE
+  IX ix_contract_obligation_events_event_type_concept_id : (event_type_concept_id) BTREE
+  IX ix_contract_obligation_events_evidence_file_id : (evidence_file_id) BTREE
+  IX ix_contract_obligation_events_outcome_concept_id : (outcome_concept_id) BTREE
+  IX ix_contract_obligation_events_recorded_by_user_id : (recorded_by_user_id) BTREE
+  IX ix_contract_obligation_events_obligation_event : (contract_obligation_id, event_at DESC) BTREE
+  BRIN brin_contract_obligation_events_created_at : (created_at) BRIN pages_per_range=128
+}
+
+contract_obligation_events .. idxset_contract_obligation_events : indexed by
+
+entity "INDEXES · contract_renewals" as idxset_contract_renewals <<INDEX_SET>> {
+  PK pk_contract_renewals : (id) UNIQUE BTREE
+  IX ix_contract_renewals_contract_id : (contract_id) BTREE
+  IX ix_contract_renewals_renewal_type_concept_id : (renewal_type_concept_id) BTREE
+  IX ix_contract_renewals_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_contract_renewals_initiated_by_user_id : (initiated_by_user_id) BTREE
+  IX ix_contract_renewals_decision_by_user_id : (decision_by_user_id) BTREE
+  IX ix_contract_renewals_status_concept_id : (status_concept_id) BTREE
+  IX ix_contract_renewals_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_contract_renewals_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_contract_renewals_contract_status : (contract_id, status_concept_id) BTREE
+}
+
+contract_renewals .. idxset_contract_renewals : indexed by
+
+entity "INDEXES · contract_terminations" as idxset_contract_terminations <<INDEX_SET>> {
+  PK pk_contract_terminations : (id) UNIQUE BTREE
+  IX ix_contract_terminations_contract_id : (contract_id) BTREE
+  IX ix_contract_terminations_termination_type_concept_id : (termination_type_concept_id) BTREE
+  IX ix_contract_terminations_initiated_by_user_id : (initiated_by_user_id) BTREE
+  IX ix_contract_terminations_approved_by_user_id : (approved_by_user_id) BTREE
+  IX ix_contract_terminations_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_contract_terminations_status_concept_id : (status_concept_id) BTREE
+  IX ix_contract_terminations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_contract_terminations_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_contract_terminations_contract_status : (contract_id, status_concept_id) BTREE
+}
+
+contract_terminations .. idxset_contract_terminations : indexed by
+
+entity "INDEXES · contract_team_members" as idxset_contract_team_members <<INDEX_SET>> {
+  PK pk_contract_team_members : (id) UNIQUE BTREE
+  UK uq_contract_team_members_contract_id_user_id_team_role_5e285251 : (contract_id, user_id, team_role_concept_id, valid_from) UNIQUE BTREE
+  IX ix_contract_team_members_contract_id : (contract_id) BTREE
+  IX ix_contract_team_members_user_id : (user_id) BTREE
+  IX ix_contract_team_members_team_role_concept_id : (team_role_concept_id) BTREE
+  IX ix_contract_team_members_responsibility_scope_concept_id : (responsibility_scope_concept_id) BTREE
+  IX ix_contract_team_members_status_concept_id : (status_concept_id) BTREE
+  IX ix_contract_team_members_created_by_user_id : (created_by_user_id) BTREE
+}
+
+contract_team_members .. idxset_contract_team_members : indexed by
+
+entity "INDEXES · contract_approval_requests" as idxset_contract_approval_requests <<INDEX_SET>> {
+  PK pk_contract_approval_requests : (id) UNIQUE BTREE
+  IX ix_contract_approval_requests_contract_id : (contract_id) BTREE
+  IX ix_contract_approval_requests_contract_version_id : (contract_version_id) BTREE
+  IX ix_contract_approval_requests_contract_amendment_id : (contract_amendment_id) BTREE
+  IX ix_contract_approval_requests_approval_type_concept_id : (approval_type_concept_id) BTREE
+  IX ix_contract_approval_requests_requested_by_user_id : (requested_by_user_id) BTREE
+  IX ix_contract_approval_requests_workflow_instance_id : (workflow_instance_id) BTREE
+  IX ix_contract_approval_requests_status_concept_id : (status_concept_id) BTREE
+  IX ix_contract_approval_requests_contract_status_due : (contract_id, status_concept_id, due_at) BTREE
+}
+
+contract_approval_requests .. idxset_contract_approval_requests : indexed by
+
+entity "INDEXES · contract_approval_steps" as idxset_contract_approval_steps <<INDEX_SET>> {
+  PK pk_contract_approval_steps : (id) UNIQUE BTREE
+  UK uq_contract_approval_steps_contract_approval_request_i_754e6454 : (contract_approval_request_id, step_number) UNIQUE BTREE
+  IX ix_contract_approval_steps_contract_approval_request_id : (contract_approval_request_id) BTREE
+  IX ix_contract_approval_steps_approver_user_id : (approver_user_id) BTREE
+  IX ix_contract_approval_steps_approver_team_role_concept_id : (approver_team_role_concept_id) BTREE
+  IX ix_contract_approval_steps_decision_concept_id : (decision_concept_id) BTREE
+  IX ix_contract_approval_steps_status_concept_id : (status_concept_id) BTREE
+}
+
+contract_approval_steps .. idxset_contract_approval_steps : indexed by
+
+entity "INDEXES · contract_object_assignments" as idxset_contract_object_assignments <<INDEX_SET>> {
+  PK pk_contract_object_assignments : (id) UNIQUE BTREE
+  IX ix_contract_object_assignments_contract_id : (contract_id) BTREE
+  IX ix_contract_object_assignments_contract_line_item_id : (contract_line_item_id) BTREE
+  IX ix_contract_object_assignments_assignment_role_concept_id : (assignment_role_concept_id) BTREE
+  IX ix_contract_object_assignments_business_partner_id : (business_partner_id) BTREE
+  IX ix_contract_object_assignments_asset_id : (asset_id) BTREE
+  IX ix_contract_object_assignments_liability_id : (liability_id) BTREE
+  IX ix_contract_object_assignments_project_id : (project_id) BTREE
+  IX ix_contract_object_assignments_wbs_element_id : (wbs_element_id) BTREE
+  IX ix_contract_object_assignments_cost_center_id : (cost_center_id) BTREE
+  IX ix_contract_object_assignments_profit_center_id : (profit_center_id) BTREE
+  IX ix_contract_object_assignments_purchase_order_id : (purchase_order_id) BTREE
+  IX ix_contract_object_assignments_sales_order_id : (sales_order_id) BTREE
+  IX ix_contract_object_assignments_employee_id : (employee_id) BTREE
+  IX ix_contract_object_assignments_practice_id : (practice_id) BTREE
+  IX ix_contract_object_assignments_branch_id : (branch_id) BTREE
+  IX ix_contract_object_assignments_status_concept_id : (status_concept_id) BTREE
+  IX ix_contract_object_assignments_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_contract_object_assignments_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_contract_object_assignments_contract_role_status : (contract_id, assignment_role_concept_id, status_concept_id) BTREE
+}
+
+contract_object_assignments .. idxset_contract_object_assignments : indexed by
+
+entity "INDEXES · contract_accounting_terms" as idxset_contract_accounting_terms <<INDEX_SET>> {
+  PK pk_contract_accounting_terms : (id) UNIQUE BTREE
+  IX ix_contract_accounting_terms_contract_id : (contract_id) BTREE
+  IX ix_contract_accounting_terms_contract_line_item_id : (contract_line_item_id) BTREE
+  IX ix_contract_accounting_terms_accounting_treatment_concept_id : (accounting_treatment_concept_id) BTREE
+  IX ix_contract_accounting_terms_expense_account_id : (expense_account_id) BTREE
+  IX ix_contract_accounting_terms_revenue_account_id : (revenue_account_id) BTREE
+  IX ix_contract_accounting_terms_accrual_account_id : (accrual_account_id) BTREE
+  IX ix_contract_accounting_terms_asset_account_id : (asset_account_id) BTREE
+  IX ix_contract_accounting_terms_liability_account_id : (liability_account_id) BTREE
+  IX ix_contract_accounting_terms_cost_center_id : (cost_center_id) BTREE
+  IX ix_contract_accounting_terms_profit_center_id : (profit_center_id) BTREE
+  IX ix_contract_accounting_terms_tax_code_id : (tax_code_id) BTREE
+  IX ix_contract_accounting_terms_status_concept_id : (status_concept_id) BTREE
+  IX ix_contract_accounting_terms_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_contract_accounting_terms_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_contract_accounting_terms_contract_effective : (contract_id, effective_from DESC) BTREE
+}
+
+contract_accounting_terms .. idxset_contract_accounting_terms : indexed by
+
+entity "INDEXES · contract_payment_schedules" as idxset_contract_payment_schedules <<INDEX_SET>> {
+  PK pk_contract_payment_schedules : (id) UNIQUE BTREE
+  UK uq_contract_payment_schedules_contract_id_installment_number : (contract_id, installment_number) UNIQUE BTREE
+  IX ix_contract_payment_schedules_contract_id : (contract_id) BTREE
+  IX ix_contract_payment_schedules_contract_line_item_id : (contract_line_item_id) BTREE
+  IX ix_contract_payment_schedules_contract_obligation_id : (contract_obligation_id) BTREE
+  IX ix_contract_payment_schedules_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_contract_payment_schedules_payment_direction_concept_id : (payment_direction_concept_id) BTREE
+  IX ix_contract_payment_schedules_invoice_id : (invoice_id) BTREE
+  IX ix_contract_payment_schedules_bill_id : (bill_id) BTREE
+  IX ix_contract_payment_schedules_payment_transaction_id : (payment_transaction_id) BTREE
+  IX ix_contract_payment_schedules_status_concept_id : (status_concept_id) BTREE
+  IX ix_contract_payment_schedules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_contract_payment_schedules_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_contract_payment_schedules_status_due : (status_concept_id, due_date) BTREE
+}
+
+contract_payment_schedules .. idxset_contract_payment_schedules : indexed by
+
+entity "INDEXES · lease_contracts" as idxset_lease_contracts <<INDEX_SET>> {
+  PK pk_lease_contracts : (id) UNIQUE BTREE
+  UK uq_lease_contracts_contract_id : (contract_id) UNIQUE BTREE
+  IX ix_lease_contracts_contract_id : (contract_id) BTREE
+  IX ix_lease_contracts_lease_role_concept_id : (lease_role_concept_id) BTREE
+  IX ix_lease_contracts_accounting_principle_concept_id : (accounting_principle_concept_id) BTREE
+  IX ix_lease_contracts_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_lease_contracts_status_concept_id : (status_concept_id) BTREE
+  IX ix_lease_contracts_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_lease_contracts_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+lease_contracts .. idxset_lease_contracts : indexed by
+
+entity "INDEXES · lease_objects" as idxset_lease_objects <<INDEX_SET>> {
+  PK pk_lease_objects : (id) UNIQUE BTREE
+  IX ix_lease_objects_lease_contract_id : (lease_contract_id) BTREE
+  IX ix_lease_objects_object_type_concept_id : (object_type_concept_id) BTREE
+  IX ix_lease_objects_source_asset_id : (source_asset_id) BTREE
+  IX ix_lease_objects_branch_id : (branch_id) BTREE
+  IX ix_lease_objects_unit_concept_id : (unit_concept_id) BTREE
+  IX ix_lease_objects_status_concept_id : (status_concept_id) BTREE
+  IX ix_lease_objects_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_lease_objects_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+lease_objects .. idxset_lease_objects : indexed by
+
+entity "INDEXES · lease_cash_flows" as idxset_lease_cash_flows <<INDEX_SET>> {
+  PK pk_lease_cash_flows : (id) UNIQUE BTREE
+  IX ix_lease_cash_flows_lease_contract_id : (lease_contract_id) BTREE
+  IX ix_lease_cash_flows_lease_object_id : (lease_object_id) BTREE
+  IX ix_lease_cash_flows_flow_type_concept_id : (flow_type_concept_id) BTREE
+  IX ix_lease_cash_flows_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_lease_cash_flows_index_reference_concept_id : (index_reference_concept_id) BTREE
+  IX ix_lease_cash_flows_status_concept_id : (status_concept_id) BTREE
+  IX ix_lease_cash_flows_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_lease_cash_flows_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_lease_cash_flows_lease_status_due : (lease_contract_id, status_concept_id, due_date) BTREE
+}
+
+lease_cash_flows .. idxset_lease_cash_flows : indexed by
+
+entity "INDEXES · lease_valuations" as idxset_lease_valuations <<INDEX_SET>> {
+  PK pk_lease_valuations : (id) UNIQUE BTREE
+  UK uq_lease_valuations_lease_contract_id_valuation_date_accountin : (lease_contract_id, valuation_date, accounting_principle_concept_id) UNIQUE BTREE
+  IX ix_lease_valuations_lease_contract_id : (lease_contract_id) BTREE
+  IX ix_lease_valuations_accounting_principle_concept_id : (accounting_principle_concept_id) BTREE
+  IX ix_lease_valuations_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_lease_valuations_journal_transaction_id : (journal_transaction_id) BTREE
+  IX ix_lease_valuations_status_concept_id : (status_concept_id) BTREE
+  IX ix_lease_valuations_created_by_user_id : (created_by_user_id) BTREE
+}
+
+lease_valuations .. idxset_lease_valuations : indexed by
+
+entity "INDEXES · lease_accounting_links" as idxset_lease_accounting_links <<INDEX_SET>> {
+  PK pk_lease_accounting_links : (id) UNIQUE BTREE
+  IX ix_lease_accounting_links_lease_contract_id : (lease_contract_id) BTREE
+  IX ix_lease_accounting_links_lease_object_id : (lease_object_id) BTREE
+  IX ix_lease_accounting_links_right_of_use_asset_id : (right_of_use_asset_id) BTREE
+  IX ix_lease_accounting_links_lease_liability_id : (lease_liability_id) BTREE
+  IX ix_lease_accounting_links_right_of_use_asset_account_id : (right_of_use_asset_account_id) BTREE
+  IX ix_lease_accounting_links_lease_liability_account_id : (lease_liability_account_id) BTREE
+  IX ix_lease_accounting_links_interest_expense_account_id : (interest_expense_account_id) BTREE
+  IX ix_lease_accounting_links_depreciation_expense_account_id : (depreciation_expense_account_id) BTREE
+  IX ix_lease_accounting_links_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_lease_accounting_links_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_lease_accounting_links_lease_valid_from : (lease_contract_id, valid_from DESC) BTREE
+}
+
+lease_accounting_links .. idxset_lease_accounting_links : indexed by
+
+entity "INDEXES · employees" as idxset_employees <<INDEX_SET>> {
+  PK pk_employees : (id) UNIQUE BTREE
+  IX ix_employees_practice_id : (practice_id) BTREE
+  IX ix_employees_person_user_id : (person_user_id) BTREE
+  IX ix_employees_role_concept_id : (role_concept_id) BTREE
+  IX ix_employees_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_employees_payment_method_concept_id : (payment_method_concept_id) BTREE
+  IX ix_employees_business_partner_id : (business_partner_id) BTREE
+  IX ix_employees_status_concept_id : (status_concept_id) BTREE
+  IX ix_employees_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_employees_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+employees .. idxset_employees : indexed by
+
+entity "INDEXES · departments" as idxset_departments <<INDEX_SET>> {
+  PK pk_departments : (id) UNIQUE BTREE
+  IX ix_departments_tenant_id : (tenant_id) BTREE
+  IX ix_departments_parent_department_id : (parent_department_id) BTREE
+  IX ix_departments_manager_employee_id : (manager_employee_id) BTREE
+  IX ix_departments_cost_center_id : (cost_center_id) BTREE
+  IX ix_departments_status_concept_id : (status_concept_id) BTREE
+  IX ix_departments_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_departments_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_departments_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+departments .. idxset_departments : indexed by
+
+entity "INDEXES · positions" as idxset_positions <<INDEX_SET>> {
+  PK pk_positions : (id) UNIQUE BTREE
+  IX ix_positions_tenant_id : (tenant_id) BTREE
+  IX ix_positions_department_id : (department_id) BTREE
+  IX ix_positions_job_family_concept_id : (job_family_concept_id) BTREE
+  IX ix_positions_grade_concept_id : (grade_concept_id) BTREE
+  IX ix_positions_status_concept_id : (status_concept_id) BTREE
+  IX ix_positions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_positions_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_positions_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+positions .. idxset_positions : indexed by
+
+entity "INDEXES · employment_records" as idxset_employment_records <<INDEX_SET>> {
+  PK pk_employment_records : (id) UNIQUE BTREE
+  IX ix_employment_records_employee_id : (employee_id) BTREE
+  IX ix_employment_records_tenant_id : (tenant_id) BTREE
+  IX ix_employment_records_position_id : (position_id) BTREE
+  IX ix_employment_records_department_id : (department_id) BTREE
+  IX ix_employment_records_employment_type_concept_id : (employment_type_concept_id) BTREE
+  IX ix_employment_records_manager_employee_id : (manager_employee_id) BTREE
+  IX ix_employment_records_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_employment_records_contract_id : (contract_id) BTREE
+  IX ix_employment_records_status_concept_id : (status_concept_id) BTREE
+  IX ix_employment_records_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_employment_records_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_employment_records_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+employment_records .. idxset_employment_records : indexed by
+
+entity "INDEXES · employee_assignments" as idxset_employee_assignments <<INDEX_SET>> {
+  PK pk_employee_assignments : (id) UNIQUE BTREE
+  IX ix_employee_assignments_employment_record_id : (employment_record_id) BTREE
+  IX ix_employee_assignments_assignment_type_concept_id : (assignment_type_concept_id) BTREE
+  IX ix_employee_assignments_practice_id : (practice_id) BTREE
+  IX ix_employee_assignments_branch_id : (branch_id) BTREE
+  IX ix_employee_assignments_department_id : (department_id) BTREE
+  IX ix_employee_assignments_status_concept_id : (status_concept_id) BTREE
+  IX ix_employee_assignments_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_employee_assignments_updated_by_user_id : (updated_by_user_id) BTREE
+  GIST gist_employee_assignments_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+}
+
+employee_assignments .. idxset_employee_assignments : indexed by
+
+entity "INDEXES · time_off_requests" as idxset_time_off_requests <<INDEX_SET>> {
+  PK pk_time_off_requests : (id) UNIQUE BTREE
+  IX ix_time_off_requests_employee_id : (employee_id) BTREE
+  IX ix_time_off_requests_leave_type_concept_id : (leave_type_concept_id) BTREE
+  IX ix_time_off_requests_approver_user_id : (approver_user_id) BTREE
+  IX ix_time_off_requests_status_concept_id : (status_concept_id) BTREE
+  IX ix_time_off_requests_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_time_off_requests_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+time_off_requests .. idxset_time_off_requests : indexed by
+
+entity "INDEXES · performance_reviews" as idxset_performance_reviews <<INDEX_SET>> {
+  PK pk_performance_reviews : (id) UNIQUE BTREE
+  IX ix_performance_reviews_employee_id : (employee_id) BTREE
+  IX ix_performance_reviews_reviewer_employee_id : (reviewer_employee_id) BTREE
+  IX ix_performance_reviews_rating_concept_id : (rating_concept_id) BTREE
+  IX ix_performance_reviews_status_concept_id : (status_concept_id) BTREE
+  IX ix_performance_reviews_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_performance_reviews_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+performance_reviews .. idxset_performance_reviews : indexed by
+
+entity "INDEXES · contracts" as idxset_contracts <<INDEX_SET>> {
+  PK pk_contracts : (id) UNIQUE BTREE
+  UK uq_contracts_contract_number : (contract_number) UNIQUE BTREE
+  IX ix_contracts_tenant_id : (tenant_id) BTREE
+  IX ix_contracts_contract_type_concept_id : (contract_type_concept_id) BTREE
+  IX ix_contracts_counterparty_type_concept_id : (counterparty_type_concept_id) BTREE
+  IX ix_contracts_renewal_type_concept_id : (renewal_type_concept_id) BTREE
+  IX ix_contracts_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_contracts_governing_jurisdiction_concept_id : (governing_jurisdiction_concept_id) BTREE
+  IX ix_contracts_owner_user_id : (owner_user_id) BTREE
+  IX ix_contracts_primary_business_partner_id : (primary_business_partner_id) BTREE
+  IX ix_contracts_current_version_id : (current_version_id) BTREE
+  IX ix_contracts_parent_contract_id : (parent_contract_id) BTREE
+  IX ix_contracts_master_agreement_id : (master_agreement_id) BTREE
+  IX ix_contracts_owning_department_id : (owning_department_id) BTREE
+  IX ix_contracts_owning_cost_center_id : (owning_cost_center_id) BTREE
+  IX ix_contracts_owning_profit_center_id : (owning_profit_center_id) BTREE
+  IX ix_contracts_approval_status_concept_id : (approval_status_concept_id) BTREE
+  IX ix_contracts_signature_status_concept_id : (signature_status_concept_id) BTREE
+  IX ix_contracts_status_concept_id : (status_concept_id) BTREE
+  IX ix_contracts_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_contracts_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_contracts_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+contracts .. idxset_contracts : indexed by
+
+entity "INDEXES · contract_parties" as idxset_contract_parties <<INDEX_SET>> {
+  PK pk_contract_parties : (id) UNIQUE BTREE
+  IX ix_contract_parties_contract_id : (contract_id) BTREE
+  IX ix_contract_parties_party_role_concept_id : (party_role_concept_id) BTREE
+  IX ix_contract_parties_party_type_concept_id : (party_type_concept_id) BTREE
+  IX ix_contract_parties_signatory_user_id : (signatory_user_id) BTREE
+  IX ix_contract_parties_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_contract_parties_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+contract_parties .. idxset_contract_parties : indexed by
+
+entity "INDEXES · contract_line_items" as idxset_contract_line_items <<INDEX_SET>> {
+  PK pk_contract_line_items : (id) UNIQUE BTREE
+  IX ix_contract_line_items_contract_id : (contract_id) BTREE
+  IX ix_contract_line_items_service_concept_id : (service_concept_id) BTREE
+  IX ix_contract_line_items_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_contract_line_items_recurrence_concept_id : (recurrence_concept_id) BTREE
+  IX ix_contract_line_items_account_id : (account_id) BTREE
+  IX ix_contract_line_items_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_contract_line_items_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+contract_line_items .. idxset_contract_line_items : indexed by
+
+entity "INDEXES · contract_milestones" as idxset_contract_milestones <<INDEX_SET>> {
+  PK pk_contract_milestones : (id) UNIQUE BTREE
+  IX ix_contract_milestones_contract_id : (contract_id) BTREE
+  IX ix_contract_milestones_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_contract_milestones_status_concept_id : (status_concept_id) BTREE
+  IX ix_contract_milestones_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_contract_milestones_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+contract_milestones .. idxset_contract_milestones : indexed by
+
+entity "INDEXES · contract_documents" as idxset_contract_documents <<INDEX_SET>> {
+  PK pk_contract_documents : (id) UNIQUE BTREE
+  IX ix_contract_documents_contract_id : (contract_id) BTREE
+  IX ix_contract_documents_document_type_concept_id : (document_type_concept_id) BTREE
+  IX ix_contract_documents_file_id : (file_id) BTREE
+  IX ix_contract_documents_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_contract_documents_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_contract_documents_contract_id_version : (contract_id, version) UNIQUE BTREE
+}
+
+contract_documents .. idxset_contract_documents : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

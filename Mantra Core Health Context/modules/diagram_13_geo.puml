@@ -1,0 +1,223 @@
+@startuml SALUD_Module_13_geo
+title Module 13 — Geolocation and Mobile Tracking\n(schema: geo)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_13_geo.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_13_geo
+  BUSINESS PURPOSE
+  Real-time location and mobile tracking, primarily for ambulances and
+  field staff: position telemetry, tracking sessions, virtual zones
+  (geofences) and trips.
+end note
+
+entity tracked_subjects {
+  * id : uuid <<PK>>
+  --
+  * subject_type_concept_id : uuid <<FK>>
+  * subject_id : uuid
+    device_id : uuid <<FK>>
+    tenant_id : uuid <<FK>>
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity location_pings <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * tracked_subject_id : uuid <<FK>>
+    device_id : uuid <<FK>>
+  * latitude : numeric
+  * longitude : numeric
+    accuracy_m : numeric
+    altitude_m : numeric
+    speed_mps : numeric
+    heading_deg : numeric
+    battery_pct : integer
+    network_concept_id : uuid <<FK>>
+    captured_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity tracking_sessions {
+  * id : uuid <<PK>>
+  --
+  * tracked_subject_id : uuid <<FK>>
+    purpose_concept_id : uuid <<FK>>
+    related_resource_type : varchar
+    related_resource_id : uuid
+  * status_concept_id : uuid <<FK>>
+    started_at : timestamptz
+    ended_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity geofences {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * name : varchar
+  * shape_type_concept_id : uuid <<FK>>
+    geometry_json : jsonb
+    radius_m : numeric
+    center_lat : numeric
+    center_lng : numeric
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity geofence_events <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * geofence_id : uuid <<FK>>
+  * tracked_subject_id : uuid <<FK>>
+  * event_type_concept_id : uuid <<FK>>
+    location_ping_id : uuid <<FK>>
+    occurred_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity trips {
+  * id : uuid <<PK>>
+  --
+    tracking_session_id : uuid <<FK>>
+    origin_address_id : uuid <<FK>>
+    destination_address_id : uuid <<FK>>
+    distance_m : numeric
+    duration_s : integer
+  * status_concept_id : uuid <<FK>>
+    started_at : timestamptz
+    ended_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+tracked_subjects ||--o{ location_pings
+tracked_subjects ||--o{ tracking_sessions
+geofences ||--o{ geofence_events
+tracked_subjects ||--o{ geofence_events
+tracking_sessions ||--o{ trips
+
+note as DEP_diagram_13_geo
+  Connects to other modules via:
+  devices, tenants
+end note
+
+note as REC_GEO_GEO_diagram_13_geo
+  REC 3.5 — SPATIAL TYPES
+location_pings/geofences store numeric lat/lng and jsonb geometry. For
+real geofencing and route/proximity math, adopt PostGIS
+(geography/geometry + GiST index); keep numeric columns for fast display.
+end note
+
+note as REC_POLY_GEO_diagram_13_geo
+  REC 3.1 — POLYMORPHIC TRACKING TARGET
+tracked_subjects.(subject_type_concept_id,subject_id) and
+tracking_sessions.(related_resource_type,related_resource_id) are
+polymorphic; validate discriminators against closed value_sets.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · tracked_subjects" as idxset_tracked_subjects <<INDEX_SET>> {
+  PK pk_tracked_subjects : (id) UNIQUE BTREE
+  IX ix_tracked_subjects_subject_type_concept_id : (subject_type_concept_id) BTREE
+  IX ix_tracked_subjects_device_id : (device_id) BTREE
+  IX ix_tracked_subjects_tenant_id : (tenant_id) BTREE
+  IX ix_tracked_subjects_state_concept_id : (state_concept_id) BTREE
+  IX ix_tracked_subjects_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_tracked_subjects_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_tracked_subjects_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+}
+
+tracked_subjects .. idxset_tracked_subjects : indexed by
+
+entity "INDEXES · location_pings" as idxset_location_pings <<INDEX_SET>> {
+  PK pk_location_pings : (id) UNIQUE BTREE
+  IX ix_location_pings_tracked_subject_id : (tracked_subject_id) BTREE
+  IX ix_location_pings_device_id : (device_id) BTREE
+  IX ix_location_pings_network_concept_id : (network_concept_id) BTREE
+  IX ix_location_pings_recorded_by_user_id : (recorded_by_user_id) BTREE
+  GIST gist_location_pings_location : geography_point GIST
+  BRIN brin_location_pings_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+location_pings .. idxset_location_pings : indexed by
+
+entity "INDEXES · tracking_sessions" as idxset_tracking_sessions <<INDEX_SET>> {
+  PK pk_tracking_sessions : (id) UNIQUE BTREE
+  IX ix_tracking_sessions_tracked_subject_id : (tracked_subject_id) BTREE
+  IX ix_tracking_sessions_purpose_concept_id : (purpose_concept_id) BTREE
+  IX ix_tracking_sessions_status_concept_id : (status_concept_id) BTREE
+  IX ix_tracking_sessions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_tracking_sessions_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+tracking_sessions .. idxset_tracking_sessions : indexed by
+
+entity "INDEXES · geofences" as idxset_geofences <<INDEX_SET>> {
+  PK pk_geofences : (id) UNIQUE BTREE
+  IX ix_geofences_tenant_id : (tenant_id) BTREE
+  IX ix_geofences_shape_type_concept_id : (shape_type_concept_id) BTREE
+  IX ix_geofences_state_concept_id : (state_concept_id) BTREE
+  IX ix_geofences_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_geofences_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_geofences_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+}
+
+geofences .. idxset_geofences : indexed by
+
+entity "INDEXES · geofence_events" as idxset_geofence_events <<INDEX_SET>> {
+  PK pk_geofence_events : (id) UNIQUE BTREE
+  IX ix_geofence_events_geofence_id : (geofence_id) BTREE
+  IX ix_geofence_events_tracked_subject_id : (tracked_subject_id) BTREE
+  IX ix_geofence_events_event_type_concept_id : (event_type_concept_id) BTREE
+  IX ix_geofence_events_location_ping_id : (location_ping_id) BTREE
+  IX ix_geofence_events_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_geofence_events_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+geofence_events .. idxset_geofence_events : indexed by
+
+entity "INDEXES · trips" as idxset_trips <<INDEX_SET>> {
+  PK pk_trips : (id) UNIQUE BTREE
+  IX ix_trips_tracking_session_id : (tracking_session_id) BTREE
+  IX ix_trips_origin_address_id : (origin_address_id) BTREE
+  IX ix_trips_destination_address_id : (destination_address_id) BTREE
+  IX ix_trips_status_concept_id : (status_concept_id) BTREE
+  IX ix_trips_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_trips_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+trips .. idxset_trips : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

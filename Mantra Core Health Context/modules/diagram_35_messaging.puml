@@ -1,0 +1,862 @@
+@startuml SALUD_Module_35_messaging
+title Module 35 — Domain Events, Outbox, Queues and Notification Delivery\n(schema: messaging)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_35_messaging.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_35_messaging
+  BUSINESS PURPOSE
+  Provides durable domain events, transactional outbox publication, subscriptions,
+  generic worker queues, retries and dead-letter evidence. User notification delivery
+  is separated into module 35B while remaining in the same messaging schema.
+end note
+
+entity domain_events <<LOG>> {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * event_type : varchar
+  * event_version : integer
+  * aggregate_type : varchar
+  * aggregate_id : uuid
+  * payload_json : jsonb
+    metadata_json : jsonb
+  * correlation_id : varchar
+    causation_id : uuid <<FK>>
+    occurred_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+entity outbox_messages {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * domain_event_id : uuid <<FK>>
+  * aggregate_type : varchar
+  * aggregate_id : uuid
+  * idempotency_key : varchar <<UK>>
+  * payload_json : jsonb
+  * status_concept_id : uuid <<FK>>
+    available_at : timestamptz
+    published_at : timestamptz
+  * attempts : integer
+  * max_attempts : integer
+    locked_by : varchar
+    lock_expires_at : timestamptz
+    last_error_text : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity event_subscriptions {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * subscriber_code : varchar
+  * event_type : varchar
+    event_version : integer
+  * delivery_mode_concept_id : uuid <<FK>>
+    target_queue : varchar
+    filter_json : jsonb
+  * is_active : boolean
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity event_deliveries <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * domain_event_id : uuid <<FK>>
+  * subscription_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * attempt_number : integer
+    error_text : text
+    handled_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+entity message_queues {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * name : varchar
+    default_priority : integer
+    default_max_attempts : integer
+    visibility_timeout_s : integer
+    dead_letter_queue_id : uuid <<FK>>
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity queued_jobs {
+  * id : uuid <<PK>>
+  --
+  * queue_id : uuid <<FK>>
+    tenant_id : uuid <<FK>>
+  * job_type : varchar
+    dedupe_key : varchar <<UK>>
+  * priority : integer
+  * payload_json : jsonb
+  * status_concept_id : uuid <<FK>>
+    available_at : timestamptz
+    started_at : timestamptz
+    completed_at : timestamptz
+  * attempts : integer
+  * max_attempts : integer
+    locked_by : varchar
+    lock_expires_at : timestamptz
+    last_error_text : text
+    result_json : jsonb
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity dead_letter_jobs <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * queue_id : uuid <<FK>>
+  * original_job_id : uuid <<FK>>
+  * failure_reason_text : text
+  * payload_json : jsonb
+  * attempts : integer
+    failed_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+domain_events ||--o{ outbox_messages
+domain_events ||--o{ event_deliveries
+event_subscriptions ||--o{ event_deliveries
+message_queues ||--o{ queued_jobs
+message_queues ||--o{ dead_letter_jobs
+queued_jobs ||--o{ dead_letter_jobs
+
+note as DEP_diagram_35_messaging
+  Connects to directory.tenants, iam.users, terminology.catalog_concepts and all
+  write modules. Domain events and outbox rows are committed with the business change.
+end note
+
+note as REC_OUTBOX_diagram_35_messaging
+  TRANSACTIONAL OUTBOX CONTRACT
+  A persistent relay worker claims rows with SELECT ... FOR UPDATE SKIP LOCKED,
+  honours idempotency_key, applies bounded retries and moves exhausted work to DLQ.
+  External providers are never called inside the business transaction.
+end note
+
+note as REC_POLY_MSG_diagram_35_messaging
+  domain_events.(aggregate_type, aggregate_id) is polymorphic. The aggregate_type
+  discriminator must use a closed value set and be validated against entity_registry.
+end note
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_35b_notification_delivery.puml
+' ------------------------------------------------------------------------------
+entity in_app_notifications {
+  * id : uuid <<PK>>
+  --
+  * recipient_user_id : uuid <<FK>>
+    tenant_id : uuid <<FK>>
+  * channel_concept_id : uuid <<FK>>
+    category_concept_id : uuid <<FK>>
+    template_code : varchar
+    subject : varchar
+    body_text : text
+    payload_json : jsonb
+    related_resource_type : varchar
+    related_resource_id : uuid
+  * status_concept_id : uuid <<FK>>
+    scheduled_at : timestamptz
+    sent_at : timestamptz
+    read_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+  ' + v4.0.1
+  * notification_request_id : uuid <<FK>>
+  * notification_delivery_id : uuid <<FK>>
+    dispatch_recipient_id : uuid <<FK>>
+  * available_at : timestamptz
+    first_seen_at : timestamptz
+    last_seen_at : timestamptz
+    opened_at : timestamptz
+    dismissed_at : timestamptz
+    archived_at : timestamptz
+    expires_at : timestamptz
+    action_state_json : jsonb
+}
+
+note as BIZ_diagram_35b_notification_delivery
+  BUSINESS PURPOSE
+  Handles consent-aware, template-driven delivery over configured channels and
+  providers. Requests, attempts and receipts remain traceable without copying PHI into
+  provider payloads beyond the minimum approved for the notification purpose.
+end note
+
+entity message_channels {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * name : varchar
+  * channel_type_concept_id : uuid <<FK>>
+    supports_templates : boolean
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity messaging_providers {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * name : varchar
+  * provider_type_concept_id : uuid <<FK>>
+    capabilities_json : jsonb
+    external_provider_id : uuid <<FK>>
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+  ' + v4.0.1
+  * adapter_code : varchar
+  * adapter_version : varchar
+  * is_builtin : boolean
+  * supports_webhooks : boolean
+  * supports_polling : boolean
+  * supports_delivery_receipts : boolean
+  * supports_read_receipts : boolean
+  * supports_click_receipts : boolean
+  * supports_reply_receipts : boolean
+    provider_time_semantics_concept_id : uuid <<FK>>
+}
+
+entity provider_channel_configs {
+  * id : uuid <<PK>>
+  --
+  * provider_id : uuid <<FK>>
+  * channel_id : uuid <<FK>>
+    tenant_id : uuid <<FK>>
+    sender_identity : varchar
+    credential_id : uuid <<FK>>
+    config_json : jsonb
+    priority : integer
+    rate_limit_per_min : integer
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+  ' + v4.0.1
+  * adapter_config_version : integer
+    webhook_endpoint_key : varchar
+    webhook_secret_credential_id : uuid <<FK>>
+    webhook_signature_scheme_concept_id : uuid <<FK>>
+  * tracking_mode_concept_id : uuid <<FK>>
+    polling_interval_seconds : integer
+  * status_mapping_version : integer
+    enabled_at : timestamptz
+    disabled_at : timestamptz
+    enabled_by_user_id : uuid <<FK>>
+    disabled_by_user_id : uuid <<FK>>
+}
+
+entity message_templates {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * code : varchar
+  * channel_id : uuid <<FK>>
+    language_concept_id : uuid <<FK>>
+  * subject_template : varchar
+  * body_template : text
+    variables_json : jsonb
+    provider_template_ref : varchar
+  * version : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity notification_requests {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * recipient_user_id : uuid <<FK>>
+    recipient_address : varchar
+  * channel_id : uuid <<FK>>
+    template_id : uuid <<FK>>
+    domain_event_id : uuid <<FK>>
+    payload_json : jsonb
+    debounce_key : varchar
+  * priority : integer
+    category_concept_id : uuid <<FK>>
+    related_resource_type : varchar
+    related_resource_id : uuid
+  * status_concept_id : uuid <<FK>>
+    scheduled_at : timestamptz
+    consent_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+  ' + v4.0.1
+    dispatch_id : uuid <<FK>>
+    dispatch_recipient_id : uuid <<FK>>
+  * recipient_type_concept_id : uuid <<FK>>
+  * recipient_ref_id : uuid
+    recipient_endpoint_id : uuid <<FK>>
+  * source_concept_id : uuid <<FK>>
+  * authorized_by_user_id : uuid <<FK>>
+  * authorization_snapshot_json : jsonb
+  * content_snapshot_json : jsonb
+  * content_hash : varchar
+  * idempotency_key : varchar
+    expires_at : timestamptz
+    cancellation_requested_at : timestamptz
+    cancelled_at : timestamptz
+}
+
+entity notification_deliveries {
+  * id : uuid <<PK>>
+  --
+  * notification_request_id : uuid <<FK>>
+  * provider_id : uuid <<FK>>
+  * channel_id : uuid <<FK>>
+  * attempt_number : integer
+    provider_message_ref : varchar
+  * status_concept_id : uuid <<FK>>
+    error_code : varchar
+    error_text : text
+    cost_amount : numeric
+    currency_concept_id : uuid <<FK>>
+    sent_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+  ' + v4.0.1
+  * provider_channel_config_id : uuid <<FK>>
+  * adapter_code : varchar
+  * adapter_version : varchar
+    started_at : timestamptz
+    accepted_at : timestamptz
+    delivered_at : timestamptz
+    seen_at : timestamptz
+    read_at : timestamptz
+    clicked_at : timestamptz
+    replied_at : timestamptz
+    bounced_at : timestamptz
+    failed_at : timestamptz
+    cancelled_at : timestamptz
+    expired_at : timestamptz
+    terminal_at : timestamptz
+    last_event_at : timestamptz
+    last_event_id : uuid <<FK>>
+    provider_status_raw : varchar
+    provider_response_hash : varchar
+}
+
+entity delivery_receipts <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * delivery_id : uuid <<FK>>
+  * receipt_type_concept_id : uuid <<FK>>
+    provider_status : varchar
+    raw_payload_json : jsonb
+    occurred_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+entity recipient_preferences {
+  * id : uuid <<PK>>
+  --
+  * user_id : uuid <<FK>>
+    tenant_id : uuid <<FK>>
+  * channel_id : uuid <<FK>>
+    category_concept_id : uuid <<FK>>
+  * opted_in : boolean
+    quiet_hours_json : jsonb
+    language_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+message_channels ||--o{ provider_channel_configs
+messaging_providers ||--o{ provider_channel_configs
+message_channels ||--o{ message_templates
+message_channels ||--o{ notification_requests
+message_templates |o--o{ notification_requests
+notification_requests ||--o{ notification_deliveries
+messaging_providers ||--o{ notification_deliveries
+notification_deliveries ||--o{ delivery_receipts
+message_channels ||--o{ recipient_preferences
+
+note as DEP_diagram_35b_notification_delivery
+  Connects to iam.users, directory.tenants, consent.consents,
+  integrations.external_providers and integrations.provider_credentials.
+end note
+
+note as REC_POLY_MSG_diagram_35b_notification_delivery
+  notification_requests.(related_resource_type, related_resource_id) is polymorphic;
+  validate the type through a closed value set. debounce_key collapses duplicate
+  notifications while preserving one auditable request and its delivery attempts.
+end note
+
+
+' ===== v4.0.1 (scheduled campaigns / site-admin / tracking) =====
+entity adapter_event_mappings {
+  * id : uuid <<PK>>
+  --
+  * provider_id : uuid <<FK>>
+  * channel_id : uuid <<FK>>
+  * mapping_version : integer
+  * external_event_code : varchar
+  * canonical_event_type_concept_id : uuid <<FK>>
+  * canonical_delivery_status_concept_id : uuid <<FK>>
+  * terminal : boolean
+    success : boolean
+  * precedence : integer
+    condition_json : jsonb
+  * effective_from : timestamptz
+    effective_to : timestamptz
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  * created_by_user_id : uuid <<FK>>
+  * updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity adapter_inbound_events <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * provider_id : uuid <<FK>>
+  * provider_channel_config_id : uuid <<FK>>
+  * channel_id : uuid <<FK>>
+  * ingestion_type_concept_id : uuid <<FK>>
+    external_event_id : varchar
+  * external_event_code : varchar
+    provider_message_ref : varchar
+    payload_json_encrypted : jsonb
+    payload_storage_ref : varchar
+  * payload_sha256 : varchar
+    headers_redacted_json : jsonb
+  * signature_status_concept_id : uuid <<FK>>
+  * replay_status_concept_id : uuid <<FK>>
+  * received_at : timestamptz
+    provider_occurred_at : timestamptz
+  * processing_status_concept_id : uuid <<FK>>
+  * processing_attempts : integer
+    mapping_version : integer
+    delivery_id : uuid <<FK>>
+    normalization_error_code : varchar
+    normalization_error_detail : text
+  * recorded_at : timestamptz
+}
+
+entity adapter_tracking_capabilities {
+  * id : uuid <<PK>>
+  --
+  * provider_id : uuid <<FK>>
+  * channel_id : uuid <<FK>>
+  * canonical_event_type_concept_id : uuid <<FK>>
+  * support_level_concept_id : uuid <<FK>>
+  * evidence_source_concept_id : uuid <<FK>>
+    notes : text
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  * created_by_user_id : uuid <<FK>>
+  * updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity delivery_reconciliation_runs {
+  * id : uuid <<PK>>
+  --
+  * provider_channel_config_id : uuid <<FK>>
+  * started_at : timestamptz
+    finished_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * query_window_from : timestamptz
+  * query_window_to : timestamptz
+  * deliveries_checked : bigint
+  * events_imported : bigint
+  * inconsistencies_found : bigint
+    error_detail : text
+  * created_by_user_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity delivery_status_transitions {
+  * id : uuid <<PK>>
+  --
+    from_status_concept_id : uuid <<FK>>
+  * event_type_concept_id : uuid <<FK>>
+  * to_status_concept_id : uuid <<FK>>
+    channel_type_concept_id : uuid <<FK>>
+  * allow_late_event : boolean
+  * allow_after_terminal : boolean
+  * precedence : integer
+  * state_concept_id : uuid <<FK>>
+}
+
+entity delivery_tracking_events <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * delivery_id : uuid <<FK>>
+  * notification_request_id : uuid <<FK>>
+    dispatch_id : uuid <<FK>>
+    dispatch_recipient_id : uuid <<FK>>
+    inbound_event_id : uuid <<FK>>
+  * canonical_event_type_concept_id : uuid <<FK>>
+  * resulting_status_concept_id : uuid <<FK>>
+  * source_concept_id : uuid <<FK>>
+    provider_event_code : varchar
+    provider_event_id : varchar
+    provider_message_ref : varchar
+    sequence_number : bigint
+  * occurred_at : timestamptz
+  * received_at : timestamptz
+  * effective_at : timestamptz
+  * precedence : integer
+  * is_terminal : boolean
+    is_success : boolean
+  * is_late : boolean
+  * is_duplicate : boolean
+    metadata_json : jsonb
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+messaging_providers ||--o{ adapter_tracking_capabilities
+messaging_providers ||--o{ adapter_event_mappings
+provider_channel_configs ||--o{ adapter_inbound_events
+provider_channel_configs ||--o{ delivery_reconciliation_runs
+notification_deliveries ||--o{ delivery_tracking_events
+adapter_inbound_events |o--o{ delivery_tracking_events
+' ===== v4.0.1 (scheduled campaigns / site-admin / tracking) ===== (fin entidades)
+
+package "Physical Indexes" {
+entity "INDEXES · domain_events" as idxset_domain_events <<INDEX_SET>> {
+  PK pk_domain_events : (id) UNIQUE BTREE
+  IX ix_domain_events_tenant_id : (tenant_id) BTREE
+  IX ix_domain_events_causation_id : (causation_id) BTREE
+  IX ix_domain_events_recorded_by_user_id : (recorded_by_user_id) BTREE
+  IX ix_domain_events_tenant_id_recorded_at : (tenant_id, recorded_at DESC) BTREE
+  BRIN brin_domain_events_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+domain_events .. idxset_domain_events : indexed by
+
+entity "INDEXES · outbox_messages" as idxset_outbox_messages <<INDEX_SET>> {
+  PK pk_outbox_messages : (id) UNIQUE BTREE
+  UK uq_outbox_messages_idempotency_key : (idempotency_key) UNIQUE BTREE
+  IX ix_outbox_messages_tenant_id : (tenant_id) BTREE
+  IX ix_outbox_messages_domain_event_id : (domain_event_id) BTREE
+  IX ix_outbox_messages_status_concept_id : (status_concept_id) BTREE
+  IX ix_outbox_messages_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_outbox_messages_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_outbox_messages_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+outbox_messages .. idxset_outbox_messages : indexed by
+
+entity "INDEXES · event_subscriptions" as idxset_event_subscriptions <<INDEX_SET>> {
+  PK pk_event_subscriptions : (id) UNIQUE BTREE
+  IX ix_event_subscriptions_tenant_id : (tenant_id) BTREE
+  IX ix_event_subscriptions_delivery_mode_concept_id : (delivery_mode_concept_id) BTREE
+  IX ix_event_subscriptions_state_concept_id : (state_concept_id) BTREE
+  IX ix_event_subscriptions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_event_subscriptions_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_event_subscriptions_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+}
+
+event_subscriptions .. idxset_event_subscriptions : indexed by
+
+entity "INDEXES · event_deliveries" as idxset_event_deliveries <<INDEX_SET>> {
+  PK pk_event_deliveries : (id) UNIQUE BTREE
+  IX ix_event_deliveries_domain_event_id : (domain_event_id) BTREE
+  IX ix_event_deliveries_subscription_id : (subscription_id) BTREE
+  IX ix_event_deliveries_status_concept_id : (status_concept_id) BTREE
+  IX ix_event_deliveries_recorded_by_user_id : (recorded_by_user_id) BTREE
+  UK uq_event_deliveries_domain_event_id_attempt_number : (domain_event_id, attempt_number) UNIQUE BTREE
+  BRIN brin_event_deliveries_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+event_deliveries .. idxset_event_deliveries : indexed by
+
+entity "INDEXES · message_queues" as idxset_message_queues <<INDEX_SET>> {
+  PK pk_message_queues : (id) UNIQUE BTREE
+  UK uq_message_queues_code : (code) UNIQUE BTREE
+  IX ix_message_queues_dead_letter_queue_id : (dead_letter_queue_id) BTREE
+  IX ix_message_queues_state_concept_id : (state_concept_id) BTREE
+  IX ix_message_queues_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_message_queues_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+message_queues .. idxset_message_queues : indexed by
+
+entity "INDEXES · queued_jobs" as idxset_queued_jobs <<INDEX_SET>> {
+  PK pk_queued_jobs : (id) UNIQUE BTREE
+  UK uq_queued_jobs_dedupe_key : (dedupe_key) UNIQUE BTREE
+  IX ix_queued_jobs_queue_id : (queue_id) BTREE
+  IX ix_queued_jobs_tenant_id : (tenant_id) BTREE
+  IX ix_queued_jobs_status_concept_id : (status_concept_id) BTREE
+  IX ix_queued_jobs_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_queued_jobs_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_queued_jobs_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+queued_jobs .. idxset_queued_jobs : indexed by
+
+entity "INDEXES · dead_letter_jobs" as idxset_dead_letter_jobs <<INDEX_SET>> {
+  PK pk_dead_letter_jobs : (id) UNIQUE BTREE
+  IX ix_dead_letter_jobs_queue_id : (queue_id) BTREE
+  IX ix_dead_letter_jobs_original_job_id : (original_job_id) BTREE
+  IX ix_dead_letter_jobs_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_dead_letter_jobs_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+dead_letter_jobs .. idxset_dead_letter_jobs : indexed by
+
+entity "INDEXES · in_app_notifications" as idxset_in_app_notifications <<INDEX_SET>> {
+  PK pk_in_app_notifications : (id) UNIQUE BTREE
+  IX ix_in_app_notifications_recipient_user_id : (recipient_user_id) BTREE
+  IX ix_in_app_notifications_tenant_id : (tenant_id) BTREE
+  IX ix_in_app_notifications_channel_concept_id : (channel_concept_id) BTREE
+  IX ix_in_app_notifications_category_concept_id : (category_concept_id) BTREE
+  IX ix_in_app_notifications_status_concept_id : (status_concept_id) BTREE
+  IX ix_in_app_notifications_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_in_app_notifications_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_in_app_notifications_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+in_app_notifications .. idxset_in_app_notifications : indexed by
+
+entity "INDEXES · message_channels" as idxset_message_channels <<INDEX_SET>> {
+  PK pk_message_channels : (id) UNIQUE BTREE
+  UK uq_message_channels_code : (code) UNIQUE BTREE
+  IX ix_message_channels_channel_type_concept_id : (channel_type_concept_id) BTREE
+  IX ix_message_channels_state_concept_id : (state_concept_id) BTREE
+  IX ix_message_channels_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_message_channels_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+message_channels .. idxset_message_channels : indexed by
+
+entity "INDEXES · messaging_providers" as idxset_messaging_providers <<INDEX_SET>> {
+  PK pk_messaging_providers : (id) UNIQUE BTREE
+  UK uq_messaging_providers_code : (code) UNIQUE BTREE
+  IX ix_messaging_providers_provider_type_concept_id : (provider_type_concept_id) BTREE
+  IX ix_messaging_providers_external_provider_id : (external_provider_id) BTREE
+  IX ix_messaging_providers_state_concept_id : (state_concept_id) BTREE
+  IX ix_messaging_providers_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_messaging_providers_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+messaging_providers .. idxset_messaging_providers : indexed by
+
+entity "INDEXES · provider_channel_configs" as idxset_provider_channel_configs <<INDEX_SET>> {
+  PK pk_provider_channel_configs : (id) UNIQUE BTREE
+  IX ix_provider_channel_configs_provider_id : (provider_id) BTREE
+  IX ix_provider_channel_configs_channel_id : (channel_id) BTREE
+  IX ix_provider_channel_configs_tenant_id : (tenant_id) BTREE
+  IX ix_provider_channel_configs_credential_id : (credential_id) BTREE
+  IX ix_provider_channel_configs_state_concept_id : (state_concept_id) BTREE
+  IX ix_provider_channel_configs_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_provider_channel_configs_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_provider_channel_configs_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+}
+
+provider_channel_configs .. idxset_provider_channel_configs : indexed by
+
+entity "INDEXES · message_templates" as idxset_message_templates <<INDEX_SET>> {
+  PK pk_message_templates : (id) UNIQUE BTREE
+  IX ix_message_templates_tenant_id : (tenant_id) BTREE
+  IX ix_message_templates_channel_id : (channel_id) BTREE
+  IX ix_message_templates_language_concept_id : (language_concept_id) BTREE
+  IX ix_message_templates_status_concept_id : (status_concept_id) BTREE
+  IX ix_message_templates_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_message_templates_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_message_templates_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  UK uq_message_templates_channel_id_version : (channel_id, version) UNIQUE BTREE
+}
+
+message_templates .. idxset_message_templates : indexed by
+
+entity "INDEXES · notification_requests" as idxset_notification_requests <<INDEX_SET>> {
+  PK pk_notification_requests : (id) UNIQUE BTREE
+  IX ix_notification_requests_tenant_id : (tenant_id) BTREE
+  IX ix_notification_requests_recipient_user_id : (recipient_user_id) BTREE
+  IX ix_notification_requests_channel_id : (channel_id) BTREE
+  IX ix_notification_requests_template_id : (template_id) BTREE
+  IX ix_notification_requests_domain_event_id : (domain_event_id) BTREE
+  IX ix_notification_requests_category_concept_id : (category_concept_id) BTREE
+  IX ix_notification_requests_status_concept_id : (status_concept_id) BTREE
+  IX ix_notification_requests_consent_id : (consent_id) BTREE
+  IX ix_notification_requests_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_notification_requests_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_notification_requests_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+notification_requests .. idxset_notification_requests : indexed by
+
+entity "INDEXES · notification_deliveries" as idxset_notification_deliveries <<INDEX_SET>> {
+  PK pk_notification_deliveries : (id) UNIQUE BTREE
+  IX ix_notification_deliveries_notification_request_id : (notification_request_id) BTREE
+  IX ix_notification_deliveries_provider_id : (provider_id) BTREE
+  IX ix_notification_deliveries_channel_id : (channel_id) BTREE
+  IX ix_notification_deliveries_status_concept_id : (status_concept_id) BTREE
+  IX ix_notification_deliveries_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_notification_deliveries_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_notification_deliveries_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_notification_deliveries_notification_request_id_att_f36b3e5c : (notification_request_id, attempt_number) UNIQUE BTREE
+}
+
+notification_deliveries .. idxset_notification_deliveries : indexed by
+
+entity "INDEXES · delivery_receipts" as idxset_delivery_receipts <<INDEX_SET>> {
+  PK pk_delivery_receipts : (id) UNIQUE BTREE
+  IX ix_delivery_receipts_delivery_id : (delivery_id) BTREE
+  IX ix_delivery_receipts_receipt_type_concept_id : (receipt_type_concept_id) BTREE
+  IX ix_delivery_receipts_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_delivery_receipts_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+delivery_receipts .. idxset_delivery_receipts : indexed by
+
+entity "INDEXES · recipient_preferences" as idxset_recipient_preferences <<INDEX_SET>> {
+  PK pk_recipient_preferences : (id) UNIQUE BTREE
+  IX ix_recipient_preferences_user_id : (user_id) BTREE
+  IX ix_recipient_preferences_tenant_id : (tenant_id) BTREE
+  IX ix_recipient_preferences_channel_id : (channel_id) BTREE
+  IX ix_recipient_preferences_category_concept_id : (category_concept_id) BTREE
+  IX ix_recipient_preferences_language_concept_id : (language_concept_id) BTREE
+  IX ix_recipient_preferences_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_recipient_preferences_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_recipient_preferences_tenant_id_updated_at : (tenant_id, updated_at DESC) BTREE
+}
+
+recipient_preferences .. idxset_recipient_preferences : indexed by
+' ===== v4.0.1 (scheduled campaigns / site-admin / tracking) ===== (index sets)
+entity "INDEXES · adapter_event_mappings" as idxset_adapter_event_mappings <<INDEX_SET>> {
+  PK pk_adapter_event_mappings : (id) UNIQUE BTREE
+  UK uq_adapter_event_mappings_provider_id : (provider_id, channel_id, mapping_version, external_event_code) UNIQUE BTREE
+  IX ix_adapter_event_mappings_provider_id : (provider_id) BTREE
+  IX ix_adapter_event_mappings_channel_id : (channel_id) BTREE
+  IX ix_adapter_event_mappings_canonical_event_type_concept_id : (canonical_event_type_concept_id) BTREE
+  IX ix_adapter_event_mappings_canonical_delivery_status_concept_id : (canonical_delivery_status_concept_id) BTREE
+  IX ix_adapter_event_mappings_state_concept_id : (state_concept_id) BTREE
+  IX ix_adapter_event_mappings_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_adapter_event_mappings_updated_by_user_id : (updated_by_user_id) BTREE
+}
+adapter_event_mappings .. idxset_adapter_event_mappings : indexed by
+entity "INDEXES · adapter_inbound_events" as idxset_adapter_inbound_events <<INDEX_SET>> {
+  PK pk_adapter_inbound_events : (id) UNIQUE BTREE
+  UK uq_adapter_inbound_events_provider_id : (provider_id, external_event_id) UNIQUE BTREE
+  UK uq_adapter_inbound_events_provider_id : (provider_id, payload_sha256, received_time_bucket) UNIQUE BTREE
+  IX ix_adapter_inbound_events_provider_id : (provider_id) BTREE
+  IX ix_adapter_inbound_events_provider_channel_config_id : (provider_channel_config_id) BTREE
+  IX ix_adapter_inbound_events_channel_id : (channel_id) BTREE
+  IX ix_adapter_inbound_events_ingestion_type_concept_id : (ingestion_type_concept_id) BTREE
+  IX ix_adapter_inbound_events_signature_status_concept_id : (signature_status_concept_id) BTREE
+  IX ix_adapter_inbound_events_replay_status_concept_id : (replay_status_concept_id) BTREE
+  IX ix_adapter_inbound_events_processing_status_concept_id : (processing_status_concept_id) BTREE
+  IX ix_adapter_inbound_events_delivery_id : (delivery_id) BTREE
+}
+adapter_inbound_events .. idxset_adapter_inbound_events : indexed by
+entity "INDEXES · adapter_tracking_capabilities" as idxset_adapter_tracking_capabilities <<INDEX_SET>> {
+  PK pk_adapter_tracking_capabilities : (id) UNIQUE BTREE
+  IX ix_adapter_tracking_capabilities_provider_id : (provider_id) BTREE
+  IX ix_adapter_tracking_capabilities_channel_id : (channel_id) BTREE
+  IX ix_adapter_tracking_capabilities_canonical_event_type_concept_id : (canonical_event_type_concept_id) BTREE
+  IX ix_adapter_tracking_capabilities_support_level_concept_id : (support_level_concept_id) BTREE
+  IX ix_adapter_tracking_capabilities_evidence_source_concept_id : (evidence_source_concept_id) BTREE
+  IX ix_adapter_tracking_capabilities_state_concept_id : (state_concept_id) BTREE
+  IX ix_adapter_tracking_capabilities_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_adapter_tracking_capabilities_updated_by_user_id : (updated_by_user_id) BTREE
+}
+adapter_tracking_capabilities .. idxset_adapter_tracking_capabilities : indexed by
+entity "INDEXES · delivery_reconciliation_runs" as idxset_delivery_reconciliation_runs <<INDEX_SET>> {
+  PK pk_delivery_reconciliation_runs : (id) UNIQUE BTREE
+  IX ix_delivery_reconciliation_runs_provider_channel_config_id : (provider_channel_config_id) BTREE
+  IX ix_delivery_reconciliation_runs_status_concept_id : (status_concept_id) BTREE
+  IX ix_delivery_reconciliation_runs_created_by_user_id : (created_by_user_id) BTREE
+}
+delivery_reconciliation_runs .. idxset_delivery_reconciliation_runs : indexed by
+entity "INDEXES · delivery_status_transitions" as idxset_delivery_status_transitions <<INDEX_SET>> {
+  PK pk_delivery_status_transitions : (id) UNIQUE BTREE
+  IX ix_delivery_status_transitions_from_status_concept_id : (from_status_concept_id) BTREE
+  IX ix_delivery_status_transitions_event_type_concept_id : (event_type_concept_id) BTREE
+  IX ix_delivery_status_transitions_to_status_concept_id : (to_status_concept_id) BTREE
+  IX ix_delivery_status_transitions_channel_type_concept_id : (channel_type_concept_id) BTREE
+  IX ix_delivery_status_transitions_state_concept_id : (state_concept_id) BTREE
+}
+delivery_status_transitions .. idxset_delivery_status_transitions : indexed by
+entity "INDEXES · delivery_tracking_events" as idxset_delivery_tracking_events <<INDEX_SET>> {
+  PK pk_delivery_tracking_events : (id) UNIQUE BTREE
+  UK uq_delivery_tracking_events_delivery_id : (delivery_id, source_concept_id, provider_event_id) UNIQUE BTREE
+  UK uq_delivery_tracking_events_delivery_id : (delivery_id, canonical_event_type_concept_id, sequence_number) UNIQUE BTREE
+  IX ix_delivery_tracking_events_delivery_id : (delivery_id) BTREE
+  IX ix_delivery_tracking_events_notification_request_id : (notification_request_id) BTREE
+  IX ix_delivery_tracking_events_dispatch_id : (dispatch_id) BTREE
+  IX ix_delivery_tracking_events_dispatch_recipient_id : (dispatch_recipient_id) BTREE
+  IX ix_delivery_tracking_events_inbound_event_id : (inbound_event_id) BTREE
+  IX ix_delivery_tracking_events_canonical_event_type_concept_id : (canonical_event_type_concept_id) BTREE
+  IX ix_delivery_tracking_events_resulting_status_concept_id : (resulting_status_concept_id) BTREE
+  IX ix_delivery_tracking_events_source_concept_id : (source_concept_id) BTREE
+  IX ix_delivery_tracking_events_recorded_by_user_id : (recorded_by_user_id) BTREE
+}
+delivery_tracking_events .. idxset_delivery_tracking_events : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

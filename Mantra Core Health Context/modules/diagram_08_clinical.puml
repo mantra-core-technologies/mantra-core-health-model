@@ -1,0 +1,977 @@
+@startuml SALUD_Module_08_clinical
+title Module 08 — Core Clinical Record, Orders and Encounter Logistics\n(schema: clinical)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_08_clinical.puml
+' ------------------------------------------------------------------------------
+entity family_member_history {
+  * id : uuid <<PK>>
+  --
+  * custodian_tenant_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+  * relationship_concept_id : uuid <<FK>>
+    condition_concept_id : uuid <<FK>>
+    onset_age_years : integer
+    deceased : boolean
+    deceased_age_years : integer
+    note_text : text
+    recorded_by_user_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity social_history {
+  * id : uuid <<PK>>
+  --
+  * custodian_tenant_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+  * category_concept_id : uuid <<FK>>
+    status_concept_id : uuid <<FK>>
+    value_concept_id : uuid <<FK>>
+    value_text : text
+    quantity_decimal : numeric
+    unit_concept_id : uuid <<FK>>
+    effective_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+note as BIZ_diagram_08_clinical
+  Stores the canonical encounter-centered clinical record, coded findings,
+  allergies, orders and diagnostic reports. Specialized medication, procedure,
+  appointment and participation records are separated into Module 08B.
+end note
+
+entity care_episodes {
+  * id : uuid <<PK>>
+  --
+  * patient_profile_id : uuid <<FK>>
+  * tenant_id : uuid <<FK>>
+    responsible_practitioner_id : uuid <<FK>>
+    type_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    start_at : timestamptz
+    end_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity encounters {
+  * id : uuid <<PK>>
+  --
+  * patient_profile_id : uuid <<FK>>
+    episode_id : uuid <<FK>>
+  * tenant_id : uuid <<FK>>
+    branch_id : uuid <<FK>>
+    primary_practitioner_id : uuid <<FK>>
+    class_concept_id : uuid <<FK>>
+    type_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    reason_text : text
+    start_at : timestamptz
+    end_at : timestamptz
+    appointment_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity observations {
+  * id : uuid <<PK>>
+  --
+  * custodian_tenant_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+    encounter_id : uuid <<FK>>
+    based_on_service_request_id : uuid <<FK>>
+    category_concept_id : uuid <<FK>>
+  * code_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * value_type_concept_id : uuid <<FK>>
+    value_decimal : numeric
+    value_integer : bigint
+    value_boolean : boolean
+    value_text : text
+    value_concept_id : uuid <<FK>>
+    value_datetime : timestamptz
+    value_date : date
+    quantity_value : numeric
+    quantity_unit_concept_id : uuid <<FK>>
+    range_low_value : numeric
+    range_high_value : numeric
+    range_unit_concept_id : uuid <<FK>>
+    ratio_numerator_value : numeric
+    ratio_numerator_unit_concept_id : uuid <<FK>>
+    ratio_denominator_value : numeric
+    ratio_denominator_unit_concept_id : uuid <<FK>>
+    sampled_data_json : jsonb
+    value_file_id : uuid <<FK>>
+    value_reference_type_concept_id : uuid <<FK>>
+    value_reference_id : uuid
+    data_absent_reason_concept_id : uuid <<FK>>
+    interpretation_concept_id : uuid <<FK>>
+    method_concept_id : uuid <<FK>>
+    body_site_concept_id : uuid <<FK>>
+    specimen_id : uuid <<FK>>
+    source_device_id : uuid <<FK>>
+    effective_start_at : timestamptz
+    effective_end_at : timestamptz
+    issued_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity observation_components {
+  * id : uuid <<PK>>
+  --
+  * observation_id : uuid <<FK>>
+  * code_concept_id : uuid <<FK>>
+  * value_type_concept_id : uuid <<FK>>
+    value_decimal : numeric
+    value_integer : bigint
+    value_boolean : boolean
+    value_text : text
+    value_concept_id : uuid <<FK>>
+    value_datetime : timestamptz
+    quantity_value : numeric
+    quantity_unit_concept_id : uuid <<FK>>
+    range_low_value : numeric
+    range_high_value : numeric
+    range_unit_concept_id : uuid <<FK>>
+    data_absent_reason_concept_id : uuid <<FK>>
+    interpretation_concept_id : uuid <<FK>>
+  * ordinal : integer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity conditions {
+  * id : uuid <<PK>>
+  --
+  * custodian_tenant_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+    encounter_id : uuid <<FK>>
+  * code_concept_id : uuid <<FK>>
+    category_concept_id : uuid <<FK>>
+    clinical_status_concept_id : uuid <<FK>>
+    verification_status_concept_id : uuid <<FK>>
+    severity_concept_id : uuid <<FK>>
+    laterality_concept_id : uuid <<FK>>
+    clinical_course_concept_id : uuid <<FK>>
+    onset_at : timestamptz
+  ' + v4.1.3: segunda columna del PR #171 que vivía solo en el ORM (B-9 la promovió
+  ' a medias: v4.1.2 cubrió el curso clínico y esta quedó afuera). Nullable: una
+  ' condición crónica no tiene resolución esperada.
+    expected_resolution_at : timestamptz
+    resolved_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+  ' + v4.1.3: hallazgos y justificación clínica del diagnóstico. Narrativa libre
+  ' de quien registra; mismo molde que procedures/observation_notes.
+    note_text : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity allergy_intolerances {
+  * id : uuid <<PK>>
+  --
+  * custodian_tenant_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+  * substance_concept_id : uuid <<FK>>
+    type_concept_id : uuid <<FK>>
+    category_concept_id : uuid <<FK>>
+    criticality_concept_id : uuid <<FK>>
+    clinical_status_concept_id : uuid <<FK>>
+    verification_status_concept_id : uuid <<FK>>
+    recorded_by_user_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity allergy_reactions {
+  * id : uuid <<PK>>
+  --
+  * allergy_id : uuid <<FK>>
+  * manifestation_concept_id : uuid <<FK>>
+    severity_concept_id : uuid <<FK>>
+    description : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity service_requests {
+  * id : uuid <<PK>>
+  --
+  * custodian_tenant_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+    encounter_id : uuid <<FK>>
+  * code_concept_id : uuid <<FK>>
+    category_concept_id : uuid <<FK>>
+    intent_concept_id : uuid <<FK>>
+    priority_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    requester_profile_id : uuid <<FK>>
+    performer_tenant_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity diagnostic_reports {
+  * id : uuid <<PK>>
+  --
+  * custodian_tenant_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+    service_request_id : uuid <<FK>>
+    encounter_id : uuid <<FK>>
+  * code_concept_id : uuid <<FK>>
+    category_concept_id : uuid <<FK>>
+  * lifecycle_status_concept_id : uuid <<FK>>
+    current_version_id : uuid <<FK>>
+    current_released_version_id : uuid <<FK>>
+    result_release_status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+care_episodes ||--o{ encounters
+encounters ||--o{ observations
+observations ||--o{ observation_components
+encounters ||--o{ conditions
+allergy_intolerances ||--o{ allergy_reactions
+encounters ||--o{ service_requests
+service_requests ||--o{ diagnostic_reports
+
+note as DEP_diagram_08_clinical
+  External references include patient/practitioner profiles, terminology,
+  practice locations, files, consent, authorization, provenance and audit.
+end note
+
+note as CANONICAL_diagram_08_clinical
+  PostgreSQL is the canonical clinical store. Offline/document transit
+  may be used only as an encrypted synchronization buffer and never as an
+  independent mutable source of truth.
+end note
+
+note as REC_DIAGNOSTICS_CLIN_diagram_08_clinical
+  Diagnostic reports link to structured results and governed files in the
+  diagnostics schema. Large imaging objects remain in PACS/VNA or object storage.
+end note
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_08b_clinical_orders.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_08b_clinical_orders
+  Separates high-change workflow records from the core clinical diagram while
+  remaining in the same schema and sharing the same encounter, patient,
+  practitioner, consent, provenance and audit controls.
+end note
+
+entity medication_requests {
+  * id : uuid <<PK>>
+  --
+  * custodian_tenant_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+    encounter_id : uuid <<FK>>
+  * medication_concept_id : uuid <<FK>>
+    substance_atc_concept_id : uuid <<FK>>
+    intent_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    prescriber_profile_id : uuid <<FK>>
+    dose_text : varchar
+    route_concept_id : uuid <<FK>>
+    frequency_text : varchar
+    quantity_decimal : numeric
+    unit_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  ' + v4.1.3: indicaciones al paciente que se imprimen en la receta. Separadas de
+  ' dose_text a propósito: la posología la lee farmacia para dispensar y no debe
+  ' llevar narrativa ("tomar con las comidas") concatenada.
+    patient_instructions_text : text
+  ' + v4.1.6: el diagnóstico que motiva la prescripción — «para qué es» esta receta.
+  ' Compartir el encuentro con una condición no dice cuál de las condiciones del
+  ' paciente se está tratando, y esa respuesta la necesitan tres lectores: el papel
+  ' impreso, la validación farmacológica (dosis y contraindicación dependen de la
+  ' indicación) y la renovación, que arrastra el motivo del original.
+  ' Nullable a propósito: hay prescripciones legítimas sin condición registrada
+  ' (sintomática, profilaxis, receta cargada antes de codificar el diagnóstico), y
+  ' obligar aquí bloquearía el acto clínico para completar el dato administrativo.
+  ' La convención por nombre no resuelve el destino (no existe tabla
+  ' `indication_conditions`): se declara en la nota del vault
+  ' `SALUD/FK/FK clinical.medication_requests.indication_condition_id.md`.
+    indication_condition_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+  ' + v4.0.8 (REDESA D-05 / CAN-RX): firma de la receta y máquina de estados.
+  ' Todas NULLABLE: una receta sin firmar tiene signed_at/signed_by en NULL, y la
+  ' firma solo se exige cuando una prescription_signature_policies vigente lo pide.
+    signed_at : timestamptz
+    signed_by_user_id : uuid <<FK>>
+    issued_at : timestamptz
+    status_reason_text : text
+  ' Autorreferencias (invalidar / reemplazar / renovar). La convención por nombre
+  ' no resuelve el autoenlace, así que el destino se declara en la nota del vault
+  ' `SALUD/FK/FK clinical.medication_requests.<col>.md`.
+    replaces_request_id : uuid <<FK>>
+    replaced_by_request_id : uuid <<FK>>
+    renewed_from_request_id : uuid <<FK>>
+  ' + v4.0.9 (REDESA CAN §6, MISSING_IDEMPOTENCY): la emisión de una receta no era
+  ' idempotente y un reintento del cliente podía re-ejecutar el sellado. Con la
+  ' clave, el reintento devuelve la receta ya emitida en vez de emitir otra.
+  ' Nullable: las emisiones históricas no la traen, y por eso su índice único es
+  ' PARCIAL — no se les exige retroactivamente.
+    issue_idempotency_key : varchar
+}
+
+' + v4.0.8 (REDESA D-05) — Política PARAMETRIZABLE de firma de receta.
+' Las dimensiones NULLABLE actúan de comodín ("aplica a todas"): gana la política
+' vigente más específica, con desempate por effective_from más reciente. Diseño
+' fail-safe: sin política aplicable NO se exige firma.
+entity prescription_signature_policies {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+    jurisdiction_code : varchar(16)
+    medication_type_concept_id : uuid <<FK>>
+    channel_concept_id : uuid <<FK>>
+  * signature_required : boolean
+  * effective_from : timestamptz
+    effective_to : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity "INDEXES · prescription_signature_policies" as idxset_prescription_signature_policies <<INDEX_SET>> {
+  PK pk_prescription_signature_policies : (id) UNIQUE BTREE
+  IX ix_prescription_signature_policies_tenant_id : (tenant_id) BTREE
+}
+prescription_signature_policies .. idxset_prescription_signature_policies : indexed by
+
+entity medication_records {
+  * id : uuid <<PK>>
+  --
+  * custodian_tenant_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+    request_id : uuid <<FK>>
+  * medication_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    record_type_concept_id : uuid <<FK>>
+    dose_decimal : numeric
+    unit_concept_id : uuid <<FK>>
+    administered_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity procedures {
+  * id : uuid <<PK>>
+  --
+  * custodian_tenant_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+    encounter_id : uuid <<FK>>
+  * code_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    performer_profile_id : uuid <<FK>>
+    performed_at : timestamptz
+    note_text : text
+  service_request_id : uuid <<FK>>
+  parent_procedure_id : uuid <<FK>>
+  category_concept_id : uuid <<FK>>
+  status_reason_concept_id : uuid <<FK>>
+  practice_site_id : uuid <<FK>>
+  care_space_id : uuid <<FK>>
+  recorder_profile_id : uuid <<FK>>
+  outcome_concept_id : uuid <<FK>>
+  reported_source_concept_id : uuid <<FK>>
+  occurrence_start_at : timestamptz
+  occurrence_end_at : timestamptz
+  recorded_at : timestamptz
+  follow_up_text : text
+  operative_report_file_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity immunizations {
+  * id : uuid <<PK>>
+  --
+  * custodian_tenant_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+  * vaccine_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    dose_number : integer
+    lot_number : varchar
+    route_concept_id : uuid <<FK>>
+    administered_at : timestamptz
+    administered_by_profile_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity appointments {
+  * id : uuid <<PK>>
+  --
+  * patient_profile_id : uuid <<FK>>
+    practitioner_profile_id : uuid <<FK>>
+  * tenant_id : uuid <<FK>>
+    branch_id : uuid <<FK>>
+    type_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    channel_concept_id : uuid <<FK>>
+  * start_at : timestamptz
+    end_at : timestamptz
+    reason_text : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity encounter_participants {
+  * id : uuid <<PK>>
+  --
+  * encounter_id : uuid <<FK>>
+  * practitioner_profile_id : uuid <<FK>>
+  * participant_role_concept_id : uuid <<FK>>
+    practitioner_role_assignment_id : uuid <<FK>>
+    period_start : timestamptz
+    period_end : timestamptz
+    is_responsible : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity encounter_locations {
+  * id : uuid <<PK>>
+  --
+  * encounter_id : uuid <<FK>>
+  * practice_site_id : uuid <<FK>>
+    clinical_unit_id : uuid <<FK>>
+    care_space_id : uuid <<FK>>
+  * location_status_concept_id : uuid <<FK>>
+    period_start : timestamptz
+    period_end : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+
+
+
+appointments |o--o{ encounters
+encounters ||--o{ encounter_participants
+encounters ||--o{ encounter_locations
+encounters ||--o{ medication_requests
+medication_requests ||--o{ medication_records
+encounters ||--o{ procedures
+
+note as EXTERNAL_diagram_08b_clinical_orders
+  encounters is defined in Module 08. All cross-file references remain
+  foreign keys in the physical model; this split is documentation-only.
+end note
+
+note as MEDICATION_diagram_08b_clinical_orders
+  Medication dispensing by a pharmacy is represented in the pharmacy schema.
+  medication_records records the clinical administration/use history and must not
+  be treated as the pharmacy inventory ledger.
+end note
+
+entity observation_performers {
+  * id : uuid <<PK>>
+  --
+  * observation_id : uuid <<FK>>
+  * performer_type_concept_id : uuid <<FK>>
+  * performer_id : uuid
+    performer_role_concept_id : uuid <<FK>>
+  * ordinal : integer
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+
+entity observation_reference_ranges {
+  * id : uuid <<PK>>
+  --
+  * observation_id : uuid <<FK>>
+    observation_component_id : uuid <<FK>>
+    low_value : numeric
+    high_value : numeric
+    unit_concept_id : uuid <<FK>>
+    type_concept_id : uuid <<FK>>
+    applies_to_concept_id : uuid <<FK>>
+    age_low_years : numeric
+    age_high_years : numeric
+    text : varchar
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+
+entity observation_notes {
+  * id : uuid <<PK>>
+  --
+  * observation_id : uuid <<FK>>
+  * author_user_id : uuid <<FK>>
+  * note_text : text
+  * recorded_at : timestamptz
+}
+
+observations ||--o{ observation_performers
+observations ||--o{ observation_reference_ranges
+observation_components |o--o{ observation_reference_ranges
+observations ||--o{ observation_notes
+
+note as CLINICAL_CUSTODY
+  CLINICAL CUSTODY AND RLS
+  Every clinical aggregate that can exist without an encounter carries an explicit
+  custodian_tenant_id. Child records inherit custody from their parent and database
+  constraints prevent cross-tenant parent/child links. RLS evaluates custodian,
+  patient scope, purpose of use, consent/privacy directives and emergency override.
+end note
+
+note as OBSERVATION_VALUE_CONTRACT
+  OBSERVATION VALUE CONTRACT
+  value_type_concept_id selects exactly one value family. Named CHECK constraints
+  enforce mutual exclusivity across scalar, quantity, range, ratio, sampled data,
+  attachment and governed reference values. Multi-performer, reference-range,
+  specimen, device, body-site and absent-data semantics are explicit.
+end note
+
+
+
+package "Physical Indexes" {
+entity "INDEXES · family_member_history" as idxset_family_member_history <<INDEX_SET>> {
+  PK pk_family_member_history : (id) UNIQUE BTREE
+  IX ix_family_member_history_custodian_tenant_id : (custodian_tenant_id) BTREE
+  IX ix_family_member_history_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_family_member_history_relationship_concept_id : (relationship_concept_id) BTREE
+  IX ix_family_member_history_condition_concept_id : (condition_concept_id) BTREE
+  IX ix_family_member_history_recorded_by_user_id : (recorded_by_user_id) BTREE
+  IX ix_family_member_history_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_family_member_history_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_family_member_history_custodian_tenant_id_updated_at : (custodian_tenant_id, updated_at DESC) BTREE
+  IX ix_family_member_history_patient_profile_id_updated_at : (custodian_tenant_id, patient_profile_id, updated_at DESC) BTREE
+}
+
+family_member_history .. idxset_family_member_history : indexed by
+
+entity "INDEXES · social_history" as idxset_social_history <<INDEX_SET>> {
+  PK pk_social_history : (id) UNIQUE BTREE
+  IX ix_social_history_custodian_tenant_id : (custodian_tenant_id) BTREE
+  IX ix_social_history_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_social_history_category_concept_id : (category_concept_id) BTREE
+  IX ix_social_history_status_concept_id : (status_concept_id) BTREE
+  IX ix_social_history_value_concept_id : (value_concept_id) BTREE
+  IX ix_social_history_unit_concept_id : (unit_concept_id) BTREE
+  IX ix_social_history_recorded_by_user_id : (recorded_by_user_id) BTREE
+  IX ix_social_history_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_social_history_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_social_history_custodian_tenant_id_status_concept_id : (custodian_tenant_id, status_concept_id, updated_at DESC) BTREE
+  IX ix_social_history_patient_profile_id_updated_at : (custodian_tenant_id, patient_profile_id, updated_at DESC) BTREE
+}
+
+social_history .. idxset_social_history : indexed by
+
+entity "INDEXES · care_episodes" as idxset_care_episodes <<INDEX_SET>> {
+  PK pk_care_episodes : (id) UNIQUE BTREE
+  IX ix_care_episodes_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_care_episodes_tenant_id : (tenant_id) BTREE
+  IX ix_care_episodes_responsible_practitioner_id : (responsible_practitioner_id) BTREE
+  IX ix_care_episodes_type_concept_id : (type_concept_id) BTREE
+  IX ix_care_episodes_status_concept_id : (status_concept_id) BTREE
+  IX ix_care_episodes_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_care_episodes_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_care_episodes_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  IX ix_care_episodes_patient_profile_id_updated_at : (tenant_id, patient_profile_id, updated_at DESC) BTREE
+}
+
+care_episodes .. idxset_care_episodes : indexed by
+
+entity "INDEXES · encounters" as idxset_encounters <<INDEX_SET>> {
+  PK pk_encounters : (id) UNIQUE BTREE
+  IX ix_encounters_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_encounters_episode_id : (episode_id) BTREE
+  IX ix_encounters_tenant_id : (tenant_id) BTREE
+  IX ix_encounters_branch_id : (branch_id) BTREE
+  IX ix_encounters_primary_practitioner_id : (primary_practitioner_id) BTREE
+  IX ix_encounters_class_concept_id : (class_concept_id) BTREE
+  IX ix_encounters_type_concept_id : (type_concept_id) BTREE
+  IX ix_encounters_status_concept_id : (status_concept_id) BTREE
+  IX ix_encounters_appointment_id : (appointment_id) BTREE
+  IX ix_encounters_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_encounters_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_encounters_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  IX ix_encounters_patient_profile_id_updated_at : (tenant_id, patient_profile_id, updated_at DESC) BTREE
+}
+
+encounters .. idxset_encounters : indexed by
+
+entity "INDEXES · observations" as idxset_observations <<INDEX_SET>> {
+  PK pk_observations : (id) UNIQUE BTREE
+  IX ix_observations_custodian_tenant_id : (custodian_tenant_id) BTREE
+  IX ix_observations_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_observations_encounter_id : (encounter_id) BTREE
+  IX ix_observations_based_on_service_request_id : (based_on_service_request_id) BTREE
+  IX ix_observations_category_concept_id : (category_concept_id) BTREE
+  IX ix_observations_code_concept_id : (code_concept_id) BTREE
+  IX ix_observations_status_concept_id : (status_concept_id) BTREE
+  IX ix_observations_value_type_concept_id : (value_type_concept_id) BTREE
+  IX ix_observations_value_concept_id : (value_concept_id) BTREE
+  IX ix_observations_quantity_unit_concept_id : (quantity_unit_concept_id) BTREE
+  IX ix_observations_range_unit_concept_id : (range_unit_concept_id) BTREE
+  IX ix_observations_ratio_numerator_unit_concept_id : (ratio_numerator_unit_concept_id) BTREE
+  IX ix_observations_ratio_denominator_unit_concept_id : (ratio_denominator_unit_concept_id) BTREE
+  IX ix_observations_value_file_id : (value_file_id) BTREE
+  IX ix_observations_value_reference_type_concept_id : (value_reference_type_concept_id) BTREE
+  IX ix_observations_data_absent_reason_concept_id : (data_absent_reason_concept_id) BTREE
+  IX ix_observations_interpretation_concept_id : (interpretation_concept_id) BTREE
+  IX ix_observations_method_concept_id : (method_concept_id) BTREE
+  IX ix_observations_body_site_concept_id : (body_site_concept_id) BTREE
+  IX ix_observations_specimen_id : (specimen_id) BTREE
+  IX ix_observations_source_device_id : (source_device_id) BTREE
+  IX ix_observations_recorded_by_user_id : (recorded_by_user_id) BTREE
+  IX ix_observations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_observations_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_observations_custodian_tenant_id_status_concept_id : (custodian_tenant_id, status_concept_id, updated_at DESC) BTREE
+  IX ix_observations_patient_profile_id_updated_at : (custodian_tenant_id, patient_profile_id, updated_at DESC) BTREE
+  IX ix_observations_patient_code_effective : (custodian_tenant_id, patient_profile_id, code_concept_id, effective_start_at DESC) BTREE
+  IX ix_observations_encounter_code : (encounter_id, code_concept_id) BTREE WHERE encounter_id IS NOT NULL
+}
+
+observations .. idxset_observations : indexed by
+
+entity "INDEXES · observation_components" as idxset_observation_components <<INDEX_SET>> {
+  PK pk_observation_components : (id) UNIQUE BTREE
+  IX ix_observation_components_observation_id : (observation_id) BTREE
+  IX ix_observation_components_code_concept_id : (code_concept_id) BTREE
+  IX ix_observation_components_value_type_concept_id : (value_type_concept_id) BTREE
+  IX ix_observation_components_value_concept_id : (value_concept_id) BTREE
+  IX ix_observation_components_quantity_unit_concept_id : (quantity_unit_concept_id) BTREE
+  IX ix_observation_components_range_unit_concept_id : (range_unit_concept_id) BTREE
+  IX ix_observation_components_data_absent_reason_concept_id : (data_absent_reason_concept_id) BTREE
+  IX ix_observation_components_interpretation_concept_id : (interpretation_concept_id) BTREE
+  IX ix_observation_components_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_observation_components_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+observation_components .. idxset_observation_components : indexed by
+
+entity "INDEXES · conditions" as idxset_conditions <<INDEX_SET>> {
+  PK pk_conditions : (id) UNIQUE BTREE
+  IX ix_conditions_custodian_tenant_id : (custodian_tenant_id) BTREE
+  IX ix_conditions_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_conditions_encounter_id : (encounter_id) BTREE
+  IX ix_conditions_code_concept_id : (code_concept_id) BTREE
+  IX ix_conditions_category_concept_id : (category_concept_id) BTREE
+  IX ix_conditions_clinical_status_concept_id : (clinical_status_concept_id) BTREE
+  IX ix_conditions_verification_status_concept_id : (verification_status_concept_id) BTREE
+  IX ix_conditions_severity_concept_id : (severity_concept_id) BTREE
+  IX ix_conditions_laterality_concept_id : (laterality_concept_id) BTREE
+  IX ix_conditions_clinical_course_concept_id : (clinical_course_concept_id) BTREE
+  IX ix_conditions_recorded_by_user_id : (recorded_by_user_id) BTREE
+  IX ix_conditions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_conditions_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_conditions_custodian_tenant_id_updated_at : (custodian_tenant_id, updated_at DESC) BTREE
+  IX ix_conditions_patient_profile_id_updated_at : (custodian_tenant_id, patient_profile_id, updated_at DESC) BTREE
+  IX ix_conditions_patient_clinical_status : (custodian_tenant_id, patient_profile_id, clinical_status_concept_id, onset_at DESC) BTREE
+}
+
+conditions .. idxset_conditions : indexed by
+
+entity "INDEXES · allergy_intolerances" as idxset_allergy_intolerances <<INDEX_SET>> {
+  PK pk_allergy_intolerances : (id) UNIQUE BTREE
+  IX ix_allergy_intolerances_custodian_tenant_id : (custodian_tenant_id) BTREE
+  IX ix_allergy_intolerances_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_allergy_intolerances_substance_concept_id : (substance_concept_id) BTREE
+  IX ix_allergy_intolerances_type_concept_id : (type_concept_id) BTREE
+  IX ix_allergy_intolerances_category_concept_id : (category_concept_id) BTREE
+  IX ix_allergy_intolerances_criticality_concept_id : (criticality_concept_id) BTREE
+  IX ix_allergy_intolerances_clinical_status_concept_id : (clinical_status_concept_id) BTREE
+  IX ix_allergy_intolerances_verification_status_concept_id : (verification_status_concept_id) BTREE
+  IX ix_allergy_intolerances_recorded_by_user_id : (recorded_by_user_id) BTREE
+  IX ix_allergy_intolerances_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_allergy_intolerances_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_allergy_intolerances_custodian_tenant_id_updated_at : (custodian_tenant_id, updated_at DESC) BTREE
+  IX ix_allergy_intolerances_patient_profile_id_updated_at : (custodian_tenant_id, patient_profile_id, updated_at DESC) BTREE
+  IX ix_allergies_patient_status : (custodian_tenant_id, patient_profile_id, clinical_status_concept_id) BTREE
+}
+
+allergy_intolerances .. idxset_allergy_intolerances : indexed by
+
+entity "INDEXES · allergy_reactions" as idxset_allergy_reactions <<INDEX_SET>> {
+  PK pk_allergy_reactions : (id) UNIQUE BTREE
+  IX ix_allergy_reactions_allergy_id : (allergy_id) BTREE
+  IX ix_allergy_reactions_manifestation_concept_id : (manifestation_concept_id) BTREE
+  IX ix_allergy_reactions_severity_concept_id : (severity_concept_id) BTREE
+  IX ix_allergy_reactions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_allergy_reactions_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+allergy_reactions .. idxset_allergy_reactions : indexed by
+
+entity "INDEXES · service_requests" as idxset_service_requests <<INDEX_SET>> {
+  PK pk_service_requests : (id) UNIQUE BTREE
+  IX ix_service_requests_custodian_tenant_id : (custodian_tenant_id) BTREE
+  IX ix_service_requests_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_service_requests_encounter_id : (encounter_id) BTREE
+  IX ix_service_requests_code_concept_id : (code_concept_id) BTREE
+  IX ix_service_requests_category_concept_id : (category_concept_id) BTREE
+  IX ix_service_requests_intent_concept_id : (intent_concept_id) BTREE
+  IX ix_service_requests_priority_concept_id : (priority_concept_id) BTREE
+  IX ix_service_requests_status_concept_id : (status_concept_id) BTREE
+  IX ix_service_requests_requester_profile_id : (requester_profile_id) BTREE
+  IX ix_service_requests_performer_tenant_id : (performer_tenant_id) BTREE
+  IX ix_service_requests_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_service_requests_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_service_requests_custodian_tenant_id_status_concept_id : (custodian_tenant_id, status_concept_id, updated_at DESC) BTREE
+  IX ix_service_requests_patient_profile_id_updated_at : (custodian_tenant_id, patient_profile_id, updated_at DESC) BTREE
+}
+
+service_requests .. idxset_service_requests : indexed by
+
+entity "INDEXES · diagnostic_reports" as idxset_diagnostic_reports <<INDEX_SET>> {
+  PK pk_diagnostic_reports : (id) UNIQUE BTREE
+  IX ix_diagnostic_reports_custodian_tenant_id : (custodian_tenant_id) BTREE
+  IX ix_diagnostic_reports_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_diagnostic_reports_service_request_id : (service_request_id) BTREE
+  IX ix_diagnostic_reports_encounter_id : (encounter_id) BTREE
+  IX ix_diagnostic_reports_code_concept_id : (code_concept_id) BTREE
+  IX ix_diagnostic_reports_category_concept_id : (category_concept_id) BTREE
+  IX ix_diagnostic_reports_lifecycle_status_concept_id : (lifecycle_status_concept_id) BTREE
+  IX ix_diagnostic_reports_current_version_id : (current_version_id) BTREE
+  IX ix_diagnostic_reports_current_released_version_id : (current_released_version_id) BTREE
+  IX ix_diagnostic_reports_result_release_status_concept_id : (result_release_status_concept_id) BTREE
+  IX ix_diagnostic_reports_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_diagnostic_reports_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_diagnostic_reports_custodian_tenant_id_lifecycle_st_43c65044 : (custodian_tenant_id, lifecycle_status_concept_id, updated_at DESC) BTREE
+  IX ix_diagnostic_reports_patient_profile_id_updated_at : (custodian_tenant_id, patient_profile_id, updated_at DESC) BTREE
+}
+
+diagnostic_reports .. idxset_diagnostic_reports : indexed by
+
+entity "INDEXES · medication_requests" as idxset_medication_requests <<INDEX_SET>> {
+  PK pk_medication_requests : (id) UNIQUE BTREE
+  IX ix_medication_requests_custodian_tenant_id : (custodian_tenant_id) BTREE
+  IX ix_medication_requests_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_medication_requests_encounter_id : (encounter_id) BTREE
+  IX ix_medication_requests_medication_concept_id : (medication_concept_id) BTREE
+  IX ix_medication_requests_substance_atc_concept_id : (substance_atc_concept_id) BTREE
+  IX ix_medication_requests_intent_concept_id : (intent_concept_id) BTREE
+  IX ix_medication_requests_status_concept_id : (status_concept_id) BTREE
+  IX ix_medication_requests_prescriber_profile_id : (prescriber_profile_id) BTREE
+  IX ix_medication_requests_route_concept_id : (route_concept_id) BTREE
+  IX ix_medication_requests_unit_concept_id : (unit_concept_id) BTREE
+  IX ix_medication_requests_indication_condition_id : (indication_condition_id) BTREE
+  IX ix_medication_requests_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_medication_requests_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_medication_requests_custodian_tenant_id_status_concept_id : (custodian_tenant_id, status_concept_id, updated_at DESC) BTREE
+  IX ix_medication_requests_patient_profile_id_updated_at : (custodian_tenant_id, patient_profile_id, updated_at DESC) BTREE
+  UK uq_medication_requests_issue_idempotency_key : (issue_idempotency_key) UNIQUE BTREE WHERE issue_idempotency_key IS NOT NULL
+}
+
+medication_requests .. idxset_medication_requests : indexed by
+
+entity "INDEXES · medication_records" as idxset_medication_records <<INDEX_SET>> {
+  PK pk_medication_records : (id) UNIQUE BTREE
+  IX ix_medication_records_custodian_tenant_id : (custodian_tenant_id) BTREE
+  IX ix_medication_records_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_medication_records_request_id : (request_id) BTREE
+  IX ix_medication_records_medication_concept_id : (medication_concept_id) BTREE
+  IX ix_medication_records_status_concept_id : (status_concept_id) BTREE
+  IX ix_medication_records_record_type_concept_id : (record_type_concept_id) BTREE
+  IX ix_medication_records_unit_concept_id : (unit_concept_id) BTREE
+  IX ix_medication_records_recorded_by_user_id : (recorded_by_user_id) BTREE
+  IX ix_medication_records_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_medication_records_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_medication_records_custodian_tenant_id_status_concept_id : (custodian_tenant_id, status_concept_id, updated_at DESC) BTREE
+  IX ix_medication_records_patient_profile_id_updated_at : (custodian_tenant_id, patient_profile_id, updated_at DESC) BTREE
+}
+
+medication_records .. idxset_medication_records : indexed by
+
+entity "INDEXES · procedures" as idxset_procedures <<INDEX_SET>> {
+  PK pk_procedures : (id) UNIQUE BTREE
+  IX ix_procedures_custodian_tenant_id : (custodian_tenant_id) BTREE
+  IX ix_procedures_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_procedures_encounter_id : (encounter_id) BTREE
+  IX ix_procedures_code_concept_id : (code_concept_id) BTREE
+  IX ix_procedures_status_concept_id : (status_concept_id) BTREE
+  IX ix_procedures_performer_profile_id : (performer_profile_id) BTREE
+  IX ix_procedures_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_procedures_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_procedures_custodian_tenant_id_status_concept_id : (custodian_tenant_id, status_concept_id, updated_at DESC) BTREE
+  IX ix_procedures_patient_profile_id_updated_at : (custodian_tenant_id, patient_profile_id, updated_at DESC) BTREE
+  IX ix_procedures_service_request_id : (service_request_id) BTREE
+  IX ix_procedures_parent_procedure_id : (parent_procedure_id) BTREE
+  IX ix_procedures_practice_site_id : (practice_site_id) BTREE
+  IX ix_procedures_patient_occurrence : (custodian_tenant_id, patient_profile_id, occurrence_start_at DESC) BTREE
+  IX ix_procedures_code_status_time : (custodian_tenant_id, code_concept_id, status_concept_id, occurrence_start_at DESC) BTREE
+}
+
+procedures .. idxset_procedures : indexed by
+
+entity "INDEXES · immunizations" as idxset_immunizations <<INDEX_SET>> {
+  PK pk_immunizations : (id) UNIQUE BTREE
+  IX ix_immunizations_custodian_tenant_id : (custodian_tenant_id) BTREE
+  IX ix_immunizations_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_immunizations_vaccine_concept_id : (vaccine_concept_id) BTREE
+  IX ix_immunizations_status_concept_id : (status_concept_id) BTREE
+  IX ix_immunizations_route_concept_id : (route_concept_id) BTREE
+  IX ix_immunizations_administered_by_profile_id : (administered_by_profile_id) BTREE
+  IX ix_immunizations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_immunizations_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_immunizations_custodian_tenant_id_status_concept_id : (custodian_tenant_id, status_concept_id, updated_at DESC) BTREE
+  IX ix_immunizations_patient_profile_id_updated_at : (custodian_tenant_id, patient_profile_id, updated_at DESC) BTREE
+}
+
+immunizations .. idxset_immunizations : indexed by
+
+entity "INDEXES · appointments" as idxset_appointments <<INDEX_SET>> {
+  PK pk_appointments : (id) UNIQUE BTREE
+  IX ix_appointments_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_appointments_practitioner_profile_id : (practitioner_profile_id) BTREE
+  IX ix_appointments_tenant_id : (tenant_id) BTREE
+  IX ix_appointments_branch_id : (branch_id) BTREE
+  IX ix_appointments_type_concept_id : (type_concept_id) BTREE
+  IX ix_appointments_status_concept_id : (status_concept_id) BTREE
+  IX ix_appointments_channel_concept_id : (channel_concept_id) BTREE
+  IX ix_appointments_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_appointments_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_appointments_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  IX ix_appointments_patient_profile_id_updated_at : (tenant_id, patient_profile_id, updated_at DESC) BTREE
+  GIST gist_appointments_effective_period : tstzrange(start_at, end_at, '[)') GIST
+  GIST gist_appointments_practitioner_time : (practitioner_profile_id, tstzrange(start_at, end_at, '[)')) GIST WHERE status_concept_id IN (held_status(), confirmed_status())
+  IX ix_appointments_patient_start : (patient_profile_id, start_at DESC) BTREE
+}
+
+appointments .. idxset_appointments : indexed by
+
+entity "INDEXES · encounter_participants" as idxset_encounter_participants <<INDEX_SET>> {
+  PK pk_encounter_participants : (id) UNIQUE BTREE
+  IX ix_encounter_participants_encounter_id : (encounter_id) BTREE
+  IX ix_encounter_participants_practitioner_profile_id : (practitioner_profile_id) BTREE
+  IX ix_encounter_participants_participant_role_concept_id : (participant_role_concept_id) BTREE
+  IX ix_encounter_participants_practitioner_role_assignment_id : (practitioner_role_assignment_id) BTREE
+  IX ix_encounter_participants_status_concept_id : (status_concept_id) BTREE
+  IX ix_encounter_participants_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_encounter_participants_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+encounter_participants .. idxset_encounter_participants : indexed by
+
+entity "INDEXES · encounter_locations" as idxset_encounter_locations <<INDEX_SET>> {
+  PK pk_encounter_locations : (id) UNIQUE BTREE
+  IX ix_encounter_locations_encounter_id : (encounter_id) BTREE
+  IX ix_encounter_locations_practice_site_id : (practice_site_id) BTREE
+  IX ix_encounter_locations_clinical_unit_id : (clinical_unit_id) BTREE
+  IX ix_encounter_locations_care_space_id : (care_space_id) BTREE
+  IX ix_encounter_locations_location_status_concept_id : (location_status_concept_id) BTREE
+  IX ix_encounter_locations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_encounter_locations_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+encounter_locations .. idxset_encounter_locations : indexed by
+
+entity "INDEXES · observation_performers" as idxset_observation_performers <<INDEX_SET>> {
+  PK pk_observation_performers : (id) UNIQUE BTREE
+  IX ix_observation_performers_observation_id : (observation_id) BTREE
+  IX ix_observation_performers_performer_type_concept_id : (performer_type_concept_id) BTREE
+  IX ix_observation_performers_performer_role_concept_id : (performer_role_concept_id) BTREE
+  IX ix_observation_performers_created_by_user_id : (created_by_user_id) BTREE
+}
+
+observation_performers .. idxset_observation_performers : indexed by
+
+entity "INDEXES · observation_reference_ranges" as idxset_observation_reference_ranges <<INDEX_SET>> {
+  PK pk_observation_reference_ranges : (id) UNIQUE BTREE
+  IX ix_observation_reference_ranges_observation_id : (observation_id) BTREE
+  IX ix_observation_reference_ranges_observation_component_id : (observation_component_id) BTREE
+  IX ix_observation_reference_ranges_unit_concept_id : (unit_concept_id) BTREE
+  IX ix_observation_reference_ranges_type_concept_id : (type_concept_id) BTREE
+  IX ix_observation_reference_ranges_applies_to_concept_id : (applies_to_concept_id) BTREE
+  IX ix_observation_reference_ranges_created_by_user_id : (created_by_user_id) BTREE
+}
+
+observation_reference_ranges .. idxset_observation_reference_ranges : indexed by
+
+entity "INDEXES · observation_notes" as idxset_observation_notes <<INDEX_SET>> {
+  PK pk_observation_notes : (id) UNIQUE BTREE
+  IX ix_observation_notes_observation_id : (observation_id) BTREE
+  IX ix_observation_notes_author_user_id : (author_user_id) BTREE
+}
+
+observation_notes .. idxset_observation_notes : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

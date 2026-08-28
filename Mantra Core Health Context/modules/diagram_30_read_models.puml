@@ -1,0 +1,1747 @@
+@startuml SALUD_Module_30_read_models
+title Module 30 — Frontend View Contracts, Routes and Read Models\n(schema: read_models)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+note as BIZ
+  BUSINESS PURPOSE
+  Provides frontend-ready, permission-aware read contracts. Every page binds to a
+  route, a versioned read model, field metadata, filters, sorting, actions, KPIs and
+  explicit loading/empty/error/forbidden/stale states. Views return display-ready
+  labels and stable codes without exposing ORM models, secrets or unnecessary PHI.
+end note
+
+entity portal_surfaces {
+  * id : uuid <<PK>>
+  --
+  * portal_code : varchar <<UK>>
+  * name : varchar
+  * portal_type_concept_id : uuid <<FK>>
+    audience_role_value_set_id : uuid <<FK>>
+    tenant_scoped : boolean
+    patient_scoped : boolean
+    default_route : varchar
+    description : text
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity frontend_routes {
+  * id : uuid <<PK>>
+  --
+  * portal_surface_id : uuid <<FK>>
+  * route_code : varchar
+  * route_pattern : varchar
+  * page_title : varchar
+    navigation_group : varchar
+    navigation_icon_key : varchar
+    breadcrumb_json : jsonb
+    required_permission_id : uuid <<FK>>
+    purpose_of_use_concept_id : uuid <<FK>>
+    feature_flag_code : varchar
+    requires_patient_context : boolean
+    requires_tenant_context : boolean
+    cache_policy_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity read_model_definitions <<VERSIONED>> {
+  * id : uuid <<PK>>
+  --
+  * schema_name : varchar
+  * object_name : varchar
+  * object_type_concept_id : uuid <<FK>>
+    owning_module : varchar
+    purpose_text : text
+    refresh_mode_concept_id : uuid <<FK>>
+    maximum_staleness_seconds : integer
+    default_page_size : integer
+    maximum_page_size : integer
+    stable_cursor_columns_json : jsonb
+    contains_pii : boolean
+    contains_phi : boolean
+    security_barrier_required : boolean
+    row_level_security_required : boolean
+    definition_hash : varchar
+  * version_number : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity read_model_dependencies {
+  * id : uuid <<PK>>
+  --
+  * read_model_definition_id : uuid <<FK>>
+  * source_schema_name : varchar
+  * source_object_name : varchar
+  * dependency_type_concept_id : uuid <<FK>>
+    selected_columns_json : jsonb
+    filtering_rule_summary : text
+  * created_at : timestamptz
+}
+
+entity frontend_page_views {
+  * id : uuid <<PK>>
+  --
+  * frontend_route_id : uuid <<FK>>
+  * read_model_definition_id : uuid <<FK>>
+  * view_code : varchar
+  * view_type_concept_id : uuid <<FK>>
+    title : varchar
+    description : text
+    field_mask_policy_id : uuid <<FK>>
+    default_sort_code : varchar
+    polling_interval_seconds : integer
+    supports_cursor_pagination : boolean
+    supports_export : boolean
+    supports_saved_filters : boolean
+    layout_spec_json : jsonb
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity frontend_view_fields {
+  * id : uuid <<PK>>
+  --
+  * frontend_page_view_id : uuid <<FK>>
+  * field_code : varchar
+  * source_column : varchar
+  * label : varchar
+  * data_type : technical_data_type
+    display_component_concept_id : uuid <<FK>>
+    format_mask : varchar
+    responsive_priority : integer
+    sortable : boolean
+    filterable : boolean
+    searchable : boolean
+    sensitive : boolean
+    permission_id : uuid <<FK>>
+    empty_display_text : varchar
+    metadata_json : jsonb
+  * ordinal : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity frontend_view_filters {
+  * id : uuid <<PK>>
+  --
+  * frontend_page_view_id : uuid <<FK>>
+  * filter_code : varchar
+  * label : varchar
+  * operator_value_set_id : uuid <<FK>>
+  * input_type_concept_id : uuid <<FK>>
+    value_set_id : uuid <<FK>>
+    dynamic_enum_definition_id : uuid <<FK>>
+    source_column : varchar
+    default_value_json : jsonb
+    required : boolean
+    url_parameter_name : varchar
+  * ordinal : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity frontend_view_sort_options {
+  * id : uuid <<PK>>
+  --
+  * frontend_page_view_id : uuid <<FK>>
+  * sort_code : varchar
+  * label : varchar
+  * sort_expression : varchar
+  * direction_concept_id : uuid <<FK>>
+  * nulls_position_concept_id : uuid <<FK>>
+    stable_tie_breaker_expression : varchar
+  * ordinal : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity frontend_view_actions {
+  * id : uuid <<PK>>
+  --
+  * frontend_page_view_id : uuid <<FK>>
+  * action_code : varchar
+  * label : varchar
+  * action_type_concept_id : uuid <<FK>>
+    route_template : varchar
+    required_permission_id : uuid <<FK>>
+    allowed_state_value_set_id : uuid <<FK>>
+    confirmation_policy_concept_id : uuid <<FK>>
+    idempotency_required : boolean
+    icon_key : varchar
+    prominence_concept_id : uuid <<FK>>
+  * ordinal : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity frontend_view_kpis {
+  * id : uuid <<PK>>
+  --
+  * frontend_page_view_id : uuid <<FK>>
+  * kpi_code : varchar
+  * label : varchar
+  * value_column : varchar
+  * comparison_column : varchar
+    unit_concept_id : uuid <<FK>>
+    format_mask : varchar
+    threshold_rules_json : jsonb
+    drilldown_route_template : varchar
+  * ordinal : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity frontend_view_states {
+  * id : uuid <<PK>>
+  --
+  * frontend_page_view_id : uuid <<FK>>
+  * state_type_concept_id : uuid <<FK>>
+  * title : varchar
+  * message : varchar
+    illustration_key : varchar
+    recovery_action_code : varchar
+    telemetry_event_code : varchar
+    retry_allowed : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity user_view_preferences {
+  * id : uuid <<PK>>
+  --
+  * user_id : uuid <<FK>>
+  * frontend_page_view_id : uuid <<FK>>
+    tenant_id : uuid <<FK>>
+    visible_fields_json : jsonb
+    field_order_json : jsonb
+    active_filter_json : jsonb
+    sort_code : varchar
+    density_concept_id : uuid <<FK>>
+    page_size : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity read_model_refresh_runs <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * read_model_definition_id : uuid <<FK>>
+  * refresh_type_concept_id : uuid <<FK>>
+    started_at : timestamptz
+    completed_at : timestamptz
+    rows_affected : bigint
+    source_watermark : varchar
+    result_concept_id : uuid <<FK>>
+    error_code : varchar
+    correlation_id : uuid
+  * created_at : timestamptz
+}
+
+package "System administration projections" {
+  entity system_admin_dashboard_v <<VIEW>> {
+    tenant_count : bigint
+    pending_verification_count : bigint
+    open_security_alert_count : bigint
+    degraded_integration_count : bigint
+    failed_job_count : bigint
+    generated_at : timestamptz
+  }
+  entity system_admin_tenant_list_v <<VIEW>> {
+    tenant_id : uuid
+    tenant_code : varchar
+    display_name : varchar
+    tenant_type_code : varchar
+    tenant_type_label : varchar
+    verification_status_code : varchar
+    verification_status_label : varchar
+    verification_status_tone : varchar
+    active_member_count : bigint
+    open_security_alert_count : bigint
+    integration_health_code : varchar
+    updated_at : timestamptz
+    available_actions_json : jsonb
+  }
+  entity system_admin_verification_queue_v <<VIEW>> {
+    verification_case_id : uuid
+    subject_type_code : varchar
+    subject_display_name : varchar
+    risk_score : numeric
+    status_code : varchar
+    status_label : varchar
+    status_tone : varchar
+    assigned_reviewer_user_id : uuid
+    assigned_reviewer_display_name : varchar
+    queued_at : timestamptz
+    age_seconds : bigint
+    available_actions_json : jsonb
+  }
+  entity system_admin_integration_health_v <<VIEW>> {
+    integration_id : uuid
+    provider_code : varchar
+    provider_name : varchar
+    environment_code : varchar
+    health_code : varchar
+    health_label : varchar
+    health_tone : varchar
+    last_success_at : timestamptz
+    last_failure_at : timestamptz
+    failure_count_24h : bigint
+    latency_p95_ms : numeric
+    available_actions_json : jsonb
+  }
+}
+
+package "ERP and finance projections" {
+  entity erp_financial_summary_v <<VIEW>> {
+    tenant_id : uuid
+    fiscal_period_id : uuid
+    cash_balance : numeric
+    accounts_receivable_total : numeric
+    accounts_payable_total : numeric
+    recognized_revenue_total : numeric
+    operating_expense_total : numeric
+    net_result : numeric
+    currency_code : varchar
+    generated_at : timestamptz
+  }
+  entity erp_general_ledger_balance_v <<VIEW>> {
+    tenant_id : uuid
+    account_id : uuid
+    account_code : varchar
+    account_name : varchar
+    fiscal_period_id : uuid
+    debit_total : numeric
+    credit_total : numeric
+    ending_balance : numeric
+    currency_code : varchar
+  }
+  entity erp_accounts_receivable_queue_v <<VIEW>> {
+    receivable_id : uuid
+    counterparty_display_name : varchar
+    document_number : varchar
+    issue_date : date
+    due_date : date
+    original_amount : numeric
+    outstanding_amount : numeric
+    currency_code : varchar
+    aging_bucket_code : varchar
+    status_code : varchar
+    status_label : varchar
+    status_tone : varchar
+    available_actions_json : jsonb
+  }
+  entity erp_accounts_payable_queue_v <<VIEW>> {
+    payable_id : uuid
+    supplier_display_name : varchar
+    document_number : varchar
+    due_date : date
+    outstanding_amount : numeric
+    currency_code : varchar
+    approval_status_code : varchar
+    approval_status_label : varchar
+    payment_status_code : varchar
+    available_actions_json : jsonb
+  }
+  entity erp_inventory_valuation_v <<MATERIALIZED_VIEW>> {
+    tenant_id : uuid
+    location_id : uuid
+    product_id : uuid
+    product_display_name : varchar
+    on_hand_quantity : numeric
+    available_quantity : numeric
+    inventory_value : numeric
+    expiring_quantity : numeric
+    currency_code : varchar
+    refreshed_at : timestamptz
+  }
+}
+
+package "Infrastructure and hospital projections" {
+  entity infrastructure_operations_dashboard_v <<VIEW>> {
+    practice_id : uuid
+    site_id : uuid
+    site_display_name : varchar
+    appointments_today : bigint
+    active_encounters : bigint
+    pending_results : bigint
+    staff_on_duty : bigint
+    unavailable_space_count : bigint
+    operational_status_code : varchar
+    operational_status_label : varchar
+    updated_at : timestamptz
+  }
+  entity hospital_bed_board_v <<VIEW>> {
+    hospital_id : uuid
+    clinical_unit_id : uuid
+    care_space_id : uuid
+    bed_code : varchar
+    bed_label : varchar
+    occupancy_status_code : varchar
+    occupancy_status_label : varchar
+    patient_display_token : varchar
+    encounter_id : uuid
+    expected_discharge_at : timestamptz
+    isolation_required : boolean
+    available_actions_json : jsonb
+  }
+  entity workforce_shift_board_v <<VIEW>> {
+    practice_site_id : uuid
+    shift_id : uuid
+    practitioner_profile_id : uuid
+    practitioner_display_name : varchar
+    role_label : varchar
+    shift_start_at : timestamptz
+    shift_end_at : timestamptz
+    attendance_status_code : varchar
+    assignment_status_code : varchar
+    available_actions_json : jsonb
+  }
+}
+
+package "Diagnostic and pharmacy projections" {
+  entity diagnostic_worklist_v <<VIEW>> {
+    diagnostic_unit_id : uuid
+    work_item_id : uuid
+    service_request_id : uuid
+    patient_display_token : varchar
+    study_code : varchar
+    study_name : varchar
+    priority_code : varchar
+    status_code : varchar
+    status_label : varchar
+    scheduled_at : timestamptz
+    age_seconds : bigint
+    available_actions_json : jsonb
+  }
+  entity diagnostic_result_release_queue_v <<VIEW>> {
+    diagnostic_report_id : uuid
+    patient_display_token : varchar
+    study_name : varchar
+    verification_status_code : varchar
+    release_status_code : varchar
+    abnormal_flag : boolean
+    verified_by_display_name : varchar
+    verified_at : timestamptz
+    available_actions_json : jsonb
+  }
+  entity diagnostic_unit_public_catalog_v <<MATERIALIZED_VIEW>> {
+    diagnostic_unit_id : uuid
+    public_profile_id : uuid
+    site_id : uuid
+    display_name : varchar
+    city_label : varchar
+    study_offering_id : uuid
+    study_code : varchar
+    study_name : varchar
+    specialty_name : varchar
+    public_price : numeric
+    currency_code : varchar
+    next_available_at : timestamptz
+    distance_km : numeric
+    rating_value : numeric
+    review_count : bigint
+    verified : boolean
+    refreshed_at : timestamptz
+  }
+  entity pharmacy_inventory_dashboard_v <<VIEW>> {
+    pharmacy_id : uuid
+    pharmacy_site_id : uuid
+    product_id : uuid
+    product_display_name : varchar
+    on_hand_quantity : numeric
+    reserved_quantity : numeric
+    available_quantity : numeric
+    reorder_required : boolean
+    expiry_risk_code : varchar
+    status_tone : varchar
+    available_actions_json : jsonb
+  }
+  entity pharmacy_dispensing_queue_v <<VIEW>> {
+    dispensing_request_id : uuid
+    patient_display_token : varchar
+    medication_display_name : varchar
+    requested_quantity : numeric
+    status_code : varchar
+    status_label : varchar
+    payment_status_code : varchar
+    insurance_status_code : varchar
+    queued_at : timestamptz
+    available_actions_json : jsonb
+  }
+  entity pharmacy_public_stock_offer_v <<MATERIALIZED_VIEW>> {
+    pharmacy_id : uuid
+    pharmacy_site_id : uuid
+    public_profile_id : uuid
+    product_id : uuid
+    product_display_name : varchar
+    public_price : numeric
+    currency_code : varchar
+    available_bucket_code : varchar
+    distance_km : numeric
+    delivery_available : boolean
+    reservation_available : boolean
+    refreshed_at : timestamptz
+  }
+}
+
+package "Doctor workspace projections" {
+  entity doctor_daily_workspace_v <<VIEW>> {
+    practitioner_profile_id : uuid
+    practice_site_id : uuid
+    appointment_id : uuid
+    appointment_start_at : timestamptz
+    patient_profile_id : uuid
+    patient_display_token : varchar
+    appointment_type_label : varchar
+    appointment_status_code : varchar
+    encounter_id : uuid
+    encounter_status_code : varchar
+    pending_result_count : bigint
+    alert_count : bigint
+    available_actions_json : jsonb
+  }
+  entity doctor_patient_summary_v <<VIEW>> {
+    practitioner_profile_id : uuid
+    patient_profile_id : uuid
+    patient_display_name : varchar
+    age_display : varchar
+    sex_at_birth_label : varchar
+    allergy_summary_json : jsonb
+    active_condition_summary_json : jsonb
+    active_medication_summary_json : jsonb
+    latest_vitals_json : jsonb
+    care_gap_summary_json : jsonb
+    last_encounter_at : timestamptz
+    access_scope_code : varchar
+  }
+  entity doctor_result_inbox_v <<VIEW>> {
+    practitioner_profile_id : uuid
+    diagnostic_report_id : uuid
+    patient_display_token : varchar
+    result_title : varchar
+    abnormal_flag : boolean
+    critical_flag : boolean
+    release_status_code : varchar
+    received_at : timestamptz
+    acknowledged_at : timestamptz
+    available_actions_json : jsonb
+  }
+  entity doctor_note_history_v <<VIEW>> {
+    practitioner_profile_id : uuid
+    patient_profile_id : uuid
+    note_id : uuid
+    note_version_id : uuid
+    note_type_label : varchar
+    author_display_name : varchar
+    version_number : integer
+    status_code : varchar
+    recorded_at : timestamptz
+    superseded_at : timestamptz
+    available_actions_json : jsonb
+  }
+}
+
+package "Patient portal projections" {
+  entity patient_home_dashboard_v <<VIEW>> {
+    patient_profile_id : uuid
+    next_appointment_id : uuid
+    next_appointment_at : timestamptz
+    next_appointment_provider_name : varchar
+    pending_order_count : bigint
+    new_result_count : bigint
+    medication_reminder_count : bigint
+    outstanding_balance : numeric
+    currency_code : varchar
+    unread_notification_count : bigint
+    care_action_cards_json : jsonb
+    generated_at : timestamptz
+  }
+  entity patient_health_timeline_v <<VIEW>> {
+    patient_profile_id : uuid
+    event_type_code : varchar
+    event_id : uuid
+    occurred_at : timestamptz
+    display_title : varchar
+    display_summary : varchar
+    icon_key : varchar
+    status_code : varchar
+    status_label : varchar
+    release_status_code : varchar
+    source_tenant_display_name : varchar
+    route_target : varchar
+  }
+  entity patient_appointments_v <<VIEW>> {
+    patient_profile_id : uuid
+    appointment_id : uuid
+    start_at : timestamptz
+    end_at : timestamptz
+    provider_display_name : varchar
+    site_display_name : varchar
+    appointment_type_label : varchar
+    channel_label : varchar
+    status_code : varchar
+    status_label : varchar
+    status_tone : varchar
+    available_actions_json : jsonb
+  }
+  entity patient_orders_results_v <<VIEW>> {
+    patient_profile_id : uuid
+    service_request_id : uuid
+    order_display_name : varchar
+    order_category_label : varchar
+    ordered_at : timestamptz
+    order_status_code : varchar
+    diagnostic_report_id : uuid
+    result_status_code : varchar
+    result_release_status_code : varchar
+    abnormal_flag : boolean
+    result_available_at : timestamptz
+    available_actions_json : jsonb
+  }
+  entity patient_medication_summary_v <<VIEW>> {
+    patient_profile_id : uuid
+    medication_request_id : uuid
+    medication_display_name : varchar
+    dose_display : varchar
+    route_label : varchar
+    frequency_display : varchar
+    valid_from : timestamptz
+    valid_to : timestamptz
+    status_code : varchar
+    refill_status_code : varchar
+    available_actions_json : jsonb
+  }
+  entity patient_billing_wallet_v <<VIEW>> {
+    patient_profile_id : uuid
+    invoice_id : uuid
+    invoice_number : varchar
+    provider_display_name : varchar
+    issue_date : date
+    due_date : date
+    total_amount : numeric
+    outstanding_amount : numeric
+    currency_code : varchar
+    payment_status_code : varchar
+    claim_status_code : varchar
+    available_actions_json : jsonb
+  }
+  entity patient_consent_center_v <<VIEW>> {
+    patient_profile_id : uuid
+    privacy_record_type_code : varchar
+    privacy_record_id : uuid
+    purpose_label : varchar
+    tenant_display_name : varchar
+    status_code : varchar
+    status_label : varchar
+    valid_from : timestamptz
+    valid_to : timestamptz
+    last_event_at : timestamptz
+    available_actions_json : jsonb
+  }
+  entity patient_provider_search_v <<MATERIALIZED_VIEW>> {
+    public_profile_id : uuid
+    target_type_code : varchar
+    target_id : uuid
+    display_name : varchar
+    headline : varchar
+    specialties_json : jsonb
+    services_json : jsonb
+    next_available_at : timestamptz
+    minimum_public_price : numeric
+    currency_code : varchar
+    distance_km : numeric
+    telehealth_available : boolean
+    accepts_new_patients : boolean
+    rating_value : numeric
+    review_count : bigint
+    verified : boolean
+    refreshed_at : timestamptz
+  }
+}
+
+package "Insurance and broker projections" {
+  entity insurer_authorization_queue_v <<VIEW>> {
+    insurance_carrier_id : uuid
+    authorization_request_id : uuid
+    patient_display_token : varchar
+    provider_display_name : varchar
+    requested_service_label : varchar
+    requested_amount : numeric
+    currency_code : varchar
+    priority_code : varchar
+    status_code : varchar
+    status_label : varchar
+    age_seconds : bigint
+    sla_breach_at : timestamptz
+    available_actions_json : jsonb
+  }
+  entity insurer_claim_reconciliation_v <<VIEW>> {
+    insurance_carrier_id : uuid
+    provider_entity_id : uuid
+    provider_display_name : varchar
+    claim_id : uuid
+    claim_number : varchar
+    adjudicated_amount : numeric
+    paid_amount : numeric
+    variance_amount : numeric
+    currency_code : varchar
+    reconciliation_status_code : varchar
+    available_actions_json : jsonb
+  }
+  entity insurer_network_performance_v <<MATERIALIZED_VIEW>> {
+    insurance_carrier_id : uuid
+    provider_entity_id : uuid
+    provider_display_name : varchar
+    claim_count : bigint
+    approval_rate : numeric
+    denial_rate : numeric
+    average_turnaround_hours : numeric
+    average_paid_amount : numeric
+    quality_score : numeric
+    refreshed_at : timestamptz
+  }
+  entity broker_portfolio_v <<VIEW>> {
+    insurance_broker_id : uuid
+    client_type_code : varchar
+    client_id : uuid
+    client_display_name : varchar
+    active_coverage_count : bigint
+    annual_premium_amount : numeric
+    currency_code : varchar
+    renewal_due_at : date
+    renewal_status_code : varchar
+    assigned_broker_user_id : uuid
+    available_actions_json : jsonb
+  }
+  entity broker_commission_statement_v <<VIEW>> {
+    insurance_broker_id : uuid
+    statement_period_start : date
+    statement_period_end : date
+    agreement_id : uuid
+    carrier_display_name : varchar
+    earned_amount : numeric
+    paid_amount : numeric
+    outstanding_amount : numeric
+    currency_code : varchar
+    statement_status_code : varchar
+  }
+}
+
+package "Public and growth projections" {
+  entity public_provider_directory_v <<MATERIALIZED_VIEW>> {
+    public_profile_id : uuid
+    target_type_code : varchar
+    target_id : uuid
+    slug : varchar
+    display_name : varchar
+    headline : varchar
+    city_label : varchar
+    specialties_json : jsonb
+    services_json : jsonb
+    public_price_range_json : jsonb
+    rating_value : numeric
+    review_count : bigint
+    verified : boolean
+    next_available_at : timestamptz
+    refreshed_at : timestamptz
+  }
+  entity public_profile_detail_v <<MATERIALIZED_VIEW>> {
+    public_profile_id : uuid
+    slug : varchar
+    display_name : varchar
+    biography : text
+    avatar_uri : text
+    cover_uri : text
+    specialties_json : jsonb
+    qualifications_json : jsonb
+    sites_json : jsonb
+    services_json : jsonb
+    rating_summary_json : jsonb
+    verified_badges_json : jsonb
+    refreshed_at : timestamptz
+  }
+  entity public_feed_v <<VIEW>> {
+    viewer_profile_id : uuid
+    feed_item_id : uuid
+    item_type_code : varchar
+    source_profile_id : uuid
+    source_display_name : varchar
+    title : varchar
+    preview_text : varchar
+    media_json : jsonb
+    reaction_summary_json : jsonb
+    comment_count : bigint
+    ranking_score : numeric
+    published_at : timestamptz
+    available_actions_json : jsonb
+  }
+  entity education_learner_dashboard_v <<VIEW>> {
+    learner_profile_id : uuid
+    active_enrollment_count : bigint
+    overdue_activity_count : bigint
+    completed_course_count : bigint
+    cme_credit_total : numeric
+    expiring_certificate_count : bigint
+    next_activity_json : jsonb
+    generated_at : timestamptz
+  }
+  entity crm_pipeline_board_v <<VIEW>> {
+    tenant_id : uuid
+    opportunity_id : uuid
+    account_display_name : varchar
+    opportunity_name : varchar
+    stage_code : varchar
+    stage_label : varchar
+    expected_value : numeric
+    currency_code : varchar
+    probability : numeric
+    expected_close_date : date
+    owner_display_name : varchar
+    available_actions_json : jsonb
+  }
+  entity marketing_campaign_performance_v <<MATERIALIZED_VIEW>> {
+    tenant_id : uuid
+    campaign_id : uuid
+    campaign_name : varchar
+    status_code : varchar
+    audience_count : bigint
+    delivered_count : bigint
+    engaged_count : bigint
+    conversion_count : bigint
+    attributed_revenue : numeric
+    spend_amount : numeric
+    currency_code : varchar
+    refreshed_at : timestamptz
+  }
+}
+
+portal_surfaces ||--o{ frontend_routes
+frontend_routes ||--o{ frontend_page_views
+read_model_definitions ||--o{ frontend_page_views
+read_model_definitions ||--o{ read_model_dependencies
+read_model_definitions ||--o{ read_model_refresh_runs
+frontend_page_views ||--o{ frontend_view_fields
+frontend_page_views ||--o{ frontend_view_filters
+frontend_page_views ||--o{ frontend_view_sort_options
+frontend_page_views ||--o{ frontend_view_actions
+frontend_page_views ||--o{ frontend_view_kpis
+frontend_page_views ||--o{ frontend_view_states
+frontend_page_views ||--o{ user_view_preferences
+
+note as FRONT_CONTRACT
+  FRONTEND CONTRACT
+  - Codes are stable API values; labels and tones are presentation metadata.
+  - Lists use cursor pagination with deterministic tie-breakers.
+  - Filters and sort options are allow-listed; raw SQL expressions never come from clients.
+  - available_actions_json is derived from state + permission + purpose, never trusted on write.
+  - Loading, skeleton, empty, stale, error, forbidden and offline states are explicit.
+  - Public projections contain only approved public fields and stable internal media URIs.
+  - Signed file URLs are generated after authorization and are never persisted in views.
+end note
+
+note as READ_SECURITY
+  READ SECURITY
+  Every protected projection applies tenant/patient scope, RLS, purpose of use,
+  consent/privacy directives, field masks and audit correlation. Materialized views
+  containing PII/PHI require isolated storage, controlled refresh, staleness metadata
+  and the same authorization boundary as their source data.
+end note
+
+
+
+package "ERP association and contract projections" {
+  entity erp_business_partner_360_v <<VIEW>> {
+    business_partner_id : uuid
+    partner_number : varchar
+    display_name : varchar
+    active_roles_json : jsonb
+    crm_account_id : uuid
+    supplier_open_balance : numeric
+    customer_open_balance : numeric
+    active_contract_count : bigint
+    overdue_obligation_count : bigint
+    last_activity_at : timestamptz
+    status_code : varchar
+    available_actions_json : jsonb
+  }
+  entity erp_contract_lifecycle_queue_v <<VIEW>> {
+    contract_id : uuid
+    contract_number : varchar
+    title : varchar
+    counterparty_display_name : varchar
+    current_version_number : integer
+    approval_status_code : varchar
+    signature_status_code : varchar
+    start_date : date
+    end_date : date
+    renewal_notice_due_date : date
+    open_obligation_count : bigint
+    overdue_obligation_count : bigint
+    total_value : numeric
+    currency_code : varchar
+    owner_display_name : varchar
+    available_actions_json : jsonb
+  }
+  entity erp_contract_obligation_queue_v <<VIEW>> {
+    obligation_id : uuid
+    contract_id : uuid
+    contract_number : varchar
+    obligation_title : varchar
+    responsible_display_name : varchar
+    due_date : date
+    days_to_due : integer
+    financial_amount : numeric
+    currency_code : varchar
+    evidence_required : boolean
+    status_code : varchar
+    status_tone : varchar
+    available_actions_json : jsonb
+  }
+  entity erp_procure_to_pay_match_queue_v <<VIEW>> {
+    bill_id : uuid
+    bill_number : varchar
+    supplier_display_name : varchar
+    purchase_order_id : uuid
+    purchase_order_number : varchar
+    match_type_code : varchar
+    invoice_amount : numeric
+    ordered_amount : numeric
+    received_amount : numeric
+    variance_amount : numeric
+    currency_code : varchar
+    match_result_code : varchar
+    approval_status_code : varchar
+    available_actions_json : jsonb
+  }
+  entity erp_asset_rollforward_mv <<MATERIALIZED_VIEW>> {
+    tenant_id : uuid
+    fiscal_period_id : uuid
+    asset_class_id : uuid
+    asset_class_code : varchar
+    opening_cost : numeric
+    acquisitions : numeric
+    transfers : numeric
+    retirements : numeric
+    closing_cost : numeric
+    opening_accumulated_depreciation : numeric
+    depreciation_expense : numeric
+    closing_accumulated_depreciation : numeric
+    closing_book_value : numeric
+    currency_code : varchar
+    refreshed_at : timestamptz
+  }
+  entity erp_liability_maturity_v <<VIEW>> {
+    liability_id : uuid
+    liability_code : varchar
+    creditor_display_name : varchar
+    contract_id : uuid
+    principal_outstanding : numeric
+    interest_outstanding : numeric
+    due_30_days : numeric
+    due_90_days : numeric
+    due_365_days : numeric
+    due_after_365_days : numeric
+    currency_code : varchar
+    status_code : varchar
+  }
+  entity erp_journal_line_trace_v <<VIEW>> {
+    ledger_entry_id : uuid
+    transaction_number : varchar
+    account_code : varchar
+    debit_amount : numeric
+    credit_amount : numeric
+    business_partner_display_name : varchar
+    asset_code : varchar
+    liability_code : varchar
+    contract_number : varchar
+    project_number : varchar
+    wbs_code : varchar
+    cost_center_code : varchar
+    profit_center_code : varchar
+    purchase_order_number : varchar
+    payment_reference : varchar
+    posting_date : date
+  }
+}
+
+package "CRM activity, calendar and service projections" {
+  entity crm_account_360_v <<VIEW>> {
+    crm_account_id : uuid
+    business_partner_id : uuid
+    account_name : varchar
+    lifecycle_stage_code : varchar
+    open_opportunity_value : numeric
+    active_contract_count : bigint
+    open_case_count : bigint
+    overdue_task_count : bigint
+    next_activity_at : timestamptz
+    last_activity_at : timestamptz
+    primary_contact_display_name : varchar
+    owner_display_name : varchar
+    available_actions_json : jsonb
+  }
+  entity crm_activity_timeline_mv <<MATERIALIZED_VIEW>> {
+    tenant_id : uuid
+    activity_id : uuid
+    activity_subtype_code : varchar
+    subject : varchar
+    occurred_or_due_at : timestamptz
+    direction_code : varchar
+    outcome_code : varchar
+    account_id : uuid
+    account_display_name : varchar
+    primary_contact_id : uuid
+    primary_contact_display_name : varchar
+    opportunity_id : uuid
+    contract_id : uuid
+    case_id : uuid
+    owner_user_id : uuid
+    participant_summary_json : jsonb
+    status_code : varchar
+    refreshed_at : timestamptz
+  }
+  entity crm_task_queue_v <<VIEW>> {
+    task_id : uuid
+    activity_id : uuid
+    subject : varchar
+    priority_code : varchar
+    due_date : date
+    assignee_user_id : uuid
+    assignee_display_name : varchar
+    related_record_type_code : varchar
+    related_record_id : uuid
+    related_record_display_name : varchar
+    reminder_at : timestamptz
+    overdue_days : integer
+    status_code : varchar
+    available_actions_json : jsonb
+  }
+  entity crm_calendar_v <<VIEW>> {
+    event_id : uuid
+    activity_id : uuid
+    subject : varchar
+    start_at : timestamptz
+    end_at : timestamptz
+    is_all_day : boolean
+    time_zone : varchar
+    location_text : varchar
+    organizer_display_name : varchar
+    invitee_count : bigint
+    accepted_count : bigint
+    declined_count : bigint
+    related_record_display_name : varchar
+    status_code : varchar
+  }
+  entity crm_case_queue_v <<VIEW>> {
+    case_id : uuid
+    case_number : varchar
+    subject : varchar
+    account_display_name : varchar
+    primary_contact_display_name : varchar
+    priority_code : varchar
+    owner_display_name : varchar
+    opened_at : timestamptz
+    next_milestone_at : timestamptz
+    response_breached : boolean
+    resolution_breached : boolean
+    status_code : varchar
+    status_tone : varchar
+    available_actions_json : jsonb
+  }
+  entity crm_opportunity_forecast_v <<VIEW>> {
+    opportunity_id : uuid
+    opportunity_name : varchar
+    account_display_name : varchar
+    stage_code : varchar
+    stage_label : varchar
+    amount : numeric
+    weighted_amount : numeric
+    currency_code : varchar
+    expected_close_date : date
+    days_in_stage : integer
+    primary_contact_display_name : varchar
+    next_activity_at : timestamptz
+    owner_display_name : varchar
+    forecast_category_code : varchar
+  }
+}
+
+package "Operational, advertising, payments and clinical data projections" {
+entity ops_service_health_overview_v <<VIEW>> {
+  tenant_id : uuid
+  service_component_id : uuid
+  service_code : varchar
+  service_name : varchar
+  criticality_code : varchar
+  current_health_code : varchar
+  open_incident_count : bigint
+  highest_incident_severity_code : varchar
+  slo_attainment_percent : numeric
+  error_budget_remaining_percent : numeric
+  active_change_count : bigint
+  last_deployment_at : timestamptz
+  last_health_check_at : timestamptz
+  owner_team_name : varchar
+  on_call_display_name : varchar
+  available_actions_json : jsonb
+}
+
+entity ops_incident_command_center_v <<VIEW>> {
+  health_incident_id : uuid
+  incident_number : varchar
+  service_component_id : uuid
+  service_name : varchar
+  severity_code : varchar
+  status_code : varchar
+  title : varchar
+  started_at : timestamptz
+  detected_at : timestamptz
+  acknowledged_at : timestamptz
+  resolved_at : timestamptz
+  incident_commander_display_name : varchar
+  responder_count : bigint
+  latest_timeline_summary : text
+  next_update_due_at : timestamptz
+  customer_impact_summary : text
+  available_actions_json : jsonb
+}
+
+entity ops_slo_error_budget_mv <<MATERIALIZED_VIEW>> {
+  tenant_id : uuid
+  service_component_id : uuid
+  service_level_objective_id : uuid
+  slo_code : varchar
+  target_value : numeric
+  attained_value : numeric
+  rolling_window_seconds : bigint
+  error_budget_remaining_percent : numeric
+  current_burn_rate : numeric
+  warning_burn_rate : numeric
+  critical_burn_rate : numeric
+  deployment_freeze_required : boolean
+  measurement_status_code : varchar
+  measured_at : timestamptz
+  refreshed_at : timestamptz
+}
+
+entity ops_change_calendar_v <<VIEW>> {
+  change_request_id : uuid
+  change_number : varchar
+  service_component_id : uuid
+  service_name : varchar
+  title : varchar
+  change_type_code : varchar
+  risk_level_code : varchar
+  status_code : varchar
+  planned_start_at : timestamptz
+  planned_end_at : timestamptz
+  maintenance_window_name : varchar
+  approval_progress_json : jsonb
+  rollback_plan_present : boolean
+  conflict_count : bigint
+  available_actions_json : jsonb
+}
+
+entity ads_campaign_delivery_dashboard_v <<VIEW>> {
+  tenant_id : uuid
+  ad_account_id : uuid
+  campaign_id : uuid
+  campaign_name : varchar
+  objective_code : varchar
+  status_code : varchar
+  effective_status_code : varchar
+  daily_budget : numeric
+  lifetime_budget : numeric
+  spend_amount : numeric
+  impressions : bigint
+  reach : bigint
+  clicks : bigint
+  conversions : numeric
+  conversion_value : numeric
+  currency_code : char(3)
+  cost_per_result : numeric
+  learning_limited_adset_count : bigint
+  policy_violation_count : bigint
+  last_insight_at : timestamptz
+  available_actions_json : jsonb
+}
+
+entity ads_conversion_quality_mv <<MATERIALIZED_VIEW>> {
+  tenant_id : uuid
+  conversion_dataset_id : uuid
+  dataset_name : varchar
+  event_name : varchar
+  events_received : bigint
+  events_delivered : bigint
+  events_rejected : bigint
+  events_deduplicated : bigint
+  event_match_quality_score : numeric
+  average_delivery_latency_seconds : numeric
+  freshness_seconds : bigint
+  blocked_phi_event_count : bigint
+  last_event_at : timestamptz
+  quality_status_code : varchar
+  refreshed_at : timestamptz
+}
+
+entity ads_lead_inbox_v <<VIEW>> {
+  lead_submission_id : uuid
+  lead_form_id : uuid
+  form_name : varchar
+  campaign_name : varchar
+  ad_name : varchar
+  submitted_at : timestamptz
+  crm_lead_id : uuid
+  lead_display_name_masked : varchar
+  lead_contact_masked : varchar
+  consent_status_code : varchar
+  processing_status_code : varchar
+  delivery_attempt_count : integer
+  last_delivery_result_code : varchar
+  owner_display_name : varchar
+  available_actions_json : jsonb
+}
+
+entity ads_policy_review_queue_v <<VIEW>> {
+  ad_policy_violation_id : uuid
+  ad_id : uuid
+  ad_name : varchar
+  campaign_name : varchar
+  policy_code : varchar
+  policy_category_code : varchar
+  severity_code : varchar
+  detected_at : timestamptz
+  status_code : varchar
+  latest_appeal_status_code : varchar
+  latest_appeal_at : timestamptz
+  owner_display_name : varchar
+  available_actions_json : jsonb
+}
+
+entity payments_gateway_operations_v <<VIEW>> {
+  tenant_id : uuid
+  gateway_connection_id : uuid
+  gateway_name : varchar
+  connection_status_code : varchar
+  transactions_last_hour : bigint
+  successful_last_hour : bigint
+  failed_last_hour : bigint
+  pending_last_hour : bigint
+  callback_unverified_count : bigint
+  status_inquiry_pending_count : bigint
+  average_provider_latency_ms : numeric
+  last_successful_operation_at : timestamptz
+  last_callback_at : timestamptz
+  available_actions_json : jsonb
+}
+
+entity payments_reconciliation_queue_v <<VIEW>> {
+  reconciliation_exception_id : uuid
+  reconciliation_run_id : uuid
+  gateway_connection_id : uuid
+  external_transaction_id : varchar
+  payment_transaction_id : uuid
+  payment_debt_id : uuid
+  internal_amount : numeric
+  provider_amount : numeric
+  currency_code : char(3)
+  match_status_code : varchar
+  mismatch_reason_code : varchar
+  provider_status_code : varchar
+  recorded_at : timestamptz
+  assigned_user_display_name : varchar
+  available_actions_json : jsonb
+}
+
+entity payments_debt_checkout_v <<VIEW>> {
+  payment_debt_id : uuid
+  internal_debt_number : varchar
+  debtor_display_name : varchar
+  patient_display_name_masked : varchar
+  invoice_number : varchar
+  total_amount : numeric
+  outstanding_amount : numeric
+  currency_code : char(3)
+  due_at : timestamptz
+  debt_status_code : varchar
+  latest_checkout_session_id : uuid
+  checkout_status_code : varchar
+  checkout_expires_at : timestamptz
+  external_transaction_id : varchar
+  payment_status_code : varchar
+  receipt_id : uuid
+  available_actions_json : jsonb
+}
+
+entity patient_diagnostic_timeline_v <<VIEW>> {
+  custodian_tenant_id : uuid
+  patient_profile_id : uuid
+  timeline_entry_id : uuid
+  event_time : timestamptz
+  event_type_code : varchar
+  service_request_id : uuid
+  specimen_id : uuid
+  observation_id : uuid
+  diagnostic_report_id : uuid
+  imaging_study_id : uuid
+  display_code : varchar
+  display_name : varchar
+  status_code : varchar
+  result_summary_masked : text
+  abnormal_flag_code : varchar
+  verification_status_code : varchar
+  patient_visibility_code : varchar
+  source_organization_name : varchar
+  available_actions_json : jsonb
+}
+
+entity lab_specimen_trace_v <<VIEW>> {
+  specimen_id : uuid
+  patient_profile_id : uuid
+  accession_number : varchar
+  specimen_type_code : varchar
+  container_identifier : varchar
+  collection_at : timestamptz
+  received_at : timestamptz
+  current_location_name : varchar
+  current_custodian_display_name : varchar
+  chain_event_count : bigint
+  rejected : boolean
+  rejection_reason_code : varchar
+  work_order_number : varchar
+  test_count : bigint
+  completed_test_count : bigint
+  critical_result_count : bigint
+  status_code : varchar
+  available_actions_json : jsonb
+}
+
+entity imaging_study_viewer_manifest_v <<VIEW>> {
+  imaging_study_id : uuid
+  patient_profile_id : uuid
+  dicom_study_instance_uid : varchar
+  accession_number : varchar
+  modality_codes_json : jsonb
+  started_at : timestamptz
+  series_count : integer
+  instance_count : integer
+  structured_report_count : integer
+  selection_count : integer
+  diagnostic_report_id : uuid
+  viewer_endpoint_reference : varchar
+  authorization_scope_hash : varchar
+  manifest_expires_at : timestamptz
+  status_code : varchar
+}
+
+entity health_data_ingestion_quality_v <<VIEW>> {
+  tenant_id : uuid
+  health_source_system_id : uuid
+  source_system_name : varchar
+  health_ingestion_batch_id : uuid
+  batch_identifier : varchar
+  received_at : timestamptz
+  status_code : varchar
+  records_received : bigint
+  records_accepted : bigint
+  records_rejected : bigint
+  validation_issue_count : bigint
+  quality_issue_count : bigint
+  unresolved_identity_match_count : bigint
+  canonicalized_count : bigint
+  average_processing_latency_seconds : numeric
+  available_actions_json : jsonb
+}
+
+entity patient_longitudinal_record_v <<VIEW>> {
+  custodian_tenant_id : uuid
+  patient_profile_id : uuid
+  event_time : timestamptz
+  event_type_code : varchar
+  source_entity_type_code : varchar
+  source_entity_id : uuid
+  encounter_id : uuid
+  organization_name : varchar
+  title : varchar
+  summary_masked : text
+  clinical_priority_code : varchar
+  patient_visibility_code : varchar
+  source_system_name : varchar
+  provenance_available : boolean
+  quality_issue_count : bigint
+  available_actions_json : jsonb
+}
+
+entity procedure_case_command_center_v <<VIEW>> {
+  procedure_case_id : uuid
+  case_number : varchar
+  patient_profile_id : uuid
+  patient_display_name_masked : varchar
+  procedure_display_name : varchar
+  case_type_code : varchar
+  priority_code : varchar
+  status_code : varchar
+  scheduled_start_at : timestamptz
+  scheduled_end_at : timestamptz
+  operating_room_name : varchar
+  primary_surgeon_display_name : varchar
+  anesthesiologist_display_name : varchar
+  team_readiness_percent : numeric
+  preoperative_clearance_code : varchar
+  safety_checklist_progress_percent : numeric
+  open_risk_count : bigint
+  delay_minutes : integer
+  available_actions_json : jsonb
+}
+
+entity operating_room_schedule_v <<VIEW>> {
+  operating_room_id : uuid
+  operating_room_name : varchar
+  procedure_case_id : uuid
+  case_number : varchar
+  patient_display_name_masked : varchar
+  procedure_display_name : varchar
+  scheduled_start_at : timestamptz
+  scheduled_end_at : timestamptz
+  actual_start_at : timestamptz
+  actual_end_at : timestamptz
+  status_code : varchar
+  turnover_minutes : integer
+  delay_reason_code : varchar
+  conflict_count : bigint
+  sterility_check_status_code : varchar
+  available_actions_json : jsonb
+}
+
+entity postoperative_followup_queue_v <<VIEW>> {
+  postoperative_followup_id : uuid
+  procedure_case_id : uuid
+  case_number : varchar
+  patient_profile_id : uuid
+  patient_display_name_masked : varchar
+  procedure_display_name : varchar
+  followup_type_code : varchar
+  due_at : timestamptz
+  overdue_days : integer
+  status_code : varchar
+  wound_status_code : varchar
+  pain_score : numeric
+  complications_present : boolean
+  next_followup_at : timestamptz
+  assigned_profile_display_name : varchar
+  available_actions_json : jsonb
+}
+}
+
+' ===== v4.0.1 (scheduled campaigns / site-admin / tracking) =====
+entity adapter_health_summary <<MATERIALIZED_VIEW>> {
+    adapter : varchar
+    channel : varchar
+    state : varchar
+    last_success_at : timestamptz
+    last_failure_at : timestamptz
+    success_rate_15m : varchar
+    success_rate_24h : varchar
+    p95_latency : varchar
+    rate_limited_count : bigint
+    webhook_lag : varchar
+    unprocessed_inbound_events : varchar
+}
+
+entity campaign_dispatch_summary <<MATERIALIZED_VIEW>> {
+    campaign_id : uuid
+    dispatch_id : uuid
+    planned_at : timestamptz
+    started_at : timestamptz
+    finished_at : timestamptz
+    status : varchar
+    total_candidates : bigint
+    total_eligible : bigint
+    total_suppressed : bigint
+    total_requests : bigint
+    total_accepted : bigint
+    total_delivered : bigint
+    total_seen : bigint
+    total_read : bigint
+    total_interacted : bigint
+    total_replied : bigint
+    total_failed : bigint
+    total_cancelled : bigint
+    delivery_rate : numeric
+    read_rate : numeric
+    interaction_rate : numeric
+    failure_rate : numeric
+}
+
+entity recipient_delivery_timeline <<VIEW>> {
+    campaign : varchar
+    dispatch : varchar
+    request : varchar
+}
+
+' ===== v4.0.1 (scheduled campaigns / site-admin / tracking) ===== (fin entidades)
+
+package "Physical Indexes" {
+
+entity "INDEXES · erp_asset_rollforward_mv" as idxset_erp_asset_rollforward_mv <<INDEX_SET>> {
+  UK uq_erp_asset_rollforward_mv_period_class : (tenant_id, fiscal_period_id, asset_class_id) UNIQUE BTREE
+  IX ix_erp_asset_rollforward_mv_period : (tenant_id, fiscal_period_id) BTREE
+  IX ix_erp_asset_rollforward_mv_refreshed_at : (refreshed_at DESC) BTREE
+}
+erp_asset_rollforward_mv .. idxset_erp_asset_rollforward_mv : indexed by
+
+entity "INDEXES · crm_activity_timeline_mv" as idxset_crm_activity_timeline_mv <<INDEX_SET>> {
+  UK uq_crm_activity_timeline_mv_activity : (tenant_id, activity_id) UNIQUE BTREE
+  IX ix_crm_activity_timeline_mv_account_time : (tenant_id, account_id, occurred_or_due_at DESC) BTREE
+  IX ix_crm_activity_timeline_mv_contact_time : (tenant_id, primary_contact_id, occurred_or_due_at DESC) BTREE
+  IX ix_crm_activity_timeline_mv_opportunity_time : (tenant_id, opportunity_id, occurred_or_due_at DESC) BTREE
+  IX ix_crm_activity_timeline_mv_case_time : (tenant_id, case_id, occurred_or_due_at DESC) BTREE
+  IX ix_crm_activity_timeline_mv_owner_status_time : (tenant_id, owner_user_id, status_code, occurred_or_due_at DESC) BTREE
+}
+crm_activity_timeline_mv .. idxset_crm_activity_timeline_mv : indexed by
+
+entity "INDEXES · portal_surfaces" as idxset_portal_surfaces <<INDEX_SET>> {
+  PK pk_portal_surfaces : (id) UNIQUE BTREE
+  UK uq_portal_surfaces_portal_code : (portal_code) UNIQUE BTREE
+  IX ix_portal_surfaces_portal_type_concept_id : (portal_type_concept_id) BTREE
+  IX ix_portal_surfaces_audience_role_value_set_id : (audience_role_value_set_id) BTREE
+  IX ix_portal_surfaces_status_concept_id : (status_concept_id) BTREE
+  IX ix_portal_surfaces_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_portal_surfaces_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_portal_surfaces_search : to_tsvector('simple', concat_ws(' ', name, description)) GIN
+}
+
+portal_surfaces .. idxset_portal_surfaces : indexed by
+
+entity "INDEXES · frontend_routes" as idxset_frontend_routes <<INDEX_SET>> {
+  PK pk_frontend_routes : (id) UNIQUE BTREE
+  IX ix_frontend_routes_portal_surface_id : (portal_surface_id) BTREE
+  IX ix_frontend_routes_required_permission_id : (required_permission_id) BTREE
+  IX ix_frontend_routes_purpose_of_use_concept_id : (purpose_of_use_concept_id) BTREE
+  IX ix_frontend_routes_cache_policy_concept_id : (cache_policy_concept_id) BTREE
+  IX ix_frontend_routes_status_concept_id : (status_concept_id) BTREE
+  IX ix_frontend_routes_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_frontend_routes_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_frontend_routes_portal_code : (portal_surface_id, route_code) UNIQUE BTREE
+  UK uq_frontend_routes_pattern : (portal_surface_id, route_pattern) UNIQUE BTREE
+}
+
+frontend_routes .. idxset_frontend_routes : indexed by
+
+entity "INDEXES · read_model_definitions" as idxset_read_model_definitions <<INDEX_SET>> {
+  PK pk_read_model_definitions : (id) UNIQUE BTREE
+  IX ix_read_model_definitions_object_type_concept_id : (object_type_concept_id) BTREE
+  IX ix_read_model_definitions_refresh_mode_concept_id : (refresh_mode_concept_id) BTREE
+  IX ix_read_model_definitions_status_concept_id : (status_concept_id) BTREE
+  IX ix_read_model_definitions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_read_model_definitions_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_read_model_definition_version : (schema_name, object_name, version_number) UNIQUE BTREE
+}
+
+read_model_definitions .. idxset_read_model_definitions : indexed by
+
+entity "INDEXES · read_model_dependencies" as idxset_read_model_dependencies <<INDEX_SET>> {
+  PK pk_read_model_dependencies : (id) UNIQUE BTREE
+  IX ix_read_model_dependencies_read_model_definition_id : (read_model_definition_id) BTREE
+  IX ix_read_model_dependencies_dependency_type_concept_id : (dependency_type_concept_id) BTREE
+}
+
+read_model_dependencies .. idxset_read_model_dependencies : indexed by
+
+entity "INDEXES · frontend_page_views" as idxset_frontend_page_views <<INDEX_SET>> {
+  PK pk_frontend_page_views : (id) UNIQUE BTREE
+  IX ix_frontend_page_views_frontend_route_id : (frontend_route_id) BTREE
+  IX ix_frontend_page_views_read_model_definition_id : (read_model_definition_id) BTREE
+  IX ix_frontend_page_views_view_type_concept_id : (view_type_concept_id) BTREE
+  IX ix_frontend_page_views_field_mask_policy_id : (field_mask_policy_id) BTREE
+  IX ix_frontend_page_views_status_concept_id : (status_concept_id) BTREE
+  IX ix_frontend_page_views_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_frontend_page_views_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_frontend_page_views_search : to_tsvector('simple', concat_ws(' ', title, description)) GIN
+  UK uq_frontend_page_views_route_code : (frontend_route_id, view_code) UNIQUE BTREE
+}
+
+frontend_page_views .. idxset_frontend_page_views : indexed by
+
+entity "INDEXES · frontend_view_fields" as idxset_frontend_view_fields <<INDEX_SET>> {
+  PK pk_frontend_view_fields : (id) UNIQUE BTREE
+  IX ix_frontend_view_fields_frontend_page_view_id : (frontend_page_view_id) BTREE
+  IX ix_frontend_view_fields_display_component_concept_id : (display_component_concept_id) BTREE
+  IX ix_frontend_view_fields_permission_id : (permission_id) BTREE
+  IX ix_frontend_view_fields_status_concept_id : (status_concept_id) BTREE
+  IX ix_frontend_view_fields_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_frontend_view_fields_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_frontend_view_fields_code : (frontend_page_view_id, field_code) UNIQUE BTREE
+}
+
+frontend_view_fields .. idxset_frontend_view_fields : indexed by
+
+entity "INDEXES · frontend_view_filters" as idxset_frontend_view_filters <<INDEX_SET>> {
+  PK pk_frontend_view_filters : (id) UNIQUE BTREE
+  IX ix_frontend_view_filters_frontend_page_view_id : (frontend_page_view_id) BTREE
+  IX ix_frontend_view_filters_operator_value_set_id : (operator_value_set_id) BTREE
+  IX ix_frontend_view_filters_input_type_concept_id : (input_type_concept_id) BTREE
+  IX ix_frontend_view_filters_value_set_id : (value_set_id) BTREE
+  IX ix_frontend_view_filters_dynamic_enum_definition_id : (dynamic_enum_definition_id) BTREE
+  IX ix_frontend_view_filters_status_concept_id : (status_concept_id) BTREE
+  IX ix_frontend_view_filters_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_frontend_view_filters_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_frontend_view_filters_code : (frontend_page_view_id, filter_code) UNIQUE BTREE
+}
+
+frontend_view_filters .. idxset_frontend_view_filters : indexed by
+
+entity "INDEXES · frontend_view_sort_options" as idxset_frontend_view_sort_options <<INDEX_SET>> {
+  PK pk_frontend_view_sort_options : (id) UNIQUE BTREE
+  IX ix_frontend_view_sort_options_frontend_page_view_id : (frontend_page_view_id) BTREE
+  IX ix_frontend_view_sort_options_direction_concept_id : (direction_concept_id) BTREE
+  IX ix_frontend_view_sort_options_nulls_position_concept_id : (nulls_position_concept_id) BTREE
+  IX ix_frontend_view_sort_options_status_concept_id : (status_concept_id) BTREE
+  IX ix_frontend_view_sort_options_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_frontend_view_sort_options_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_frontend_view_sort_code : (frontend_page_view_id, sort_code) UNIQUE BTREE
+}
+
+frontend_view_sort_options .. idxset_frontend_view_sort_options : indexed by
+
+entity "INDEXES · frontend_view_actions" as idxset_frontend_view_actions <<INDEX_SET>> {
+  PK pk_frontend_view_actions : (id) UNIQUE BTREE
+  IX ix_frontend_view_actions_frontend_page_view_id : (frontend_page_view_id) BTREE
+  IX ix_frontend_view_actions_action_type_concept_id : (action_type_concept_id) BTREE
+  IX ix_frontend_view_actions_required_permission_id : (required_permission_id) BTREE
+  IX ix_frontend_view_actions_allowed_state_value_set_id : (allowed_state_value_set_id) BTREE
+  IX ix_frontend_view_actions_confirmation_policy_concept_id : (confirmation_policy_concept_id) BTREE
+  IX ix_frontend_view_actions_prominence_concept_id : (prominence_concept_id) BTREE
+  IX ix_frontend_view_actions_status_concept_id : (status_concept_id) BTREE
+  IX ix_frontend_view_actions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_frontend_view_actions_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_frontend_view_actions_code : (frontend_page_view_id, action_code) UNIQUE BTREE
+}
+
+frontend_view_actions .. idxset_frontend_view_actions : indexed by
+
+entity "INDEXES · frontend_view_kpis" as idxset_frontend_view_kpis <<INDEX_SET>> {
+  PK pk_frontend_view_kpis : (id) UNIQUE BTREE
+  IX ix_frontend_view_kpis_frontend_page_view_id : (frontend_page_view_id) BTREE
+  IX ix_frontend_view_kpis_unit_concept_id : (unit_concept_id) BTREE
+  IX ix_frontend_view_kpis_status_concept_id : (status_concept_id) BTREE
+  IX ix_frontend_view_kpis_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_frontend_view_kpis_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+frontend_view_kpis .. idxset_frontend_view_kpis : indexed by
+
+entity "INDEXES · frontend_view_states" as idxset_frontend_view_states <<INDEX_SET>> {
+  PK pk_frontend_view_states : (id) UNIQUE BTREE
+  IX ix_frontend_view_states_frontend_page_view_id : (frontend_page_view_id) BTREE
+  IX ix_frontend_view_states_state_type_concept_id : (state_type_concept_id) BTREE
+  IX ix_frontend_view_states_status_concept_id : (status_concept_id) BTREE
+  IX ix_frontend_view_states_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_frontend_view_states_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_frontend_view_states_search : to_tsvector('simple', concat_ws(' ', title)) GIN
+}
+
+frontend_view_states .. idxset_frontend_view_states : indexed by
+
+entity "INDEXES · user_view_preferences" as idxset_user_view_preferences <<INDEX_SET>> {
+  PK pk_user_view_preferences : (id) UNIQUE BTREE
+  IX ix_user_view_preferences_user_id : (user_id) BTREE
+  IX ix_user_view_preferences_frontend_page_view_id : (frontend_page_view_id) BTREE
+  IX ix_user_view_preferences_tenant_id : (tenant_id) BTREE
+  IX ix_user_view_preferences_density_concept_id : (density_concept_id) BTREE
+  IX ix_user_view_preferences_status_concept_id : (status_concept_id) BTREE
+  IX ix_user_view_preferences_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_user_view_preferences_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_user_view_preferences_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+user_view_preferences .. idxset_user_view_preferences : indexed by
+
+entity "INDEXES · read_model_refresh_runs" as idxset_read_model_refresh_runs <<INDEX_SET>> {
+  PK pk_read_model_refresh_runs : (id) UNIQUE BTREE
+  IX ix_read_model_refresh_runs_read_model_definition_id : (read_model_definition_id) BTREE
+  IX ix_read_model_refresh_runs_refresh_type_concept_id : (refresh_type_concept_id) BTREE
+  IX ix_read_model_refresh_runs_result_concept_id : (result_concept_id) BTREE
+  BRIN brin_read_model_refresh_runs_created_at : (created_at) BRIN pages_per_range=128
+}
+
+read_model_refresh_runs .. idxset_read_model_refresh_runs : indexed by
+
+entity "INDEXES · ops_slo_error_budget_mv" as idxset_ops_slo_error_budget_mv <<INDEX_SET>> {
+  UK uq_ops_slo_error_budget_mv_slo : (tenant_id, service_level_objective_id) UNIQUE BTREE
+  IX ix_ops_slo_error_budget_mv_service : (tenant_id, service_component_id, measured_at DESC) BTREE
+  IX ix_ops_slo_error_budget_mv_burn : (tenant_id, deployment_freeze_required, current_burn_rate DESC) BTREE
+}
+ops_slo_error_budget_mv .. idxset_ops_slo_error_budget_mv : indexed by
+
+entity "INDEXES · ads_conversion_quality_mv" as idxset_ads_conversion_quality_mv <<INDEX_SET>> {
+  UK uq_ads_conversion_quality_mv_dataset_event : (tenant_id, conversion_dataset_id, event_name) UNIQUE BTREE
+  IX ix_ads_conversion_quality_mv_status : (tenant_id, quality_status_code, last_event_at DESC) BTREE
+  IX ix_ads_conversion_quality_mv_refreshed : (refreshed_at DESC) BTREE
+}
+ads_conversion_quality_mv .. idxset_ads_conversion_quality_mv : indexed by
+
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

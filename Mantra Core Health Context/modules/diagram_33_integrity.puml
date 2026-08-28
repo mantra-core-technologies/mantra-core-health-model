@@ -1,0 +1,129 @@
+@startuml SALUD_Module_33_integrity
+title Module 33 — Concurrency, Constraints and Integrity Matrix\n(schema: integrity)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_33_concurrency_and_integrity.puml
+' ------------------------------------------------------------------------------
+entity inventory_stock_positions <<REFERENCE_ONLY>> {
+  PK : id
+  UK : location + product + lot
+  CHECK : quantities >= 0
+  LOCK : SELECT FOR UPDATE
+  VERSION : row_version
+}
+entity inventory_ledger_entries <<IMMUTABLE, REFERENCE_ONLY>> {
+  UK : pharmacy + idempotency_key
+  UK : pharmacy + ledger_sequence
+  CHECK : non-zero delta
+  UPDATE_DELETE : forbidden
+}
+entity inventory_reservations <<REFERENCE_ONLY>> {
+  UK : pharmacy + idempotency_key
+  EXCLUDE : active allocation overlap when required
+  WORKER : expiration release
+}
+entity diagnostic_study_prices <<VERSIONED, REFERENCE_ONLY>> {
+  UK : schedule + offering + version
+  EXCLUDE : no overlapping active effective periods
+  CHECK : amounts >= 0
+}
+entity patient_coverages <<REFERENCE_ONLY>> {
+  UK : insurer + member identifier + effective period
+  EXCLUDE : conflicting primary coverage periods
+}
+entity claim_adjudication_versions <<IMMUTABLE, REFERENCE_ONLY>> {
+  UK : claim + adjudication version
+  UPDATE_DELETE : forbidden
+}
+entity identity_verification_attempts <<REFERENCE_ONLY>> {
+  UK : case + endpoint + attempt number
+  UK : endpoint + idempotency key
+  RETRY : bounded policy only
+}
+entity user_activity_events <<APPEND_ONLY, REFERENCE_ONLY>> {
+  UK : event schema + event idempotency key
+  PARTITION : received_at
+  RETENTION : purpose-specific
+}
+entity practitioner_delegate_assignments <<REFERENCE_ONLY>> {
+  EXCLUDE : incompatible overlapping assignments
+  CHECK : signature permission requires authorized role
+}
+entity appointments <<REFERENCE_ONLY>> {
+  EXCLUDE : practitioner/location time overlap
+  LOCK : reservation confirmation transaction
+}
+
+entity claim_appeal_decisions <<IMMUTABLE, REFERENCE_ONLY>> {
+  UK : dispute + decision version
+  UPDATE_DELETE : forbidden
+}
+entity claim_reversals <<IMMUTABLE, REFERENCE_ONLY>> {
+  UK : claim + idempotency_key
+  UPDATE_DELETE : forbidden
+}
+entity coordination_of_benefits <<VERSIONED, REFERENCE_ONLY>> {
+  UK : patient + determination version
+  EXCLUDE : overlapping active COB periods
+}
+
+' + v4.0.10 (REDESA CAN-AUDIT-001 / C-19) — WORM real sobre la auditoria.
+' "Los registros de auditoria no podran modificarse ni eliminarse". La cadena hash
+' de audit_log da tamper-EVIDENCE (se detecta al verificar); estos guards dan
+' tamper-RESISTANCE: la base rechaza la mutacion sea cual sea el rol, incluido el
+' propietario. Antes vivian como DDL suelto (database/ del repo API, luego
+' SQL/patches/) que ningun rebuild aplicaba: la promesa WORM era solo convencion.
+entity audit_log <<IMMUTABLE, REFERENCE_ONLY>> {
+  UPDATE_DELETE : forbidden
+}
+' data_access_log es ASIMETRICA a proposito: prohibe UPDATE pero permite DELETE,
+' porque la purga de retencion controlada (UC-10-09) borra por ventana explicita.
+' Prohibirle el DELETE romperia la retencion; no prohibirle el UPDATE dejaria
+' reescribir que dato se divulgo.
+entity data_access_log <<APPEND_ONLY, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+  DELETE : retention purge only (UC-10-09)
+}
+
+inventory_stock_positions --> inventory_ledger_entries : atomic projection
+inventory_reservations --> inventory_ledger_entries : reserve/release
+patient_coverages --> claim_adjudication_versions : adjudication basis
+identity_verification_attempts --> practitioner_delegate_assignments : verified actor
+
+note as TX_diagram_33_concurrency_and_integrity
+  TRANSACTION POLICY
+  - Use READ COMMITTED plus explicit row locks for narrow stock mutations.
+  - Use SERIALIZABLE for cross-row invariants that cannot be safely locked by a
+    deterministic key; retry the full transaction on SQLSTATE 40001.
+  - Keep external API calls outside database lock windows. Persist intent/outbox,
+    then reconcile asynchronous results with idempotency.
+  - SKIP LOCKED is valid for workers and queues, not for business availability.
+end note
+
+note as DB_diagram_33_concurrency_and_integrity
+  PHYSICAL DATABASE GATES
+  Named CHECK/UNIQUE/EXCLUDE/FK constraints, partial unique indexes, immutable
+  triggers, partitioning plans, index evidence and concurrency tests are required
+  before migrations are approved. Application validation is never the only guard.
+end note
+
+note as NON_OWNING_INTEGRITY_MATRIX
+  NON-OWNING INTEGRITY MATRIX
+  This module does not create duplicate tables. Every entity shown is a reference
+  to the canonical owner module. Named unique, exclusion, check, partition and
+  transaction rules must be implemented in the owning table migration and repeated
+  here only as a cross-domain verification matrix.
+end note
+
+note as INDEX_SCOPE
+  INDEX SCOPE
+  This module is architectural/use-case/deployment documentation and has no
+  owned relational tables. Physical indexes are declared in the owning data modules.
+end note
+
+@enduml
+

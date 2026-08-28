@@ -1,0 +1,1008 @@
+@startuml SALUD_Module_26_insurance
+title Module 26 — Insurance Networks, Operations, Appeals and Reconciliation\n(schema: insurance)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_26_insurance_network.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_26_insurance_network
+  BUSINESS PURPOSE
+  Reconciles insurer companies, brokers, patients, healthcare infrastructure,
+  practitioners, diagnostic units and pharmacies without collapsing them into
+  one generic actor. Each relationship is temporal, auditable and scoped.
+end note
+
+entity insurance_carriers {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK,UK>>
+  * carrier_code : varchar <<UK>>
+  * legal_name : varchar
+  ' + v4.1.8 — cómo se nombra a la compañía en el giro comercial («Alianza Vida»),
+  ' que casi nunca es su razón social completa, y la dirección de su oficina
+  ' principal. Nullable las dos: el alta real las declara, y las 9 aseguradoras
+  ' bolivianas del paquete de seeds ya las traen.
+    sigla : varchar
+    address : varchar
+    regulator_identifier : varchar
+    jurisdiction_concept_id : uuid <<FK>>
+    public_profile_id : uuid <<FK>>
+  * verification_status_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity insurance_brokers {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK,UK>>
+  * broker_code : varchar <<UK>>
+  * legal_name : varchar
+    license_number : varchar
+    jurisdiction_concept_id : uuid <<FK>>
+    public_profile_id : uuid <<FK>>
+  * verification_status_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity broker_carrier_agreements {
+  * id : uuid <<PK>>
+  --
+  * insurance_broker_id : uuid <<FK>>
+  * insurance_carrier_id : uuid <<FK>>
+  * agreement_code : varchar
+    commission_model_concept_id : uuid <<FK>>
+    effective_from : date
+    effective_to : date
+    contract_file_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity employer_groups {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * group_code : varchar
+  * legal_name : varchar
+    tax_identifier : varchar
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity insurance_products {
+  * id : uuid <<PK>>
+  --
+  * insurance_carrier_id : uuid <<FK>>
+  * product_code : varchar
+  * name : varchar
+  * product_type_concept_id : uuid <<FK>>
+    market_segment_concept_id : uuid <<FK>>
+    jurisdiction_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity insurance_plans {
+  * id : uuid <<PK>>
+  --
+  * insurance_product_id : uuid <<FK>>
+  * plan_code : varchar
+  * name : varchar
+    plan_type_concept_id : uuid <<FK>>
+    currency_concept_id : uuid <<FK>>
+    effective_from : date
+    effective_to : date
+    policy_document_file_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity insurance_plan_benefits {
+  * id : uuid <<PK>>
+  --
+  * insurance_plan_id : uuid <<FK>>
+  * benefit_category_concept_id : uuid <<FK>>
+    service_concept_id : uuid <<FK>>
+    coverage_percent : numeric
+    copay_amount : numeric
+    deductible_amount : numeric
+    annual_limit_amount : numeric
+    requires_prior_authorization : boolean
+    eligibility_rule_json : jsonb
+  * effective_from : date
+    effective_to : date
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity provider_networks {
+  * id : uuid <<PK>>
+  --
+  * insurance_carrier_id : uuid <<FK>>
+  * network_code : varchar
+  * name : varchar
+    network_type_concept_id : uuid <<FK>>
+    effective_from : date
+    effective_to : date
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity network_provider_memberships {
+  * id : uuid <<PK>>
+  --
+  * provider_network_id : uuid <<FK>>
+  * provider_type_concept_id : uuid <<FK>>
+  * provider_entity_id : uuid
+    practitioner_role_assignment_id : uuid <<FK>>
+    practice_id : uuid <<FK>>
+    hospital_id : uuid <<FK>>
+    diagnostic_unit_id : uuid <<FK>>
+    pharmacy_id : uuid <<FK>>
+    participation_level_concept_id : uuid <<FK>>
+    contract_reference : varchar
+    effective_from : date
+    effective_to : date
+  * verification_status_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity patient_coverages {
+  * id : uuid <<PK>>
+  --
+  * patient_profile_id : uuid <<FK>>
+  * insurance_plan_id : uuid <<FK>>
+    insurance_broker_id : uuid <<FK>>
+    employer_group_id : uuid <<FK>>
+  * member_identifier : varchar
+    policy_identifier : varchar
+    coverage_order : integer
+    relationship_to_subscriber_concept_id : uuid <<FK>>
+    effective_from : date
+    effective_to : date
+  * verification_status_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity coverage_dependents {
+  * id : uuid <<PK>>
+  --
+  * patient_coverage_id : uuid <<FK>>
+  * dependent_patient_profile_id : uuid <<FK>>
+  * relationship_concept_id : uuid <<FK>>
+    effective_from : date
+    effective_to : date
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity broker_clients {
+  * id : uuid <<PK>>
+  --
+  * insurance_broker_id : uuid <<FK>>
+    patient_profile_id : uuid <<FK>>
+    employer_group_id : uuid <<FK>>
+  * client_type_concept_id : uuid <<FK>>
+    assigned_broker_user_id : uuid <<FK>>
+    effective_from : date
+    effective_to : date
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+insurance_carriers ||--o{ insurance_products
+insurance_products ||--o{ insurance_plans
+insurance_plans ||--o{ insurance_plan_benefits
+insurance_carriers ||--o{ provider_networks
+provider_networks ||--o{ network_provider_memberships
+insurance_carriers ||--o{ broker_carrier_agreements
+insurance_brokers ||--o{ broker_carrier_agreements
+insurance_plans ||--o{ patient_coverages
+patient_coverages ||--o{ coverage_dependents
+insurance_brokers ||--o{ broker_clients
+
+note as POLY_diagram_26_insurance_network
+  PROVIDER MEMBERSHIP INTEGRITY
+  Exactly one concrete provider reference is populated according to
+  provider_type_concept_id. Database triggers validate the target against
+  entity_registry and reject expired credentials or overlapping contracts.
+end note
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_26b_insurance_operations.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_26b_insurance_operations
+  BUSINESS PURPOSE
+  Covers real-time eligibility, prior authorization, claim submission, immutable
+  adjudication versions and patient-facing explanations of benefits. Settlement,
+  reconciliation, disputes and reversals are separated into module 26C.
+end note
+
+
+
+
+entity coverage_eligibility_requests {
+  * id : uuid <<PK>>
+  --
+  * patient_coverage_id : uuid <<FK>>
+  * requesting_provider_type_concept_id : uuid <<FK>>
+    requesting_provider_entity_id : uuid
+    service_date : date
+    purpose_value_set_id : uuid <<FK>>
+    idempotency_key : varchar
+  * status_concept_id : uuid <<FK>>
+  * requested_at : timestamptz
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+
+entity coverage_eligibility_responses <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * coverage_eligibility_request_id : uuid <<FK>>
+  * response_version : integer
+  * in_force : boolean
+    benefit_summary_json : jsonb
+    authorization_requirements_json : jsonb
+    response_reference : varchar
+  * outcome_concept_id : uuid <<FK>>
+  * responded_at : timestamptz
+    responded_by_user_id : uuid <<FK>>
+}
+
+entity prior_authorization_requests {
+  * id : uuid <<PK>>
+  --
+  * patient_coverage_id : uuid <<FK>>
+    service_request_id : uuid <<FK>>
+    medication_request_id : uuid <<FK>>
+  * requesting_provider_type_concept_id : uuid <<FK>>
+  * requesting_provider_entity_id : uuid
+  * status_concept_id : uuid <<FK>>
+    priority_concept_id : uuid <<FK>>
+    submitted_at : timestamptz
+    idempotency_key : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity prior_authorization_items {
+  * id : uuid <<PK>>
+  --
+  * prior_authorization_request_id : uuid <<FK>>
+  * item_sequence : integer
+    service_concept_id : uuid <<FK>>
+    diagnostic_study_offering_id : uuid <<FK>>
+    pharmacy_product_id : uuid <<FK>>
+    requested_quantity : numeric
+    requested_amount : numeric
+    currency_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity prior_authorization_determinations <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * prior_authorization_request_id : uuid <<FK>>
+    prior_authorization_item_id : uuid <<FK>>
+  * determination_version : integer
+  * decision_concept_id : uuid <<FK>>
+    approved_quantity : numeric
+    approved_amount : numeric
+    denial_reason_concept_id : uuid <<FK>>
+    valid_from : date
+    valid_to : date
+    supporting_file_id : uuid <<FK>>
+  * decided_at : timestamptz
+    decided_by_user_id : uuid <<FK>>
+}
+
+entity insurance_claims {
+  * id : uuid <<PK>>
+  --
+  * insurance_carrier_id : uuid <<FK>>
+  * patient_coverage_id : uuid <<FK>>
+  * billing_provider_type_concept_id : uuid <<FK>>
+  * billing_provider_entity_id : uuid
+    encounter_id : uuid <<FK>>
+    prior_authorization_request_id : uuid <<FK>>
+  * claim_identifier : varchar
+  * status_concept_id : uuid <<FK>>
+    submitted_at : timestamptz
+    total_amount : numeric
+    currency_concept_id : uuid <<FK>>
+    idempotency_key : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity insurance_claim_lines {
+  * id : uuid <<PK>>
+  --
+  * insurance_claim_id : uuid <<FK>>
+  * line_sequence : integer
+    service_concept_id : uuid <<FK>>
+    diagnostic_study_offering_id : uuid <<FK>>
+    medication_dispensation_line_id : uuid <<FK>>
+    quantity : numeric
+    billed_amount : numeric
+    patient_responsibility_amount : numeric
+    supporting_clinical_reference : varchar
+  * created_at : timestamptz
+}
+
+entity claim_adjudication_versions <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * insurance_claim_id : uuid <<FK>>
+  * adjudication_version : integer
+  * outcome_concept_id : uuid <<FK>>
+    disposition_text : text
+    total_approved_amount : numeric
+    total_patient_amount : numeric
+    total_denied_amount : numeric
+    supersedes_version_id : uuid <<FK>>
+  * adjudicated_at : timestamptz
+    adjudicated_by_user_id : uuid <<FK>>
+}
+
+entity claim_line_adjudications <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * claim_adjudication_version_id : uuid <<FK>>
+  * insurance_claim_line_id : uuid <<FK>>
+  * decision_concept_id : uuid <<FK>>
+    approved_amount : numeric
+    patient_amount : numeric
+    denied_amount : numeric
+    reason_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity patient_explanations_of_benefit {
+  * id : uuid <<PK>>
+  --
+  * insurance_claim_id : uuid <<FK>>
+  * claim_adjudication_version_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+    document_record_id : uuid <<FK>>
+    published_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+
+patient_coverages ||--o{ coverage_eligibility_requests
+patient_coverages ||--o{ prior_authorization_requests
+patient_coverages ||--o{ insurance_claims
+insurance_carriers ||--o{ insurance_claims
+coverage_eligibility_requests ||--o{ coverage_eligibility_responses
+prior_authorization_requests ||--o{ prior_authorization_items
+prior_authorization_requests ||--o{ prior_authorization_determinations
+prior_authorization_items |o--o{ prior_authorization_determinations
+insurance_claims ||--o{ insurance_claim_lines
+insurance_claims ||--o{ claim_adjudication_versions
+claim_adjudication_versions ||--o{ claim_line_adjudications
+insurance_claim_lines ||--o{ claim_line_adjudications
+insurance_claims ||--o{ patient_explanations_of_benefit
+
+note as APPEND_diagram_26b_insurance_operations
+  ADJUDICATION RULE
+  Eligibility responses, authorization determinations and claim adjudications are
+  immutable versions. New decisions supersede but never mutate prior evidence.
+  Patient-facing explanations must exclude confidential settlement details.
+end note
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_26c_insurance_reconciliation_appeals.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_26c_insurance_reconciliation_appeals
+  BUSINESS PURPOSE
+  Separates post-adjudication money reconciliation and legal/administrative dispute
+  workflows from claim intake. Coordination and decision evidence remain versioned
+  or immutable; reversals create new records and never rewrite adjudication history.
+end note
+
+
+
+
+
+
+
+entity insurance_reconciliation_batches {
+  * id : uuid <<PK>>
+  --
+  * insurance_carrier_id : uuid <<FK>>
+  * provider_type_concept_id : uuid <<FK>>
+  * provider_entity_id : uuid
+  * period_start : date
+  * period_end : date
+    total_claimed_amount : numeric
+    total_approved_amount : numeric
+    total_paid_amount : numeric
+    currency_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity insurance_reconciliation_items {
+  * id : uuid <<PK>>
+  --
+  * insurance_reconciliation_batch_id : uuid <<FK>>
+  * insurance_claim_id : uuid <<FK>>
+  * claim_adjudication_version_id : uuid <<FK>>
+    expected_amount : numeric
+    accepted_amount : numeric
+    variance_amount : numeric
+    variance_reason_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity broker_commission_statements {
+  * id : uuid <<PK>>
+  --
+  * insurance_broker_id : uuid <<FK>>
+  * broker_carrier_agreement_id : uuid <<FK>>
+  * period_start : date
+  * period_end : date
+    gross_premium_amount : numeric
+    commission_amount : numeric
+    currency_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity coordination_of_benefits <<VERSIONED>> {
+  * id : uuid <<PK>>
+  --
+  * patient_profile_id : uuid <<FK>>
+  * primary_patient_coverage_id : uuid <<FK>>
+    secondary_patient_coverage_id : uuid <<FK>>
+    tertiary_patient_coverage_id : uuid <<FK>>
+  * cob_rule_concept_id : uuid <<FK>>
+  * determination_version : integer
+    determined_by_authority_concept_id : uuid <<FK>>
+  * effective_from : date
+    effective_to : date
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+
+entity claim_disputes {
+  * id : uuid <<PK>>
+  --
+  * insurance_claim_id : uuid <<FK>>
+    claim_adjudication_version_id : uuid <<FK>>
+  * dispute_type_concept_id : uuid <<FK>>
+  * dispute_reason_concept_id : uuid <<FK>>
+  * initiated_by_party_type_concept_id : uuid <<FK>>
+    initiated_by_entity_id : uuid
+    supporting_evidence_file_id : uuid <<FK>>
+    filing_deadline : date
+    submitted_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity claim_appeal_decisions <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * claim_dispute_id : uuid <<FK>>
+  * appeal_level_concept_id : uuid <<FK>>
+  * decision_version : integer
+  * decision_concept_id : uuid <<FK>>
+    adjusted_amount : numeric
+    currency_concept_id : uuid <<FK>>
+    rationale_text : text
+    supersedes_decision_id : uuid <<FK>>
+    decided_at : timestamptz
+    decided_by_reviewer_user_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity claim_reversals <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * insurance_claim_id : uuid <<FK>>
+  * reversed_adjudication_version_id : uuid <<FK>>
+  * reversal_reason_concept_id : uuid <<FK>>
+    reversal_amount : numeric
+    currency_concept_id : uuid <<FK>>
+    replacement_claim_id : uuid <<FK>>
+    idempotency_key : varchar
+  * occurred_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+insurance_reconciliation_batches ||--o{ insurance_reconciliation_items
+insurance_claims ||--o{ insurance_reconciliation_items
+claim_adjudication_versions ||--o{ insurance_reconciliation_items
+insurance_brokers ||--o{ broker_commission_statements
+broker_carrier_agreements ||--o{ broker_commission_statements
+patient_coverages ||--o{ coordination_of_benefits
+insurance_claims ||--o{ claim_disputes
+claim_disputes ||--o{ claim_appeal_decisions
+insurance_claims ||--o{ claim_reversals
+
+note as INTEGRITY_diagram_26c_insurance_reconciliation_appeals
+  Reconciliation items reference the exact adjudication version being settled.
+  Appeal decisions and reversals are append-only and idempotent; replacement claims
+  are separate claims linked from the reversal instead of mutations of the original.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · insurance_carriers" as idxset_insurance_carriers <<INDEX_SET>> {
+  PK pk_insurance_carriers : (id) UNIQUE BTREE
+  UK uq_insurance_carriers_tenant_id : (tenant_id) UNIQUE BTREE
+  UK uq_insurance_carriers_carrier_code : (carrier_code) UNIQUE BTREE
+  IX ix_insurance_carriers_tenant_id : (tenant_id) BTREE
+  IX ix_insurance_carriers_jurisdiction_concept_id : (jurisdiction_concept_id) BTREE
+  IX ix_insurance_carriers_public_profile_id : (public_profile_id) BTREE
+  IX ix_insurance_carriers_verification_status_concept_id : (verification_status_concept_id) BTREE
+  IX ix_insurance_carriers_status_concept_id : (status_concept_id) BTREE
+  IX ix_insurance_carriers_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_insurance_carriers_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_insurance_carriers_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+insurance_carriers .. idxset_insurance_carriers : indexed by
+
+entity "INDEXES · insurance_brokers" as idxset_insurance_brokers <<INDEX_SET>> {
+  PK pk_insurance_brokers : (id) UNIQUE BTREE
+  UK uq_insurance_brokers_tenant_id : (tenant_id) UNIQUE BTREE
+  UK uq_insurance_brokers_broker_code : (broker_code) UNIQUE BTREE
+  IX ix_insurance_brokers_tenant_id : (tenant_id) BTREE
+  IX ix_insurance_brokers_jurisdiction_concept_id : (jurisdiction_concept_id) BTREE
+  IX ix_insurance_brokers_public_profile_id : (public_profile_id) BTREE
+  IX ix_insurance_brokers_verification_status_concept_id : (verification_status_concept_id) BTREE
+  IX ix_insurance_brokers_status_concept_id : (status_concept_id) BTREE
+  IX ix_insurance_brokers_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_insurance_brokers_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_insurance_brokers_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+insurance_brokers .. idxset_insurance_brokers : indexed by
+
+entity "INDEXES · broker_carrier_agreements" as idxset_broker_carrier_agreements <<INDEX_SET>> {
+  PK pk_broker_carrier_agreements : (id) UNIQUE BTREE
+  IX ix_broker_carrier_agreements_insurance_broker_id : (insurance_broker_id) BTREE
+  IX ix_broker_carrier_agreements_insurance_carrier_id : (insurance_carrier_id) BTREE
+  IX ix_broker_carrier_agreements_commission_model_concept_id : (commission_model_concept_id) BTREE
+  IX ix_broker_carrier_agreements_contract_file_id : (contract_file_id) BTREE
+  IX ix_broker_carrier_agreements_status_concept_id : (status_concept_id) BTREE
+  IX ix_broker_carrier_agreements_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_broker_carrier_agreements_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+broker_carrier_agreements .. idxset_broker_carrier_agreements : indexed by
+
+entity "INDEXES · employer_groups" as idxset_employer_groups <<INDEX_SET>> {
+  PK pk_employer_groups : (id) UNIQUE BTREE
+  IX ix_employer_groups_tenant_id : (tenant_id) BTREE
+  IX ix_employer_groups_status_concept_id : (status_concept_id) BTREE
+  IX ix_employer_groups_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_employer_groups_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_employer_groups_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+employer_groups .. idxset_employer_groups : indexed by
+
+entity "INDEXES · insurance_products" as idxset_insurance_products <<INDEX_SET>> {
+  PK pk_insurance_products : (id) UNIQUE BTREE
+  IX ix_insurance_products_insurance_carrier_id : (insurance_carrier_id) BTREE
+  IX ix_insurance_products_product_type_concept_id : (product_type_concept_id) BTREE
+  IX ix_insurance_products_market_segment_concept_id : (market_segment_concept_id) BTREE
+  IX ix_insurance_products_jurisdiction_concept_id : (jurisdiction_concept_id) BTREE
+  IX ix_insurance_products_status_concept_id : (status_concept_id) BTREE
+  IX ix_insurance_products_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_insurance_products_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+insurance_products .. idxset_insurance_products : indexed by
+
+entity "INDEXES · insurance_plans" as idxset_insurance_plans <<INDEX_SET>> {
+  PK pk_insurance_plans : (id) UNIQUE BTREE
+  IX ix_insurance_plans_insurance_product_id : (insurance_product_id) BTREE
+  IX ix_insurance_plans_plan_type_concept_id : (plan_type_concept_id) BTREE
+  IX ix_insurance_plans_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_insurance_plans_policy_document_file_id : (policy_document_file_id) BTREE
+  IX ix_insurance_plans_status_concept_id : (status_concept_id) BTREE
+  IX ix_insurance_plans_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_insurance_plans_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+insurance_plans .. idxset_insurance_plans : indexed by
+
+entity "INDEXES · insurance_plan_benefits" as idxset_insurance_plan_benefits <<INDEX_SET>> {
+  PK pk_insurance_plan_benefits : (id) UNIQUE BTREE
+  IX ix_insurance_plan_benefits_insurance_plan_id : (insurance_plan_id) BTREE
+  IX ix_insurance_plan_benefits_benefit_category_concept_id : (benefit_category_concept_id) BTREE
+  IX ix_insurance_plan_benefits_service_concept_id : (service_concept_id) BTREE
+  IX ix_insurance_plan_benefits_status_concept_id : (status_concept_id) BTREE
+  IX ix_insurance_plan_benefits_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_insurance_plan_benefits_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+insurance_plan_benefits .. idxset_insurance_plan_benefits : indexed by
+
+entity "INDEXES · provider_networks" as idxset_provider_networks <<INDEX_SET>> {
+  PK pk_provider_networks : (id) UNIQUE BTREE
+  IX ix_provider_networks_insurance_carrier_id : (insurance_carrier_id) BTREE
+  IX ix_provider_networks_network_type_concept_id : (network_type_concept_id) BTREE
+  IX ix_provider_networks_status_concept_id : (status_concept_id) BTREE
+  IX ix_provider_networks_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_provider_networks_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+provider_networks .. idxset_provider_networks : indexed by
+
+entity "INDEXES · network_provider_memberships" as idxset_network_provider_memberships <<INDEX_SET>> {
+  PK pk_network_provider_memberships : (id) UNIQUE BTREE
+  IX ix_network_provider_memberships_provider_network_id : (provider_network_id) BTREE
+  IX ix_network_provider_memberships_provider_type_concept_id : (provider_type_concept_id) BTREE
+  IX ix_network_provider_memberships_practitioner_role_assignment_id : (practitioner_role_assignment_id) BTREE
+  IX ix_network_provider_memberships_practice_id : (practice_id) BTREE
+  IX ix_network_provider_memberships_hospital_id : (hospital_id) BTREE
+  IX ix_network_provider_memberships_diagnostic_unit_id : (diagnostic_unit_id) BTREE
+  IX ix_network_provider_memberships_pharmacy_id : (pharmacy_id) BTREE
+  IX ix_network_provider_memberships_participation_level_concept_id : (participation_level_concept_id) BTREE
+  IX ix_network_provider_memberships_verification_status_concept_id : (verification_status_concept_id) BTREE
+  IX ix_network_provider_memberships_status_concept_id : (status_concept_id) BTREE
+  IX ix_network_provider_memberships_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_network_provider_memberships_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+network_provider_memberships .. idxset_network_provider_memberships : indexed by
+
+entity "INDEXES · patient_coverages" as idxset_patient_coverages <<INDEX_SET>> {
+  PK pk_patient_coverages : (id) UNIQUE BTREE
+  IX ix_patient_coverages_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_patient_coverages_insurance_plan_id : (insurance_plan_id) BTREE
+  IX ix_patient_coverages_insurance_broker_id : (insurance_broker_id) BTREE
+  IX ix_patient_coverages_employer_group_id : (employer_group_id) BTREE
+  IX ix_patient_coverages_relationship_to_subscriber_concept_id : (relationship_to_subscriber_concept_id) BTREE
+  IX ix_patient_coverages_verification_status_concept_id : (verification_status_concept_id) BTREE
+  IX ix_patient_coverages_status_concept_id : (status_concept_id) BTREE
+  IX ix_patient_coverages_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_patient_coverages_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_patient_coverages_patient_profile_id_updated_at : (patient_profile_id, updated_at DESC) BTREE
+}
+
+patient_coverages .. idxset_patient_coverages : indexed by
+
+entity "INDEXES · coverage_dependents" as idxset_coverage_dependents <<INDEX_SET>> {
+  PK pk_coverage_dependents : (id) UNIQUE BTREE
+  IX ix_coverage_dependents_patient_coverage_id : (patient_coverage_id) BTREE
+  IX ix_coverage_dependents_dependent_patient_profile_id : (dependent_patient_profile_id) BTREE
+  IX ix_coverage_dependents_relationship_concept_id : (relationship_concept_id) BTREE
+  IX ix_coverage_dependents_status_concept_id : (status_concept_id) BTREE
+  IX ix_coverage_dependents_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_coverage_dependents_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+coverage_dependents .. idxset_coverage_dependents : indexed by
+
+entity "INDEXES · broker_clients" as idxset_broker_clients <<INDEX_SET>> {
+  PK pk_broker_clients : (id) UNIQUE BTREE
+  IX ix_broker_clients_insurance_broker_id : (insurance_broker_id) BTREE
+  IX ix_broker_clients_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_broker_clients_employer_group_id : (employer_group_id) BTREE
+  IX ix_broker_clients_client_type_concept_id : (client_type_concept_id) BTREE
+  IX ix_broker_clients_assigned_broker_user_id : (assigned_broker_user_id) BTREE
+  IX ix_broker_clients_status_concept_id : (status_concept_id) BTREE
+  IX ix_broker_clients_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_broker_clients_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_broker_clients_patient_profile_id_updated_at : (patient_profile_id, updated_at DESC) BTREE
+}
+
+broker_clients .. idxset_broker_clients : indexed by
+
+entity "INDEXES · coverage_eligibility_requests" as idxset_coverage_eligibility_requests <<INDEX_SET>> {
+  PK pk_coverage_eligibility_requests : (id) UNIQUE BTREE
+  IX ix_coverage_eligibility_requests_patient_coverage_id : (patient_coverage_id) BTREE
+  IX ix_coverage_eligibility_requests_requesting_provider_t_ccab8dd1 : (requesting_provider_type_concept_id) BTREE
+  IX ix_coverage_eligibility_requests_purpose_value_set_id : (purpose_value_set_id) BTREE
+  IX ix_coverage_eligibility_requests_status_concept_id : (status_concept_id) BTREE
+  IX ix_coverage_eligibility_requests_created_by_user_id : (created_by_user_id) BTREE
+  UK uq_coverage_eligibility_requests_idempotency : (idempotency_key) UNIQUE BTREE
+}
+
+coverage_eligibility_requests .. idxset_coverage_eligibility_requests : indexed by
+
+entity "INDEXES · coverage_eligibility_responses" as idxset_coverage_eligibility_responses <<INDEX_SET>> {
+  PK pk_coverage_eligibility_responses : (id) UNIQUE BTREE
+  IX ix_coverage_eligibility_responses_coverage_eligibility_44692f00 : (coverage_eligibility_request_id) BTREE
+  IX ix_coverage_eligibility_responses_outcome_concept_id : (outcome_concept_id) BTREE
+  IX ix_coverage_eligibility_responses_responded_by_user_id : (responded_by_user_id) BTREE
+}
+
+coverage_eligibility_responses .. idxset_coverage_eligibility_responses : indexed by
+
+entity "INDEXES · prior_authorization_requests" as idxset_prior_authorization_requests <<INDEX_SET>> {
+  PK pk_prior_authorization_requests : (id) UNIQUE BTREE
+  IX ix_prior_authorization_requests_patient_coverage_id : (patient_coverage_id) BTREE
+  IX ix_prior_authorization_requests_service_request_id : (service_request_id) BTREE
+  IX ix_prior_authorization_requests_medication_request_id : (medication_request_id) BTREE
+  IX ix_prior_authorization_requests_requesting_provider_ty_ace534e5 : (requesting_provider_type_concept_id) BTREE
+  IX ix_prior_authorization_requests_status_concept_id : (status_concept_id) BTREE
+  IX ix_prior_authorization_requests_priority_concept_id : (priority_concept_id) BTREE
+  IX ix_prior_authorization_requests_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_prior_authorization_requests_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_prior_authorization_requests_idempotency : (idempotency_key) UNIQUE BTREE
+}
+
+prior_authorization_requests .. idxset_prior_authorization_requests : indexed by
+
+entity "INDEXES · prior_authorization_items" as idxset_prior_authorization_items <<INDEX_SET>> {
+  PK pk_prior_authorization_items : (id) UNIQUE BTREE
+  IX ix_prior_authorization_items_prior_authorization_request_id : (prior_authorization_request_id) BTREE
+  IX ix_prior_authorization_items_service_concept_id : (service_concept_id) BTREE
+  IX ix_prior_authorization_items_diagnostic_study_offering_id : (diagnostic_study_offering_id) BTREE
+  IX ix_prior_authorization_items_pharmacy_product_id : (pharmacy_product_id) BTREE
+  IX ix_prior_authorization_items_currency_concept_id : (currency_concept_id) BTREE
+}
+
+prior_authorization_items .. idxset_prior_authorization_items : indexed by
+
+entity "INDEXES · prior_authorization_determinations" as idxset_prior_authorization_determinations <<INDEX_SET>> {
+  PK pk_prior_authorization_determinations : (id) UNIQUE BTREE
+  IX ix_prior_authorization_determinations_prior_authorizat_9b22376b : (prior_authorization_request_id) BTREE
+  IX ix_prior_authorization_determinations_prior_authorizat_3c8c8cdf : (prior_authorization_item_id) BTREE
+  IX ix_prior_authorization_determinations_decision_concept_id : (decision_concept_id) BTREE
+  IX ix_prior_authorization_determinations_denial_reason_concept_id : (denial_reason_concept_id) BTREE
+  IX ix_prior_authorization_determinations_supporting_file_id : (supporting_file_id) BTREE
+  IX ix_prior_authorization_determinations_decided_by_user_id : (decided_by_user_id) BTREE
+  GIST gist_prior_authorization_determinations_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+}
+
+prior_authorization_determinations .. idxset_prior_authorization_determinations : indexed by
+
+entity "INDEXES · insurance_claims" as idxset_insurance_claims <<INDEX_SET>> {
+  PK pk_insurance_claims : (id) UNIQUE BTREE
+  IX ix_insurance_claims_insurance_carrier_id : (insurance_carrier_id) BTREE
+  IX ix_insurance_claims_patient_coverage_id : (patient_coverage_id) BTREE
+  IX ix_insurance_claims_billing_provider_type_concept_id : (billing_provider_type_concept_id) BTREE
+  IX ix_insurance_claims_encounter_id : (encounter_id) BTREE
+  IX ix_insurance_claims_prior_authorization_request_id : (prior_authorization_request_id) BTREE
+  IX ix_insurance_claims_status_concept_id : (status_concept_id) BTREE
+  IX ix_insurance_claims_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_insurance_claims_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_insurance_claims_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_insurance_claims_idempotency : (idempotency_key) UNIQUE BTREE
+}
+
+insurance_claims .. idxset_insurance_claims : indexed by
+
+entity "INDEXES · insurance_claim_lines" as idxset_insurance_claim_lines <<INDEX_SET>> {
+  PK pk_insurance_claim_lines : (id) UNIQUE BTREE
+  IX ix_insurance_claim_lines_insurance_claim_id : (insurance_claim_id) BTREE
+  IX ix_insurance_claim_lines_service_concept_id : (service_concept_id) BTREE
+  IX ix_insurance_claim_lines_diagnostic_study_offering_id : (diagnostic_study_offering_id) BTREE
+  IX ix_insurance_claim_lines_medication_dispensation_line_id : (medication_dispensation_line_id) BTREE
+}
+
+insurance_claim_lines .. idxset_insurance_claim_lines : indexed by
+
+entity "INDEXES · claim_adjudication_versions" as idxset_claim_adjudication_versions <<INDEX_SET>> {
+  PK pk_claim_adjudication_versions : (id) UNIQUE BTREE
+  IX ix_claim_adjudication_versions_insurance_claim_id : (insurance_claim_id) BTREE
+  IX ix_claim_adjudication_versions_outcome_concept_id : (outcome_concept_id) BTREE
+  IX ix_claim_adjudication_versions_supersedes_version_id : (supersedes_version_id) BTREE
+  IX ix_claim_adjudication_versions_adjudicated_by_user_id : (adjudicated_by_user_id) BTREE
+}
+
+claim_adjudication_versions .. idxset_claim_adjudication_versions : indexed by
+
+entity "INDEXES · claim_line_adjudications" as idxset_claim_line_adjudications <<INDEX_SET>> {
+  PK pk_claim_line_adjudications : (id) UNIQUE BTREE
+  IX ix_claim_line_adjudications_claim_adjudication_version_id : (claim_adjudication_version_id) BTREE
+  IX ix_claim_line_adjudications_insurance_claim_line_id : (insurance_claim_line_id) BTREE
+  IX ix_claim_line_adjudications_decision_concept_id : (decision_concept_id) BTREE
+  IX ix_claim_line_adjudications_reason_concept_id : (reason_concept_id) BTREE
+  BRIN brin_claim_line_adjudications_created_at : (created_at) BRIN pages_per_range=128
+}
+
+claim_line_adjudications .. idxset_claim_line_adjudications : indexed by
+
+entity "INDEXES · patient_explanations_of_benefit" as idxset_patient_explanations_of_benefit <<INDEX_SET>> {
+  PK pk_patient_explanations_of_benefit : (id) UNIQUE BTREE
+  IX ix_patient_explanations_of_benefit_insurance_claim_id : (insurance_claim_id) BTREE
+  IX ix_patient_explanations_of_benefit_claim_adjudication__441b4744 : (claim_adjudication_version_id) BTREE
+  IX ix_patient_explanations_of_benefit_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_patient_explanations_of_benefit_document_record_id : (document_record_id) BTREE
+  IX ix_patient_explanations_of_benefit_status_concept_id : (status_concept_id) BTREE
+  IX ix_patient_explanations_of_benefit_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_patient_explanations_of_benefit_patient_profile_id__2239c1f8 : (patient_profile_id, created_at DESC) BTREE
+}
+
+patient_explanations_of_benefit .. idxset_patient_explanations_of_benefit : indexed by
+
+entity "INDEXES · insurance_reconciliation_batches" as idxset_insurance_reconciliation_batches <<INDEX_SET>> {
+  PK pk_insurance_reconciliation_batches : (id) UNIQUE BTREE
+  IX ix_insurance_reconciliation_batches_insurance_carrier_id : (insurance_carrier_id) BTREE
+  IX ix_insurance_reconciliation_batches_provider_type_concept_id : (provider_type_concept_id) BTREE
+  IX ix_insurance_reconciliation_batches_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_insurance_reconciliation_batches_status_concept_id : (status_concept_id) BTREE
+  IX ix_insurance_reconciliation_batches_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_insurance_reconciliation_batches_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+insurance_reconciliation_batches .. idxset_insurance_reconciliation_batches : indexed by
+
+entity "INDEXES · insurance_reconciliation_items" as idxset_insurance_reconciliation_items <<INDEX_SET>> {
+  PK pk_insurance_reconciliation_items : (id) UNIQUE BTREE
+  IX ix_insurance_reconciliation_items_insurance_reconcilia_4340c85a : (insurance_reconciliation_batch_id) BTREE
+  IX ix_insurance_reconciliation_items_insurance_claim_id : (insurance_claim_id) BTREE
+  IX ix_insurance_reconciliation_items_claim_adjudication_version_id : (claim_adjudication_version_id) BTREE
+  IX ix_insurance_reconciliation_items_variance_reason_concept_id : (variance_reason_concept_id) BTREE
+  IX ix_insurance_reconciliation_items_status_concept_id : (status_concept_id) BTREE
+  IX ix_insurance_reconciliation_items_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_insurance_reconciliation_items_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+insurance_reconciliation_items .. idxset_insurance_reconciliation_items : indexed by
+
+entity "INDEXES · broker_commission_statements" as idxset_broker_commission_statements <<INDEX_SET>> {
+  PK pk_broker_commission_statements : (id) UNIQUE BTREE
+  IX ix_broker_commission_statements_insurance_broker_id : (insurance_broker_id) BTREE
+  IX ix_broker_commission_statements_broker_carrier_agreement_id : (broker_carrier_agreement_id) BTREE
+  IX ix_broker_commission_statements_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_broker_commission_statements_status_concept_id : (status_concept_id) BTREE
+  IX ix_broker_commission_statements_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_broker_commission_statements_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+broker_commission_statements .. idxset_broker_commission_statements : indexed by
+
+entity "INDEXES · coordination_of_benefits" as idxset_coordination_of_benefits <<INDEX_SET>> {
+  PK pk_coordination_of_benefits : (id) UNIQUE BTREE
+  IX ix_coordination_of_benefits_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_coordination_of_benefits_primary_patient_coverage_id : (primary_patient_coverage_id) BTREE
+  IX ix_coordination_of_benefits_secondary_patient_coverage_id : (secondary_patient_coverage_id) BTREE
+  IX ix_coordination_of_benefits_tertiary_patient_coverage_id : (tertiary_patient_coverage_id) BTREE
+  IX ix_coordination_of_benefits_cob_rule_concept_id : (cob_rule_concept_id) BTREE
+  IX ix_coordination_of_benefits_determined_by_authority_concept_id : (determined_by_authority_concept_id) BTREE
+  IX ix_coordination_of_benefits_status_concept_id : (status_concept_id) BTREE
+  IX ix_coordination_of_benefits_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_coordination_of_benefits_patient_profile_id_created_at : (patient_profile_id, created_at DESC) BTREE
+}
+
+coordination_of_benefits .. idxset_coordination_of_benefits : indexed by
+
+entity "INDEXES · claim_disputes" as idxset_claim_disputes <<INDEX_SET>> {
+  PK pk_claim_disputes : (id) UNIQUE BTREE
+  IX ix_claim_disputes_insurance_claim_id : (insurance_claim_id) BTREE
+  IX ix_claim_disputes_claim_adjudication_version_id : (claim_adjudication_version_id) BTREE
+  IX ix_claim_disputes_dispute_type_concept_id : (dispute_type_concept_id) BTREE
+  IX ix_claim_disputes_dispute_reason_concept_id : (dispute_reason_concept_id) BTREE
+  IX ix_claim_disputes_initiated_by_party_type_concept_id : (initiated_by_party_type_concept_id) BTREE
+  IX ix_claim_disputes_supporting_evidence_file_id : (supporting_evidence_file_id) BTREE
+  IX ix_claim_disputes_status_concept_id : (status_concept_id) BTREE
+  IX ix_claim_disputes_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_claim_disputes_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+claim_disputes .. idxset_claim_disputes : indexed by
+
+entity "INDEXES · claim_appeal_decisions" as idxset_claim_appeal_decisions <<INDEX_SET>> {
+  PK pk_claim_appeal_decisions : (id) UNIQUE BTREE
+  IX ix_claim_appeal_decisions_claim_dispute_id : (claim_dispute_id) BTREE
+  IX ix_claim_appeal_decisions_appeal_level_concept_id : (appeal_level_concept_id) BTREE
+  IX ix_claim_appeal_decisions_decision_concept_id : (decision_concept_id) BTREE
+  IX ix_claim_appeal_decisions_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_claim_appeal_decisions_supersedes_decision_id : (supersedes_decision_id) BTREE
+  IX ix_claim_appeal_decisions_decided_by_reviewer_user_id : (decided_by_reviewer_user_id) BTREE
+  BRIN brin_claim_appeal_decisions_created_at : (created_at) BRIN pages_per_range=128
+}
+
+claim_appeal_decisions .. idxset_claim_appeal_decisions : indexed by
+
+entity "INDEXES · claim_reversals" as idxset_claim_reversals <<INDEX_SET>> {
+  PK pk_claim_reversals : (id) UNIQUE BTREE
+  IX ix_claim_reversals_insurance_claim_id : (insurance_claim_id) BTREE
+  IX ix_claim_reversals_reversed_adjudication_version_id : (reversed_adjudication_version_id) BTREE
+  IX ix_claim_reversals_reversal_reason_concept_id : (reversal_reason_concept_id) BTREE
+  IX ix_claim_reversals_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_claim_reversals_replacement_claim_id : (replacement_claim_id) BTREE
+  IX ix_claim_reversals_recorded_by_user_id : (recorded_by_user_id) BTREE
+  UK uq_claim_reversals_idempotency : (idempotency_key) UNIQUE BTREE
+  BRIN brin_claim_reversals_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+claim_reversals .. idxset_claim_reversals : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

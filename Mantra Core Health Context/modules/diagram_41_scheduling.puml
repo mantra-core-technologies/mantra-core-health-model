@@ -1,0 +1,616 @@
+@startuml SALUD_Module_41_scheduling
+title Module 41 — Appointments, Availability, Holds and Waitlists\n(schema: scheduling)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_41_scheduling.puml
+' ------------------------------------------------------------------------------
+entity practitioner_schedules {
+  * id : uuid <<PK>>
+  --
+  * practitioner_profile_id : uuid <<FK>>
+    practice_id : uuid <<FK>>
+    care_space_id : uuid <<FK>>
+    day_of_week : integer
+    start_time : time
+    end_time : time
+    slot_minutes : integer
+    valid_from : date
+    valid_to : date
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity availability_slots {
+  * id : uuid <<PK>>
+  --
+    schedule_id : uuid <<FK>>
+  * practitioner_profile_id : uuid <<FK>>
+    care_space_id : uuid <<FK>>
+  * start_at : timestamptz
+  * end_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+    appointment_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+note as BIZ_diagram_41_scheduling
+  BUSINESS PURPOSE
+  The full booking (agenda) layer on top of the clinical appointment record. Models
+  bookable resources (practitioners, rooms, equipment), schedule templates and rules
+  that generate slots, availability exceptions, concurrency-safe slot holds (the
+  distributed reservation lock for CU-10), confirmed bookings, reschedules,
+  cancellations with policy-driven fees, waitlists and reminders. The canonical
+  clinical appointment stays in module 08/18; this module owns the reservation
+  lifecycle and anti-double-booking guarantees.
+end note
+
+entity appointments <<external>> {
+  .. defined in module 08 clinical ..
+  * id : uuid <<PK>>
+}
+
+entity schedulable_resources {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+    practice_id : uuid <<FK>>
+  * resource_type_concept_id : uuid <<FK>>
+  * resource_ref_type : varchar
+  * resource_ref_id : uuid
+  * name : varchar
+    time_zone : varchar
+    capacity : integer
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity schedule_templates {
+  * id : uuid <<PK>>
+  --
+  * resource_id : uuid <<FK>>
+    practitioner_schedule_id : uuid <<FK>>
+  * name : varchar
+    service_concept_id : uuid <<FK>>
+    valid_from : date
+    valid_to : date
+    slot_minutes : integer
+    booking_policy_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity schedule_rules {
+  * id : uuid <<PK>>
+  --
+  * schedule_template_id : uuid <<FK>>
+  * day_of_week : integer
+  * start_time : time
+  * end_time : time
+    slot_minutes : integer
+    capacity_per_slot : integer
+  ' + v4.2.2 — el receso entre consultas, POR FRANJA. «El lunes consultas de 45 sin
+  ' respiro, el miércoles de 20 con 10 de margen»: el respiro es una propiedad de la
+  ' franja, igual que `slot_minutes`, y por eso vive acá y no en la plantilla — partirlo
+  ' en dos fuentes obligaría a preguntarle a dos filas cuánto dura un turno.
+  '
+  ' El paso del generador pasa a ser `slot_minutes + gap_minutes`, pero **cada turno
+  ' sigue midiendo su duración real**: el paciente reserva 20 minutos y el respiro es
+  ' aire del profesional, no un cupo que alguien pueda pedir ni un bloqueo que ocupe.
+  '
+  ' Nullable y SIN default, como su vecina `slot_minutes`: el modelo no emite defaults
+  ' —`row_version` es la única excepción, y la emite el generador— y acá no harían
+  ' falta, porque `NULL` ≡ «sin respiro» dice exactamente lo mismo que 0. El `?? 0` lo
+  ' pone el servicio, igual que ya hace con `slot_minutes ?? DEFAULT_SLOT_MINUTES`.
+    gap_minutes : integer
+    valid_from : date
+    valid_to : date
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity availability_exceptions {
+  * id : uuid <<PK>>
+  --
+  * resource_id : uuid <<FK>>
+  * exception_type_concept_id : uuid <<FK>>
+  * start_at : timestamptz
+  * end_at : timestamptz
+    reason : varchar
+    is_available : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity bookable_slots {
+  * id : uuid <<PK>>
+  --
+  * resource_id : uuid <<FK>>
+    schedule_template_id : uuid <<FK>>
+    service_concept_id : uuid <<FK>>
+  * start_at : timestamptz
+  * end_at : timestamptz
+  * capacity : integer
+  * remaining_capacity : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity slot_holds {
+  * id : uuid <<PK>>
+  --
+  * bookable_slot_id : uuid <<FK>>
+    patient_profile_id : uuid <<FK>>
+  * held_by_user_id : uuid <<FK>>
+  * hold_token : varchar <<UK>>
+  * status_concept_id : uuid <<FK>>
+  * expires_at : timestamptz
+    released_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity booking_policies {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+    practice_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+    min_notice_minutes : integer
+    max_advance_days : integer
+    cancellation_window_minutes : integer
+    no_show_fee_amount : numeric
+    currency_concept_id : uuid <<FK>>
+    allow_overbooking : boolean
+    max_active_per_patient : integer
+    hold_ttl_seconds : integer
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity appointment_bookings {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+  * bookable_slot_id : uuid <<FK>>
+    resource_id : uuid <<FK>>
+    appointment_id : uuid <<FK>>
+    service_concept_id : uuid <<FK>>
+  * booking_channel_concept_id : uuid <<FK>>
+    booked_by_user_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    confirmed_at : timestamptz
+    checked_in_at : timestamptz
+    reason_text : text
+    booking_policy_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+  ' + v4.0.8 (REDESA CAN-APT): copia congelada de la política de cancelación tal
+  ' como se aceptó al reservar. Se guarda el snapshot, no una FK, justamente para
+  ' que un cambio posterior de la política no reescriba lo que el paciente aceptó.
+    cancellation_policy_snapshot : jsonb
+}
+
+' + v4.0.8 (REDESA C-11) — Motor de confirmación automática de reservas.
+' Reglas deterministas que deciden si una solicitud se auto-confirma, se
+' auto-rechaza o va a revisión manual. No se borran en duro: se desactivan
+' (`enabled`) y se versionan (`version`). La evaluación corre siempre contra los
+' datos congelados de la solicitud.
+entity booking_confirmation_rules {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * scope_type_concept_id : uuid <<FK>>
+  ' Alcance concreto (practice / resource / service) según scope_type_concept_id;
+  ' NULL = todo el tipo. Polimórfica por diseño, por eso no lleva <<FK>>.
+    scope_id : uuid
+  * priority : integer
+  * effective_from : timestamptz
+    effective_to : timestamptz
+  * condition_json : jsonb
+  * decision_concept_id : uuid <<FK>>
+  * enabled : boolean
+  * version : integer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity "INDEXES · booking_confirmation_rules" as idxset_booking_confirmation_rules <<INDEX_SET>> {
+  PK pk_booking_confirmation_rules : (id) UNIQUE BTREE
+  IX ix_booking_confirmation_rules_tenant_id : (tenant_id) BTREE
+  IX ix_booking_confirmation_rules_scope : (scope_type_concept_id, scope_id) BTREE
+}
+booking_confirmation_rules .. idxset_booking_confirmation_rules : indexed by
+
+entity booking_reschedules <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * booking_id : uuid <<FK>>
+  * from_slot_id : uuid <<FK>>
+  * to_slot_id : uuid <<FK>>
+    reason_concept_id : uuid <<FK>>
+    rescheduled_by_user_id : uuid <<FK>>
+    occurred_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity booking_cancellations {
+  * id : uuid <<PK>>
+  --
+  * booking_id : uuid <<FK>>
+  * reason_concept_id : uuid <<FK>>
+    cancelled_by_user_id : uuid <<FK>>
+    is_no_show : boolean
+    fee_amount : numeric
+    currency_concept_id : uuid <<FK>>
+    fee_payment_intent_id : uuid <<FK>>
+    cancelled_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity waitlist_entries {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+    resource_id : uuid <<FK>>
+    service_concept_id : uuid <<FK>>
+    desired_from : timestamptz
+    desired_to : timestamptz
+  * priority : integer
+  * status_concept_id : uuid <<FK>>
+    fulfilled_booking_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity appointment_reminders {
+  * id : uuid <<PK>>
+  --
+  * booking_id : uuid <<FK>>
+  * channel_concept_id : uuid <<FK>>
+  * offset_minutes : integer
+  * scheduled_at : timestamptz
+    sent_at : timestamptz
+    notification_request_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+schedulable_resources ||--o{ schedule_templates
+practitioner_schedules |o--o{ schedule_templates
+schedule_templates ||--o{ schedule_rules
+schedulable_resources ||--o{ availability_exceptions
+schedulable_resources ||--o{ bookable_slots
+schedule_templates |o--o{ bookable_slots
+bookable_slots ||--o{ slot_holds
+booking_policies |o--o{ schedule_templates
+bookable_slots ||--o{ appointment_bookings
+appointments |o--o{ appointment_bookings
+appointment_bookings ||--o{ booking_reschedules
+appointment_bookings ||--o{ booking_cancellations
+schedulable_resources ||--o{ waitlist_entries
+appointment_bookings ||--o{ appointment_reminders
+practitioner_schedules ||--o{ availability_slots
+
+note as DEP_diagram_41_scheduling
+  Connects to other modules via:
+  clinical.appointments (appointment_bookings.appointment_id),
+  clinical_ext.practitioner_schedules, profiles.patient_profiles, directory.tenants,
+  practice.practices, practice.care_spaces (resources), messaging.notification_requests
+  (reminders), payments.payment_intents (no-show/cancellation fees),
+  terminology.catalog_concepts.
+end note
+
+note as REC_CONCURRENCY_SCHED_diagram_41_scheduling
+  ANTI-DOUBLE-BOOKING (see module 33 Integrity Matrix)
+  bookable_slots.remaining_capacity is decremented under SELECT ... FOR UPDATE.
+  A slot_hold reserves capacity with hold_token + expires_at (TTL from booking_policy);
+  an idempotent worker releases expired holds (SKIP LOCKED). Confirming a booking
+  converts a live hold; UNIQUE(bookable_slot_id, patient_profile_id) on active bookings
+  prevents duplicates. resource_ref is polymorphic — constrain via value_set.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · practitioner_schedules" as idxset_practitioner_schedules <<INDEX_SET>> {
+  PK pk_practitioner_schedules : (id) UNIQUE BTREE
+  IX ix_practitioner_schedules_practitioner_profile_id : (practitioner_profile_id) BTREE
+  IX ix_practitioner_schedules_practice_id : (practice_id) BTREE
+  IX ix_practitioner_schedules_care_space_id : (care_space_id) BTREE
+  IX ix_practitioner_schedules_status_concept_id : (status_concept_id) BTREE
+  IX ix_practitioner_schedules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_practitioner_schedules_updated_by_user_id : (updated_by_user_id) BTREE
+  GIST gist_practitioner_schedules_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+}
+
+practitioner_schedules .. idxset_practitioner_schedules : indexed by
+
+entity "INDEXES · availability_slots" as idxset_availability_slots <<INDEX_SET>> {
+  PK pk_availability_slots : (id) UNIQUE BTREE
+  IX ix_availability_slots_schedule_id : (schedule_id) BTREE
+  IX ix_availability_slots_practitioner_profile_id : (practitioner_profile_id) BTREE
+  IX ix_availability_slots_care_space_id : (care_space_id) BTREE
+  IX ix_availability_slots_status_concept_id : (status_concept_id) BTREE
+  IX ix_availability_slots_appointment_id : (appointment_id) BTREE
+  IX ix_availability_slots_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_availability_slots_updated_by_user_id : (updated_by_user_id) BTREE
+  GIST gist_availability_slots_effective_period : tstzrange(start_at, end_at, '[)') GIST
+}
+
+availability_slots .. idxset_availability_slots : indexed by
+
+entity "INDEXES · schedulable_resources" as idxset_schedulable_resources <<INDEX_SET>> {
+  PK pk_schedulable_resources : (id) UNIQUE BTREE
+  IX ix_schedulable_resources_tenant_id : (tenant_id) BTREE
+  IX ix_schedulable_resources_practice_id : (practice_id) BTREE
+  IX ix_schedulable_resources_resource_type_concept_id : (resource_type_concept_id) BTREE
+  IX ix_schedulable_resources_state_concept_id : (state_concept_id) BTREE
+  IX ix_schedulable_resources_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_schedulable_resources_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_schedulable_resources_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+}
+
+schedulable_resources .. idxset_schedulable_resources : indexed by
+
+entity "INDEXES · schedule_templates" as idxset_schedule_templates <<INDEX_SET>> {
+  PK pk_schedule_templates : (id) UNIQUE BTREE
+  IX ix_schedule_templates_resource_id : (resource_id) BTREE
+  IX ix_schedule_templates_practitioner_schedule_id : (practitioner_schedule_id) BTREE
+  IX ix_schedule_templates_service_concept_id : (service_concept_id) BTREE
+  IX ix_schedule_templates_booking_policy_id : (booking_policy_id) BTREE
+  IX ix_schedule_templates_status_concept_id : (status_concept_id) BTREE
+  IX ix_schedule_templates_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_schedule_templates_updated_by_user_id : (updated_by_user_id) BTREE
+  GIST gist_schedule_templates_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+}
+
+schedule_templates .. idxset_schedule_templates : indexed by
+
+entity "INDEXES · schedule_rules" as idxset_schedule_rules <<INDEX_SET>> {
+  PK pk_schedule_rules : (id) UNIQUE BTREE
+  IX ix_schedule_rules_schedule_template_id : (schedule_template_id) BTREE
+  IX ix_schedule_rules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_schedule_rules_updated_by_user_id : (updated_by_user_id) BTREE
+  GIST gist_schedule_rules_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+}
+
+schedule_rules .. idxset_schedule_rules : indexed by
+
+entity "INDEXES · availability_exceptions" as idxset_availability_exceptions <<INDEX_SET>> {
+  PK pk_availability_exceptions : (id) UNIQUE BTREE
+  IX ix_availability_exceptions_resource_id : (resource_id) BTREE
+  IX ix_availability_exceptions_exception_type_concept_id : (exception_type_concept_id) BTREE
+  IX ix_availability_exceptions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_availability_exceptions_updated_by_user_id : (updated_by_user_id) BTREE
+  GIST gist_availability_exceptions_effective_period : tstzrange(start_at, end_at, '[)') GIST
+}
+
+availability_exceptions .. idxset_availability_exceptions : indexed by
+
+entity "INDEXES · bookable_slots" as idxset_bookable_slots <<INDEX_SET>> {
+  PK pk_bookable_slots : (id) UNIQUE BTREE
+  IX ix_bookable_slots_resource_id : (resource_id) BTREE
+  IX ix_bookable_slots_schedule_template_id : (schedule_template_id) BTREE
+  IX ix_bookable_slots_service_concept_id : (service_concept_id) BTREE
+  IX ix_bookable_slots_status_concept_id : (status_concept_id) BTREE
+  IX ix_bookable_slots_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_bookable_slots_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+bookable_slots .. idxset_bookable_slots : indexed by
+
+entity "INDEXES · slot_holds" as idxset_slot_holds <<INDEX_SET>> {
+  PK pk_slot_holds : (id) UNIQUE BTREE
+  UK uq_slot_holds_hold_token : (hold_token) UNIQUE BTREE
+  IX ix_slot_holds_bookable_slot_id : (bookable_slot_id) BTREE
+  IX ix_slot_holds_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_slot_holds_held_by_user_id : (held_by_user_id) BTREE
+  IX ix_slot_holds_status_concept_id : (status_concept_id) BTREE
+  IX ix_slot_holds_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_slot_holds_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_slot_holds_patient_profile_id_updated_at : (patient_profile_id, updated_at DESC) BTREE
+}
+
+slot_holds .. idxset_slot_holds : indexed by
+
+entity "INDEXES · booking_policies" as idxset_booking_policies <<INDEX_SET>> {
+  PK pk_booking_policies : (id) UNIQUE BTREE
+  IX ix_booking_policies_tenant_id : (tenant_id) BTREE
+  IX ix_booking_policies_practice_id : (practice_id) BTREE
+  IX ix_booking_policies_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_booking_policies_state_concept_id : (state_concept_id) BTREE
+  IX ix_booking_policies_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_booking_policies_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_booking_policies_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+}
+
+booking_policies .. idxset_booking_policies : indexed by
+
+entity "INDEXES · appointment_bookings" as idxset_appointment_bookings <<INDEX_SET>> {
+  PK pk_appointment_bookings : (id) UNIQUE BTREE
+  IX ix_appointment_bookings_tenant_id : (tenant_id) BTREE
+  IX ix_appointment_bookings_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_appointment_bookings_bookable_slot_id : (bookable_slot_id) BTREE
+  IX ix_appointment_bookings_resource_id : (resource_id) BTREE
+  IX ix_appointment_bookings_appointment_id : (appointment_id) BTREE
+  IX ix_appointment_bookings_service_concept_id : (service_concept_id) BTREE
+  IX ix_appointment_bookings_booking_channel_concept_id : (booking_channel_concept_id) BTREE
+  IX ix_appointment_bookings_booked_by_user_id : (booked_by_user_id) BTREE
+  IX ix_appointment_bookings_status_concept_id : (status_concept_id) BTREE
+  IX ix_appointment_bookings_booking_policy_id : (booking_policy_id) BTREE
+  IX ix_appointment_bookings_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_appointment_bookings_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_appointment_bookings_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  IX ix_appointment_bookings_patient_profile_id_updated_at : (tenant_id, patient_profile_id, updated_at DESC) BTREE
+}
+
+appointment_bookings .. idxset_appointment_bookings : indexed by
+
+entity "INDEXES · booking_reschedules" as idxset_booking_reschedules <<INDEX_SET>> {
+  PK pk_booking_reschedules : (id) UNIQUE BTREE
+  IX ix_booking_reschedules_booking_id : (booking_id) BTREE
+  IX ix_booking_reschedules_from_slot_id : (from_slot_id) BTREE
+  IX ix_booking_reschedules_to_slot_id : (to_slot_id) BTREE
+  IX ix_booking_reschedules_reason_concept_id : (reason_concept_id) BTREE
+  IX ix_booking_reschedules_rescheduled_by_user_id : (rescheduled_by_user_id) BTREE
+  IX ix_booking_reschedules_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_booking_reschedules_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+booking_reschedules .. idxset_booking_reschedules : indexed by
+
+entity "INDEXES · booking_cancellations" as idxset_booking_cancellations <<INDEX_SET>> {
+  PK pk_booking_cancellations : (id) UNIQUE BTREE
+  IX ix_booking_cancellations_booking_id : (booking_id) BTREE
+  IX ix_booking_cancellations_reason_concept_id : (reason_concept_id) BTREE
+  IX ix_booking_cancellations_cancelled_by_user_id : (cancelled_by_user_id) BTREE
+  IX ix_booking_cancellations_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_booking_cancellations_fee_payment_intent_id : (fee_payment_intent_id) BTREE
+  IX ix_booking_cancellations_status_concept_id : (status_concept_id) BTREE
+  IX ix_booking_cancellations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_booking_cancellations_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+booking_cancellations .. idxset_booking_cancellations : indexed by
+
+entity "INDEXES · waitlist_entries" as idxset_waitlist_entries <<INDEX_SET>> {
+  PK pk_waitlist_entries : (id) UNIQUE BTREE
+  IX ix_waitlist_entries_tenant_id : (tenant_id) BTREE
+  IX ix_waitlist_entries_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_waitlist_entries_resource_id : (resource_id) BTREE
+  IX ix_waitlist_entries_service_concept_id : (service_concept_id) BTREE
+  IX ix_waitlist_entries_status_concept_id : (status_concept_id) BTREE
+  IX ix_waitlist_entries_fulfilled_booking_id : (fulfilled_booking_id) BTREE
+  IX ix_waitlist_entries_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_waitlist_entries_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_waitlist_entries_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  IX ix_waitlist_entries_patient_profile_id_updated_at : (tenant_id, patient_profile_id, updated_at DESC) BTREE
+}
+
+waitlist_entries .. idxset_waitlist_entries : indexed by
+
+entity "INDEXES · appointment_reminders" as idxset_appointment_reminders <<INDEX_SET>> {
+  PK pk_appointment_reminders : (id) UNIQUE BTREE
+  IX ix_appointment_reminders_booking_id : (booking_id) BTREE
+  IX ix_appointment_reminders_channel_concept_id : (channel_concept_id) BTREE
+  IX ix_appointment_reminders_notification_request_id : (notification_request_id) BTREE
+  IX ix_appointment_reminders_status_concept_id : (status_concept_id) BTREE
+  IX ix_appointment_reminders_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_appointment_reminders_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+appointment_reminders .. idxset_appointment_reminders : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+
+' ===== v4.0.2 (agenda profesional / prestigio / bloqueos / buzon) =====
+
+entity calendar_absences {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+    practice_id : uuid <<FK>>
+  * subject_type_concept_id : uuid <<FK>>
+  * subject_ref_id : uuid
+    person_id : uuid <<FK>>
+    user_id : uuid <<FK>>
+    resource_id : uuid <<FK>>
+  * absence_type_concept_id : uuid <<FK>>
+  * start_at : timestamptz
+  * end_at : timestamptz
+    all_day : boolean
+    reason : varchar
+  * approval_status_concept_id : uuid <<FK>>
+    approved_by_user_id : uuid <<FK>>
+    approved_at : timestamptz
+    time_off_request_id : uuid <<FK>>
+    blocks_scheduling : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' ===== v4.0.2 (agenda profesional / prestigio / bloqueos / buzon) ===== (index sets)
+
+entity "INDEXES · calendar_absences" as idxset_calendar_absences <<INDEX_SET>> {
+  PK pk_calendar_absences : (id) UNIQUE BTREE
+  IX ix_calendar_absences_subject : (tenant_id, subject_type_concept_id, subject_ref_id) BTREE
+  IX ix_calendar_absences_resource_id : (resource_id) BTREE
+  IX ix_calendar_absences_person_id : (person_id) BTREE
+  IX ix_calendar_absences_user_id : (user_id) BTREE
+  IX ix_calendar_absences_range : (tenant_id, start_at, end_at) BTREE
+  IX ix_calendar_absences_approval_status_concept_id : (approval_status_concept_id) BTREE
+  IX ix_calendar_absences_time_off_request_id : (time_off_request_id) BTREE
+}
+calendar_absences .. idxset_calendar_absences : indexed by
+
+' ===== v4.0.2 (agenda profesional / prestigio / bloqueos / buzon) ===== (relaciones)
+
+availability_exceptions ||--o{ calendar_absences
+
+schedulable_resources ||--o{ calendar_absences
+
+@enduml

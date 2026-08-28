@@ -1,0 +1,512 @@
+@startuml SALUD_Module_36_qa_lab
+title Module 36 — Quality Assurance Lab and Test Evidence\n(schema: qa_lab)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_36_qa_lab.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_36_qa_lab
+  BUSINESS PURPOSE
+  A governed quality-assurance laboratory for the platform's integrations and
+  critical workflows. Stores reusable test suites and cases, executable runs against
+  named environments, per-case results, and — crucially — the exact request payloads
+  SENT and response payloads RECEIVED for every step, so any integration failure can
+  be reproduced, audited and diffed against the contract in module 12/31.
+end note
+
+entity test_environments {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * name : varchar
+  * environment_concept_id : uuid <<FK>>
+    base_url : text
+    tenant_id : uuid <<FK>>
+    config_json : jsonb
+    is_production_safe : boolean
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity test_suites {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * code : varchar <<UK>>
+  * name : varchar
+    description : text
+    target_system_concept_id : uuid <<FK>>
+    suite_type_concept_id : uuid <<FK>>
+    owner_team : varchar
+  * version : integer
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity test_cases {
+  * id : uuid <<PK>>
+  --
+  * suite_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+    case_type_concept_id : uuid <<FK>>
+    endpoint_id : uuid <<FK>>
+    http_method_concept_id : uuid <<FK>>
+    request_path : text
+    expected_http_status : integer
+    setup_json : jsonb
+    teardown_json : jsonb
+    ordinal : integer
+    is_critical : boolean
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity test_assertions {
+  * id : uuid <<PK>>
+  --
+  * test_case_id : uuid <<FK>>
+  * assertion_type_concept_id : uuid <<FK>>
+    json_path : varchar
+    operator_concept_id : uuid <<FK>>
+    expected_value : text
+    tolerance : numeric
+    ordinal : integer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity test_fixtures {
+  * id : uuid <<PK>>
+  --
+    suite_id : uuid <<FK>>
+    test_case_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+  * payload_json : jsonb
+    file_id : uuid <<FK>>
+    fixture_type_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity test_runs {
+  * id : uuid <<PK>>
+  --
+  * suite_id : uuid <<FK>>
+  * environment_id : uuid <<FK>>
+    tenant_id : uuid <<FK>>
+  * run_number : varchar <<UK>>
+  * trigger_concept_id : uuid <<FK>>
+    triggered_by_user_id : uuid <<FK>>
+    git_ref : varchar
+  * status_concept_id : uuid <<FK>>
+    started_at : timestamptz
+    finished_at : timestamptz
+    total_cases : integer
+    total_passed : integer
+    total_failed : integer
+    total_skipped : integer
+    duration_ms : integer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity test_case_results {
+  * id : uuid <<PK>>
+  --
+  * test_run_id : uuid <<FK>>
+  * test_case_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    duration_ms : integer
+    assertions_total : integer
+    assertions_passed : integer
+    assertions_failed : integer
+    error_type_concept_id : uuid <<FK>>
+    error_text : text
+    stack_trace : text
+    started_at : timestamptz
+    finished_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity assertion_results <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * test_case_result_id : uuid <<FK>>
+  * test_assertion_id : uuid <<FK>>
+  * passed : boolean
+    actual_value : text
+    message : text
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity request_payloads <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * test_case_result_id : uuid <<FK>>
+  * direction_concept_id : uuid <<FK>>
+    sequence_no : integer
+    http_method_concept_id : uuid <<FK>>
+    target_url : text
+    headers_json : jsonb
+  * body_json : jsonb
+    body_hash : varchar
+    size_bytes : integer
+    sent_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity response_payloads <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * test_case_result_id : uuid <<FK>>
+    request_payload_id : uuid <<FK>>
+    http_status : integer
+    headers_json : jsonb
+  * body_json : jsonb
+    body_hash : varchar
+    latency_ms : integer
+    size_bytes : integer
+    received_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity run_artifacts {
+  * id : uuid <<PK>>
+  --
+  * test_run_id : uuid <<FK>>
+    test_case_result_id : uuid <<FK>>
+  * artifact_type_concept_id : uuid <<FK>>
+    file_id : uuid <<FK>>
+    label : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+test_suites ||--o{ test_cases
+test_cases ||--o{ test_assertions
+test_suites ||--o{ test_fixtures
+test_cases |o--o{ test_fixtures
+test_suites ||--o{ test_runs
+test_environments ||--o{ test_runs
+test_runs ||--o{ test_case_results
+test_cases ||--o{ test_case_results
+test_case_results ||--o{ assertion_results
+test_assertions ||--o{ assertion_results
+test_case_results ||--o{ request_payloads
+test_case_results ||--o{ response_payloads
+request_payloads |o--o{ response_payloads
+test_runs ||--o{ run_artifacts
+
+note as DEP_diagram_36_qa_lab
+  Connects to other modules via:
+  directory.tenants, iam.users, common.files (file_id, artifacts),
+  integrations.integration_endpoints (test_cases.endpoint_id),
+  terminology.catalog_concepts.
+end note
+
+note as REC_PAYLOAD_EVIDENCE_diagram_36_qa_lab
+  PAYLOAD EVIDENCE
+  request_payloads/response_payloads are append-only (<<LOG>>) and store the exact
+  bytes sent and received per step, with body_hash for tamper-evidence and diffing.
+  Redact/mask PII/PHI before persistence when the environment is not production-safe;
+  bind sensitive fields to system_ops.field_registry masking strategies.
+end note
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_36b_qa_lab_ext.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_36b_qa_lab_ext
+  BUSINESS PURPOSE
+  QA Lab extension. Adds scheduled/automated suite execution (continuous testing,
+  a data-center standard) and a defect/flaky-tracking loop that turns failing
+  test_case_results into triaged, deduplicated defects with an external issue ref.
+  Closes the gap between running tests and acting on their failures.
+end note
+
+entity test_schedules {
+  * id : uuid <<PK>>
+  --
+  * suite_id : uuid <<FK>>
+  * environment_id : uuid <<FK>>
+    tenant_id : uuid <<FK>>
+  * code : varchar <<UK>>
+  * name : varchar
+    cron_expression : varchar
+    timezone : varchar
+  * trigger_concept_id : uuid <<FK>>
+    concurrency_policy_concept_id : uuid <<FK>>
+    is_enabled : boolean
+    last_run_id : uuid <<FK>>
+    last_run_at : timestamptz
+    next_run_at : timestamptz
+    notify_channel_concept_id : uuid <<FK>>
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity test_defects {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * test_case_id : uuid <<FK>>
+    test_case_result_id : uuid <<FK>>
+  * defect_number : varchar <<UK>>
+  * defect_type_concept_id : uuid <<FK>>
+  * severity_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    is_flaky : boolean
+    failure_signature_hash : varchar
+    occurrences_count : integer
+    first_seen_at : timestamptz
+    last_seen_at : timestamptz
+    external_issue_ref : varchar
+    assigned_to_user_id : uuid <<FK>>
+  * title : varchar
+    description : text
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+note as DEP_diagram_36b_qa_lab_ext
+  Connects to the base qa_lab diagram via:
+  qa_lab.test_suites, qa_lab.test_environments, qa_lab.test_runs (last_run_id),
+  qa_lab.test_cases, qa_lab.test_case_results, iam.users, directory.tenants,
+  terminology.catalog_concepts. test_schedules trigger test_runs on cron.
+end note
+
+note as HARDENING_diagram_36b_qa_lab_ext
+  REC 3.4 — HARDENING (QA Lab)
+  - test_schedules: UNIQUE(suite_id, environment_id, code); concurrency_policy controls
+    overlapping runs; next_run_at derived from cron_expression (recompute).
+  - test_defects: UNIQUE(tenant_id, defect_number); dedupe by
+    (test_case_id, failure_signature_hash); occurrences_count is derived (REC 3.3).
+end note
+
+note as VALUE_SETS_diagram_36b_qa_lab_ext
+  VALUE SETS
+  trigger->vs_test_trigger{manual,scheduled,ci_push,ci_pr,webhook};
+  concurrency_policy->vs_concurrency_policy{allow,forbid,queue};
+  defect_type->vs_defect_type{bug,flaky,regression,environment,data};
+  defect status->vs_defect_status{open,triaged,in_progress,resolved,wont_fix};
+  notify_channel->vs_notify_channel{email,slack,webhook,none}.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · test_environments" as idxset_test_environments <<INDEX_SET>> {
+  PK pk_test_environments : (id) UNIQUE BTREE
+  UK uq_test_environments_code : (code) UNIQUE BTREE
+  IX ix_test_environments_environment_concept_id : (environment_concept_id) BTREE
+  IX ix_test_environments_tenant_id : (tenant_id) BTREE
+  IX ix_test_environments_state_concept_id : (state_concept_id) BTREE
+  IX ix_test_environments_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_test_environments_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_test_environments_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+}
+
+test_environments .. idxset_test_environments : indexed by
+
+entity "INDEXES · test_suites" as idxset_test_suites <<INDEX_SET>> {
+  PK pk_test_suites : (id) UNIQUE BTREE
+  UK uq_test_suites_code : (code) UNIQUE BTREE
+  IX ix_test_suites_tenant_id : (tenant_id) BTREE
+  IX ix_test_suites_target_system_concept_id : (target_system_concept_id) BTREE
+  IX ix_test_suites_suite_type_concept_id : (suite_type_concept_id) BTREE
+  IX ix_test_suites_state_concept_id : (state_concept_id) BTREE
+  IX ix_test_suites_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_test_suites_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_test_suites_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+}
+
+test_suites .. idxset_test_suites : indexed by
+
+entity "INDEXES · test_cases" as idxset_test_cases <<INDEX_SET>> {
+  PK pk_test_cases : (id) UNIQUE BTREE
+  IX ix_test_cases_suite_id : (suite_id) BTREE
+  IX ix_test_cases_case_type_concept_id : (case_type_concept_id) BTREE
+  IX ix_test_cases_endpoint_id : (endpoint_id) BTREE
+  IX ix_test_cases_http_method_concept_id : (http_method_concept_id) BTREE
+  IX ix_test_cases_state_concept_id : (state_concept_id) BTREE
+  IX ix_test_cases_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_test_cases_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+test_cases .. idxset_test_cases : indexed by
+
+entity "INDEXES · test_assertions" as idxset_test_assertions <<INDEX_SET>> {
+  PK pk_test_assertions : (id) UNIQUE BTREE
+  IX ix_test_assertions_test_case_id : (test_case_id) BTREE
+  IX ix_test_assertions_assertion_type_concept_id : (assertion_type_concept_id) BTREE
+  IX ix_test_assertions_operator_concept_id : (operator_concept_id) BTREE
+  IX ix_test_assertions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_test_assertions_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+test_assertions .. idxset_test_assertions : indexed by
+
+entity "INDEXES · test_fixtures" as idxset_test_fixtures <<INDEX_SET>> {
+  PK pk_test_fixtures : (id) UNIQUE BTREE
+  IX ix_test_fixtures_suite_id : (suite_id) BTREE
+  IX ix_test_fixtures_test_case_id : (test_case_id) BTREE
+  IX ix_test_fixtures_file_id : (file_id) BTREE
+  IX ix_test_fixtures_fixture_type_concept_id : (fixture_type_concept_id) BTREE
+  IX ix_test_fixtures_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_test_fixtures_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+test_fixtures .. idxset_test_fixtures : indexed by
+
+entity "INDEXES · test_runs" as idxset_test_runs <<INDEX_SET>> {
+  PK pk_test_runs : (id) UNIQUE BTREE
+  UK uq_test_runs_run_number : (run_number) UNIQUE BTREE
+  IX ix_test_runs_suite_id : (suite_id) BTREE
+  IX ix_test_runs_environment_id : (environment_id) BTREE
+  IX ix_test_runs_tenant_id : (tenant_id) BTREE
+  IX ix_test_runs_trigger_concept_id : (trigger_concept_id) BTREE
+  IX ix_test_runs_triggered_by_user_id : (triggered_by_user_id) BTREE
+  IX ix_test_runs_status_concept_id : (status_concept_id) BTREE
+  IX ix_test_runs_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_test_runs_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_test_runs_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+test_runs .. idxset_test_runs : indexed by
+
+entity "INDEXES · test_case_results" as idxset_test_case_results <<INDEX_SET>> {
+  PK pk_test_case_results : (id) UNIQUE BTREE
+  IX ix_test_case_results_test_run_id : (test_run_id) BTREE
+  IX ix_test_case_results_test_case_id : (test_case_id) BTREE
+  IX ix_test_case_results_status_concept_id : (status_concept_id) BTREE
+  IX ix_test_case_results_error_type_concept_id : (error_type_concept_id) BTREE
+  IX ix_test_case_results_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_test_case_results_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+test_case_results .. idxset_test_case_results : indexed by
+
+entity "INDEXES · assertion_results" as idxset_assertion_results <<INDEX_SET>> {
+  PK pk_assertion_results : (id) UNIQUE BTREE
+  IX ix_assertion_results_test_case_result_id : (test_case_result_id) BTREE
+  IX ix_assertion_results_test_assertion_id : (test_assertion_id) BTREE
+  IX ix_assertion_results_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_assertion_results_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+assertion_results .. idxset_assertion_results : indexed by
+
+entity "INDEXES · request_payloads" as idxset_request_payloads <<INDEX_SET>> {
+  PK pk_request_payloads : (id) UNIQUE BTREE
+  IX ix_request_payloads_test_case_result_id : (test_case_result_id) BTREE
+  IX ix_request_payloads_direction_concept_id : (direction_concept_id) BTREE
+  IX ix_request_payloads_http_method_concept_id : (http_method_concept_id) BTREE
+  IX ix_request_payloads_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_request_payloads_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+request_payloads .. idxset_request_payloads : indexed by
+
+entity "INDEXES · response_payloads" as idxset_response_payloads <<INDEX_SET>> {
+  PK pk_response_payloads : (id) UNIQUE BTREE
+  IX ix_response_payloads_test_case_result_id : (test_case_result_id) BTREE
+  IX ix_response_payloads_request_payload_id : (request_payload_id) BTREE
+  IX ix_response_payloads_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_response_payloads_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+response_payloads .. idxset_response_payloads : indexed by
+
+entity "INDEXES · run_artifacts" as idxset_run_artifacts <<INDEX_SET>> {
+  PK pk_run_artifacts : (id) UNIQUE BTREE
+  IX ix_run_artifacts_test_run_id : (test_run_id) BTREE
+  IX ix_run_artifacts_test_case_result_id : (test_case_result_id) BTREE
+  IX ix_run_artifacts_artifact_type_concept_id : (artifact_type_concept_id) BTREE
+  IX ix_run_artifacts_file_id : (file_id) BTREE
+  IX ix_run_artifacts_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_run_artifacts_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+run_artifacts .. idxset_run_artifacts : indexed by
+
+entity "INDEXES · test_schedules" as idxset_test_schedules <<INDEX_SET>> {
+  PK pk_test_schedules : (id) UNIQUE BTREE
+  UK uq_test_schedules_code : (code) UNIQUE BTREE
+  IX ix_test_schedules_suite_id : (suite_id) BTREE
+  IX ix_test_schedules_environment_id : (environment_id) BTREE
+  IX ix_test_schedules_tenant_id : (tenant_id) BTREE
+  IX ix_test_schedules_trigger_concept_id : (trigger_concept_id) BTREE
+  IX ix_test_schedules_concurrency_policy_concept_id : (concurrency_policy_concept_id) BTREE
+  IX ix_test_schedules_last_run_id : (last_run_id) BTREE
+  IX ix_test_schedules_notify_channel_concept_id : (notify_channel_concept_id) BTREE
+  IX ix_test_schedules_state_concept_id : (state_concept_id) BTREE
+  IX ix_test_schedules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_test_schedules_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_test_schedules_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+}
+
+test_schedules .. idxset_test_schedules : indexed by
+
+entity "INDEXES · test_defects" as idxset_test_defects <<INDEX_SET>> {
+  PK pk_test_defects : (id) UNIQUE BTREE
+  UK uq_test_defects_defect_number : (defect_number) UNIQUE BTREE
+  IX ix_test_defects_tenant_id : (tenant_id) BTREE
+  IX ix_test_defects_test_case_id : (test_case_id) BTREE
+  IX ix_test_defects_test_case_result_id : (test_case_result_id) BTREE
+  IX ix_test_defects_defect_type_concept_id : (defect_type_concept_id) BTREE
+  IX ix_test_defects_severity_concept_id : (severity_concept_id) BTREE
+  IX ix_test_defects_status_concept_id : (status_concept_id) BTREE
+  IX ix_test_defects_assigned_to_user_id : (assigned_to_user_id) BTREE
+  IX ix_test_defects_state_concept_id : (state_concept_id) BTREE
+  IX ix_test_defects_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_test_defects_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_test_defects_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+test_defects .. idxset_test_defects : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

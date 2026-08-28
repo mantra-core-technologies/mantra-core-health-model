@@ -1,0 +1,404 @@
+@startuml SALUD_Module_32_workflow
+title Module 32 — State Machines and Cross-Domain Workflows\n(schema: workflow)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+note as BIZ
+  BUSINESS PURPOSE
+  Makes lifecycle rules executable and auditable. State codes remain governed
+  terminology concepts, while this module defines initial/terminal states, allowed
+  transitions, actor permissions, guards, idempotency, side effects and immutable
+  transition evidence for critical aggregates.
+end note
+
+entity state_machine_definitions <<VERSIONED>> {
+  * id : uuid <<PK>>
+  --
+  * machine_code : varchar <<UK>>
+  * aggregate_schema_name : varchar
+  * aggregate_entity_name : varchar
+  * status_field_name : varchar
+  * state_value_set_id : uuid <<FK>>
+  * version_number : integer
+  * status_concept_id : uuid <<FK>>
+    effective_from : timestamptz
+    effective_to : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity state_definitions {
+  * id : uuid <<PK>>
+  --
+  * state_machine_definition_id : uuid <<FK>>
+  * state_concept_id : uuid <<FK>>
+  * state_code_snapshot : varchar
+  * is_initial : boolean
+  * is_terminal : boolean
+  * allows_edit : boolean
+  * ordinal : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity state_transition_definitions {
+  * id : uuid <<PK>>
+  --
+  * state_machine_definition_id : uuid <<FK>>
+  * transition_code : varchar
+  * from_state_concept_id : uuid <<FK>>
+  * to_state_concept_id : uuid <<FK>>
+  * command_code : varchar
+  * required_permission_id : uuid <<FK>>
+  * purpose_of_use_concept_id : uuid <<FK>>
+    idempotency_required : boolean
+    optimistic_lock_required : boolean
+    reason_required : boolean
+    transition_timeout_seconds : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity transition_guards {
+  * id : uuid <<PK>>
+  --
+  * state_transition_definition_id : uuid <<FK>>
+  * guard_code : varchar
+  * guard_type_concept_id : uuid <<FK>>
+  * evaluation_order : integer
+    expression_json : jsonb
+    failure_code : varchar
+    failure_message_key : varchar
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity transition_side_effects {
+  * id : uuid <<PK>>
+  --
+  * state_transition_definition_id : uuid <<FK>>
+  * side_effect_code : varchar
+  * side_effect_type_concept_id : uuid <<FK>>
+  * execution_mode_concept_id : uuid <<FK>>
+  * execution_order : integer
+    outbox_event_type : varchar
+    action_spec_json : jsonb
+    compensation_spec_json : jsonb
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity state_transition_events <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * state_machine_definition_id : uuid <<FK>>
+  * transition_definition_id : uuid <<FK>>
+  * aggregate_id : uuid
+  * from_state_concept_id : uuid <<FK>>
+  * to_state_concept_id : uuid <<FK>>
+  * actor_user_id : uuid <<FK>>
+    actor_tenant_id : uuid <<FK>>
+    reason_concept_id : uuid <<FK>>
+    reason_text : text
+    idempotency_key : varchar
+    correlation_id : uuid
+    causation_id : uuid
+    aggregate_row_version_before : integer
+    aggregate_row_version_after : integer
+  * occurred_at : timestamptz
+}
+
+entity workflow_instances {
+  * id : uuid <<PK>>
+  --
+  * workflow_code : varchar
+  * subject_type_concept_id : uuid <<FK>>
+  * subject_id : uuid
+  * tenant_id : uuid <<FK>>
+  * current_state_concept_id : uuid <<FK>>
+    current_step_code : varchar
+    context_json : jsonb
+    due_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity workflow_tasks {
+  * id : uuid <<PK>>
+  --
+  * workflow_instance_id : uuid <<FK>>
+  * task_code : varchar
+  * task_type_concept_id : uuid <<FK>>
+    assigned_user_id : uuid <<FK>>
+    assigned_role_concept_id : uuid <<FK>>
+    required_permission_id : uuid <<FK>>
+    due_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+state_machine_definitions ||--o{ state_definitions
+state_machine_definitions ||--o{ state_transition_definitions
+state_transition_definitions ||--o{ transition_guards
+state_transition_definitions ||--o{ transition_side_effects
+state_machine_definitions ||--o{ state_transition_events
+workflow_instances ||--o{ workflow_tasks
+
+package "Required state machines" {
+  entity appointment_machine <<STATE_MACHINE>> {
+    code : APPOINTMENT
+    initial : requested
+    states : requested, held, confirmed, checked_in, in_progress, completed, cancelled, no_show
+    terminal : completed, cancelled, no_show
+    owner_module : scheduling
+  }
+  entity encounter_machine <<STATE_MACHINE>> {
+    code : ENCOUNTER
+    initial : planned
+    states : planned, arrived, triaged, in_progress, on_hold, finished, cancelled, entered_in_error
+    terminal : finished, cancelled, entered_in_error
+    owner_module : clinical
+  }
+  entity service_request_machine <<STATE_MACHINE>> {
+    code : SERVICE_REQUEST
+    initial : draft
+    states : draft, active, on_hold, revoked, completed, entered_in_error
+    terminal : revoked, completed, entered_in_error
+    owner_module : clinical
+  }
+  entity diagnostic_report_machine <<STATE_MACHINE>> {
+    code : DIAGNOSTIC_REPORT
+    initial : registered
+    states : registered, partial, preliminary, final, amended, corrected, cancelled, entered_in_error
+    terminal : cancelled, entered_in_error
+    owner_module : clinical/diagnostics
+  }
+  entity payment_intent_machine <<STATE_MACHINE>> {
+    code : PAYMENT_INTENT
+    initial : created
+    states : created, requires_action, processing, authorized, captured, partially_refunded, refunded, cancelled, failed
+    terminal : refunded, cancelled, failed
+    owner_module : payments
+  }
+  entity insurance_claim_machine <<STATE_MACHINE>> {
+    code : INSURANCE_CLAIM
+    initial : draft
+    states : draft, submitted, acknowledged, pending_information, adjudicated, partially_paid, paid, denied, appealed, reversed, closed
+    terminal : paid, denied, reversed, closed
+    owner_module : insurance
+  }
+  entity consent_machine <<STATE_MACHINE>> {
+    code : CONSENT_DIRECTIVE
+    initial : proposed
+    states : proposed, active, inactive, rejected, withdrawn, entered_in_error, expired
+    terminal : rejected, withdrawn, entered_in_error, expired
+    owner_module : consent
+  }
+  entity identity_verification_machine <<STATE_MACHINE>> {
+    code : IDENTITY_VERIFICATION
+    initial : opened
+    states : opened, collecting, pending_review, verified, rejected, expired, cancelled
+    terminal : verified, rejected, expired, cancelled
+    owner_module : identity_assurance
+  }
+  entity automation_run_machine <<STATE_MACHINE>> {
+    code : AUTOMATION_RUN
+    initial : queued
+    states : queued, running, waiting_human, retry_scheduled, succeeded, partially_succeeded, failed, cancelled
+    terminal : succeeded, partially_succeeded, failed, cancelled
+    owner_module : automation
+  }
+}
+
+package "Cross-domain orchestration" {
+  component "Identity Assurance" as IDA
+  component "Scheduling / Encounter" as Care
+  component "Clinical Orders" as Orders
+  component "Diagnostic Results" as Results
+  component "Pharmacy Inventory" as Inventory
+  component "Insurance Eligibility & Authorization" as Coverage
+  component "Claims & Reconciliation" as Claims
+  component "Audit + Provenance" as Audit
+  component "Transactional Outbox" as Outbox
+  component "Notifications" as Notify
+
+  IDA --> Care : verified subject context
+  Care --> Orders : encounter commands
+  Orders --> Coverage : eligibility / prior authorization
+  Orders --> Results : diagnostic fulfillment
+  Orders --> Inventory : medication fulfillment
+  Results --> Claims : service evidence
+  Inventory --> Claims : dispensing evidence
+  Care --> Outbox
+  Orders --> Outbox
+  Results --> Outbox
+  Inventory --> Outbox
+  Coverage --> Outbox
+  Claims --> Outbox
+  Outbox --> Notify
+  IDA --> Audit
+  Care --> Audit
+  Orders --> Audit
+  Results --> Audit
+  Inventory --> Audit
+  Coverage --> Audit
+  Claims --> Audit
+}
+
+note as TRANSITION_CONTRACT
+  TRANSITION CONTRACT
+  A state change is accepted only through a declared transition using optimistic
+  concurrency and, when required, an idempotency key. The business mutation and
+  outbox record commit in one transaction. External calls occur after commit.
+  Consumers assume at-least-once delivery and are idempotent. Every rejected guard
+  returns a stable business error code without exposing sensitive internals.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · state_machine_definitions" as idxset_state_machine_definitions <<INDEX_SET>> {
+  PK pk_state_machine_definitions : (id) UNIQUE BTREE
+  UK uq_state_machine_definitions_machine_code : (machine_code) UNIQUE BTREE
+  IX ix_state_machine_definitions_state_value_set_id : (state_value_set_id) BTREE
+  IX ix_state_machine_definitions_status_concept_id : (status_concept_id) BTREE
+  IX ix_state_machine_definitions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_state_machine_definitions_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_state_machine_definitions_state_value_set_id_version_number : (state_value_set_id, version_number) UNIQUE BTREE
+}
+
+state_machine_definitions .. idxset_state_machine_definitions : indexed by
+
+entity "INDEXES · state_definitions" as idxset_state_definitions <<INDEX_SET>> {
+  PK pk_state_definitions : (id) UNIQUE BTREE
+  IX ix_state_definitions_state_machine_definition_id : (state_machine_definition_id) BTREE
+  IX ix_state_definitions_state_concept_id : (state_concept_id) BTREE
+  IX ix_state_definitions_status_concept_id : (status_concept_id) BTREE
+  IX ix_state_definitions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_state_definitions_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+state_definitions .. idxset_state_definitions : indexed by
+
+entity "INDEXES · state_transition_definitions" as idxset_state_transition_definitions <<INDEX_SET>> {
+  PK pk_state_transition_definitions : (id) UNIQUE BTREE
+  IX ix_state_transition_definitions_state_machine_definition_id : (state_machine_definition_id) BTREE
+  IX ix_state_transition_definitions_from_state_concept_id : (from_state_concept_id) BTREE
+  IX ix_state_transition_definitions_to_state_concept_id : (to_state_concept_id) BTREE
+  IX ix_state_transition_definitions_required_permission_id : (required_permission_id) BTREE
+  IX ix_state_transition_definitions_purpose_of_use_concept_id : (purpose_of_use_concept_id) BTREE
+  IX ix_state_transition_definitions_status_concept_id : (status_concept_id) BTREE
+  IX ix_state_transition_definitions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_state_transition_definitions_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+state_transition_definitions .. idxset_state_transition_definitions : indexed by
+
+entity "INDEXES · transition_guards" as idxset_transition_guards <<INDEX_SET>> {
+  PK pk_transition_guards : (id) UNIQUE BTREE
+  IX ix_transition_guards_state_transition_definition_id : (state_transition_definition_id) BTREE
+  IX ix_transition_guards_guard_type_concept_id : (guard_type_concept_id) BTREE
+  IX ix_transition_guards_status_concept_id : (status_concept_id) BTREE
+  IX ix_transition_guards_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_transition_guards_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+transition_guards .. idxset_transition_guards : indexed by
+
+entity "INDEXES · transition_side_effects" as idxset_transition_side_effects <<INDEX_SET>> {
+  PK pk_transition_side_effects : (id) UNIQUE BTREE
+  IX ix_transition_side_effects_state_transition_definition_id : (state_transition_definition_id) BTREE
+  IX ix_transition_side_effects_side_effect_type_concept_id : (side_effect_type_concept_id) BTREE
+  IX ix_transition_side_effects_execution_mode_concept_id : (execution_mode_concept_id) BTREE
+  IX ix_transition_side_effects_status_concept_id : (status_concept_id) BTREE
+  IX ix_transition_side_effects_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_transition_side_effects_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+transition_side_effects .. idxset_transition_side_effects : indexed by
+
+entity "INDEXES · state_transition_events" as idxset_state_transition_events <<INDEX_SET>> {
+  PK pk_state_transition_events : (id) UNIQUE BTREE
+  IX ix_state_transition_events_state_machine_definition_id : (state_machine_definition_id) BTREE
+  IX ix_state_transition_events_transition_definition_id : (transition_definition_id) BTREE
+  IX ix_state_transition_events_from_state_concept_id : (from_state_concept_id) BTREE
+  IX ix_state_transition_events_to_state_concept_id : (to_state_concept_id) BTREE
+  IX ix_state_transition_events_actor_user_id : (actor_user_id) BTREE
+  IX ix_state_transition_events_actor_tenant_id : (actor_tenant_id) BTREE
+  IX ix_state_transition_events_reason_concept_id : (reason_concept_id) BTREE
+  UK uq_state_transition_events_idempotency : (idempotency_key) UNIQUE BTREE
+  BRIN brin_state_transition_events_occurred_at : (occurred_at) BRIN pages_per_range=128
+  UK uq_state_transition_idempotency : (state_machine_definition_id, aggregate_id, idempotency_key) UNIQUE BTREE WHERE idempotency_key IS NOT NULL
+}
+
+state_transition_events .. idxset_state_transition_events : indexed by
+
+entity "INDEXES · workflow_instances" as idxset_workflow_instances <<INDEX_SET>> {
+  PK pk_workflow_instances : (id) UNIQUE BTREE
+  IX ix_workflow_instances_subject_type_concept_id : (subject_type_concept_id) BTREE
+  IX ix_workflow_instances_tenant_id : (tenant_id) BTREE
+  IX ix_workflow_instances_current_state_concept_id : (current_state_concept_id) BTREE
+  IX ix_workflow_instances_status_concept_id : (status_concept_id) BTREE
+  IX ix_workflow_instances_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_workflow_instances_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_workflow_instances_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+workflow_instances .. idxset_workflow_instances : indexed by
+
+entity "INDEXES · workflow_tasks" as idxset_workflow_tasks <<INDEX_SET>> {
+  PK pk_workflow_tasks : (id) UNIQUE BTREE
+  IX ix_workflow_tasks_workflow_instance_id : (workflow_instance_id) BTREE
+  IX ix_workflow_tasks_task_type_concept_id : (task_type_concept_id) BTREE
+  IX ix_workflow_tasks_assigned_user_id : (assigned_user_id) BTREE
+  IX ix_workflow_tasks_assigned_role_concept_id : (assigned_role_concept_id) BTREE
+  IX ix_workflow_tasks_required_permission_id : (required_permission_id) BTREE
+  IX ix_workflow_tasks_status_concept_id : (status_concept_id) BTREE
+  IX ix_workflow_tasks_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_workflow_tasks_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+workflow_tasks .. idxset_workflow_tasks : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

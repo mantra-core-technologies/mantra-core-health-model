@@ -1,0 +1,627 @@
+@startuml SALUD_Module_09_forms
+title Module 09 — Dynamic Forms and Extensibility Governance\n(schema: forms)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_09_forms.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_09_forms
+  BUSINESS PURPOSE
+  Lets each organization capture additional, validated information
+  without custom software, adapting to local requirements while keeping
+  data quality and a full change history.
+end note
+
+entity dynamic_field_sections {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * name : varchar
+    parent_section_id : uuid <<FK>>
+    ordinal : integer
+    state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity dynamic_field_definitions {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * name : varchar
+  * data_type : technical_data_type
+    data_use_concept_id : uuid <<FK>>
+    sensitivity_concept_id : uuid <<FK>>
+    semantic_concept_id : uuid <<FK>>
+    value_set_id : uuid <<FK>>
+    unit_value_set_id : uuid <<FK>>
+    cardinality_min : integer
+    cardinality_max : integer
+    length_min : integer
+    length_max : integer
+    num_precision : integer
+    num_scale : integer
+    min_value_decimal : numeric
+    max_value_decimal : numeric
+    regex : text
+    default_value_json : jsonb
+    keeps_history : boolean
+    computed : boolean
+    computation_expression : text
+    fhir_path : varchar
+    fhir_extension_url : text
+    schema_version : integer
+    state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity field_assignments {
+  * id : uuid <<PK>>
+  --
+  * field_id : uuid <<FK>>
+  * target_resource_concept_id : uuid <<FK>>
+    profile_type_concept_id : uuid <<FK>>
+    tenant_id : uuid <<FK>>
+    branch_id : uuid <<FK>>
+  * section_id : uuid <<FK>>
+  * required : boolean
+  * visible : boolean
+  * editable : boolean
+    ordinal : integer
+    read_role_value_set_id : uuid <<FK>>
+    write_role_value_set_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+    state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity field_validation_rules {
+  * id : uuid <<PK>>
+  --
+  * field_id : uuid <<FK>>
+  * rule_type_concept_id : uuid <<FK>>
+    operator_concept_id : uuid <<FK>>
+  * parameters_json : jsonb
+    error_message : varchar
+    severity_concept_id : uuid <<FK>>
+    ordinal : integer
+    active : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity field_dependencies {
+  * id : uuid <<PK>>
+  --
+  * target_field_id : uuid <<FK>>
+  * source_field_id : uuid <<FK>>
+  * operator_concept_id : uuid <<FK>>
+    comparison_value_json : jsonb
+  * behavior_concept_id : uuid <<FK>>
+    logical_group : varchar
+    ordinal : integer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity form_instances {
+  * id : uuid <<PK>>
+  --
+  * resource_type_concept_id : uuid <<FK>>
+  * resource_id : uuid
+    tenant_context_id : uuid <<FK>>
+  * schema_version : integer
+    state_concept_id : uuid <<FK>>
+    closed_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity field_values {
+  * id : uuid <<PK>>
+  --
+  * form_instance_id : uuid <<FK>>
+  * resource_type_concept_id : uuid <<FK>>
+  * resource_id : uuid
+  * field_id : uuid <<FK>>
+    assignment_id : uuid <<FK>>
+    instance_group_id : uuid
+  * ordinal : integer
+    value_string : varchar
+    value_text : text
+    value_integer : bigint
+    value_decimal : numeric
+    value_boolean : boolean
+    value_date : date
+    value_datetime : timestamptz
+    value_time : time
+    value_url : text
+    value_json : jsonb
+    value_concept_id : uuid <<FK>>
+    value_reference_type : varchar
+    value_reference_id : uuid
+    file_id : uuid <<FK>>
+    unit_concept_id : uuid <<FK>>
+    data_source_concept_id : uuid <<FK>>
+    value_status_concept_id : uuid <<FK>>
+    effective_from : timestamptz
+    effective_to : timestamptz
+    value_version : integer
+    supersedes_value_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity field_value_audit <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * field_value_id : uuid <<FK>>
+  * action_concept_id : uuid <<FK>>
+  * user_id : uuid <<FK>>
+    reason_concept_id : uuid <<FK>>
+    previous_snapshot_json : jsonb
+    new_snapshot_json : jsonb
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity resource_fields_view <<VIEW>> {
+  --
+    resource_type : varchar
+    resource_id : uuid
+    field_code : varchar
+    field_name : varchar
+    data_type : varchar
+    normalized_value : text
+    display_value : varchar
+    unit_code : varchar
+    source : varchar
+    effective_from : timestamptz
+    status : varchar
+}
+
+dynamic_field_sections |o--o{ dynamic_field_sections : parent
+dynamic_field_definitions ||--o{ field_assignments
+dynamic_field_sections ||--o{ field_assignments
+dynamic_field_definitions ||--o{ field_validation_rules
+dynamic_field_definitions ||--o{ field_dependencies : target
+form_instances ||--o{ field_values
+dynamic_field_definitions ||--o{ field_values
+field_assignments |o--o{ field_values
+field_values ||--o{ field_value_audit
+field_values |o--o{ field_values : supersedes
+
+note as DEP_diagram_09_forms
+  Connects to other modules via:
+  specialty_chart_templates
+end note
+
+note as REC_VALUEX_FORMS_diagram_09_forms
+  REC 3.4 — value[x] EXCLUSIVITY
+field_values holds value_string/text/integer/decimal/boolean/date/datetime/
+time/url/json/concept/reference. Add a CHECK driven by
+dynamic_field_definitions.technical_data_type so only the matching value_*
+column is populated per row.
+end note
+
+note as REC_POLY_FORMS_diagram_09_forms
+  REC 3.1 — POLYMORPHIC REFERENCES (no DB-level FK)
+field_values.(value_reference_type,value_reference_id) and
+(resource_type_concept_id,resource_id) are polymorphic. Validate types
+against a closed value_set and enforce via trigger; these are high-volume
+so consider a concrete FK where a single target dominates.
+end note
+
+note as EXT_GOV_REF_diagram_09_forms
+  EXTENSION GOVERNANCE
+  Definition-set versioning, localization, provenance, access policy and
+  schema migration are specified in diagram_09b_extensibility_governance.
+end note
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_09b_extensibility_governance.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_09b_extensibility_governance
+  BUSINESS PURPOSE
+  Deep governance for dynamic fields: reusable definition sets, immutable
+  schema versions, localization, provenance, access policy and safe migration.
+  This extends core entities without changing their base tables or weakening
+  semantic validation.
+end note
+
+entity field_definition_sets {
+  * id : uuid <<PK>>
+  --
+  * namespace_uri : text <<UK>>
+  * code : varchar
+  * name : varchar
+    owner_tenant_id : uuid <<FK>>
+    owner_organization_text : varchar
+    target_domain_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity field_definition_set_versions <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * definition_set_id : uuid <<FK>>
+  * semantic_version : varchar
+  * schema_hash : varchar
+    effective_from : timestamptz
+    effective_to : timestamptz
+    publication_status_concept_id : uuid <<FK>>
+    compatibility_concept_id : uuid <<FK>>
+    fhir_structure_definition_url : text
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity field_set_members {
+  * id : uuid <<PK>>
+  --
+  * definition_set_version_id : uuid <<FK>>
+  * field_id : uuid <<FK>>
+    section_id : uuid <<FK>>
+    required : boolean
+    ordinal : integer
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+entity field_definition_localizations {
+  * id : uuid <<PK>>
+  --
+  * field_id : uuid <<FK>>
+  * language_concept_id : uuid <<FK>>
+    label : varchar
+    help_text : text
+    placeholder : varchar
+    validation_message : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity field_value_provenance <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * field_value_id : uuid <<FK>>
+    source_system_uri : text
+    source_resource_type : varchar
+    source_resource_id : varchar
+    source_version : varchar
+    import_batch_id : uuid <<FK>>
+    author_profile_id : uuid <<FK>>
+    entered_by_user_id : uuid <<FK>>
+    verification_status_concept_id : uuid <<FK>>
+    confidence_score : numeric
+    content_hash : varchar
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity field_value_access_rules {
+  * id : uuid <<PK>>
+  --
+  * field_id : uuid <<FK>>
+    assignment_id : uuid <<FK>>
+  * purpose_of_use_value_set_id : uuid <<FK>>
+    read_role_value_set_id : uuid <<FK>>
+    write_role_value_set_id : uuid <<FK>>
+    consent_category_concept_id : uuid <<FK>>
+    mask_strategy_concept_id : uuid <<FK>>
+    break_glass_allowed : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity field_schema_migrations {
+  * id : uuid <<PK>>
+  --
+  * definition_set_id : uuid <<FK>>
+  * from_version_id : uuid <<FK>>
+  * to_version_id : uuid <<FK>>
+  * migration_type_concept_id : uuid <<FK>>
+    transformation_expression : text
+    validation_expression : text
+    rollback_expression : text
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity extension_target_policies {
+  * id : uuid <<PK>>
+  --
+  * target_resource_concept_id : uuid <<FK>>
+  * definition_set_id : uuid <<FK>>
+    tenant_id : uuid <<FK>>
+    jurisdiction_concept_id : uuid <<FK>>
+    allow_tenant_fields : boolean
+    allow_vendor_fields : boolean
+    maximum_fields : integer
+    maximum_payload_bytes : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+field_definition_sets ||--o{ field_definition_set_versions
+field_definition_set_versions ||--o{ field_set_members
+field_definition_set_versions ||--o{ field_schema_migrations : from
+field_definition_set_versions ||--o{ field_schema_migrations : to
+field_definition_sets ||--o{ extension_target_policies
+
+note as FUTURE_TARGETS_diagram_09b_extensibility_governance
+  HIGH-PROBABILITY FUTURE TARGETS
+  Patient profiles; practitioner profiles; practitioner specialties;
+  organizations, sites, units and spaces; encounters; observations and
+  diagnostic reports; imaging studies and clinical media; service catalog;
+  insurance coverage, prior authorizations and claims; devices/implants and
+  UDI; staff competencies and rosters; home-care visits; patient-reported
+  outcomes; research consent; public profiles and reviews; inventory lots;
+  provider enrollment and jurisdiction-specific regulatory records.
+end note
+
+note as LIMIT_diagram_09b_extensibility_governance
+  BOUNDARY
+  Dynamic fields extend a known resource. They do not replace core clinical
+  columns, terminology bindings, state machines, accounting invariants or
+  authorization. High-value searchable fields should graduate into typed
+  columns after evidence of stable use.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · dynamic_field_sections" as idxset_dynamic_field_sections <<INDEX_SET>> {
+  PK pk_dynamic_field_sections : (id) UNIQUE BTREE
+  UK uq_dynamic_field_sections_code : (code) UNIQUE BTREE
+  IX ix_dynamic_field_sections_parent_section_id : (parent_section_id) BTREE
+  IX ix_dynamic_field_sections_state_concept_id : (state_concept_id) BTREE
+  IX ix_dynamic_field_sections_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_dynamic_field_sections_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+dynamic_field_sections .. idxset_dynamic_field_sections : indexed by
+
+entity "INDEXES · dynamic_field_definitions" as idxset_dynamic_field_definitions <<INDEX_SET>> {
+  PK pk_dynamic_field_definitions : (id) UNIQUE BTREE
+  UK uq_dynamic_field_definitions_code : (code) UNIQUE BTREE
+  IX ix_dynamic_field_definitions_data_use_concept_id : (data_use_concept_id) BTREE
+  IX ix_dynamic_field_definitions_sensitivity_concept_id : (sensitivity_concept_id) BTREE
+  IX ix_dynamic_field_definitions_semantic_concept_id : (semantic_concept_id) BTREE
+  IX ix_dynamic_field_definitions_value_set_id : (value_set_id) BTREE
+  IX ix_dynamic_field_definitions_unit_value_set_id : (unit_value_set_id) BTREE
+  IX ix_dynamic_field_definitions_state_concept_id : (state_concept_id) BTREE
+  IX ix_dynamic_field_definitions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_dynamic_field_definitions_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+dynamic_field_definitions .. idxset_dynamic_field_definitions : indexed by
+
+entity "INDEXES · field_assignments" as idxset_field_assignments <<INDEX_SET>> {
+  PK pk_field_assignments : (id) UNIQUE BTREE
+  IX ix_field_assignments_field_id : (field_id) BTREE
+  IX ix_field_assignments_target_resource_concept_id : (target_resource_concept_id) BTREE
+  IX ix_field_assignments_profile_type_concept_id : (profile_type_concept_id) BTREE
+  IX ix_field_assignments_tenant_id : (tenant_id) BTREE
+  IX ix_field_assignments_branch_id : (branch_id) BTREE
+  IX ix_field_assignments_section_id : (section_id) BTREE
+  IX ix_field_assignments_read_role_value_set_id : (read_role_value_set_id) BTREE
+  IX ix_field_assignments_write_role_value_set_id : (write_role_value_set_id) BTREE
+  IX ix_field_assignments_state_concept_id : (state_concept_id) BTREE
+  IX ix_field_assignments_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_field_assignments_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_field_assignments_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+  GIST gist_field_assignments_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+}
+
+field_assignments .. idxset_field_assignments : indexed by
+
+entity "INDEXES · field_validation_rules" as idxset_field_validation_rules <<INDEX_SET>> {
+  PK pk_field_validation_rules : (id) UNIQUE BTREE
+  IX ix_field_validation_rules_field_id : (field_id) BTREE
+  IX ix_field_validation_rules_rule_type_concept_id : (rule_type_concept_id) BTREE
+  IX ix_field_validation_rules_operator_concept_id : (operator_concept_id) BTREE
+  IX ix_field_validation_rules_severity_concept_id : (severity_concept_id) BTREE
+  IX ix_field_validation_rules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_field_validation_rules_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+field_validation_rules .. idxset_field_validation_rules : indexed by
+
+entity "INDEXES · field_dependencies" as idxset_field_dependencies <<INDEX_SET>> {
+  PK pk_field_dependencies : (id) UNIQUE BTREE
+  IX ix_field_dependencies_target_field_id : (target_field_id) BTREE
+  IX ix_field_dependencies_source_field_id : (source_field_id) BTREE
+  IX ix_field_dependencies_operator_concept_id : (operator_concept_id) BTREE
+  IX ix_field_dependencies_behavior_concept_id : (behavior_concept_id) BTREE
+  IX ix_field_dependencies_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_field_dependencies_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+field_dependencies .. idxset_field_dependencies : indexed by
+
+entity "INDEXES · form_instances" as idxset_form_instances <<INDEX_SET>> {
+  PK pk_form_instances : (id) UNIQUE BTREE
+  IX ix_form_instances_resource_type_concept_id : (resource_type_concept_id) BTREE
+  IX ix_form_instances_tenant_context_id : (tenant_context_id) BTREE
+  IX ix_form_instances_state_concept_id : (state_concept_id) BTREE
+  IX ix_form_instances_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_form_instances_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+form_instances .. idxset_form_instances : indexed by
+
+entity "INDEXES · field_values" as idxset_field_values <<INDEX_SET>> {
+  PK pk_field_values : (id) UNIQUE BTREE
+  IX ix_field_values_form_instance_id : (form_instance_id) BTREE
+  IX ix_field_values_resource_type_concept_id : (resource_type_concept_id) BTREE
+  IX ix_field_values_field_id : (field_id) BTREE
+  IX ix_field_values_assignment_id : (assignment_id) BTREE
+  IX ix_field_values_value_concept_id : (value_concept_id) BTREE
+  IX ix_field_values_file_id : (file_id) BTREE
+  IX ix_field_values_unit_concept_id : (unit_concept_id) BTREE
+  IX ix_field_values_data_source_concept_id : (data_source_concept_id) BTREE
+  IX ix_field_values_value_status_concept_id : (value_status_concept_id) BTREE
+  IX ix_field_values_supersedes_value_id : (supersedes_value_id) BTREE
+  IX ix_field_values_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_field_values_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+field_values .. idxset_field_values : indexed by
+
+entity "INDEXES · field_value_audit" as idxset_field_value_audit <<INDEX_SET>> {
+  PK pk_field_value_audit : (id) UNIQUE BTREE
+  IX ix_field_value_audit_field_value_id : (field_value_id) BTREE
+  IX ix_field_value_audit_action_concept_id : (action_concept_id) BTREE
+  IX ix_field_value_audit_user_id : (user_id) BTREE
+  IX ix_field_value_audit_reason_concept_id : (reason_concept_id) BTREE
+  IX ix_field_value_audit_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_field_value_audit_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+field_value_audit .. idxset_field_value_audit : indexed by
+
+entity "INDEXES · field_definition_sets" as idxset_field_definition_sets <<INDEX_SET>> {
+  PK pk_field_definition_sets : (id) UNIQUE BTREE
+  UK uq_field_definition_sets_namespace_uri : (namespace_uri) UNIQUE BTREE
+  IX ix_field_definition_sets_owner_tenant_id : (owner_tenant_id) BTREE
+  IX ix_field_definition_sets_target_domain_concept_id : (target_domain_concept_id) BTREE
+  IX ix_field_definition_sets_status_concept_id : (status_concept_id) BTREE
+  IX ix_field_definition_sets_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_field_definition_sets_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+field_definition_sets .. idxset_field_definition_sets : indexed by
+
+entity "INDEXES · field_definition_set_versions" as idxset_field_definition_set_versions <<INDEX_SET>> {
+  PK pk_field_definition_set_versions : (id) UNIQUE BTREE
+  IX ix_field_definition_set_versions_definition_set_id : (definition_set_id) BTREE
+  IX ix_field_definition_set_versions_publication_status_concept_id : (publication_status_concept_id) BTREE
+  IX ix_field_definition_set_versions_compatibility_concept_id : (compatibility_concept_id) BTREE
+  IX ix_field_definition_set_versions_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_field_definition_set_versions_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+field_definition_set_versions .. idxset_field_definition_set_versions : indexed by
+
+entity "INDEXES · field_set_members" as idxset_field_set_members <<INDEX_SET>> {
+  PK pk_field_set_members : (id) UNIQUE BTREE
+  IX ix_field_set_members_definition_set_version_id : (definition_set_version_id) BTREE
+  IX ix_field_set_members_field_id : (field_id) BTREE
+  IX ix_field_set_members_section_id : (section_id) BTREE
+  IX ix_field_set_members_created_by_user_id : (created_by_user_id) BTREE
+}
+
+field_set_members .. idxset_field_set_members : indexed by
+
+entity "INDEXES · field_definition_localizations" as idxset_field_definition_localizations <<INDEX_SET>> {
+  PK pk_field_definition_localizations : (id) UNIQUE BTREE
+  IX ix_field_definition_localizations_field_id : (field_id) BTREE
+  IX ix_field_definition_localizations_language_concept_id : (language_concept_id) BTREE
+  IX ix_field_definition_localizations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_field_definition_localizations_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+field_definition_localizations .. idxset_field_definition_localizations : indexed by
+
+entity "INDEXES · field_value_provenance" as idxset_field_value_provenance <<INDEX_SET>> {
+  PK pk_field_value_provenance : (id) UNIQUE BTREE
+  IX ix_field_value_provenance_field_value_id : (field_value_id) BTREE
+  IX ix_field_value_provenance_import_batch_id : (import_batch_id) BTREE
+  IX ix_field_value_provenance_author_profile_id : (author_profile_id) BTREE
+  IX ix_field_value_provenance_entered_by_user_id : (entered_by_user_id) BTREE
+  IX ix_field_value_provenance_verification_status_concept_id : (verification_status_concept_id) BTREE
+  IX ix_field_value_provenance_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_field_value_provenance_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+field_value_provenance .. idxset_field_value_provenance : indexed by
+
+entity "INDEXES · field_value_access_rules" as idxset_field_value_access_rules <<INDEX_SET>> {
+  PK pk_field_value_access_rules : (id) UNIQUE BTREE
+  IX ix_field_value_access_rules_field_id : (field_id) BTREE
+  IX ix_field_value_access_rules_assignment_id : (assignment_id) BTREE
+  IX ix_field_value_access_rules_purpose_of_use_value_set_id : (purpose_of_use_value_set_id) BTREE
+  IX ix_field_value_access_rules_read_role_value_set_id : (read_role_value_set_id) BTREE
+  IX ix_field_value_access_rules_write_role_value_set_id : (write_role_value_set_id) BTREE
+  IX ix_field_value_access_rules_consent_category_concept_id : (consent_category_concept_id) BTREE
+  IX ix_field_value_access_rules_mask_strategy_concept_id : (mask_strategy_concept_id) BTREE
+  IX ix_field_value_access_rules_status_concept_id : (status_concept_id) BTREE
+  IX ix_field_value_access_rules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_field_value_access_rules_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+field_value_access_rules .. idxset_field_value_access_rules : indexed by
+
+entity "INDEXES · field_schema_migrations" as idxset_field_schema_migrations <<INDEX_SET>> {
+  PK pk_field_schema_migrations : (id) UNIQUE BTREE
+  IX ix_field_schema_migrations_definition_set_id : (definition_set_id) BTREE
+  IX ix_field_schema_migrations_from_version_id : (from_version_id) BTREE
+  IX ix_field_schema_migrations_to_version_id : (to_version_id) BTREE
+  IX ix_field_schema_migrations_migration_type_concept_id : (migration_type_concept_id) BTREE
+  IX ix_field_schema_migrations_status_concept_id : (status_concept_id) BTREE
+  IX ix_field_schema_migrations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_field_schema_migrations_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+field_schema_migrations .. idxset_field_schema_migrations : indexed by
+
+entity "INDEXES · extension_target_policies" as idxset_extension_target_policies <<INDEX_SET>> {
+  PK pk_extension_target_policies : (id) UNIQUE BTREE
+  IX ix_extension_target_policies_target_resource_concept_id : (target_resource_concept_id) BTREE
+  IX ix_extension_target_policies_definition_set_id : (definition_set_id) BTREE
+  IX ix_extension_target_policies_tenant_id : (tenant_id) BTREE
+  IX ix_extension_target_policies_jurisdiction_concept_id : (jurisdiction_concept_id) BTREE
+  IX ix_extension_target_policies_status_concept_id : (status_concept_id) BTREE
+  IX ix_extension_target_policies_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_extension_target_policies_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_extension_target_policies_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+extension_target_policies .. idxset_extension_target_policies : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

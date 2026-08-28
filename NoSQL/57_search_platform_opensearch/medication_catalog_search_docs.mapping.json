@@ -1,0 +1,48 @@
+{
+  "mappings": {
+    "properties": {
+      "tenant_id": {
+        "type": "keyword"
+      },
+      "source_entity_id": {
+        "type": "keyword"
+      },
+      "source_version": {
+        "type": "long"
+      },
+      "lifecycle_state": {
+        "type": "keyword"
+      },
+      "updated_at": {
+        "type": "date"
+      },
+      "routing_key": {
+        "type": "keyword"
+      },
+      "medication_id": {
+        "type": "keyword"
+      },
+      "generic_name": {
+        "type": "text"
+      },
+      "brand_names": {
+        "type": "text"
+      },
+      "ingredient_codes": {
+        "type": "keyword"
+      },
+      "dosage_forms": {
+        "type": "keyword"
+      },
+      "strengths": {
+        "type": "nested"
+      },
+      "manufacturer": {
+        "type": "keyword"
+      },
+      "searchable_terms": {
+        "type": "text"
+      }
+    }
+  }
+}

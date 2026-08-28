@@ -1,0 +1,405 @@
+@startuml SALUD_Module_14_practice
+title Module 14 — Care Organizations, Sites, Units, Spaces and Workforce\n(schema: practice)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_14_practice.puml
+' ------------------------------------------------------------------------------
+entity inventory_items {
+  * id : uuid <<PK>>
+  --
+  * practice_id : uuid <<FK>>
+    product_concept_id : uuid <<FK>>
+  * name : varchar
+    lot_number : varchar
+    expiry_date : date
+  * quantity_on_hand : numeric
+    unit_concept_id : uuid <<FK>>
+    reorder_level : numeric
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity inventory_movements <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * inventory_item_id : uuid <<FK>>
+  * movement_type_concept_id : uuid <<FK>>
+  * quantity : numeric
+    related_resource_type : varchar
+    related_resource_id : uuid
+    occurred_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+note as BIZ_diagram_14_practice
+  BUSINESS PURPOSE
+  General physical and care-delivery infrastructure for a private office, clinic,
+  medical center, hospital, nursing station, laboratory, imaging site, pharmacy
+  counter, mobile unit or virtual service. Hospitals, diagnostic units and
+  pharmacies receive explicit domain identities in specialized schemas. A site
+  may host them without merging their tenants, credentials or data governance.
+  The model implements Organization + Location + HealthcareService +
+  PractitionerRole semantics without forcing every professional to own a room.
+end note
+
+entity practices {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+  * type_concept_id : uuid <<FK>>
+  * admin_user_id : uuid <<FK>>
+    currency_concept_id : uuid <<FK>>
+    time_zone : varchar
+    settings_json : jsonb
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity practice_sites {
+  * id : uuid <<PK>>
+  --
+  * practice_id : uuid <<FK>>
+    branch_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+  * site_type_concept_id : uuid <<FK>>
+    physical_type_concept_id : uuid <<FK>>
+    operational_status_concept_id : uuid <<FK>>
+    time_zone : varchar
+    address_id : uuid <<FK>>
+    managing_tenant_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity clinical_units {
+  * id : uuid <<PK>>
+  --
+  * practice_site_id : uuid <<FK>>
+    parent_unit_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+  * unit_type_concept_id : uuid <<FK>>
+    specialty_concept_id : uuid <<FK>>
+    service_mode_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity care_spaces {
+  * id : uuid <<PK>>
+  --
+  * practice_site_id : uuid <<FK>>
+    clinical_unit_id : uuid <<FK>>
+    parent_space_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+  * space_type_concept_id : uuid <<FK>>
+    capacity : integer
+    operational_status_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity healthcare_services {
+  * id : uuid <<PK>>
+  --
+  * practice_id : uuid <<FK>>
+    practice_site_id : uuid <<FK>>
+    clinical_unit_id : uuid <<FK>>
+  * service_concept_id : uuid <<FK>>
+    specialty_concept_id : uuid <<FK>>
+    referral_required : boolean
+    appointment_required : boolean
+    telehealth_available : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity practitioner_role_assignments {
+  * id : uuid <<PK>>
+  --
+  * practitioner_profile_id : uuid <<FK>>
+  * practice_id : uuid <<FK>>
+    practice_site_id : uuid <<FK>>
+    clinical_unit_id : uuid <<FK>>
+    healthcare_service_id : uuid <<FK>>
+  * role_concept_id : uuid <<FK>>
+    specialty_concept_id : uuid <<FK>>
+    supervisor_practitioner_profile_id : uuid <<FK>>
+    revenue_share_percent : numeric
+    is_primary : boolean
+    valid_from : date
+    valid_to : date
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity practitioner_support_assignments {
+  * id : uuid <<PK>>
+  --
+  * practitioner_role_assignment_id : uuid <<FK>>
+  * support_profile_id : uuid <<FK>>
+  * support_role_concept_id : uuid <<FK>>
+    scope_concept_id : uuid <<FK>>
+    valid_from : date
+    valid_to : date
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity practice_accreditations {
+  * id : uuid <<PK>>
+  --
+  * practice_id : uuid <<FK>>
+    practice_site_id : uuid <<FK>>
+  * accreditation_type_concept_id : uuid <<FK>>
+    accreditation_number : varchar
+    issuer_tenant_id : uuid <<FK>>
+    issuer_name : varchar
+    valid_from : date
+    valid_to : date
+    evidence_file_id : uuid <<FK>>
+  * verification_status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity practice_settings {
+  * id : uuid <<PK>>
+  --
+  * practice_id : uuid <<FK>>
+  * setting_key : varchar
+  * value_json : jsonb
+    category_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+practices ||--o{ practice_sites
+practices ||--o{ healthcare_services
+practices ||--o{ practitioner_role_assignments
+practices ||--o{ practice_accreditations
+practices ||--o{ practice_settings
+practice_sites ||--o{ clinical_units
+practice_sites ||--o{ care_spaces
+clinical_units |o--o{ clinical_units : parent
+clinical_units ||--o{ care_spaces
+care_spaces |o--o{ care_spaces : parent
+healthcare_services |o--o{ practitioner_role_assignments
+practitioner_role_assignments ||--o{ practitioner_support_assignments
+inventory_items ||--o{ inventory_movements
+
+note as MIGRATION_diagram_14_practice
+  MIGRATION FROM THE PREVIOUS MODEL
+  practices remains the stable financial/operational root. consulting_rooms
+  becomes care_spaces. practice_practitioners becomes
+  practitioner_role_assignments. This preserves practice_id references while
+  allowing hospitals, nursing units, departments, beds and mobile services.
+  Hosted diagnostic units/pharmacies are linked through organization_affiliations;
+  they do not become informal subrecords of the host practice.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · inventory_items" as idxset_inventory_items <<INDEX_SET>> {
+  PK pk_inventory_items : (id) UNIQUE BTREE
+  IX ix_inventory_items_practice_id : (practice_id) BTREE
+  IX ix_inventory_items_product_concept_id : (product_concept_id) BTREE
+  IX ix_inventory_items_unit_concept_id : (unit_concept_id) BTREE
+  IX ix_inventory_items_status_concept_id : (status_concept_id) BTREE
+  IX ix_inventory_items_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_inventory_items_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+inventory_items .. idxset_inventory_items : indexed by
+
+entity "INDEXES · inventory_movements" as idxset_inventory_movements <<INDEX_SET>> {
+  PK pk_inventory_movements : (id) UNIQUE BTREE
+  IX ix_inventory_movements_inventory_item_id : (inventory_item_id) BTREE
+  IX ix_inventory_movements_movement_type_concept_id : (movement_type_concept_id) BTREE
+  IX ix_inventory_movements_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_inventory_movements_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+inventory_movements .. idxset_inventory_movements : indexed by
+
+entity "INDEXES · practices" as idxset_practices <<INDEX_SET>> {
+  PK pk_practices : (id) UNIQUE BTREE
+  IX ix_practices_tenant_id : (tenant_id) BTREE
+  IX ix_practices_type_concept_id : (type_concept_id) BTREE
+  IX ix_practices_admin_user_id : (admin_user_id) BTREE
+  IX ix_practices_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_practices_status_concept_id : (status_concept_id) BTREE
+  IX ix_practices_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_practices_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_practices_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+practices .. idxset_practices : indexed by
+
+entity "INDEXES · practice_sites" as idxset_practice_sites <<INDEX_SET>> {
+  PK pk_practice_sites : (id) UNIQUE BTREE
+  IX ix_practice_sites_practice_id : (practice_id) BTREE
+  IX ix_practice_sites_branch_id : (branch_id) BTREE
+  IX ix_practice_sites_site_type_concept_id : (site_type_concept_id) BTREE
+  IX ix_practice_sites_physical_type_concept_id : (physical_type_concept_id) BTREE
+  IX ix_practice_sites_operational_status_concept_id : (operational_status_concept_id) BTREE
+  IX ix_practice_sites_address_id : (address_id) BTREE
+  IX ix_practice_sites_managing_tenant_id : (managing_tenant_id) BTREE
+  IX ix_practice_sites_status_concept_id : (status_concept_id) BTREE
+  IX ix_practice_sites_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_practice_sites_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+practice_sites .. idxset_practice_sites : indexed by
+
+entity "INDEXES · clinical_units" as idxset_clinical_units <<INDEX_SET>> {
+  PK pk_clinical_units : (id) UNIQUE BTREE
+  IX ix_clinical_units_practice_site_id : (practice_site_id) BTREE
+  IX ix_clinical_units_parent_unit_id : (parent_unit_id) BTREE
+  IX ix_clinical_units_unit_type_concept_id : (unit_type_concept_id) BTREE
+  IX ix_clinical_units_specialty_concept_id : (specialty_concept_id) BTREE
+  IX ix_clinical_units_service_mode_concept_id : (service_mode_concept_id) BTREE
+  IX ix_clinical_units_status_concept_id : (status_concept_id) BTREE
+  IX ix_clinical_units_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_clinical_units_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+clinical_units .. idxset_clinical_units : indexed by
+
+entity "INDEXES · care_spaces" as idxset_care_spaces <<INDEX_SET>> {
+  PK pk_care_spaces : (id) UNIQUE BTREE
+  IX ix_care_spaces_practice_site_id : (practice_site_id) BTREE
+  IX ix_care_spaces_clinical_unit_id : (clinical_unit_id) BTREE
+  IX ix_care_spaces_parent_space_id : (parent_space_id) BTREE
+  IX ix_care_spaces_space_type_concept_id : (space_type_concept_id) BTREE
+  IX ix_care_spaces_operational_status_concept_id : (operational_status_concept_id) BTREE
+  IX ix_care_spaces_status_concept_id : (status_concept_id) BTREE
+  IX ix_care_spaces_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_care_spaces_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+care_spaces .. idxset_care_spaces : indexed by
+
+entity "INDEXES · healthcare_services" as idxset_healthcare_services <<INDEX_SET>> {
+  PK pk_healthcare_services : (id) UNIQUE BTREE
+  IX ix_healthcare_services_practice_id : (practice_id) BTREE
+  IX ix_healthcare_services_practice_site_id : (practice_site_id) BTREE
+  IX ix_healthcare_services_clinical_unit_id : (clinical_unit_id) BTREE
+  IX ix_healthcare_services_service_concept_id : (service_concept_id) BTREE
+  IX ix_healthcare_services_specialty_concept_id : (specialty_concept_id) BTREE
+  IX ix_healthcare_services_status_concept_id : (status_concept_id) BTREE
+  IX ix_healthcare_services_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_healthcare_services_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+healthcare_services .. idxset_healthcare_services : indexed by
+
+entity "INDEXES · practitioner_role_assignments" as idxset_practitioner_role_assignments <<INDEX_SET>> {
+  PK pk_practitioner_role_assignments : (id) UNIQUE BTREE
+  IX ix_practitioner_role_assignments_practitioner_profile_id : (practitioner_profile_id) BTREE
+  IX ix_practitioner_role_assignments_practice_id : (practice_id) BTREE
+  IX ix_practitioner_role_assignments_practice_site_id : (practice_site_id) BTREE
+  IX ix_practitioner_role_assignments_clinical_unit_id : (clinical_unit_id) BTREE
+  IX ix_practitioner_role_assignments_healthcare_service_id : (healthcare_service_id) BTREE
+  IX ix_practitioner_role_assignments_role_concept_id : (role_concept_id) BTREE
+  IX ix_practitioner_role_assignments_specialty_concept_id : (specialty_concept_id) BTREE
+  IX ix_practitioner_role_assignments_supervisor_practition_4d201e89 : (supervisor_practitioner_profile_id) BTREE
+  IX ix_practitioner_role_assignments_status_concept_id : (status_concept_id) BTREE
+  IX ix_practitioner_role_assignments_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_practitioner_role_assignments_updated_by_user_id : (updated_by_user_id) BTREE
+  GIST gist_practitioner_role_assignments_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+}
+
+practitioner_role_assignments .. idxset_practitioner_role_assignments : indexed by
+
+entity "INDEXES · practitioner_support_assignments" as idxset_practitioner_support_assignments <<INDEX_SET>> {
+  PK pk_practitioner_support_assignments : (id) UNIQUE BTREE
+  IX ix_practitioner_support_assignments_practitioner_role__d1c4a67d : (practitioner_role_assignment_id) BTREE
+  IX ix_practitioner_support_assignments_support_profile_id : (support_profile_id) BTREE
+  IX ix_practitioner_support_assignments_support_role_concept_id : (support_role_concept_id) BTREE
+  IX ix_practitioner_support_assignments_scope_concept_id : (scope_concept_id) BTREE
+  IX ix_practitioner_support_assignments_status_concept_id : (status_concept_id) BTREE
+  IX ix_practitioner_support_assignments_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_practitioner_support_assignments_updated_by_user_id : (updated_by_user_id) BTREE
+  GIST gist_practitioner_support_assignments_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+}
+
+practitioner_support_assignments .. idxset_practitioner_support_assignments : indexed by
+
+entity "INDEXES · practice_accreditations" as idxset_practice_accreditations <<INDEX_SET>> {
+  PK pk_practice_accreditations : (id) UNIQUE BTREE
+  IX ix_practice_accreditations_practice_id : (practice_id) BTREE
+  IX ix_practice_accreditations_practice_site_id : (practice_site_id) BTREE
+  IX ix_practice_accreditations_accreditation_type_concept_id : (accreditation_type_concept_id) BTREE
+  IX ix_practice_accreditations_issuer_tenant_id : (issuer_tenant_id) BTREE
+  IX ix_practice_accreditations_evidence_file_id : (evidence_file_id) BTREE
+  IX ix_practice_accreditations_verification_status_concept_id : (verification_status_concept_id) BTREE
+  IX ix_practice_accreditations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_practice_accreditations_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+practice_accreditations .. idxset_practice_accreditations : indexed by
+
+entity "INDEXES · practice_settings" as idxset_practice_settings <<INDEX_SET>> {
+  PK pk_practice_settings : (id) UNIQUE BTREE
+  IX ix_practice_settings_practice_id : (practice_id) BTREE
+  IX ix_practice_settings_category_concept_id : (category_concept_id) BTREE
+  IX ix_practice_settings_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_practice_settings_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+practice_settings .. idxset_practice_settings : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

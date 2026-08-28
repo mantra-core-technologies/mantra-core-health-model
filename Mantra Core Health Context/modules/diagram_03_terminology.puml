@@ -1,0 +1,467 @@
+@startuml SALUD_Module_03_terminology
+title Module 03 — Terminology, Value Sets and Dynamic Catalogs\n(schema: terminology)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_03_terminology.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_03_terminology
+  BUSINESS PURPOSE
+  A governed engine for every coded value the platform uses (diagnoses,
+  statuses, units, roles...) based on international standards (SNOMED,
+  LOINC, ICD, ATC, UCUM) plus local catalogs. It makes the system
+  multilingual, interoperable and future-proof: new values are added
+  without software changes.
+end note
+
+entity terminology_sources {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * name : varchar
+    source_type_concept_id : uuid <<FK>>
+    owner : varchar
+    official_url : text
+    license : text
+    jurisdiction_concept_id : uuid <<FK>>
+    state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity code_systems {
+  * id : uuid <<PK>>
+  --
+  * source_id : uuid <<FK>>
+  * internal_code : varchar <<UK>>
+  * name : varchar
+  * canonical_url : text <<UK>>
+    oid : varchar
+    content_type_concept_id : uuid <<FK>>
+    case_sensitive : boolean
+    supports_composition : boolean
+    state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity code_system_versions {
+  * id : uuid <<PK>>
+  --
+  * code_system_id : uuid <<FK>>
+  * version : varchar
+    published_at : timestamptz
+    valid_from : timestamptz
+    valid_to : timestamptz
+    checksum : varchar
+    is_default : boolean
+    state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity catalog_concepts {
+  * id : uuid <<PK>>
+  --
+  * code_system_version_id : uuid <<FK>>
+  * code : varchar
+  * display : varchar
+    definition : text
+    abstract : boolean
+    selectable : boolean
+    valid_from : timestamptz
+    valid_to : timestamptz
+    replaced_by_concept_id : uuid <<FK>>
+    state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity concept_designations {
+  * id : uuid <<PK>>
+  --
+  * concept_id : uuid <<FK>>
+    language_concept_id : uuid <<FK>>
+    designation_type_concept_id : uuid <<FK>>
+  * value : varchar
+    preferred : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity concept_properties {
+  * id : uuid <<PK>>
+  --
+  * concept_id : uuid <<FK>>
+  * property_code : varchar
+  * data_type : technical_data_type
+  * value_json : jsonb
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity concept_relationships {
+  * id : uuid <<PK>>
+  --
+  * source_concept_id : uuid <<FK>>
+  * target_concept_id : uuid <<FK>>
+  * relationship_type_concept_id : uuid <<FK>>
+    ordinal : integer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity value_sets {
+  * id : uuid <<PK>>
+  --
+  * internal_code : varchar <<UK>>
+  * name : varchar
+  * canonical_url : text <<UK>>
+    description : text
+    jurisdiction_concept_id : uuid <<FK>>
+    state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity value_set_versions {
+  * id : uuid <<PK>>
+  --
+  * value_set_id : uuid <<FK>>
+  * version : varchar
+    valid_from : timestamptz
+    valid_to : timestamptz
+    is_default : boolean
+    state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity value_set_members {
+  * id : uuid <<PK>>
+  --
+  * value_set_version_id : uuid <<FK>>
+  * concept_id : uuid <<FK>>
+  * included : boolean
+    ordinal : integer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity value_set_rules {
+  * id : uuid <<PK>>
+  --
+  * value_set_version_id : uuid <<FK>>
+  * code_system_id : uuid <<FK>>
+    operator_concept_id : uuid <<FK>>
+    property : varchar
+    value : varchar
+  * included : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity concept_maps {
+  * id : uuid <<PK>>
+  --
+  * source_concept_id : uuid <<FK>>
+  * target_concept_id : uuid <<FK>>
+    equivalence_concept_id : uuid <<FK>>
+    context : varchar
+    version : varchar
+    state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity catalog_import_batches <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * source_id : uuid <<FK>>
+    code_system_version_id : uuid <<FK>>
+    file_id : uuid <<FK>>
+    state_concept_id : uuid <<FK>>
+    started_at : timestamptz
+    finished_at : timestamptz
+    total_read : bigint
+    total_inserted : bigint
+    total_errors : bigint
+    checksum : varchar
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity tenant_catalog_policies {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * value_set_id : uuid <<FK>>
+    mode_concept_id : uuid <<FK>>
+    allow_subset : boolean
+    allow_alias : boolean
+    allow_local_concepts : boolean
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity tenant_concept_config {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * concept_id : uuid <<FK>>
+  * enabled : boolean
+    alias_display : varchar
+    ordinal : integer
+    is_default : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+terminology_sources ||--o{ code_systems
+code_systems ||--o{ code_system_versions
+code_system_versions ||--o{ catalog_concepts
+catalog_concepts ||--o{ concept_designations
+catalog_concepts ||--o{ concept_properties
+catalog_concepts ||--o{ concept_relationships : source
+value_sets ||--o{ value_set_versions
+value_set_versions ||--o{ value_set_members
+catalog_concepts ||--o{ value_set_members
+value_set_versions ||--o{ value_set_rules
+code_systems ||--o{ value_set_rules
+catalog_concepts ||--o{ concept_maps : source
+terminology_sources ||--o{ catalog_import_batches
+value_sets ||--o{ tenant_catalog_policies
+catalog_concepts ||--o{ tenant_concept_config
+
+note as DEP_diagram_03_terminology
+  Connects to other modules via:
+  tenants
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · terminology_sources" as idxset_terminology_sources <<INDEX_SET>> {
+  PK pk_terminology_sources : (id) UNIQUE BTREE
+  UK uq_terminology_sources_code : (code) UNIQUE BTREE
+  IX ix_terminology_sources_source_type_concept_id : (source_type_concept_id) BTREE
+  IX ix_terminology_sources_jurisdiction_concept_id : (jurisdiction_concept_id) BTREE
+  IX ix_terminology_sources_state_concept_id : (state_concept_id) BTREE
+  IX ix_terminology_sources_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_terminology_sources_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_terminology_sources_search : to_tsvector('simple', concat_ws(' ', name, code)) GIN
+}
+
+terminology_sources .. idxset_terminology_sources : indexed by
+
+entity "INDEXES · code_systems" as idxset_code_systems <<INDEX_SET>> {
+  PK pk_code_systems : (id) UNIQUE BTREE
+  UK uq_code_systems_internal_code : (internal_code) UNIQUE BTREE
+  UK uq_code_systems_canonical_url : (canonical_url) UNIQUE BTREE
+  IX ix_code_systems_source_id : (source_id) BTREE
+  IX ix_code_systems_content_type_concept_id : (content_type_concept_id) BTREE
+  IX ix_code_systems_state_concept_id : (state_concept_id) BTREE
+  IX ix_code_systems_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_code_systems_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_code_systems_search : to_tsvector('simple', concat_ws(' ', name)) GIN
+}
+
+code_systems .. idxset_code_systems : indexed by
+
+entity "INDEXES · code_system_versions" as idxset_code_system_versions <<INDEX_SET>> {
+  PK pk_code_system_versions : (id) UNIQUE BTREE
+  IX ix_code_system_versions_code_system_id : (code_system_id) BTREE
+  IX ix_code_system_versions_state_concept_id : (state_concept_id) BTREE
+  IX ix_code_system_versions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_code_system_versions_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_code_system_versions_code_system_id_version : (code_system_id, version) UNIQUE BTREE
+  UK uq_code_system_versions_system_version : (code_system_id, version) UNIQUE BTREE
+}
+
+code_system_versions .. idxset_code_system_versions : indexed by
+
+entity "INDEXES · catalog_concepts" as idxset_catalog_concepts <<INDEX_SET>> {
+  PK pk_catalog_concepts : (id) UNIQUE BTREE
+  IX ix_catalog_concepts_code_system_version_id : (code_system_version_id) BTREE
+  IX ix_catalog_concepts_replaced_by_concept_id : (replaced_by_concept_id) BTREE
+  IX ix_catalog_concepts_state_concept_id : (state_concept_id) BTREE
+  IX ix_catalog_concepts_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_catalog_concepts_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_catalog_concepts_search : to_tsvector('simple', concat_ws(' ', code)) GIN
+  UK uq_catalog_concepts_version_code : (code_system_version_id, code) UNIQUE BTREE
+  IX ix_catalog_concepts_display : (display) BTREE
+}
+
+catalog_concepts .. idxset_catalog_concepts : indexed by
+
+entity "INDEXES · concept_designations" as idxset_concept_designations <<INDEX_SET>> {
+  PK pk_concept_designations : (id) UNIQUE BTREE
+  IX ix_concept_designations_concept_id : (concept_id) BTREE
+  IX ix_concept_designations_language_concept_id : (language_concept_id) BTREE
+  IX ix_concept_designations_designation_type_concept_id : (designation_type_concept_id) BTREE
+  IX ix_concept_designations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_concept_designations_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+concept_designations .. idxset_concept_designations : indexed by
+
+entity "INDEXES · concept_properties" as idxset_concept_properties <<INDEX_SET>> {
+  PK pk_concept_properties : (id) UNIQUE BTREE
+  IX ix_concept_properties_concept_id : (concept_id) BTREE
+  IX ix_concept_properties_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_concept_properties_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+concept_properties .. idxset_concept_properties : indexed by
+
+entity "INDEXES · concept_relationships" as idxset_concept_relationships <<INDEX_SET>> {
+  PK pk_concept_relationships : (id) UNIQUE BTREE
+  IX ix_concept_relationships_source_concept_id : (source_concept_id) BTREE
+  IX ix_concept_relationships_target_concept_id : (target_concept_id) BTREE
+  IX ix_concept_relationships_relationship_type_concept_id : (relationship_type_concept_id) BTREE
+  IX ix_concept_relationships_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_concept_relationships_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+concept_relationships .. idxset_concept_relationships : indexed by
+
+entity "INDEXES · value_sets" as idxset_value_sets <<INDEX_SET>> {
+  PK pk_value_sets : (id) UNIQUE BTREE
+  UK uq_value_sets_internal_code : (internal_code) UNIQUE BTREE
+  UK uq_value_sets_canonical_url : (canonical_url) UNIQUE BTREE
+  IX ix_value_sets_jurisdiction_concept_id : (jurisdiction_concept_id) BTREE
+  IX ix_value_sets_state_concept_id : (state_concept_id) BTREE
+  IX ix_value_sets_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_value_sets_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_value_sets_search : to_tsvector('simple', concat_ws(' ', name, description)) GIN
+}
+
+value_sets .. idxset_value_sets : indexed by
+
+entity "INDEXES · value_set_versions" as idxset_value_set_versions <<INDEX_SET>> {
+  PK pk_value_set_versions : (id) UNIQUE BTREE
+  IX ix_value_set_versions_value_set_id : (value_set_id) BTREE
+  IX ix_value_set_versions_state_concept_id : (state_concept_id) BTREE
+  IX ix_value_set_versions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_value_set_versions_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_value_set_versions_value_set_id_version : (value_set_id, version) UNIQUE BTREE
+  UK uq_value_set_versions_set_version : (value_set_id, version) UNIQUE BTREE
+}
+
+value_set_versions .. idxset_value_set_versions : indexed by
+
+entity "INDEXES · value_set_members" as idxset_value_set_members <<INDEX_SET>> {
+  PK pk_value_set_members : (id) UNIQUE BTREE
+  IX ix_value_set_members_value_set_version_id : (value_set_version_id) BTREE
+  IX ix_value_set_members_concept_id : (concept_id) BTREE
+  IX ix_value_set_members_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_value_set_members_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_value_set_members_version_concept : (value_set_version_id, concept_id) UNIQUE BTREE
+}
+
+value_set_members .. idxset_value_set_members : indexed by
+
+entity "INDEXES · value_set_rules" as idxset_value_set_rules <<INDEX_SET>> {
+  PK pk_value_set_rules : (id) UNIQUE BTREE
+  IX ix_value_set_rules_value_set_version_id : (value_set_version_id) BTREE
+  IX ix_value_set_rules_code_system_id : (code_system_id) BTREE
+  IX ix_value_set_rules_operator_concept_id : (operator_concept_id) BTREE
+  IX ix_value_set_rules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_value_set_rules_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+value_set_rules .. idxset_value_set_rules : indexed by
+
+entity "INDEXES · concept_maps" as idxset_concept_maps <<INDEX_SET>> {
+  PK pk_concept_maps : (id) UNIQUE BTREE
+  IX ix_concept_maps_source_concept_id : (source_concept_id) BTREE
+  IX ix_concept_maps_target_concept_id : (target_concept_id) BTREE
+  IX ix_concept_maps_equivalence_concept_id : (equivalence_concept_id) BTREE
+  IX ix_concept_maps_state_concept_id : (state_concept_id) BTREE
+  IX ix_concept_maps_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_concept_maps_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+concept_maps .. idxset_concept_maps : indexed by
+
+entity "INDEXES · catalog_import_batches" as idxset_catalog_import_batches <<INDEX_SET>> {
+  PK pk_catalog_import_batches : (id) UNIQUE BTREE
+  IX ix_catalog_import_batches_source_id : (source_id) BTREE
+  IX ix_catalog_import_batches_code_system_version_id : (code_system_version_id) BTREE
+  IX ix_catalog_import_batches_file_id : (file_id) BTREE
+  IX ix_catalog_import_batches_state_concept_id : (state_concept_id) BTREE
+  IX ix_catalog_import_batches_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_catalog_import_batches_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+catalog_import_batches .. idxset_catalog_import_batches : indexed by
+
+entity "INDEXES · tenant_catalog_policies" as idxset_tenant_catalog_policies <<INDEX_SET>> {
+  PK pk_tenant_catalog_policies : (id) UNIQUE BTREE
+  IX ix_tenant_catalog_policies_tenant_id : (tenant_id) BTREE
+  IX ix_tenant_catalog_policies_value_set_id : (value_set_id) BTREE
+  IX ix_tenant_catalog_policies_mode_concept_id : (mode_concept_id) BTREE
+  IX ix_tenant_catalog_policies_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_tenant_catalog_policies_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_tenant_catalog_policies_tenant_id_updated_at : (tenant_id, updated_at DESC) BTREE
+}
+
+tenant_catalog_policies .. idxset_tenant_catalog_policies : indexed by
+
+entity "INDEXES · tenant_concept_config" as idxset_tenant_concept_config <<INDEX_SET>> {
+  PK pk_tenant_concept_config : (id) UNIQUE BTREE
+  IX ix_tenant_concept_config_tenant_id : (tenant_id) BTREE
+  IX ix_tenant_concept_config_concept_id : (concept_id) BTREE
+  IX ix_tenant_concept_config_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_tenant_concept_config_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_tenant_concept_config_tenant_id_updated_at : (tenant_id, updated_at DESC) BTREE
+}
+
+tenant_concept_config .. idxset_tenant_concept_config : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

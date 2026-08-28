@@ -1,0 +1,434 @@
+@startuml SALUD_Module_39_reporting
+title Module 39 — Reporting, Dashboards and Scheduled Distribution\n(schema: reporting)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_39_reporting.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_39_reporting
+  BUSINESS PURPOSE
+  A configuration-driven reporting engine so the application supports dynamic reports
+  without code changes. Report definitions declare a governed dataset, parameters,
+  columns and output formats; versions are tracked; schedules and subscriptions drive
+  automated execution and distribution; executions capture parameters, row counts and
+  the produced file; dashboards compose reports into visual surfaces. Reads only from
+  governed read models (module 30) — never grants authority.
+end note
+
+entity report_data_sources {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * code : varchar <<UK>>
+  * name : varchar
+  * source_type_concept_id : uuid <<FK>>
+    read_model_definition_id : uuid <<FK>>
+    view_name : varchar
+    spec_json : jsonb
+    row_security_json : jsonb
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity report_definitions {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * code : varchar <<UK>>
+  * name : varchar
+    description : text
+    category_concept_id : uuid <<FK>>
+  * data_source_id : uuid <<FK>>
+    query_spec_json : jsonb
+    default_output_format_concept_id : uuid <<FK>>
+    required_permission_id : uuid <<FK>>
+    is_public : boolean
+  * current_version : integer
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity report_versions {
+  * id : uuid <<PK>>
+  --
+  * report_definition_id : uuid <<FK>>
+  * version : integer
+  * spec_json : jsonb
+    change_note : text
+  * status_concept_id : uuid <<FK>>
+    published_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity report_parameters {
+  * id : uuid <<PK>>
+  --
+  * report_definition_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+  * data_type : technical_data_type
+    required : boolean
+    default_value_json : jsonb
+    value_set_id : uuid <<FK>>
+    ordinal : integer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity report_columns {
+  * id : uuid <<PK>>
+  --
+  * report_definition_id : uuid <<FK>>
+  * code : varchar
+  * label : varchar
+    expression : text
+    data_type : technical_data_type
+    aggregation_concept_id : uuid <<FK>>
+    format_mask : varchar
+    is_visible : boolean
+    ordinal : integer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity report_schedules {
+  * id : uuid <<PK>>
+  --
+  * report_definition_id : uuid <<FK>>
+    tenant_id : uuid <<FK>>
+  * name : varchar
+  * cron_expression : varchar
+    time_zone : varchar
+    parameters_json : jsonb
+  * output_format_concept_id : uuid <<FK>>
+    is_enabled : boolean
+    next_run_at : timestamptz
+    last_run_at : timestamptz
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity report_executions {
+  * id : uuid <<PK>>
+  --
+  * report_definition_id : uuid <<FK>>
+    report_version_id : uuid <<FK>>
+    schedule_id : uuid <<FK>>
+    tenant_id : uuid <<FK>>
+  * trigger_concept_id : uuid <<FK>>
+    requested_by_user_id : uuid <<FK>>
+    parameters_json : jsonb
+  * status_concept_id : uuid <<FK>>
+    started_at : timestamptz
+    finished_at : timestamptz
+    row_count : bigint
+    output_format_concept_id : uuid <<FK>>
+    output_file_id : uuid <<FK>>
+    error_text : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity report_snapshots {
+  * id : uuid <<PK>>
+  --
+  * report_execution_id : uuid <<FK>>
+  * storage_uri : text
+    content_hash : varchar
+    row_count : bigint
+    size_bytes : bigint
+    expires_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity report_distributions {
+  * id : uuid <<PK>>
+  --
+    schedule_id : uuid <<FK>>
+    report_execution_id : uuid <<FK>>
+  * recipient_type_concept_id : uuid <<FK>>
+    recipient_user_id : uuid <<FK>>
+    recipient_address : varchar
+  * channel_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    sent_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity report_subscriptions {
+  * id : uuid <<PK>>
+  --
+  * report_schedule_id : uuid <<FK>>
+  * subscriber_user_id : uuid <<FK>>
+  * channel_id : uuid <<FK>>
+  * is_active : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity dashboards {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * code : varchar <<UK>>
+  * name : varchar
+    description : text
+    layout_json : jsonb
+    required_permission_id : uuid <<FK>>
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity dashboard_widgets {
+  * id : uuid <<PK>>
+  --
+  * dashboard_id : uuid <<FK>>
+    report_definition_id : uuid <<FK>>
+  * widget_type_concept_id : uuid <<FK>>
+  * title : varchar
+    visualization_concept_id : uuid <<FK>>
+    config_json : jsonb
+    position_json : jsonb
+    ordinal : integer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+report_data_sources ||--o{ report_definitions
+report_definitions ||--o{ report_versions
+report_definitions ||--o{ report_parameters
+report_definitions ||--o{ report_columns
+report_definitions ||--o{ report_schedules
+report_definitions ||--o{ report_executions
+report_versions |o--o{ report_executions
+report_schedules |o--o{ report_executions
+report_executions ||--o{ report_snapshots
+report_schedules ||--o{ report_distributions
+report_executions |o--o{ report_distributions
+report_schedules ||--o{ report_subscriptions
+dashboards ||--o{ dashboard_widgets
+report_definitions |o--o{ dashboard_widgets
+
+note as DEP_diagram_39_reporting
+  Connects to other modules via:
+  directory.tenants, iam.users, common.files (output_file_id), authz.permissions,
+  read_models.read_model_definitions (data_source), messaging.message_channels
+  (distributions/subscriptions), terminology.value_sets/catalog_concepts.
+end note
+
+note as REC_REPORTING_diagram_39_reporting
+  DYNAMIC + GOVERNED
+  Reports resolve their dataset through read_models (module 30), which already apply
+  permission, purpose, scope, RLS and field masking — reporting never bypasses these.
+  data_type columns use the technical_data_type enum; parameters bind to value_sets.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · report_data_sources" as idxset_report_data_sources <<INDEX_SET>> {
+  PK pk_report_data_sources : (id) UNIQUE BTREE
+  UK uq_report_data_sources_code : (code) UNIQUE BTREE
+  IX ix_report_data_sources_tenant_id : (tenant_id) BTREE
+  IX ix_report_data_sources_source_type_concept_id : (source_type_concept_id) BTREE
+  IX ix_report_data_sources_read_model_definition_id : (read_model_definition_id) BTREE
+  IX ix_report_data_sources_state_concept_id : (state_concept_id) BTREE
+  IX ix_report_data_sources_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_report_data_sources_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_report_data_sources_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+  GIN gin_report_data_sources_search : to_tsvector('simple', concat_ws(' ', name, code)) GIN
+}
+
+report_data_sources .. idxset_report_data_sources : indexed by
+
+entity "INDEXES · report_definitions" as idxset_report_definitions <<INDEX_SET>> {
+  PK pk_report_definitions : (id) UNIQUE BTREE
+  UK uq_report_definitions_code : (code) UNIQUE BTREE
+  IX ix_report_definitions_tenant_id : (tenant_id) BTREE
+  IX ix_report_definitions_category_concept_id : (category_concept_id) BTREE
+  IX ix_report_definitions_data_source_id : (data_source_id) BTREE
+  IX ix_report_definitions_default_output_format_concept_id : (default_output_format_concept_id) BTREE
+  IX ix_report_definitions_required_permission_id : (required_permission_id) BTREE
+  IX ix_report_definitions_state_concept_id : (state_concept_id) BTREE
+  IX ix_report_definitions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_report_definitions_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_report_definitions_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+  GIN gin_report_definitions_search : to_tsvector('simple', concat_ws(' ', name, description)) GIN
+}
+
+report_definitions .. idxset_report_definitions : indexed by
+
+entity "INDEXES · report_versions" as idxset_report_versions <<INDEX_SET>> {
+  PK pk_report_versions : (id) UNIQUE BTREE
+  IX ix_report_versions_report_definition_id : (report_definition_id) BTREE
+  IX ix_report_versions_status_concept_id : (status_concept_id) BTREE
+  IX ix_report_versions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_report_versions_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_report_versions_report_definition_id_version : (report_definition_id, version) UNIQUE BTREE
+}
+
+report_versions .. idxset_report_versions : indexed by
+
+entity "INDEXES · report_parameters" as idxset_report_parameters <<INDEX_SET>> {
+  PK pk_report_parameters : (id) UNIQUE BTREE
+  IX ix_report_parameters_report_definition_id : (report_definition_id) BTREE
+  IX ix_report_parameters_value_set_id : (value_set_id) BTREE
+  IX ix_report_parameters_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_report_parameters_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_report_parameters_search : to_tsvector('simple', concat_ws(' ', name, code)) GIN
+}
+
+report_parameters .. idxset_report_parameters : indexed by
+
+entity "INDEXES · report_columns" as idxset_report_columns <<INDEX_SET>> {
+  PK pk_report_columns : (id) UNIQUE BTREE
+  IX ix_report_columns_report_definition_id : (report_definition_id) BTREE
+  IX ix_report_columns_aggregation_concept_id : (aggregation_concept_id) BTREE
+  IX ix_report_columns_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_report_columns_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_report_columns_search : to_tsvector('simple', concat_ws(' ', code)) GIN
+}
+
+report_columns .. idxset_report_columns : indexed by
+
+entity "INDEXES · report_schedules" as idxset_report_schedules <<INDEX_SET>> {
+  PK pk_report_schedules : (id) UNIQUE BTREE
+  IX ix_report_schedules_report_definition_id : (report_definition_id) BTREE
+  IX ix_report_schedules_tenant_id : (tenant_id) BTREE
+  IX ix_report_schedules_output_format_concept_id : (output_format_concept_id) BTREE
+  IX ix_report_schedules_state_concept_id : (state_concept_id) BTREE
+  IX ix_report_schedules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_report_schedules_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_report_schedules_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+  GIN gin_report_schedules_search : to_tsvector('simple', concat_ws(' ', name)) GIN
+}
+
+report_schedules .. idxset_report_schedules : indexed by
+
+entity "INDEXES · report_executions" as idxset_report_executions <<INDEX_SET>> {
+  PK pk_report_executions : (id) UNIQUE BTREE
+  IX ix_report_executions_report_definition_id : (report_definition_id) BTREE
+  IX ix_report_executions_report_version_id : (report_version_id) BTREE
+  IX ix_report_executions_schedule_id : (schedule_id) BTREE
+  IX ix_report_executions_tenant_id : (tenant_id) BTREE
+  IX ix_report_executions_trigger_concept_id : (trigger_concept_id) BTREE
+  IX ix_report_executions_requested_by_user_id : (requested_by_user_id) BTREE
+  IX ix_report_executions_status_concept_id : (status_concept_id) BTREE
+  IX ix_report_executions_output_format_concept_id : (output_format_concept_id) BTREE
+  IX ix_report_executions_output_file_id : (output_file_id) BTREE
+  IX ix_report_executions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_report_executions_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_report_executions_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+report_executions .. idxset_report_executions : indexed by
+
+entity "INDEXES · report_snapshots" as idxset_report_snapshots <<INDEX_SET>> {
+  PK pk_report_snapshots : (id) UNIQUE BTREE
+  IX ix_report_snapshots_report_execution_id : (report_execution_id) BTREE
+  IX ix_report_snapshots_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_report_snapshots_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+report_snapshots .. idxset_report_snapshots : indexed by
+
+entity "INDEXES · report_distributions" as idxset_report_distributions <<INDEX_SET>> {
+  PK pk_report_distributions : (id) UNIQUE BTREE
+  IX ix_report_distributions_schedule_id : (schedule_id) BTREE
+  IX ix_report_distributions_report_execution_id : (report_execution_id) BTREE
+  IX ix_report_distributions_recipient_type_concept_id : (recipient_type_concept_id) BTREE
+  IX ix_report_distributions_recipient_user_id : (recipient_user_id) BTREE
+  IX ix_report_distributions_channel_id : (channel_id) BTREE
+  IX ix_report_distributions_status_concept_id : (status_concept_id) BTREE
+  IX ix_report_distributions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_report_distributions_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+report_distributions .. idxset_report_distributions : indexed by
+
+entity "INDEXES · report_subscriptions" as idxset_report_subscriptions <<INDEX_SET>> {
+  PK pk_report_subscriptions : (id) UNIQUE BTREE
+  IX ix_report_subscriptions_report_schedule_id : (report_schedule_id) BTREE
+  IX ix_report_subscriptions_subscriber_user_id : (subscriber_user_id) BTREE
+  IX ix_report_subscriptions_channel_id : (channel_id) BTREE
+  IX ix_report_subscriptions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_report_subscriptions_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+report_subscriptions .. idxset_report_subscriptions : indexed by
+
+entity "INDEXES · dashboards" as idxset_dashboards <<INDEX_SET>> {
+  PK pk_dashboards : (id) UNIQUE BTREE
+  UK uq_dashboards_code : (code) UNIQUE BTREE
+  IX ix_dashboards_tenant_id : (tenant_id) BTREE
+  IX ix_dashboards_required_permission_id : (required_permission_id) BTREE
+  IX ix_dashboards_state_concept_id : (state_concept_id) BTREE
+  IX ix_dashboards_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_dashboards_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_dashboards_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+  GIN gin_dashboards_search : to_tsvector('simple', concat_ws(' ', name, description)) GIN
+}
+
+dashboards .. idxset_dashboards : indexed by
+
+entity "INDEXES · dashboard_widgets" as idxset_dashboard_widgets <<INDEX_SET>> {
+  PK pk_dashboard_widgets : (id) UNIQUE BTREE
+  IX ix_dashboard_widgets_dashboard_id : (dashboard_id) BTREE
+  IX ix_dashboard_widgets_report_definition_id : (report_definition_id) BTREE
+  IX ix_dashboard_widgets_widget_type_concept_id : (widget_type_concept_id) BTREE
+  IX ix_dashboard_widgets_visualization_concept_id : (visualization_concept_id) BTREE
+  IX ix_dashboard_widgets_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_dashboard_widgets_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_dashboard_widgets_search : to_tsvector('simple', concat_ws(' ', title)) GIN
+}
+
+dashboard_widgets .. idxset_dashboard_widgets : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

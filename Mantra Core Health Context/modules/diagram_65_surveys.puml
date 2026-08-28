@@ -1,0 +1,277 @@
+@startuml SALUD_Module_65_surveys
+title Module 65 — Surveys (post-visit questionnaires)\n(schema: surveys)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: promoted from mantra-core-health-api/src/modules/surveys
+' The seven entities landed in code on 2026-08-15 (carril 10) with no .puml and
+' no line in SQL/, so the schema never existed in any database the pipeline
+' builds and every endpoint of the module failed with
+' relation "surveys.*" does not exist. This diagram TRANSCRIBES what those
+' entities already declare — column, type and nullability — and adds nothing.
+' Same case as module 64 (audio_assets).
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_65_surveys
+  BUSINESS PURPOSE
+  The practitioner asks the patient how the visit went. A template is owned by
+  one professional and published as immutable versions; an assignment says which
+  attentions a version applies to; a completed booking issues one invitation to
+  one patient, with an expiry derived at issue time; the patient answers once.
+  Answers are private by construction: this module has no visibility column and
+  never feeds the public rating, which lives in community.service_reviews.
+end note
+
+entity survey_templates {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * owner_practitioner_id : uuid <<FK>>
+  * title : text
+    description : text
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity survey_versions {
+  * id : uuid <<PK>>
+  --
+  * survey_template_id : uuid <<FK>>
+  * version_number : integer
+  * publication_status_concept_id : uuid <<FK>>
+    effective_from : timestamptz
+    effective_to : timestamptz
+  * response_window_days : integer
+    published_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity survey_questions {
+  * id : uuid <<PK>>
+  --
+  * survey_version_id : uuid <<FK>>
+  * position : integer
+  * question_text : text
+  * answer_type_concept_id : uuid <<FK>>
+  * required : boolean
+    options : jsonb
+    scale_min : integer
+    scale_max : integer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity survey_assignments {
+  * id : uuid <<PK>>
+  --
+  * survey_version_id : uuid <<FK>>
+  * tenant_id : uuid <<FK>>
+  * target_type_concept_id : uuid <<FK>>
+  * target_id : uuid
+  * active : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity survey_invitations {
+  * id : uuid <<PK>>
+  --
+  * survey_version_id : uuid <<FK>>
+  * survey_assignment_id : uuid <<FK>>
+  * tenant_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+  * appointment_booking_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * issued_at : timestamptz
+  * expires_at : timestamptz
+    answered_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity survey_responses {
+  * id : uuid <<PK>>
+  --
+  * survey_invitation_id : uuid <<FK>>
+  * survey_version_id : uuid <<FK>>
+  * tenant_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+  * submitted_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity survey_answers {
+  * id : uuid <<PK>>
+  --
+  * survey_response_id : uuid <<FK>>
+  * survey_question_id : uuid <<FK>>
+    value_text : text
+    value_number : integer
+    value_boolean : boolean
+    value_choices : jsonb
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+survey_templates ||--o{ survey_versions
+survey_versions ||--o{ survey_questions
+survey_versions ||--o{ survey_assignments
+survey_versions ||--o{ survey_invitations
+survey_assignments ||--o{ survey_invitations
+survey_invitations ||--o{ survey_responses
+survey_versions ||--o{ survey_responses
+survey_responses ||--o{ survey_answers
+survey_questions ||--o{ survey_answers
+
+note as DEP_diagram_65_surveys
+  Connects to other modules via:
+  tenants, practitioner_profiles, patient_profiles, appointment_bookings,
+  catalog_concepts, users
+end note
+
+note as REC_TARGET_SURVEYS_diagram_65_surveys
+  REC 65.1 — THE ASSIGNMENT TARGET IS POLYMORPHIC, ON PURPOSE
+survey_assignments.target_id carries the identity of whatever is being
+evaluated — a concrete booking, a health service or a care type — and which one
+it is depends on target_type_concept_id. It is the only uuid column in the
+module with NO foreign key, and that is deliberate: three nullable columns with
+a check that exactly one is set would say the same thing and make every read
+branch. The pair (type, id) is the contract; nothing in the database enforces
+that the id exists, so the service must resolve it against the schema the type
+names. Revisit if a fourth target type appears.
+end note
+
+note as REC_PRIVACY_SURVEYS_diagram_65_surveys
+  REC 65.2 — ANSWERS ARE PRIVATE BY CONSTRUCTION, NOT BY FLAG
+survey_responses has no visibility column and survey_answers has no publication
+state, and that absence is the design (decision D-08): an individual answer is
+never publishable. What a visitor reads about a professional is
+community.service_reviews, a different table with its own moderation. Adding a
+"public" flag here would put the two behind one row and make a moderation bug a
+privacy incident. patient_profile_id is duplicated from the invitation on
+purpose, so a patient's own history can be read without joining invitations.
+end note
+
+note as REC_VALUE_SURVEYS_diagram_65_surveys
+  REC 65.3 — ONE value_* COLUMN PER ROW, ENFORCED BY THE SERVICE
+survey_answers keeps value_text, value_number, value_boolean and value_choices
+all nullable, and exactly one of them is populated according to the question's
+answer_type_concept_id. The entity documents that the SERVICE enforces it while
+the module README claims a CHECK in the database — they contradict each other
+and the code has no CHECK. This diagram transcribes the code: four nullable
+columns, no constraint. Promoting the rule to a CHECK is a decision for the
+model owner, not something to infer from prose.
+end note
+
+note as REC_IDEMPOTENCY_SURVEYS_diagram_65_surveys
+  REC 65.4 — ISSUE IDEMPOTENCY IS NOT BACKED BY A CONSTRAINT YET
+The module README states that issuing is idempotent, "unique per (booking,
+version), also held by an index in the database". No such index exists: not in
+the entities, not in the ORM catalogue, not in SQL. Today only
+InvitationsRepository.listByBooking holds it, which is a read-then-write and
+therefore loses a race. The unique index over survey_invitations
+(appointment_booking_id, survey_version_id) is NOT declared here because adding
+it would change behaviour — it would start rejecting rows that today are
+accepted — and that is a decision, not a transcription. Same for the implicit
+uniqueness of (survey_template_id, version_number) and of
+survey_responses.survey_invitation_id, both assumed by findOne calls.
+end note
+
+note as REC_VERSION_SURVEYS_diagram_65_surveys
+  REC 65.5 — PUBLISHED VERSIONS ARE IMMUTABLE, DRAFTS ARE NOT
+A version whose publication_status_concept_id is SURVEY_VERSION_PUBLISHED must
+not change, nor may its questions: correcting the instrument means publishing a
+new version, which is what version_number and effective_from/effective_to are
+for. The row is NOT marked <<IMMUTABLE>> because while it is a draft it does
+mutate — hence row_version. The transition is what has to be guarded, and today
+that lives in the service.
+end note
+
+package "Physical Indexes" {
+entity "INDEXES · survey_templates" as idxset_survey_templates <<INDEX_SET>> {
+  PK pk_survey_templates : (id) UNIQUE BTREE
+  IX ix_survey_templates_owner : (owner_practitioner_id, created_at DESC) BTREE
+  IX ix_survey_templates_tenant_id : (tenant_id) BTREE
+}
+
+survey_templates .. idxset_survey_templates : indexed by
+
+entity "INDEXES · survey_versions" as idxset_survey_versions <<INDEX_SET>> {
+  PK pk_survey_versions : (id) UNIQUE BTREE
+  IX ix_survey_versions_template_number : (survey_template_id, version_number) BTREE
+}
+
+survey_versions .. idxset_survey_versions : indexed by
+
+entity "INDEXES · survey_questions" as idxset_survey_questions <<INDEX_SET>> {
+  PK pk_survey_questions : (id) UNIQUE BTREE
+  IX ix_survey_questions_version_position : (survey_version_id, position) BTREE
+}
+
+survey_questions .. idxset_survey_questions : indexed by
+
+entity "INDEXES · survey_assignments" as idxset_survey_assignments <<INDEX_SET>> {
+  PK pk_survey_assignments : (id) UNIQUE BTREE
+  IX ix_survey_assignments_tenant_target : (tenant_id, target_id, active) BTREE
+  IX ix_survey_assignments_version : (survey_version_id) BTREE
+}
+
+survey_assignments .. idxset_survey_assignments : indexed by
+
+entity "INDEXES · survey_invitations" as idxset_survey_invitations <<INDEX_SET>> {
+  PK pk_survey_invitations : (id) UNIQUE BTREE
+  IX ix_survey_invitations_patient_issued : (patient_profile_id, issued_at DESC) BTREE
+  IX ix_survey_invitations_booking : (appointment_booking_id) BTREE
+  IX ix_survey_invitations_version : (survey_version_id) BTREE
+  IX ix_survey_invitations_assignment : (survey_assignment_id) BTREE
+  IX ix_survey_invitations_tenant_id : (tenant_id) BTREE
+}
+
+survey_invitations .. idxset_survey_invitations : indexed by
+
+entity "INDEXES · survey_responses" as idxset_survey_responses <<INDEX_SET>> {
+  PK pk_survey_responses : (id) UNIQUE BTREE
+  IX ix_survey_responses_invitation : (survey_invitation_id) BTREE
+  IX ix_survey_responses_patient_submitted : (patient_profile_id, submitted_at DESC) BTREE
+  IX ix_survey_responses_version : (survey_version_id) BTREE
+  IX ix_survey_responses_tenant_id : (tenant_id) BTREE
+}
+
+survey_responses .. idxset_survey_responses : indexed by
+
+entity "INDEXES · survey_answers" as idxset_survey_answers <<INDEX_SET>> {
+  PK pk_survey_answers : (id) UNIQUE BTREE
+  IX ix_survey_answers_response : (survey_response_id) BTREE
+  IX ix_survey_answers_question : (survey_question_id) BTREE
+}
+
+survey_answers .. idxset_survey_answers : indexed by
+}
+
+@enduml

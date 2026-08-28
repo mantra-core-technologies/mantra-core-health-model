@@ -1,0 +1,616 @@
+@startuml SALUD_Module_48_automation
+title Module 48 — Automation and Multi-Agent Orchestration\n(schema: automation)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_48_automation.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_48_automation
+  BUSINESS PURPOSE
+  A governed layer that lets multiple AI agents (and deterministic bots) automate the
+  capture, enrichment, validation and routing of information records across the platform —
+  the "dynamic multi-agent automation layer" the clients asked for. Registers agents with
+  versioned definitions, the tools they may call, and the guardrails/policies that bound
+  them; orchestrates work through triggers -> workflows -> tasks -> agent runs -> steps,
+  with per-record automations, human-in-the-loop approvals, agent memory/knowledge and a
+  full append-only execution trail. Every automated write is attributable and auditable.
+end note
+
+entity agents {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * code : varchar <<UK>>
+  * name : varchar
+  * agent_type_concept_id : uuid <<FK>>
+    description : text
+    default_model_concept_id : uuid <<FK>>
+    system_service_component_id : uuid <<FK>>
+  * autonomy_level_concept_id : uuid <<FK>>
+    acts_as_user_id : uuid <<FK>>
+  * current_version : integer
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity agent_versions {
+  * id : uuid <<PK>>
+  --
+  * agent_id : uuid <<FK>>
+  * version : integer
+  * prompt_template : text
+    model_concept_id : uuid <<FK>>
+    model_params_json : jsonb
+    input_schema_json : jsonb
+    output_schema_json : jsonb
+    changelog : text
+  * status_concept_id : uuid <<FK>>
+    published_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity agent_tools {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * name : varchar
+  * tool_type_concept_id : uuid <<FK>>
+    target_resource : varchar
+    input_schema_json : jsonb
+    output_schema_json : jsonb
+    integration_endpoint_id : uuid <<FK>>
+    is_write : boolean
+    requires_approval : boolean
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity agent_tool_bindings {
+  * id : uuid <<PK>>
+  --
+  * agent_version_id : uuid <<FK>>
+  * agent_tool_id : uuid <<FK>>
+    scope_json : jsonb
+    max_calls_per_run : integer
+  * permission_effect_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity guardrail_policies {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * code : varchar <<UK>>
+  * name : varchar
+  * policy_type_concept_id : uuid <<FK>>
+    rule_json : jsonb
+    pii_phi_handling_concept_id : uuid <<FK>>
+    max_cost_amount : numeric
+  * enforcement_concept_id : uuid <<FK>>
+  * is_active : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity agent_guardrails {
+  * id : uuid <<PK>>
+  --
+  * agent_id : uuid <<FK>>
+  * guardrail_policy_id : uuid <<FK>>
+  * is_enabled : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity workflows {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * code : varchar <<UK>>
+  * name : varchar
+    description : text
+  * orchestration_type_concept_id : uuid <<FK>>
+    definition_json : jsonb
+  * current_version : integer
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity workflow_steps {
+  * id : uuid <<PK>>
+  --
+  * workflow_id : uuid <<FK>>
+  * step_code : varchar
+  * step_type_concept_id : uuid <<FK>>
+    agent_id : uuid <<FK>>
+    agent_tool_id : uuid <<FK>>
+    on_success_step_id : uuid <<FK>>
+    on_failure_step_id : uuid <<FK>>
+    config_json : jsonb
+    ordinal : integer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity automation_triggers {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * code : varchar <<UK>>
+  * name : varchar
+  * trigger_type_concept_id : uuid <<FK>>
+    event_type : varchar
+    target_resource_type : varchar
+    condition_json : jsonb
+    schedule_cron : varchar
+  * workflow_id : uuid <<FK>>
+    is_enabled : boolean
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+  ' + v4.0.1
+    campaign_schedule_id : uuid <<FK>>
+  * schedule_source_concept_id : uuid <<FK>>
+}
+entity record_automations {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * name : varchar
+  * target_resource_type : varchar
+  * automation_action_concept_id : uuid <<FK>>
+    field_mapping_json : jsonb
+    validation_json : jsonb
+    agent_id : uuid <<FK>>
+    workflow_id : uuid <<FK>>
+  * write_mode_concept_id : uuid <<FK>>
+    dedupe_key_expr : varchar
+  * is_active : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity workflow_runs {
+  * id : uuid <<PK>>
+  --
+  * workflow_id : uuid <<FK>>
+    trigger_id : uuid <<FK>>
+    tenant_id : uuid <<FK>>
+  * run_number : varchar <<UK>>
+  * trigger_source_concept_id : uuid <<FK>>
+    input_json : jsonb
+    context_ref_type : varchar
+    context_ref_id : uuid
+  * status_concept_id : uuid <<FK>>
+    started_at : timestamptz
+    finished_at : timestamptz
+    total_cost_amount : numeric
+    error_text : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity agent_runs {
+  * id : uuid <<PK>>
+  --
+    workflow_run_id : uuid <<FK>>
+  * agent_id : uuid <<FK>>
+  * agent_version_id : uuid <<FK>>
+  * task_type_concept_id : uuid <<FK>>
+    input_json : jsonb
+    output_json : jsonb
+  * status_concept_id : uuid <<FK>>
+    input_tokens : integer
+    output_tokens : integer
+    cost_amount : numeric
+    latency_ms : integer
+    started_at : timestamptz
+    finished_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity agent_run_steps <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * agent_run_id : uuid <<FK>>
+  * sequence_no : integer
+  * step_kind_concept_id : uuid <<FK>>
+    agent_tool_id : uuid <<FK>>
+    thought_text : text
+    tool_input_json : jsonb
+    tool_output_json : jsonb
+  * status_concept_id : uuid <<FK>>
+    error_text : text
+    occurred_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity automation_approvals {
+  * id : uuid <<PK>>
+  --
+  * agent_run_id : uuid <<FK>>
+    agent_run_step_id : uuid <<FK>>
+  * approval_type_concept_id : uuid <<FK>>
+    requested_action_json : jsonb
+    target_resource_type : varchar
+    target_ref_id : uuid
+  * status_concept_id : uuid <<FK>>
+    decided_by_user_id : uuid <<FK>>
+    decided_at : timestamptz
+    decision_note : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity agent_memory {
+  * id : uuid <<PK>>
+  --
+  * agent_id : uuid <<FK>>
+  * scope_concept_id : uuid <<FK>>
+    scope_ref_id : uuid
+  * memory_type_concept_id : uuid <<FK>>
+  * content_text : text
+    embedding_ref : varchar
+    importance : numeric
+    expires_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity knowledge_sources {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * name : varchar
+  * source_type_concept_id : uuid <<FK>>
+    uri : text
+    file_id : uuid <<FK>>
+    index_ref : varchar
+    last_indexed_at : timestamptz
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+agents ||--o{ agent_versions
+agent_versions ||--o{ agent_tool_bindings
+agent_tools ||--o{ agent_tool_bindings
+agents ||--o{ agent_guardrails
+guardrail_policies ||--o{ agent_guardrails
+workflows ||--o{ workflow_steps
+agents |o--o{ workflow_steps
+workflows ||--o{ automation_triggers
+workflows ||--o{ workflow_runs
+automation_triggers ||--o{ workflow_runs
+workflow_runs ||--o{ agent_runs
+agents ||--o{ agent_runs
+agent_versions ||--o{ agent_runs
+agent_runs ||--o{ agent_run_steps
+agent_runs ||--o{ automation_approvals
+agents ||--o{ agent_memory
+agents ||--o{ record_automations
+workflows |o--o{ record_automations
+
+note as DEP_diagram_48_automation
+  Connects to other modules via:
+  directory.tenants, iam.users (agents.acts_as_user_id — automated writes are attributable),
+  integrations.integration_endpoints (agent_tools), platform_ops.service_components,
+  common.files (knowledge_sources), messaging.domain_events (automation_triggers consume the
+  event bus; runs enqueue via module 35), authz.permissions (tool permission_effect),
+  terminology.catalog_concepts. record_automations write to ANY target schema under guardrails.
+end note
+
+note as REC_GOVERNANCE_diagram_48_automation
+  ATTRIBUTION & GOVERNANCE
+  Every automated write sets created_by_user_id/updated_by_user_id to agents.acts_as_user_id
+  (a dedicated service identity) and is journaled to audit with the agent_run_id as source.
+  Write-capable tools with requires_approval=true MUST pass through automation_approvals
+  (human-in-the-loop) before executing. guardrail_policies bound PII/PHI handling and cost.
+end note
+
+note as REC_DERIVED_diagram_48_automation
+  REC 3.3 — DERIVED
+  workflow_runs.total_cost_amount and agent_runs token/cost fields roll up from
+  agent_run_steps (append-only). agents.current_version / workflows.current_version track the
+  latest published version. agent_memory may expire (TTL).
+end note
+
+note as HARDENING_diagram_48_automation
+  REC 3.4 — HARDENING (enforce at DDL)
+  - agent_run_steps: append-only; PARTITION BY recorded_at; index (agent_run_id, sequence_no).
+  - agent_tool_bindings: UNIQUE(agent_version_id, agent_tool_id).
+  - automation_approvals: pending write actions block tool execution until status='approved'.
+  - record_automations: dedupe by dedupe_key_expr to avoid duplicate record creation.
+  - polymorphic (target_resource_type/context_ref_type/scope_ref_id,*_ref_id) -> value_set + trigger.
+end note
+
+note as VALUE_SETS_diagram_48_automation
+  VALUE SETS (bind *_concept_id; do not hardcode)
+  agent_type->vs_agent_type{llm,rule_based,rpa,hybrid,human_proxy};
+  autonomy_level->vs_autonomy{suggest_only,human_approval,supervised,autonomous};
+  tool_type->vs_agent_tool_type{db_read,db_write,http_call,search,notify,compute,handoff};
+  orchestration_type->vs_orchestration{sequential,parallel,dag,state_machine,router};
+  step_type/step_kind->vs_step_kind{agent_call,tool_call,condition,human_task,wait,transform};
+  trigger_type->vs_trigger_type{event,schedule,webhook,manual,record_change};
+  automation_action->vs_automation_action{create,update,enrich,validate,route,classify,summarize,extract};
+  write_mode->vs_write_mode{draft,direct,upsert};
+  approval_type->vs_approval_type{write,external_call,high_cost,phi_access};
+  memory_type->vs_memory_type{episodic,semantic,procedural,scratch};
+  scope->vs_memory_scope{global,tenant,workflow,entity};
+  policy_type->vs_guardrail_type{content,cost,rate_limit,phi,tool_allowlist};
+  enforcement->vs_enforcement{block,warn,log};
+  pii_phi_handling->vs_phi_handling{deny,mask,allow_with_consent};
+  source_type(knowledge)->vs_knowledge_source{document,url,table,vector_index};
+  status/state->vs_lifecycle_state.
+end note
+
+
+' ===== v4.0.1 (scheduled campaigns / site-admin / tracking) =====
+' ===== v4.0.1 (scheduled campaigns / site-admin / tracking) ===== (fin entidades)
+
+package "Physical Indexes" {
+entity "INDEXES · agents" as idxset_agents <<INDEX_SET>> {
+  PK pk_agents : (id) UNIQUE BTREE
+  UK uq_agents_code : (code) UNIQUE BTREE
+  IX ix_agents_tenant_id : (tenant_id) BTREE
+  IX ix_agents_agent_type_concept_id : (agent_type_concept_id) BTREE
+  IX ix_agents_default_model_concept_id : (default_model_concept_id) BTREE
+  IX ix_agents_system_service_component_id : (system_service_component_id) BTREE
+  IX ix_agents_autonomy_level_concept_id : (autonomy_level_concept_id) BTREE
+  IX ix_agents_acts_as_user_id : (acts_as_user_id) BTREE
+  IX ix_agents_state_concept_id : (state_concept_id) BTREE
+  IX ix_agents_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_agents_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_agents_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+}
+
+agents .. idxset_agents : indexed by
+
+entity "INDEXES · agent_versions" as idxset_agent_versions <<INDEX_SET>> {
+  PK pk_agent_versions : (id) UNIQUE BTREE
+  IX ix_agent_versions_agent_id : (agent_id) BTREE
+  IX ix_agent_versions_model_concept_id : (model_concept_id) BTREE
+  IX ix_agent_versions_status_concept_id : (status_concept_id) BTREE
+  IX ix_agent_versions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_agent_versions_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_agent_versions_agent_id_version : (agent_id, version) UNIQUE BTREE
+}
+
+agent_versions .. idxset_agent_versions : indexed by
+
+entity "INDEXES · agent_tools" as idxset_agent_tools <<INDEX_SET>> {
+  PK pk_agent_tools : (id) UNIQUE BTREE
+  UK uq_agent_tools_code : (code) UNIQUE BTREE
+  IX ix_agent_tools_tool_type_concept_id : (tool_type_concept_id) BTREE
+  IX ix_agent_tools_integration_endpoint_id : (integration_endpoint_id) BTREE
+  IX ix_agent_tools_state_concept_id : (state_concept_id) BTREE
+  IX ix_agent_tools_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_agent_tools_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+agent_tools .. idxset_agent_tools : indexed by
+
+entity "INDEXES · agent_tool_bindings" as idxset_agent_tool_bindings <<INDEX_SET>> {
+  PK pk_agent_tool_bindings : (id) UNIQUE BTREE
+  IX ix_agent_tool_bindings_agent_version_id : (agent_version_id) BTREE
+  IX ix_agent_tool_bindings_agent_tool_id : (agent_tool_id) BTREE
+  IX ix_agent_tool_bindings_permission_effect_concept_id : (permission_effect_concept_id) BTREE
+  IX ix_agent_tool_bindings_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_agent_tool_bindings_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+agent_tool_bindings .. idxset_agent_tool_bindings : indexed by
+
+entity "INDEXES · guardrail_policies" as idxset_guardrail_policies <<INDEX_SET>> {
+  PK pk_guardrail_policies : (id) UNIQUE BTREE
+  UK uq_guardrail_policies_code : (code) UNIQUE BTREE
+  IX ix_guardrail_policies_tenant_id : (tenant_id) BTREE
+  IX ix_guardrail_policies_policy_type_concept_id : (policy_type_concept_id) BTREE
+  IX ix_guardrail_policies_pii_phi_handling_concept_id : (pii_phi_handling_concept_id) BTREE
+  IX ix_guardrail_policies_enforcement_concept_id : (enforcement_concept_id) BTREE
+  IX ix_guardrail_policies_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_guardrail_policies_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_guardrail_policies_tenant_id_updated_at : (tenant_id, updated_at DESC) BTREE
+}
+
+guardrail_policies .. idxset_guardrail_policies : indexed by
+
+entity "INDEXES · agent_guardrails" as idxset_agent_guardrails <<INDEX_SET>> {
+  PK pk_agent_guardrails : (id) UNIQUE BTREE
+  IX ix_agent_guardrails_agent_id : (agent_id) BTREE
+  IX ix_agent_guardrails_guardrail_policy_id : (guardrail_policy_id) BTREE
+  IX ix_agent_guardrails_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_agent_guardrails_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+agent_guardrails .. idxset_agent_guardrails : indexed by
+
+entity "INDEXES · workflows" as idxset_workflows <<INDEX_SET>> {
+  PK pk_workflows : (id) UNIQUE BTREE
+  UK uq_workflows_code : (code) UNIQUE BTREE
+  IX ix_workflows_tenant_id : (tenant_id) BTREE
+  IX ix_workflows_orchestration_type_concept_id : (orchestration_type_concept_id) BTREE
+  IX ix_workflows_state_concept_id : (state_concept_id) BTREE
+  IX ix_workflows_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_workflows_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_workflows_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+}
+
+workflows .. idxset_workflows : indexed by
+
+entity "INDEXES · workflow_steps" as idxset_workflow_steps <<INDEX_SET>> {
+  PK pk_workflow_steps : (id) UNIQUE BTREE
+  IX ix_workflow_steps_workflow_id : (workflow_id) BTREE
+  IX ix_workflow_steps_step_type_concept_id : (step_type_concept_id) BTREE
+  IX ix_workflow_steps_agent_id : (agent_id) BTREE
+  IX ix_workflow_steps_agent_tool_id : (agent_tool_id) BTREE
+  IX ix_workflow_steps_on_success_step_id : (on_success_step_id) BTREE
+  IX ix_workflow_steps_on_failure_step_id : (on_failure_step_id) BTREE
+  IX ix_workflow_steps_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_workflow_steps_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+workflow_steps .. idxset_workflow_steps : indexed by
+
+entity "INDEXES · automation_triggers" as idxset_automation_triggers <<INDEX_SET>> {
+  PK pk_automation_triggers : (id) UNIQUE BTREE
+  UK uq_automation_triggers_code : (code) UNIQUE BTREE
+  IX ix_automation_triggers_tenant_id : (tenant_id) BTREE
+  IX ix_automation_triggers_trigger_type_concept_id : (trigger_type_concept_id) BTREE
+  IX ix_automation_triggers_workflow_id : (workflow_id) BTREE
+  IX ix_automation_triggers_state_concept_id : (state_concept_id) BTREE
+  IX ix_automation_triggers_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_automation_triggers_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_automation_triggers_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+}
+
+automation_triggers .. idxset_automation_triggers : indexed by
+
+entity "INDEXES · record_automations" as idxset_record_automations <<INDEX_SET>> {
+  PK pk_record_automations : (id) UNIQUE BTREE
+  IX ix_record_automations_tenant_id : (tenant_id) BTREE
+  IX ix_record_automations_automation_action_concept_id : (automation_action_concept_id) BTREE
+  IX ix_record_automations_agent_id : (agent_id) BTREE
+  IX ix_record_automations_workflow_id : (workflow_id) BTREE
+  IX ix_record_automations_write_mode_concept_id : (write_mode_concept_id) BTREE
+  IX ix_record_automations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_record_automations_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_record_automations_tenant_id_updated_at : (tenant_id, updated_at DESC) BTREE
+}
+
+record_automations .. idxset_record_automations : indexed by
+
+entity "INDEXES · workflow_runs" as idxset_workflow_runs <<INDEX_SET>> {
+  PK pk_workflow_runs : (id) UNIQUE BTREE
+  UK uq_workflow_runs_run_number : (run_number) UNIQUE BTREE
+  IX ix_workflow_runs_workflow_id : (workflow_id) BTREE
+  IX ix_workflow_runs_trigger_id : (trigger_id) BTREE
+  IX ix_workflow_runs_tenant_id : (tenant_id) BTREE
+  IX ix_workflow_runs_trigger_source_concept_id : (trigger_source_concept_id) BTREE
+  IX ix_workflow_runs_status_concept_id : (status_concept_id) BTREE
+  IX ix_workflow_runs_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_workflow_runs_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_workflow_runs_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+workflow_runs .. idxset_workflow_runs : indexed by
+
+entity "INDEXES · agent_runs" as idxset_agent_runs <<INDEX_SET>> {
+  PK pk_agent_runs : (id) UNIQUE BTREE
+  IX ix_agent_runs_workflow_run_id : (workflow_run_id) BTREE
+  IX ix_agent_runs_agent_id : (agent_id) BTREE
+  IX ix_agent_runs_agent_version_id : (agent_version_id) BTREE
+  IX ix_agent_runs_task_type_concept_id : (task_type_concept_id) BTREE
+  IX ix_agent_runs_status_concept_id : (status_concept_id) BTREE
+  IX ix_agent_runs_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_agent_runs_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+agent_runs .. idxset_agent_runs : indexed by
+
+entity "INDEXES · agent_run_steps" as idxset_agent_run_steps <<INDEX_SET>> {
+  PK pk_agent_run_steps : (id) UNIQUE BTREE
+  IX ix_agent_run_steps_agent_run_id : (agent_run_id) BTREE
+  IX ix_agent_run_steps_step_kind_concept_id : (step_kind_concept_id) BTREE
+  IX ix_agent_run_steps_agent_tool_id : (agent_tool_id) BTREE
+  IX ix_agent_run_steps_status_concept_id : (status_concept_id) BTREE
+  IX ix_agent_run_steps_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_agent_run_steps_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+agent_run_steps .. idxset_agent_run_steps : indexed by
+
+entity "INDEXES · automation_approvals" as idxset_automation_approvals <<INDEX_SET>> {
+  PK pk_automation_approvals : (id) UNIQUE BTREE
+  IX ix_automation_approvals_agent_run_id : (agent_run_id) BTREE
+  IX ix_automation_approvals_agent_run_step_id : (agent_run_step_id) BTREE
+  IX ix_automation_approvals_approval_type_concept_id : (approval_type_concept_id) BTREE
+  IX ix_automation_approvals_status_concept_id : (status_concept_id) BTREE
+  IX ix_automation_approvals_decided_by_user_id : (decided_by_user_id) BTREE
+  IX ix_automation_approvals_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_automation_approvals_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+automation_approvals .. idxset_automation_approvals : indexed by
+
+entity "INDEXES · agent_memory" as idxset_agent_memory <<INDEX_SET>> {
+  PK pk_agent_memory : (id) UNIQUE BTREE
+  IX ix_agent_memory_agent_id : (agent_id) BTREE
+  IX ix_agent_memory_scope_concept_id : (scope_concept_id) BTREE
+  IX ix_agent_memory_memory_type_concept_id : (memory_type_concept_id) BTREE
+  IX ix_agent_memory_status_concept_id : (status_concept_id) BTREE
+  IX ix_agent_memory_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_agent_memory_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+agent_memory .. idxset_agent_memory : indexed by
+
+entity "INDEXES · knowledge_sources" as idxset_knowledge_sources <<INDEX_SET>> {
+  PK pk_knowledge_sources : (id) UNIQUE BTREE
+  IX ix_knowledge_sources_tenant_id : (tenant_id) BTREE
+  IX ix_knowledge_sources_source_type_concept_id : (source_type_concept_id) BTREE
+  IX ix_knowledge_sources_file_id : (file_id) BTREE
+  IX ix_knowledge_sources_state_concept_id : (state_concept_id) BTREE
+  IX ix_knowledge_sources_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_knowledge_sources_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_knowledge_sources_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+}
+
+knowledge_sources .. idxset_knowledge_sources : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

@@ -1,0 +1,353 @@
+@startuml SALUD_Module_58_time_series
+title Module 58 — High-Volume Time Series and Event Analytics\n(time-series / columnar event store)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+note as BIZ_time_series
+  BUSINESS PURPOSE
+  Stores high-frequency readings and operational events that would overload transactional tables.
+  Only validated and clinically meaningful summaries are promoted into PostgreSQL clinical.observations.
+end note
+
+entity "directory.tenants" as directory_tenants <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "profiles.patient_profiles" as profiles_patient_profiles <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "diagnostics.medical_devices" as diagnostics_medical_devices <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "platform_ops.services" as platform_ops_services <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity device_raw_reading_series <<TIMESERIES_MEASUREMENT>> {
+  * time : timestamptz <<TIME_KEY>>
+  * tenant_id : uuid <<PARTITION_KEY>>
+  * series_id : varchar <<SERIES_KEY>>
+  * ingestion_id : uuid
+  * source_version : varchar
+  * quality_state : varchar
+  * device_id : uuid
+    patient_profile_id : uuid
+  * channel_code : varchar
+  * raw_value : jsonb
+    numeric_value : double
+    unit_code : varchar
+    device_sequence : bigint
+    observed_at_device : timestamptz
+  * received_at : timestamptz
+}
+
+entity normalized_vital_series <<TIMESERIES_MEASUREMENT>> {
+  * time : timestamptz <<TIME_KEY>>
+  * tenant_id : uuid <<PARTITION_KEY>>
+  * series_id : varchar <<SERIES_KEY>>
+  * ingestion_id : uuid
+  * source_version : varchar
+  * quality_state : varchar
+  * patient_profile_id : uuid
+  * observation_code : varchar
+  * numeric_value : double
+  * unit_code : varchar
+    device_id : uuid
+    encounter_id : uuid
+  * validation_state : varchar
+    clinically_promoted_observation_id : uuid
+}
+
+entity telemetry_event_series <<TIMESERIES_MEASUREMENT>> {
+  * time : timestamptz <<TIME_KEY>>
+  * tenant_id : uuid <<PARTITION_KEY>>
+  * series_id : varchar <<SERIES_KEY>>
+  * ingestion_id : uuid
+  * source_version : varchar
+  * quality_state : varchar
+  * user_id : uuid
+  * event_code : varchar
+  * session_id : uuid
+  * application_code : varchar
+  * duration_ms : integer
+    properties : jsonb
+}
+
+entity location_ping_series <<TIMESERIES_MEASUREMENT>> {
+  * time : timestamptz <<TIME_KEY>>
+  * tenant_id : uuid <<PARTITION_KEY>>
+  * series_id : varchar <<SERIES_KEY>>
+  * ingestion_id : uuid
+  * source_version : varchar
+  * quality_state : varchar
+  * subject_type : varchar
+  * subject_id : uuid
+  * latitude : double
+  * longitude : double
+    altitude_m : double
+    accuracy_m : double
+    speed_mps : double
+    geohash : varchar
+}
+
+entity application_tracking_series <<TIMESERIES_MEASUREMENT>> {
+  * time : timestamptz <<TIME_KEY>>
+  * tenant_id : uuid <<PARTITION_KEY>>
+  * series_id : varchar <<SERIES_KEY>>
+  * ingestion_id : uuid
+  * source_version : varchar
+  * quality_state : varchar
+  * application_code : varchar
+  * user_id : uuid
+  * event_name : varchar
+    screen_code : varchar
+    campaign_id : uuid
+    properties : jsonb
+}
+
+entity ads_delivery_event_series <<TIMESERIES_MEASUREMENT>> {
+  * time : timestamptz <<TIME_KEY>>
+  * tenant_id : uuid <<PARTITION_KEY>>
+  * series_id : varchar <<SERIES_KEY>>
+  * ingestion_id : uuid
+  * source_version : varchar
+  * quality_state : varchar
+  * ad_account_id : uuid
+  * campaign_id : uuid
+    ad_set_id : uuid
+    ad_id : uuid
+  * event_name : varchar
+  * event_id : varchar
+    value : double
+    currency_code : char(3)
+    dimensions : jsonb
+}
+
+entity ai_runtime_metric_series <<TIMESERIES_MEASUREMENT>> {
+  * time : timestamptz <<TIME_KEY>>
+  * tenant_id : uuid <<PARTITION_KEY>>
+  * series_id : varchar <<SERIES_KEY>>
+  * ingestion_id : uuid
+  * source_version : varchar
+  * quality_state : varchar
+  * agent_id : uuid
+  * execution_id : uuid
+  * model_provider : varchar
+  * model_id : varchar
+  * metric_code : varchar
+  * metric_value : double
+    dimensions : jsonb
+}
+
+entity payment_gateway_metric_series <<TIMESERIES_MEASUREMENT>> {
+  * time : timestamptz <<TIME_KEY>>
+  * tenant_id : uuid <<PARTITION_KEY>>
+  * series_id : varchar <<SERIES_KEY>>
+  * ingestion_id : uuid
+  * source_version : varchar
+  * quality_state : varchar
+  * gateway_id : uuid
+  * operation_code : varchar
+  * metric_code : varchar
+  * metric_value : double
+    payment_transaction_id : uuid
+    dimensions : jsonb
+}
+
+entity lab_analyzer_event_series <<TIMESERIES_MEASUREMENT>> {
+  * time : timestamptz <<TIME_KEY>>
+  * tenant_id : uuid <<PARTITION_KEY>>
+  * series_id : varchar <<SERIES_KEY>>
+  * ingestion_id : uuid
+  * source_version : varchar
+  * quality_state : varchar
+  * analyzer_id : uuid
+  * accession_id : uuid
+  * event_code : varchar
+    test_code : varchar
+    numeric_value : double
+    unit_code : varchar
+    details : jsonb
+}
+
+entity ingestion_pipeline_metric_series <<TIMESERIES_MEASUREMENT>> {
+  * time : timestamptz <<TIME_KEY>>
+  * tenant_id : uuid <<PARTITION_KEY>>
+  * series_id : varchar <<SERIES_KEY>>
+  * ingestion_id : uuid
+  * source_version : varchar
+  * quality_state : varchar
+  * pipeline_code : varchar
+  * batch_id : uuid
+  * stage_code : varchar
+  * metric_code : varchar
+  * metric_value : double
+    details : jsonb
+}
+
+entity service_sli_series <<TIMESERIES_MEASUREMENT>> {
+  * time : timestamptz <<TIME_KEY>>
+  * tenant_id : uuid <<PARTITION_KEY>>
+  * series_id : varchar <<SERIES_KEY>>
+  * ingestion_id : uuid
+  * source_version : varchar
+  * quality_state : varchar
+  * service_id : uuid
+  * sli_code : varchar
+  * numerator : double
+  * denominator : double
+  * value : double
+    region_code : varchar
+    dimensions : jsonb
+}
+
+entity audit_access_metric_series <<TIMESERIES_MEASUREMENT>> {
+  * time : timestamptz <<TIME_KEY>>
+  * tenant_id : uuid <<PARTITION_KEY>>
+  * series_id : varchar <<SERIES_KEY>>
+  * ingestion_id : uuid
+  * source_version : varchar
+  * quality_state : varchar
+  * actor_type : varchar
+  * actor_id : uuid
+  * action_code : varchar
+  * target_type : varchar
+  * outcome : varchar
+  * count : bigint
+    dimensions : jsonb
+}
+
+
+directory_tenants -- device_raw_reading_series : partitions
+profiles_patient_profiles -- normalized_vital_series : subject
+diagnostics_medical_devices -- device_raw_reading_series : emits
+device_raw_reading_series -- normalized_vital_series : normalizes to
+platform_ops_services -- service_sli_series : measured by
+
+package "Physical Indexes and Access Patterns" {
+entity "INDEXES · device_raw_reading_series" as idxset_device_raw_reading_series <<INDEX_SET>> {
+  PARTITION hypertable_device_raw : time chunk=1 day, space=tenant_id/device_id
+  ORDER order_device_raw : tenant_id, device_id, channel_code, time DESC
+  UK uq_device_sequence : tenant_id, device_id, channel_code, device_sequence
+  BRIN brin_device_time : time
+  RETENTION retain_device_raw : policy by tenant and program
+  COMPRESSION compress_device_raw : segment by tenant_id,device_id,channel_code order by time
+}
+
+device_raw_reading_series .. idxset_device_raw_reading_series : indexed by
+
+entity "INDEXES · normalized_vital_series" as idxset_normalized_vital_series <<INDEX_SET>> {
+  PARTITION hypertable_vitals : time chunk=7 days, space=tenant_id/patient_profile_id
+  ORDER order_vitals_patient_code : tenant_id, patient_profile_id, observation_code, time DESC
+  IX ix_vitals_promoted : clinically_promoted_observation_id PARTIAL not null
+  COMPRESSION compress_vitals : segment by tenant_id,patient_profile_id,observation_code
+}
+
+normalized_vital_series .. idxset_normalized_vital_series : indexed by
+
+entity "INDEXES · telemetry_event_series" as idxset_telemetry_event_series <<INDEX_SET>> {
+  PARTITION partition_telemetry : event day + tenant hash
+  ORDER order_telemetry_user : tenant_id, user_id, time DESC
+  SKIP bloom_telemetry_event : event_code
+  RETENTION retain_telemetry : privacy policy
+}
+
+telemetry_event_series .. idxset_telemetry_event_series : indexed by
+
+entity "INDEXES · location_ping_series" as idxset_location_ping_series <<INDEX_SET>> {
+  PARTITION partition_location : event day + tenant/subject hash
+  ORDER order_location_subject : tenant_id, subject_id, time DESC
+  GEO geohash_location : geohash prefix
+  RETENTION retain_location : short, consent-governed
+}
+
+location_ping_series .. idxset_location_ping_series : indexed by
+
+entity "INDEXES · application_tracking_series" as idxset_application_tracking_series <<INDEX_SET>> {
+  PARTITION partition_tracking : event day + tenant hash
+  ORDER order_tracking_app_event : tenant_id, application_code, event_name, time DESC
+  SKIP bloom_tracking_user : user_id
+  RETENTION retain_tracking : analytics policy
+}
+
+application_tracking_series .. idxset_application_tracking_series : indexed by
+
+entity "INDEXES · ads_delivery_event_series" as idxset_ads_delivery_event_series <<INDEX_SET>> {
+  PARTITION partition_ads_event : metric day + ad_account hash
+  ORDER order_ads_campaign_event : tenant_id, campaign_id, event_name, time DESC
+  UK uq_ads_event : tenant_id, ad_account_id, event_id, event_name
+  RETENTION retain_ads_event : campaign attribution window
+}
+
+ads_delivery_event_series .. idxset_ads_delivery_event_series : indexed by
+
+entity "INDEXES · ai_runtime_metric_series" as idxset_ai_runtime_metric_series <<INDEX_SET>> {
+  PARTITION partition_ai_metric : event day + tenant/agent hash
+  ORDER order_ai_agent_metric : tenant_id, agent_id, metric_code, time DESC
+  SKIP bloom_ai_model : model_provider, model_id
+  RETENTION retain_ai_metric : observability policy
+}
+
+ai_runtime_metric_series .. idxset_ai_runtime_metric_series : indexed by
+
+entity "INDEXES · payment_gateway_metric_series" as idxset_payment_gateway_metric_series <<INDEX_SET>> {
+  PARTITION partition_payment_metric : event day + gateway hash
+  ORDER order_payment_gateway_metric : tenant_id, gateway_id, metric_code, time DESC
+  SKIP bloom_payment_tx : payment_transaction_id
+  RETENTION retain_payment_metric : operational policy
+}
+
+payment_gateway_metric_series .. idxset_payment_gateway_metric_series : indexed by
+
+entity "INDEXES · lab_analyzer_event_series" as idxset_lab_analyzer_event_series <<INDEX_SET>> {
+  PARTITION partition_lab_event : event day + analyzer hash
+  ORDER order_lab_accession : tenant_id, accession_id, time DESC
+  SKIP bloom_lab_event : event_code, test_code
+  RETENTION retain_lab_event : laboratory quality policy
+}
+
+lab_analyzer_event_series .. idxset_lab_analyzer_event_series : indexed by
+
+entity "INDEXES · ingestion_pipeline_metric_series" as idxset_ingestion_pipeline_metric_series <<INDEX_SET>> {
+  PARTITION partition_ingestion_metric : event day + pipeline hash
+  ORDER order_ingestion_batch_stage : tenant_id, batch_id, stage_code, time DESC
+  SKIP bloom_ingestion_metric : metric_code
+}
+
+ingestion_pipeline_metric_series .. idxset_ingestion_pipeline_metric_series : indexed by
+
+entity "INDEXES · service_sli_series" as idxset_service_sli_series <<INDEX_SET>> {
+  PARTITION partition_sli : event day + service hash
+  ORDER order_sli_service_code : service_id, sli_code, time DESC
+  ROLLUP continuous_sli_hourly : 1 hour aggregate
+  ROLLUP continuous_sli_daily : 1 day aggregate
+  RETENTION retain_sli_raw : raw short, aggregates long
+}
+
+service_sli_series .. idxset_service_sli_series : indexed by
+
+entity "INDEXES · audit_access_metric_series" as idxset_audit_access_metric_series <<INDEX_SET>> {
+  PARTITION partition_audit_metric : event day + tenant hash
+  ORDER order_audit_metric : tenant_id, target_type, action_code, time DESC
+  ROLLUP continuous_audit_daily : daily counts
+  POLICY no_raw_audit_replacement : metrics do not replace audit events
+}
+
+audit_access_metric_series .. idxset_audit_access_metric_series : indexed by
+
+}
+
+
+note as INDEX_POLICY_time_series
+  INDEX AND ACCESS-PATTERN POLICY
+  - Partitioning always includes time and a bounded tenant or subject dimension.
+  - Retention, compression and rollups are explicit per dataset.
+  - Raw device data remains distinguishable from normalized and clinically promoted observations.
+  - Event stores are append-only; corrections are represented as new events or governed backfills.
+end note
+
+@enduml

@@ -1,0 +1,1961 @@
+@startuml SALUD_Module_42_payments
+title Module 42 — Payment Gateways, Transactions, Refunds and Payouts\n(schema: payments)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_42_payments.puml
+' ------------------------------------------------------------------------------
+
+entity "erp.business_partners" as erp_business_partners <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "erp.contracts" as erp_contracts <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "accounting.company_bank_accounts" as accounting_company_bank_accounts <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "accounting.clearing_documents" as accounting_clearing_documents <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+
+note as BIZ_diagram_42_payments
+  BUSINESS PURPOSE
+  A provider-agnostic payment layer supporting multiple gateways (card, wallet, bank
+  transfer, local rails). Tokenized payment methods (never raw PAN), payment intents
+  tied to invoices/bookings/ad spend, gateway transactions with authorize/capture,
+  refunds, disputes/chargebacks, scheduled payouts to practitioners (CU-18), gateway
+  settlements and signed webhook events. Posts to the general ledger (module 16) and
+  reconciles against billing (module 17) — money never lives only in the gateway.
+end note
+
+entity invoices <<external>> {
+  .. defined in module 17 billing ..
+  * id : uuid <<PK>>
+}
+entity journal_transactions <<external>> {
+  .. defined in module 16 accounting ..
+  * id : uuid <<PK>>
+}
+
+entity payment_gateways {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * name : varchar
+  * gateway_type_concept_id : uuid <<FK>>
+    capabilities_json : jsonb
+    supported_currencies_json : jsonb
+    external_provider_id : uuid <<FK>>
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity gateway_connections {
+  * id : uuid <<PK>>
+  --
+  * gateway_id : uuid <<FK>>
+  * tenant_id : uuid <<FK>>
+    practice_id : uuid <<FK>>
+  * environment_concept_id : uuid <<FK>>
+    merchant_ref : varchar
+    credential_id : uuid <<FK>>
+    config_json : jsonb
+    webhook_secret_ref : varchar
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity payment_methods {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * owner_type_concept_id : uuid <<FK>>
+  * owner_ref_id : uuid
+  * gateway_id : uuid <<FK>>
+  * method_type_concept_id : uuid <<FK>>
+  * gateway_token : varchar
+    brand : varchar
+    last_four : varchar
+    expiry_month : integer
+    expiry_year : integer
+    holder_name : varchar
+    is_default : boolean
+    billing_address_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity payment_intents {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+    practice_id : uuid <<FK>>
+  * gateway_id : uuid <<FK>>
+    gateway_connection_id : uuid <<FK>>
+    payment_method_id : uuid <<FK>>
+  * purpose_concept_id : uuid <<FK>>
+    invoice_id : uuid <<FK>>
+    source_ref_type : varchar
+    source_ref_id : uuid
+  * amount : numeric
+  * currency_concept_id : uuid <<FK>>
+  * idempotency_key : varchar <<UK>>
+    gateway_intent_ref : varchar
+  * status_concept_id : uuid <<FK>>
+    client_secret_ref : varchar
+    expires_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity payment_transactions {
+  * id : uuid <<PK>>
+  --
+  * payment_intent_id : uuid <<FK>>
+  * gateway_id : uuid <<FK>>
+  * transaction_type_concept_id : uuid <<FK>>
+    gateway_transaction_ref : varchar <<UK>>
+  * amount : numeric
+  * currency_concept_id : uuid <<FK>>
+    fee_amount : numeric
+    net_amount : numeric
+    payer_business_partner_id : uuid <<FK>>
+    payee_business_partner_id : uuid <<FK>>
+    contract_id : uuid <<FK>>
+    company_bank_account_id : uuid <<FK>>
+    clearing_document_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    authorization_code : varchar
+    processed_at : timestamptz
+    failure_reason_concept_id : uuid <<FK>>
+    journal_transaction_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity refunds {
+  * id : uuid <<PK>>
+  --
+  * payment_transaction_id : uuid <<FK>>
+  * amount : numeric
+  * currency_concept_id : uuid <<FK>>
+  * reason_concept_id : uuid <<FK>>
+    gateway_refund_ref : varchar
+  * status_concept_id : uuid <<FK>>
+    processed_at : timestamptz
+    journal_transaction_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity payment_disputes {
+  * id : uuid <<PK>>
+  --
+  * payment_transaction_id : uuid <<FK>>
+  * dispute_type_concept_id : uuid <<FK>>
+  * reason_concept_id : uuid <<FK>>
+  * amount : numeric
+    currency_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    evidence_file_id : uuid <<FK>>
+    gateway_dispute_ref : varchar
+    due_by : timestamptz
+    resolved_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity payouts {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+    practice_id : uuid <<FK>>
+  * payee_type_concept_id : uuid <<FK>>
+  * payee_ref_id : uuid
+  * gateway_id : uuid <<FK>>
+  * amount : numeric
+  * currency_concept_id : uuid <<FK>>
+  * period_start : date
+  * period_end : date
+  * status_concept_id : uuid <<FK>>
+    scheduled_at : timestamptz
+    executed_at : timestamptz
+    destination_ref : varchar
+    gateway_payout_ref : varchar
+    journal_transaction_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity payout_items {
+  * id : uuid <<PK>>
+  --
+  * payout_id : uuid <<FK>>
+  * source_type_concept_id : uuid <<FK>>
+  * source_ref_id : uuid
+  * amount : numeric
+    commission_amount : numeric
+    description : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity gateway_settlements {
+  * id : uuid <<PK>>
+  --
+  * gateway_id : uuid <<FK>>
+  * settlement_ref : varchar <<UK>>
+  * gross_amount : numeric
+  * fee_amount : numeric
+  * net_amount : numeric
+  * currency_concept_id : uuid <<FK>>
+    settled_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+    journal_transaction_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity settlement_lines {
+  * id : uuid <<PK>>
+  --
+  * settlement_id : uuid <<FK>>
+    payment_transaction_id : uuid <<FK>>
+    refund_id : uuid <<FK>>
+  * amount : numeric
+    fee_amount : numeric
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity payment_webhook_events <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * gateway_id : uuid <<FK>>
+    gateway_connection_id : uuid <<FK>>
+  * event_type : varchar
+    gateway_event_ref : varchar <<UK>>
+  * payload_json : jsonb
+    signature : varchar
+    is_verified : boolean
+    processed : boolean
+    related_intent_id : uuid <<FK>>
+    received_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+payment_gateways ||--o{ gateway_connections
+payment_gateways ||--o{ payment_methods
+payment_gateways ||--o{ payment_intents
+gateway_connections |o--o{ payment_intents
+payment_methods |o--o{ payment_intents
+invoices |o--o{ payment_intents
+payment_intents ||--o{ payment_transactions
+payment_transactions ||--o{ refunds
+payment_transactions ||--o{ payment_disputes
+payment_gateways ||--o{ payouts
+payouts ||--o{ payout_items
+payment_gateways ||--o{ gateway_settlements
+gateway_settlements ||--o{ settlement_lines
+payment_transactions |o--o{ settlement_lines
+payment_gateways ||--o{ payment_webhook_events
+
+note as DEP_diagram_42_payments
+  Connects to other modules via:
+  billing.invoices (payment_intents.invoice_id), accounting.journal_transactions
+  (ledger posting), directory.tenants, practice.practices, common.addresses,
+  common.files (dispute evidence), integrations.external_providers,
+  scheduling.booking_cancellations (no-show fees), ads.ad_accounts (ad spend funding),
+  terminology.catalog_concepts.
+end note
+
+note as REC_PAYMENTS_diagram_42_payments
+  MONEY INTEGRITY
+  Never store raw card data — only gateway_token (PCI scope minimized). Every
+  successful transaction/refund/payout/settlement posts to accounting via
+  journal_transaction_id (double-entry) and reconciles to billing. idempotency_key on
+  payment_intents prevents double charges; payment_webhook_events is append-only and
+  verified by signature before processing. (owner_type,owner_ref_id) /
+  (source_type,source_ref_id) / (payee_type,payee_ref_id) are polymorphic — constrain
+  via value_set.
+end note
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_42b_payments_advanced.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_42b_payments_advanced
+  BUSINESS PURPOSE
+  Turns the base gateway layer (module 42) into a marketplace-grade money platform of
+  the kind a Delivery-Hero-style operator expects. Adds ledgered wallets and balances,
+  multi-party split payments and connected-account payouts, subscriptions/plans and
+  installment schedules, direct-debit/card mandates, tips and dynamic fee breakdowns,
+  FX rate locks, risk/fraud scoring and 3-D Secure, KYC/onboarding for payees, and a
+  full reconciliation engine (gateway vs ledger vs bank). Every movement double-posts
+  to accounting (module 16); the wallet ledger is append-only truth for balances.
+end note
+
+
+
+
+
+entity wallets {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * owner_type_concept_id : uuid <<FK>>
+  * owner_ref_id : uuid
+  * wallet_type_concept_id : uuid <<FK>>
+  * currency_concept_id : uuid <<FK>>
+    available_balance : numeric
+    pending_balance : numeric
+    reserved_balance : numeric
+    ledger_account_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity wallet_ledger_entries <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * wallet_id : uuid <<FK>>
+  * direction_concept_id : uuid <<FK>>
+  * amount : numeric
+  * currency_concept_id : uuid <<FK>>
+  * entry_type_concept_id : uuid <<FK>>
+    balance_after : numeric
+    source_type : varchar
+    source_ref_id : uuid
+    payment_transaction_id : uuid <<FK>>
+    journal_transaction_id : uuid <<FK>>
+  * idempotency_key : varchar <<UK>>
+    occurred_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity connected_accounts {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * gateway_id : uuid <<FK>>
+  * payee_type_concept_id : uuid <<FK>>
+  * payee_ref_id : uuid
+  * external_account_ref : varchar
+    business_partner_id : uuid <<FK>>
+    company_bank_account_id : uuid <<FK>>
+  * onboarding_status_concept_id : uuid <<FK>>
+    capabilities_json : jsonb
+    default_wallet_id : uuid <<FK>>
+    payout_schedule_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity kyc_verifications {
+  * id : uuid <<PK>>
+  --
+  * connected_account_id : uuid <<FK>>
+  * kyc_level_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    provider_ref : varchar
+    risk_rating_concept_id : uuid <<FK>>
+    verified_at : timestamptz
+    expires_at : timestamptz
+    evidence_file_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity payment_splits {
+  * id : uuid <<PK>>
+  --
+  * payment_intent_id : uuid <<FK>>
+  * payee_connected_account_id : uuid <<FK>>
+  * split_type_concept_id : uuid <<FK>>
+    amount : numeric
+    percentage : numeric
+    currency_concept_id : uuid <<FK>>
+  * is_platform_fee : boolean
+    destination_wallet_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity fee_schedules {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * code : varchar <<UK>>
+  * name : varchar
+  * fee_type_concept_id : uuid <<FK>>
+  * calculation_method_concept_id : uuid <<FK>>
+    percentage : numeric
+    fixed_amount : numeric
+    currency_concept_id : uuid <<FK>>
+    min_amount : numeric
+    max_amount : numeric
+    applies_to_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity transaction_fees {
+  * id : uuid <<PK>>
+  --
+  * payment_transaction_id : uuid <<FK>>
+    fee_schedule_id : uuid <<FK>>
+  * fee_type_concept_id : uuid <<FK>>
+  * amount : numeric
+  * currency_concept_id : uuid <<FK>>
+    bearer_type_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity tips {
+  * id : uuid <<PK>>
+  --
+  * payment_intent_id : uuid <<FK>>
+  * beneficiary_type_concept_id : uuid <<FK>>
+  * beneficiary_ref_id : uuid
+  * amount : numeric
+  * currency_concept_id : uuid <<FK>>
+    destination_wallet_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity subscription_plans {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+    practice_id : uuid <<FK>>
+  * code : varchar <<UK>>
+  * name : varchar
+  ' + v4.0.5
+  * tier_concept_id : uuid <<FK>>
+    is_default : boolean
+    is_public : boolean
+  * billing_interval_concept_id : uuid <<FK>>
+    interval_count : integer
+  * amount : numeric
+  * currency_concept_id : uuid <<FK>>
+    trial_days : integer
+    setup_fee : numeric
+    usage_type_concept_id : uuid <<FK>>
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity subscriptions {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * plan_id : uuid <<FK>>
+  * subscriber_type_concept_id : uuid <<FK>>
+  * subscriber_ref_id : uuid
+    payment_method_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    current_period_start : timestamptz
+    current_period_end : timestamptz
+    trial_end_at : timestamptz
+    cancel_at : timestamptz
+    canceled_at : timestamptz
+    mandate_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity installment_plans {
+  * id : uuid <<PK>>
+  --
+  * payment_intent_id : uuid <<FK>>
+  * number_of_installments : integer
+  * total_amount : numeric
+  * currency_concept_id : uuid <<FK>>
+    interest_rate : numeric
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity installment_schedules {
+  * id : uuid <<PK>>
+  --
+  * installment_plan_id : uuid <<FK>>
+  * sequence_no : integer
+  * due_date : date
+  * amount : numeric
+    paid_amount : numeric
+    payment_transaction_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity payment_mandates {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * payer_type_concept_id : uuid <<FK>>
+  * payer_ref_id : uuid
+  * mandate_type_concept_id : uuid <<FK>>
+    payment_method_id : uuid <<FK>>
+  * mandate_ref : varchar <<UK>>
+    scheme_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    signed_at : timestamptz
+    revoked_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity fx_rate_locks {
+  * id : uuid <<PK>>
+  --
+  * payment_intent_id : uuid <<FK>>
+  * from_currency_concept_id : uuid <<FK>>
+  * to_currency_concept_id : uuid <<FK>>
+  * locked_rate : numeric
+    provider_ref : varchar
+    locked_at : timestamptz
+    expires_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity risk_assessments {
+  * id : uuid <<PK>>
+  --
+  * payment_intent_id : uuid <<FK>>
+  * risk_score : numeric
+  * risk_level_concept_id : uuid <<FK>>
+  * decision_concept_id : uuid <<FK>>
+    provider_ref : varchar
+    signals_json : jsonb
+    three_ds_status_concept_id : uuid <<FK>>
+    reviewed_by_user_id : uuid <<FK>>
+    assessed_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity reconciliation_runs {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * gateway_id : uuid <<FK>>
+  * period_start : date
+  * period_end : date
+  * status_concept_id : uuid <<FK>>
+    total_gateway : numeric
+    total_ledger : numeric
+    total_bank : numeric
+    matched_count : integer
+    unmatched_count : integer
+    started_at : timestamptz
+    finished_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity reconciliation_exceptions {
+  * id : uuid <<PK>>
+  --
+  * reconciliation_run_id : uuid <<FK>>
+  * exception_type_concept_id : uuid <<FK>>
+    payment_transaction_id : uuid <<FK>>
+    wallet_ledger_entry_id : uuid <<FK>>
+    external_ref : varchar
+    amount_difference : numeric
+  * status_concept_id : uuid <<FK>>
+    resolution_text : text
+    resolved_by_user_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+wallets ||--o{ wallet_ledger_entries
+connected_accounts ||--o{ kyc_verifications
+connected_accounts ||--o{ payment_splits
+payment_intents ||--o{ payment_splits
+fee_schedules ||--o{ transaction_fees
+payment_transactions ||--o{ transaction_fees
+payment_intents ||--o{ tips
+subscription_plans ||--o{ subscriptions
+subscriptions ||--o{ installment_plans
+payment_intents ||--o{ installment_plans
+installment_plans ||--o{ installment_schedules
+payment_mandates |o--o{ subscriptions
+payment_intents ||--o{ fx_rate_locks
+payment_intents ||--o{ risk_assessments
+reconciliation_runs ||--o{ reconciliation_exceptions
+wallets |o--o{ connected_accounts
+
+note as PAYOUTS_LINK_diagram_42b_payments_advanced
+  connected_accounts.default_wallet_id and payment_splits.destination_wallet_id feed
+  payouts (module 42): each executed payout draws down a payout-type wallet and posts a
+  matching wallet_ledger_entry. No hard FK is drawn cross-diagram (module 42 owns payouts).
+end note
+
+note as DEP_diagram_42b_payments_advanced
+  Connects to other modules via:
+  payments (module 42) anchors, accounting.journal_transactions & accounts (wallet ledger
+  posting), billing.invoices, directory.tenants, practice.practices, common.files,
+  terminology.catalog_concepts. Marketplace payees resolve to practice/pharmacy/diagnostic
+  organizations via (payee_type, payee_ref_id).
+end note
+
+note as REC_DERIVED_diagram_42b_payments_advanced
+  REC 3.3 — DERIVED BALANCES
+  wallets.available_balance/pending_balance/reserved_balance are DERIVED projections of
+  the append-only wallet_ledger_entries (source of truth); maintain by trigger with
+  balance_after and reconcile. installment_schedules.paid_amount and reconciliation totals
+  are derived. Every wallet movement double-posts to accounting via journal_transaction_id.
+end note
+
+note as HARDENING_diagram_42b_payments_advanced
+  REC 3.4 — HARDENING (enforce at DDL)
+  - wallet_ledger_entries: append-only; UNIQUE(idempotency_key); PARTITION BY recorded_at;
+    index (wallet_id, recorded_at DESC); CHECK amount > 0.
+  - wallets: UNIQUE(owner_type_concept_id, owner_ref_id, currency_concept_id, wallet_type_concept_id);
+    CHECK balances >= 0 unless overdraft wallet_type.
+  - payment_splits: CHECK SUM(amount) per payment_intent <= captured amount (trigger).
+  - subscriptions: partial UNIQUE(subscriber_type, subscriber_ref_id, plan_id) WHERE status='active'.
+  - installment_schedules: UNIQUE(installment_plan_id, sequence_no); CHECK paid_amount <= amount.
+  - payment_mandates: UNIQUE(mandate_ref); risk_assessments: CHECK risk_score BETWEEN 0 AND 1000.
+end note
+
+note as VALUE_SETS_diagram_42b_payments_advanced
+  VALUE SETS (bind *_concept_id; do not hardcode)
+  owner_type->vs_wallet_owner{patient,practitioner,practice,pharmacy,diagnostic_unit,tenant,platform};
+  wallet_type->vs_wallet_type{cash,credit,escrow,rewards,payout,overdraft};
+  entry_type->vs_wallet_entry_type{topup,charge,refund,payout,fee,split_in,split_out,adjustment,hold,release,tip};
+  direction->vs_direction{debit,credit};
+  split_type->vs_split_type{fixed,percentage,remainder,platform_fee};
+  payee_type->vs_payee_type{practitioner,practice,pharmacy,diagnostic_unit,partner,vendor};
+  fee_type->vs_fee_type{processing,platform,interchange,payout,fx,chargeback,late};
+  calculation_method->vs_fee_calc{percentage,fixed,tiered,blended};
+  billing_interval->vs_billing_interval{day,week,month,quarter,year};
+  usage_type->vs_subscription_usage{licensed,metered,per_seat};
+  mandate_type->vs_mandate_type{sepa_debit,card_on_file,ach,recurring};
+  scheme->vs_mandate_scheme{sepa_core,sepa_b2b,ach,local};
+  three_ds_status->vs_3ds_status{not_required,challenge,authenticated,failed};
+  risk_level->vs_risk_level{low,medium,high,blocked};
+  decision->vs_risk_decision{approve,review,decline,challenge};
+  kyc_level->vs_kyc_level{none,basic,full,enhanced};
+  onboarding_status->vs_onboarding_status{pending,restricted,active,rejected};
+  payout_schedule->vs_payout_schedule{manual,daily,weekly,monthly};
+  exception_type->vs_recon_exception{missing_in_ledger,missing_in_gateway,amount_mismatch,duplicate,timing};
+  status->vs_generic_status; state->vs_lifecycle_state.
+end note
+
+
+
+erp_business_partners |o--o{ payment_transactions : payer/payee
+erp_contracts |o--o{ payment_transactions
+accounting_company_bank_accounts |o--o{ payment_transactions
+accounting_clearing_documents |o--o{ payment_transactions
+erp_business_partners |o--o{ connected_accounts
+accounting_company_bank_accounts |o--o{ connected_accounts
+
+note as PAYMENT_FINANCE_ASSOCIATIONS
+  Payment gateway events are explicitly tied to the legal/business counterparty,
+  enterprise contract, destination company bank account and accounting clearing document.
+  This closes the payment-to-contract-to-subledger-to-ledger traceability chain.
+end note
+
+entity payment_channel_catalog {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * name : varchar
+  * channel_type_concept_id : uuid <<FK>>
+    description : text
+    supports_qr : boolean
+    supports_card : boolean
+    supports_bank_transfer : boolean
+    supports_cash : boolean
+    requires_payer_identity : boolean
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity gateway_payment_channel_mappings {
+  * id : uuid <<PK>>
+  --
+  * gateway_connection_id : uuid <<FK>>
+  * payment_channel_catalog_id : uuid <<FK>>
+  * external_channel_code : varchar
+    configuration_json : jsonb
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity payment_debts {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * gateway_connection_id : uuid <<FK>>
+  * debtor_business_partner_id : uuid <<FK>>
+    patient_profile_id : uuid <<FK>>
+    contract_id : uuid <<FK>>
+    invoice_id : uuid <<FK>>
+  * internal_debt_number : varchar
+    external_debt_id : varchar
+  * currency_code : char(3)
+  * total_amount : numeric(20,6)
+  * outstanding_amount : numeric(20,6)
+  * due_at : timestamptz
+    description : text
+  * status_concept_id : uuid <<FK>>
+    registered_at : timestamptz
+    settled_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity payment_debt_lines {
+  * id : uuid <<PK>>
+  --
+  * payment_debt_id : uuid <<FK>>
+  * line_number : integer
+    billable_item_type_concept_id : uuid <<FK>>
+    billable_item_id : uuid
+  * description : varchar
+  * quantity : numeric(20,6)
+  * unit_amount : numeric(20,6)
+  * line_amount : numeric(20,6)
+    tax_amount : numeric(20,6)
+    discount_amount : numeric(20,6)
+    accounting_account_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity payment_debt_invoice_requests <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * payment_debt_id : uuid <<FK>>
+  * request_number : integer
+  * requested_at : timestamptz
+    requested_by_user_id : uuid <<FK>>
+    invoice_name : varchar
+    tax_identifier : varchar
+    invoice_email : varchar
+    invoice_metadata_json : jsonb
+  * status_concept_id : uuid <<FK>>
+    external_invoice_request_id : varchar
+    completed_at : timestamptz
+  * created_at : timestamptz
+}
+
+entity payment_checkout_sessions {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * gateway_connection_id : uuid <<FK>>
+  * payment_debt_id : uuid <<FK>>
+    payment_intent_id : uuid <<FK>>
+  * session_token_hash : varchar
+    external_transaction_id : varchar
+  * redirect_url : varchar
+    success_return_url : varchar
+    failure_return_url : varchar
+    callback_endpoint_id : uuid <<FK>>
+  * expires_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+    opened_at : timestamptz
+    completed_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity provider_api_operations {
+  * id : uuid <<PK>>
+  --
+  * gateway_connection_id : uuid <<FK>>
+  * operation_code : varchar
+  * name : varchar
+  * http_method : varchar
+  * endpoint_template : varchar
+    timeout_ms : integer
+    retry_policy_json : jsonb
+    request_schema_json : jsonb
+    response_schema_json : jsonb
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity provider_api_attempts <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * provider_api_operation_id : uuid <<FK>>
+    payment_debt_id : uuid <<FK>>
+    payment_checkout_session_id : uuid <<FK>>
+    payment_transaction_id : uuid <<FK>>
+  * correlation_id : uuid
+  * attempt_number : integer
+  * requested_at : timestamptz
+    responded_at : timestamptz
+    http_status : integer
+  * result_concept_id : uuid <<FK>>
+    external_error_code : varchar
+    request_hash : varchar
+    response_hash : varchar
+    response_body_redacted_json : jsonb
+    retry_at : timestamptz
+  * created_at : timestamptz
+}
+
+entity provider_callback_endpoints {
+  * id : uuid <<PK>>
+  --
+  * gateway_connection_id : uuid <<FK>>
+  * code : varchar
+  * callback_path : varchar
+  * verification_method_concept_id : uuid <<FK>>
+    verification_secret_id : uuid <<FK>>
+    allowed_source_cidrs_json : jsonb
+    replay_window_seconds : integer
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity provider_callback_events <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * provider_callback_endpoint_id : uuid <<FK>>
+    payment_checkout_session_id : uuid <<FK>>
+    payment_transaction_id : uuid <<FK>>
+    external_event_id : varchar
+    external_transaction_id : varchar
+  * received_at : timestamptz
+  * payload_hash : varchar
+    headers_redacted_json : jsonb
+    payload_redacted_json : jsonb
+  * verification_status_concept_id : uuid <<FK>>
+  * processing_status_concept_id : uuid <<FK>>
+    duplicate_of_event_id : uuid <<FK>>
+    processed_at : timestamptz
+  * created_at : timestamptz
+}
+
+entity callback_verification_runs <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * provider_callback_event_id : uuid <<FK>>
+  * verification_method_concept_id : uuid <<FK>>
+  * verified_at : timestamptz
+  * result_concept_id : uuid <<FK>>
+    signature_present : boolean
+    timestamp_within_window : boolean
+    source_network_allowed : boolean
+    status_inquiry_confirmed : boolean
+    failure_reason : text
+  * created_at : timestamptz
+}
+
+entity payment_status_inquiries <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * gateway_connection_id : uuid <<FK>>
+    payment_debt_id : uuid <<FK>>
+    payment_checkout_session_id : uuid <<FK>>
+    payment_transaction_id : uuid <<FK>>
+    external_transaction_id : varchar
+  * inquiry_reason_concept_id : uuid <<FK>>
+  * requested_at : timestamptz
+    responded_at : timestamptz
+  * result_status_concept_id : uuid <<FK>>
+    provider_status_code : varchar
+    provider_amount : numeric(20,6)
+    provider_currency_code : char(3)
+    response_hash : varchar
+  * created_at : timestamptz
+}
+
+entity cashier_payment_contexts {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * payment_checkout_session_id : uuid <<FK>>
+    cashier_user_id : uuid <<FK>>
+    cash_register_id : uuid <<FK>>
+    site_id : uuid <<FK>>
+    workstation_reference : varchar
+    shift_reference : varchar
+    customer_display_reference : varchar
+  * created_at : timestamptz
+}
+
+entity payment_cancellation_requests {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * gateway_connection_id : uuid <<FK>>
+    payment_debt_id : uuid <<FK>>
+    payment_checkout_session_id : uuid <<FK>>
+    payment_transaction_id : uuid <<FK>>
+  * request_number : varchar
+  * reason_concept_id : uuid <<FK>>
+    reason_text : text
+  * requested_by_user_id : uuid <<FK>>
+  * requested_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+    external_cancellation_id : varchar
+    completed_at : timestamptz
+    provider_result_json : jsonb
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity invoice_regeneration_requests {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * gateway_connection_id : uuid <<FK>>
+  * payment_transaction_id : uuid <<FK>>
+    payment_debt_id : uuid <<FK>>
+  * request_number : varchar
+  * requested_at : timestamptz
+    requested_by_user_id : uuid <<FK>>
+    invoice_name : varchar
+    tax_identifier : varchar
+    invoice_email : varchar
+  * status_concept_id : uuid <<FK>>
+    external_request_id : varchar
+    completed_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity provider_invoice_artifacts {
+  * id : uuid <<PK>>
+  --
+  * gateway_connection_id : uuid <<FK>>
+  * payment_transaction_id : uuid <<FK>>
+    invoice_regeneration_request_id : uuid <<FK>>
+  * artifact_type_concept_id : uuid <<FK>>
+  * external_invoice_id : varchar
+    invoice_number : varchar
+    authorization_code : varchar
+    issue_date : date
+    file_id : uuid <<FK>>
+    download_url_encrypted : text
+    content_hash : varchar
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity payment_receipts {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * payment_transaction_id : uuid <<FK>>
+    payment_debt_id : uuid <<FK>>
+  * receipt_number : varchar
+  * issued_at : timestamptz
+  * amount : numeric(20,6)
+  * currency_code : char(3)
+    payer_business_partner_id : uuid <<FK>>
+    file_id : uuid <<FK>>
+    content_hash : varchar
+    voided_at : timestamptz
+    void_reason : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity provider_reconciliation_records <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * gateway_connection_id : uuid <<FK>>
+  * reconciliation_run_id : uuid <<FK>>
+    payment_debt_id : uuid <<FK>>
+    payment_transaction_id : uuid <<FK>>
+  * external_transaction_id : varchar
+  * provider_status_code : varchar
+    provider_paid_at : timestamptz
+  * provider_amount : numeric(20,6)
+  * provider_currency_code : char(3)
+    provider_fee_amount : numeric(20,6)
+    settlement_reference : varchar
+  * match_status_concept_id : uuid <<FK>>
+    mismatch_reason_concept_id : uuid <<FK>>
+    source_record_hash : varchar
+  * recorded_at : timestamptz
+  * created_at : timestamptz
+}
+
+payment_gateways ||--o{ gateway_connections
+payment_channel_catalog ||--o{ gateway_payment_channel_mappings
+gateway_connections ||--o{ gateway_payment_channel_mappings
+gateway_connections ||--o{ payment_debts
+payment_debts ||--o{ payment_debt_lines
+payment_debts ||--o{ payment_debt_invoice_requests
+payment_debts ||--o{ payment_checkout_sessions
+payment_intents ||--o{ payment_checkout_sessions
+gateway_connections ||--o{ provider_api_operations
+provider_api_operations ||--o{ provider_api_attempts
+gateway_connections ||--o{ provider_callback_endpoints
+provider_callback_endpoints ||--o{ provider_callback_events
+provider_callback_events ||--o{ callback_verification_runs
+payment_transactions ||--o{ payment_status_inquiries
+payment_checkout_sessions ||--o| cashier_payment_contexts
+payment_transactions ||--o{ payment_cancellation_requests
+payment_transactions ||--o{ invoice_regeneration_requests
+payment_transactions ||--o{ provider_invoice_artifacts
+payment_transactions ||--o| payment_receipts
+reconciliation_runs ||--o{ provider_reconciliation_records
+payment_transactions ||--o{ provider_reconciliation_records
+
+note right of payment_debts
+  LIBELULA-STYLE DEBT FLOW
+  Internal debt -> provider registration -> external transaction/checkout URL -> callback
+  -> independent status inquiry -> canonical transaction -> receipt/invoice -> reconciliation.
+end note
+
+note right of provider_callback_events
+  TRUST BOUNDARY
+  A redirect or callback never marks a debt as paid by itself. The event is authenticated,
+  deduplicated and confirmed through provider status/reconciliation before accounting effects.
+end note
+
+note right of provider_api_attempts
+  Secrets and full sensitive payloads remain in a credential vault or encrypted object store.
+  This log retains hashes, redacted fields, correlation and deterministic retry evidence.
+end note
+
+package "Physical Indexes" {
+entity "INDEXES · payment_gateways" as idxset_payment_gateways <<INDEX_SET>> {
+  PK pk_payment_gateways : (id) UNIQUE BTREE
+  UK uq_payment_gateways_code : (code) UNIQUE BTREE
+  IX ix_payment_gateways_gateway_type_concept_id : (gateway_type_concept_id) BTREE
+  IX ix_payment_gateways_external_provider_id : (external_provider_id) BTREE
+  IX ix_payment_gateways_state_concept_id : (state_concept_id) BTREE
+  IX ix_payment_gateways_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_payment_gateways_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+payment_gateways .. idxset_payment_gateways : indexed by
+
+entity "INDEXES · gateway_connections" as idxset_gateway_connections <<INDEX_SET>> {
+  PK pk_gateway_connections : (id) UNIQUE BTREE
+  IX ix_gateway_connections_gateway_id : (gateway_id) BTREE
+  IX ix_gateway_connections_tenant_id : (tenant_id) BTREE
+  IX ix_gateway_connections_practice_id : (practice_id) BTREE
+  IX ix_gateway_connections_environment_concept_id : (environment_concept_id) BTREE
+  IX ix_gateway_connections_credential_id : (credential_id) BTREE
+  IX ix_gateway_connections_state_concept_id : (state_concept_id) BTREE
+  IX ix_gateway_connections_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_gateway_connections_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_gateway_connections_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+}
+
+gateway_connections .. idxset_gateway_connections : indexed by
+
+entity "INDEXES · payment_methods" as idxset_payment_methods <<INDEX_SET>> {
+  PK pk_payment_methods : (id) UNIQUE BTREE
+  IX ix_payment_methods_tenant_id : (tenant_id) BTREE
+  IX ix_payment_methods_owner_type_concept_id : (owner_type_concept_id) BTREE
+  IX ix_payment_methods_gateway_id : (gateway_id) BTREE
+  IX ix_payment_methods_method_type_concept_id : (method_type_concept_id) BTREE
+  IX ix_payment_methods_billing_address_id : (billing_address_id) BTREE
+  IX ix_payment_methods_status_concept_id : (status_concept_id) BTREE
+  IX ix_payment_methods_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_payment_methods_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_payment_methods_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+payment_methods .. idxset_payment_methods : indexed by
+
+entity "INDEXES · payment_intents" as idxset_payment_intents <<INDEX_SET>> {
+  PK pk_payment_intents : (id) UNIQUE BTREE
+  UK uq_payment_intents_idempotency_key : (idempotency_key) UNIQUE BTREE
+  IX ix_payment_intents_tenant_id : (tenant_id) BTREE
+  IX ix_payment_intents_practice_id : (practice_id) BTREE
+  IX ix_payment_intents_gateway_id : (gateway_id) BTREE
+  IX ix_payment_intents_gateway_connection_id : (gateway_connection_id) BTREE
+  IX ix_payment_intents_payment_method_id : (payment_method_id) BTREE
+  IX ix_payment_intents_purpose_concept_id : (purpose_concept_id) BTREE
+  IX ix_payment_intents_invoice_id : (invoice_id) BTREE
+  IX ix_payment_intents_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_payment_intents_status_concept_id : (status_concept_id) BTREE
+  IX ix_payment_intents_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_payment_intents_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_payment_intents_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+payment_intents .. idxset_payment_intents : indexed by
+
+entity "INDEXES · payment_transactions" as idxset_payment_transactions <<INDEX_SET>> {
+  PK pk_payment_transactions : (id) UNIQUE BTREE
+  UK uq_payment_transactions_gateway_transaction_ref : (gateway_transaction_ref) UNIQUE BTREE
+  IX ix_payment_transactions_payment_intent_id : (payment_intent_id) BTREE
+  IX ix_payment_transactions_payer_business_partner_id : (payer_business_partner_id) BTREE
+  IX ix_payment_transactions_payee_business_partner_id : (payee_business_partner_id) BTREE
+  IX ix_payment_transactions_contract_id : (contract_id) BTREE
+  IX ix_payment_transactions_company_bank_account_id : (company_bank_account_id) BTREE
+  IX ix_payment_transactions_clearing_document_id : (clearing_document_id) BTREE
+  IX ix_payment_transactions_gateway_id : (gateway_id) BTREE
+  IX ix_payment_transactions_transaction_type_concept_id : (transaction_type_concept_id) BTREE
+  IX ix_payment_transactions_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_payment_transactions_status_concept_id : (status_concept_id) BTREE
+  IX ix_payment_transactions_failure_reason_concept_id : (failure_reason_concept_id) BTREE
+  IX ix_payment_transactions_journal_transaction_id : (journal_transaction_id) BTREE
+  IX ix_payment_transactions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_payment_transactions_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_payment_provider_transaction : (payment_gateway_id, provider_transaction_id) UNIQUE BTREE
+}
+
+payment_transactions .. idxset_payment_transactions : indexed by
+
+entity "INDEXES · refunds" as idxset_refunds <<INDEX_SET>> {
+  PK pk_refunds : (id) UNIQUE BTREE
+  IX ix_refunds_payment_transaction_id : (payment_transaction_id) BTREE
+  IX ix_refunds_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_refunds_reason_concept_id : (reason_concept_id) BTREE
+  IX ix_refunds_status_concept_id : (status_concept_id) BTREE
+  IX ix_refunds_journal_transaction_id : (journal_transaction_id) BTREE
+  IX ix_refunds_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_refunds_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+refunds .. idxset_refunds : indexed by
+
+entity "INDEXES · payment_disputes" as idxset_payment_disputes <<INDEX_SET>> {
+  PK pk_payment_disputes : (id) UNIQUE BTREE
+  IX ix_payment_disputes_payment_transaction_id : (payment_transaction_id) BTREE
+  IX ix_payment_disputes_dispute_type_concept_id : (dispute_type_concept_id) BTREE
+  IX ix_payment_disputes_reason_concept_id : (reason_concept_id) BTREE
+  IX ix_payment_disputes_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_payment_disputes_status_concept_id : (status_concept_id) BTREE
+  IX ix_payment_disputes_evidence_file_id : (evidence_file_id) BTREE
+  IX ix_payment_disputes_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_payment_disputes_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+payment_disputes .. idxset_payment_disputes : indexed by
+
+entity "INDEXES · payouts" as idxset_payouts <<INDEX_SET>> {
+  PK pk_payouts : (id) UNIQUE BTREE
+  IX ix_payouts_tenant_id : (tenant_id) BTREE
+  IX ix_payouts_practice_id : (practice_id) BTREE
+  IX ix_payouts_payee_type_concept_id : (payee_type_concept_id) BTREE
+  IX ix_payouts_gateway_id : (gateway_id) BTREE
+  IX ix_payouts_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_payouts_status_concept_id : (status_concept_id) BTREE
+  IX ix_payouts_journal_transaction_id : (journal_transaction_id) BTREE
+  IX ix_payouts_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_payouts_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_payouts_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+payouts .. idxset_payouts : indexed by
+
+entity "INDEXES · payout_items" as idxset_payout_items <<INDEX_SET>> {
+  PK pk_payout_items : (id) UNIQUE BTREE
+  IX ix_payout_items_payout_id : (payout_id) BTREE
+  IX ix_payout_items_source_type_concept_id : (source_type_concept_id) BTREE
+  IX ix_payout_items_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_payout_items_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+payout_items .. idxset_payout_items : indexed by
+
+entity "INDEXES · gateway_settlements" as idxset_gateway_settlements <<INDEX_SET>> {
+  PK pk_gateway_settlements : (id) UNIQUE BTREE
+  UK uq_gateway_settlements_settlement_ref : (settlement_ref) UNIQUE BTREE
+  IX ix_gateway_settlements_gateway_id : (gateway_id) BTREE
+  IX ix_gateway_settlements_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_gateway_settlements_status_concept_id : (status_concept_id) BTREE
+  IX ix_gateway_settlements_journal_transaction_id : (journal_transaction_id) BTREE
+  IX ix_gateway_settlements_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_gateway_settlements_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+gateway_settlements .. idxset_gateway_settlements : indexed by
+
+entity "INDEXES · settlement_lines" as idxset_settlement_lines <<INDEX_SET>> {
+  PK pk_settlement_lines : (id) UNIQUE BTREE
+  IX ix_settlement_lines_settlement_id : (settlement_id) BTREE
+  IX ix_settlement_lines_payment_transaction_id : (payment_transaction_id) BTREE
+  IX ix_settlement_lines_refund_id : (refund_id) BTREE
+  IX ix_settlement_lines_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_settlement_lines_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+settlement_lines .. idxset_settlement_lines : indexed by
+
+entity "INDEXES · payment_webhook_events" as idxset_payment_webhook_events <<INDEX_SET>> {
+  PK pk_payment_webhook_events : (id) UNIQUE BTREE
+  UK uq_payment_webhook_events_gateway_event_ref : (gateway_event_ref) UNIQUE BTREE
+  IX ix_payment_webhook_events_gateway_id : (gateway_id) BTREE
+  IX ix_payment_webhook_events_gateway_connection_id : (gateway_connection_id) BTREE
+  IX ix_payment_webhook_events_related_intent_id : (related_intent_id) BTREE
+  IX ix_payment_webhook_events_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_payment_webhook_events_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+payment_webhook_events .. idxset_payment_webhook_events : indexed by
+
+entity "INDEXES · wallets" as idxset_wallets <<INDEX_SET>> {
+  PK pk_wallets : (id) UNIQUE BTREE
+  IX ix_wallets_tenant_id : (tenant_id) BTREE
+  IX ix_wallets_owner_type_concept_id : (owner_type_concept_id) BTREE
+  IX ix_wallets_wallet_type_concept_id : (wallet_type_concept_id) BTREE
+  IX ix_wallets_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_wallets_ledger_account_id : (ledger_account_id) BTREE
+  IX ix_wallets_status_concept_id : (status_concept_id) BTREE
+  IX ix_wallets_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_wallets_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_wallets_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+wallets .. idxset_wallets : indexed by
+
+entity "INDEXES · wallet_ledger_entries" as idxset_wallet_ledger_entries <<INDEX_SET>> {
+  PK pk_wallet_ledger_entries : (id) UNIQUE BTREE
+  UK uq_wallet_ledger_entries_idempotency_key : (idempotency_key) UNIQUE BTREE
+  IX ix_wallet_ledger_entries_wallet_id : (wallet_id) BTREE
+  IX ix_wallet_ledger_entries_direction_concept_id : (direction_concept_id) BTREE
+  IX ix_wallet_ledger_entries_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_wallet_ledger_entries_entry_type_concept_id : (entry_type_concept_id) BTREE
+  IX ix_wallet_ledger_entries_payment_transaction_id : (payment_transaction_id) BTREE
+  IX ix_wallet_ledger_entries_journal_transaction_id : (journal_transaction_id) BTREE
+  IX ix_wallet_ledger_entries_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_wallet_ledger_entries_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+wallet_ledger_entries .. idxset_wallet_ledger_entries : indexed by
+
+entity "INDEXES · connected_accounts" as idxset_connected_accounts <<INDEX_SET>> {
+  PK pk_connected_accounts : (id) UNIQUE BTREE
+  IX ix_connected_accounts_tenant_id : (tenant_id) BTREE
+  IX ix_connected_accounts_gateway_id : (gateway_id) BTREE
+  IX ix_connected_accounts_business_partner_id : (business_partner_id) BTREE
+  IX ix_connected_accounts_company_bank_account_id : (company_bank_account_id) BTREE
+  IX ix_connected_accounts_payee_type_concept_id : (payee_type_concept_id) BTREE
+  IX ix_connected_accounts_onboarding_status_concept_id : (onboarding_status_concept_id) BTREE
+  IX ix_connected_accounts_default_wallet_id : (default_wallet_id) BTREE
+  IX ix_connected_accounts_payout_schedule_concept_id : (payout_schedule_concept_id) BTREE
+  IX ix_connected_accounts_status_concept_id : (status_concept_id) BTREE
+  IX ix_connected_accounts_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_connected_accounts_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_connected_accounts_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+connected_accounts .. idxset_connected_accounts : indexed by
+
+entity "INDEXES · kyc_verifications" as idxset_kyc_verifications <<INDEX_SET>> {
+  PK pk_kyc_verifications : (id) UNIQUE BTREE
+  IX ix_kyc_verifications_connected_account_id : (connected_account_id) BTREE
+  IX ix_kyc_verifications_kyc_level_concept_id : (kyc_level_concept_id) BTREE
+  IX ix_kyc_verifications_status_concept_id : (status_concept_id) BTREE
+  IX ix_kyc_verifications_risk_rating_concept_id : (risk_rating_concept_id) BTREE
+  IX ix_kyc_verifications_evidence_file_id : (evidence_file_id) BTREE
+  IX ix_kyc_verifications_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_kyc_verifications_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+kyc_verifications .. idxset_kyc_verifications : indexed by
+
+entity "INDEXES · payment_splits" as idxset_payment_splits <<INDEX_SET>> {
+  PK pk_payment_splits : (id) UNIQUE BTREE
+  IX ix_payment_splits_payment_intent_id : (payment_intent_id) BTREE
+  IX ix_payment_splits_payee_connected_account_id : (payee_connected_account_id) BTREE
+  IX ix_payment_splits_split_type_concept_id : (split_type_concept_id) BTREE
+  IX ix_payment_splits_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_payment_splits_destination_wallet_id : (destination_wallet_id) BTREE
+  IX ix_payment_splits_status_concept_id : (status_concept_id) BTREE
+  IX ix_payment_splits_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_payment_splits_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+payment_splits .. idxset_payment_splits : indexed by
+
+entity "INDEXES · fee_schedules" as idxset_fee_schedules <<INDEX_SET>> {
+  PK pk_fee_schedules : (id) UNIQUE BTREE
+  UK uq_fee_schedules_code : (code) UNIQUE BTREE
+  IX ix_fee_schedules_tenant_id : (tenant_id) BTREE
+  IX ix_fee_schedules_fee_type_concept_id : (fee_type_concept_id) BTREE
+  IX ix_fee_schedules_calculation_method_concept_id : (calculation_method_concept_id) BTREE
+  IX ix_fee_schedules_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_fee_schedules_applies_to_concept_id : (applies_to_concept_id) BTREE
+  IX ix_fee_schedules_state_concept_id : (state_concept_id) BTREE
+  IX ix_fee_schedules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_fee_schedules_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_fee_schedules_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+  GIST gist_fee_schedules_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+}
+
+fee_schedules .. idxset_fee_schedules : indexed by
+
+entity "INDEXES · transaction_fees" as idxset_transaction_fees <<INDEX_SET>> {
+  PK pk_transaction_fees : (id) UNIQUE BTREE
+  IX ix_transaction_fees_payment_transaction_id : (payment_transaction_id) BTREE
+  IX ix_transaction_fees_fee_schedule_id : (fee_schedule_id) BTREE
+  IX ix_transaction_fees_fee_type_concept_id : (fee_type_concept_id) BTREE
+  IX ix_transaction_fees_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_transaction_fees_bearer_type_concept_id : (bearer_type_concept_id) BTREE
+  IX ix_transaction_fees_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_transaction_fees_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+transaction_fees .. idxset_transaction_fees : indexed by
+
+entity "INDEXES · tips" as idxset_tips <<INDEX_SET>> {
+  PK pk_tips : (id) UNIQUE BTREE
+  IX ix_tips_payment_intent_id : (payment_intent_id) BTREE
+  IX ix_tips_beneficiary_type_concept_id : (beneficiary_type_concept_id) BTREE
+  IX ix_tips_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_tips_destination_wallet_id : (destination_wallet_id) BTREE
+  IX ix_tips_status_concept_id : (status_concept_id) BTREE
+  IX ix_tips_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_tips_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+tips .. idxset_tips : indexed by
+
+entity "INDEXES · subscription_plans" as idxset_subscription_plans <<INDEX_SET>> {
+  PK pk_subscription_plans : (id) UNIQUE BTREE
+  UK uq_subscription_plans_code : (code) UNIQUE BTREE
+  IX ix_subscription_plans_tenant_id : (tenant_id) BTREE
+  IX ix_subscription_plans_practice_id : (practice_id) BTREE
+  IX ix_subscription_plans_billing_interval_concept_id : (billing_interval_concept_id) BTREE
+  IX ix_subscription_plans_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_subscription_plans_usage_type_concept_id : (usage_type_concept_id) BTREE
+  IX ix_subscription_plans_state_concept_id : (state_concept_id) BTREE
+  IX ix_subscription_plans_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_subscription_plans_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_subscription_plans_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+}
+
+subscription_plans .. idxset_subscription_plans : indexed by
+
+entity "INDEXES · subscriptions" as idxset_subscriptions <<INDEX_SET>> {
+  PK pk_subscriptions : (id) UNIQUE BTREE
+  IX ix_subscriptions_tenant_id : (tenant_id) BTREE
+  IX ix_subscriptions_plan_id : (plan_id) BTREE
+  IX ix_subscriptions_subscriber_type_concept_id : (subscriber_type_concept_id) BTREE
+  IX ix_subscriptions_payment_method_id : (payment_method_id) BTREE
+  IX ix_subscriptions_status_concept_id : (status_concept_id) BTREE
+  IX ix_subscriptions_mandate_id : (mandate_id) BTREE
+  IX ix_subscriptions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_subscriptions_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_subscriptions_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+subscriptions .. idxset_subscriptions : indexed by
+
+entity "INDEXES · installment_plans" as idxset_installment_plans <<INDEX_SET>> {
+  PK pk_installment_plans : (id) UNIQUE BTREE
+  IX ix_installment_plans_payment_intent_id : (payment_intent_id) BTREE
+  IX ix_installment_plans_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_installment_plans_status_concept_id : (status_concept_id) BTREE
+  IX ix_installment_plans_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_installment_plans_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+installment_plans .. idxset_installment_plans : indexed by
+
+entity "INDEXES · installment_schedules" as idxset_installment_schedules <<INDEX_SET>> {
+  PK pk_installment_schedules : (id) UNIQUE BTREE
+  IX ix_installment_schedules_installment_plan_id : (installment_plan_id) BTREE
+  IX ix_installment_schedules_payment_transaction_id : (payment_transaction_id) BTREE
+  IX ix_installment_schedules_status_concept_id : (status_concept_id) BTREE
+  IX ix_installment_schedules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_installment_schedules_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+installment_schedules .. idxset_installment_schedules : indexed by
+
+entity "INDEXES · payment_mandates" as idxset_payment_mandates <<INDEX_SET>> {
+  PK pk_payment_mandates : (id) UNIQUE BTREE
+  UK uq_payment_mandates_mandate_ref : (mandate_ref) UNIQUE BTREE
+  IX ix_payment_mandates_tenant_id : (tenant_id) BTREE
+  IX ix_payment_mandates_payer_type_concept_id : (payer_type_concept_id) BTREE
+  IX ix_payment_mandates_mandate_type_concept_id : (mandate_type_concept_id) BTREE
+  IX ix_payment_mandates_payment_method_id : (payment_method_id) BTREE
+  IX ix_payment_mandates_scheme_concept_id : (scheme_concept_id) BTREE
+  IX ix_payment_mandates_status_concept_id : (status_concept_id) BTREE
+  IX ix_payment_mandates_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_payment_mandates_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_payment_mandates_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+payment_mandates .. idxset_payment_mandates : indexed by
+
+entity "INDEXES · fx_rate_locks" as idxset_fx_rate_locks <<INDEX_SET>> {
+  PK pk_fx_rate_locks : (id) UNIQUE BTREE
+  IX ix_fx_rate_locks_payment_intent_id : (payment_intent_id) BTREE
+  IX ix_fx_rate_locks_from_currency_concept_id : (from_currency_concept_id) BTREE
+  IX ix_fx_rate_locks_to_currency_concept_id : (to_currency_concept_id) BTREE
+  IX ix_fx_rate_locks_status_concept_id : (status_concept_id) BTREE
+  IX ix_fx_rate_locks_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_fx_rate_locks_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+fx_rate_locks .. idxset_fx_rate_locks : indexed by
+
+entity "INDEXES · risk_assessments" as idxset_risk_assessments <<INDEX_SET>> {
+  PK pk_risk_assessments : (id) UNIQUE BTREE
+  IX ix_risk_assessments_payment_intent_id : (payment_intent_id) BTREE
+  IX ix_risk_assessments_risk_level_concept_id : (risk_level_concept_id) BTREE
+  IX ix_risk_assessments_decision_concept_id : (decision_concept_id) BTREE
+  IX ix_risk_assessments_three_ds_status_concept_id : (three_ds_status_concept_id) BTREE
+  IX ix_risk_assessments_reviewed_by_user_id : (reviewed_by_user_id) BTREE
+  IX ix_risk_assessments_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_risk_assessments_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+risk_assessments .. idxset_risk_assessments : indexed by
+
+entity "INDEXES · reconciliation_runs" as idxset_reconciliation_runs <<INDEX_SET>> {
+  PK pk_reconciliation_runs : (id) UNIQUE BTREE
+  IX ix_reconciliation_runs_tenant_id : (tenant_id) BTREE
+  IX ix_reconciliation_runs_gateway_id : (gateway_id) BTREE
+  IX ix_reconciliation_runs_status_concept_id : (status_concept_id) BTREE
+  IX ix_reconciliation_runs_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_reconciliation_runs_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_reconciliation_runs_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+reconciliation_runs .. idxset_reconciliation_runs : indexed by
+
+entity "INDEXES · reconciliation_exceptions" as idxset_reconciliation_exceptions <<INDEX_SET>> {
+  PK pk_reconciliation_exceptions : (id) UNIQUE BTREE
+  IX ix_reconciliation_exceptions_reconciliation_run_id : (reconciliation_run_id) BTREE
+  IX ix_reconciliation_exceptions_exception_type_concept_id : (exception_type_concept_id) BTREE
+  IX ix_reconciliation_exceptions_payment_transaction_id : (payment_transaction_id) BTREE
+  IX ix_reconciliation_exceptions_wallet_ledger_entry_id : (wallet_ledger_entry_id) BTREE
+  IX ix_reconciliation_exceptions_status_concept_id : (status_concept_id) BTREE
+  IX ix_reconciliation_exceptions_resolved_by_user_id : (resolved_by_user_id) BTREE
+  IX ix_reconciliation_exceptions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_reconciliation_exceptions_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+reconciliation_exceptions .. idxset_reconciliation_exceptions : indexed by
+
+entity "INDEXES · payment_channel_catalog" as idxset_payment_channel_catalog <<INDEX_SET>> {
+  PK pk_payment_channel_catalog : (id) UNIQUE BTREE
+  IX ix_payment_channel_catalog_channel_type_concept_id : (channel_type_concept_id) BTREE
+  IX ix_payment_channel_catalog_state_concept_id : (state_concept_id) BTREE
+  IX ix_payment_channel_catalog_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_payment_channel_catalog_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+payment_channel_catalog .. idxset_payment_channel_catalog : indexed by
+
+entity "INDEXES · gateway_payment_channel_mappings" as idxset_gateway_payment_channel_mappings <<INDEX_SET>> {
+  PK pk_gateway_payment_channel_mappings : (id) UNIQUE BTREE
+  IX ix_gateway_payment_channel_mappings_gateway_connection_id : (gateway_connection_id) BTREE
+  IX ix_gateway_payment_channel_mappings_payment_channel_catalog_id : (payment_channel_catalog_id) BTREE
+  IX ix_gateway_payment_channel_mappings_state_concept_id : (state_concept_id) BTREE
+  IX ix_gateway_payment_channel_mappings_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_gateway_payment_channel_mappings_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_gateway_channel_mapping : (gateway_connection_id, payment_channel_catalog_id) UNIQUE BTREE
+  UK uk_gateway_external_channel : (gateway_connection_id, external_channel_code) UNIQUE BTREE
+}
+
+gateway_payment_channel_mappings .. idxset_gateway_payment_channel_mappings : indexed by
+
+entity "INDEXES · payment_debts" as idxset_payment_debts <<INDEX_SET>> {
+  PK pk_payment_debts : (id) UNIQUE BTREE
+  IX ix_payment_debts_tenant_id : (tenant_id) BTREE
+  IX ix_payment_debts_gateway_connection_id : (gateway_connection_id) BTREE
+  IX ix_payment_debts_debtor_business_partner_id : (debtor_business_partner_id) BTREE
+  IX ix_payment_debts_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_payment_debts_contract_id : (contract_id) BTREE
+  IX ix_payment_debts_invoice_id : (invoice_id) BTREE
+  IX ix_payment_debts_external_debt_id : (external_debt_id) BTREE
+  IX ix_payment_debts_status_concept_id : (status_concept_id) BTREE
+  IX ix_payment_debts_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_payment_debts_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_payment_debts_tenant_status : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  UK uk_payment_debts_tenant_number : (tenant_id, internal_debt_number) UNIQUE BTREE
+  UK uk_payment_debts_gateway_external : (gateway_connection_id, external_debt_id) UNIQUE BTREE
+  IX ix_payment_debts_partner_status_due : (debtor_business_partner_id, status_concept_id, due_at) BTREE
+}
+
+payment_debts .. idxset_payment_debts : indexed by
+
+entity "INDEXES · payment_debt_lines" as idxset_payment_debt_lines <<INDEX_SET>> {
+  PK pk_payment_debt_lines : (id) UNIQUE BTREE
+  IX ix_payment_debt_lines_payment_debt_id : (payment_debt_id) BTREE
+  IX ix_payment_debt_lines_billable_item_type_concept_id : (billable_item_type_concept_id) BTREE
+  IX ix_payment_debt_lines_billable_item_id : (billable_item_id) BTREE
+  IX ix_payment_debt_lines_accounting_account_id : (accounting_account_id) BTREE
+  IX ix_payment_debt_lines_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_payment_debt_lines_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_payment_debt_lines_debt_line : (payment_debt_id, line_number) UNIQUE BTREE
+}
+
+payment_debt_lines .. idxset_payment_debt_lines : indexed by
+
+entity "INDEXES · payment_debt_invoice_requests" as idxset_payment_debt_invoice_requests <<INDEX_SET>> {
+  PK pk_payment_debt_invoice_requests : (id) UNIQUE BTREE
+  IX ix_payment_debt_invoice_requests_payment_debt_id : (payment_debt_id) BTREE
+  IX ix_payment_debt_invoice_requests_requested_by_user_id : (requested_by_user_id) BTREE
+  IX ix_payment_debt_invoice_requests_status_concept_id : (status_concept_id) BTREE
+  IX ix_payment_debt_invoice_requests_external_invoice_request_id : (external_invoice_request_id) BTREE
+  BRIN brin_payment_debt_invoice_requests_created_at : (created_at) BRIN pages_per_range=128
+  UK uk_debt_invoice_requests_debt_number : (payment_debt_id, request_number) UNIQUE BTREE
+}
+
+payment_debt_invoice_requests .. idxset_payment_debt_invoice_requests : indexed by
+
+entity "INDEXES · payment_checkout_sessions" as idxset_payment_checkout_sessions <<INDEX_SET>> {
+  PK pk_payment_checkout_sessions : (id) UNIQUE BTREE
+  IX ix_payment_checkout_sessions_tenant_id : (tenant_id) BTREE
+  IX ix_payment_checkout_sessions_gateway_connection_id : (gateway_connection_id) BTREE
+  IX ix_payment_checkout_sessions_payment_debt_id : (payment_debt_id) BTREE
+  IX ix_payment_checkout_sessions_payment_intent_id : (payment_intent_id) BTREE
+  IX ix_payment_checkout_sessions_external_transaction_id : (external_transaction_id) BTREE
+  IX ix_payment_checkout_sessions_callback_endpoint_id : (callback_endpoint_id) BTREE
+  IX ix_payment_checkout_sessions_status_concept_id : (status_concept_id) BTREE
+  IX ix_payment_checkout_sessions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_payment_checkout_sessions_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_payment_checkout_sessions_tenant_status : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  UK uk_payment_checkout_sessions_token : (session_token_hash) UNIQUE BTREE
+  UK uk_payment_checkout_external_transaction : (gateway_connection_id, external_transaction_id) UNIQUE BTREE
+}
+
+payment_checkout_sessions .. idxset_payment_checkout_sessions : indexed by
+
+entity "INDEXES · provider_api_operations" as idxset_provider_api_operations <<INDEX_SET>> {
+  PK pk_provider_api_operations : (id) UNIQUE BTREE
+  IX ix_provider_api_operations_gateway_connection_id : (gateway_connection_id) BTREE
+  IX ix_provider_api_operations_state_concept_id : (state_concept_id) BTREE
+  IX ix_provider_api_operations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_provider_api_operations_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_provider_api_operations_connection_code : (gateway_connection_id, operation_code) UNIQUE BTREE
+}
+
+provider_api_operations .. idxset_provider_api_operations : indexed by
+
+entity "INDEXES · provider_api_attempts" as idxset_provider_api_attempts <<INDEX_SET>> {
+  PK pk_provider_api_attempts : (id) UNIQUE BTREE
+  IX ix_provider_api_attempts_provider_api_operation_id : (provider_api_operation_id) BTREE
+  IX ix_provider_api_attempts_payment_debt_id : (payment_debt_id) BTREE
+  IX ix_provider_api_attempts_payment_checkout_session_id : (payment_checkout_session_id) BTREE
+  IX ix_provider_api_attempts_payment_transaction_id : (payment_transaction_id) BTREE
+  IX ix_provider_api_attempts_correlation_id : (correlation_id) BTREE
+  IX ix_provider_api_attempts_result_concept_id : (result_concept_id) BTREE
+  BRIN brin_provider_api_attempts_created_at : (created_at) BRIN pages_per_range=128
+  UK uk_provider_api_attempts_operation_correlation_attempt : (provider_api_operation_id, correlation_id, attempt_number) UNIQUE BTREE
+}
+
+provider_api_attempts .. idxset_provider_api_attempts : indexed by
+
+entity "INDEXES · provider_callback_endpoints" as idxset_provider_callback_endpoints <<INDEX_SET>> {
+  PK pk_provider_callback_endpoints : (id) UNIQUE BTREE
+  IX ix_provider_callback_endpoints_gateway_connection_id : (gateway_connection_id) BTREE
+  IX ix_provider_callback_endpoints_verification_method_concept_id : (verification_method_concept_id) BTREE
+  IX ix_provider_callback_endpoints_verification_secret_id : (verification_secret_id) BTREE
+  IX ix_provider_callback_endpoints_state_concept_id : (state_concept_id) BTREE
+  IX ix_provider_callback_endpoints_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_provider_callback_endpoints_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_provider_callback_endpoints_connection_code : (gateway_connection_id, code) UNIQUE BTREE
+  UK uk_provider_callback_endpoints_path : (callback_path) UNIQUE BTREE
+}
+
+provider_callback_endpoints .. idxset_provider_callback_endpoints : indexed by
+
+entity "INDEXES · provider_callback_events" as idxset_provider_callback_events <<INDEX_SET>> {
+  PK pk_provider_callback_events : (id) UNIQUE BTREE
+  IX ix_provider_callback_events_provider_callback_endpoint_id : (provider_callback_endpoint_id) BTREE
+  IX ix_provider_callback_events_payment_checkout_session_id : (payment_checkout_session_id) BTREE
+  IX ix_provider_callback_events_payment_transaction_id : (payment_transaction_id) BTREE
+  IX ix_provider_callback_events_external_event_id : (external_event_id) BTREE
+  IX ix_provider_callback_events_external_transaction_id : (external_transaction_id) BTREE
+  IX ix_provider_callback_events_verification_status_concept_id : (verification_status_concept_id) BTREE
+  IX ix_provider_callback_events_processing_status_concept_id : (processing_status_concept_id) BTREE
+  IX ix_provider_callback_events_duplicate_of_event_id : (duplicate_of_event_id) BTREE
+  BRIN brin_provider_callback_events_created_at : (created_at) BRIN pages_per_range=128
+  UK uk_provider_callback_external_event : (provider_callback_endpoint_id, external_event_id) UNIQUE BTREE
+  IX ix_provider_callback_external_transaction : (provider_callback_endpoint_id, external_transaction_id, received_at DESC) BTREE
+}
+
+provider_callback_events .. idxset_provider_callback_events : indexed by
+
+entity "INDEXES · callback_verification_runs" as idxset_callback_verification_runs <<INDEX_SET>> {
+  PK pk_callback_verification_runs : (id) UNIQUE BTREE
+  IX ix_callback_verification_runs_provider_callback_event_id : (provider_callback_event_id) BTREE
+  IX ix_callback_verification_runs_verification_method_concept_id : (verification_method_concept_id) BTREE
+  IX ix_callback_verification_runs_result_concept_id : (result_concept_id) BTREE
+  BRIN brin_callback_verification_runs_created_at : (created_at) BRIN pages_per_range=128
+}
+
+callback_verification_runs .. idxset_callback_verification_runs : indexed by
+
+entity "INDEXES · payment_status_inquiries" as idxset_payment_status_inquiries <<INDEX_SET>> {
+  PK pk_payment_status_inquiries : (id) UNIQUE BTREE
+  IX ix_payment_status_inquiries_gateway_connection_id : (gateway_connection_id) BTREE
+  IX ix_payment_status_inquiries_payment_debt_id : (payment_debt_id) BTREE
+  IX ix_payment_status_inquiries_payment_checkout_session_id : (payment_checkout_session_id) BTREE
+  IX ix_payment_status_inquiries_payment_transaction_id : (payment_transaction_id) BTREE
+  IX ix_payment_status_inquiries_external_transaction_id : (external_transaction_id) BTREE
+  IX ix_payment_status_inquiries_inquiry_reason_concept_id : (inquiry_reason_concept_id) BTREE
+  IX ix_payment_status_inquiries_result_status_concept_id : (result_status_concept_id) BTREE
+  BRIN brin_payment_status_inquiries_created_at : (created_at) BRIN pages_per_range=128
+}
+
+payment_status_inquiries .. idxset_payment_status_inquiries : indexed by
+
+entity "INDEXES · cashier_payment_contexts" as idxset_cashier_payment_contexts <<INDEX_SET>> {
+  PK pk_cashier_payment_contexts : (id) UNIQUE BTREE
+  IX ix_cashier_payment_contexts_tenant_id : (tenant_id) BTREE
+  IX ix_cashier_payment_contexts_payment_checkout_session_id : (payment_checkout_session_id) BTREE
+  IX ix_cashier_payment_contexts_cashier_user_id : (cashier_user_id) BTREE
+  IX ix_cashier_payment_contexts_cash_register_id : (cash_register_id) BTREE
+  IX ix_cashier_payment_contexts_site_id : (site_id) BTREE
+  IX ix_cashier_payment_contexts_tenant_created : (tenant_id, created_at DESC) BTREE
+  UK uk_cashier_payment_contexts_session : (payment_checkout_session_id) UNIQUE BTREE
+}
+
+cashier_payment_contexts .. idxset_cashier_payment_contexts : indexed by
+
+entity "INDEXES · payment_cancellation_requests" as idxset_payment_cancellation_requests <<INDEX_SET>> {
+  PK pk_payment_cancellation_requests : (id) UNIQUE BTREE
+  IX ix_payment_cancellation_requests_tenant_id : (tenant_id) BTREE
+  IX ix_payment_cancellation_requests_gateway_connection_id : (gateway_connection_id) BTREE
+  IX ix_payment_cancellation_requests_payment_debt_id : (payment_debt_id) BTREE
+  IX ix_payment_cancellation_requests_payment_checkout_session_id : (payment_checkout_session_id) BTREE
+  IX ix_payment_cancellation_requests_payment_transaction_id : (payment_transaction_id) BTREE
+  IX ix_payment_cancellation_requests_reason_concept_id : (reason_concept_id) BTREE
+  IX ix_payment_cancellation_requests_requested_by_user_id : (requested_by_user_id) BTREE
+  IX ix_payment_cancellation_requests_status_concept_id : (status_concept_id) BTREE
+  IX ix_payment_cancellation_requests_external_cancellation_id : (external_cancellation_id) BTREE
+  IX ix_payment_cancellation_requests_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_payment_cancellation_requests_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_payment_cancellation_requests_tenant_status : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  UK uk_payment_cancellation_requests_tenant_number : (tenant_id, request_number) UNIQUE BTREE
+}
+
+payment_cancellation_requests .. idxset_payment_cancellation_requests : indexed by
+
+entity "INDEXES · invoice_regeneration_requests" as idxset_invoice_regeneration_requests <<INDEX_SET>> {
+  PK pk_invoice_regeneration_requests : (id) UNIQUE BTREE
+  IX ix_invoice_regeneration_requests_tenant_id : (tenant_id) BTREE
+  IX ix_invoice_regeneration_requests_gateway_connection_id : (gateway_connection_id) BTREE
+  IX ix_invoice_regeneration_requests_payment_transaction_id : (payment_transaction_id) BTREE
+  IX ix_invoice_regeneration_requests_payment_debt_id : (payment_debt_id) BTREE
+  IX ix_invoice_regeneration_requests_requested_by_user_id : (requested_by_user_id) BTREE
+  IX ix_invoice_regeneration_requests_status_concept_id : (status_concept_id) BTREE
+  IX ix_invoice_regeneration_requests_external_request_id : (external_request_id) BTREE
+  IX ix_invoice_regeneration_requests_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_invoice_regeneration_requests_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_invoice_regeneration_requests_tenant_status : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  UK uk_invoice_regeneration_tenant_number : (tenant_id, request_number) UNIQUE BTREE
+}
+
+invoice_regeneration_requests .. idxset_invoice_regeneration_requests : indexed by
+
+entity "INDEXES · provider_invoice_artifacts" as idxset_provider_invoice_artifacts <<INDEX_SET>> {
+  PK pk_provider_invoice_artifacts : (id) UNIQUE BTREE
+  IX ix_provider_invoice_artifacts_gateway_connection_id : (gateway_connection_id) BTREE
+  IX ix_provider_invoice_artifacts_payment_transaction_id : (payment_transaction_id) BTREE
+  IX ix_provider_invoice_artifacts_invoice_regeneration_request_id : (invoice_regeneration_request_id) BTREE
+  IX ix_provider_invoice_artifacts_artifact_type_concept_id : (artifact_type_concept_id) BTREE
+  IX ix_provider_invoice_artifacts_external_invoice_id : (external_invoice_id) BTREE
+  IX ix_provider_invoice_artifacts_file_id : (file_id) BTREE
+  IX ix_provider_invoice_artifacts_status_concept_id : (status_concept_id) BTREE
+  IX ix_provider_invoice_artifacts_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_provider_invoice_artifacts_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_provider_invoice_artifacts_external : (gateway_connection_id, external_invoice_id, artifact_type_concept_id) UNIQUE BTREE
+}
+
+provider_invoice_artifacts .. idxset_provider_invoice_artifacts : indexed by
+
+entity "INDEXES · payment_receipts" as idxset_payment_receipts <<INDEX_SET>> {
+  PK pk_payment_receipts : (id) UNIQUE BTREE
+  IX ix_payment_receipts_tenant_id : (tenant_id) BTREE
+  IX ix_payment_receipts_payment_transaction_id : (payment_transaction_id) BTREE
+  IX ix_payment_receipts_payment_debt_id : (payment_debt_id) BTREE
+  IX ix_payment_receipts_payer_business_partner_id : (payer_business_partner_id) BTREE
+  IX ix_payment_receipts_file_id : (file_id) BTREE
+  IX ix_payment_receipts_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_payment_receipts_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_payment_receipts_tenant_created : (tenant_id, created_at DESC) BTREE
+  UK uk_payment_receipts_tenant_number : (tenant_id, receipt_number) UNIQUE BTREE
+  UK uk_payment_receipts_transaction : (payment_transaction_id) UNIQUE BTREE
+}
+
+payment_receipts .. idxset_payment_receipts : indexed by
+
+entity "INDEXES · provider_reconciliation_records" as idxset_provider_reconciliation_records <<INDEX_SET>> {
+  PK pk_provider_reconciliation_records : (id) UNIQUE BTREE
+  IX ix_provider_reconciliation_records_gateway_connection_id : (gateway_connection_id) BTREE
+  IX ix_provider_reconciliation_records_reconciliation_run_id : (reconciliation_run_id) BTREE
+  IX ix_provider_reconciliation_records_payment_debt_id : (payment_debt_id) BTREE
+  IX ix_provider_reconciliation_records_payment_transaction_id : (payment_transaction_id) BTREE
+  IX ix_provider_reconciliation_records_external_transaction_id : (external_transaction_id) BTREE
+  IX ix_provider_reconciliation_records_match_status_concept_id : (match_status_concept_id) BTREE
+  IX ix_provider_reconciliation_records_mismatch_reason_concept_id : (mismatch_reason_concept_id) BTREE
+  BRIN brin_provider_reconciliation_records_recorded_at : (recorded_at) BRIN pages_per_range=128
+  UK uk_provider_reconciliation_connection_external_run : (gateway_connection_id, external_transaction_id, reconciliation_run_id) UNIQUE BTREE
+}
+
+provider_reconciliation_records .. idxset_provider_reconciliation_records : indexed by
+
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+
+' ===== v4.0.5 (planes de suscripcion Free/PRO/MAX) =====
+
+entity plan_prices {
+  * id : uuid <<PK>>
+  --
+  * plan_id : uuid <<FK>>
+  * currency_concept_id : uuid <<FK>>
+  * billing_interval_concept_id : uuid <<FK>>
+    interval_count : integer
+  * amount : numeric
+    region_concept_id : uuid <<FK>>
+    tax_included : boolean
+    valid_from : date
+    valid_to : date
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity plan_features {
+  * id : uuid <<PK>>
+  --
+  * plan_id : uuid <<FK>>
+  * feature_concept_id : uuid <<FK>>
+  * is_enabled : boolean
+    limit_value : numeric
+    value_json : jsonb
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity plan_quotas {
+  * id : uuid <<PK>>
+  --
+  * plan_id : uuid <<FK>>
+  * metric_concept_id : uuid <<FK>>
+    limit_value : numeric
+    soft_limit_value : numeric
+    quota_period_concept_id : uuid <<FK>>
+    overage_policy_concept_id : uuid <<FK>>
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity plan_eligibility_rules {
+  * id : uuid <<PK>>
+  --
+  * plan_id : uuid <<FK>>
+  * eligible_practice_type_concept_id : uuid <<FK>>
+  * is_included : boolean
+    notes : varchar
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity subscription_usage_counters {
+  * id : uuid <<PK>>
+  --
+  * subscription_id : uuid <<FK>>
+  * metric_concept_id : uuid <<FK>>
+  * period_start : timestamptz
+  * period_end : timestamptz
+    used_value : numeric
+    limit_value : numeric
+    last_event_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' ===== v4.0.5 (planes de suscripcion Free/PRO/MAX) ===== (index sets)
+
+entity "INDEXES · plan_prices" as idxset_plan_prices <<INDEX_SET>> {
+  PK pk_plan_prices : (id) UNIQUE BTREE
+  IX ix_plan_prices_plan_id : (plan_id) BTREE
+  IX ix_plan_prices_currency_concept_id : (currency_concept_id) BTREE
+  UK uk_plan_prices_plan_currency_interval : (plan_id, currency_concept_id, billing_interval_concept_id, region_concept_id) UNIQUE BTREE
+}
+plan_prices .. idxset_plan_prices : indexed by
+
+entity "INDEXES · plan_features" as idxset_plan_features <<INDEX_SET>> {
+  PK pk_plan_features : (id) UNIQUE BTREE
+  IX ix_plan_features_plan_id : (plan_id) BTREE
+  IX ix_plan_features_feature_concept_id : (feature_concept_id) BTREE
+  UK uk_plan_features_plan_feature : (plan_id, feature_concept_id) UNIQUE BTREE
+}
+plan_features .. idxset_plan_features : indexed by
+
+entity "INDEXES · plan_quotas" as idxset_plan_quotas <<INDEX_SET>> {
+  PK pk_plan_quotas : (id) UNIQUE BTREE
+  IX ix_plan_quotas_plan_id : (plan_id) BTREE
+  IX ix_plan_quotas_metric_concept_id : (metric_concept_id) BTREE
+  UK uk_plan_quotas_plan_metric : (plan_id, metric_concept_id) UNIQUE BTREE
+}
+plan_quotas .. idxset_plan_quotas : indexed by
+
+entity "INDEXES · plan_eligibility_rules" as idxset_plan_eligibility_rules <<INDEX_SET>> {
+  PK pk_plan_eligibility_rules : (id) UNIQUE BTREE
+  IX ix_plan_eligibility_rules_plan_id : (plan_id) BTREE
+  IX ix_plan_eligibility_rules_practice_type : (eligible_practice_type_concept_id) BTREE
+  UK uk_plan_eligibility_rules_plan_type : (plan_id, eligible_practice_type_concept_id) UNIQUE BTREE
+}
+plan_eligibility_rules .. idxset_plan_eligibility_rules : indexed by
+
+entity "INDEXES · subscription_usage_counters" as idxset_subscription_usage_counters <<INDEX_SET>> {
+  PK pk_subscription_usage_counters : (id) UNIQUE BTREE
+  IX ix_subscription_usage_counters_subscription_id : (subscription_id) BTREE
+  IX ix_subscription_usage_counters_metric_concept_id : (metric_concept_id) BTREE
+  UK uk_subscription_usage_counters_period : (subscription_id, metric_concept_id, period_start) UNIQUE BTREE
+}
+subscription_usage_counters .. idxset_subscription_usage_counters : indexed by
+
+' ===== v4.0.5 (planes de suscripcion Free/PRO/MAX) ===== (relaciones)
+
+subscription_plans ||--o{ plan_eligibility_rules
+
+subscription_plans ||--o{ plan_features
+
+subscription_plans ||--o{ plan_prices
+
+subscription_plans ||--o{ plan_quotas
+
+subscriptions ||--o{ subscription_usage_counters
+
+@enduml

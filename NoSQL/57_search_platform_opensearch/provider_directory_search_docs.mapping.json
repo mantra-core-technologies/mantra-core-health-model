@@ -1,0 +1,51 @@
+{
+  "mappings": {
+    "properties": {
+      "tenant_id": {
+        "type": "keyword"
+      },
+      "source_entity_id": {
+        "type": "keyword"
+      },
+      "source_version": {
+        "type": "long"
+      },
+      "lifecycle_state": {
+        "type": "keyword"
+      },
+      "updated_at": {
+        "type": "date"
+      },
+      "routing_key": {
+        "type": "keyword"
+      },
+      "practitioner_profile_id": {
+        "type": "keyword"
+      },
+      "display_name": {
+        "type": "text"
+      },
+      "specialties": {
+        "type": "nested"
+      },
+      "services": {
+        "type": "nested"
+      },
+      "organizations": {
+        "type": "nested"
+      },
+      "languages": {
+        "type": "keyword"
+      },
+      "geo": {
+        "type": "geo_point"
+      },
+      "rating_summary": {
+        "type": "object"
+      },
+      "accepting_new_patients": {
+        "type": "boolean"
+      }
+    }
+  }
+}

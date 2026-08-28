@@ -1,0 +1,26 @@
+{
+  "source": "Medical Subject Headings (MeSH)",
+  "production_year": 2026,
+  "publisher": "U.S. National Library of Medicine",
+  "download_page": "https://www.nlm.nih.gov/databases/download/mesh.html",
+  "terms": "https://www.nlm.nih.gov/databases/download/terms_and_conditions_mesh.html",
+  "files": {
+    "desc2026.zip": {
+      "url": "https://nlmpubs.nlm.nih.gov/projects/mesh/MESH_FILES/xmlmesh/desc2026.zip",
+      "sha256": "c541855fcfdbaafcbdfef71cf1b7bff833598396f021aef27b75335c8e440b41",
+      "bytes": 16812779
+    },
+    "supp2026.zip": {
+      "url": "https://nlmpubs.nlm.nih.gov/projects/mesh/MESH_FILES/xmlmesh/supp2026.zip",
+      "sha256": "36628755faf1b39e881b93b782a294284bf7415122fa2dbd999c2031a3901790",
+      "bytes": 47285597
+    },
+    "qual2026.xml": {
+      "url": "https://nlmpubs.nlm.nih.gov/projects/mesh/MESH_FILES/xmlmesh/qual2026.xml",
+      "sha256": "5b4ca9ca9bd8019113e77132ebf7a16f915213c3e9d32a784defd96900a955dd",
+      "bytes": 290948
+    }
+  },
+  "combined_sha256": "f09aaa1f28413003d89661feae41310305ce34add798b4fd9dd303e23d2f82e6",
+  "attribution": "Courtesy of the U.S. National Library of Medicine"
+}

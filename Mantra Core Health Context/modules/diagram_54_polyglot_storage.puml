@@ -1,0 +1,490 @@
+@startuml SALUD_Module_54_polyglot_storage
+title Module 54 — Polyglot Storage Governance and Data Placement\n(control plane: PostgreSQL metadata)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+note as BIZ_polyglot_storage
+  BUSINESS PURPOSE
+  Defines where each dataset may live, which store is canonical, how tenants are isolated, and which encryption, residency, retention, replication and consistency rules apply.
+  This module is the control plane. It does not move clinical or financial sources of truth away from PostgreSQL.
+end note
+
+entity "directory.tenants" as directory_tenants <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "common.files" as common_files <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "iam.users" as iam_users <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "system_ops.retention_policies" as system_ops_retention_policies <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity storage_backends <<CONTROL_PLANE>> {
+  * id : uuid <<PK>>
+  --
+  * code : varchar
+  * name : varchar
+  * backend_type : varchar
+  * provider_code : varchar
+  * control_plane_endpoint : varchar
+  * supports_transactions : boolean
+  * supports_ttl : boolean
+  * supports_encryption : boolean
+  * supports_versioning : boolean
+  * supports_worm : boolean
+  * supports_vector_search : boolean
+  * supports_full_text : boolean
+  * state : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  * row_version : integer
+}
+
+entity storage_backend_regions <<CONTROL_PLANE>> {
+  * id : uuid <<PK>>
+  --
+  * storage_backend_id : uuid <<FK>>
+  * region_code : varchar
+  * country_code : char(2)
+  * jurisdiction_code : varchar
+  * endpoint_uri : varchar
+  * is_primary : boolean
+  * state : varchar
+  * created_at : timestamptz
+}
+
+entity storage_capabilities <<CONTROL_PLANE>> {
+  * id : uuid <<PK>>
+  --
+  * storage_backend_id : uuid <<FK>>
+  * capability_code : varchar
+  * capability_version : varchar
+  * configuration_json : jsonb
+  * verified_at : timestamptz
+  * verification_status : varchar
+}
+
+entity data_classifications <<CONTROL_PLANE>> {
+  * id : uuid <<PK>>
+  --
+  * code : varchar
+  * name : varchar
+  * sensitivity_level : smallint
+  * contains_phi : boolean
+  * contains_pii : boolean
+  * contains_financial_data : boolean
+  * default_encryption_profile_id : uuid <<FK>>
+  * default_retention_policy_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity dataset_definitions <<CONTROL_PLANE>> {
+  * id : uuid <<PK>>
+  --
+  * code : varchar
+  * name : varchar
+  * owning_module_code : varchar
+  * data_classification_id : uuid <<FK>>
+  * source_of_truth : varchar
+  * canonical_entity_type : varchar
+  * lifecycle_state : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  * row_version : integer
+}
+
+entity dataset_versions <<CONTROL_PLANE>> {
+  * id : uuid <<PK>>
+  --
+  * dataset_definition_id : uuid <<FK>>
+  * version : varchar
+  * schema_fingerprint : varchar
+  * compatibility_mode : varchar
+  * schema_document_file_id : uuid <<FK>>
+  * effective_from : timestamptz
+    effective_to : timestamptz
+  * state : varchar
+  * created_at : timestamptz
+}
+
+entity collection_definitions <<CONTROL_PLANE>> {
+  * id : uuid <<PK>>
+  --
+  * storage_backend_id : uuid <<FK>>
+  * dataset_definition_id : uuid <<FK>>
+  * logical_name : varchar
+  * physical_name_pattern : varchar
+  * partitioning_strategy : varchar
+  * tenant_isolation_mode : varchar
+  * routing_key_expression : varchar
+  * shard_key_expression : varchar
+  * lifecycle_state : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+}
+
+entity collection_schema_versions <<CONTROL_PLANE>> {
+  * id : uuid <<PK>>
+  --
+  * collection_definition_id : uuid <<FK>>
+  * dataset_version_id : uuid <<FK>>
+  * schema_version : varchar
+  * validation_mode : varchar
+  * schema_document_json : jsonb
+  * migration_strategy : varchar
+  * effective_from : timestamptz
+    effective_to : timestamptz
+  * state : varchar
+}
+
+entity dataset_placements <<CONTROL_PLANE>> {
+  * id : uuid <<PK>>
+  --
+  * dataset_version_id : uuid <<FK>>
+  * storage_backend_region_id : uuid <<FK>>
+  * collection_definition_id : uuid <<FK>>
+  * placement_role : varchar
+  * residency_policy_id : uuid <<FK>>
+  * replication_policy_id : uuid <<FK>>
+  * consistency_policy_id : uuid <<FK>>
+  * encryption_profile_id : uuid <<FK>>
+  * state : varchar
+  * activated_at : timestamptz
+}
+
+entity tenant_storage_bindings <<CONTROL_PLANE>> {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * dataset_definition_id : uuid <<FK>>
+  * primary_placement_id : uuid <<FK>>
+    secondary_placement_id : uuid <<FK>>
+  * tenant_partition_key : varchar
+  * tenant_encryption_key_ref : varchar
+  * state : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+}
+
+entity encryption_profiles <<CONTROL_PLANE>> {
+  * id : uuid <<PK>>
+  --
+  * code : varchar
+  * algorithm : varchar
+  * key_management_provider : varchar
+  * key_reference : varchar
+  * envelope_encryption : boolean
+  * field_level_encryption : boolean
+  * deterministic_fields_json : jsonb
+  * rotation_policy_id : uuid <<FK>>
+  * state : varchar
+  * created_at : timestamptz
+}
+
+entity key_rotation_policies <<CONTROL_PLANE>> {
+  * id : uuid <<PK>>
+  --
+  * code : varchar
+  * rotation_interval_days : integer
+  * overlap_days : integer
+  * reencrypt_existing_data : boolean
+  * emergency_rotation_enabled : boolean
+  * state : varchar
+}
+
+entity retention_policies <<CONTROL_PLANE>> {
+  * id : uuid <<PK>>
+  --
+  * code : varchar
+  * retention_days : integer
+  * archive_after_days : integer
+  * deletion_mode : varchar
+  * legal_hold_overrides_deletion : boolean
+  * jurisdiction_code : varchar
+  * state : varchar
+}
+
+entity replication_policies <<CONTROL_PLANE>> {
+  * id : uuid <<PK>>
+  --
+  * code : varchar
+  * replica_count : smallint
+  * replication_mode : varchar
+  * cross_region_enabled : boolean
+  * max_replication_lag_seconds : integer
+  * failover_mode : varchar
+  * state : varchar
+}
+
+entity consistency_policies <<CONTROL_PLANE>> {
+  * id : uuid <<PK>>
+  --
+  * code : varchar
+  * read_consistency : varchar
+  * write_consistency : varchar
+  * conflict_resolution : varchar
+  * stale_read_tolerance_seconds : integer
+  * requires_read_your_writes : boolean
+  * state : varchar
+}
+
+entity residency_policies <<CONTROL_PLANE>> {
+  * id : uuid <<PK>>
+  --
+  * code : varchar
+  * allowed_country_codes : text[]
+  * forbidden_country_codes : text[]
+  * allowed_region_codes : text[]
+  * requires_in_country_backup : boolean
+  * cross_border_transfer_basis : varchar
+  * state : varchar
+}
+
+entity data_access_policies <<CONTROL_PLANE>> {
+  * id : uuid <<PK>>
+  --
+  * dataset_definition_id : uuid <<FK>>
+  * purpose_of_use_code : varchar
+  * principal_type : varchar
+  * field_policy_json : jsonb
+  * row_filter_expression : text
+  * masking_profile_code : varchar
+  * state : varchar
+  * created_at : timestamptz
+}
+
+entity store_health_checks <<CONTROL_PLANE>> {
+  * id : uuid <<PK>>
+  --
+  * storage_backend_region_id : uuid <<FK>>
+  * check_type : varchar
+  * checked_at : timestamptz
+  * status : varchar
+  * latency_ms : integer
+  * details_json : jsonb
+}
+
+entity storage_cost_snapshots <<CONTROL_PLANE>> {
+  * id : uuid <<PK>>
+  --
+  * storage_backend_region_id : uuid <<FK>>
+  * tenant_id : uuid <<FK>>
+  * dataset_definition_id : uuid <<FK>>
+  * period_start : date
+  * period_end : date
+  * storage_bytes : bigint
+  * read_units : numeric
+  * write_units : numeric
+  * egress_bytes : bigint
+  * estimated_cost : numeric(18,6)
+  * currency_code : char(3)
+  * created_at : timestamptz
+}
+
+entity storage_integrity_policies <<CONTROL_PLANE>> {
+  * id : uuid <<PK>>
+  --
+  * dataset_definition_id : uuid <<FK>>
+  * hash_algorithm : varchar
+  * verification_interval_hours : integer
+  * sample_percentage : numeric(5,2)
+  * compare_with_canonical_source : boolean
+  * quarantine_on_mismatch : boolean
+  * state : varchar
+}
+
+
+storage_backends -- storage_backend_regions : has
+storage_backends -- storage_capabilities : declares
+dataset_definitions -- dataset_versions : versions
+dataset_definitions -- collection_definitions : materializes
+collection_definitions -- collection_schema_versions : validates with
+dataset_versions -- dataset_placements : placed as
+storage_backend_regions -- dataset_placements : hosts
+directory_tenants -- tenant_storage_bindings : owns
+dataset_definitions -- tenant_storage_bindings : binds
+encryption_profiles -- data_classifications : default encryption
+key_rotation_policies -- encryption_profiles : rotates
+retention_policies -- data_classifications : default retention
+residency_policies -- dataset_placements : constrains
+replication_policies -- dataset_placements : replicates
+consistency_policies -- dataset_placements : consistency
+dataset_definitions -- data_access_policies : protected by
+storage_backend_regions -- store_health_checks : checked by
+dataset_definitions -- storage_integrity_policies : verified by
+
+package "Physical Indexes and Access Patterns" {
+entity "INDEXES · storage_backends" as idxset_storage_backends <<INDEX_SET>> {
+  PK pk_storage_backends : (id) UNIQUE BTREE
+  UK uk_storage_backends_code : (code) UNIQUE BTREE
+  IX ix_storage_backends_type_state : (backend_type, state) BTREE
+}
+
+storage_backends .. idxset_storage_backends : indexed by
+
+entity "INDEXES · storage_backend_regions" as idxset_storage_backend_regions <<INDEX_SET>> {
+  PK pk_storage_backend_regions : (id) UNIQUE BTREE
+  UK uk_storage_backend_regions_backend_region : (storage_backend_id, region_code) UNIQUE BTREE
+  IX ix_storage_backend_regions_country : (country_code, state) BTREE
+}
+
+storage_backend_regions .. idxset_storage_backend_regions : indexed by
+
+entity "INDEXES · storage_capabilities" as idxset_storage_capabilities <<INDEX_SET>> {
+  PK pk_storage_capabilities : (id) UNIQUE BTREE
+  UK uk_storage_capabilities_backend_code : (storage_backend_id, capability_code, capability_version) UNIQUE BTREE
+}
+
+storage_capabilities .. idxset_storage_capabilities : indexed by
+
+entity "INDEXES · data_classifications" as idxset_data_classifications <<INDEX_SET>> {
+  PK pk_data_classifications : (id) UNIQUE BTREE
+  UK uk_data_classifications_code : (code) UNIQUE BTREE
+  IX ix_data_classifications_sensitivity : (sensitivity_level, contains_phi) BTREE
+}
+
+data_classifications .. idxset_data_classifications : indexed by
+
+entity "INDEXES · dataset_definitions" as idxset_dataset_definitions <<INDEX_SET>> {
+  PK pk_dataset_definitions : (id) UNIQUE BTREE
+  UK uk_dataset_definitions_code : (code) UNIQUE BTREE
+  IX ix_dataset_definitions_owner_state : (owning_module_code, lifecycle_state) BTREE
+}
+
+dataset_definitions .. idxset_dataset_definitions : indexed by
+
+entity "INDEXES · dataset_versions" as idxset_dataset_versions <<INDEX_SET>> {
+  PK pk_dataset_versions : (id) UNIQUE BTREE
+  UK uk_dataset_versions_dataset_version : (dataset_definition_id, version) UNIQUE BTREE
+  IX ix_dataset_versions_effective : (dataset_definition_id, effective_from DESC) BTREE
+}
+
+dataset_versions .. idxset_dataset_versions : indexed by
+
+entity "INDEXES · collection_definitions" as idxset_collection_definitions <<INDEX_SET>> {
+  PK pk_collection_definitions : (id) UNIQUE BTREE
+  UK uk_collection_definitions_backend_name : (storage_backend_id, logical_name) UNIQUE BTREE
+  IX ix_collection_definitions_dataset : (dataset_definition_id, lifecycle_state) BTREE
+}
+
+collection_definitions .. idxset_collection_definitions : indexed by
+
+entity "INDEXES · collection_schema_versions" as idxset_collection_schema_versions <<INDEX_SET>> {
+  PK pk_collection_schema_versions : (id) UNIQUE BTREE
+  UK uk_collection_schema_versions_collection_version : (collection_definition_id, schema_version) UNIQUE BTREE
+  GIN gin_collection_schema_versions_schema : (schema_document_json) GIN jsonb_path_ops
+}
+
+collection_schema_versions .. idxset_collection_schema_versions : indexed by
+
+entity "INDEXES · dataset_placements" as idxset_dataset_placements <<INDEX_SET>> {
+  PK pk_dataset_placements : (id) UNIQUE BTREE
+  UK uk_dataset_placements_version_region_role : (dataset_version_id, storage_backend_region_id, placement_role) UNIQUE BTREE
+  IX ix_dataset_placements_state : (state, activated_at DESC) BTREE
+}
+
+dataset_placements .. idxset_dataset_placements : indexed by
+
+entity "INDEXES · tenant_storage_bindings" as idxset_tenant_storage_bindings <<INDEX_SET>> {
+  PK pk_tenant_storage_bindings : (id) UNIQUE BTREE
+  UK uk_tenant_storage_bindings_tenant_dataset : (tenant_id, dataset_definition_id) UNIQUE BTREE
+  IX ix_tenant_storage_bindings_state : (tenant_id, state) BTREE
+}
+
+tenant_storage_bindings .. idxset_tenant_storage_bindings : indexed by
+
+entity "INDEXES · encryption_profiles" as idxset_encryption_profiles <<INDEX_SET>> {
+  PK pk_encryption_profiles : (id) UNIQUE BTREE
+  UK uk_encryption_profiles_code : (code) UNIQUE BTREE
+  IX ix_encryption_profiles_provider_state : (key_management_provider, state) BTREE
+}
+
+encryption_profiles .. idxset_encryption_profiles : indexed by
+
+entity "INDEXES · key_rotation_policies" as idxset_key_rotation_policies <<INDEX_SET>> {
+  PK pk_key_rotation_policies : (id) UNIQUE BTREE
+  UK uk_key_rotation_policies_code : (code) UNIQUE BTREE
+}
+
+key_rotation_policies .. idxset_key_rotation_policies : indexed by
+
+entity "INDEXES · retention_policies" as idxset_retention_policies <<INDEX_SET>> {
+  PK pk_retention_policies : (id) UNIQUE BTREE
+  UK uk_retention_policies_code : (code) UNIQUE BTREE
+  IX ix_retention_policies_jurisdiction : (jurisdiction_code, state) BTREE
+}
+
+retention_policies .. idxset_retention_policies : indexed by
+
+entity "INDEXES · replication_policies" as idxset_replication_policies <<INDEX_SET>> {
+  PK pk_replication_policies : (id) UNIQUE BTREE
+  UK uk_replication_policies_code : (code) UNIQUE BTREE
+}
+
+replication_policies .. idxset_replication_policies : indexed by
+
+entity "INDEXES · consistency_policies" as idxset_consistency_policies <<INDEX_SET>> {
+  PK pk_consistency_policies : (id) UNIQUE BTREE
+  UK uk_consistency_policies_code : (code) UNIQUE BTREE
+}
+
+consistency_policies .. idxset_consistency_policies : indexed by
+
+entity "INDEXES · residency_policies" as idxset_residency_policies <<INDEX_SET>> {
+  PK pk_residency_policies : (id) UNIQUE BTREE
+  UK uk_residency_policies_code : (code) UNIQUE BTREE
+  GIN gin_residency_policies_allowed_countries : (allowed_country_codes) GIN
+}
+
+residency_policies .. idxset_residency_policies : indexed by
+
+entity "INDEXES · data_access_policies" as idxset_data_access_policies <<INDEX_SET>> {
+  PK pk_data_access_policies : (id) UNIQUE BTREE
+  UK uk_data_access_policies_dataset_purpose_principal : (dataset_definition_id, purpose_of_use_code, principal_type) UNIQUE BTREE
+  GIN gin_data_access_policies_fields : (field_policy_json) GIN jsonb_path_ops
+}
+
+data_access_policies .. idxset_data_access_policies : indexed by
+
+entity "INDEXES · store_health_checks" as idxset_store_health_checks <<INDEX_SET>> {
+  PK pk_store_health_checks : (id) UNIQUE BTREE
+  IX ix_store_health_checks_region_time : (storage_backend_region_id, checked_at DESC) BTREE
+  BRIN brin_store_health_checks_checked_at : (checked_at) BRIN
+}
+
+store_health_checks .. idxset_store_health_checks : indexed by
+
+entity "INDEXES · storage_cost_snapshots" as idxset_storage_cost_snapshots <<INDEX_SET>> {
+  PK pk_storage_cost_snapshots : (id) UNIQUE BTREE
+  UK uk_storage_cost_snapshots_scope_period : (storage_backend_region_id, tenant_id, dataset_definition_id, period_start, period_end) UNIQUE BTREE
+  IX ix_storage_cost_snapshots_tenant_period : (tenant_id, period_end DESC) BTREE
+}
+
+storage_cost_snapshots .. idxset_storage_cost_snapshots : indexed by
+
+entity "INDEXES · storage_integrity_policies" as idxset_storage_integrity_policies <<INDEX_SET>> {
+  PK pk_storage_integrity_policies : (id) UNIQUE BTREE
+  UK uk_storage_integrity_policies_dataset : (dataset_definition_id) UNIQUE BTREE
+}
+
+storage_integrity_policies .. idxset_storage_integrity_policies : indexed by
+
+}
+
+
+note as INDEX_POLICY_polyglot_storage
+  INDEX AND ACCESS-PATTERN POLICY
+  - Metadata indexes are PostgreSQL BTREE/GIN because governance records require transactions and auditability.
+  - A placement is valid only when residency, encryption, retention and tenant isolation policies are simultaneously satisfied.
+  - No application writes directly to a backend that lacks an active tenant_storage_binding.
+end note
+
+@enduml

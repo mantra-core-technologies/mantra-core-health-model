@@ -1,0 +1,506 @@
+@startuml SALUD_Module_01_iam
+title Module 01 — Identity & Access — User Accounts and Security\n(schema: iam)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_01_iam.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_01_iam
+  BUSINESS PURPOSE
+  Manages login accounts, credentials, MFA, devices and sessions. A user
+  record is an authenticating account, not a person, patient or practitioner.
+  Human identity and role profiles are modeled separately in Module 05 and
+  linked optionally so patients and external professionals can exist without
+  portal credentials.
+end note
+
+entity users <<ACCOUNT>> {
+  * id : uuid <<PK>>
+  --
+  * status_concept_id : uuid <<FK>>
+  * display_name : varchar
+    preferred_language_concept_id : uuid <<FK>>
+    time_zone : varchar
+    residence_country_concept_id : uuid <<FK>>
+    data_residency_region_concept_id : uuid <<FK>>
+    email_verified : boolean
+    phone_verified : boolean
+    mfa_status_concept_id : uuid <<FK>>
+    legal_basis_concept_id : uuid <<FK>>
+    privacy_accepted_at : timestamptz
+    privacy_policy_version : varchar
+    anonymized_at : timestamptz
+    last_login_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+  ' + v4.0.8 (REDESA C-18): la cuenta creada por registro asistido queda obligada
+  ' a fijar su propia contraseña en el primer ingreso.
+    must_change_password : boolean
+}
+
+' + v4.0.8 (REDESA C-18 / CAN-IDENT) — Registro asistido de pacientes.
+' Un clínico crea la cuenta de alguien que no puede hacerlo por sí mismo. El
+' creador NUNCA conoce la contraseña definitiva: se emite un token de activación
+' de un solo uso del que se persiste SOLO el hash, con caducidad, y el titular fija
+' su credencial al activarla.
+entity account_activations {
+  * id : uuid <<PK>>
+  --
+  * user_id : uuid <<FK>>
+  ' SHA-256 (hex) del token; el token en claro no se guarda en ninguna parte.
+  * token_hash : varchar <<UK>>
+  * state_concept_id : uuid <<FK>>
+  ' Motivo del registro asistido, exigido por C-18 para la trazabilidad.
+    reason : varchar
+  ' Representación legal que ampara el registro, si la hay. El nombre de la
+  ' columna no resuelve el destino por convención, así que
+  ' authz.patient_legal_representations se declara en su nota del vault.
+    legal_representation_id : uuid <<FK>>
+    legal_representative_user_id : uuid <<FK>>
+  * expires_at : timestamptz
+    consumed_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  ' El clínico o administrativo que creó la cuenta.
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity "INDEXES · account_activations" as idxset_account_activations <<INDEX_SET>> {
+  PK pk_account_activations : (id) UNIQUE BTREE
+  UX ux_account_activations_token_hash : (token_hash) UNIQUE BTREE
+  IX ix_account_activations_user : (user_id, state_concept_id) BTREE
+}
+account_activations .. idxset_account_activations : indexed by
+
+' + v4.0.9 (REDESA CAN-IDENT) — Verificación del correo del auto-registro.
+' El paciente que se registra por sí mismo con su documento elige su contraseña,
+' así que la cuenta nace ACTIVA. El correo es OPCIONAL y verificarlo NO condiciona
+' el acceso: si lo aporta se emite un token de un solo uso del que se persiste
+' SOLO el hash, con caducidad.
+entity email_verifications {
+  * id : uuid <<PK>>
+  --
+  * user_id : uuid <<FK>>
+  ' Dirección que se está verificando; se guarda acá porque la verificación
+  ' prueba ESA dirección, aunque después el usuario cambie la suya.
+  * email : varchar
+  ' SHA-256 (hex) del token; el token en claro no se guarda en ninguna parte.
+  * token_hash : varchar <<UK>>
+  * state_concept_id : uuid <<FK>>
+  * expires_at : timestamptz
+  ' Sella el uso único: un token consumido no vuelve a servir.
+    consumed_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity "INDEXES · email_verifications" as idxset_email_verifications <<INDEX_SET>> {
+  PK pk_email_verifications : (id) UNIQUE BTREE
+  UX ux_email_verifications_token_hash : (token_hash) UNIQUE BTREE
+  IX ix_email_verifications_user : (user_id, state_concept_id) BTREE
+}
+email_verifications .. idxset_email_verifications : indexed by
+
+' + v4.0.9 (REDESA CAN-IDENT) — Restablecimiento de contraseña.
+' Comparte forma con email_verifications pero NO significado, y por eso no
+' comparte tabla: consumir un token de verificación marca un correo como probado;
+' consumir uno de restablecimiento cambia una credencial y mata todas las
+' sesiones. En una sola tabla, un token emitido para lo primero serviría para lo
+' segundo — una escalada de privilegio con la forma de un ahorro de tabla.
+entity password_resets {
+  * id : uuid <<PK>>
+  --
+  * user_id : uuid <<FK>>
+  ' Identificador con el que se pidió el restablecimiento: correo o documento,
+  ' según por cuál se autentique el titular.
+  * external_subject : varchar
+  ' SHA-256 (hex) del token; el token en claro no se guarda en ninguna parte.
+  * token_hash : varchar <<UK>>
+  * state_concept_id : uuid <<FK>>
+  * expires_at : timestamptz
+    consumed_at : timestamptz
+  ' Origen de la solicitud, para auditar abuso del formulario público.
+    requested_ip : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity "INDEXES · password_resets" as idxset_password_resets <<INDEX_SET>> {
+  PK pk_password_resets : (id) UNIQUE BTREE
+  UX ux_password_resets_token_hash : (token_hash) UNIQUE BTREE
+  IX ix_password_resets_user_state : (user_id, state_concept_id) BTREE
+}
+password_resets .. idxset_password_resets : indexed by
+
+entity authentication_credentials {
+  * id : uuid <<PK>>
+  --
+  * user_id : uuid <<FK>>
+  * method_concept_id : uuid <<FK>>
+    external_subject : varchar
+    secret_hash : varchar
+    hash_algorithm_concept_id : uuid <<FK>>
+    public_key : text
+    identity_provider : varchar
+  * state_concept_id : uuid <<FK>>
+    last_used_at : timestamptz
+    expires_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity mfa_factors {
+  * id : uuid <<PK>>
+  --
+  * user_id : uuid <<FK>>
+  * factor_type_concept_id : uuid <<FK>>
+    label : varchar
+    secret_encrypted : text
+  * state_concept_id : uuid <<FK>>
+    verified_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity devices {
+  * id : uuid <<PK>>
+  --
+  * user_id : uuid <<FK>>
+    device_fingerprint : varchar <<UK>>
+    platform_concept_id : uuid <<FK>>
+    name : varchar
+    push_token_encrypted : text
+    trusted : boolean
+    last_seen_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity sessions {
+  * id : uuid <<PK>>
+  --
+  * user_id : uuid <<FK>>
+    device_id : uuid <<FK>>
+  * token_id : varchar <<UK>>
+    ip : inet
+    geo_location : varchar
+  * state_concept_id : uuid <<FK>>
+  * expires_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity refresh_tokens {
+  * id : uuid <<PK>>
+  --
+  * session_id : uuid <<FK>>
+  * token_hash : varchar <<UK>>
+  * state_concept_id : uuid <<FK>>
+    replaced_by_id : uuid <<FK>>
+  * expires_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity user_global_roles {
+  * id : uuid <<PK>>
+  --
+  * user_id : uuid <<FK>>
+  * role_concept_id : uuid <<FK>>
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity security_events <<LOG>> {
+  * id : uuid <<PK>>
+  --
+    user_id : uuid <<FK>>
+  * event_type_concept_id : uuid <<FK>>
+  * outcome_concept_id : uuid <<FK>>
+    ip : inet
+    detail_json : jsonb
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+users ||--o{ authentication_credentials
+users ||--o{ mfa_factors
+users ||--o{ devices
+users ||--o{ sessions
+devices |o--o{ sessions
+sessions ||--o{ refresh_tokens
+users ||--o{ user_global_roles
+users ||--o{ security_events
+
+note as DEP_diagram_01_iam
+  Connects to other modules via:
+  audit_log, clinical_access_grants, data_access_log, dsar_requests,
+  tenant_memberships, tracked_subjects, user_permission_grants,
+  user_profiles, user_role_assignments, users_history
+end note
+
+note as REC_SECURITY_EVENTS_diagram_01_iam
+  REC 3.7 — SCOPE OF security_events
+security_events is authentication/session-specific (login, MFA, token,
+lockout). The platform-wide, tamper-evident activity trail lives in
+audit.audit_log. Both are append-only; they are complementary, not
+duplicates. Correlate via user_id + recorded_at when reconstructing a
+security timeline.
+end note
+
+note as ACCOUNT_PERSON_BOUNDARY
+  ACCOUNT/PERSON BOUNDARY
+  iam.users is an authentication account. profiles.persons is the human identity.
+  profiles.person_account_links is optional and versioned. Never require a login
+  account to create a patient, newborn, emergency record, deceased person or
+  external practitioner. Authorization is evaluated on the account plus the
+  currently selected person/profile/tenant context.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · users" as idxset_users <<INDEX_SET>> {
+  PK pk_users : (id) UNIQUE BTREE
+  IX ix_users_status_concept_id : (status_concept_id) BTREE
+  IX ix_users_preferred_language_concept_id : (preferred_language_concept_id) BTREE
+  IX ix_users_residence_country_concept_id : (residence_country_concept_id) BTREE
+  IX ix_users_data_residency_region_concept_id : (data_residency_region_concept_id) BTREE
+  IX ix_users_mfa_status_concept_id : (mfa_status_concept_id) BTREE
+  IX ix_users_legal_basis_concept_id : (legal_basis_concept_id) BTREE
+  IX ix_users_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_users_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+users .. idxset_users : indexed by
+
+' + v4.0.9 (REDESA CAN-IDENT): ux_authentication_credentials_live_password_subject
+' impide dos credenciales de contraseña VIVAS para el mismo external_subject (correo
+' o documento). Sin él, dos altas concurrentes pasaban ambas el "¿ya existe?" bajo
+' READ COMMITTED y creaban dos cuentas para el mismo documento.
+' Es PARCIAL a propósito: una credencial revocada o expirada con el mismo sujeto no
+' debe bloquear un alta nueva. Y lleva los concept_id como UUID LITERALES —única
+' excepción a la regla de no hardcodear conceptos— porque el predicado de un índice
+' parcial debe ser inmutable y Postgres no admite subconsultas ahí. Son UUIDv5
+' deterministas sobre SALUD_UUID_NAMESPACE, iguales en todos los entornos:
+'   37da1281-cc62-5032-b598-1eb39dc46060 = método CRED_PASSWORD
+'   38a1d301-f40d-5b17-a695-5e6d605f8b19 = estado STATE_ACTIVE
+'   2e38dae4-c0c2-52ff-b1c9-a954ff880a38 = estado STATE_PENDING
+entity "INDEXES · authentication_credentials" as idxset_authentication_credentials <<INDEX_SET>> {
+  PK pk_authentication_credentials : (id) UNIQUE BTREE
+  IX ix_authentication_credentials_user_id : (user_id) BTREE
+  IX ix_authentication_credentials_method_concept_id : (method_concept_id) BTREE
+  IX ix_authentication_credentials_hash_algorithm_concept_id : (hash_algorithm_concept_id) BTREE
+  IX ix_authentication_credentials_state_concept_id : (state_concept_id) BTREE
+  IX ix_authentication_credentials_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_authentication_credentials_updated_by_user_id : (updated_by_user_id) BTREE
+  UX ux_authentication_credentials_live_password_subject : (external_subject) UNIQUE BTREE WHERE method_concept_id = '37da1281-cc62-5032-b598-1eb39dc46060' AND external_subject IS NOT NULL AND state_concept_id IN ('38a1d301-f40d-5b17-a695-5e6d605f8b19', '2e38dae4-c0c2-52ff-b1c9-a954ff880a38')
+}
+
+authentication_credentials .. idxset_authentication_credentials : indexed by
+
+entity "INDEXES · mfa_factors" as idxset_mfa_factors <<INDEX_SET>> {
+  PK pk_mfa_factors : (id) UNIQUE BTREE
+  IX ix_mfa_factors_user_id : (user_id) BTREE
+  IX ix_mfa_factors_factor_type_concept_id : (factor_type_concept_id) BTREE
+  IX ix_mfa_factors_state_concept_id : (state_concept_id) BTREE
+  IX ix_mfa_factors_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_mfa_factors_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+mfa_factors .. idxset_mfa_factors : indexed by
+
+entity "INDEXES · devices" as idxset_devices <<INDEX_SET>> {
+  PK pk_devices : (id) UNIQUE BTREE
+  UK uq_devices_device_fingerprint : (device_fingerprint) UNIQUE BTREE
+  IX ix_devices_user_id : (user_id) BTREE
+  IX ix_devices_platform_concept_id : (platform_concept_id) BTREE
+  IX ix_devices_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_devices_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+devices .. idxset_devices : indexed by
+
+entity "INDEXES · sessions" as idxset_sessions <<INDEX_SET>> {
+  PK pk_sessions : (id) UNIQUE BTREE
+  UK uq_sessions_token_id : (token_id) UNIQUE BTREE
+  IX ix_sessions_user_id : (user_id) BTREE
+  IX ix_sessions_device_id : (device_id) BTREE
+  IX ix_sessions_state_concept_id : (state_concept_id) BTREE
+  IX ix_sessions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_sessions_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_sessions_user_state_expiry : (user_id, state_concept_id, expires_at) BTREE
+}
+
+sessions .. idxset_sessions : indexed by
+
+entity "INDEXES · refresh_tokens" as idxset_refresh_tokens <<INDEX_SET>> {
+  PK pk_refresh_tokens : (id) UNIQUE BTREE
+  UK uq_refresh_tokens_token_hash : (token_hash) UNIQUE BTREE
+  IX ix_refresh_tokens_session_id : (session_id) BTREE
+  IX ix_refresh_tokens_state_concept_id : (state_concept_id) BTREE
+  IX ix_refresh_tokens_replaced_by_id : (replaced_by_id) BTREE
+  IX ix_refresh_tokens_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_refresh_tokens_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_refresh_tokens_session_state : (session_id, state_concept_id, expires_at) BTREE
+}
+
+refresh_tokens .. idxset_refresh_tokens : indexed by
+
+entity "INDEXES · user_global_roles" as idxset_user_global_roles <<INDEX_SET>> {
+  PK pk_user_global_roles : (id) UNIQUE BTREE
+  IX ix_user_global_roles_user_id : (user_id) BTREE
+  IX ix_user_global_roles_role_concept_id : (role_concept_id) BTREE
+  IX ix_user_global_roles_state_concept_id : (state_concept_id) BTREE
+  IX ix_user_global_roles_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_user_global_roles_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+user_global_roles .. idxset_user_global_roles : indexed by
+
+entity "INDEXES · security_events" as idxset_security_events <<INDEX_SET>> {
+  PK pk_security_events : (id) UNIQUE BTREE
+  IX ix_security_events_user_id : (user_id) BTREE
+  IX ix_security_events_event_type_concept_id : (event_type_concept_id) BTREE
+  IX ix_security_events_outcome_concept_id : (outcome_concept_id) BTREE
+  IX ix_security_events_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_security_events_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+security_events .. idxset_security_events : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+
+' ===== v4.0.6 (endurecimiento de seguridad) =====
+
+entity api_keys {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * name : varchar
+  * key_prefix : varchar
+  * key_hash : varchar
+  * hash_algorithm_concept_id : uuid <<FK>>
+    owner_user_id : uuid <<FK>>
+    service_principal_id : uuid <<FK>>
+    expires_at : timestamptz
+    last_used_at : timestamptz
+    last_used_ip : varchar
+    rate_limit_per_min : integer
+    ip_access_rule_id : uuid <<FK>>
+    revoked_at : timestamptz
+    revoked_by_user_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity api_key_scopes {
+  * id : uuid <<PK>>
+  --
+  * api_key_id : uuid <<FK>>
+  * scope_concept_id : uuid <<FK>>
+    resource : varchar
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity account_lockouts {
+  * id : uuid <<PK>>
+  --
+  * user_id : uuid <<FK>>
+    tenant_id : uuid <<FK>>
+  * reason_concept_id : uuid <<FK>>
+    failed_attempts : integer
+    locked_at : timestamptz
+    locked_until : timestamptz
+    unlocked_at : timestamptz
+    unlocked_by_user_id : uuid <<FK>>
+    source_ip : varchar
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' ===== v4.0.6 (endurecimiento de seguridad) ===== (index sets)
+
+entity "INDEXES · api_keys" as idxset_api_keys <<INDEX_SET>> {
+  PK pk_api_keys : (id) UNIQUE BTREE
+  UK uk_api_keys_key_prefix : (key_prefix) UNIQUE BTREE
+  IX ix_api_keys_tenant_id : (tenant_id) BTREE
+  IX ix_api_keys_owner_user_id : (owner_user_id) BTREE
+  IX ix_api_keys_service_principal_id : (service_principal_id) BTREE
+  IX ix_api_keys_status_concept_id : (status_concept_id) BTREE
+}
+api_keys .. idxset_api_keys : indexed by
+
+entity "INDEXES · api_key_scopes" as idxset_api_key_scopes <<INDEX_SET>> {
+  PK pk_api_key_scopes : (id) UNIQUE BTREE
+  IX ix_api_key_scopes_api_key_id : (api_key_id) BTREE
+  UK uk_api_key_scopes_key_scope : (api_key_id, scope_concept_id, resource) UNIQUE BTREE
+}
+api_key_scopes .. idxset_api_key_scopes : indexed by
+
+entity "INDEXES · account_lockouts" as idxset_account_lockouts <<INDEX_SET>> {
+  PK pk_account_lockouts : (id) UNIQUE BTREE
+  IX ix_account_lockouts_user_id : (user_id) BTREE
+  IX ix_account_lockouts_status_concept_id : (status_concept_id) BTREE
+  IX ix_account_lockouts_locked_until : (locked_until) BTREE
+}
+account_lockouts .. idxset_account_lockouts : indexed by
+
+' ===== v4.0.6 (endurecimiento de seguridad) ===== (relaciones)
+
+api_keys ||--o{ api_key_scopes
+
+users ||--o{ account_lockouts
+
+users ||--o{ api_keys
+
+@enduml
+

@@ -1,0 +1,545 @@
+@startuml SALUD_Module_47_education
+title Module 47 — Medical Education and Continuing Professional Development\n(schema: education)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_47_education.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_47_education
+  BUSINESS PURPOSE
+  A learning platform for doctors and staff (the "doctor courses" the clients asked for):
+  structured courses with modules and lessons, instructors, cohorts and enrollments,
+  progress tracking, assessments/quizzes with attempts and grading, completion
+  certificates, and accredited Continuing-Medical-Education (CME) credits tied to a
+  practitioner's specialties and jurisdiction licensing (module 05). Content is governed
+  and versioned; certificates are verifiable. Integrates with scheduling for live sessions
+  and payments for paid courses.
+end note
+
+entity courses {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * code : varchar <<UK>>
+  * title : varchar
+    description : text
+  * course_type_concept_id : uuid <<FK>>
+    specialty_concept_id : uuid <<FK>>
+    level_concept_id : uuid <<FK>>
+    language_concept_id : uuid <<FK>>
+    cover_file_id : uuid <<FK>>
+    is_accredited : boolean
+    cme_credit_hours : numeric
+    accrediting_body_concept_id : uuid <<FK>>
+    price : numeric
+    currency_concept_id : uuid <<FK>>
+    duration_minutes : integer
+  * current_version : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity course_versions {
+  * id : uuid <<PK>>
+  --
+  * course_id : uuid <<FK>>
+  * version : integer
+    changelog : text
+  * status_concept_id : uuid <<FK>>
+    published_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity course_modules {
+  * id : uuid <<PK>>
+  --
+  * course_id : uuid <<FK>>
+  * title : varchar
+    ordinal : integer
+    description : text
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity lessons {
+  * id : uuid <<PK>>
+  --
+  * course_module_id : uuid <<FK>>
+  * title : varchar
+  * content_type_concept_id : uuid <<FK>>
+    body_richtext_json : jsonb
+    media_file_id : uuid <<FK>>
+    external_url : text
+    duration_minutes : integer
+    ordinal : integer
+    is_preview : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity instructors {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+    practitioner_profile_id : uuid <<FK>>
+    user_id : uuid <<FK>>
+  * display_name : varchar
+    bio : text
+    credentials_text : varchar
+    photo_file_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity course_instructors {
+  * id : uuid <<PK>>
+  --
+  * course_id : uuid <<FK>>
+  * instructor_id : uuid <<FK>>
+  * role_concept_id : uuid <<FK>>
+    ordinal : integer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity course_cohorts {
+  * id : uuid <<PK>>
+  --
+  * course_id : uuid <<FK>>
+  * code : varchar
+  * delivery_mode_concept_id : uuid <<FK>>
+    start_date : date
+    end_date : date
+    capacity : integer
+    enrolled_count : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity enrollments {
+  * id : uuid <<PK>>
+  --
+  * course_id : uuid <<FK>>
+    cohort_id : uuid <<FK>>
+  * learner_type_concept_id : uuid <<FK>>
+  * learner_ref_id : uuid
+  * enrollment_source_concept_id : uuid <<FK>>
+    payment_intent_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    progress_percent : numeric
+    enrolled_at : timestamptz
+    completed_at : timestamptz
+    expires_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity lesson_progress <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * enrollment_id : uuid <<FK>>
+  * lesson_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    seconds_watched : integer
+    completion_percent : numeric
+    completed_at : timestamptz
+    occurred_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity assessments {
+  * id : uuid <<PK>>
+  --
+  * course_id : uuid <<FK>>
+    course_module_id : uuid <<FK>>
+  * title : varchar
+  * assessment_type_concept_id : uuid <<FK>>
+    passing_score : numeric
+    max_attempts : integer
+    time_limit_minutes : integer
+    is_graded : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity assessment_questions {
+  * id : uuid <<PK>>
+  --
+  * assessment_id : uuid <<FK>>
+  * question_type_concept_id : uuid <<FK>>
+  * prompt_text : text
+    options_json : jsonb
+    correct_answer_json : jsonb
+    points : numeric
+    ordinal : integer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity assessment_attempts {
+  * id : uuid <<PK>>
+  --
+  * assessment_id : uuid <<FK>>
+  * enrollment_id : uuid <<FK>>
+  * attempt_number : integer
+    score : numeric
+    passed : boolean
+    responses_json : jsonb
+    started_at : timestamptz
+    submitted_at : timestamptz
+    graded_by_user_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity certificates {
+  * id : uuid <<PK>>
+  --
+  * enrollment_id : uuid <<FK>>
+  * course_id : uuid <<FK>>
+  * certificate_number : varchar <<UK>>
+    learner_ref_id : uuid
+    cme_credits_awarded : numeric
+    issued_at : timestamptz
+    expires_at : timestamptz
+    verification_code : varchar <<UK>>
+    file_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity cme_credit_records {
+  * id : uuid <<PK>>
+  --
+  * practitioner_profile_id : uuid <<FK>>
+    certificate_id : uuid <<FK>>
+  * credit_hours : numeric
+  * accrediting_body_concept_id : uuid <<FK>>
+    specialty_concept_id : uuid <<FK>>
+    jurisdiction_concept_id : uuid <<FK>>
+    awarded_on : date
+    period_year : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity course_reviews {
+  * id : uuid <<PK>>
+  --
+  * course_id : uuid <<FK>>
+  * reviewer_ref_id : uuid
+  * rating : integer
+    review_text : text
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+courses ||--o{ course_versions
+courses ||--o{ course_modules
+course_modules ||--o{ lessons
+courses ||--o{ course_instructors
+instructors ||--o{ course_instructors
+courses ||--o{ course_cohorts
+courses ||--o{ enrollments
+course_cohorts |o--o{ enrollments
+enrollments ||--o{ lesson_progress
+lessons ||--o{ lesson_progress
+courses ||--o{ assessments
+assessments ||--o{ assessment_questions
+assessments ||--o{ assessment_attempts
+enrollments ||--o{ assessment_attempts
+enrollments ||--o{ certificates
+certificates ||--o{ cme_credit_records
+courses ||--o{ course_reviews
+
+note as DEP_diagram_47_education
+  Connects to other modules via:
+  directory.tenants, iam.users, profiles.health_practitioner_profiles (instructors,
+  learners, cme_credit_records), profiles.practitioner_specialties / jurisdiction_authorizations
+  (CME accreditation), common.files (media, certificates), payments.payment_intents (paid
+  courses), scheduling.appointment_bookings (live sessions), terminology.catalog_concepts.
+end note
+
+note as REC_DERIVED_diagram_47_education
+  REC 3.3 — DERIVED
+  enrollments.progress_percent and course_cohorts.enrolled_count are DERIVED from
+  lesson_progress / enrollments (trigger). certificates.cme_credits_awarded rolls up into
+  cme_credit_records per practitioner/period. lesson_progress is append-only.
+end note
+
+note as HARDENING_diagram_47_education
+  REC 3.4 — HARDENING (enforce at DDL)
+  - enrollments: partial UNIQUE(course_id, learner_type_concept_id, learner_ref_id) WHERE status IN ('active','completed').
+  - assessment_attempts: UNIQUE(assessment_id, enrollment_id, attempt_number); CHECK attempt_number <= assessments.max_attempts.
+  - certificates: UNIQUE(certificate_number), UNIQUE(verification_code).
+  - lesson_progress: append-only; index (enrollment_id, lesson_id, recorded_at DESC).
+  - (learner_type_concept_id, learner_ref_id) polymorphic -> value_set{patient,practitioner,staff,user} + trigger.
+end note
+
+note as VALUE_SETS_diagram_47_education
+  VALUE SETS (bind *_concept_id; do not hardcode)
+  course_type->vs_course_type{cme,onboarding,certification,workshop,microlearning};
+  level->vs_course_level{beginner,intermediate,advanced,expert};
+  content_type->vs_lesson_content{video,article,pdf,scorm,quiz,live_session};
+  delivery_mode->vs_delivery_mode{self_paced,cohort,live,blended};
+  learner_type->vs_learner_type{practitioner,staff,patient,user};
+  enrollment_source->vs_enrollment_source{self,assigned,purchased,partner};
+  assessment_type->vs_assessment_type{quiz,exam,assignment,survey};
+  question_type->vs_question_type{single_choice,multiple_choice,true_false,short_answer,matching};
+  role(instructor)->vs_instructor_role{lead,co,guest,assistant};
+  accrediting_body->vs_accrediting_body{...jurisdictional CME bodies...};
+  status/state->vs_lifecycle_state.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · courses" as idxset_courses <<INDEX_SET>> {
+  PK pk_courses : (id) UNIQUE BTREE
+  UK uq_courses_code : (code) UNIQUE BTREE
+  IX ix_courses_tenant_id : (tenant_id) BTREE
+  IX ix_courses_course_type_concept_id : (course_type_concept_id) BTREE
+  IX ix_courses_specialty_concept_id : (specialty_concept_id) BTREE
+  IX ix_courses_level_concept_id : (level_concept_id) BTREE
+  IX ix_courses_language_concept_id : (language_concept_id) BTREE
+  IX ix_courses_cover_file_id : (cover_file_id) BTREE
+  IX ix_courses_accrediting_body_concept_id : (accrediting_body_concept_id) BTREE
+  IX ix_courses_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_courses_status_concept_id : (status_concept_id) BTREE
+  IX ix_courses_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_courses_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_courses_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  GIN gin_courses_search : to_tsvector('simple', concat_ws(' ', title, description)) GIN
+}
+
+courses .. idxset_courses : indexed by
+
+entity "INDEXES · course_versions" as idxset_course_versions <<INDEX_SET>> {
+  PK pk_course_versions : (id) UNIQUE BTREE
+  IX ix_course_versions_course_id : (course_id) BTREE
+  IX ix_course_versions_status_concept_id : (status_concept_id) BTREE
+  IX ix_course_versions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_course_versions_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_course_versions_course_id_version : (course_id, version) UNIQUE BTREE
+}
+
+course_versions .. idxset_course_versions : indexed by
+
+entity "INDEXES · course_modules" as idxset_course_modules <<INDEX_SET>> {
+  PK pk_course_modules : (id) UNIQUE BTREE
+  IX ix_course_modules_course_id : (course_id) BTREE
+  IX ix_course_modules_status_concept_id : (status_concept_id) BTREE
+  IX ix_course_modules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_course_modules_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_course_modules_search : to_tsvector('simple', concat_ws(' ', title, description)) GIN
+}
+
+course_modules .. idxset_course_modules : indexed by
+
+entity "INDEXES · lessons" as idxset_lessons <<INDEX_SET>> {
+  PK pk_lessons : (id) UNIQUE BTREE
+  IX ix_lessons_course_module_id : (course_module_id) BTREE
+  IX ix_lessons_content_type_concept_id : (content_type_concept_id) BTREE
+  IX ix_lessons_media_file_id : (media_file_id) BTREE
+  IX ix_lessons_status_concept_id : (status_concept_id) BTREE
+  IX ix_lessons_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_lessons_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_lessons_search : to_tsvector('simple', concat_ws(' ', title)) GIN
+}
+
+lessons .. idxset_lessons : indexed by
+
+entity "INDEXES · instructors" as idxset_instructors <<INDEX_SET>> {
+  PK pk_instructors : (id) UNIQUE BTREE
+  IX ix_instructors_tenant_id : (tenant_id) BTREE
+  IX ix_instructors_practitioner_profile_id : (practitioner_profile_id) BTREE
+  IX ix_instructors_user_id : (user_id) BTREE
+  IX ix_instructors_photo_file_id : (photo_file_id) BTREE
+  IX ix_instructors_status_concept_id : (status_concept_id) BTREE
+  IX ix_instructors_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_instructors_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_instructors_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  GIN gin_instructors_search : to_tsvector('simple', concat_ws(' ', display_name)) GIN
+}
+
+instructors .. idxset_instructors : indexed by
+
+entity "INDEXES · course_instructors" as idxset_course_instructors <<INDEX_SET>> {
+  PK pk_course_instructors : (id) UNIQUE BTREE
+  IX ix_course_instructors_course_id : (course_id) BTREE
+  IX ix_course_instructors_instructor_id : (instructor_id) BTREE
+  IX ix_course_instructors_role_concept_id : (role_concept_id) BTREE
+  IX ix_course_instructors_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_course_instructors_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+course_instructors .. idxset_course_instructors : indexed by
+
+entity "INDEXES · course_cohorts" as idxset_course_cohorts <<INDEX_SET>> {
+  PK pk_course_cohorts : (id) UNIQUE BTREE
+  IX ix_course_cohorts_course_id : (course_id) BTREE
+  IX ix_course_cohorts_delivery_mode_concept_id : (delivery_mode_concept_id) BTREE
+  IX ix_course_cohorts_status_concept_id : (status_concept_id) BTREE
+  IX ix_course_cohorts_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_course_cohorts_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_course_cohorts_search : to_tsvector('simple', concat_ws(' ', code)) GIN
+}
+
+course_cohorts .. idxset_course_cohorts : indexed by
+
+entity "INDEXES · enrollments" as idxset_enrollments <<INDEX_SET>> {
+  PK pk_enrollments : (id) UNIQUE BTREE
+  IX ix_enrollments_course_id : (course_id) BTREE
+  IX ix_enrollments_cohort_id : (cohort_id) BTREE
+  IX ix_enrollments_learner_type_concept_id : (learner_type_concept_id) BTREE
+  IX ix_enrollments_enrollment_source_concept_id : (enrollment_source_concept_id) BTREE
+  IX ix_enrollments_payment_intent_id : (payment_intent_id) BTREE
+  IX ix_enrollments_status_concept_id : (status_concept_id) BTREE
+  IX ix_enrollments_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_enrollments_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+enrollments .. idxset_enrollments : indexed by
+
+entity "INDEXES · lesson_progress" as idxset_lesson_progress <<INDEX_SET>> {
+  PK pk_lesson_progress : (id) UNIQUE BTREE
+  IX ix_lesson_progress_enrollment_id : (enrollment_id) BTREE
+  IX ix_lesson_progress_lesson_id : (lesson_id) BTREE
+  IX ix_lesson_progress_status_concept_id : (status_concept_id) BTREE
+  IX ix_lesson_progress_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_lesson_progress_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+lesson_progress .. idxset_lesson_progress : indexed by
+
+entity "INDEXES · assessments" as idxset_assessments <<INDEX_SET>> {
+  PK pk_assessments : (id) UNIQUE BTREE
+  IX ix_assessments_course_id : (course_id) BTREE
+  IX ix_assessments_course_module_id : (course_module_id) BTREE
+  IX ix_assessments_assessment_type_concept_id : (assessment_type_concept_id) BTREE
+  IX ix_assessments_status_concept_id : (status_concept_id) BTREE
+  IX ix_assessments_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_assessments_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_assessments_search : to_tsvector('simple', concat_ws(' ', title)) GIN
+}
+
+assessments .. idxset_assessments : indexed by
+
+entity "INDEXES · assessment_questions" as idxset_assessment_questions <<INDEX_SET>> {
+  PK pk_assessment_questions : (id) UNIQUE BTREE
+  IX ix_assessment_questions_assessment_id : (assessment_id) BTREE
+  IX ix_assessment_questions_question_type_concept_id : (question_type_concept_id) BTREE
+  IX ix_assessment_questions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_assessment_questions_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+assessment_questions .. idxset_assessment_questions : indexed by
+
+entity "INDEXES · assessment_attempts" as idxset_assessment_attempts <<INDEX_SET>> {
+  PK pk_assessment_attempts : (id) UNIQUE BTREE
+  IX ix_assessment_attempts_assessment_id : (assessment_id) BTREE
+  IX ix_assessment_attempts_enrollment_id : (enrollment_id) BTREE
+  IX ix_assessment_attempts_graded_by_user_id : (graded_by_user_id) BTREE
+  IX ix_assessment_attempts_status_concept_id : (status_concept_id) BTREE
+  IX ix_assessment_attempts_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_assessment_attempts_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_assessment_attempts_assessment_id_attempt_number : (assessment_id, attempt_number) UNIQUE BTREE
+}
+
+assessment_attempts .. idxset_assessment_attempts : indexed by
+
+entity "INDEXES · certificates" as idxset_certificates <<INDEX_SET>> {
+  PK pk_certificates : (id) UNIQUE BTREE
+  UK uq_certificates_certificate_number : (certificate_number) UNIQUE BTREE
+  UK uq_certificates_verification_code : (verification_code) UNIQUE BTREE
+  IX ix_certificates_enrollment_id : (enrollment_id) BTREE
+  IX ix_certificates_course_id : (course_id) BTREE
+  IX ix_certificates_file_id : (file_id) BTREE
+  IX ix_certificates_status_concept_id : (status_concept_id) BTREE
+  IX ix_certificates_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_certificates_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+certificates .. idxset_certificates : indexed by
+
+entity "INDEXES · cme_credit_records" as idxset_cme_credit_records <<INDEX_SET>> {
+  PK pk_cme_credit_records : (id) UNIQUE BTREE
+  IX ix_cme_credit_records_practitioner_profile_id : (practitioner_profile_id) BTREE
+  IX ix_cme_credit_records_certificate_id : (certificate_id) BTREE
+  IX ix_cme_credit_records_accrediting_body_concept_id : (accrediting_body_concept_id) BTREE
+  IX ix_cme_credit_records_specialty_concept_id : (specialty_concept_id) BTREE
+  IX ix_cme_credit_records_jurisdiction_concept_id : (jurisdiction_concept_id) BTREE
+  IX ix_cme_credit_records_status_concept_id : (status_concept_id) BTREE
+  IX ix_cme_credit_records_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_cme_credit_records_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+cme_credit_records .. idxset_cme_credit_records : indexed by
+
+entity "INDEXES · course_reviews" as idxset_course_reviews <<INDEX_SET>> {
+  PK pk_course_reviews : (id) UNIQUE BTREE
+  IX ix_course_reviews_course_id : (course_id) BTREE
+  IX ix_course_reviews_status_concept_id : (status_concept_id) BTREE
+  IX ix_course_reviews_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_course_reviews_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_course_reviews_search : to_tsvector('simple', concat_ws(' ', review_text)) GIN
+}
+
+course_reviews .. idxset_course_reviews : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

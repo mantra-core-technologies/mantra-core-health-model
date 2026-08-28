@@ -1,0 +1,462 @@
+@startuml SALUD_Module_62_cross_store_consistency
+title Module 62 — Outbox Projection, Reconciliation and Deletion Propagation\n(control plane: PostgreSQL consistency metadata)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+note as BIZ_cross_store_consistency
+  BUSINESS PURPOSE
+  Guarantees that derived NoSQL/search/cache/vector/object projections can be rebuilt, reconciled, repaired and deleted without dual-write inconsistency.
+  All domain writes commit only to PostgreSQL plus outbox; persistent workers update secondary stores idempotently.
+end note
+
+entity "messaging.outbox_events" as messaging_outbox_events <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "directory.tenants" as directory_tenants <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "polyglot_storage.dataset_definitions" as polyglot_dataset_definitions <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "audit.audit_events" as audit_audit_events <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity projection_definitions <<CONSISTENCY_CONTROL>> {
+  * id : uuid <<PK>>
+  * code : varchar
+  * source_dataset_id : uuid
+  * target_dataset_id : uuid
+  * projection_version : varchar
+  * delivery_semantics : varchar
+  * transformation_ref : varchar
+  * state : varchar
+  * created_at : timestamptz
+}
+
+entity projection_subscriptions <<CONSISTENCY_CONTROL>> {
+  * id : uuid <<PK>>
+  * projection_definition_id : uuid
+  * source_event_type : varchar
+  * consumer_code : varchar
+  * target_backend_code : varchar
+  * concurrency_limit : integer
+  * retry_policy_json : jsonb
+  * dead_letter_enabled : boolean
+  * state : varchar
+}
+
+entity projection_consumers <<CONSISTENCY_CONTROL>> {
+  * id : uuid <<PK>>
+  * code : varchar
+  * service_name : varchar
+  * deployment_region : varchar
+  * consumer_group : varchar
+  * heartbeat_at : timestamptz
+  * state : varchar
+}
+
+entity projection_checkpoints <<CONSISTENCY_CONTROL>> {
+  * id : uuid <<PK>>
+  * projection_subscription_id : uuid
+  * tenant_id : uuid
+  * partition_key : varchar
+  * source_position : varchar
+  * source_event_id : uuid
+  * target_version : bigint
+  * checkpointed_at : timestamptz
+}
+
+entity projection_delivery_attempts <<CONSISTENCY_CONTROL>> {
+  * id : uuid <<PK>>
+  * projection_subscription_id : uuid
+  * outbox_event_id : uuid
+  * tenant_id : uuid
+  * attempt_number : integer
+  * idempotency_key : varchar
+  * payload_hash : varchar
+  * status : varchar
+  * started_at : timestamptz
+  * completed_at : timestamptz
+    error_code : varchar
+}
+
+entity projection_dead_letters <<CONSISTENCY_CONTROL>> {
+  * id : uuid <<PK>>
+  * projection_delivery_attempt_id : uuid
+  * tenant_id : uuid
+  * reason_code : varchar
+  * payload_object_id : uuid
+  * state : varchar
+  * created_at : timestamptz
+  * resolved_at : timestamptz
+}
+
+entity reconciliation_runs <<CONSISTENCY_CONTROL>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * dataset_id : uuid
+  * source_backend_code : varchar
+  * target_backend_code : varchar
+  * reconciliation_scope_json : jsonb
+  * status : varchar
+  * started_at : timestamptz
+  * completed_at : timestamptz
+}
+
+entity reconciliation_items <<CONSISTENCY_CONTROL>> {
+  * id : uuid <<PK>>
+  * reconciliation_run_id : uuid
+  * canonical_entity_id : uuid
+  * canonical_version : bigint
+  * target_document_id : varchar
+  * target_version : varchar
+  * canonical_hash : varchar
+  * target_hash : varchar
+  * result : varchar
+  * detected_at : timestamptz
+}
+
+entity projection_drift_events <<CONSISTENCY_CONTROL>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * dataset_id : uuid
+  * canonical_entity_id : uuid
+  * drift_type : varchar
+  * severity : varchar
+  * canonical_version : bigint
+  * target_version : varchar
+  * reconciliation_item_id : uuid
+  * status : varchar
+  * detected_at : timestamptz
+}
+
+entity projection_repair_jobs <<CONSISTENCY_CONTROL>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * projection_drift_event_id : uuid
+  * repair_action : varchar
+  * idempotency_key : varchar
+  * status : varchar
+  * requested_at : timestamptz
+  * completed_at : timestamptz
+}
+
+entity deletion_requests <<CONSISTENCY_CONTROL>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * subject_type : varchar
+  * subject_id : uuid
+  * reason_code : varchar
+  * legal_basis_code : varchar
+  * requested_by_user_id : uuid
+  * requested_at : timestamptz
+  * state : varchar
+  * due_at : timestamptz
+}
+
+entity deletion_targets <<CONSISTENCY_CONTROL>> {
+  * id : uuid <<PK>>
+  * deletion_request_id : uuid
+  * dataset_id : uuid
+  * backend_code : varchar
+  * target_locator : varchar
+  * deletion_mode : varchar
+  * blocked_by_legal_hold : boolean
+  * state : varchar
+}
+
+entity deletion_executions <<CONSISTENCY_CONTROL>> {
+  * id : uuid <<PK>>
+  * deletion_target_id : uuid
+  * attempt_number : integer
+  * idempotency_key : varchar
+  * status : varchar
+  * provider_receipt : varchar
+  * started_at : timestamptz
+  * completed_at : timestamptz
+    error_code : varchar
+}
+
+entity deletion_verifications <<CONSISTENCY_CONTROL>> {
+  * id : uuid <<PK>>
+  * deletion_target_id : uuid
+  * verification_method : varchar
+  * verified_absent : boolean
+  * residual_reference_count : integer
+  * evidence_object_id : uuid
+  * verified_at : timestamptz
+}
+
+entity reindex_jobs <<CONSISTENCY_CONTROL>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * dataset_id : uuid
+  * source_alias : varchar
+  * target_index : varchar
+  * target_schema_version : varchar
+  * status : varchar
+  * processed_count : bigint
+  * failed_count : bigint
+  * started_at : timestamptz
+  * completed_at : timestamptz
+}
+
+entity cache_invalidation_jobs <<CONSISTENCY_CONTROL>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * dataset_id : uuid
+  * entity_id : uuid
+  * entity_version : bigint
+  * cache_scope : varchar
+  * status : varchar
+  * created_at : timestamptz
+  * completed_at : timestamptz
+}
+
+entity data_movement_jobs <<CONSISTENCY_CONTROL>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * dataset_id : uuid
+  * source_placement_id : uuid
+  * target_placement_id : uuid
+  * movement_mode : varchar
+  * manifest_hash : varchar
+  * status : varchar
+  * started_at : timestamptz
+  * completed_at : timestamptz
+}
+
+entity schema_migration_jobs <<CONSISTENCY_CONTROL>> {
+  * id : uuid <<PK>>
+  * dataset_id : uuid
+  * collection_definition_id : uuid
+  * from_schema_version : varchar
+  * to_schema_version : varchar
+  * migration_strategy : varchar
+  * status : varchar
+  * migrated_count : bigint
+  * failed_count : bigint
+  * started_at : timestamptz
+  * completed_at : timestamptz
+}
+
+entity archive_jobs <<CONSISTENCY_CONTROL>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * dataset_id : uuid
+  * retention_cutoff : timestamptz
+  * archive_manifest_object_id : uuid
+  * status : varchar
+  * archived_count : bigint
+  * deleted_hot_count : bigint
+  * started_at : timestamptz
+  * completed_at : timestamptz
+}
+
+entity store_consistency_slos <<CONSISTENCY_CONTROL>> {
+  * id : uuid <<PK>>
+  * dataset_id : uuid
+  * target_backend_code : varchar
+  * max_projection_lag_seconds : integer
+  * max_drift_rate : numeric(8,6)
+  * reconciliation_interval_minutes : integer
+  * alert_policy_code : varchar
+  * state : varchar
+}
+
+
+projection_definitions -- projection_subscriptions : subscribed by
+projection_subscriptions -- projection_checkpoints : checkpointed at
+projection_subscriptions -- projection_delivery_attempts : delivers
+messaging_outbox_events -- projection_delivery_attempts : source
+projection_delivery_attempts -- projection_dead_letters : dead letters
+reconciliation_runs -- reconciliation_items : contains
+reconciliation_items -- projection_drift_events : detects
+projection_drift_events -- projection_repair_jobs : repaired by
+deletion_requests -- deletion_targets : expands to
+deletion_targets -- deletion_executions : executes
+deletion_targets -- deletion_verifications : verifies
+polyglot_dataset_definitions -- store_consistency_slos : governed by
+
+package "Physical Indexes and Access Patterns" {
+entity "INDEXES · projection_definitions" as idxset_projection_definitions <<INDEX_SET>> {
+  PK pk_projection_definitions : (id)
+  UK uq_projection_definition_version : (code, projection_version)
+  IX ix_projection_definition_datasets : (source_dataset_id, target_dataset_id, state)
+}
+
+projection_definitions .. idxset_projection_definitions : indexed by
+
+entity "INDEXES · projection_subscriptions" as idxset_projection_subscriptions <<INDEX_SET>> {
+  PK pk_projection_subscriptions : (id)
+  UK uq_projection_subscription_consumer_event : (projection_definition_id, source_event_type, consumer_code)
+  IX ix_projection_subscription_state : (state, target_backend_code)
+}
+
+projection_subscriptions .. idxset_projection_subscriptions : indexed by
+
+entity "INDEXES · projection_consumers" as idxset_projection_consumers <<INDEX_SET>> {
+  PK pk_projection_consumers : (id)
+  UK uq_projection_consumer_code_region : (code, deployment_region)
+  IX ix_projection_consumer_heartbeat : (state, heartbeat_at ASC)
+}
+
+projection_consumers .. idxset_projection_consumers : indexed by
+
+entity "INDEXES · projection_checkpoints" as idxset_projection_checkpoints <<INDEX_SET>> {
+  PK pk_projection_checkpoints : (id)
+  UK uq_projection_checkpoint_partition : (projection_subscription_id, tenant_id, partition_key)
+  IX ix_projection_checkpoint_event : (source_event_id)
+  IX ix_projection_checkpoint_time : (checkpointed_at DESC)
+}
+
+projection_checkpoints .. idxset_projection_checkpoints : indexed by
+
+entity "INDEXES · projection_delivery_attempts" as idxset_projection_delivery_attempts <<INDEX_SET>> {
+  PK pk_projection_delivery_attempts : (id)
+  UK uq_projection_delivery_attempt : (projection_subscription_id, outbox_event_id, attempt_number)
+  UK uq_projection_delivery_idem : (projection_subscription_id, idempotency_key)
+  IX ix_projection_delivery_status : (tenant_id, status, started_at ASC)
+}
+
+projection_delivery_attempts .. idxset_projection_delivery_attempts : indexed by
+
+entity "INDEXES · projection_dead_letters" as idxset_projection_dead_letters <<INDEX_SET>> {
+  PK pk_projection_dead_letters : (id)
+  UK uq_projection_dead_letter_attempt : (projection_delivery_attempt_id)
+  IX ix_projection_dead_letter_state : (tenant_id, state, created_at ASC)
+}
+
+projection_dead_letters .. idxset_projection_dead_letters : indexed by
+
+entity "INDEXES · reconciliation_runs" as idxset_reconciliation_runs <<INDEX_SET>> {
+  PK pk_reconciliation_runs : (id)
+  IX ix_reconciliation_run_status : (tenant_id, status, started_at ASC)
+  IX ix_reconciliation_run_dataset : (dataset_id, started_at DESC)
+}
+
+reconciliation_runs .. idxset_reconciliation_runs : indexed by
+
+entity "INDEXES · reconciliation_items" as idxset_reconciliation_items <<INDEX_SET>> {
+  PK pk_reconciliation_items : (id)
+  UK uq_reconciliation_item_entity : (reconciliation_run_id, canonical_entity_id)
+  IX ix_reconciliation_item_result : (reconciliation_run_id, result)
+}
+
+reconciliation_items .. idxset_reconciliation_items : indexed by
+
+entity "INDEXES · projection_drift_events" as idxset_projection_drift_events <<INDEX_SET>> {
+  PK pk_projection_drift_events : (id)
+  UK uq_projection_drift_active : (tenant_id, dataset_id, canonical_entity_id, drift_type, status)
+  IX ix_projection_drift_severity : (tenant_id, status, severity, detected_at ASC)
+}
+
+projection_drift_events .. idxset_projection_drift_events : indexed by
+
+entity "INDEXES · projection_repair_jobs" as idxset_projection_repair_jobs <<INDEX_SET>> {
+  PK pk_projection_repair_jobs : (id)
+  UK uq_projection_repair_idem : (idempotency_key)
+  IX ix_projection_repair_status : (tenant_id, status, requested_at ASC)
+}
+
+projection_repair_jobs .. idxset_projection_repair_jobs : indexed by
+
+entity "INDEXES · deletion_requests" as idxset_deletion_requests <<INDEX_SET>> {
+  PK pk_deletion_requests : (id)
+  IX ix_deletion_request_state_due : (tenant_id, state, due_at ASC)
+  IX ix_deletion_request_subject : (tenant_id, subject_type, subject_id, requested_at DESC)
+}
+
+deletion_requests .. idxset_deletion_requests : indexed by
+
+entity "INDEXES · deletion_targets" as idxset_deletion_targets <<INDEX_SET>> {
+  PK pk_deletion_targets : (id)
+  UK uq_deletion_target_dataset_backend : (deletion_request_id, dataset_id, backend_code, target_locator)
+  IX ix_deletion_target_state : (state, blocked_by_legal_hold)
+}
+
+deletion_targets .. idxset_deletion_targets : indexed by
+
+entity "INDEXES · deletion_executions" as idxset_deletion_executions <<INDEX_SET>> {
+  PK pk_deletion_executions : (id)
+  UK uq_deletion_execution_attempt : (deletion_target_id, attempt_number)
+  UK uq_deletion_execution_idem : (idempotency_key)
+  IX ix_deletion_execution_status : (status, started_at ASC)
+}
+
+deletion_executions .. idxset_deletion_executions : indexed by
+
+entity "INDEXES · deletion_verifications" as idxset_deletion_verifications <<INDEX_SET>> {
+  PK pk_deletion_verifications : (id)
+  IX ix_deletion_verification_target : (deletion_target_id, verified_at DESC)
+  IX ix_deletion_verification_residual : (verified_absent, residual_reference_count)
+}
+
+deletion_verifications .. idxset_deletion_verifications : indexed by
+
+entity "INDEXES · reindex_jobs" as idxset_reindex_jobs <<INDEX_SET>> {
+  PK pk_reindex_jobs : (id)
+  IX ix_reindex_job_status : (tenant_id, status, started_at ASC)
+  UK uq_reindex_target_index : (target_index)
+}
+
+reindex_jobs .. idxset_reindex_jobs : indexed by
+
+entity "INDEXES · cache_invalidation_jobs" as idxset_cache_invalidation_jobs <<INDEX_SET>> {
+  PK pk_cache_invalidation_jobs : (id)
+  UK uq_cache_invalidation_version : (tenant_id, dataset_id, entity_id, entity_version, cache_scope)
+  IX ix_cache_invalidation_status : (status, created_at ASC)
+}
+
+cache_invalidation_jobs .. idxset_cache_invalidation_jobs : indexed by
+
+entity "INDEXES · data_movement_jobs" as idxset_data_movement_jobs <<INDEX_SET>> {
+  PK pk_data_movement_jobs : (id)
+  UK uq_data_movement_manifest : (tenant_id, dataset_id, manifest_hash)
+  IX ix_data_movement_status : (tenant_id, status, started_at ASC)
+}
+
+data_movement_jobs .. idxset_data_movement_jobs : indexed by
+
+entity "INDEXES · schema_migration_jobs" as idxset_schema_migration_jobs <<INDEX_SET>> {
+  PK pk_schema_migration_jobs : (id)
+  UK uq_schema_migration_versions : (collection_definition_id, from_schema_version, to_schema_version)
+  IX ix_schema_migration_status : (status, started_at ASC)
+}
+
+schema_migration_jobs .. idxset_schema_migration_jobs : indexed by
+
+entity "INDEXES · archive_jobs" as idxset_archive_jobs <<INDEX_SET>> {
+  PK pk_archive_jobs : (id)
+  UK uq_archive_job_cutoff : (tenant_id, dataset_id, retention_cutoff)
+  IX ix_archive_job_status : (status, started_at ASC)
+}
+
+archive_jobs .. idxset_archive_jobs : indexed by
+
+entity "INDEXES · store_consistency_slos" as idxset_store_consistency_slos <<INDEX_SET>> {
+  PK pk_store_consistency_slos : (id)
+  UK uq_store_consistency_slo : (dataset_id, target_backend_code)
+  IX ix_store_consistency_state : (state, target_backend_code)
+}
+
+store_consistency_slos .. idxset_store_consistency_slos : indexed by
+
+}
+
+
+note as INDEX_POLICY_cross_store_consistency
+  INDEX AND ACCESS-PATTERN POLICY
+  - Delivery is at least once; target writes are idempotent by event id, entity version and payload hash.
+  - Checkpoints are advanced only after the target write is durable.
+  - Reconciliation compares canonical and target hashes and creates explicit drift events.
+  - Deletion is complete only after every target is verified absent or explicitly blocked by legal hold.
+end note
+
+@enduml

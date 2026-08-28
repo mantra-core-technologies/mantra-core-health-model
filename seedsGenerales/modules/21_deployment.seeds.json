@@ -1,0 +1,172 @@
+{
+  "$schema": "../schemas/module-seed.schema.json",
+  "module": {
+    "number": 21,
+    "code": "deployment",
+    "title": "Deployment, Data Centers and Regional Topology",
+    "source_file": "modules/diagram_21_deployment.puml",
+    "source_sha256": "53a5d12b4fdf1572dc7ce644e2cfd439d4700cd60128e33d28673cb2030dc90b",
+    "source_model_version": "4.0.9",
+    "requested_release_label": "4.0.9",
+    "business_purpose": "Datos de arranque y escenarios sintéticos profundos para Deployment, Data Centers and Regional Topology.",
+    "seed_revision": "2.5.0-v4.1.4"
+  },
+  "environment_policy": {
+    "boot": {
+      "allowed_environments": [
+        "production",
+        "development",
+        "test",
+        "staging"
+      ],
+      "execution_order": 1,
+      "idempotency": "upsert_by_stable_natural_key_or_deterministic_uuid",
+      "contains_credentials": false,
+      "contains_real_personal_data": false
+    },
+    "mock": {
+      "allowed_environments": [
+        "development",
+        "test",
+        "qa",
+        "staging"
+      ],
+      "blocked_environments": [
+        "production"
+      ],
+      "execution_order": 2,
+      "hard_fail_when_node_env_production": true,
+      "synthetic_data_domain": "example.invalid",
+      "contains_real_personal_data": false
+    }
+  },
+  "boot": {
+    "load_order": [],
+    "record_count": 0,
+    "records": {},
+    "entity_seed_policies": [],
+    "summary": {
+      "record_count": 0,
+      "entity_count": 0,
+      "populated_entity_count": 0,
+      "scenario_count": null,
+      "seed_revision": "2.0.0-enhanced"
+    },
+    "production_policy": {
+      "safe_for_production": true,
+      "contains_business_transactions": false,
+      "contains_real_personal_data": false,
+      "contains_embedded_secrets": false,
+      "upsert_required": true,
+      "stable_identity_required": true,
+      "empty_boot_is_intentional": true,
+      "empty_reason": "El módulo no posee catálogos o configuración global segura; sus registros nacen del onboarding, la operación clínica o transacciones reales."
+    }
+  },
+  "mock": {
+    "load_order": [],
+    "record_count": 0,
+    "records": {},
+    "summary": {
+      "record_count": 0,
+      "entity_count": 0,
+      "populated_entity_count": 0,
+      "scenario_count": 0,
+      "seed_revision": "2.0.0-enhanced"
+    },
+    "scenario_coverage": {
+      "happy_path": true,
+      "validation_error": true,
+      "permission_denied": true,
+      "idempotent_retry": true,
+      "reversal_or_cancellation": true,
+      "audit_trace": true,
+      "synthetic_only": true,
+      "production_hard_fail_required": true
+    }
+  },
+  "integrity_contract": {
+    "stable_ids": true,
+    "timestamps_are_deterministic": true,
+    "secrets_must_be_injected_externally": true,
+    "mock_must_fail_in_production": true,
+    "views_are_never_inserted": true,
+    "reference_only_entities_are_never_inserted_by_this_module": true
+  },
+  "quality_profile": {
+    "revision": "2.0.0-enhanced",
+    "strategy": "domain-aware deterministic catalogs plus connected synthetic scenarios",
+    "boot_scope": "catálogos, políticas, plantillas y configuración segura sin transacciones empresariales ficticias",
+    "mock_scope": "escenarios enlazados de éxito, error, borde, reversión, auditoría y recuperación",
+    "quality_gates": [
+      "UUID determinístico",
+      "idempotencia por clave estable",
+      "sin secretos",
+      "mock prohibido en producción",
+      "campos obligatorios presentes",
+      "FK resolubles",
+      "fechas coherentes",
+      "valores de dominio no genéricos"
+    ],
+    "scenario_catalog": []
+  },
+  "non_persistent_blueprint": {
+    "kind": "deployment_blueprint",
+    "persistence": "none",
+    "reason": "La topología se materializa mediante IaC y configuración segura, no mediante tablas de este módulo.",
+    "production_boot_configuration": {
+      "regional_cell": {
+        "ingress": [
+          "api-gateway",
+          "mtls",
+          "oidc-mfa"
+        ],
+        "application": [
+          "stateless-api",
+          "persistent-workers",
+          "fhir-gateway",
+          "dicomweb-gateway"
+        ],
+        "data": [
+          "postgresql-writer",
+          "read-replicas",
+          "durable-outbox"
+        ],
+        "binary": [
+          "versioned-object-storage",
+          "pacs-vna",
+          "worm-audit-vault"
+        ],
+        "security": [
+          "regional-kms-hsm",
+          "secret-manager",
+          "siem"
+        ],
+        "observability": [
+          "metrics",
+          "phi-redacted-logs",
+          "distributed-traces"
+        ],
+        "recovery": [
+          "encrypted-backup-vault",
+          "automated-restore-tests"
+        ]
+      },
+      "controls": {
+        "phi_cross_region_default": "deny",
+        "tls_required": true,
+        "backup_encryption_required": true,
+        "restore_test_required": true,
+        "logs_phi_redaction_required": true,
+        "secrets_in_code_allowed": false
+      },
+      "required_environment_profiles": [
+        "production",
+        "staging",
+        "qa",
+        "development",
+        "test"
+      ]
+    }
+  }
+}

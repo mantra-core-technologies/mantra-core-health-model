@@ -1,0 +1,199 @@
+{
+  "$schema": "../schemas/module-seed.schema.json",
+  "module": {
+    "number": 0,
+    "code": "platform",
+    "title": "SALUD v3.9 — Canonical Platform and Polyglot Data Architecture",
+    "source_file": "modules/diagram_00_platform.puml",
+    "source_sha256": "7fc8f5a47c43a5728be48ae738e0b10710665f10584c73ad6ef3c8854cef488d",
+    "source_model_version": "4.0.9",
+    "requested_release_label": "4.0.9",
+    "business_purpose": "Datos de arranque y escenarios sintéticos profundos para SALUD v3.9 — Canonical Platform and Polyglot Data Architecture.",
+    "seed_revision": "2.5.0-v4.1.4"
+  },
+  "environment_policy": {
+    "boot": {
+      "allowed_environments": [
+        "production",
+        "development",
+        "test",
+        "staging"
+      ],
+      "execution_order": 1,
+      "idempotency": "upsert_by_stable_natural_key_or_deterministic_uuid",
+      "contains_credentials": false,
+      "contains_real_personal_data": false
+    },
+    "mock": {
+      "allowed_environments": [
+        "development",
+        "test",
+        "qa",
+        "staging"
+      ],
+      "blocked_environments": [
+        "production"
+      ],
+      "execution_order": 2,
+      "hard_fail_when_node_env_production": true,
+      "synthetic_data_domain": "example.invalid",
+      "contains_real_personal_data": false
+    }
+  },
+  "boot": {
+    "load_order": [],
+    "record_count": 0,
+    "records": {},
+    "entity_seed_policies": [],
+    "summary": {
+      "record_count": 0,
+      "entity_count": 0,
+      "populated_entity_count": 0,
+      "scenario_count": null,
+      "seed_revision": "2.0.0-enhanced"
+    },
+    "production_policy": {
+      "safe_for_production": true,
+      "contains_business_transactions": false,
+      "contains_real_personal_data": false,
+      "contains_embedded_secrets": false,
+      "upsert_required": true,
+      "stable_identity_required": true,
+      "empty_boot_is_intentional": true,
+      "empty_reason": "El módulo no posee catálogos o configuración global segura; sus registros nacen del onboarding, la operación clínica o transacciones reales."
+    }
+  },
+  "mock": {
+    "load_order": [],
+    "record_count": 0,
+    "records": {},
+    "summary": {
+      "record_count": 0,
+      "entity_count": 0,
+      "populated_entity_count": 0,
+      "scenario_count": 0,
+      "seed_revision": "2.0.0-enhanced"
+    },
+    "scenario_coverage": {
+      "happy_path": true,
+      "validation_error": true,
+      "permission_denied": true,
+      "idempotent_retry": true,
+      "reversal_or_cancellation": true,
+      "audit_trace": true,
+      "synthetic_only": true,
+      "production_hard_fail_required": true
+    }
+  },
+  "integrity_contract": {
+    "stable_ids": true,
+    "timestamps_are_deterministic": true,
+    "secrets_must_be_injected_externally": true,
+    "mock_must_fail_in_production": true,
+    "views_are_never_inserted": true,
+    "reference_only_entities_are_never_inserted_by_this_module": true
+  },
+  "quality_profile": {
+    "revision": "2.0.0-enhanced",
+    "strategy": "domain-aware deterministic catalogs plus connected synthetic scenarios",
+    "boot_scope": "catálogos, políticas, plantillas y configuración segura sin transacciones empresariales ficticias",
+    "mock_scope": "escenarios enlazados de éxito, error, borde, reversión, auditoría y recuperación",
+    "quality_gates": [
+      "UUID determinístico",
+      "idempotencia por clave estable",
+      "sin secretos",
+      "mock prohibido en producción",
+      "campos obligatorios presentes",
+      "FK resolubles",
+      "fechas coherentes",
+      "valores de dominio no genéricos"
+    ],
+    "scenario_catalog": []
+  },
+  "non_persistent_blueprint": {
+    "kind": "architectural_module_blueprint",
+    "persistence": "none",
+    "reason": "El módulo indexa la arquitectura y no posee tablas propias.",
+    "production_boot_configuration": {
+      "canonical_store": "PostgreSQL",
+      "secondary_store_policy": "derived-and-rebuildable",
+      "write_consistency": "transactional-outbox",
+      "worker_model": "persistent-independent-processes",
+      "supported_modules": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05",
+        "06",
+        "07",
+        "08",
+        "09",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "17",
+        "18",
+        "19",
+        "20",
+        "21",
+        "22",
+        "23",
+        "24",
+        "25",
+        "26",
+        "27",
+        "28",
+        "29",
+        "30",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "38",
+        "39",
+        "40",
+        "41",
+        "42",
+        "43",
+        "44",
+        "45",
+        "46",
+        "47",
+        "48",
+        "49",
+        "50",
+        "51",
+        "52",
+        "53",
+        "54",
+        "55",
+        "56",
+        "57",
+        "58",
+        "59",
+        "60",
+        "61",
+        "62",
+        "63"
+      ],
+      "mandatory_invariants": [
+        "iam.users representa cuentas y profiles.persons representa personas",
+        "toda escritura clínica declara custodia de tenant",
+        "las rutas frontend consumen read models",
+        "no existen escrituras duales inseguras",
+        "retención y borrado se propagan a stores secundarios",
+        "enums dinámicos se resuelven mediante terminology y system context",
+        "workers son idempotentes y persistentes",
+        "toda operación sensible produce auditoría"
+      ]
+    }
+  }
+}

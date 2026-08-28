@@ -1,0 +1,235 @@
+@startuml SALUD_Module_00_platform
+title SALUD v4.0 — Canonical Platform Architecture and Polyglot Data Module Index
+left to right direction
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+
+note as VERSION
+  MODEL VERSION 4.0.0
+  One canonical PUML per module. Module files contain explicit physical index sets.
+  The manifest and validation report cover 64 canonical modules, including 10 polyglot storage modules.
+end note
+
+package "Foundation" {
+  component "01 · Identity & Access — User Accounts and Security\n[iam]" as M01
+  component "02 · Shared Identifiers, Contacts, Addresses and Files\n[common]" as M02
+  component "03 · Terminology, Value Sets and Dynamic Catalogs\n[terminology]" as M03
+  component "04 · Tenants, Organizations, Sites and Directory\n[directory]" as M04
+  component "05 · Persons, Patients and Health Workforce\n[profiles]" as M05
+  component "06 · Authorization, Purpose of Use and Field Masking\n[authz]" as M06
+  component "07 · Privacy Directives, Legal Bases and Consent Evidence\n[consent]" as M07
+}
+
+package "Clinical and care" {
+  component "08 · Core Clinical Record, Orders and Encounter Logistics\n[clinical]" as M08
+  component "09 · Dynamic Forms and Extensibility Governance\n[forms]" as M09
+  component "10 · Audit, Provenance and Version Histories\n[audit]" as M10
+  component "11 · Data Governance and System Operations\n[system_ops]" as M11
+  component "12 · External Connectivity and Messaging\n[integrations]" as M12
+  component "13 · Geolocation and Mobile Tracking\n[geo]" as M13
+  component "14 · Care Organizations, Sites, Units, Spaces and Workforce\n[practice]" as M14
+  component "15 · Versioned Patient Chart, Notes and Documents\n[chart]" as M15
+}
+
+package "Finance and engagement" {
+  component "16 · General Ledger and Accounting Subledgers\n[accounting]" as M16
+  component "17 · Billing, Receivables, Payables and Financial Planning\n[billing]" as M17
+  component "18 · Care Coordination, Alerts and Decision Support\n[clinical_ext]" as M18
+  component "19 · Public Profiles, Social Graph, Messaging and Moderation\n[community]" as M19
+  component "20 · Laboratory, Medical Imaging and Clinical Media\n[diagnostics]" as M20
+}
+
+package "Infrastructure and partner domains" {
+  component "21 · Deployment, Data Centers and Regional Topology\n[deployment]" as M21
+  component "22 · Healthcare Organization Specializations\n[organization_extensions]" as M22
+  component "23 · Diagnostic Units, Studies, Specialists and Prices\n[diagnostic_units]" as M23
+  component "24 · Pharmacy Identity, Sites, Catalog and Pricing\n[pharmacy]" as M24
+  component "25 · Pharmacy Inventory, Supply and Dispensing\n[pharmacy_inventory]" as M25
+  component "26 · Insurance Networks, Operations, Appeals and Reconciliation\n[insurance]" as M26
+  component "27 · Identity Proofing, Assertions and Fraud Controls\n[identity_assurance]" as M27
+  component "28 · User Activity, Consent-Aware Tracking and Analytics\n[telemetry]" as M28
+  component "29 · Delegated Access and Scoped Infrastructure Users\n[delegated_access]" as M29
+}
+
+package "Read, workflow and quality" {
+  component "30 · Frontend View Contracts and Read Models\n[read_models]" as M30
+  component "31 · Governed Backend-to-Backend Contracts\n[integration_contracts]" as M31
+  component "32 · State Machines and Cross-Domain Workflows\n[workflow]" as M32
+  component "33 · Concurrency, Constraints and Integrity Matrix\n[integrity]" as M33
+  component "34 · Portal Catalogue and Frontend Navigation\n[portal_catalog]" as M34
+  component "35 · Domain Events, Outbox, Queues and Notification Delivery\n[messaging]" as M35
+  component "36 · Quality Assurance Lab and Test Evidence\n[qa_lab]" as M36
+  component "37 · Shipments, Milestones and Status Timelines\n[tracking]" as M37
+  component "38 · Internal ERP, Contracts, HR and Organization\n[erp]" as M38
+  component "39 · Reporting, Dashboards and Scheduled Distribution\n[reporting]" as M39
+}
+
+package "Identity, scheduling and commerce" {
+  component "40 · Federated Authentication Providers and Identity Linking\n[auth_providers]" as M40
+  component "41 · Appointments, Availability, Holds and Waitlists\n[scheduling]" as M41
+  component "42 · Payment Gateways, Transactions, Refunds and Payouts\n[payments]" as M42
+  component "43 · Advertising, Assets, Delivery, Commerce and Optimization\n[ads]" as M43
+}
+
+package "Context, operations and growth" {
+  component "44 · Country Health Environment Context\n[health_context]" as M44
+  component "45 · System Context and Dynamic Enumerations\n[system_context]" as M45
+  component "46 · Platform Operations, Observability and Releases\n[platform_ops]" as M46
+  component "47 · Medical Education and Continuing Professional Development\n[education]" as M47
+  component "48 · Automation and Multi-Agent Orchestration\n[automation]" as M48
+  component "49 · Customer and Partner Relationship Management\n[crm]" as M49
+  component "50 · Marketing Automation, Journeys and Attribution\n[marketing]" as M50
+  component "51 · Loyalty, Discounts, Coupons and Referrals\n[promotions]" as M51
+  component "52 · International Health Data Platform and Longitudinal Record\n[health_data]" as M52
+  component "53 · Medical Interventions, Surgery and Perioperative Care\n[procedures_perioperative]" as M53
+}
+
+package "Polyglot storage, search and analytics" {
+  component "54 · Polyglot Storage Governance and Data Placement\n[polyglot_storage]" as M54
+  component "55 · Document Store for FHIR and Variable Payloads\n[document_store]" as M55
+  component "56 · Redis Runtime Cache and Ephemeral Coordination\n[redis_runtime]" as M56
+  component "57 · Search and Operational Index Projections\n[search_platform]" as M57
+  component "58 · High-Volume Time Series and Event Analytics\n[time_series]" as M58
+  component "59 · Vector Search, RAG Evidence and Embeddings\n[vector_rag]" as M59
+  component "60 · Object Storage, Medical Media and PACS Catalog\n[object_storage]" as M60
+  component "61 · Graph Projections and Relationship Intelligence\n[graph_intelligence]" as M61
+  component "62 · Projection Consistency, Reconciliation and Deletion\n[cross_store_consistency]" as M62
+  component "63 · Lakehouse, Data Products and Research Releases\n[lakehouse]" as M63
+}
+
+M01 --> M05
+M01 --> M06
+M02 --> M05
+M02 --> M08
+M03 --> M01
+M03 --> M05
+M03 --> M06
+M03 --> M07
+M04 --> M05
+M04 --> M14
+M05 --> M08
+M05 --> M14
+M05 --> M19
+M06 --> M07
+M06 --> M08
+M06 --> M30
+M07 --> M08
+M07 --> M30
+M08 --> M15
+M08 --> M18
+M08 --> M20
+M08 --> M32
+M09 --> M08
+M10 --> M01
+M10 --> M05
+M10 --> M08
+M10 --> M42
+M11 --> M30
+M12 --> M31
+M13 --> M14
+M14 --> M18
+M14 --> M41
+M15 --> M30
+M16 --> M17
+M16 --> M38
+M17 --> M42
+M18 --> M41
+M19 --> M30
+M20 --> M23
+M20 --> M30
+M21 --> M46
+M22 --> M14
+M23 --> M20
+M24 --> M25
+M25 --> M42
+M26 --> M42
+M27 --> M01
+M28 --> M49
+M29 --> M06
+M30 --> M34
+M31 --> M35
+M32 --> M35
+M33 --> M08
+M33 --> M25
+M35 --> M46
+M36 --> M46
+M37 --> M38
+M38 --> M39
+M39 --> M30
+M40 --> M01
+M41 --> M08
+M42 --> M16
+M43 --> M50
+M44 --> M45
+M45 --> M48
+M46 --> M48
+M47 --> M30
+M48 --> M35
+M49 --> M50
+M50 --> M51
+M43 --> M30
+M42 --> M30
+M46 --> M11
+M53 --> M30
+M53 --> M20
+M52 --> M30
+M20 --> M52
+M08 --> M53
+
+M11 --> M54
+M46 --> M54
+M54 --> M55
+M54 --> M56
+M54 --> M57
+M54 --> M58
+M54 --> M59
+M54 --> M60
+M54 --> M61
+M54 --> M63
+M35 --> M62
+M62 --> M55
+M62 --> M56
+M62 --> M57
+M62 --> M58
+M62 --> M59
+M62 --> M60
+M62 --> M61
+M62 --> M63
+M52 --> M55
+M52 --> M60
+M52 --> M63
+M28 --> M58
+M20 --> M60
+M48 --> M59
+M30 --> M56
+M30 --> M57
+M39 --> M63
+M07 --> M55
+M06 --> M57
+M06 --> M59
+M10 --> M62
+
+note bottom
+  GOVERNANCE
+  - iam.users is an account; profiles.persons is the human identity.
+  - Clinical aggregates carry explicit custody for tenant isolation and RLS.
+  - Legal bases, consent, authorization and informed consent are separate records.
+  - State transitions are governed in Module 32.
+  - Frontend pages consume Module 30 projections, never raw ORM entities.
+  - Module 52 governs interoperable ingestion, identity resolution, lineage and controlled exports.
+  - Module 53 governs interventions, surgery, anesthesia, implants, recovery and outcomes.
+  - PostgreSQL remains canonical; Modules 54-63 govern specialized derived stores.
+  - Cross-store writes use transactional outbox and persistent idempotent workers, never unsafe dual writes.
+  - Deletion, legal hold, retention and reconciliation propagate across every secondary store.
+  - Dynamic enumerations resolve through terminology and system context.
+  - All writes use named constraints, optimistic concurrency and idempotency where required.
+end note
+
+note as INDEX_SCOPE
+  INDEX SCOPE
+  This module is architectural/use-case/deployment documentation and has no
+  owned relational tables. Physical indexes are declared in the owning data modules.
+end note
+
+@enduml

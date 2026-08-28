@@ -1,0 +1,51 @@
+{
+  "mappings": {
+    "properties": {
+      "tenant_id": {
+        "type": "keyword"
+      },
+      "source_entity_id": {
+        "type": "keyword"
+      },
+      "source_version": {
+        "type": "long"
+      },
+      "lifecycle_state": {
+        "type": "keyword"
+      },
+      "updated_at": {
+        "type": "date"
+      },
+      "routing_key": {
+        "type": "keyword"
+      },
+      "audit_event_id": {
+        "type": "keyword"
+      },
+      "actor_id": {
+        "type": "keyword"
+      },
+      "action_code": {
+        "type": "keyword"
+      },
+      "target_type": {
+        "type": "keyword"
+      },
+      "target_id": {
+        "type": "keyword"
+      },
+      "purpose_of_use": {
+        "type": "keyword"
+      },
+      "outcome": {
+        "type": "keyword"
+      },
+      "occurred_at": {
+        "type": "date"
+      },
+      "searchable_metadata": {
+        "type": "flat_object"
+      }
+    }
+  }
+}

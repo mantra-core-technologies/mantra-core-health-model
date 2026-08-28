@@ -1,0 +1,647 @@
+{
+  "$schema": "../schemas/module-seed.schema.json",
+  "module": {
+    "number": 34,
+    "code": "portal_catalog",
+    "title": "Portal Catalogue and Frontend Navigation",
+    "source_file": "modules/diagram_34_portal_catalog.puml",
+    "source_sha256": "86c0ce1c8f004487ee776ba60e2308a225d83c6c90870e3de77c012cd734a071",
+    "source_model_version": "4.0.9",
+    "requested_release_label": "4.0.9",
+    "business_purpose": "Datos de arranque y escenarios sintéticos profundos para Portal Catalogue and Frontend Navigation.",
+    "seed_revision": "2.5.0-v4.1.4"
+  },
+  "environment_policy": {
+    "boot": {
+      "allowed_environments": [
+        "production",
+        "development",
+        "test",
+        "staging"
+      ],
+      "execution_order": 1,
+      "idempotency": "upsert_by_stable_natural_key_or_deterministic_uuid",
+      "contains_credentials": false,
+      "contains_real_personal_data": false
+    },
+    "mock": {
+      "allowed_environments": [
+        "development",
+        "test",
+        "qa",
+        "staging"
+      ],
+      "blocked_environments": [
+        "production"
+      ],
+      "execution_order": 2,
+      "hard_fail_when_node_env_production": true,
+      "synthetic_data_domain": "example.invalid",
+      "contains_real_personal_data": false
+    }
+  },
+  "boot": {
+    "load_order": [],
+    "record_count": 0,
+    "records": {},
+    "entity_seed_policies": [],
+    "summary": {
+      "record_count": 0,
+      "entity_count": 0,
+      "populated_entity_count": 0,
+      "scenario_count": null,
+      "seed_revision": "2.0.0-enhanced"
+    },
+    "production_policy": {
+      "safe_for_production": true,
+      "contains_business_transactions": false,
+      "contains_real_personal_data": false,
+      "contains_embedded_secrets": false,
+      "upsert_required": true,
+      "stable_identity_required": true,
+      "empty_boot_is_intentional": true,
+      "empty_reason": "El módulo no posee catálogos o configuración global segura; sus registros nacen del onboarding, la operación clínica o transacciones reales."
+    }
+  },
+  "mock": {
+    "load_order": [],
+    "record_count": 0,
+    "records": {},
+    "summary": {
+      "record_count": 0,
+      "entity_count": 0,
+      "populated_entity_count": 0,
+      "scenario_count": 0,
+      "seed_revision": "2.0.0-enhanced"
+    },
+    "scenario_coverage": {
+      "happy_path": true,
+      "validation_error": true,
+      "permission_denied": true,
+      "idempotent_retry": true,
+      "reversal_or_cancellation": true,
+      "audit_trace": true,
+      "synthetic_only": true,
+      "production_hard_fail_required": true
+    }
+  },
+  "integrity_contract": {
+    "stable_ids": true,
+    "timestamps_are_deterministic": true,
+    "secrets_must_be_injected_externally": true,
+    "mock_must_fail_in_production": true,
+    "views_are_never_inserted": true,
+    "reference_only_entities_are_never_inserted_by_this_module": true
+  },
+  "quality_profile": {
+    "revision": "2.0.0-enhanced",
+    "strategy": "domain-aware deterministic catalogs plus connected synthetic scenarios",
+    "boot_scope": "catálogos, políticas, plantillas y configuración segura sin transacciones empresariales ficticias",
+    "mock_scope": "escenarios enlazados de éxito, error, borde, reversión, auditoría y recuperación",
+    "quality_gates": [
+      "UUID determinístico",
+      "idempotencia por clave estable",
+      "sin secretos",
+      "mock prohibido en producción",
+      "campos obligatorios presentes",
+      "FK resolubles",
+      "fechas coherentes",
+      "valores de dominio no genéricos"
+    ],
+    "scenario_catalog": []
+  },
+  "non_persistent_blueprint": {
+    "kind": "portal_route_catalog_blueprint",
+    "persistence": "none",
+    "reason": "El módulo define contratos de navegación y estados UX; las proyecciones persistentes pertenecen al módulo 30.",
+    "production_boot_configuration": {
+      "routes": [
+        {
+          "code": "PUBLIC_DISCOVERY",
+          "route": "/public/discovery",
+          "authorization_required": false,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "PUBLIC_PROVIDER_PROFILE",
+          "route": "/public/provider/profile",
+          "authorization_required": false,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "AUTHENTICATION",
+          "route": "/authentication",
+          "authorization_required": false,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "PATIENT_DASHBOARD",
+          "route": "/patient/dashboard",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "PATIENT_APPOINTMENTS",
+          "route": "/patient/appointments",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "PATIENT_TIMELINE",
+          "route": "/patient/timeline",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "PATIENT_MEDICATIONS",
+          "route": "/patient/medications",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "PATIENT_BILLING",
+          "route": "/patient/billing",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "PATIENT_CONSENT",
+          "route": "/patient/consent",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "DOCTOR_AGENDA",
+          "route": "/doctor/agenda",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "DOCTOR_ENCOUNTER",
+          "route": "/doctor/encounter",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "DOCTOR_NOTES",
+          "route": "/doctor/notes",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "DOCTOR_ORDERS",
+          "route": "/doctor/orders",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "DOCTOR_RESULTS",
+          "route": "/doctor/results",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "HOSPITAL_CAPACITY",
+          "route": "/hospital/capacity",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "HOSPITAL_WORKFORCE",
+          "route": "/hospital/workforce",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "DIAGNOSTIC_WORKLIST",
+          "route": "/diagnostic/worklist",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "DIAGNOSTIC_RESULTS",
+          "route": "/diagnostic/results",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "PHARMACY_CATALOG",
+          "route": "/pharmacy/catalog",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "PHARMACY_INVENTORY",
+          "route": "/pharmacy/inventory",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "INSURANCE_ELIGIBILITY",
+          "route": "/insurance/eligibility",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "INSURANCE_CLAIMS",
+          "route": "/insurance/claims",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "ERP_LEDGER",
+          "route": "/erp/ledger",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "ERP_SETTLEMENTS",
+          "route": "/erp/settlements",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "SYSTEM_SECURITY",
+          "route": "/system/security",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "SYSTEM_INTEGRATIONS",
+          "route": "/system/integrations",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "SYSTEM_TERMINOLOGY",
+          "route": "/system/terminology",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "PLATFORM_HEALTH",
+          "route": "/platform/health",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "EDUCATION_CATALOG",
+          "route": "/education/catalog",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "CRM_PIPELINE",
+          "route": "/crm/pipeline",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "MARKETING_JOURNEYS",
+          "route": "/marketing/journeys",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "ADS_INSIGHTS",
+          "route": "/ads/insights",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "PAYMENTS_RECONCILIATION",
+          "route": "/payments/reconciliation",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "HEALTH_DATA_INGESTION",
+          "route": "/health/data/ingestion",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "HEALTH_DATA_QUALITY",
+          "route": "/health/data/quality",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "PROCEDURE_OR_SCHEDULE",
+          "route": "/procedure/or/schedule",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        },
+        {
+          "code": "PROCEDURE_RECOVERY",
+          "route": "/procedure/recovery",
+          "authorization_required": true,
+          "required_states": [
+            "authorization-pending",
+            "loading",
+            "empty",
+            "ready",
+            "forbidden",
+            "error",
+            "stale"
+          ]
+        }
+      ],
+      "navigation_policy": {
+        "raw_orm_entities_allowed": false,
+        "read_models_required": true,
+        "permission_check_required": true,
+        "loading_state_required": true,
+        "error_boundary_required": true
+      }
+    }
+  }
+}

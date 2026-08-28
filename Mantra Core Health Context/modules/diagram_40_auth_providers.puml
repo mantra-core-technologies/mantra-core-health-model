@@ -1,0 +1,343 @@
+@startuml SALUD_Module_40_auth_providers
+title Module 40 — Federated Authentication Providers and Identity Linking\n(schema: auth_providers)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_40_auth_providers.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_40_auth_providers
+  BUSINESS PURPOSE
+  Generic, provider-adaptable federated login and user provisioning. Registers
+  identity providers (OIDC, SAML 2.0, OAuth2, social, enterprise) with their protocol
+  configuration and signing keys, binds them per tenant with auto-provisioning rules,
+  maps external claims to platform attributes, links external subjects to platform
+  users, and records every login attempt for security. Extends iam
+  (authentication_credentials.identity_provider) into a first-class, configurable
+  federation layer; distinct from module 27 identity_assurance (proofing/IAL/AAL).
+end note
+
+entity iam_users <<external>> {
+  .. defined in module 01 iam ..
+  * id : uuid <<PK>>
+}
+
+entity identity_providers {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * code : varchar <<UK>>
+  * name : varchar
+  * protocol_concept_id : uuid <<FK>>
+  * provider_category_concept_id : uuid <<FK>>
+    issuer : varchar
+    logo_file_id : uuid <<FK>>
+    is_global : boolean
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity provider_protocol_configs {
+  * id : uuid <<PK>>
+  --
+  * provider_id : uuid <<FK>>
+  * environment_concept_id : uuid <<FK>>
+    client_id : varchar
+    client_secret_ref : varchar
+    authorize_url : text
+    token_url : text
+    userinfo_url : text
+    jwks_uri : text
+    metadata_url : text
+    saml_entity_id : varchar
+    saml_acs_url : text
+    scopes : varchar
+    response_type : varchar
+    token_endpoint_auth_concept_id : uuid <<FK>>
+    pkce_required : boolean
+    extra_config_json : jsonb
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity provider_signing_keys {
+  * id : uuid <<PK>>
+  --
+  * provider_id : uuid <<FK>>
+  * key_id : varchar
+  * key_use_concept_id : uuid <<FK>>
+  * algorithm : varchar
+  * public_key : text
+    certificate : text
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity provider_tenant_bindings {
+  * id : uuid <<PK>>
+  --
+  * provider_id : uuid <<FK>>
+  * tenant_id : uuid <<FK>>
+  * is_enabled : boolean
+    auto_provision : boolean
+    default_role_concept_id : uuid <<FK>>
+    allowed_email_domains : varchar
+    just_in_time_provisioning : boolean
+    ordinal : integer
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity provider_attribute_mappings {
+  * id : uuid <<PK>>
+  --
+  * provider_id : uuid <<FK>>
+  * source_claim : varchar
+  * target_attribute : varchar
+    is_identifier : boolean
+    transform_json : jsonb
+    required : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity provisioning_rules {
+  * id : uuid <<PK>>
+  --
+  * provider_id : uuid <<FK>>
+    tenant_id : uuid <<FK>>
+  * priority : integer
+    condition_json : jsonb
+    assign_role_concept_id : uuid <<FK>>
+    assign_tenant_id : uuid <<FK>>
+    effect_concept_id : uuid <<FK>>
+  * is_active : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity federated_identities {
+  * id : uuid <<PK>>
+  --
+  * provider_id : uuid <<FK>>
+  * user_id : uuid <<FK>>
+  * external_subject : varchar <<UK>>
+    external_email : varchar
+    display_name : varchar
+    linked_at : timestamptz
+    last_login_at : timestamptz
+    raw_claims_json : jsonb
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity account_link_requests {
+  * id : uuid <<PK>>
+  --
+  * provider_id : uuid <<FK>>
+    user_id : uuid <<FK>>
+  * external_subject : varchar
+  * link_token_hash : varchar <<UK>>
+  * status_concept_id : uuid <<FK>>
+    expires_at : timestamptz
+    completed_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity federated_login_attempts <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * provider_id : uuid <<FK>>
+    tenant_id : uuid <<FK>>
+    user_id : uuid <<FK>>
+    external_subject : varchar
+  * outcome_concept_id : uuid <<FK>>
+    failure_reason_concept_id : uuid <<FK>>
+    ip : inet
+    user_agent : varchar
+    request_id : varchar
+    occurred_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+identity_providers ||--o{ provider_protocol_configs
+identity_providers ||--o{ provider_signing_keys
+identity_providers ||--o{ provider_tenant_bindings
+identity_providers ||--o{ provider_attribute_mappings
+identity_providers ||--o{ provisioning_rules
+identity_providers ||--o{ federated_identities
+iam_users ||--o{ federated_identities
+identity_providers ||--o{ account_link_requests
+identity_providers ||--o{ federated_login_attempts
+
+note as DEP_diagram_40_auth_providers
+  Connects to other modules via:
+  iam.users (federated_identities.user_id), iam.authentication_credentials,
+  directory.tenants, authz.roles (default/assign role concepts resolve here),
+  common.files (logo), identity_assurance.identity_assertions (AAL/FAL linkage),
+  terminology.catalog_concepts.
+end note
+
+note as REC_AUTHP_diagram_40_auth_providers
+  FEDERATION SECURITY
+  Secrets are references (client_secret_ref) to a vault, never stored inline.
+  external_subject is unique per provider (UK). federated_login_attempts is
+  append-only and complements iam.security_events. Auto-provisioning must respect
+  provider_tenant_bindings + provisioning_rules; AAL/FAL is asserted via module 27.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · identity_providers" as idxset_identity_providers <<INDEX_SET>> {
+  PK pk_identity_providers : (id) UNIQUE BTREE
+  UK uq_identity_providers_code : (code) UNIQUE BTREE
+  IX ix_identity_providers_tenant_id : (tenant_id) BTREE
+  IX ix_identity_providers_protocol_concept_id : (protocol_concept_id) BTREE
+  IX ix_identity_providers_provider_category_concept_id : (provider_category_concept_id) BTREE
+  IX ix_identity_providers_logo_file_id : (logo_file_id) BTREE
+  IX ix_identity_providers_state_concept_id : (state_concept_id) BTREE
+  IX ix_identity_providers_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_identity_providers_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_identity_providers_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+}
+
+identity_providers .. idxset_identity_providers : indexed by
+
+entity "INDEXES · provider_protocol_configs" as idxset_provider_protocol_configs <<INDEX_SET>> {
+  PK pk_provider_protocol_configs : (id) UNIQUE BTREE
+  IX ix_provider_protocol_configs_provider_id : (provider_id) BTREE
+  IX ix_provider_protocol_configs_environment_concept_id : (environment_concept_id) BTREE
+  IX ix_provider_protocol_configs_token_endpoint_auth_concept_id : (token_endpoint_auth_concept_id) BTREE
+  IX ix_provider_protocol_configs_state_concept_id : (state_concept_id) BTREE
+  IX ix_provider_protocol_configs_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_provider_protocol_configs_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+provider_protocol_configs .. idxset_provider_protocol_configs : indexed by
+
+entity "INDEXES · provider_signing_keys" as idxset_provider_signing_keys <<INDEX_SET>> {
+  PK pk_provider_signing_keys : (id) UNIQUE BTREE
+  IX ix_provider_signing_keys_provider_id : (provider_id) BTREE
+  IX ix_provider_signing_keys_key_use_concept_id : (key_use_concept_id) BTREE
+  IX ix_provider_signing_keys_state_concept_id : (state_concept_id) BTREE
+  IX ix_provider_signing_keys_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_provider_signing_keys_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+provider_signing_keys .. idxset_provider_signing_keys : indexed by
+
+entity "INDEXES · provider_tenant_bindings" as idxset_provider_tenant_bindings <<INDEX_SET>> {
+  PK pk_provider_tenant_bindings : (id) UNIQUE BTREE
+  IX ix_provider_tenant_bindings_provider_id : (provider_id) BTREE
+  IX ix_provider_tenant_bindings_tenant_id : (tenant_id) BTREE
+  IX ix_provider_tenant_bindings_default_role_concept_id : (default_role_concept_id) BTREE
+  IX ix_provider_tenant_bindings_state_concept_id : (state_concept_id) BTREE
+  IX ix_provider_tenant_bindings_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_provider_tenant_bindings_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_provider_tenant_bindings_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+}
+
+provider_tenant_bindings .. idxset_provider_tenant_bindings : indexed by
+
+entity "INDEXES · provider_attribute_mappings" as idxset_provider_attribute_mappings <<INDEX_SET>> {
+  PK pk_provider_attribute_mappings : (id) UNIQUE BTREE
+  IX ix_provider_attribute_mappings_provider_id : (provider_id) BTREE
+  IX ix_provider_attribute_mappings_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_provider_attribute_mappings_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+provider_attribute_mappings .. idxset_provider_attribute_mappings : indexed by
+
+entity "INDEXES · provisioning_rules" as idxset_provisioning_rules <<INDEX_SET>> {
+  PK pk_provisioning_rules : (id) UNIQUE BTREE
+  IX ix_provisioning_rules_provider_id : (provider_id) BTREE
+  IX ix_provisioning_rules_tenant_id : (tenant_id) BTREE
+  IX ix_provisioning_rules_assign_role_concept_id : (assign_role_concept_id) BTREE
+  IX ix_provisioning_rules_assign_tenant_id : (assign_tenant_id) BTREE
+  IX ix_provisioning_rules_effect_concept_id : (effect_concept_id) BTREE
+  IX ix_provisioning_rules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_provisioning_rules_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_provisioning_rules_tenant_id_updated_at : (tenant_id, updated_at DESC) BTREE
+}
+
+provisioning_rules .. idxset_provisioning_rules : indexed by
+
+entity "INDEXES · federated_identities" as idxset_federated_identities <<INDEX_SET>> {
+  PK pk_federated_identities : (id) UNIQUE BTREE
+  UK uq_federated_identities_external_subject : (external_subject) UNIQUE BTREE
+  IX ix_federated_identities_provider_id : (provider_id) BTREE
+  IX ix_federated_identities_user_id : (user_id) BTREE
+  IX ix_federated_identities_state_concept_id : (state_concept_id) BTREE
+  IX ix_federated_identities_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_federated_identities_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+federated_identities .. idxset_federated_identities : indexed by
+
+entity "INDEXES · account_link_requests" as idxset_account_link_requests <<INDEX_SET>> {
+  PK pk_account_link_requests : (id) UNIQUE BTREE
+  UK uq_account_link_requests_link_token_hash : (link_token_hash) UNIQUE BTREE
+  IX ix_account_link_requests_provider_id : (provider_id) BTREE
+  IX ix_account_link_requests_user_id : (user_id) BTREE
+  IX ix_account_link_requests_status_concept_id : (status_concept_id) BTREE
+  IX ix_account_link_requests_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_account_link_requests_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+account_link_requests .. idxset_account_link_requests : indexed by
+
+entity "INDEXES · federated_login_attempts" as idxset_federated_login_attempts <<INDEX_SET>> {
+  PK pk_federated_login_attempts : (id) UNIQUE BTREE
+  IX ix_federated_login_attempts_provider_id : (provider_id) BTREE
+  IX ix_federated_login_attempts_tenant_id : (tenant_id) BTREE
+  IX ix_federated_login_attempts_user_id : (user_id) BTREE
+  IX ix_federated_login_attempts_outcome_concept_id : (outcome_concept_id) BTREE
+  IX ix_federated_login_attempts_failure_reason_concept_id : (failure_reason_concept_id) BTREE
+  IX ix_federated_login_attempts_recorded_by_user_id : (recorded_by_user_id) BTREE
+  IX ix_federated_login_attempts_tenant_id_recorded_at : (tenant_id, recorded_at DESC) BTREE
+  BRIN brin_federated_login_attempts_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+federated_login_attempts .. idxset_federated_login_attempts : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

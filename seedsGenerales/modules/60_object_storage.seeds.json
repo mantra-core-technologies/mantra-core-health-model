@@ -1,0 +1,4015 @@
+{
+  "$schema": "../schemas/module-seed.schema.json",
+  "module": {
+    "number": 60,
+    "code": "object_storage",
+    "title": "Object Storage, Medical Media and PACS Catalog",
+    "source_file": "modules/diagram_60_object_storage.puml",
+    "source_sha256": "407a90e815ee92f9b98cf65656488dfb54be51408a7908e6084ba090aa58be82",
+    "source_model_version": "4.0.9",
+    "requested_release_label": "4.0.9",
+    "business_purpose": "Stores large immutable or versioned binaries: DICOM, reports, PDFs, videos, signed evidence, exports, backups and raw payloads. The database stores metadata, hashes, retention, encryption, legal hold and object locations; binary content remains in object storage/PACS.",
+    "seed_revision": "2.5.0-v4.1.4"
+  },
+  "environment_policy": {
+    "boot": {
+      "allowed_environments": [
+        "production",
+        "development",
+        "test",
+        "staging"
+      ],
+      "execution_order": 1,
+      "idempotency": "upsert_by_stable_natural_key_or_deterministic_uuid",
+      "contains_credentials": false,
+      "contains_real_personal_data": false
+    },
+    "mock": {
+      "allowed_environments": [
+        "development",
+        "test",
+        "qa",
+        "staging"
+      ],
+      "blocked_environments": [
+        "production"
+      ],
+      "execution_order": 2,
+      "hard_fail_when_node_env_production": true,
+      "synthetic_data_domain": "example.invalid",
+      "contains_real_personal_data": false
+    }
+  },
+  "boot": {
+    "load_order": [
+      "object_namespaces"
+    ],
+    "record_count": 10,
+    "records": {
+      "directory_tenants": [],
+      "profiles_patient_profiles": [],
+      "diagnostics_imaging_studies": [],
+      "common_files": [],
+      "object_namespaces": [
+        {
+          "id": "b3158917-df47-5373-a4ba-7c2f992c1662",
+          "code": "CLINICAL_DOCUMENTS",
+          "backend_code": "OBJECT_STORAGE",
+          "region_code": "BO-PRIMARY",
+          "bucket_or_container": "salud-clinical-documents",
+          "object_key_prefix": "clinical_documents/",
+          "default_storage_class": "STANDARD",
+          "versioning_enabled": true,
+          "object_lock_enabled": true,
+          "state": "DRAFT"
+        },
+        {
+          "id": "3f621b77-6c31-5faf-9c0f-aac1ba7b49ca",
+          "code": "DIAGNOSTIC_IMAGES",
+          "backend_code": "OBJECT_STORAGE",
+          "region_code": "BO-PRIMARY",
+          "bucket_or_container": "salud-diagnostic-images",
+          "object_key_prefix": "diagnostic_images/",
+          "default_storage_class": "STANDARD",
+          "versioning_enabled": true,
+          "object_lock_enabled": true,
+          "state": "DRAFT"
+        },
+        {
+          "id": "4e732e95-565f-5c8b-8a2d-7e3a82b8d0aa",
+          "code": "DICOM_ARCHIVE",
+          "backend_code": "OBJECT_STORAGE",
+          "region_code": "BO-PRIMARY",
+          "bucket_or_container": "salud-dicom-archive",
+          "object_key_prefix": "dicom_archive/",
+          "default_storage_class": "STANDARD",
+          "versioning_enabled": true,
+          "object_lock_enabled": true,
+          "state": "DRAFT"
+        },
+        {
+          "id": "aa8c3c9d-d827-5844-8262-7a736fe4df8d",
+          "code": "AUDIT_EVIDENCE",
+          "backend_code": "OBJECT_STORAGE",
+          "region_code": "BO-PRIMARY",
+          "bucket_or_container": "salud-audit-evidence",
+          "object_key_prefix": "audit_evidence/",
+          "default_storage_class": "STANDARD",
+          "versioning_enabled": true,
+          "object_lock_enabled": true,
+          "state": "DRAFT"
+        },
+        {
+          "id": "2f447a3b-b53e-5114-b487-f2f0b8ad085e",
+          "code": "EXPORTS",
+          "backend_code": "OBJECT_STORAGE",
+          "region_code": "BO-PRIMARY",
+          "bucket_or_container": "salud-controlled-exports",
+          "object_key_prefix": "exports/",
+          "default_storage_class": "STANDARD",
+          "versioning_enabled": true,
+          "object_lock_enabled": false,
+          "state": "DRAFT"
+        },
+        {
+          "id": "3f3b9233-e450-52b5-801d-8edbc10af1be",
+          "code": "BACKUPS",
+          "backend_code": "OBJECT_STORAGE",
+          "region_code": "BO-PRIMARY",
+          "bucket_or_container": "salud-backups",
+          "object_key_prefix": "backups/",
+          "default_storage_class": "STANDARD",
+          "versioning_enabled": true,
+          "object_lock_enabled": true,
+          "state": "DRAFT"
+        },
+        {
+          "id": "f5b15531-952a-5f61-b099-3bbc8b51062b",
+          "code": "PUBLIC_ASSETS",
+          "backend_code": "OBJECT_STORAGE",
+          "region_code": "BO-PRIMARY",
+          "bucket_or_container": "salud-public-assets",
+          "object_key_prefix": "public_assets/",
+          "default_storage_class": "STANDARD",
+          "versioning_enabled": true,
+          "object_lock_enabled": false,
+          "state": "DRAFT"
+        },
+        {
+          "id": "e1333b33-af4a-57d9-813d-5e38799c5fa9",
+          "code": "ADS_ASSETS",
+          "backend_code": "ADS_ASSETS",
+          "region_code": "ADS_ASSETS",
+          "bucket_or_container": "salud-clinical-documents",
+          "object_key_prefix": "clinical_documents/",
+          "default_storage_class": "STANDARD",
+          "versioning_enabled": true,
+          "object_lock_enabled": true,
+          "state": "DRAFT"
+        },
+        {
+          "id": "08babb00-4e8f-5b63-b937-f1f2a28f23e1",
+          "code": "CLINICAL_DOCUMENTS_008",
+          "backend_code": "OBJECT_STORAGE_008",
+          "region_code": "BO-PRIMARY_008",
+          "bucket_or_container": "salud-clinical-documents",
+          "object_key_prefix": "clinical_documents_008",
+          "default_storage_class": "STANDARD",
+          "versioning_enabled": true,
+          "object_lock_enabled": true,
+          "state": "rejected"
+        },
+        {
+          "id": "752ad3f5-c592-513e-b790-7cd914791e03",
+          "code": "DIAGNOSTIC_IMAGES_009",
+          "backend_code": "OBJECT_STORAGE_009",
+          "region_code": "BO-PRIMARY_009",
+          "bucket_or_container": "salud-diagnostic-images",
+          "object_key_prefix": "diagnostic_images_009",
+          "default_storage_class": "STANDARD",
+          "versioning_enabled": false,
+          "object_lock_enabled": false,
+          "state": "retrying"
+        }
+      ],
+      "object_manifests": [],
+      "object_versions": [],
+      "object_locations": [],
+      "object_checksums": [],
+      "object_encryption_envelopes": [],
+      "object_retention_locks": [],
+      "object_legal_holds": [],
+      "multipart_uploads": [],
+      "large_payload_manifests": [],
+      "dicom_study_manifests": [],
+      "dicom_series_manifests": [],
+      "dicom_instance_manifests": [],
+      "dicomweb_access_logs": [],
+      "archive_manifests": [],
+      "object_integrity_checks": [],
+      "object_deletion_markers": []
+    },
+    "entity_seed_policies": [
+      {
+        "entity": "directory_tenants",
+        "stereotype": "REFERENCE_ONLY",
+        "boot_seeded": false,
+        "mock_seeded": false,
+        "rationale": "REFERENCE_ONLY: pertenece a otro módulo y no se inserta desde este archivo.",
+        "required_fields": [
+          "id"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "profiles_patient_profiles",
+        "stereotype": "REFERENCE_ONLY",
+        "boot_seeded": false,
+        "mock_seeded": false,
+        "rationale": "REFERENCE_ONLY: pertenece a otro módulo y no se inserta desde este archivo.",
+        "required_fields": [
+          "id"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "diagnostics_imaging_studies",
+        "stereotype": "REFERENCE_ONLY",
+        "boot_seeded": false,
+        "mock_seeded": false,
+        "rationale": "REFERENCE_ONLY: pertenece a otro módulo y no se inserta desde este archivo.",
+        "required_fields": [
+          "id"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "common_files",
+        "stereotype": "REFERENCE_ONLY",
+        "boot_seeded": false,
+        "mock_seeded": false,
+        "rationale": "REFERENCE_ONLY: pertenece a otro módulo y no se inserta desde este archivo.",
+        "required_fields": [
+          "id"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "object_namespaces",
+        "stereotype": "OBJECT_CATALOG",
+        "boot_seeded": true,
+        "mock_seeded": true,
+        "rationale": "Catálogo/configuración mínima segura y determinística para prod y dev.",
+        "required_fields": [
+          "id",
+          "code",
+          "backend_code",
+          "region_code",
+          "bucket_or_container",
+          "object_key_prefix",
+          "default_storage_class",
+          "versioning_enabled",
+          "object_lock_enabled",
+          "state"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "object_manifests",
+        "stereotype": "OBJECT_CATALOG",
+        "boot_seeded": false,
+        "mock_seeded": true,
+        "rationale": "Entidad transaccional o dependiente del tenant: no se inventan registros de producción.",
+        "required_fields": [
+          "id",
+          "tenant_id",
+          "namespace_id",
+          "logical_object_id",
+          "object_type",
+          "patient_profile_id",
+          "current_version_id",
+          "lifecycle_state",
+          "retention_policy_code",
+          "created_at",
+          "updated_at"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "object_versions",
+        "stereotype": "OBJECT_CATALOG",
+        "boot_seeded": false,
+        "mock_seeded": true,
+        "rationale": "Entidad transaccional o dependiente del tenant: no se inventan registros de producción.",
+        "required_fields": [
+          "id",
+          "object_manifest_id",
+          "version_number",
+          "provider_version_id",
+          "object_key",
+          "mime_type",
+          "size_bytes",
+          "sha256",
+          "etag",
+          "compression",
+          "created_at",
+          "supersedes_version_id"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "object_locations",
+        "stereotype": "OBJECT_CATALOG",
+        "boot_seeded": false,
+        "mock_seeded": true,
+        "rationale": "Entidad transaccional o dependiente del tenant: no se inventan registros de producción.",
+        "required_fields": [
+          "id",
+          "object_version_id",
+          "namespace_id",
+          "placement_role",
+          "provider_uri",
+          "storage_class",
+          "replication_state",
+          "verified_at"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "object_checksums",
+        "stereotype": "OBJECT_CATALOG",
+        "boot_seeded": false,
+        "mock_seeded": true,
+        "rationale": "Entidad transaccional o dependiente del tenant: no se inventan registros de producción.",
+        "required_fields": [
+          "id",
+          "object_version_id",
+          "algorithm",
+          "checksum",
+          "source",
+          "verified_at",
+          "verification_status"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "object_encryption_envelopes",
+        "stereotype": "OBJECT_CATALOG",
+        "boot_seeded": false,
+        "mock_seeded": true,
+        "rationale": "Entidad transaccional o dependiente del tenant: no se inventan registros de producción.",
+        "required_fields": [
+          "id",
+          "object_version_id",
+          "algorithm",
+          "key_management_provider",
+          "encrypted_data_key",
+          "key_version",
+          "encryption_context_hash",
+          "created_at"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "object_retention_locks",
+        "stereotype": "OBJECT_CATALOG",
+        "boot_seeded": false,
+        "mock_seeded": true,
+        "rationale": "Entidad transaccional o dependiente del tenant: no se inventan registros de producción.",
+        "required_fields": [
+          "id",
+          "object_version_id",
+          "lock_mode",
+          "retain_until",
+          "policy_code",
+          "applied_at",
+          "released_at"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "object_legal_holds",
+        "stereotype": "OBJECT_CATALOG",
+        "boot_seeded": false,
+        "mock_seeded": true,
+        "rationale": "Entidad transaccional o dependiente del tenant: no se inventan registros de producción.",
+        "required_fields": [
+          "id",
+          "object_version_id",
+          "legal_case_reference",
+          "hold_state",
+          "placed_by_user_id",
+          "placed_at",
+          "released_at"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "multipart_uploads",
+        "stereotype": "OBJECT_CATALOG",
+        "boot_seeded": false,
+        "mock_seeded": true,
+        "rationale": "Entidad transaccional o dependiente del tenant: no se inventan registros de producción.",
+        "required_fields": [
+          "id",
+          "tenant_id",
+          "namespace_id",
+          "provider_upload_id",
+          "target_object_key",
+          "expected_size_bytes",
+          "received_size_bytes",
+          "status",
+          "expires_at",
+          "created_at"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "large_payload_manifests",
+        "stereotype": "OBJECT_CATALOG",
+        "boot_seeded": false,
+        "mock_seeded": true,
+        "rationale": "Entidad transaccional o dependiente del tenant: no se inventan registros de producción.",
+        "required_fields": [
+          "id",
+          "tenant_id",
+          "payload_type",
+          "source_entity_type",
+          "source_entity_id",
+          "object_manifest_id",
+          "content_hash",
+          "contains_phi",
+          "created_at"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "dicom_study_manifests",
+        "stereotype": "OBJECT_CATALOG",
+        "boot_seeded": false,
+        "mock_seeded": true,
+        "rationale": "Entidad transaccional o dependiente del tenant: no se inventan registros de producción.",
+        "required_fields": [
+          "id",
+          "tenant_id",
+          "patient_profile_id",
+          "imaging_study_id",
+          "study_instance_uid",
+          "accession_number",
+          "study_date",
+          "modality_codes",
+          "series_count",
+          "instance_count",
+          "lifecycle_state"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "dicom_series_manifests",
+        "stereotype": "OBJECT_CATALOG",
+        "boot_seeded": false,
+        "mock_seeded": true,
+        "rationale": "Entidad transaccional o dependiente del tenant: no se inventan registros de producción.",
+        "required_fields": [
+          "id",
+          "dicom_study_manifest_id",
+          "series_instance_uid",
+          "modality",
+          "series_number",
+          "body_part_examined",
+          "instance_count",
+          "thumbnail_object_manifest_id"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "dicom_instance_manifests",
+        "stereotype": "OBJECT_CATALOG",
+        "boot_seeded": false,
+        "mock_seeded": true,
+        "rationale": "Entidad transaccional o dependiente del tenant: no se inventan registros de producción.",
+        "required_fields": [
+          "id",
+          "dicom_series_manifest_id",
+          "sop_instance_uid",
+          "sop_class_uid",
+          "instance_number",
+          "transfer_syntax_uid",
+          "object_manifest_id",
+          "frame_count",
+          "metadata_json"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "dicomweb_access_logs",
+        "stereotype": "OBJECT_CATALOG",
+        "boot_seeded": false,
+        "mock_seeded": true,
+        "rationale": "Entidad transaccional o dependiente del tenant: no se inventan registros de producción.",
+        "required_fields": [
+          "id",
+          "tenant_id",
+          "principal_id",
+          "operation",
+          "study_instance_uid",
+          "purpose_of_use_code",
+          "outcome",
+          "occurred_at"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "archive_manifests",
+        "stereotype": "OBJECT_CATALOG",
+        "boot_seeded": false,
+        "mock_seeded": true,
+        "rationale": "Entidad transaccional o dependiente del tenant: no se inventan registros de producción.",
+        "required_fields": [
+          "id",
+          "tenant_id",
+          "archive_type",
+          "source_scope_json",
+          "object_manifest_id",
+          "record_count",
+          "manifest_hash",
+          "created_at",
+          "verified_at"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "object_integrity_checks",
+        "stereotype": "OBJECT_CATALOG",
+        "boot_seeded": false,
+        "mock_seeded": true,
+        "rationale": "Entidad transaccional o dependiente del tenant: no se inventan registros de producción.",
+        "required_fields": [
+          "id",
+          "object_version_id",
+          "check_type",
+          "expected_hash",
+          "actual_hash",
+          "status",
+          "checked_at",
+          "repair_job_id"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "object_deletion_markers",
+        "stereotype": "OBJECT_CATALOG",
+        "boot_seeded": false,
+        "mock_seeded": true,
+        "rationale": "Entidad transaccional o dependiente del tenant: no se inventan registros de producción.",
+        "required_fields": [
+          "id",
+          "object_manifest_id",
+          "requested_by_job_id",
+          "provider_delete_marker",
+          "requested_at",
+          "effective_at",
+          "verification_status"
+        ],
+        "unique_fields": [],
+        "primary_key_fields": [
+          "id"
+        ]
+      }
+    ],
+    "summary": {
+      "record_count": 10,
+      "entity_count": 1,
+      "populated_entity_count": 1,
+      "scenario_count": null,
+      "seed_revision": "2.0.0-enhanced"
+    },
+    "production_policy": {
+      "safe_for_production": true,
+      "contains_business_transactions": false,
+      "contains_real_personal_data": false,
+      "contains_embedded_secrets": false,
+      "upsert_required": true,
+      "stable_identity_required": true,
+      "empty_boot_is_intentional": false,
+      "empty_reason": null
+    }
+  },
+  "mock": {
+    "load_order": [
+      "object_namespaces",
+      "object_manifests",
+      "object_versions",
+      "object_locations",
+      "object_checksums",
+      "object_encryption_envelopes",
+      "object_retention_locks",
+      "object_legal_holds",
+      "multipart_uploads",
+      "large_payload_manifests",
+      "dicom_study_manifests",
+      "dicom_series_manifests",
+      "dicom_instance_manifests",
+      "dicomweb_access_logs",
+      "archive_manifests",
+      "object_integrity_checks",
+      "object_deletion_markers"
+    ],
+    "record_count": 272,
+    "records": {
+      "directory_tenants": [],
+      "profiles_patient_profiles": [],
+      "diagnostics_imaging_studies": [],
+      "common_files": [],
+      "object_namespaces": [
+        {
+          "id": "8868b61b-5c9a-5b70-95aa-3b6a3689cf36",
+          "code": "CLINICAL_DOCS",
+          "backend_code": "CLINICAL_DOCS",
+          "region_code": "CLINICAL_DOCS",
+          "bucket_or_container": "Documentos clínicos 01",
+          "object_key_prefix": "CLINICAL_DOCS",
+          "default_storage_class": "Documentos clínicos 01",
+          "versioning_enabled": true,
+          "object_lock_enabled": true,
+          "state": "ACTIVE"
+        },
+        {
+          "id": "90fd9cc4-0041-52fb-bdec-afa595c14479",
+          "code": "DICOM",
+          "backend_code": "DICOM",
+          "region_code": "DICOM",
+          "bucket_or_container": "Objetos DICOM 02",
+          "object_key_prefix": "DICOM",
+          "default_storage_class": "Objetos DICOM 02",
+          "versioning_enabled": false,
+          "object_lock_enabled": false,
+          "state": "DRAFT"
+        },
+        {
+          "id": "53b27239-297d-5328-8c38-f59f25178bbf",
+          "code": "CONSENT_EVIDENCE",
+          "backend_code": "CONSENT_EVIDENCE",
+          "region_code": "CONSENT_EVIDENCE",
+          "bucket_or_container": "Evidencias de consentimiento 03",
+          "object_key_prefix": "CONSENT_EVIDENCE",
+          "default_storage_class": "Evidencias de consentimiento 03",
+          "versioning_enabled": true,
+          "object_lock_enabled": true,
+          "state": "ACTIVE"
+        },
+        {
+          "id": "829a80c5-4ff4-5b33-b38f-61e2bb070f9e",
+          "code": "BILLING",
+          "backend_code": "BILLING",
+          "region_code": "BILLING",
+          "bucket_or_container": "Documentos de facturación 04",
+          "object_key_prefix": "BILLING",
+          "default_storage_class": "Documentos de facturación 04",
+          "versioning_enabled": false,
+          "object_lock_enabled": false,
+          "state": "DRAFT"
+        },
+        {
+          "id": "a5d5f4be-b189-5df3-ab63-389e2330990b",
+          "code": "AUDIT_WORM",
+          "backend_code": "AUDIT_WORM",
+          "region_code": "AUDIT_WORM",
+          "bucket_or_container": "Auditoría inmutable 05",
+          "object_key_prefix": "AUDIT_WORM",
+          "default_storage_class": "Auditoría inmutable 05",
+          "versioning_enabled": true,
+          "object_lock_enabled": true,
+          "state": "ACTIVE"
+        },
+        {
+          "id": "37460770-a603-5b0c-87c5-498c353fd2ba",
+          "code": "EXPORTS",
+          "backend_code": "EXPORTS",
+          "region_code": "EXPORTS",
+          "bucket_or_container": "Exportaciones controladas 06",
+          "object_key_prefix": "EXPORTS",
+          "default_storage_class": "Exportaciones controladas 06",
+          "versioning_enabled": false,
+          "object_lock_enabled": false,
+          "state": "DRAFT"
+        },
+        {
+          "id": "6d36f765-23e7-5bbc-ba8d-423512a1650b",
+          "code": "EDUCATION",
+          "backend_code": "EDUCATION",
+          "region_code": "EDUCATION",
+          "bucket_or_container": "Contenido educativo 07",
+          "object_key_prefix": "EDUCATION",
+          "default_storage_class": "Contenido educativo 07",
+          "versioning_enabled": true,
+          "object_lock_enabled": true,
+          "state": "ACTIVE"
+        },
+        {
+          "id": "41cd968c-151c-5d09-a84e-979057e304d1",
+          "code": "ADS_ASSETS",
+          "backend_code": "ADS_ASSETS",
+          "region_code": "ADS_ASSETS",
+          "bucket_or_container": "Activos publicitarios 08",
+          "object_key_prefix": "ADS_ASSETS",
+          "default_storage_class": "Activos publicitarios 08",
+          "versioning_enabled": false,
+          "object_lock_enabled": false,
+          "state": "DRAFT"
+        },
+        {
+          "id": "c5bd5761-f476-5d04-af18-fb7213f7f5b2",
+          "code": "CLINICAL_DOCS_008",
+          "backend_code": "CLINICAL_DOCS_008",
+          "region_code": "CLINICAL_DOCS_008",
+          "bucket_or_container": "Documentos clínicos 01",
+          "object_key_prefix": "CLINICAL_DOCS_008",
+          "default_storage_class": "Documentos clínicos 01",
+          "versioning_enabled": true,
+          "object_lock_enabled": true,
+          "state": "rejected"
+        },
+        {
+          "id": "525b6eec-0832-58dd-9270-17a5cb4baa16",
+          "code": "DICOM_009",
+          "backend_code": "DICOM_009",
+          "region_code": "DICOM_009",
+          "bucket_or_container": "Objetos DICOM 02",
+          "object_key_prefix": "DICOM_009",
+          "default_storage_class": "Objetos DICOM 02",
+          "versioning_enabled": false,
+          "object_lock_enabled": false,
+          "state": "retrying"
+        },
+        {
+          "id": "3cf98db4-b55a-5d1c-8fad-84626c7c1a6c",
+          "code": "CONSENT_EVIDENCE_010",
+          "backend_code": "CONSENT_EVIDENCE_010",
+          "region_code": "CONSENT_EVIDENCE_010",
+          "bucket_or_container": "Evidencias de consentimiento 03",
+          "object_key_prefix": "CONSENT_EVIDENCE_010",
+          "default_storage_class": "Evidencias de consentimiento 03",
+          "versioning_enabled": true,
+          "object_lock_enabled": true,
+          "state": "active"
+        },
+        {
+          "id": "742c440f-dd3a-59d3-8cec-741118dfe2bc",
+          "code": "BILLING_011",
+          "backend_code": "BILLING_011",
+          "region_code": "BILLING_011",
+          "bucket_or_container": "Documentos de facturación 04",
+          "object_key_prefix": "BILLING_011",
+          "default_storage_class": "Documentos de facturación 04",
+          "versioning_enabled": false,
+          "object_lock_enabled": false,
+          "state": "pending"
+        },
+        {
+          "id": "f525b412-423f-5e9d-a8ce-d99acc27c9a7",
+          "code": "AUDIT_WORM_012",
+          "backend_code": "AUDIT_WORM_012",
+          "region_code": "AUDIT_WORM_012",
+          "bucket_or_container": "Auditoría inmutable 05",
+          "object_key_prefix": "AUDIT_WORM_012",
+          "default_storage_class": "Auditoría inmutable 05",
+          "versioning_enabled": true,
+          "object_lock_enabled": true,
+          "state": "in_progress"
+        },
+        {
+          "id": "0e790b0a-a365-5127-a766-d8321acc871a",
+          "code": "EXPORTS_013",
+          "backend_code": "EXPORTS_013",
+          "region_code": "EXPORTS_013",
+          "bucket_or_container": "Exportaciones controladas 06",
+          "object_key_prefix": "EXPORTS_013",
+          "default_storage_class": "Exportaciones controladas 06",
+          "versioning_enabled": false,
+          "object_lock_enabled": false,
+          "state": "completed"
+        },
+        {
+          "id": "4609d09d-c11b-562e-b709-33e6497e67f3",
+          "code": "EDUCATION_014",
+          "backend_code": "EDUCATION_014",
+          "region_code": "EDUCATION_014",
+          "bucket_or_container": "Contenido educativo 07",
+          "object_key_prefix": "EDUCATION_014",
+          "default_storage_class": "Contenido educativo 07",
+          "versioning_enabled": true,
+          "object_lock_enabled": true,
+          "state": "failed"
+        },
+        {
+          "id": "0885b5e1-7f88-5020-a75a-97582e11f2b9",
+          "code": "ADS_ASSETS_015",
+          "backend_code": "ADS_ASSETS_015",
+          "region_code": "ADS_ASSETS_015",
+          "bucket_or_container": "Activos publicitarios 08",
+          "object_key_prefix": "ADS_ASSETS_015",
+          "default_storage_class": "Activos publicitarios 08",
+          "versioning_enabled": false,
+          "object_lock_enabled": false,
+          "state": "cancelled"
+        }
+      ],
+      "object_manifests": [
+        {
+          "id": "59d724fd-df8f-55ab-b879-daeb6fd8dc5c",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "logical_object_id": "087645bf-138b-58af-9897-3e8a61d0d19a",
+          "object_type": "OBJECT_MANIFESTS_01",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "current_version_id": "7b97d327-03dd-58c3-91c4-b88928a07a39",
+          "lifecycle_state": "ACTIVE",
+          "retention_policy_code": "OBJECT_MANIFESTS_01",
+          "created_at": "2026-09-01T08:05:00Z",
+          "updated_at": "2026-09-01T08:25:00Z"
+        },
+        {
+          "id": "f402f99b-b646-56c8-9836-50d7179e2c5c",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "logical_object_id": "087645bf-138b-58af-9897-3e8a61d0d19a",
+          "object_type": "OBJECT_MANIFESTS_02",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "current_version_id": "7b97d327-03dd-58c3-91c4-b88928a07a39",
+          "lifecycle_state": "DRAFT",
+          "retention_policy_code": "OBJECT_MANIFESTS_02",
+          "created_at": "2026-09-06T08:16:00Z",
+          "updated_at": "2026-09-06T08:37:00Z"
+        },
+        {
+          "id": "9d3af9e8-1eba-51e0-8554-17973ae814fb",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "logical_object_id": "087645bf-138b-58af-9897-3e8a61d0d19a",
+          "object_type": "OBJECT_MANIFESTS_03",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "current_version_id": "7b97d327-03dd-58c3-91c4-b88928a07a39",
+          "lifecycle_state": "ACTIVE",
+          "retention_policy_code": "OBJECT_MANIFESTS_03",
+          "created_at": "2026-09-11T08:27:00Z",
+          "updated_at": "2026-09-11T08:49:00Z"
+        },
+        {
+          "id": "677daccd-2992-5e9e-82ee-2c0d1ec7d08d",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "logical_object_id": "087645bf-138b-58af-9897-3e8a61d0d19a",
+          "object_type": "OBJECT_MANIFESTS_04",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "current_version_id": "7b97d327-03dd-58c3-91c4-b88928a07a39",
+          "lifecycle_state": "DRAFT",
+          "retention_policy_code": "OBJECT_MANIFESTS_04",
+          "created_at": "2026-09-16T08:38:00Z",
+          "updated_at": "2026-09-16T09:01:00Z"
+        },
+        {
+          "id": "f29963d4-5c1c-53cc-a61c-9e34e6f3e7a4",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "logical_object_id": "087645bf-138b-58af-9897-3e8a61d0d19a",
+          "object_type": "OBJECT_MANIFESTS_05",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "current_version_id": "7b97d327-03dd-58c3-91c4-b88928a07a39",
+          "lifecycle_state": "ACTIVE",
+          "retention_policy_code": "OBJECT_MANIFESTS_05",
+          "created_at": "2026-09-21T08:49:00Z",
+          "updated_at": "2026-09-21T09:13:00Z"
+        },
+        {
+          "id": "28814c75-27a7-5420-8144-ae71eda23b8e",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "logical_object_id": "087645bf-138b-58af-9897-3e8a61d0d19a",
+          "object_type": "OBJECT_MANIFESTS_06",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "current_version_id": "7b97d327-03dd-58c3-91c4-b88928a07a39",
+          "lifecycle_state": "DRAFT",
+          "retention_policy_code": "OBJECT_MANIFESTS_06",
+          "created_at": "2026-09-26T09:00:00Z",
+          "updated_at": "2026-09-26T09:25:00Z"
+        },
+        {
+          "id": "fcbed1a3-8233-5400-943a-41cf10fbe1fa",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "logical_object_id": "087645bf-138b-58af-9897-3e8a61d0d19a",
+          "object_type": "OBJECT_MANIFESTS_07",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "current_version_id": "7b97d327-03dd-58c3-91c4-b88928a07a39",
+          "lifecycle_state": "ACTIVE",
+          "retention_policy_code": "OBJECT_MANIFESTS_07",
+          "created_at": "2026-10-01T09:11:00Z",
+          "updated_at": "2026-10-01T09:37:00Z"
+        },
+        {
+          "id": "e07d294a-6318-56e4-9d48-83f122050862",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "logical_object_id": "087645bf-138b-58af-9897-3e8a61d0d19a",
+          "object_type": "OBJECT_MANIFESTS_08",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "current_version_id": "7b97d327-03dd-58c3-91c4-b88928a07a39",
+          "lifecycle_state": "DRAFT",
+          "retention_policy_code": "OBJECT_MANIFESTS_08",
+          "created_at": "2026-10-06T09:22:00Z",
+          "updated_at": "2026-10-06T09:49:00Z"
+        },
+        {
+          "id": "21ff8e7a-42da-5161-80ae-6f82cc6edb2b",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "logical_object_id": "087645bf-138b-58af-9897-3e8a61d0d19a",
+          "object_type": "OBJECT_MANIFESTS_01",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "current_version_id": "7b97d327-03dd-58c3-91c4-b88928a07a39",
+          "lifecycle_state": "rejected",
+          "retention_policy_code": "OBJECT_MANIFESTS_008",
+          "created_at": "2026-12-13T14:25:00Z",
+          "updated_at": "2026-12-13T14:25:00Z"
+        },
+        {
+          "id": "446393d9-d7f7-5f14-962b-0582efdd4fbb",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "logical_object_id": "087645bf-138b-58af-9897-3e8a61d0d19a",
+          "object_type": "OBJECT_MANIFESTS_02",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "current_version_id": "7b97d327-03dd-58c3-91c4-b88928a07a39",
+          "lifecycle_state": "retrying",
+          "retention_policy_code": "OBJECT_MANIFESTS_009",
+          "created_at": "2026-07-24T03:42:00Z",
+          "updated_at": "2026-07-24T03:42:00Z"
+        },
+        {
+          "id": "abf19a0e-602f-566e-bcdb-ff42dfd1dedc",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "logical_object_id": "087645bf-138b-58af-9897-3e8a61d0d19a",
+          "object_type": "OBJECT_MANIFESTS_03",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "current_version_id": "7b97d327-03dd-58c3-91c4-b88928a07a39",
+          "lifecycle_state": "active",
+          "retention_policy_code": "OBJECT_MANIFESTS_010",
+          "created_at": "2026-02-08T16:59:00Z",
+          "updated_at": "2026-02-08T16:59:00Z"
+        },
+        {
+          "id": "0eb8733d-d063-50a3-8db1-4d929925686d",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "logical_object_id": "087645bf-138b-58af-9897-3e8a61d0d19a",
+          "object_type": "OBJECT_MANIFESTS_04",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "current_version_id": "7b97d327-03dd-58c3-91c4-b88928a07a39",
+          "lifecycle_state": "pending",
+          "retention_policy_code": "OBJECT_MANIFESTS_011",
+          "created_at": "2026-09-19T05:16:00Z",
+          "updated_at": "2026-09-19T05:16:00Z"
+        },
+        {
+          "id": "f802dc9d-3a4e-58fc-8244-37f578d49191",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "logical_object_id": "087645bf-138b-58af-9897-3e8a61d0d19a",
+          "object_type": "OBJECT_MANIFESTS_05",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "current_version_id": "7b97d327-03dd-58c3-91c4-b88928a07a39",
+          "lifecycle_state": "in_progress",
+          "retention_policy_code": "OBJECT_MANIFESTS_012",
+          "created_at": "2026-04-03T18:33:00Z",
+          "updated_at": "2026-04-03T18:33:00Z"
+        },
+        {
+          "id": "5526754d-b43c-5ea0-94f4-29e71812b33c",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "logical_object_id": "087645bf-138b-58af-9897-3e8a61d0d19a",
+          "object_type": "OBJECT_MANIFESTS_06",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "current_version_id": "7b97d327-03dd-58c3-91c4-b88928a07a39",
+          "lifecycle_state": "completed",
+          "retention_policy_code": "OBJECT_MANIFESTS_013",
+          "created_at": "2026-11-14T07:50:00Z",
+          "updated_at": "2026-11-14T07:50:00Z"
+        },
+        {
+          "id": "b56bb0c5-2d45-5cb8-9890-22763b115f3a",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "logical_object_id": "087645bf-138b-58af-9897-3e8a61d0d19a",
+          "object_type": "OBJECT_MANIFESTS_07",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "current_version_id": "7b97d327-03dd-58c3-91c4-b88928a07a39",
+          "lifecycle_state": "failed",
+          "retention_policy_code": "OBJECT_MANIFESTS_014",
+          "created_at": "2026-06-25T20:07:00Z",
+          "updated_at": "2026-06-25T20:07:00Z"
+        },
+        {
+          "id": "959ca384-24ad-528d-be8c-03bc645780d8",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "logical_object_id": "087645bf-138b-58af-9897-3e8a61d0d19a",
+          "object_type": "OBJECT_MANIFESTS_08",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "current_version_id": "7b97d327-03dd-58c3-91c4-b88928a07a39",
+          "lifecycle_state": "cancelled",
+          "retention_policy_code": "OBJECT_MANIFESTS_015",
+          "created_at": "2026-01-09T09:24:00Z",
+          "updated_at": "2026-01-09T09:24:00Z"
+        }
+      ],
+      "object_versions": [
+        {
+          "id": "fad9f78a-853f-56e1-83f8-3e3e2766b47d",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "version_number": 1,
+          "provider_version_id": "1.0.0",
+          "object_key": "object_storage_object_versions_archivo_clinico_1",
+          "mime_type": "OBJECT_VERSIONS_01",
+          "size_bytes": 5,
+          "sha256": "Object versions — archivo clínico 01",
+          "etag": "007fa3d164de9e97e2f94289767b7cfa9dfdf1001d3fbd257fb346c26c3e9934",
+          "compression": "Object versions — archivo clínico 01",
+          "created_at": "2026-09-01T08:12:00Z",
+          "supersedes_version_id": "9c251896-0c40-5b6f-ae36-dc9b7b0571cb"
+        },
+        {
+          "id": "96d794a0-ec48-595c-945e-0c64f46e4eb7",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "version_number": 1,
+          "provider_version_id": "1.0.0",
+          "object_key": "object_storage_object_versions_estudio_dicom_2",
+          "mime_type": "OBJECT_VERSIONS_02",
+          "size_bytes": 10,
+          "sha256": "Object versions — estudio DICOM 02",
+          "etag": "d194473b2b50c4b0d88ff90da6f2d26d4ab6af1b484dbee76f1aacdc022d7efd",
+          "compression": "Object versions — estudio DICOM 02",
+          "created_at": "2026-09-06T08:23:00Z",
+          "supersedes_version_id": "9c251896-0c40-5b6f-ae36-dc9b7b0571cb"
+        },
+        {
+          "id": "f2e340b7-6cdc-586f-88d7-ccb2a915d5fd",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "version_number": 3,
+          "provider_version_id": "1.0.0",
+          "object_key": "object_storage_object_versions_serie_dicom_3",
+          "mime_type": "OBJECT_VERSIONS_03",
+          "size_bytes": 15,
+          "sha256": "Object versions — serie DICOM 03",
+          "etag": "3f5a26f593a99f7eb25b6330bcf1c1d2cd16f6b4b3c9f237026b26b029ec313a",
+          "compression": "Object versions — serie DICOM 03",
+          "created_at": "2026-09-11T08:34:00Z",
+          "supersedes_version_id": "9c251896-0c40-5b6f-ae36-dc9b7b0571cb"
+        },
+        {
+          "id": "d9cef601-7632-5b22-9fe9-63a0e177bb27",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "version_number": 4,
+          "provider_version_id": "1.0.0",
+          "object_key": "object_storage_object_versions_instancia_dicom_4",
+          "mime_type": "OBJECT_VERSIONS_04",
+          "size_bytes": 20,
+          "sha256": "Object versions — instancia DICOM 04",
+          "etag": "90788d6b4176a3386963452af539425435ce852008aebf99e44d23b1e84369bb",
+          "compression": "Object versions — instancia DICOM 04",
+          "created_at": "2026-09-16T08:45:00Z",
+          "supersedes_version_id": "9c251896-0c40-5b6f-ae36-dc9b7b0571cb"
+        },
+        {
+          "id": "7040b826-e71a-5cf8-9945-9754b153adfa",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "version_number": 5,
+          "provider_version_id": "1.0.0",
+          "object_key": "object_storage_object_versions_informe_pdf_5",
+          "mime_type": "OBJECT_VERSIONS_05",
+          "size_bytes": 25,
+          "sha256": "Object versions — informe PDF 05",
+          "etag": "ac8627b043012f5f789e103ae4a29d6461f815e13b1339d787697cf171f3b496",
+          "compression": "Object versions — informe PDF 05",
+          "created_at": "2026-09-21T08:56:00Z",
+          "supersedes_version_id": "9c251896-0c40-5b6f-ae36-dc9b7b0571cb"
+        },
+        {
+          "id": "864dc59e-b3c2-58ef-8af1-1d3e58db5565",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "version_number": 6,
+          "provider_version_id": "1.0.0",
+          "object_key": "object_storage_object_versions_evidencia_legal_6",
+          "mime_type": "OBJECT_VERSIONS_06",
+          "size_bytes": 30,
+          "sha256": "Object versions — evidencia legal 06",
+          "etag": "cb5ca3b6105cdfa9b2e3fe701f649bbdbefd1750bf708985a06a0d9ba6b29215",
+          "compression": "Object versions — evidencia legal 06",
+          "created_at": "2026-09-26T09:07:00Z",
+          "supersedes_version_id": "9c251896-0c40-5b6f-ae36-dc9b7b0571cb"
+        },
+        {
+          "id": "13e4d373-dda1-5316-b69b-96611a19bc5a",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "version_number": 7,
+          "provider_version_id": "1.0.0",
+          "object_key": "object_storage_object_versions_archivo_de_exportacion_7",
+          "mime_type": "OBJECT_VERSIONS_07",
+          "size_bytes": 35,
+          "sha256": "Object versions — archivo de exportación 07",
+          "etag": "686fdf42264e8605dca490295352f07f28c0d04d610d2fe7cf495174043d4478",
+          "compression": "Object versions — archivo de exportación 07",
+          "created_at": "2026-10-01T09:18:00Z",
+          "supersedes_version_id": "9c251896-0c40-5b6f-ae36-dc9b7b0571cb"
+        },
+        {
+          "id": "315d8513-e6c4-5d19-9d42-3f243de344d5",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "version_number": 8,
+          "provider_version_id": "1.0.0",
+          "object_key": "object_storage_object_versions_objeto_archivado_8",
+          "mime_type": "OBJECT_VERSIONS_08",
+          "size_bytes": 40,
+          "sha256": "Object versions — objeto archivado 08",
+          "etag": "4a58462387f1ca07bfd94fd5cef455dd7e1cd66285f786f0cceb299b0c368bcf",
+          "compression": "Object versions — objeto archivado 08",
+          "created_at": "2026-10-06T09:29:00Z",
+          "supersedes_version_id": "9c251896-0c40-5b6f-ae36-dc9b7b0571cb"
+        },
+        {
+          "id": "3c7df62c-a402-5b58-9e76-361a9dba77d5",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "version_number": 1,
+          "provider_version_id": "1.0.0",
+          "object_key": "object_storage_object_versions_archivo_clinico_008",
+          "mime_type": "OBJECT_VERSIONS_01",
+          "size_bytes": 15,
+          "sha256": "Object versions — archivo clínico 01",
+          "etag": "007fa3d164de9e97e2f94289767b7cfa9dfdf1001d3fbd257fb346c26c3e9934",
+          "compression": "Object versions — archivo clínico 01",
+          "created_at": "2026-12-13T14:25:00Z",
+          "supersedes_version_id": "9c251896-0c40-5b6f-ae36-dc9b7b0571cb"
+        },
+        {
+          "id": "22f6fb85-76ae-5328-9b53-a8baa6abec33",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "version_number": 1,
+          "provider_version_id": "1.0.0",
+          "object_key": "object_storage_object_versions_estudio_dicom_009",
+          "mime_type": "OBJECT_VERSIONS_02",
+          "size_bytes": 21,
+          "sha256": "Object versions — estudio DICOM 02",
+          "etag": "d194473b2b50c4b0d88ff90da6f2d26d4ab6af1b484dbee76f1aacdc022d7efd",
+          "compression": "Object versions — estudio DICOM 02",
+          "created_at": "2026-07-24T03:42:00Z",
+          "supersedes_version_id": "9c251896-0c40-5b6f-ae36-dc9b7b0571cb"
+        },
+        {
+          "id": "f740a0fb-880f-5893-ac28-7e4488a6d80a",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "version_number": 3,
+          "provider_version_id": "1.0.0",
+          "object_key": "object_storage_object_versions_serie_dicom_010",
+          "mime_type": "OBJECT_VERSIONS_03",
+          "size_bytes": 90,
+          "sha256": "Object versions — serie DICOM 03",
+          "etag": "3f5a26f593a99f7eb25b6330bcf1c1d2cd16f6b4b3c9f237026b26b029ec313a",
+          "compression": "Object versions — serie DICOM 03",
+          "created_at": "2026-02-08T16:59:00Z",
+          "supersedes_version_id": "9c251896-0c40-5b6f-ae36-dc9b7b0571cb"
+        },
+        {
+          "id": "f23f63aa-475e-534b-affa-7ad51d4ebe88",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "version_number": 4,
+          "provider_version_id": "1.0.0",
+          "object_key": "object_storage_object_versions_instancia_dicom_011",
+          "mime_type": "OBJECT_VERSIONS_04",
+          "size_bytes": 36,
+          "sha256": "Object versions — instancia DICOM 04",
+          "etag": "90788d6b4176a3386963452af539425435ce852008aebf99e44d23b1e84369bb",
+          "compression": "Object versions — instancia DICOM 04",
+          "created_at": "2026-09-19T05:16:00Z",
+          "supersedes_version_id": "9c251896-0c40-5b6f-ae36-dc9b7b0571cb"
+        },
+        {
+          "id": "1717ff2d-8b45-53f7-b15f-4ab5feb36c12",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "version_number": 5,
+          "provider_version_id": "1.0.0",
+          "object_key": "object_storage_object_versions_informe_pdf_012",
+          "mime_type": "OBJECT_VERSIONS_05",
+          "size_bytes": 97,
+          "sha256": "Object versions — informe PDF 05",
+          "etag": "ac8627b043012f5f789e103ae4a29d6461f815e13b1339d787697cf171f3b496",
+          "compression": "Object versions — informe PDF 05",
+          "created_at": "2026-04-03T18:33:00Z",
+          "supersedes_version_id": "9c251896-0c40-5b6f-ae36-dc9b7b0571cb"
+        },
+        {
+          "id": "fc75b7dd-1885-56ff-91b0-0290b14a8801",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "version_number": 6,
+          "provider_version_id": "1.0.0",
+          "object_key": "object_storage_object_versions_evidencia_legal_013",
+          "mime_type": "OBJECT_VERSIONS_06",
+          "size_bytes": 61,
+          "sha256": "Object versions — evidencia legal 06",
+          "etag": "cb5ca3b6105cdfa9b2e3fe701f649bbdbefd1750bf708985a06a0d9ba6b29215",
+          "compression": "Object versions — evidencia legal 06",
+          "created_at": "2026-11-14T07:50:00Z",
+          "supersedes_version_id": "9c251896-0c40-5b6f-ae36-dc9b7b0571cb"
+        },
+        {
+          "id": "54ed00a7-e095-5257-8330-57ddcbb52c7c",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "version_number": 7,
+          "provider_version_id": "1.0.0",
+          "object_key": "object_storage_object_versions_archivo_de_exportacion_014",
+          "mime_type": "OBJECT_VERSIONS_07",
+          "size_bytes": 41,
+          "sha256": "Object versions — archivo de exportación 07",
+          "etag": "686fdf42264e8605dca490295352f07f28c0d04d610d2fe7cf495174043d4478",
+          "compression": "Object versions — archivo de exportación 07",
+          "created_at": "2026-06-25T20:07:00Z",
+          "supersedes_version_id": "9c251896-0c40-5b6f-ae36-dc9b7b0571cb"
+        },
+        {
+          "id": "7531dda6-dfbf-5b14-a152-1ec4da77cf3f",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "version_number": 8,
+          "provider_version_id": "1.0.0",
+          "object_key": "object_storage_object_versions_objeto_archivado_015",
+          "mime_type": "OBJECT_VERSIONS_08",
+          "size_bytes": 68,
+          "sha256": "Object versions — objeto archivado 08",
+          "etag": "4a58462387f1ca07bfd94fd5cef455dd7e1cd66285f786f0cceb299b0c368bcf",
+          "compression": "Object versions — objeto archivado 08",
+          "created_at": "2026-01-09T09:24:00Z",
+          "supersedes_version_id": "9c251896-0c40-5b6f-ae36-dc9b7b0571cb"
+        }
+      ],
+      "object_locations": [
+        {
+          "id": "ace1fe0e-e7f4-5789-a846-9dba057092a5",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "placement_role": "Object locations — archivo clínico 01",
+          "provider_uri": "https://object_storage.mock.salud.example.invalid/object-locations/1",
+          "storage_class": "Object locations — archivo clínico 01",
+          "replication_state": "OBJECT_LOCATIONS_01",
+          "verified_at": "2026-09-01T08:19:00Z"
+        },
+        {
+          "id": "6685ff2a-9c46-55dd-8bea-bb5b70cf67e9",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "placement_role": "Object locations — estudio DICOM 02",
+          "provider_uri": "https://object_storage.mock.salud.example.invalid/object-locations/2",
+          "storage_class": "Object locations — estudio DICOM 02",
+          "replication_state": "OBJECT_LOCATIONS_02",
+          "verified_at": "2026-09-06T08:30:00Z"
+        },
+        {
+          "id": "4fa31d25-edc6-519d-a7cf-ad41120a8a87",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "placement_role": "Object locations — serie DICOM 03",
+          "provider_uri": "https://object_storage.mock.salud.example.invalid/object-locations/3",
+          "storage_class": "Object locations — serie DICOM 03",
+          "replication_state": "OBJECT_LOCATIONS_03",
+          "verified_at": "2026-09-11T08:41:00Z"
+        },
+        {
+          "id": "456d5a20-c99c-5ea7-af55-459825953197",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "placement_role": "Object locations — instancia DICOM 04",
+          "provider_uri": "https://object_storage.mock.salud.example.invalid/object-locations/4",
+          "storage_class": "Object locations — instancia DICOM 04",
+          "replication_state": "OBJECT_LOCATIONS_04",
+          "verified_at": "2026-09-16T08:52:00Z"
+        },
+        {
+          "id": "cf870dd7-eb1b-5432-bc7e-162a084fac5e",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "placement_role": "Object locations — informe PDF 05",
+          "provider_uri": "https://object_storage.mock.salud.example.invalid/object-locations/5",
+          "storage_class": "Object locations — informe PDF 05",
+          "replication_state": "OBJECT_LOCATIONS_05",
+          "verified_at": "2026-09-21T09:03:00Z"
+        },
+        {
+          "id": "aee5aa3d-6d8b-580d-882b-6d17161f63c4",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "placement_role": "Object locations — evidencia legal 06",
+          "provider_uri": "https://object_storage.mock.salud.example.invalid/object-locations/6",
+          "storage_class": "Object locations — evidencia legal 06",
+          "replication_state": "OBJECT_LOCATIONS_06",
+          "verified_at": "2026-09-26T09:14:00Z"
+        },
+        {
+          "id": "020fa9bb-4503-5fa3-a8b9-8d980b3bbae6",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "placement_role": "Object locations — archivo de exportación 07",
+          "provider_uri": "https://object_storage.mock.salud.example.invalid/object-locations/7",
+          "storage_class": "Object locations — archivo de exportación 07",
+          "replication_state": "OBJECT_LOCATIONS_07",
+          "verified_at": "2026-10-01T09:25:00Z"
+        },
+        {
+          "id": "ba3a1282-1d30-5ac5-91a4-5d6cf6da85e8",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "placement_role": "Object locations — objeto archivado 08",
+          "provider_uri": "https://object_storage.mock.salud.example.invalid/object-locations/8",
+          "storage_class": "Object locations — objeto archivado 08",
+          "replication_state": "OBJECT_LOCATIONS_08",
+          "verified_at": "2026-10-06T09:36:00Z"
+        },
+        {
+          "id": "3f8f2010-6167-5e3f-b7c8-68d69f5bd8e2",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "placement_role": "Object locations — archivo clínico 01",
+          "provider_uri": "https://object_storage.mock.salud.example.invalid/object-locations/1",
+          "storage_class": "Object locations — archivo clínico 01",
+          "replication_state": "rejected",
+          "verified_at": "2026-12-13T14:25:00Z"
+        },
+        {
+          "id": "81951b9a-a453-5e0f-b751-67cdca85f5a5",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "placement_role": "Object locations — estudio DICOM 02",
+          "provider_uri": "https://object_storage.mock.salud.example.invalid/object-locations/2",
+          "storage_class": "Object locations — estudio DICOM 02",
+          "replication_state": "retrying",
+          "verified_at": "2026-07-24T03:42:00Z"
+        },
+        {
+          "id": "42b03684-8a1d-54ca-8e5b-1e9ad7360b16",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "placement_role": "Object locations — serie DICOM 03",
+          "provider_uri": "https://object_storage.mock.salud.example.invalid/object-locations/3",
+          "storage_class": "Object locations — serie DICOM 03",
+          "replication_state": "active",
+          "verified_at": "2026-02-08T16:59:00Z"
+        },
+        {
+          "id": "d3e5e15c-f17f-582e-bcc7-8bee30d588df",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "placement_role": "Object locations — instancia DICOM 04",
+          "provider_uri": "https://object_storage.mock.salud.example.invalid/object-locations/4",
+          "storage_class": "Object locations — instancia DICOM 04",
+          "replication_state": "pending",
+          "verified_at": "2026-09-19T05:16:00Z"
+        },
+        {
+          "id": "df7ccd90-5d43-5f98-b16c-57c744dc736d",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "placement_role": "Object locations — informe PDF 05",
+          "provider_uri": "https://object_storage.mock.salud.example.invalid/object-locations/5",
+          "storage_class": "Object locations — informe PDF 05",
+          "replication_state": "in_progress",
+          "verified_at": "2026-04-03T18:33:00Z"
+        },
+        {
+          "id": "1115d215-1dd3-50c9-8f6c-3174418fcbb1",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "placement_role": "Object locations — evidencia legal 06",
+          "provider_uri": "https://object_storage.mock.salud.example.invalid/object-locations/6",
+          "storage_class": "Object locations — evidencia legal 06",
+          "replication_state": "completed",
+          "verified_at": "2026-11-14T07:50:00Z"
+        },
+        {
+          "id": "1af4c9a5-1ce4-5dc1-b1ed-9083d9567215",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "placement_role": "Object locations — archivo de exportación 07",
+          "provider_uri": "https://object_storage.mock.salud.example.invalid/object-locations/7",
+          "storage_class": "Object locations — archivo de exportación 07",
+          "replication_state": "failed",
+          "verified_at": "2026-06-25T20:07:00Z"
+        },
+        {
+          "id": "6c45e4cf-fe3a-5f0b-a0e7-b39dddd2263b",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "placement_role": "Object locations — objeto archivado 08",
+          "provider_uri": "https://object_storage.mock.salud.example.invalid/object-locations/8",
+          "storage_class": "Object locations — objeto archivado 08",
+          "replication_state": "cancelled",
+          "verified_at": "2026-01-09T09:24:00Z"
+        }
+      ],
+      "object_checksums": [
+        {
+          "id": "20653cda-d780-5f80-9d72-cca692e5dec9",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object checksums — archivo clínico 01",
+          "checksum": "d3f8e8db2d3e0892bbd26a39a748ec9b348a8dc22378e49fcb5f657cc39319ff",
+          "source": "Object checksums — archivo clínico 01",
+          "verified_at": "2026-09-01T08:26:00Z",
+          "verification_status": "ACTIVE"
+        },
+        {
+          "id": "08194da7-bb52-5169-895d-e107f2fa48d0",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object checksums — estudio DICOM 02",
+          "checksum": "5622a75f1eb302810e81e134c00124ca58f5db6c1721afa571f911a75f113c37",
+          "source": "Object checksums — estudio DICOM 02",
+          "verified_at": "2026-09-06T08:37:00Z",
+          "verification_status": "DRAFT"
+        },
+        {
+          "id": "670fb6db-b68e-5d0e-ad56-ada4f2b88458",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object checksums — serie DICOM 03",
+          "checksum": "1859e4d817a8ad1309e54cb4a67980df5242a0ff0cbce29ebb9bfa9d598a0bf3",
+          "source": "Object checksums — serie DICOM 03",
+          "verified_at": "2026-09-11T08:48:00Z",
+          "verification_status": "ACTIVE"
+        },
+        {
+          "id": "5ca67112-ad6a-5c9d-95ab-22798f9fb210",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object checksums — instancia DICOM 04",
+          "checksum": "c4439da2ca96f47ff24ef53dea2ebbbc2780b4d7f5158165c03ceb0467ef4d49",
+          "source": "Object checksums — instancia DICOM 04",
+          "verified_at": "2026-09-16T08:59:00Z",
+          "verification_status": "DRAFT"
+        },
+        {
+          "id": "39e00ac1-fe04-5bc2-a556-fb07c74d7694",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object checksums — informe PDF 05",
+          "checksum": "9be98799092696441396f9b12c70f987d85d6449a18cc87116eecff44e87401f",
+          "source": "Object checksums — informe PDF 05",
+          "verified_at": "2026-09-21T09:10:00Z",
+          "verification_status": "ACTIVE"
+        },
+        {
+          "id": "37c12d4a-771b-5b0b-9641-2d50475cae37",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object checksums — evidencia legal 06",
+          "checksum": "6352cdfc5e287e30634f519cd3db03b6ca88aeab1c4ee33bc14637855e9cbd11",
+          "source": "Object checksums — evidencia legal 06",
+          "verified_at": "2026-09-26T09:21:00Z",
+          "verification_status": "DRAFT"
+        },
+        {
+          "id": "911ddb02-c2d0-5636-9818-5a3f4401949b",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object checksums — archivo de exportación 07",
+          "checksum": "d60d4ef26f6958268f24beeb77fce9ff40bf59b6989d8bd05b9abd6846d743f9",
+          "source": "Object checksums — archivo de exportación 07",
+          "verified_at": "2026-10-01T09:32:00Z",
+          "verification_status": "ACTIVE"
+        },
+        {
+          "id": "3a506549-9a85-57aa-be04-5d3b12c4b069",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object checksums — objeto archivado 08",
+          "checksum": "76c298cc3b0a44de9d375496122521bb26cbd39dcafeffa32d3b8ce2616a0a5b",
+          "source": "Object checksums — objeto archivado 08",
+          "verified_at": "2026-10-06T09:43:00Z",
+          "verification_status": "DRAFT"
+        },
+        {
+          "id": "5dd10ffb-bf30-5f2e-8680-a9932e8ca6b5",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object checksums — archivo clínico 01",
+          "checksum": "d3f8e8db2d3e0892bbd26a39a748ec9b348a8dc22378e49fcb5f657cc39319ff",
+          "source": "Object checksums — archivo clínico 01",
+          "verified_at": "2026-12-13T14:25:00Z",
+          "verification_status": "rejected"
+        },
+        {
+          "id": "5dd15bc7-a534-5156-bad6-1b98d5bee66d",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object checksums — estudio DICOM 02",
+          "checksum": "5622a75f1eb302810e81e134c00124ca58f5db6c1721afa571f911a75f113c37",
+          "source": "Object checksums — estudio DICOM 02",
+          "verified_at": "2026-07-24T03:42:00Z",
+          "verification_status": "retrying"
+        },
+        {
+          "id": "e4843385-aa93-5834-8fe0-87d9b91f42a5",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object checksums — serie DICOM 03",
+          "checksum": "1859e4d817a8ad1309e54cb4a67980df5242a0ff0cbce29ebb9bfa9d598a0bf3",
+          "source": "Object checksums — serie DICOM 03",
+          "verified_at": "2026-02-08T16:59:00Z",
+          "verification_status": "active"
+        },
+        {
+          "id": "a88f5cd8-8ec3-52c9-8e1f-cd181ba5a195",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object checksums — instancia DICOM 04",
+          "checksum": "c4439da2ca96f47ff24ef53dea2ebbbc2780b4d7f5158165c03ceb0467ef4d49",
+          "source": "Object checksums — instancia DICOM 04",
+          "verified_at": "2026-09-19T05:16:00Z",
+          "verification_status": "pending"
+        },
+        {
+          "id": "9c2713b3-e10f-5621-a4f6-da51c0234a2b",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object checksums — informe PDF 05",
+          "checksum": "9be98799092696441396f9b12c70f987d85d6449a18cc87116eecff44e87401f",
+          "source": "Object checksums — informe PDF 05",
+          "verified_at": "2026-04-03T18:33:00Z",
+          "verification_status": "in_progress"
+        },
+        {
+          "id": "bfa853c6-bb16-5678-a196-eba83d6614e4",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object checksums — evidencia legal 06",
+          "checksum": "6352cdfc5e287e30634f519cd3db03b6ca88aeab1c4ee33bc14637855e9cbd11",
+          "source": "Object checksums — evidencia legal 06",
+          "verified_at": "2026-11-14T07:50:00Z",
+          "verification_status": "completed"
+        },
+        {
+          "id": "44280b71-0e45-55c4-ace6-26d71aceb798",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object checksums — archivo de exportación 07",
+          "checksum": "d60d4ef26f6958268f24beeb77fce9ff40bf59b6989d8bd05b9abd6846d743f9",
+          "source": "Object checksums — archivo de exportación 07",
+          "verified_at": "2026-06-25T20:07:00Z",
+          "verification_status": "failed"
+        },
+        {
+          "id": "0e553d59-b0f8-5b61-abfa-ffa853dfdede",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object checksums — objeto archivado 08",
+          "checksum": "76c298cc3b0a44de9d375496122521bb26cbd39dcafeffa32d3b8ce2616a0a5b",
+          "source": "Object checksums — objeto archivado 08",
+          "verified_at": "2026-01-09T09:24:00Z",
+          "verification_status": "cancelled"
+        }
+      ],
+      "object_encryption_envelopes": [
+        {
+          "id": "1268957c-87de-5b4c-b378-252e8e667375",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object encryption envelopes — archivo clínico 01",
+          "key_management_provider": "OBJECT_ENCRYPTION_ENVELOPES_01",
+          "encrypted_data_key": "MOCK_ENCRYPTED_VALUE_NOT_A_SECRET",
+          "key_version": "1.0.0",
+          "encryption_context_hash": "56be92b0a5f94a0da27e09d21743541fd571cf5f702174293720c28198fb73e4",
+          "created_at": "2026-09-01T08:33:00Z"
+        },
+        {
+          "id": "e9e9986f-5cad-5be7-99b7-40ef6fe766b1",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object encryption envelopes — estudio DICOM 02",
+          "key_management_provider": "OBJECT_ENCRYPTION_ENVELOPES_02",
+          "encrypted_data_key": "MOCK_ENCRYPTED_VALUE_NOT_A_SECRET",
+          "key_version": "1.0.0",
+          "encryption_context_hash": "e7cbd76ae9271cb562c2efad841ac7a7f86b9faa6b5b7be6dce9ba4ff950d2ec",
+          "created_at": "2026-09-06T08:44:00Z"
+        },
+        {
+          "id": "f420672a-76cc-5c55-9dcd-2aa5deea039a",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object encryption envelopes — serie DICOM 03",
+          "key_management_provider": "OBJECT_ENCRYPTION_ENVELOPES_03",
+          "encrypted_data_key": "object_storage_object_encryption_envelopes_serie_dicom_3",
+          "key_version": "1.0.0",
+          "encryption_context_hash": "4b1cdf781f932158534f06598d9ec4f8a879419b7bf05cb0b7ad1037cd8f9e0a",
+          "created_at": "2026-09-11T08:55:00Z"
+        },
+        {
+          "id": "5f72cfc5-1274-5fc1-ab54-4b0b7961a801",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object encryption envelopes — instancia DICOM 04",
+          "key_management_provider": "OBJECT_ENCRYPTION_ENVELOPES_04",
+          "encrypted_data_key": "object_storage_object_encryption_envelopes_instancia_dicom_4",
+          "key_version": "1.0.0",
+          "encryption_context_hash": "8d269973ed4f6762f7614db55da517a0576ce1d139eb6ed553599f92b6be54d9",
+          "created_at": "2026-09-16T09:06:00Z"
+        },
+        {
+          "id": "a7a76208-ef88-53e6-9339-7fbcba7f3137",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object encryption envelopes — informe PDF 05",
+          "key_management_provider": "OBJECT_ENCRYPTION_ENVELOPES_05",
+          "encrypted_data_key": "object_storage_object_encryption_envelopes_informe_pdf_5",
+          "key_version": "1.0.0",
+          "encryption_context_hash": "0c9e62c28a448cd4b857d2fb461ef8bf3d5d5dc5735fd0a778044b0b7945ed9d",
+          "created_at": "2026-09-21T09:17:00Z"
+        },
+        {
+          "id": "b9afdc5a-43bc-5ab0-b470-1715561b8993",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object encryption envelopes — evidencia legal 06",
+          "key_management_provider": "OBJECT_ENCRYPTION_ENVELOPES_06",
+          "encrypted_data_key": "object_storage_object_encryption_envelopes_evidencia_legal_6",
+          "key_version": "1.0.0",
+          "encryption_context_hash": "f9421d9727221838549b839968d50a9762fdd334b7e76b6360cb9f13e378abbe",
+          "created_at": "2026-09-26T09:28:00Z"
+        },
+        {
+          "id": "b7becc86-ecce-5410-a4ba-c7910ef7f2b0",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object encryption envelopes — archivo de exportación 07",
+          "key_management_provider": "OBJECT_ENCRYPTION_ENVELOPES_07",
+          "encrypted_data_key": "object_storage_object_encryption_envelopes_archivo_de_exportacio",
+          "key_version": "1.0.0",
+          "encryption_context_hash": "9ff561506c77229e1f73617df1e84c31aad8b27f06f77c16a7ccb17588b08cdb",
+          "created_at": "2026-10-01T09:39:00Z"
+        },
+        {
+          "id": "61632815-bc4d-5c62-87cd-d428ab63cb4f",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object encryption envelopes — objeto archivado 08",
+          "key_management_provider": "OBJECT_ENCRYPTION_ENVELOPES_08",
+          "encrypted_data_key": "object_storage_object_encryption_envelopes_objeto_archivado_8",
+          "key_version": "1.0.0",
+          "encryption_context_hash": "3eebfe0755106e559a82bf747f4201395915981d543f4abbdf87d89d189ac3a1",
+          "created_at": "2026-10-06T09:50:00Z"
+        },
+        {
+          "id": "1fb7a5c5-ecd0-51bb-8b9f-662010c05dc0",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object encryption envelopes — archivo clínico 01",
+          "key_management_provider": "OBJECT_ENCRYPTION_ENVELOPES_008",
+          "encrypted_data_key": "MOCK_ENCRYPTED_VALUE_NOT_A_SECRET_008",
+          "key_version": "1.0._008",
+          "encryption_context_hash": "56be92b0a5f94a0da27e09d21743541fd571cf5f702174293720c28198fb73e4",
+          "created_at": "2026-12-13T14:25:00Z"
+        },
+        {
+          "id": "e7db35a1-8adc-5793-aac5-bb58f68109da",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object encryption envelopes — estudio DICOM 02",
+          "key_management_provider": "OBJECT_ENCRYPTION_ENVELOPES_009",
+          "encrypted_data_key": "MOCK_ENCRYPTED_VALUE_NOT_A_SECRET_009",
+          "key_version": "1.0._009",
+          "encryption_context_hash": "e7cbd76ae9271cb562c2efad841ac7a7f86b9faa6b5b7be6dce9ba4ff950d2ec",
+          "created_at": "2026-07-24T03:42:00Z"
+        },
+        {
+          "id": "c135f702-7ca8-5205-9ebc-f6a1ce9395be",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object encryption envelopes — serie DICOM 03",
+          "key_management_provider": "OBJECT_ENCRYPTION_ENVELOPES_010",
+          "encrypted_data_key": "object_storage_object_encryption_envelopes_serie_dicom_010",
+          "key_version": "1.0._010",
+          "encryption_context_hash": "4b1cdf781f932158534f06598d9ec4f8a879419b7bf05cb0b7ad1037cd8f9e0a",
+          "created_at": "2026-02-08T16:59:00Z"
+        },
+        {
+          "id": "113004c0-24ee-564b-bd61-f7decfd61a59",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object encryption envelopes — instancia DICOM 04",
+          "key_management_provider": "OBJECT_ENCRYPTION_ENVELOPES_011",
+          "encrypted_data_key": "object_storage_object_encryption_envelopes_instancia_dicom_011",
+          "key_version": "1.0._011",
+          "encryption_context_hash": "8d269973ed4f6762f7614db55da517a0576ce1d139eb6ed553599f92b6be54d9",
+          "created_at": "2026-09-19T05:16:00Z"
+        },
+        {
+          "id": "d7d12de0-3190-53f2-b8cd-b5d19f81c9e9",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object encryption envelopes — informe PDF 05",
+          "key_management_provider": "OBJECT_ENCRYPTION_ENVELOPES_012",
+          "encrypted_data_key": "object_storage_object_encryption_envelopes_informe_pdf_012",
+          "key_version": "1.0._012",
+          "encryption_context_hash": "0c9e62c28a448cd4b857d2fb461ef8bf3d5d5dc5735fd0a778044b0b7945ed9d",
+          "created_at": "2026-04-03T18:33:00Z"
+        },
+        {
+          "id": "3120c9c4-8765-5efc-a62a-8901a9fb7cce",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object encryption envelopes — evidencia legal 06",
+          "key_management_provider": "OBJECT_ENCRYPTION_ENVELOPES_013",
+          "encrypted_data_key": "object_storage_object_encryption_envelopes_evidencia_legal_013",
+          "key_version": "1.0._013",
+          "encryption_context_hash": "f9421d9727221838549b839968d50a9762fdd334b7e76b6360cb9f13e378abbe",
+          "created_at": "2026-11-14T07:50:00Z"
+        },
+        {
+          "id": "5ddcc3c5-9627-5493-b771-296aa6a73330",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object encryption envelopes — archivo de exportación 07",
+          "key_management_provider": "OBJECT_ENCRYPTION_ENVELOPES_014",
+          "encrypted_data_key": "object_storage_object_encryption_envelopes_archivo_de_exportacio_014",
+          "key_version": "1.0._014",
+          "encryption_context_hash": "9ff561506c77229e1f73617df1e84c31aad8b27f06f77c16a7ccb17588b08cdb",
+          "created_at": "2026-06-25T20:07:00Z"
+        },
+        {
+          "id": "967cca68-5887-5509-be1a-8a2dd1b2a8a3",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "algorithm": "Object encryption envelopes — objeto archivado 08",
+          "key_management_provider": "OBJECT_ENCRYPTION_ENVELOPES_015",
+          "encrypted_data_key": "object_storage_object_encryption_envelopes_objeto_archivado_015",
+          "key_version": "1.0._015",
+          "encryption_context_hash": "3eebfe0755106e559a82bf747f4201395915981d543f4abbdf87d89d189ac3a1",
+          "created_at": "2026-01-09T09:24:00Z"
+        }
+      ],
+      "object_retention_locks": [
+        {
+          "id": "e2b149e9-c5e3-515e-b094-f90ed3e228ca",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "lock_mode": "Object retention locks — archivo clínico 01",
+          "retain_until": "2026-06-01T18:01:00Z",
+          "policy_code": "OBJECT_RETENTION_LOCKS_01",
+          "applied_at": "2026-09-01T08:40:00Z",
+          "released_at": "2026-09-01T08:40:00Z"
+        },
+        {
+          "id": "85b81709-ac69-5788-a622-bed08443394b",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "lock_mode": "Object retention locks — estudio DICOM 02",
+          "retain_until": "2026-06-01T18:02:00Z",
+          "policy_code": "OBJECT_RETENTION_LOCKS_02",
+          "applied_at": "2026-09-06T08:51:00Z",
+          "released_at": "2026-09-06T08:51:00Z"
+        },
+        {
+          "id": "fdf28e38-2c39-5797-bd26-9853a56eb353",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "lock_mode": "Object retention locks — serie DICOM 03",
+          "retain_until": "2026-06-01T18:01:00Z",
+          "policy_code": "OBJECT_RETENTION_LOCKS_03",
+          "applied_at": "2026-09-11T09:02:00Z",
+          "released_at": "2026-09-11T09:02:00Z"
+        },
+        {
+          "id": "99227493-52ed-539d-add5-54e5b9d48329",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "lock_mode": "Object retention locks — instancia DICOM 04",
+          "retain_until": "2026-06-01T18:02:00Z",
+          "policy_code": "OBJECT_RETENTION_LOCKS_04",
+          "applied_at": "2026-09-16T09:13:00Z",
+          "released_at": "2026-09-16T09:13:00Z"
+        },
+        {
+          "id": "e664d69b-d7a9-5138-8116-c152c17d75e6",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "lock_mode": "Object retention locks — informe PDF 05",
+          "retain_until": "2026-06-01T18:01:00Z",
+          "policy_code": "OBJECT_RETENTION_LOCKS_05",
+          "applied_at": "2026-09-21T09:24:00Z",
+          "released_at": "2026-09-21T09:24:00Z"
+        },
+        {
+          "id": "e6e97f68-ad51-5c84-9b32-76343ffa795c",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "lock_mode": "Object retention locks — evidencia legal 06",
+          "retain_until": "2026-06-01T18:02:00Z",
+          "policy_code": "OBJECT_RETENTION_LOCKS_06",
+          "applied_at": "2026-09-26T09:35:00Z",
+          "released_at": "2026-09-26T09:35:00Z"
+        },
+        {
+          "id": "e92836e2-6981-5ab5-a983-c7af40d5665e",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "lock_mode": "Object retention locks — archivo de exportación 07",
+          "retain_until": "2026-06-01T18:01:00Z",
+          "policy_code": "OBJECT_RETENTION_LOCKS_07",
+          "applied_at": "2026-10-01T09:46:00Z",
+          "released_at": "2026-10-01T09:46:00Z"
+        },
+        {
+          "id": "4728ad62-e670-59e8-a22e-bf8d8dae0322",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "lock_mode": "Object retention locks — objeto archivado 08",
+          "retain_until": "2026-06-01T18:02:00Z",
+          "policy_code": "OBJECT_RETENTION_LOCKS_08",
+          "applied_at": "2026-10-06T09:57:00Z",
+          "released_at": "2026-10-06T09:57:00Z"
+        },
+        {
+          "id": "3b725eee-0b3d-5587-9e7f-dccbd93d7231",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "lock_mode": "Object retention locks — archivo clínico 01",
+          "retain_until": "2026-06-01T18:01:00Z",
+          "policy_code": "OBJECT_RETENTION_LOCKS_008",
+          "applied_at": "2026-12-13T14:25:00Z",
+          "released_at": "2026-12-13T14:25:00Z"
+        },
+        {
+          "id": "f8e7049e-d518-5452-9d86-f33fa84a04a4",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "lock_mode": "Object retention locks — estudio DICOM 02",
+          "retain_until": "2026-06-01T18:02:00Z",
+          "policy_code": "OBJECT_RETENTION_LOCKS_009",
+          "applied_at": "2026-07-24T03:42:00Z",
+          "released_at": "2026-07-24T03:42:00Z"
+        },
+        {
+          "id": "f9651ac4-cec3-559d-b9d7-d83446ec62ed",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "lock_mode": "Object retention locks — serie DICOM 03",
+          "retain_until": "2026-06-01T18:01:00Z",
+          "policy_code": "OBJECT_RETENTION_LOCKS_010",
+          "applied_at": "2026-02-08T16:59:00Z",
+          "released_at": "2026-02-08T16:59:00Z"
+        },
+        {
+          "id": "cd6f1498-73fd-57e8-9312-e7e226eeb738",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "lock_mode": "Object retention locks — instancia DICOM 04",
+          "retain_until": "2026-06-01T18:02:00Z",
+          "policy_code": "OBJECT_RETENTION_LOCKS_011",
+          "applied_at": "2026-09-19T05:16:00Z",
+          "released_at": "2026-09-19T05:16:00Z"
+        },
+        {
+          "id": "80f1cbc2-f0c2-561b-86b1-fa65159978ca",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "lock_mode": "Object retention locks — informe PDF 05",
+          "retain_until": "2026-06-01T18:01:00Z",
+          "policy_code": "OBJECT_RETENTION_LOCKS_012",
+          "applied_at": "2026-04-03T18:33:00Z",
+          "released_at": "2026-04-03T18:33:00Z"
+        },
+        {
+          "id": "bf5a7024-7689-588b-b8ed-7dace2a29378",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "lock_mode": "Object retention locks — evidencia legal 06",
+          "retain_until": "2026-06-01T18:02:00Z",
+          "policy_code": "OBJECT_RETENTION_LOCKS_013",
+          "applied_at": "2026-11-14T07:50:00Z",
+          "released_at": "2026-11-14T07:50:00Z"
+        },
+        {
+          "id": "0d66417d-f6e5-5439-a6e2-a49d0840a994",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "lock_mode": "Object retention locks — archivo de exportación 07",
+          "retain_until": "2026-06-01T18:01:00Z",
+          "policy_code": "OBJECT_RETENTION_LOCKS_014",
+          "applied_at": "2026-06-25T20:07:00Z",
+          "released_at": "2026-06-25T20:07:00Z"
+        },
+        {
+          "id": "7448d9b8-ca27-51b0-b319-5bd104cbaa0a",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "lock_mode": "Object retention locks — objeto archivado 08",
+          "retain_until": "2026-06-01T18:02:00Z",
+          "policy_code": "OBJECT_RETENTION_LOCKS_015",
+          "applied_at": "2026-01-09T09:24:00Z",
+          "released_at": "2026-01-09T09:24:00Z"
+        }
+      ],
+      "object_legal_holds": [
+        {
+          "id": "fb546658-f0c3-57fc-a481-da78ca617373",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "legal_case_reference": "Object legal holds — archivo clínico 01",
+          "hold_state": "OBJECT_LEGAL_HOLDS_01",
+          "placed_by_user_id": "3d222687-8b63-5310-8ff6-c4cf24521278",
+          "placed_at": "2026-09-01T08:47:00Z",
+          "released_at": "2026-09-01T08:47:00Z"
+        },
+        {
+          "id": "b4073df6-babc-5f11-abd1-f979c5b14b84",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "legal_case_reference": "Object legal holds — estudio DICOM 02",
+          "hold_state": "OBJECT_LEGAL_HOLDS_02",
+          "placed_by_user_id": "3d222687-8b63-5310-8ff6-c4cf24521278",
+          "placed_at": "2026-09-06T08:58:00Z",
+          "released_at": "2026-09-06T08:58:00Z"
+        },
+        {
+          "id": "dbb74724-0e49-52bf-b005-6ec8d1a3b494",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "legal_case_reference": "Object legal holds — serie DICOM 03",
+          "hold_state": "OBJECT_LEGAL_HOLDS_03",
+          "placed_by_user_id": "3d222687-8b63-5310-8ff6-c4cf24521278",
+          "placed_at": "2026-09-11T09:09:00Z",
+          "released_at": "2026-09-11T09:09:00Z"
+        },
+        {
+          "id": "14076a07-a611-5d31-a0a1-8e808ba0c55f",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "legal_case_reference": "Object legal holds — instancia DICOM 04",
+          "hold_state": "OBJECT_LEGAL_HOLDS_04",
+          "placed_by_user_id": "3d222687-8b63-5310-8ff6-c4cf24521278",
+          "placed_at": "2026-09-16T09:20:00Z",
+          "released_at": "2026-09-16T09:20:00Z"
+        },
+        {
+          "id": "96355a3b-5f4b-5049-9fc2-7e32e796ac1f",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "legal_case_reference": "Object legal holds — informe PDF 05",
+          "hold_state": "OBJECT_LEGAL_HOLDS_05",
+          "placed_by_user_id": "3d222687-8b63-5310-8ff6-c4cf24521278",
+          "placed_at": "2026-09-21T09:31:00Z",
+          "released_at": "2026-09-21T09:31:00Z"
+        },
+        {
+          "id": "2b22094a-f5fe-55cd-963d-ce42c63be4a8",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "legal_case_reference": "Object legal holds — evidencia legal 06",
+          "hold_state": "OBJECT_LEGAL_HOLDS_06",
+          "placed_by_user_id": "3d222687-8b63-5310-8ff6-c4cf24521278",
+          "placed_at": "2026-09-26T09:42:00Z",
+          "released_at": "2026-09-26T09:42:00Z"
+        },
+        {
+          "id": "2cb10d87-c110-5f33-b82f-69eb9d90b244",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "legal_case_reference": "Object legal holds — archivo de exportación 07",
+          "hold_state": "OBJECT_LEGAL_HOLDS_07",
+          "placed_by_user_id": "3d222687-8b63-5310-8ff6-c4cf24521278",
+          "placed_at": "2026-10-01T09:53:00Z",
+          "released_at": "2026-10-01T09:53:00Z"
+        },
+        {
+          "id": "fdf4ad10-24aa-5a4c-a56f-01e82f32369f",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "legal_case_reference": "Object legal holds — objeto archivado 08",
+          "hold_state": "OBJECT_LEGAL_HOLDS_08",
+          "placed_by_user_id": "3d222687-8b63-5310-8ff6-c4cf24521278",
+          "placed_at": "2026-10-06T10:04:00Z",
+          "released_at": "2026-10-06T10:04:00Z"
+        },
+        {
+          "id": "073e902e-92f9-5f84-92ea-ff3eee7a45ff",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "legal_case_reference": "Object legal holds — archivo clínico 01",
+          "hold_state": "rejected",
+          "placed_by_user_id": "3d222687-8b63-5310-8ff6-c4cf24521278",
+          "placed_at": "2026-12-13T14:25:00Z",
+          "released_at": "2026-12-13T14:25:00Z"
+        },
+        {
+          "id": "eafb0913-d895-5fa6-9e6e-2cfa1a7073bd",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "legal_case_reference": "Object legal holds — estudio DICOM 02",
+          "hold_state": "retrying",
+          "placed_by_user_id": "3d222687-8b63-5310-8ff6-c4cf24521278",
+          "placed_at": "2026-07-24T03:42:00Z",
+          "released_at": "2026-07-24T03:42:00Z"
+        },
+        {
+          "id": "7af989fe-e141-5d91-9a2e-1fd140e1e03e",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "legal_case_reference": "Object legal holds — serie DICOM 03",
+          "hold_state": "active",
+          "placed_by_user_id": "3d222687-8b63-5310-8ff6-c4cf24521278",
+          "placed_at": "2026-02-08T16:59:00Z",
+          "released_at": "2026-02-08T16:59:00Z"
+        },
+        {
+          "id": "92211a59-b99b-534f-94d9-a5a74596ac8d",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "legal_case_reference": "Object legal holds — instancia DICOM 04",
+          "hold_state": "pending",
+          "placed_by_user_id": "3d222687-8b63-5310-8ff6-c4cf24521278",
+          "placed_at": "2026-09-19T05:16:00Z",
+          "released_at": "2026-09-19T05:16:00Z"
+        },
+        {
+          "id": "d0e5ee5f-9350-551c-aa99-5bf5a037c24e",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "legal_case_reference": "Object legal holds — informe PDF 05",
+          "hold_state": "in_progress",
+          "placed_by_user_id": "3d222687-8b63-5310-8ff6-c4cf24521278",
+          "placed_at": "2026-04-03T18:33:00Z",
+          "released_at": "2026-04-03T18:33:00Z"
+        },
+        {
+          "id": "25c3d36a-73c4-5a55-b4bb-64a1b870efdf",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "legal_case_reference": "Object legal holds — evidencia legal 06",
+          "hold_state": "completed",
+          "placed_by_user_id": "3d222687-8b63-5310-8ff6-c4cf24521278",
+          "placed_at": "2026-11-14T07:50:00Z",
+          "released_at": "2026-11-14T07:50:00Z"
+        },
+        {
+          "id": "172823ed-5af5-517a-a893-2d25cf6cc286",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "legal_case_reference": "Object legal holds — archivo de exportación 07",
+          "hold_state": "failed",
+          "placed_by_user_id": "3d222687-8b63-5310-8ff6-c4cf24521278",
+          "placed_at": "2026-06-25T20:07:00Z",
+          "released_at": "2026-06-25T20:07:00Z"
+        },
+        {
+          "id": "45ee34ee-c480-524a-9d72-ab4e4a28000e",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "legal_case_reference": "Object legal holds — objeto archivado 08",
+          "hold_state": "cancelled",
+          "placed_by_user_id": "3d222687-8b63-5310-8ff6-c4cf24521278",
+          "placed_at": "2026-01-09T09:24:00Z",
+          "released_at": "2026-01-09T09:24:00Z"
+        }
+      ],
+      "multipart_uploads": [
+        {
+          "id": "88dda292-54db-5cc1-9e41-71713c3bad51",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "provider_upload_id": "mock_001_provider_upload_id",
+          "target_object_key": "object_storage_multipart_uploads_archivo_clinico_1",
+          "expected_size_bytes": 5,
+          "received_size_bytes": 5,
+          "status": "ACTIVE",
+          "expires_at": "2026-09-01T10:54:00Z",
+          "created_at": "2026-09-01T08:54:00Z"
+        },
+        {
+          "id": "e72435d4-f18f-584c-931f-b6b3e53aa9f3",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "provider_upload_id": "mock_002_provider_upload_id",
+          "target_object_key": "object_storage_multipart_uploads_estudio_dicom_2",
+          "expected_size_bytes": 10,
+          "received_size_bytes": 10,
+          "status": "DRAFT",
+          "expires_at": "2026-09-06T12:05:00Z",
+          "created_at": "2026-09-06T09:05:00Z"
+        },
+        {
+          "id": "9613550d-af79-576a-ac19-a43626162a79",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "provider_upload_id": "mock_001_provider_upload_id",
+          "target_object_key": "object_storage_multipart_uploads_serie_dicom_3",
+          "expected_size_bytes": 15,
+          "received_size_bytes": 15,
+          "status": "ACTIVE",
+          "expires_at": "2026-09-11T13:16:00Z",
+          "created_at": "2026-09-11T09:16:00Z"
+        },
+        {
+          "id": "3c1c794b-d0b1-5fdc-9c84-4faea50289b7",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "provider_upload_id": "mock_002_provider_upload_id",
+          "target_object_key": "object_storage_multipart_uploads_instancia_dicom_4",
+          "expected_size_bytes": 20,
+          "received_size_bytes": 20,
+          "status": "DRAFT",
+          "expires_at": "2026-09-16T14:27:00Z",
+          "created_at": "2026-09-16T09:27:00Z"
+        },
+        {
+          "id": "21842edc-8634-541e-a3ea-412db221b70c",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "provider_upload_id": "mock_001_provider_upload_id",
+          "target_object_key": "object_storage_multipart_uploads_informe_pdf_5",
+          "expected_size_bytes": 25,
+          "received_size_bytes": 25,
+          "status": "ACTIVE",
+          "expires_at": "2026-09-21T15:38:00Z",
+          "created_at": "2026-09-21T09:38:00Z"
+        },
+        {
+          "id": "83d222d4-fe06-5a58-92a9-7d79dd8f7b16",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "provider_upload_id": "mock_002_provider_upload_id",
+          "target_object_key": "object_storage_multipart_uploads_evidencia_legal_6",
+          "expected_size_bytes": 30,
+          "received_size_bytes": 30,
+          "status": "DRAFT",
+          "expires_at": "2026-09-26T11:49:00Z",
+          "created_at": "2026-09-26T09:49:00Z"
+        },
+        {
+          "id": "e8b38366-ddab-5be6-a51f-368dfe6e50d0",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "provider_upload_id": "mock_001_provider_upload_id",
+          "target_object_key": "object_storage_multipart_uploads_archivo_de_exportacion_7",
+          "expected_size_bytes": 35,
+          "received_size_bytes": 35,
+          "status": "ACTIVE",
+          "expires_at": "2026-10-01T13:00:00Z",
+          "created_at": "2026-10-01T10:00:00Z"
+        },
+        {
+          "id": "a3bfe612-247b-5d10-bddf-d6ab9dfe627d",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "provider_upload_id": "mock_002_provider_upload_id",
+          "target_object_key": "object_storage_multipart_uploads_objeto_archivado_8",
+          "expected_size_bytes": 40,
+          "received_size_bytes": 40,
+          "status": "DRAFT",
+          "expires_at": "2026-10-06T14:11:00Z",
+          "created_at": "2026-10-06T10:11:00Z"
+        },
+        {
+          "id": "db0fe1fb-3a30-5a4c-b1e4-a08bd9314b16",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "provider_upload_id": "mock_001_provider_upload_id",
+          "target_object_key": "object_storage_multipart_uploads_archivo_clinico_008",
+          "expected_size_bytes": 17,
+          "received_size_bytes": 64,
+          "status": "rejected",
+          "expires_at": "2026-12-13T14:25:00Z",
+          "created_at": "2026-12-13T14:25:00Z"
+        },
+        {
+          "id": "fd14a4ef-1c29-5e72-b6e4-1cd8526df3e3",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "provider_upload_id": "mock_002_provider_upload_id",
+          "target_object_key": "object_storage_multipart_uploads_estudio_dicom_009",
+          "expected_size_bytes": 76,
+          "received_size_bytes": 99,
+          "status": "retrying",
+          "expires_at": "2026-07-24T03:42:00Z",
+          "created_at": "2026-07-24T03:42:00Z"
+        },
+        {
+          "id": "a501d762-bb08-517a-b3b8-0f2bfa3a00da",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "provider_upload_id": "mock_001_provider_upload_id",
+          "target_object_key": "object_storage_multipart_uploads_serie_dicom_010",
+          "expected_size_bytes": 59,
+          "received_size_bytes": 45,
+          "status": "active",
+          "expires_at": "2026-02-08T16:59:00Z",
+          "created_at": "2026-02-08T16:59:00Z"
+        },
+        {
+          "id": "de7def9a-54ed-54a4-8d5f-5f5592318ed6",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "provider_upload_id": "mock_002_provider_upload_id",
+          "target_object_key": "object_storage_multipart_uploads_instancia_dicom_011",
+          "expected_size_bytes": 46,
+          "received_size_bytes": 14,
+          "status": "pending",
+          "expires_at": "2026-09-19T05:16:00Z",
+          "created_at": "2026-09-19T05:16:00Z"
+        },
+        {
+          "id": "3c835440-0ace-584e-a535-5f6d6d6ec5ee",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "provider_upload_id": "mock_001_provider_upload_id",
+          "target_object_key": "object_storage_multipart_uploads_informe_pdf_012",
+          "expected_size_bytes": 17,
+          "received_size_bytes": 22,
+          "status": "in_progress",
+          "expires_at": "2026-04-03T18:33:00Z",
+          "created_at": "2026-04-03T18:33:00Z"
+        },
+        {
+          "id": "48f99ae0-f9e9-5a6d-8826-a67bc914be33",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "provider_upload_id": "mock_002_provider_upload_id",
+          "target_object_key": "object_storage_multipart_uploads_evidencia_legal_013",
+          "expected_size_bytes": 46,
+          "received_size_bytes": 88,
+          "status": "completed",
+          "expires_at": "2026-11-14T07:50:00Z",
+          "created_at": "2026-11-14T07:50:00Z"
+        },
+        {
+          "id": "af1fdde9-8b74-5751-b6f5-42667bfd9b6c",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "provider_upload_id": "mock_001_provider_upload_id",
+          "target_object_key": "object_storage_multipart_uploads_archivo_de_exportacion_014",
+          "expected_size_bytes": 75,
+          "received_size_bytes": 99,
+          "status": "failed",
+          "expires_at": "2026-06-25T20:07:00Z",
+          "created_at": "2026-06-25T20:07:00Z"
+        },
+        {
+          "id": "86f5d87e-7dd2-5764-a970-0b9910c2cede",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "namespace_id": "0c739ae4-80de-5e3f-9300-49fa67f17cf6",
+          "provider_upload_id": "mock_002_provider_upload_id",
+          "target_object_key": "object_storage_multipart_uploads_objeto_archivado_015",
+          "expected_size_bytes": 88,
+          "received_size_bytes": 93,
+          "status": "cancelled",
+          "expires_at": "2026-01-09T09:24:00Z",
+          "created_at": "2026-01-09T09:24:00Z"
+        }
+      ],
+      "large_payload_manifests": [
+        {
+          "id": "83267dbc-937d-524a-b089-6f0dc4c197b0",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "payload_type": "LARGE_PAYLOAD_MANIFESTS_01",
+          "source_entity_type": "LARGE_PAYLOAD_MANIFESTS_01",
+          "source_entity_id": "f1af91c8-75c7-5e4c-9420-f6488784072f",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "content_hash": "cda6cad1c0837384deba1ff9fdd2c6a64070c21bf19b7e1d949d4324dcde5c7e",
+          "contains_phi": false,
+          "created_at": "2026-09-01T09:01:00Z"
+        },
+        {
+          "id": "1b79ffbd-7911-50cf-aa0c-69f06a5f3e9d",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "payload_type": "LARGE_PAYLOAD_MANIFESTS_02",
+          "source_entity_type": "LARGE_PAYLOAD_MANIFESTS_02",
+          "source_entity_id": "f1af91c8-75c7-5e4c-9420-f6488784072f",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "content_hash": "786206ed9ae3cbefb3fe2d8f7a935fd42e127bcb75f334f5062a586a9dca72ca",
+          "contains_phi": false,
+          "created_at": "2026-09-06T09:12:00Z"
+        },
+        {
+          "id": "630c2065-4dbd-5522-a1e2-8167c74ad9e9",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "payload_type": "LARGE_PAYLOAD_MANIFESTS_03",
+          "source_entity_type": "LARGE_PAYLOAD_MANIFESTS_03",
+          "source_entity_id": "f1af91c8-75c7-5e4c-9420-f6488784072f",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "content_hash": "545851e14af8df8cfc10e672a0b82db1e0c550ec820804db5f392bd4e5ed9fff",
+          "contains_phi": false,
+          "created_at": "2026-09-11T09:23:00Z"
+        },
+        {
+          "id": "f4bd25f4-7013-58e3-b1ec-3ee37c174b20",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "payload_type": "LARGE_PAYLOAD_MANIFESTS_04",
+          "source_entity_type": "LARGE_PAYLOAD_MANIFESTS_04",
+          "source_entity_id": "f1af91c8-75c7-5e4c-9420-f6488784072f",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "content_hash": "3b0f0fbd41a46cd2769347be7f554a21df4ab87bf45b698b34d4e14d94971a31",
+          "contains_phi": false,
+          "created_at": "2026-09-16T09:34:00Z"
+        },
+        {
+          "id": "246cdaf0-d9b7-56f8-be96-1dec4523a23c",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "payload_type": "LARGE_PAYLOAD_MANIFESTS_05",
+          "source_entity_type": "LARGE_PAYLOAD_MANIFESTS_05",
+          "source_entity_id": "f1af91c8-75c7-5e4c-9420-f6488784072f",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "content_hash": "bcb24152be96ea682c2c8405427028429162ed377b1776f39036573c190e2195",
+          "contains_phi": false,
+          "created_at": "2026-09-21T09:45:00Z"
+        },
+        {
+          "id": "5f305cbd-ada6-5f51-be7b-34a9c9ba03b9",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "payload_type": "LARGE_PAYLOAD_MANIFESTS_06",
+          "source_entity_type": "LARGE_PAYLOAD_MANIFESTS_06",
+          "source_entity_id": "f1af91c8-75c7-5e4c-9420-f6488784072f",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "content_hash": "155ef6520d131841622d6450a831aea4a3064b1d14b5317c59a0f8f7b5aaefd1",
+          "contains_phi": false,
+          "created_at": "2026-09-26T09:56:00Z"
+        },
+        {
+          "id": "0f26c0e1-01dd-5a59-9465-3e35e7efc428",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "payload_type": "LARGE_PAYLOAD_MANIFESTS_07",
+          "source_entity_type": "LARGE_PAYLOAD_MANIFESTS_07",
+          "source_entity_id": "f1af91c8-75c7-5e4c-9420-f6488784072f",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "content_hash": "5765c4a0d295fa4008f0ef05d50203b00e876402ea40f38477bc1fedf98dc5ff",
+          "contains_phi": false,
+          "created_at": "2026-10-01T10:07:00Z"
+        },
+        {
+          "id": "2010d9f5-494f-54bc-a448-9ff694186082",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "payload_type": "LARGE_PAYLOAD_MANIFESTS_08",
+          "source_entity_type": "LARGE_PAYLOAD_MANIFESTS_08",
+          "source_entity_id": "f1af91c8-75c7-5e4c-9420-f6488784072f",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "content_hash": "ba82960ea65206800761ddc94482562a3294928bbfa170849294f391318485e1",
+          "contains_phi": false,
+          "created_at": "2026-10-06T10:18:00Z"
+        },
+        {
+          "id": "da1803c8-bd74-59fa-b685-ae1d60f940a2",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "payload_type": "LARGE_PAYLOAD_MANIFESTS_01",
+          "source_entity_type": "LARGE_PAYLOAD_MANIFESTS_01",
+          "source_entity_id": "f1af91c8-75c7-5e4c-9420-f6488784072f",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "content_hash": "cda6cad1c0837384deba1ff9fdd2c6a64070c21bf19b7e1d949d4324dcde5c7e",
+          "contains_phi": true,
+          "created_at": "2026-12-13T14:25:00Z"
+        },
+        {
+          "id": "fd8c75da-fd80-5e23-81ae-9bd99d756225",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "payload_type": "LARGE_PAYLOAD_MANIFESTS_02",
+          "source_entity_type": "LARGE_PAYLOAD_MANIFESTS_02",
+          "source_entity_id": "f1af91c8-75c7-5e4c-9420-f6488784072f",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "content_hash": "786206ed9ae3cbefb3fe2d8f7a935fd42e127bcb75f334f5062a586a9dca72ca",
+          "contains_phi": false,
+          "created_at": "2026-07-24T03:42:00Z"
+        },
+        {
+          "id": "d58d8378-30ba-526b-aa1e-a98bafe131e0",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "payload_type": "LARGE_PAYLOAD_MANIFESTS_03",
+          "source_entity_type": "LARGE_PAYLOAD_MANIFESTS_03",
+          "source_entity_id": "f1af91c8-75c7-5e4c-9420-f6488784072f",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "content_hash": "545851e14af8df8cfc10e672a0b82db1e0c550ec820804db5f392bd4e5ed9fff",
+          "contains_phi": true,
+          "created_at": "2026-02-08T16:59:00Z"
+        },
+        {
+          "id": "d3c2339f-5567-5c71-beeb-cc11ba47812b",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "payload_type": "LARGE_PAYLOAD_MANIFESTS_04",
+          "source_entity_type": "LARGE_PAYLOAD_MANIFESTS_04",
+          "source_entity_id": "f1af91c8-75c7-5e4c-9420-f6488784072f",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "content_hash": "3b0f0fbd41a46cd2769347be7f554a21df4ab87bf45b698b34d4e14d94971a31",
+          "contains_phi": false,
+          "created_at": "2026-09-19T05:16:00Z"
+        },
+        {
+          "id": "18b5ee04-602c-5a6c-b755-e4f3c2f7e4b7",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "payload_type": "LARGE_PAYLOAD_MANIFESTS_05",
+          "source_entity_type": "LARGE_PAYLOAD_MANIFESTS_05",
+          "source_entity_id": "f1af91c8-75c7-5e4c-9420-f6488784072f",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "content_hash": "bcb24152be96ea682c2c8405427028429162ed377b1776f39036573c190e2195",
+          "contains_phi": true,
+          "created_at": "2026-04-03T18:33:00Z"
+        },
+        {
+          "id": "a8c0255b-5f0e-5630-9878-212a7afbb3bc",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "payload_type": "LARGE_PAYLOAD_MANIFESTS_06",
+          "source_entity_type": "LARGE_PAYLOAD_MANIFESTS_06",
+          "source_entity_id": "f1af91c8-75c7-5e4c-9420-f6488784072f",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "content_hash": "155ef6520d131841622d6450a831aea4a3064b1d14b5317c59a0f8f7b5aaefd1",
+          "contains_phi": false,
+          "created_at": "2026-11-14T07:50:00Z"
+        },
+        {
+          "id": "7fd9d0b8-b982-5050-9f51-6d7e1a0d14ac",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "payload_type": "LARGE_PAYLOAD_MANIFESTS_07",
+          "source_entity_type": "LARGE_PAYLOAD_MANIFESTS_07",
+          "source_entity_id": "f1af91c8-75c7-5e4c-9420-f6488784072f",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "content_hash": "5765c4a0d295fa4008f0ef05d50203b00e876402ea40f38477bc1fedf98dc5ff",
+          "contains_phi": true,
+          "created_at": "2026-06-25T20:07:00Z"
+        },
+        {
+          "id": "41bf8a78-31a4-5895-bb32-d91a144cde64",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "payload_type": "LARGE_PAYLOAD_MANIFESTS_08",
+          "source_entity_type": "LARGE_PAYLOAD_MANIFESTS_08",
+          "source_entity_id": "f1af91c8-75c7-5e4c-9420-f6488784072f",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "content_hash": "ba82960ea65206800761ddc94482562a3294928bbfa170849294f391318485e1",
+          "contains_phi": false,
+          "created_at": "2026-01-09T09:24:00Z"
+        }
+      ],
+      "dicom_study_manifests": [
+        {
+          "id": "5a36a6e3-cdaa-5334-bba2-c85ebd8047c8",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "imaging_study_id": "2a78e232-8d61-5ec2-8393-86778802d222",
+          "study_instance_uid": "Dicom study manifests — archivo clínico 01",
+          "accession_number": "OBJECT_S-DICOM_STUDY_-000001",
+          "study_date": "2026-09-01",
+          "modality_codes": [
+            "MOCK_001"
+          ],
+          "series_count": 5,
+          "instance_count": 5,
+          "lifecycle_state": "ACTIVE"
+        },
+        {
+          "id": "862b75fd-f473-5206-bad2-a1a3094eebb6",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "imaging_study_id": "2a78e232-8d61-5ec2-8393-86778802d222",
+          "study_instance_uid": "Dicom study manifests — estudio DICOM 02",
+          "accession_number": "OBJECT_S-DICOM_STUDY_-000002",
+          "study_date": "2026-09-06",
+          "modality_codes": [
+            "MOCK_002"
+          ],
+          "series_count": 10,
+          "instance_count": 10,
+          "lifecycle_state": "DRAFT"
+        },
+        {
+          "id": "a65e8dfa-1924-5b49-86af-de1431edcefe",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "imaging_study_id": "2a78e232-8d61-5ec2-8393-86778802d222",
+          "study_instance_uid": "Dicom study manifests — serie DICOM 03",
+          "accession_number": "OBJECT_S-DICOM_STUDY_-000003",
+          "study_date": "2026-09-11",
+          "modality_codes": [
+            "MOCK_001"
+          ],
+          "series_count": 15,
+          "instance_count": 15,
+          "lifecycle_state": "ACTIVE"
+        },
+        {
+          "id": "2d9a5bba-5a3e-568c-a335-da485bbd6b7f",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "imaging_study_id": "2a78e232-8d61-5ec2-8393-86778802d222",
+          "study_instance_uid": "Dicom study manifests — instancia DICOM 04",
+          "accession_number": "OBJECT_S-DICOM_STUDY_-000004",
+          "study_date": "2026-09-16",
+          "modality_codes": [
+            "MOCK_002"
+          ],
+          "series_count": 20,
+          "instance_count": 20,
+          "lifecycle_state": "DRAFT"
+        },
+        {
+          "id": "4f80f69d-8579-5dad-a2d7-ebef4b672bea",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "imaging_study_id": "2a78e232-8d61-5ec2-8393-86778802d222",
+          "study_instance_uid": "Dicom study manifests — informe PDF 05",
+          "accession_number": "OBJECT_S-DICOM_STUDY_-000005",
+          "study_date": "2026-09-21",
+          "modality_codes": [
+            "MOCK_001"
+          ],
+          "series_count": 25,
+          "instance_count": 25,
+          "lifecycle_state": "ACTIVE"
+        },
+        {
+          "id": "fa58c1f6-1edb-588e-8fdc-9097d86b1438",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "imaging_study_id": "2a78e232-8d61-5ec2-8393-86778802d222",
+          "study_instance_uid": "Dicom study manifests — evidencia legal 06",
+          "accession_number": "OBJECT_S-DICOM_STUDY_-000006",
+          "study_date": "2026-09-26",
+          "modality_codes": [
+            "MOCK_002"
+          ],
+          "series_count": 30,
+          "instance_count": 30,
+          "lifecycle_state": "DRAFT"
+        },
+        {
+          "id": "122aa372-f2fc-5aef-a3af-17db37079b29",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "imaging_study_id": "2a78e232-8d61-5ec2-8393-86778802d222",
+          "study_instance_uid": "Dicom study manifests — archivo de exportación 07",
+          "accession_number": "OBJECT_S-DICOM_STUDY_-000007",
+          "study_date": "2026-10-01",
+          "modality_codes": [
+            "MOCK_001"
+          ],
+          "series_count": 35,
+          "instance_count": 35,
+          "lifecycle_state": "ACTIVE"
+        },
+        {
+          "id": "8d2ff216-cdbe-5ac8-b3e2-1b413dd1df93",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "imaging_study_id": "2a78e232-8d61-5ec2-8393-86778802d222",
+          "study_instance_uid": "Dicom study manifests — objeto archivado 08",
+          "accession_number": "OBJECT_S-DICOM_STUDY_-000008",
+          "study_date": "2026-10-06",
+          "modality_codes": [
+            "MOCK_002"
+          ],
+          "series_count": 40,
+          "instance_count": 40,
+          "lifecycle_state": "DRAFT"
+        },
+        {
+          "id": "9a12d80c-ae0b-5e2d-9e7b-988238211e23",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "imaging_study_id": "2a78e232-8d61-5ec2-8393-86778802d222",
+          "study_instance_uid": "Dicom study manifests — archivo clínico 01",
+          "accession_number": "OBJECT_S-DICOM_STUDY_-000001",
+          "study_date": "2026-12-13",
+          "modality_codes": [
+            "MOCK_001"
+          ],
+          "series_count": 52,
+          "instance_count": 53,
+          "lifecycle_state": "rejected"
+        },
+        {
+          "id": "99b0f74a-8c77-58d7-9d23-b1ad1198f279",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "imaging_study_id": "2a78e232-8d61-5ec2-8393-86778802d222",
+          "study_instance_uid": "Dicom study manifests — estudio DICOM 02",
+          "accession_number": "OBJECT_S-DICOM_STUDY_-000002",
+          "study_date": "2026-07-24",
+          "modality_codes": [
+            "MOCK_002"
+          ],
+          "series_count": 12,
+          "instance_count": 54,
+          "lifecycle_state": "retrying"
+        },
+        {
+          "id": "4a39aa7d-6709-531b-8f85-0d60c917e9da",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "imaging_study_id": "2a78e232-8d61-5ec2-8393-86778802d222",
+          "study_instance_uid": "Dicom study manifests — serie DICOM 03",
+          "accession_number": "OBJECT_S-DICOM_STUDY_-000003",
+          "study_date": "2026-02-08",
+          "modality_codes": [
+            "MOCK_001"
+          ],
+          "series_count": 79,
+          "instance_count": 31,
+          "lifecycle_state": "active"
+        },
+        {
+          "id": "5b6d292b-53dd-566d-9433-ae4caa95c6f4",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "imaging_study_id": "2a78e232-8d61-5ec2-8393-86778802d222",
+          "study_instance_uid": "Dicom study manifests — instancia DICOM 04",
+          "accession_number": "OBJECT_S-DICOM_STUDY_-000004",
+          "study_date": "2026-09-19",
+          "modality_codes": [
+            "MOCK_002"
+          ],
+          "series_count": 32,
+          "instance_count": 20,
+          "lifecycle_state": "pending"
+        },
+        {
+          "id": "d590d929-2654-5c04-a1da-22244c333321",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "imaging_study_id": "2a78e232-8d61-5ec2-8393-86778802d222",
+          "study_instance_uid": "Dicom study manifests — informe PDF 05",
+          "accession_number": "OBJECT_S-DICOM_STUDY_-000005",
+          "study_date": "2026-04-03",
+          "modality_codes": [
+            "MOCK_001"
+          ],
+          "series_count": 47,
+          "instance_count": 24,
+          "lifecycle_state": "in_progress"
+        },
+        {
+          "id": "99720335-bfc9-5f70-94af-030ac1f4a159",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "imaging_study_id": "2a78e232-8d61-5ec2-8393-86778802d222",
+          "study_instance_uid": "Dicom study manifests — evidencia legal 06",
+          "accession_number": "OBJECT_S-DICOM_STUDY_-000006",
+          "study_date": "2026-11-14",
+          "modality_codes": [
+            "MOCK_002"
+          ],
+          "series_count": 19,
+          "instance_count": 17,
+          "lifecycle_state": "completed"
+        },
+        {
+          "id": "868edd14-d70a-5750-be67-6327ba5be386",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "imaging_study_id": "2a78e232-8d61-5ec2-8393-86778802d222",
+          "study_instance_uid": "Dicom study manifests — archivo de exportación 07",
+          "accession_number": "OBJECT_S-DICOM_STUDY_-000007",
+          "study_date": "2026-06-25",
+          "modality_codes": [
+            "MOCK_001"
+          ],
+          "series_count": 75,
+          "instance_count": 16,
+          "lifecycle_state": "failed"
+        },
+        {
+          "id": "c2c81b70-a5b0-5256-986c-115cc71e3a5c",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "patient_profile_id": "eef52ffd-da1b-5040-a5fc-7b807cf0f6c0",
+          "imaging_study_id": "2a78e232-8d61-5ec2-8393-86778802d222",
+          "study_instance_uid": "Dicom study manifests — objeto archivado 08",
+          "accession_number": "OBJECT_S-DICOM_STUDY_-000008",
+          "study_date": "2026-01-09",
+          "modality_codes": [
+            "MOCK_002"
+          ],
+          "series_count": 83,
+          "instance_count": 83,
+          "lifecycle_state": "cancelled"
+        }
+      ],
+      "dicom_series_manifests": [
+        {
+          "id": "5fe0f70a-034b-5843-aec4-8c335dd78f57",
+          "dicom_study_manifest_id": "71f43c06-da28-51d8-99b8-79d1d7ecf6ff",
+          "series_instance_uid": "Dicom series manifests — archivo clínico 01",
+          "modality": "Dicom series manifests — archivo clínico 01",
+          "series_number": 1,
+          "body_part_examined": "Dicom series manifests — archivo clínico 01",
+          "instance_count": 5,
+          "thumbnail_object_manifest_id": "026b567d-a620-5afe-a21c-3ca4b3bd3908"
+        },
+        {
+          "id": "bff0a9cb-d2b7-55f9-8746-f97dc6162b6f",
+          "dicom_study_manifest_id": "71f43c06-da28-51d8-99b8-79d1d7ecf6ff",
+          "series_instance_uid": "Dicom series manifests — estudio DICOM 02",
+          "modality": "Dicom series manifests — estudio DICOM 02",
+          "series_number": 2,
+          "body_part_examined": "Dicom series manifests — estudio DICOM 02",
+          "instance_count": 10,
+          "thumbnail_object_manifest_id": "026b567d-a620-5afe-a21c-3ca4b3bd3908"
+        },
+        {
+          "id": "8d0c60d6-7a21-5ef2-b9ba-69d80a6a06ef",
+          "dicom_study_manifest_id": "71f43c06-da28-51d8-99b8-79d1d7ecf6ff",
+          "series_instance_uid": "Dicom series manifests — serie DICOM 03",
+          "modality": "Dicom series manifests — serie DICOM 03",
+          "series_number": 3,
+          "body_part_examined": "Dicom series manifests — serie DICOM 03",
+          "instance_count": 15,
+          "thumbnail_object_manifest_id": "026b567d-a620-5afe-a21c-3ca4b3bd3908"
+        },
+        {
+          "id": "08243f65-03e3-5207-beff-39b8d7d6873c",
+          "dicom_study_manifest_id": "71f43c06-da28-51d8-99b8-79d1d7ecf6ff",
+          "series_instance_uid": "Dicom series manifests — instancia DICOM 04",
+          "modality": "Dicom series manifests — instancia DICOM 04",
+          "series_number": 4,
+          "body_part_examined": "Dicom series manifests — instancia DICOM 04",
+          "instance_count": 20,
+          "thumbnail_object_manifest_id": "026b567d-a620-5afe-a21c-3ca4b3bd3908"
+        },
+        {
+          "id": "5db5492d-b082-5e5b-8f8f-76a4cc84e83b",
+          "dicom_study_manifest_id": "71f43c06-da28-51d8-99b8-79d1d7ecf6ff",
+          "series_instance_uid": "Dicom series manifests — informe PDF 05",
+          "modality": "Dicom series manifests — informe PDF 05",
+          "series_number": 5,
+          "body_part_examined": "Dicom series manifests — informe PDF 05",
+          "instance_count": 25,
+          "thumbnail_object_manifest_id": "026b567d-a620-5afe-a21c-3ca4b3bd3908"
+        },
+        {
+          "id": "1ca2a94e-d9d3-5c78-84cc-3dfe4469ae76",
+          "dicom_study_manifest_id": "71f43c06-da28-51d8-99b8-79d1d7ecf6ff",
+          "series_instance_uid": "Dicom series manifests — evidencia legal 06",
+          "modality": "Dicom series manifests — evidencia legal 06",
+          "series_number": 6,
+          "body_part_examined": "Dicom series manifests — evidencia legal 06",
+          "instance_count": 30,
+          "thumbnail_object_manifest_id": "026b567d-a620-5afe-a21c-3ca4b3bd3908"
+        },
+        {
+          "id": "c65a223e-6252-5f51-9ccf-2183600bdea1",
+          "dicom_study_manifest_id": "71f43c06-da28-51d8-99b8-79d1d7ecf6ff",
+          "series_instance_uid": "Dicom series manifests — archivo de exportación 07",
+          "modality": "Dicom series manifests — archivo de exportación 07",
+          "series_number": 7,
+          "body_part_examined": "Dicom series manifests — archivo de exportación 07",
+          "instance_count": 35,
+          "thumbnail_object_manifest_id": "026b567d-a620-5afe-a21c-3ca4b3bd3908"
+        },
+        {
+          "id": "a376e2f6-2626-5ad5-945d-f182ab9a78cd",
+          "dicom_study_manifest_id": "71f43c06-da28-51d8-99b8-79d1d7ecf6ff",
+          "series_instance_uid": "Dicom series manifests — objeto archivado 08",
+          "modality": "Dicom series manifests — objeto archivado 08",
+          "series_number": 8,
+          "body_part_examined": "Dicom series manifests — objeto archivado 08",
+          "instance_count": 40,
+          "thumbnail_object_manifest_id": "026b567d-a620-5afe-a21c-3ca4b3bd3908"
+        },
+        {
+          "id": "5786e566-5236-50d1-a6ce-555daff8ca86",
+          "dicom_study_manifest_id": "71f43c06-da28-51d8-99b8-79d1d7ecf6ff",
+          "series_instance_uid": "Dicom series manifests — archivo clínico 01",
+          "modality": "Dicom series manifests — archivo clínico 01",
+          "series_number": 1,
+          "body_part_examined": "Dicom series manifests — archivo clínico 01",
+          "instance_count": 73,
+          "thumbnail_object_manifest_id": "026b567d-a620-5afe-a21c-3ca4b3bd3908"
+        },
+        {
+          "id": "dd649c3f-e55a-57a0-81dc-42e59441fe77",
+          "dicom_study_manifest_id": "71f43c06-da28-51d8-99b8-79d1d7ecf6ff",
+          "series_instance_uid": "Dicom series manifests — estudio DICOM 02",
+          "modality": "Dicom series manifests — estudio DICOM 02",
+          "series_number": 2,
+          "body_part_examined": "Dicom series manifests — estudio DICOM 02",
+          "instance_count": 49,
+          "thumbnail_object_manifest_id": "026b567d-a620-5afe-a21c-3ca4b3bd3908"
+        },
+        {
+          "id": "45cbe474-9799-5238-9bfb-33557e38ddb7",
+          "dicom_study_manifest_id": "71f43c06-da28-51d8-99b8-79d1d7ecf6ff",
+          "series_instance_uid": "Dicom series manifests — serie DICOM 03",
+          "modality": "Dicom series manifests — serie DICOM 03",
+          "series_number": 3,
+          "body_part_examined": "Dicom series manifests — serie DICOM 03",
+          "instance_count": 88,
+          "thumbnail_object_manifest_id": "026b567d-a620-5afe-a21c-3ca4b3bd3908"
+        },
+        {
+          "id": "d4ae50cb-25ec-55b6-a725-ae9e67008b38",
+          "dicom_study_manifest_id": "71f43c06-da28-51d8-99b8-79d1d7ecf6ff",
+          "series_instance_uid": "Dicom series manifests — instancia DICOM 04",
+          "modality": "Dicom series manifests — instancia DICOM 04",
+          "series_number": 4,
+          "body_part_examined": "Dicom series manifests — instancia DICOM 04",
+          "instance_count": 26,
+          "thumbnail_object_manifest_id": "026b567d-a620-5afe-a21c-3ca4b3bd3908"
+        },
+        {
+          "id": "08491a82-ec92-5264-8503-50f10b9ac58b",
+          "dicom_study_manifest_id": "71f43c06-da28-51d8-99b8-79d1d7ecf6ff",
+          "series_instance_uid": "Dicom series manifests — informe PDF 05",
+          "modality": "Dicom series manifests — informe PDF 05",
+          "series_number": 5,
+          "body_part_examined": "Dicom series manifests — informe PDF 05",
+          "instance_count": 73,
+          "thumbnail_object_manifest_id": "026b567d-a620-5afe-a21c-3ca4b3bd3908"
+        },
+        {
+          "id": "3a5eed01-ec20-5d07-8343-c5bd5bb1e6a1",
+          "dicom_study_manifest_id": "71f43c06-da28-51d8-99b8-79d1d7ecf6ff",
+          "series_instance_uid": "Dicom series manifests — evidencia legal 06",
+          "modality": "Dicom series manifests — evidencia legal 06",
+          "series_number": 6,
+          "body_part_examined": "Dicom series manifests — evidencia legal 06",
+          "instance_count": 81,
+          "thumbnail_object_manifest_id": "026b567d-a620-5afe-a21c-3ca4b3bd3908"
+        },
+        {
+          "id": "5b30736f-e78c-5a3a-81d5-b7de0c1e0bf5",
+          "dicom_study_manifest_id": "71f43c06-da28-51d8-99b8-79d1d7ecf6ff",
+          "series_instance_uid": "Dicom series manifests — archivo de exportación 07",
+          "modality": "Dicom series manifests — archivo de exportación 07",
+          "series_number": 7,
+          "body_part_examined": "Dicom series manifests — archivo de exportación 07",
+          "instance_count": 99,
+          "thumbnail_object_manifest_id": "026b567d-a620-5afe-a21c-3ca4b3bd3908"
+        },
+        {
+          "id": "d49b7db7-e393-57f1-bdf7-bc45441f8bc9",
+          "dicom_study_manifest_id": "71f43c06-da28-51d8-99b8-79d1d7ecf6ff",
+          "series_instance_uid": "Dicom series manifests — objeto archivado 08",
+          "modality": "Dicom series manifests — objeto archivado 08",
+          "series_number": 8,
+          "body_part_examined": "Dicom series manifests — objeto archivado 08",
+          "instance_count": 93,
+          "thumbnail_object_manifest_id": "026b567d-a620-5afe-a21c-3ca4b3bd3908"
+        }
+      ],
+      "dicom_instance_manifests": [
+        {
+          "id": "f35a04b6-5a0d-57d9-82f3-9ea4a0ce7687",
+          "dicom_series_manifest_id": "33673850-91e1-584e-b858-6dd9584a6266",
+          "sop_instance_uid": "Dicom instance manifests — archivo clínico 01",
+          "sop_class_uid": "Dicom instance manifests — archivo clínico 01",
+          "instance_number": 1,
+          "transfer_syntax_uid": "Dicom instance manifests — archivo clínico 01",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "frame_count": 5,
+          "metadata_json": {
+            "schema_version": "1.0",
+            "source_service": "object_storage-service",
+            "trace_id": "501eb73e-f047-5486-93db-270a3e7d3bc9",
+            "producer": "salud-backend",
+            "ingest": "transactional_outbox",
+            "tenant_scoped": true
+          }
+        },
+        {
+          "id": "cc4dc6fe-85a6-568a-9c9b-151015985412",
+          "dicom_series_manifest_id": "33673850-91e1-584e-b858-6dd9584a6266",
+          "sop_instance_uid": "Dicom instance manifests — estudio DICOM 02",
+          "sop_class_uid": "Dicom instance manifests — estudio DICOM 02",
+          "instance_number": 2,
+          "transfer_syntax_uid": "Dicom instance manifests — estudio DICOM 02",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "frame_count": 10,
+          "metadata_json": {
+            "schema_version": "1.0",
+            "source_service": "object_storage-service",
+            "trace_id": "23671b51-36b8-5761-a380-6244a9954b47",
+            "producer": "salud-backend",
+            "ingest": "transactional_outbox",
+            "tenant_scoped": true
+          }
+        },
+        {
+          "id": "a88b1d82-b0da-5de2-8ed1-d03a66cc8c23",
+          "dicom_series_manifest_id": "33673850-91e1-584e-b858-6dd9584a6266",
+          "sop_instance_uid": "Dicom instance manifests — serie DICOM 03",
+          "sop_class_uid": "Dicom instance manifests — serie DICOM 03",
+          "instance_number": 3,
+          "transfer_syntax_uid": "Dicom instance manifests — serie DICOM 03",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "frame_count": 15,
+          "metadata_json": {
+            "schema_version": "1.0",
+            "source_service": "object_storage-service",
+            "trace_id": "21ff406c-5103-52d9-bbd7-d604ef9cacdc",
+            "producer": "salud-backend",
+            "ingest": "transactional_outbox",
+            "tenant_scoped": true
+          }
+        },
+        {
+          "id": "747619e1-d142-5ae9-848b-7a674ea8ef85",
+          "dicom_series_manifest_id": "33673850-91e1-584e-b858-6dd9584a6266",
+          "sop_instance_uid": "Dicom instance manifests — instancia DICOM 04",
+          "sop_class_uid": "Dicom instance manifests — instancia DICOM 04",
+          "instance_number": 4,
+          "transfer_syntax_uid": "Dicom instance manifests — instancia DICOM 04",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "frame_count": 20,
+          "metadata_json": {
+            "schema_version": "1.0",
+            "source_service": "object_storage-service",
+            "trace_id": "2c2bd8ef-adf2-5ae6-8e00-06708558547d",
+            "producer": "salud-backend",
+            "ingest": "transactional_outbox",
+            "tenant_scoped": true
+          }
+        },
+        {
+          "id": "ab34392f-caad-5233-a986-2904cacd5547",
+          "dicom_series_manifest_id": "33673850-91e1-584e-b858-6dd9584a6266",
+          "sop_instance_uid": "Dicom instance manifests — informe PDF 05",
+          "sop_class_uid": "Dicom instance manifests — informe PDF 05",
+          "instance_number": 5,
+          "transfer_syntax_uid": "Dicom instance manifests — informe PDF 05",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "frame_count": 25,
+          "metadata_json": {
+            "schema_version": "1.0",
+            "source_service": "object_storage-service",
+            "trace_id": "0491cde9-9e39-53a2-9f18-061b661d6895",
+            "producer": "salud-backend",
+            "ingest": "transactional_outbox",
+            "tenant_scoped": true
+          }
+        },
+        {
+          "id": "0986ec41-c821-577f-a90e-c065ac9ca060",
+          "dicom_series_manifest_id": "33673850-91e1-584e-b858-6dd9584a6266",
+          "sop_instance_uid": "Dicom instance manifests — evidencia legal 06",
+          "sop_class_uid": "Dicom instance manifests — evidencia legal 06",
+          "instance_number": 6,
+          "transfer_syntax_uid": "Dicom instance manifests — evidencia legal 06",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "frame_count": 30,
+          "metadata_json": {
+            "schema_version": "1.0",
+            "source_service": "object_storage-service",
+            "trace_id": "4e238cc9-40e2-52e1-a908-ec271842750b",
+            "producer": "salud-backend",
+            "ingest": "transactional_outbox",
+            "tenant_scoped": true
+          }
+        },
+        {
+          "id": "86f181cf-f685-591e-ab18-71a6da77ddf1",
+          "dicom_series_manifest_id": "33673850-91e1-584e-b858-6dd9584a6266",
+          "sop_instance_uid": "Dicom instance manifests — archivo de exportación 07",
+          "sop_class_uid": "Dicom instance manifests — archivo de exportación 07",
+          "instance_number": 7,
+          "transfer_syntax_uid": "Dicom instance manifests — archivo de exportación 07",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "frame_count": 35,
+          "metadata_json": {
+            "schema_version": "1.0",
+            "source_service": "object_storage-service",
+            "trace_id": "8b7979e1-49f5-5ccc-9a60-ce726084f392",
+            "producer": "salud-backend",
+            "ingest": "transactional_outbox",
+            "tenant_scoped": true
+          }
+        },
+        {
+          "id": "fd3c7380-e4ef-5b6a-a82d-22be6b3a0f6a",
+          "dicom_series_manifest_id": "33673850-91e1-584e-b858-6dd9584a6266",
+          "sop_instance_uid": "Dicom instance manifests — objeto archivado 08",
+          "sop_class_uid": "Dicom instance manifests — objeto archivado 08",
+          "instance_number": 8,
+          "transfer_syntax_uid": "Dicom instance manifests — objeto archivado 08",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "frame_count": 40,
+          "metadata_json": {
+            "schema_version": "1.0",
+            "source_service": "object_storage-service",
+            "trace_id": "f2c8ddd2-e32f-5d8e-81eb-14bb3740c85f",
+            "producer": "salud-backend",
+            "ingest": "transactional_outbox",
+            "tenant_scoped": true
+          }
+        },
+        {
+          "id": "d7fea102-0522-576a-88ca-5572c96a1f42",
+          "dicom_series_manifest_id": "33673850-91e1-584e-b858-6dd9584a6266",
+          "sop_instance_uid": "Dicom instance manifests — archivo clínico 01",
+          "sop_class_uid": "Dicom instance manifests — archivo clínico 01",
+          "instance_number": 1,
+          "transfer_syntax_uid": "Dicom instance manifests — archivo clínico 01",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "frame_count": 76,
+          "metadata_json": {
+            "module": "object_storage",
+            "entity": "dicom_instance_manifests",
+            "seq": 8,
+            "ref": "d058b9a2-546d-5c72-9441-06ba09db2d55",
+            "status": "rejected",
+            "amount": 316.0,
+            "currency": "BOB",
+            "occurred_at": "2026-12-13T14:25:00Z"
+          }
+        },
+        {
+          "id": "e467c32d-6840-5e82-ad11-e298da0a3d43",
+          "dicom_series_manifest_id": "33673850-91e1-584e-b858-6dd9584a6266",
+          "sop_instance_uid": "Dicom instance manifests — estudio DICOM 02",
+          "sop_class_uid": "Dicom instance manifests — estudio DICOM 02",
+          "instance_number": 2,
+          "transfer_syntax_uid": "Dicom instance manifests — estudio DICOM 02",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "frame_count": 59,
+          "metadata_json": {
+            "module": "object_storage",
+            "entity": "dicom_instance_manifests",
+            "seq": 9,
+            "ref": "3d349348-427c-5a09-b7de-45979cddab3f",
+            "status": "retrying",
+            "amount": 453.25,
+            "currency": "BOB",
+            "occurred_at": "2026-07-24T03:42:00Z"
+          }
+        },
+        {
+          "id": "73f4e219-180c-598e-9b3b-5201e7207ef6",
+          "dicom_series_manifest_id": "33673850-91e1-584e-b858-6dd9584a6266",
+          "sop_instance_uid": "Dicom instance manifests — serie DICOM 03",
+          "sop_class_uid": "Dicom instance manifests — serie DICOM 03",
+          "instance_number": 3,
+          "transfer_syntax_uid": "Dicom instance manifests — serie DICOM 03",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "frame_count": 45,
+          "metadata_json": {
+            "module": "object_storage",
+            "entity": "dicom_instance_manifests",
+            "seq": 10,
+            "ref": "9adeea49-d9a0-50f8-8885-c8256b49b289",
+            "status": "active",
+            "amount": 590.5,
+            "currency": "BOB",
+            "occurred_at": "2026-02-08T16:59:00Z"
+          }
+        },
+        {
+          "id": "d2e8aaa7-32cf-55f7-927b-8f53b5d0a648",
+          "dicom_series_manifest_id": "33673850-91e1-584e-b858-6dd9584a6266",
+          "sop_instance_uid": "Dicom instance manifests — instancia DICOM 04",
+          "sop_class_uid": "Dicom instance manifests — instancia DICOM 04",
+          "instance_number": 4,
+          "transfer_syntax_uid": "Dicom instance manifests — instancia DICOM 04",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "frame_count": 16,
+          "metadata_json": {
+            "module": "object_storage",
+            "entity": "dicom_instance_manifests",
+            "seq": 11,
+            "ref": "ca68ae90-bc45-520f-a254-e3ef970bed13",
+            "status": "pending",
+            "amount": 727.75,
+            "currency": "BOB",
+            "occurred_at": "2026-09-19T05:16:00Z"
+          }
+        },
+        {
+          "id": "56d01be5-1cd8-5398-a97a-5acbc71e5daf",
+          "dicom_series_manifest_id": "33673850-91e1-584e-b858-6dd9584a6266",
+          "sop_instance_uid": "Dicom instance manifests — informe PDF 05",
+          "sop_class_uid": "Dicom instance manifests — informe PDF 05",
+          "instance_number": 5,
+          "transfer_syntax_uid": "Dicom instance manifests — informe PDF 05",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "frame_count": 91,
+          "metadata_json": {
+            "module": "object_storage",
+            "entity": "dicom_instance_manifests",
+            "seq": 12,
+            "ref": "67f6c7ea-b5b0-5ad5-a6a3-be5ba93e64cf",
+            "status": "in_progress",
+            "amount": 864.0,
+            "currency": "BOB",
+            "occurred_at": "2026-04-03T18:33:00Z"
+          }
+        },
+        {
+          "id": "ddb2f856-327b-5e83-a312-43f43f8db463",
+          "dicom_series_manifest_id": "33673850-91e1-584e-b858-6dd9584a6266",
+          "sop_instance_uid": "Dicom instance manifests — evidencia legal 06",
+          "sop_class_uid": "Dicom instance manifests — evidencia legal 06",
+          "instance_number": 6,
+          "transfer_syntax_uid": "Dicom instance manifests — evidencia legal 06",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "frame_count": 56,
+          "metadata_json": {
+            "module": "object_storage",
+            "entity": "dicom_instance_manifests",
+            "seq": 13,
+            "ref": "9127a802-09d5-5460-86c9-8db04f4cb6d0",
+            "status": "completed",
+            "amount": 1001.25,
+            "currency": "BOB",
+            "occurred_at": "2026-11-14T07:50:00Z"
+          }
+        },
+        {
+          "id": "9dd2985a-8f07-5fa8-997a-b40c369ffc09",
+          "dicom_series_manifest_id": "33673850-91e1-584e-b858-6dd9584a6266",
+          "sop_instance_uid": "Dicom instance manifests — archivo de exportación 07",
+          "sop_class_uid": "Dicom instance manifests — archivo de exportación 07",
+          "instance_number": 7,
+          "transfer_syntax_uid": "Dicom instance manifests — archivo de exportación 07",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "frame_count": 44,
+          "metadata_json": {
+            "module": "object_storage",
+            "entity": "dicom_instance_manifests",
+            "seq": 14,
+            "ref": "a005041c-cbc1-5198-bcbb-85381fa9f9fd",
+            "status": "failed",
+            "amount": 238.5,
+            "currency": "BOB",
+            "occurred_at": "2026-06-25T20:07:00Z"
+          }
+        },
+        {
+          "id": "20aaf713-27b7-555b-a76a-5368d1615685",
+          "dicom_series_manifest_id": "33673850-91e1-584e-b858-6dd9584a6266",
+          "sop_instance_uid": "Dicom instance manifests — objeto archivado 08",
+          "sop_class_uid": "Dicom instance manifests — objeto archivado 08",
+          "instance_number": 8,
+          "transfer_syntax_uid": "Dicom instance manifests — objeto archivado 08",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "frame_count": 34,
+          "metadata_json": {
+            "module": "object_storage",
+            "entity": "dicom_instance_manifests",
+            "seq": 15,
+            "ref": "456592c9-9706-5375-84d6-eb9314178195",
+            "status": "cancelled",
+            "amount": 375.75,
+            "currency": "BOB",
+            "occurred_at": "2026-01-09T09:24:00Z"
+          }
+        }
+      ],
+      "dicomweb_access_logs": [
+        {
+          "id": "09b7d0d6-8f0d-503e-beec-0fb34bd91336",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "principal_id": "42a1ea1d-03d7-5431-be96-98198510b588",
+          "operation": "Dicomweb access logs — archivo clínico 01",
+          "study_instance_uid": "Dicomweb access logs — archivo clínico 01",
+          "series_instance_uid": "Dicomweb access logs — archivo clínico 01",
+          "sop_instance_uid": "Dicomweb access logs — archivo clínico 01",
+          "purpose_of_use_code": "DICOMWEB_ACCESS_LOGS_01",
+          "outcome": "Dicomweb access logs — archivo clínico 01",
+          "occurred_at": "2026-09-01T09:29:00Z"
+        },
+        {
+          "id": "34bdf716-4ceb-58e7-af73-55c143902283",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "principal_id": "42a1ea1d-03d7-5431-be96-98198510b588",
+          "operation": "Dicomweb access logs — estudio DICOM 02",
+          "study_instance_uid": "Dicomweb access logs — estudio DICOM 02",
+          "series_instance_uid": "Dicomweb access logs — estudio DICOM 02",
+          "sop_instance_uid": "Dicomweb access logs — estudio DICOM 02",
+          "purpose_of_use_code": "DICOMWEB_ACCESS_LOGS_02",
+          "outcome": "Dicomweb access logs — estudio DICOM 02",
+          "occurred_at": "2026-09-06T09:40:00Z"
+        },
+        {
+          "id": "a1e0cb03-66ea-5e79-bcfc-d1e55b9ef994",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "principal_id": "42a1ea1d-03d7-5431-be96-98198510b588",
+          "operation": "Dicomweb access logs — serie DICOM 03",
+          "study_instance_uid": "Dicomweb access logs — serie DICOM 03",
+          "series_instance_uid": "Dicomweb access logs — serie DICOM 03",
+          "sop_instance_uid": "Dicomweb access logs — serie DICOM 03",
+          "purpose_of_use_code": "DICOMWEB_ACCESS_LOGS_03",
+          "outcome": "Dicomweb access logs — serie DICOM 03",
+          "occurred_at": "2026-09-11T09:51:00Z"
+        },
+        {
+          "id": "98349c5e-0aec-525a-b989-7ad6dd8e2768",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "principal_id": "42a1ea1d-03d7-5431-be96-98198510b588",
+          "operation": "Dicomweb access logs — instancia DICOM 04",
+          "study_instance_uid": "Dicomweb access logs — instancia DICOM 04",
+          "series_instance_uid": "Dicomweb access logs — instancia DICOM 04",
+          "sop_instance_uid": "Dicomweb access logs — instancia DICOM 04",
+          "purpose_of_use_code": "DICOMWEB_ACCESS_LOGS_04",
+          "outcome": "Dicomweb access logs — instancia DICOM 04",
+          "occurred_at": "2026-09-16T10:02:00Z"
+        },
+        {
+          "id": "1702f7b7-2477-5618-b48d-06118c6092a8",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "principal_id": "42a1ea1d-03d7-5431-be96-98198510b588",
+          "operation": "Dicomweb access logs — informe PDF 05",
+          "study_instance_uid": "Dicomweb access logs — informe PDF 05",
+          "series_instance_uid": "Dicomweb access logs — informe PDF 05",
+          "sop_instance_uid": "Dicomweb access logs — informe PDF 05",
+          "purpose_of_use_code": "DICOMWEB_ACCESS_LOGS_05",
+          "outcome": "Dicomweb access logs — informe PDF 05",
+          "occurred_at": "2026-09-21T10:13:00Z"
+        },
+        {
+          "id": "b98e6ad8-776d-5bb2-8e1d-7bf363fb9e65",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "principal_id": "42a1ea1d-03d7-5431-be96-98198510b588",
+          "operation": "Dicomweb access logs — evidencia legal 06",
+          "study_instance_uid": "Dicomweb access logs — evidencia legal 06",
+          "series_instance_uid": "Dicomweb access logs — evidencia legal 06",
+          "sop_instance_uid": "Dicomweb access logs — evidencia legal 06",
+          "purpose_of_use_code": "DICOMWEB_ACCESS_LOGS_06",
+          "outcome": "Dicomweb access logs — evidencia legal 06",
+          "occurred_at": "2026-09-26T10:24:00Z"
+        },
+        {
+          "id": "8413b897-c20d-5bc1-82f8-e51f4914d6de",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "principal_id": "42a1ea1d-03d7-5431-be96-98198510b588",
+          "operation": "Dicomweb access logs — archivo de exportación 07",
+          "study_instance_uid": "Dicomweb access logs — archivo de exportación 07",
+          "series_instance_uid": "Dicomweb access logs — archivo de exportación 07",
+          "sop_instance_uid": "Dicomweb access logs — archivo de exportación 07",
+          "purpose_of_use_code": "DICOMWEB_ACCESS_LOGS_07",
+          "outcome": "Dicomweb access logs — archivo de exportación 07",
+          "occurred_at": "2026-10-01T10:35:00Z"
+        },
+        {
+          "id": "8d6c4c1b-9c1e-5bbd-b20d-4e9f8a74eead",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "principal_id": "42a1ea1d-03d7-5431-be96-98198510b588",
+          "operation": "Dicomweb access logs — objeto archivado 08",
+          "study_instance_uid": "Dicomweb access logs — objeto archivado 08",
+          "series_instance_uid": "Dicomweb access logs — objeto archivado 08",
+          "sop_instance_uid": "Dicomweb access logs — objeto archivado 08",
+          "purpose_of_use_code": "DICOMWEB_ACCESS_LOGS_08",
+          "outcome": "Dicomweb access logs — objeto archivado 08",
+          "occurred_at": "2026-10-06T10:46:00Z"
+        },
+        {
+          "id": "df2e8688-f0f6-5424-8e11-1fe97654118a",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "principal_id": "42a1ea1d-03d7-5431-be96-98198510b588",
+          "operation": "Dicomweb access logs — archivo clínico 01",
+          "study_instance_uid": "Dicomweb access logs — archivo clínico 01",
+          "series_instance_uid": "Dicomweb access logs — archivo clínico 01",
+          "sop_instance_uid": "Dicomweb access logs — archivo clínico 01",
+          "purpose_of_use_code": "DICOMWEB_ACCESS_LOGS_008",
+          "outcome": "Dicomweb access logs — archivo clínico 01",
+          "occurred_at": "2026-12-13T14:25:00Z"
+        },
+        {
+          "id": "3163d626-8b73-5f11-ab5f-97e9d09d0351",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "principal_id": "42a1ea1d-03d7-5431-be96-98198510b588",
+          "operation": "Dicomweb access logs — estudio DICOM 02",
+          "study_instance_uid": "Dicomweb access logs — estudio DICOM 02",
+          "series_instance_uid": "Dicomweb access logs — estudio DICOM 02",
+          "sop_instance_uid": "Dicomweb access logs — estudio DICOM 02",
+          "purpose_of_use_code": "DICOMWEB_ACCESS_LOGS_009",
+          "outcome": "Dicomweb access logs — estudio DICOM 02",
+          "occurred_at": "2026-07-24T03:42:00Z"
+        },
+        {
+          "id": "242f89d1-0184-5959-830d-242b92132f44",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "principal_id": "42a1ea1d-03d7-5431-be96-98198510b588",
+          "operation": "Dicomweb access logs — serie DICOM 03",
+          "study_instance_uid": "Dicomweb access logs — serie DICOM 03",
+          "series_instance_uid": "Dicomweb access logs — serie DICOM 03",
+          "sop_instance_uid": "Dicomweb access logs — serie DICOM 03",
+          "purpose_of_use_code": "DICOMWEB_ACCESS_LOGS_010",
+          "outcome": "Dicomweb access logs — serie DICOM 03",
+          "occurred_at": "2026-02-08T16:59:00Z"
+        },
+        {
+          "id": "66e3e6a2-7fe7-548a-90a8-c0ef582223ed",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "principal_id": "42a1ea1d-03d7-5431-be96-98198510b588",
+          "operation": "Dicomweb access logs — instancia DICOM 04",
+          "study_instance_uid": "Dicomweb access logs — instancia DICOM 04",
+          "series_instance_uid": "Dicomweb access logs — instancia DICOM 04",
+          "sop_instance_uid": "Dicomweb access logs — instancia DICOM 04",
+          "purpose_of_use_code": "DICOMWEB_ACCESS_LOGS_011",
+          "outcome": "Dicomweb access logs — instancia DICOM 04",
+          "occurred_at": "2026-09-19T05:16:00Z"
+        },
+        {
+          "id": "534c05af-b468-5eae-8215-fa646099522f",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "principal_id": "42a1ea1d-03d7-5431-be96-98198510b588",
+          "operation": "Dicomweb access logs — informe PDF 05",
+          "study_instance_uid": "Dicomweb access logs — informe PDF 05",
+          "series_instance_uid": "Dicomweb access logs — informe PDF 05",
+          "sop_instance_uid": "Dicomweb access logs — informe PDF 05",
+          "purpose_of_use_code": "DICOMWEB_ACCESS_LOGS_012",
+          "outcome": "Dicomweb access logs — informe PDF 05",
+          "occurred_at": "2026-04-03T18:33:00Z"
+        },
+        {
+          "id": "11891be8-6691-5bc8-8b53-6c1555ca1e23",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "principal_id": "42a1ea1d-03d7-5431-be96-98198510b588",
+          "operation": "Dicomweb access logs — evidencia legal 06",
+          "study_instance_uid": "Dicomweb access logs — evidencia legal 06",
+          "series_instance_uid": "Dicomweb access logs — evidencia legal 06",
+          "sop_instance_uid": "Dicomweb access logs — evidencia legal 06",
+          "purpose_of_use_code": "DICOMWEB_ACCESS_LOGS_013",
+          "outcome": "Dicomweb access logs — evidencia legal 06",
+          "occurred_at": "2026-11-14T07:50:00Z"
+        },
+        {
+          "id": "7d545e17-516d-5e8f-9860-d6236329febf",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "principal_id": "42a1ea1d-03d7-5431-be96-98198510b588",
+          "operation": "Dicomweb access logs — archivo de exportación 07",
+          "study_instance_uid": "Dicomweb access logs — archivo de exportación 07",
+          "series_instance_uid": "Dicomweb access logs — archivo de exportación 07",
+          "sop_instance_uid": "Dicomweb access logs — archivo de exportación 07",
+          "purpose_of_use_code": "DICOMWEB_ACCESS_LOGS_014",
+          "outcome": "Dicomweb access logs — archivo de exportación 07",
+          "occurred_at": "2026-06-25T20:07:00Z"
+        },
+        {
+          "id": "f5fc36cf-d267-5a23-a964-b57e84cc4aa1",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "principal_id": "42a1ea1d-03d7-5431-be96-98198510b588",
+          "operation": "Dicomweb access logs — objeto archivado 08",
+          "study_instance_uid": "Dicomweb access logs — objeto archivado 08",
+          "series_instance_uid": "Dicomweb access logs — objeto archivado 08",
+          "sop_instance_uid": "Dicomweb access logs — objeto archivado 08",
+          "purpose_of_use_code": "DICOMWEB_ACCESS_LOGS_015",
+          "outcome": "Dicomweb access logs — objeto archivado 08",
+          "occurred_at": "2026-01-09T09:24:00Z"
+        }
+      ],
+      "archive_manifests": [
+        {
+          "id": "c621034f-2ac8-569c-b746-f48c071d006d",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "archive_type": "ARCHIVE_MANIFESTS_01",
+          "source_scope_json": {
+            "module": "object_storage",
+            "entity": "archive_manifests",
+            "seq": 0,
+            "ref": "d458684d-7487-5bf3-b883-090cc70b85aa",
+            "status": "active",
+            "amount": 120.0,
+            "currency": "BOB",
+            "occurred_at": "2026-04-06T06:09:00Z"
+          },
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "record_count": 5,
+          "manifest_hash": "c0116cdfb95862bd648bf5411889e7ab58aac035ef36c69066a4e82bdfa35d7b",
+          "created_at": "2026-09-01T09:36:00Z",
+          "verified_at": "2026-09-01T09:36:00Z"
+        },
+        {
+          "id": "f0004da1-5360-5a0a-a0a5-0d1b3fd9a6d8",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "archive_type": "ARCHIVE_MANIFESTS_02",
+          "source_scope_json": {
+            "module": "object_storage",
+            "entity": "archive_manifests",
+            "seq": 1,
+            "ref": "cbe1f23a-b836-5785-8800-05bdbd345b4a",
+            "status": "pending",
+            "amount": 257.25,
+            "currency": "BOB",
+            "occurred_at": "2026-11-17T19:26:00Z"
+          },
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "record_count": 10,
+          "manifest_hash": "89677afb7483a66d8bc30b6fd05ff3611cdce912da34da2c562fd383a9cba2ef",
+          "created_at": "2026-09-06T09:47:00Z",
+          "verified_at": "2026-09-06T09:47:00Z"
+        },
+        {
+          "id": "c62d0f5e-1271-5b91-b328-6bc014a274f6",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "archive_type": "ARCHIVE_MANIFESTS_03",
+          "source_scope_json": {
+            "module": "object_storage",
+            "entity": "archive_manifests",
+            "seq": 2,
+            "ref": "45ec6986-9abe-5a9e-a0cd-597c90218395",
+            "status": "in_progress",
+            "amount": 394.5,
+            "currency": "BOB",
+            "occurred_at": "2026-06-01T08:43:00Z"
+          },
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "record_count": 15,
+          "manifest_hash": "abe0bf67c967f5822388f28c80faa0d9fef18550974f3f75d052cd29d32f3831",
+          "created_at": "2026-09-11T09:58:00Z",
+          "verified_at": "2026-09-11T09:58:00Z"
+        },
+        {
+          "id": "51a4e7a3-966f-58d9-8c80-c34d2b2c468b",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "archive_type": "ARCHIVE_MANIFESTS_04",
+          "source_scope_json": {
+            "module": "object_storage",
+            "entity": "archive_manifests",
+            "seq": 3,
+            "ref": "f3a9f576-32c3-5ad7-83b0-30eb5094e77e",
+            "status": "completed",
+            "amount": 531.75,
+            "currency": "BOB",
+            "occurred_at": "2026-01-12T21:00:00Z"
+          },
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "record_count": 20,
+          "manifest_hash": "668c97b8a54e8c9b6c41d57b957e9a547b47465a025a904b88978b0862f69480",
+          "created_at": "2026-09-16T10:09:00Z",
+          "verified_at": "2026-09-16T10:09:00Z"
+        },
+        {
+          "id": "ff4386be-46fc-5848-9428-171fd106db73",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "archive_type": "ARCHIVE_MANIFESTS_05",
+          "source_scope_json": {
+            "module": "object_storage",
+            "entity": "archive_manifests",
+            "seq": 4,
+            "ref": "c6315f35-a3a8-5ec7-985d-c51de9ea90b1",
+            "status": "failed",
+            "amount": 668.0,
+            "currency": "BOB",
+            "occurred_at": "2026-08-23T10:17:00Z"
+          },
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "record_count": 25,
+          "manifest_hash": "e23b0502f20a6eaafc18e217ac67f9b95900bcca86acffb438380442b1ce21c0",
+          "created_at": "2026-09-21T10:20:00Z",
+          "verified_at": "2026-09-21T10:20:00Z"
+        },
+        {
+          "id": "36caf3b8-8f9d-59aa-8aa6-d824fa2ff9d8",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "archive_type": "ARCHIVE_MANIFESTS_06",
+          "source_scope_json": {
+            "module": "object_storage",
+            "entity": "archive_manifests",
+            "seq": 5,
+            "ref": "a4f23608-1489-550d-9cca-57d487f232ad",
+            "status": "cancelled",
+            "amount": 805.25,
+            "currency": "BOB",
+            "occurred_at": "2026-03-07T23:34:00Z"
+          },
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "record_count": 30,
+          "manifest_hash": "11b41e16459a76b8b81b8ed1c91b98abf1f4a238ab5400633a3b23b2be7857f8",
+          "created_at": "2026-09-26T10:31:00Z",
+          "verified_at": "2026-09-26T10:31:00Z"
+        },
+        {
+          "id": "f953f519-928b-5426-8e7e-b75cebdf0e05",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "archive_type": "ARCHIVE_MANIFESTS_07",
+          "source_scope_json": {
+            "module": "object_storage",
+            "entity": "archive_manifests",
+            "seq": 6,
+            "ref": "3487e0e1-4f08-5f4b-9ba9-4e61bd186630",
+            "status": "on_hold",
+            "amount": 942.5,
+            "currency": "BOB",
+            "occurred_at": "2026-10-18T12:51:00Z"
+          },
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "record_count": 35,
+          "manifest_hash": "7ee3284e7d96cbeff975d25426e68707fdf54f2f252fd44a458f2b0e3594795d",
+          "created_at": "2026-10-01T10:42:00Z",
+          "verified_at": "2026-10-01T10:42:00Z"
+        },
+        {
+          "id": "aa3b4277-3563-553d-8c5d-0b7fac33c0e9",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "archive_type": "ARCHIVE_MANIFESTS_08",
+          "source_scope_json": {
+            "module": "object_storage",
+            "entity": "archive_manifests",
+            "seq": 7,
+            "ref": "c489b05d-d77d-538d-97fa-6513e49b313e",
+            "status": "approved",
+            "amount": 179.75,
+            "currency": "BOB",
+            "occurred_at": "2026-05-02T01:08:00Z"
+          },
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "record_count": 40,
+          "manifest_hash": "b4025af9366cbbd1b489151a2906fad3178f451bec6bcbacdbb04e54c7f75c3d",
+          "created_at": "2026-10-06T10:53:00Z",
+          "verified_at": "2026-10-06T10:53:00Z"
+        },
+        {
+          "id": "84c32627-e3df-5a94-bc2b-b8e4a9ca5c48",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "archive_type": "ARCHIVE_MANIFESTS_01",
+          "source_scope_json": {
+            "module": "object_storage",
+            "entity": "archive_manifests",
+            "seq": 8,
+            "ref": "d5dd13b2-a79f-5a8e-9b7e-121eb5ca3347",
+            "status": "rejected",
+            "amount": 316.0,
+            "currency": "BOB",
+            "occurred_at": "2026-12-13T14:25:00Z"
+          },
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "record_count": 26,
+          "manifest_hash": "c0116cdfb95862bd648bf5411889e7ab58aac035ef36c69066a4e82bdfa35d7b",
+          "created_at": "2026-12-13T14:25:00Z",
+          "verified_at": "2026-12-13T14:25:00Z"
+        },
+        {
+          "id": "8d6d9ce8-12a7-5361-a82a-37a8e1228cda",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "archive_type": "ARCHIVE_MANIFESTS_02",
+          "source_scope_json": {
+            "module": "object_storage",
+            "entity": "archive_manifests",
+            "seq": 9,
+            "ref": "488655f3-7fd6-5676-9609-b01e84718404",
+            "status": "retrying",
+            "amount": 453.25,
+            "currency": "BOB",
+            "occurred_at": "2026-07-24T03:42:00Z"
+          },
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "record_count": 47,
+          "manifest_hash": "89677afb7483a66d8bc30b6fd05ff3611cdce912da34da2c562fd383a9cba2ef",
+          "created_at": "2026-07-24T03:42:00Z",
+          "verified_at": "2026-07-24T03:42:00Z"
+        },
+        {
+          "id": "57d9aff2-6702-540a-95d3-da3fde66549b",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "archive_type": "ARCHIVE_MANIFESTS_03",
+          "source_scope_json": {
+            "module": "object_storage",
+            "entity": "archive_manifests",
+            "seq": 10,
+            "ref": "9f0b8cf1-28bb-5e9c-82e9-3299139a1d5b",
+            "status": "active",
+            "amount": 590.5,
+            "currency": "BOB",
+            "occurred_at": "2026-02-08T16:59:00Z"
+          },
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "record_count": 58,
+          "manifest_hash": "abe0bf67c967f5822388f28c80faa0d9fef18550974f3f75d052cd29d32f3831",
+          "created_at": "2026-02-08T16:59:00Z",
+          "verified_at": "2026-02-08T16:59:00Z"
+        },
+        {
+          "id": "4cdba60c-3a27-52a7-a3b7-5bb0a6a6dd76",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "archive_type": "ARCHIVE_MANIFESTS_04",
+          "source_scope_json": {
+            "module": "object_storage",
+            "entity": "archive_manifests",
+            "seq": 11,
+            "ref": "46d607d4-917f-5ec5-bc4f-b5e2723b32b6",
+            "status": "pending",
+            "amount": 727.75,
+            "currency": "BOB",
+            "occurred_at": "2026-09-19T05:16:00Z"
+          },
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "record_count": 68,
+          "manifest_hash": "668c97b8a54e8c9b6c41d57b957e9a547b47465a025a904b88978b0862f69480",
+          "created_at": "2026-09-19T05:16:00Z",
+          "verified_at": "2026-09-19T05:16:00Z"
+        },
+        {
+          "id": "42b15059-a015-5893-9547-39dbe3e5c90d",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "archive_type": "ARCHIVE_MANIFESTS_05",
+          "source_scope_json": {
+            "module": "object_storage",
+            "entity": "archive_manifests",
+            "seq": 12,
+            "ref": "a75b37c5-bf9f-5974-8a7f-6b4e894f5b3c",
+            "status": "in_progress",
+            "amount": 864.0,
+            "currency": "BOB",
+            "occurred_at": "2026-04-03T18:33:00Z"
+          },
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "record_count": 73,
+          "manifest_hash": "e23b0502f20a6eaafc18e217ac67f9b95900bcca86acffb438380442b1ce21c0",
+          "created_at": "2026-04-03T18:33:00Z",
+          "verified_at": "2026-04-03T18:33:00Z"
+        },
+        {
+          "id": "e73709b6-9510-5de1-b2f3-beda5b545a03",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "archive_type": "ARCHIVE_MANIFESTS_06",
+          "source_scope_json": {
+            "module": "object_storage",
+            "entity": "archive_manifests",
+            "seq": 13,
+            "ref": "2c6340ea-af5c-5006-835b-2abc3b66149d",
+            "status": "completed",
+            "amount": 1001.25,
+            "currency": "BOB",
+            "occurred_at": "2026-11-14T07:50:00Z"
+          },
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "record_count": 69,
+          "manifest_hash": "11b41e16459a76b8b81b8ed1c91b98abf1f4a238ab5400633a3b23b2be7857f8",
+          "created_at": "2026-11-14T07:50:00Z",
+          "verified_at": "2026-11-14T07:50:00Z"
+        },
+        {
+          "id": "e90c7727-f37d-5785-a6a8-dc3844e18afa",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "archive_type": "ARCHIVE_MANIFESTS_07",
+          "source_scope_json": {
+            "module": "object_storage",
+            "entity": "archive_manifests",
+            "seq": 14,
+            "ref": "316897c9-4b62-50cf-8baa-9730b8248b87",
+            "status": "failed",
+            "amount": 238.5,
+            "currency": "BOB",
+            "occurred_at": "2026-06-25T20:07:00Z"
+          },
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "record_count": 74,
+          "manifest_hash": "7ee3284e7d96cbeff975d25426e68707fdf54f2f252fd44a458f2b0e3594795d",
+          "created_at": "2026-06-25T20:07:00Z",
+          "verified_at": "2026-06-25T20:07:00Z"
+        },
+        {
+          "id": "6f11d7f7-7f9a-5d5f-8af4-44809171e5b2",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "archive_type": "ARCHIVE_MANIFESTS_08",
+          "source_scope_json": {
+            "module": "object_storage",
+            "entity": "archive_manifests",
+            "seq": 15,
+            "ref": "8e9c666f-5e76-5cdf-b249-0d41c25bedfc",
+            "status": "cancelled",
+            "amount": 375.75,
+            "currency": "BOB",
+            "occurred_at": "2026-01-09T09:24:00Z"
+          },
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "record_count": 61,
+          "manifest_hash": "b4025af9366cbbd1b489151a2906fad3178f451bec6bcbacdbb04e54c7f75c3d",
+          "created_at": "2026-01-09T09:24:00Z",
+          "verified_at": "2026-01-09T09:24:00Z"
+        }
+      ],
+      "object_integrity_checks": [
+        {
+          "id": "2deeb2a9-6b75-566c-870f-af843bbfc5ab",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "check_type": "OBJECT_INTEGRITY_CHECKS_01",
+          "expected_hash": "2fdfd9f58ab4fef28a0b0a27f73c72bb504b55eb71c38836f3362d9bf816a068",
+          "actual_hash": "5a61fd749f19ccf743e1d460fae06fe421546522e19c461dda613110edba0a0a",
+          "status": "ACTIVE",
+          "checked_at": "2026-09-01T09:43:00Z",
+          "repair_job_id": "094023bd-bc27-5b09-9881-85f05540a028"
+        },
+        {
+          "id": "858b56f9-e8f2-52ba-9643-08d32eb544a9",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "check_type": "OBJECT_INTEGRITY_CHECKS_02",
+          "expected_hash": "774f56488d712bf7c7236c53e5b322bc4ee46921d138fce4e64e18918de6ceea",
+          "actual_hash": "f993ab32351267b2b4f2dec7cd60245bdaf35a8a44ef25f27fb8dff24a9c570d",
+          "status": "DRAFT",
+          "checked_at": "2026-09-06T09:54:00Z",
+          "repair_job_id": "094023bd-bc27-5b09-9881-85f05540a028"
+        },
+        {
+          "id": "a5347d5c-62fc-5533-a064-943affeb61df",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "check_type": "OBJECT_INTEGRITY_CHECKS_03",
+          "expected_hash": "3e0fa86beee3971b02ca09928299e588168d44e3fd27d64762456f4fc7522659",
+          "actual_hash": "0d59bf63ce02640e09315512e20061da6fbe33d52ab82b09ea62033b8ceb757b",
+          "status": "ACTIVE",
+          "checked_at": "2026-09-11T10:05:00Z",
+          "repair_job_id": "094023bd-bc27-5b09-9881-85f05540a028"
+        },
+        {
+          "id": "c173ed7a-94a8-5b39-944f-10f605eab993",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "check_type": "OBJECT_INTEGRITY_CHECKS_04",
+          "expected_hash": "0e5cacc3b0c586583f110c35ec72ca1440bea56ebcd8b079fdb5902eb104856a",
+          "actual_hash": "83261fe0ef3fa9f8b7431260f3c573f06c88188e4a0a2953bcb4992b4b464864",
+          "status": "DRAFT",
+          "checked_at": "2026-09-16T10:16:00Z",
+          "repair_job_id": "094023bd-bc27-5b09-9881-85f05540a028"
+        },
+        {
+          "id": "52134586-b221-53b5-b4c2-53fcd544ebe5",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "check_type": "OBJECT_INTEGRITY_CHECKS_05",
+          "expected_hash": "19aa2f07902f6553019289db679070ceae26b298a7bed19b1a2dd25ef6df4583",
+          "actual_hash": "76472ff2439e6108a13ae73bdd9a8d67972f87bbd9501f9ed24eb7e5273653e1",
+          "status": "ACTIVE",
+          "checked_at": "2026-09-21T10:27:00Z",
+          "repair_job_id": "094023bd-bc27-5b09-9881-85f05540a028"
+        },
+        {
+          "id": "0d857a57-6892-592f-bc5f-6527202dff9e",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "check_type": "OBJECT_INTEGRITY_CHECKS_06",
+          "expected_hash": "8cfd95067547716bb47d67c40924617f1bc746b7d339e084139c69b62317910f",
+          "actual_hash": "dfa5b76b9536251ba1c59b3c9bb64e1320898ecf137db6cbdea7e3f9748e05e7",
+          "status": "DRAFT",
+          "checked_at": "2026-09-26T10:38:00Z",
+          "repair_job_id": "094023bd-bc27-5b09-9881-85f05540a028"
+        },
+        {
+          "id": "a325c706-930b-54db-a03a-c777dbbc4286",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "check_type": "OBJECT_INTEGRITY_CHECKS_07",
+          "expected_hash": "4c0cc792a1cc8ac6aff2a0d2bcc7c524b79e33e771269b3e75c19744e4346eeb",
+          "actual_hash": "75f53bda25f9661a48051534a6df19fd7182c96440eabd4c02d02e4a7898116f",
+          "status": "ACTIVE",
+          "checked_at": "2026-10-01T10:49:00Z",
+          "repair_job_id": "094023bd-bc27-5b09-9881-85f05540a028"
+        },
+        {
+          "id": "80fc796f-060f-5090-bc58-f96f3e445348",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "check_type": "OBJECT_INTEGRITY_CHECKS_08",
+          "expected_hash": "d8ef5c6c5a506c43639aa24b2d46acee0dc49a24523fc7ee4a6df23f30d24760",
+          "actual_hash": "2872db641fb1cd9b45e09c12a0889e5e18ec053710bf715eafb80b1beed339bb",
+          "status": "DRAFT",
+          "checked_at": "2026-10-06T11:00:00Z",
+          "repair_job_id": "094023bd-bc27-5b09-9881-85f05540a028"
+        },
+        {
+          "id": "5b00dce3-62b4-5d47-a45f-7f98627df386",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "check_type": "OBJECT_INTEGRITY_CHECKS_01",
+          "expected_hash": "2fdfd9f58ab4fef28a0b0a27f73c72bb504b55eb71c38836f3362d9bf816a068",
+          "actual_hash": "5a61fd749f19ccf743e1d460fae06fe421546522e19c461dda613110edba0a0a",
+          "status": "rejected",
+          "checked_at": "2026-12-13T14:25:00Z",
+          "repair_job_id": "094023bd-bc27-5b09-9881-85f05540a028"
+        },
+        {
+          "id": "e9119b2b-7b50-5ca2-b075-5f4bc3d935af",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "check_type": "OBJECT_INTEGRITY_CHECKS_02",
+          "expected_hash": "774f56488d712bf7c7236c53e5b322bc4ee46921d138fce4e64e18918de6ceea",
+          "actual_hash": "f993ab32351267b2b4f2dec7cd60245bdaf35a8a44ef25f27fb8dff24a9c570d",
+          "status": "retrying",
+          "checked_at": "2026-07-24T03:42:00Z",
+          "repair_job_id": "094023bd-bc27-5b09-9881-85f05540a028"
+        },
+        {
+          "id": "30245ffd-b286-519a-aa82-e478a31fa4d3",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "check_type": "OBJECT_INTEGRITY_CHECKS_03",
+          "expected_hash": "3e0fa86beee3971b02ca09928299e588168d44e3fd27d64762456f4fc7522659",
+          "actual_hash": "0d59bf63ce02640e09315512e20061da6fbe33d52ab82b09ea62033b8ceb757b",
+          "status": "active",
+          "checked_at": "2026-02-08T16:59:00Z",
+          "repair_job_id": "094023bd-bc27-5b09-9881-85f05540a028"
+        },
+        {
+          "id": "978c48a2-eb17-58f0-917c-da0ef4f47cff",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "check_type": "OBJECT_INTEGRITY_CHECKS_04",
+          "expected_hash": "0e5cacc3b0c586583f110c35ec72ca1440bea56ebcd8b079fdb5902eb104856a",
+          "actual_hash": "83261fe0ef3fa9f8b7431260f3c573f06c88188e4a0a2953bcb4992b4b464864",
+          "status": "pending",
+          "checked_at": "2026-09-19T05:16:00Z",
+          "repair_job_id": "094023bd-bc27-5b09-9881-85f05540a028"
+        },
+        {
+          "id": "5b8d2287-f9d9-53cc-b436-f277cdd64552",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "check_type": "OBJECT_INTEGRITY_CHECKS_05",
+          "expected_hash": "19aa2f07902f6553019289db679070ceae26b298a7bed19b1a2dd25ef6df4583",
+          "actual_hash": "76472ff2439e6108a13ae73bdd9a8d67972f87bbd9501f9ed24eb7e5273653e1",
+          "status": "in_progress",
+          "checked_at": "2026-04-03T18:33:00Z",
+          "repair_job_id": "094023bd-bc27-5b09-9881-85f05540a028"
+        },
+        {
+          "id": "fab6c160-daeb-5b14-9d7e-65b44d59da85",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "check_type": "OBJECT_INTEGRITY_CHECKS_06",
+          "expected_hash": "8cfd95067547716bb47d67c40924617f1bc746b7d339e084139c69b62317910f",
+          "actual_hash": "dfa5b76b9536251ba1c59b3c9bb64e1320898ecf137db6cbdea7e3f9748e05e7",
+          "status": "completed",
+          "checked_at": "2026-11-14T07:50:00Z",
+          "repair_job_id": "094023bd-bc27-5b09-9881-85f05540a028"
+        },
+        {
+          "id": "25d49a4c-e9a3-5db3-9b06-2e1d07c27faf",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "check_type": "OBJECT_INTEGRITY_CHECKS_07",
+          "expected_hash": "4c0cc792a1cc8ac6aff2a0d2bcc7c524b79e33e771269b3e75c19744e4346eeb",
+          "actual_hash": "75f53bda25f9661a48051534a6df19fd7182c96440eabd4c02d02e4a7898116f",
+          "status": "failed",
+          "checked_at": "2026-06-25T20:07:00Z",
+          "repair_job_id": "094023bd-bc27-5b09-9881-85f05540a028"
+        },
+        {
+          "id": "2a1c88e6-71ba-5e72-b72a-59499c3b01b4",
+          "object_version_id": "962886ac-58c6-51cc-abae-a4ecbed29be4",
+          "check_type": "OBJECT_INTEGRITY_CHECKS_08",
+          "expected_hash": "d8ef5c6c5a506c43639aa24b2d46acee0dc49a24523fc7ee4a6df23f30d24760",
+          "actual_hash": "2872db641fb1cd9b45e09c12a0889e5e18ec053710bf715eafb80b1beed339bb",
+          "status": "cancelled",
+          "checked_at": "2026-01-09T09:24:00Z",
+          "repair_job_id": "094023bd-bc27-5b09-9881-85f05540a028"
+        }
+      ],
+      "object_deletion_markers": [
+        {
+          "id": "0679fde3-9fa6-58e5-9304-5d8ae63bb42a",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "requested_by_job_id": "e0676e06-ab64-5062-b55d-c51e0c52a248",
+          "provider_delete_marker": "Object deletion markers — archivo clínico 01",
+          "requested_at": "2026-09-01T09:50:00Z",
+          "effective_at": "2026-09-01T09:50:00Z",
+          "verification_status": "ACTIVE"
+        },
+        {
+          "id": "78c51e0f-43f6-5c19-a06e-8d6119cccd72",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "requested_by_job_id": "e0676e06-ab64-5062-b55d-c51e0c52a248",
+          "provider_delete_marker": "Object deletion markers — estudio DICOM 02",
+          "requested_at": "2026-09-06T10:01:00Z",
+          "effective_at": "2026-09-06T10:01:00Z",
+          "verification_status": "DRAFT"
+        },
+        {
+          "id": "8f4c9b86-3179-5c8b-804a-03cf78e74328",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "requested_by_job_id": "e0676e06-ab64-5062-b55d-c51e0c52a248",
+          "provider_delete_marker": "Object deletion markers — serie DICOM 03",
+          "requested_at": "2026-09-11T10:12:00Z",
+          "effective_at": "2026-09-11T10:12:00Z",
+          "verification_status": "ACTIVE"
+        },
+        {
+          "id": "0ad6b530-afcf-54d3-9e5a-72e0bc317b6e",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "requested_by_job_id": "e0676e06-ab64-5062-b55d-c51e0c52a248",
+          "provider_delete_marker": "Object deletion markers — instancia DICOM 04",
+          "requested_at": "2026-09-16T10:23:00Z",
+          "effective_at": "2026-09-16T10:23:00Z",
+          "verification_status": "DRAFT"
+        },
+        {
+          "id": "83300888-2e0f-5c43-948b-591e9a03f4eb",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "requested_by_job_id": "e0676e06-ab64-5062-b55d-c51e0c52a248",
+          "provider_delete_marker": "Object deletion markers — informe PDF 05",
+          "requested_at": "2026-09-21T10:34:00Z",
+          "effective_at": "2026-09-21T10:34:00Z",
+          "verification_status": "ACTIVE"
+        },
+        {
+          "id": "f37ad17f-8090-5142-bc65-53038c06a952",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "requested_by_job_id": "e0676e06-ab64-5062-b55d-c51e0c52a248",
+          "provider_delete_marker": "Object deletion markers — evidencia legal 06",
+          "requested_at": "2026-09-26T10:45:00Z",
+          "effective_at": "2026-09-26T10:45:00Z",
+          "verification_status": "DRAFT"
+        },
+        {
+          "id": "797fa5c9-d783-5c38-a2f1-36aad8d50ecf",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "requested_by_job_id": "e0676e06-ab64-5062-b55d-c51e0c52a248",
+          "provider_delete_marker": "Object deletion markers — archivo de exportación 07",
+          "requested_at": "2026-10-01T10:56:00Z",
+          "effective_at": "2026-10-01T10:56:00Z",
+          "verification_status": "ACTIVE"
+        },
+        {
+          "id": "83efd2d0-13fa-51b3-84ed-68be8091f6f9",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "requested_by_job_id": "e0676e06-ab64-5062-b55d-c51e0c52a248",
+          "provider_delete_marker": "Object deletion markers — objeto archivado 08",
+          "requested_at": "2026-10-06T11:07:00Z",
+          "effective_at": "2026-10-06T11:07:00Z",
+          "verification_status": "DRAFT"
+        },
+        {
+          "id": "5c277bf5-fe90-5f55-b071-5a2a50027aba",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "requested_by_job_id": "e0676e06-ab64-5062-b55d-c51e0c52a248",
+          "provider_delete_marker": "Object deletion markers — archivo clínico 01",
+          "requested_at": "2026-12-13T14:25:00Z",
+          "effective_at": "2026-12-13T14:25:00Z",
+          "verification_status": "rejected"
+        },
+        {
+          "id": "856e44e8-3bca-5878-a981-ffe379d76113",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "requested_by_job_id": "e0676e06-ab64-5062-b55d-c51e0c52a248",
+          "provider_delete_marker": "Object deletion markers — estudio DICOM 02",
+          "requested_at": "2026-07-24T03:42:00Z",
+          "effective_at": "2026-07-24T03:42:00Z",
+          "verification_status": "retrying"
+        },
+        {
+          "id": "f37f229d-dcc2-5029-b552-673fea6f3420",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "requested_by_job_id": "e0676e06-ab64-5062-b55d-c51e0c52a248",
+          "provider_delete_marker": "Object deletion markers — serie DICOM 03",
+          "requested_at": "2026-02-08T16:59:00Z",
+          "effective_at": "2026-02-08T16:59:00Z",
+          "verification_status": "active"
+        },
+        {
+          "id": "652d7c06-33fc-5626-87a5-67475bcdd1d1",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "requested_by_job_id": "e0676e06-ab64-5062-b55d-c51e0c52a248",
+          "provider_delete_marker": "Object deletion markers — instancia DICOM 04",
+          "requested_at": "2026-09-19T05:16:00Z",
+          "effective_at": "2026-09-19T05:16:00Z",
+          "verification_status": "pending"
+        },
+        {
+          "id": "90a3aa79-8e79-5a6f-84bc-e12e3314bad9",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "requested_by_job_id": "e0676e06-ab64-5062-b55d-c51e0c52a248",
+          "provider_delete_marker": "Object deletion markers — informe PDF 05",
+          "requested_at": "2026-04-03T18:33:00Z",
+          "effective_at": "2026-04-03T18:33:00Z",
+          "verification_status": "in_progress"
+        },
+        {
+          "id": "1a48f3d9-dd05-5839-8fd3-4c3e7ad3321f",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "requested_by_job_id": "e0676e06-ab64-5062-b55d-c51e0c52a248",
+          "provider_delete_marker": "Object deletion markers — evidencia legal 06",
+          "requested_at": "2026-11-14T07:50:00Z",
+          "effective_at": "2026-11-14T07:50:00Z",
+          "verification_status": "completed"
+        },
+        {
+          "id": "216ab400-c8b7-5822-ba90-f8c81ce489eb",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "requested_by_job_id": "e0676e06-ab64-5062-b55d-c51e0c52a248",
+          "provider_delete_marker": "Object deletion markers — archivo de exportación 07",
+          "requested_at": "2026-06-25T20:07:00Z",
+          "effective_at": "2026-06-25T20:07:00Z",
+          "verification_status": "failed"
+        },
+        {
+          "id": "e19cc358-b4a6-56ae-8e17-b888ef0d4433",
+          "object_manifest_id": "d56c5431-01f5-5620-914f-2f7e13f51e8a",
+          "requested_by_job_id": "e0676e06-ab64-5062-b55d-c51e0c52a248",
+          "provider_delete_marker": "Object deletion markers — objeto archivado 08",
+          "requested_at": "2026-01-09T09:24:00Z",
+          "effective_at": "2026-01-09T09:24:00Z",
+          "verification_status": "cancelled"
+        }
+      ]
+    },
+    "summary": {
+      "record_count": 272,
+      "entity_count": 17,
+      "populated_entity_count": 17,
+      "scenario_count": 8,
+      "seed_revision": "2.0.0-enhanced"
+    },
+    "scenario_coverage": {
+      "happy_path": true,
+      "validation_error": true,
+      "permission_denied": true,
+      "idempotent_retry": true,
+      "reversal_or_cancellation": true,
+      "audit_trace": true,
+      "synthetic_only": true,
+      "production_hard_fail_required": true
+    }
+  },
+  "integrity_contract": {
+    "stable_ids": true,
+    "timestamps_are_deterministic": true,
+    "secrets_must_be_injected_externally": true,
+    "mock_must_fail_in_production": true,
+    "views_are_never_inserted": true,
+    "reference_only_entities_are_never_inserted_by_this_module": true
+  },
+  "quality_profile": {
+    "revision": "2.0.0-enhanced",
+    "strategy": "domain-aware deterministic catalogs plus connected synthetic scenarios",
+    "boot_scope": "catálogos, políticas, plantillas y configuración segura sin transacciones empresariales ficticias",
+    "mock_scope": "escenarios enlazados de éxito, error, borde, reversión, auditoría y recuperación",
+    "quality_gates": [
+      "UUID determinístico",
+      "idempotencia por clave estable",
+      "sin secretos",
+      "mock prohibido en producción",
+      "campos obligatorios presentes",
+      "FK resolubles",
+      "fechas coherentes",
+      "valores de dominio no genéricos"
+    ],
+    "scenario_catalog": [
+      "archivo clínico",
+      "estudio DICOM",
+      "serie DICOM",
+      "instancia DICOM",
+      "informe PDF",
+      "evidencia legal",
+      "archivo de exportación",
+      "objeto archivado"
+    ]
+  }
+}

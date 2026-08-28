@@ -1,0 +1,1127 @@
+@startuml SALUD_Module_52_health_data
+title Module 52 — International Health Data Platform, Interoperability and Longitudinal Record\n(schema: health_data)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+note as BIZ_health_data
+  BUSINESS PURPOSE
+  Provides a governed international-grade health data center: source onboarding, ingestion, canonical versioned resources, patient identity resolution, FHIR validation, quality, provenance, lineage, terminology mapping, controlled exports, de-identification and OMOP transformation.
+end note
+
+entity profiles_patient_profiles <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity clinical_encounters <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity clinical_service_requests <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity clinical_observations <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity clinical_diagnostic_reports <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity clinical_procedures <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity diagnostics_specimens <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity diagnostics_imaging_studies <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity consent_consent_directives <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity health_source_systems {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+  * source_type_concept_id : uuid <<FK>>
+    organization_id : uuid <<FK>>
+    vendor_name : varchar
+    product_name : varchar
+    version : varchar
+    base_url : varchar
+  * trust_level_concept_id : uuid <<FK>>
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity health_source_connections {
+  * id : uuid <<PK>>
+  --
+  * health_source_system_id : uuid <<FK>>
+  * connection_type_concept_id : uuid <<FK>>
+  * endpoint_uri : varchar
+    credential_id : uuid <<FK>>
+    network_policy_id : uuid <<FK>>
+    format_concept_id : uuid <<FK>>
+    poll_schedule : varchar
+    cursor_strategy_concept_id : uuid <<FK>>
+    last_success_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity health_ingestion_batches <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * health_source_connection_id : uuid <<FK>>
+  * batch_identifier : varchar
+  * ingestion_mode_concept_id : uuid <<FK>>
+  * received_at : timestamptz
+    source_period_start : timestamptz
+    source_period_end : timestamptz
+  * status_concept_id : uuid <<FK>>
+    records_received : bigint
+    records_accepted : bigint
+    records_rejected : bigint
+    payload_manifest_file_id : uuid <<FK>>
+    content_hash : varchar
+    completed_at : timestamptz
+  * created_at : timestamptz
+}
+
+entity health_ingestion_records <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * health_ingestion_batch_id : uuid <<FK>>
+  * source_record_identifier : varchar
+  * resource_type_concept_id : uuid <<FK>>
+    source_version : varchar
+    source_last_updated_at : timestamptz
+  * payload_hash : varchar
+    payload_file_id : uuid <<FK>>
+  * validation_status_concept_id : uuid <<FK>>
+  * processing_status_concept_id : uuid <<FK>>
+    canonical_resource_id : uuid <<FK>>
+    error_summary_json : jsonb
+  * created_at : timestamptz
+}
+
+entity canonical_health_resources {
+  * id : uuid <<PK>>
+  --
+  * custodian_tenant_id : uuid <<FK>>
+  * resource_type_concept_id : uuid <<FK>>
+  * logical_identifier : varchar
+    patient_profile_id : uuid <<FK>>
+    encounter_id : uuid <<FK>>
+    source_system_id : uuid <<FK>>
+    current_version_id : uuid <<FK>>
+  * lifecycle_status_concept_id : uuid <<FK>>
+    security_labels_json : jsonb
+    purpose_restrictions_json : jsonb
+    retention_policy_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  * row_version : integer
+}
+
+entity canonical_health_resource_versions <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * canonical_health_resource_id : uuid <<FK>>
+  * version_number : integer
+    health_ingestion_record_id : uuid <<FK>>
+  * recorded_at : timestamptz
+    effective_start_at : timestamptz
+    effective_end_at : timestamptz
+  * change_type_concept_id : uuid <<FK>>
+  * payload_format_concept_id : uuid <<FK>>
+  * normalized_payload_json : jsonb
+    original_payload_file_id : uuid <<FK>>
+  * content_hash : varchar
+    provenance_record_id : uuid <<FK>>
+    supersedes_version_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity canonical_resource_identifiers {
+  * id : uuid <<PK>>
+  --
+  * canonical_health_resource_id : uuid <<FK>>
+  * identifier_system : varchar
+  * identifier_value : varchar
+  * identifier_type_concept_id : uuid <<FK>>
+    assigning_authority : varchar
+  * is_primary : boolean
+  * effective_from : timestamptz
+    effective_to : timestamptz
+  * created_at : timestamptz
+}
+
+entity canonical_resource_relationships {
+  * id : uuid <<PK>>
+  --
+  * source_resource_id : uuid <<FK>>
+  * target_resource_id : uuid <<FK>>
+  * relationship_type_concept_id : uuid <<FK>>
+    relationship_role_concept_id : uuid <<FK>>
+  * effective_from : timestamptz
+    effective_to : timestamptz
+    confidence_score : numeric(8,5)
+  * created_at : timestamptz
+}
+
+entity canonical_resource_bindings {
+  * id : uuid <<PK>>
+  --
+  * canonical_health_resource_id : uuid <<FK>>
+  * domain_entity_type_concept_id : uuid <<FK>>
+  * domain_entity_id : uuid
+  * binding_role_concept_id : uuid <<FK>>
+  * binding_status_concept_id : uuid <<FK>>
+    mapping_version_id : uuid <<FK>>
+  * created_at : timestamptz
+    ended_at : timestamptz
+}
+
+entity patient_timeline_entries <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * custodian_tenant_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+  * event_time : timestamptz
+  * event_type_concept_id : uuid <<FK>>
+  * source_entity_type_concept_id : uuid <<FK>>
+  * source_entity_id : uuid
+    encounter_id : uuid <<FK>>
+    organization_id : uuid <<FK>>
+    title : varchar
+    summary_redacted : text
+    clinical_priority_concept_id : uuid <<FK>>
+    patient_visibility_concept_id : uuid <<FK>>
+    security_labels_json : jsonb
+  * created_at : timestamptz
+}
+
+entity fhir_profile_definitions {
+  * id : uuid <<PK>>
+  --
+  * canonical_url : varchar
+  * name : varchar
+  * resource_type_concept_id : uuid <<FK>>
+    jurisdiction_concept_id : uuid <<FK>>
+    publisher : varchar
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity fhir_profile_versions {
+  * id : uuid <<PK>>
+  --
+  * fhir_profile_definition_id : uuid <<FK>>
+  * version : varchar
+  * fhir_release_concept_id : uuid <<FK>>
+  * structure_definition_json : jsonb
+    package_name : varchar
+    package_version : varchar
+    checksum_sha256 : varchar
+  * effective_from : timestamptz
+    effective_to : timestamptz
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity fhir_validation_runs <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * canonical_health_resource_version_id : uuid <<FK>>
+  * fhir_profile_version_id : uuid <<FK>>
+  * validator_version : varchar
+  * started_at : timestamptz
+    completed_at : timestamptz
+  * result_concept_id : uuid <<FK>>
+    issue_count : integer
+    summary_json : jsonb
+  * created_at : timestamptz
+}
+
+entity fhir_validation_issues <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * fhir_validation_run_id : uuid <<FK>>
+  * severity_concept_id : uuid <<FK>>
+  * issue_code : varchar
+    expression_path : varchar
+    diagnostics_text : text
+    location_json : jsonb
+  * created_at : timestamptz
+}
+
+entity patient_identity_clusters {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * cluster_identifier : varchar
+  * master_patient_profile_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    confidence_score : numeric(8,5)
+    last_resolved_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity patient_identity_members {
+  * id : uuid <<PK>>
+  --
+  * patient_identity_cluster_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+    source_system_id : uuid <<FK>>
+    source_patient_identifier : varchar
+  * member_role_concept_id : uuid <<FK>>
+  * match_status_concept_id : uuid <<FK>>
+    confidence_score : numeric(8,5)
+  * effective_from : timestamptz
+    effective_to : timestamptz
+  * created_at : timestamptz
+}
+
+entity patient_match_candidates <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * left_patient_profile_id : uuid <<FK>>
+  * right_patient_profile_id : uuid <<FK>>
+  * algorithm_version : varchar
+  * match_score : numeric(8,5)
+    matching_features_json : jsonb
+    conflicting_features_json : jsonb
+  * status_concept_id : uuid <<FK>>
+  * generated_at : timestamptz
+  * created_at : timestamptz
+}
+
+entity patient_match_decisions <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * patient_match_candidate_id : uuid <<FK>>
+  * decision_concept_id : uuid <<FK>>
+  * decided_by_user_id : uuid <<FK>>
+  * decided_at : timestamptz
+    reason_text : text
+    resulting_cluster_id : uuid <<FK>>
+    evidence_json : jsonb
+  * created_at : timestamptz
+}
+
+entity health_data_quality_rule_sets {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+  * scope_concept_id : uuid <<FK>>
+    resource_type_concept_id : uuid <<FK>>
+  * version : varchar
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity health_data_quality_rules {
+  * id : uuid <<PK>>
+  --
+  * health_data_quality_rule_set_id : uuid <<FK>>
+  * rule_code : varchar
+  * name : varchar
+  * dimension_concept_id : uuid <<FK>>
+  * severity_concept_id : uuid <<FK>>
+  * expression_language_concept_id : uuid <<FK>>
+  * rule_expression : text
+    remediation_guidance : text
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity health_data_quality_runs <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * health_data_quality_rule_set_id : uuid <<FK>>
+    health_ingestion_batch_id : uuid <<FK>>
+    canonical_resource_id : uuid <<FK>>
+  * started_at : timestamptz
+    completed_at : timestamptz
+  * result_concept_id : uuid <<FK>>
+    records_evaluated : bigint
+    issues_detected : bigint
+    summary_json : jsonb
+  * created_at : timestamptz
+}
+
+entity health_data_quality_issues <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * health_data_quality_run_id : uuid <<FK>>
+  * health_data_quality_rule_id : uuid <<FK>>
+    canonical_health_resource_id : uuid <<FK>>
+    canonical_resource_version_id : uuid <<FK>>
+  * field_path : varchar
+  * observed_value_hash : varchar
+  * status_concept_id : uuid <<FK>>
+    assigned_user_id : uuid <<FK>>
+    resolution_text : text
+    resolved_at : timestamptz
+  * created_at : timestamptz
+}
+
+entity health_provenance_records <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * custodian_tenant_id : uuid <<FK>>
+  * activity_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+    occurred_start_at : timestamptz
+    occurred_end_at : timestamptz
+    source_system_id : uuid <<FK>>
+    responsible_agent_type_concept_id : uuid <<FK>>
+    responsible_agent_id : uuid
+    on_behalf_of_organization_id : uuid <<FK>>
+    policy_uris_json : jsonb
+    signature_id : uuid <<FK>>
+  * content_hash : varchar
+  * created_at : timestamptz
+}
+
+entity health_provenance_targets {
+  * id : uuid <<PK>>
+  --
+  * health_provenance_record_id : uuid <<FK>>
+  * target_type_concept_id : uuid <<FK>>
+  * target_id : uuid
+  * role_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity health_lineage_edges <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * source_type_concept_id : uuid <<FK>>
+  * source_id : uuid
+  * target_type_concept_id : uuid <<FK>>
+  * target_id : uuid
+  * transformation_type_concept_id : uuid <<FK>>
+    transformation_version : varchar
+    job_run_id : uuid
+  * recorded_at : timestamptz
+  * content_hash : varchar
+  * created_at : timestamptz
+}
+
+entity health_terminology_mapping_sets {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+  * source_code_system_id : uuid <<FK>>
+  * target_code_system_id : uuid <<FK>>
+  * version : varchar
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity health_terminology_mapping_rules {
+  * id : uuid <<PK>>
+  --
+  * health_terminology_mapping_set_id : uuid <<FK>>
+  * source_code : varchar
+  * target_concept_id : uuid <<FK>>
+  * equivalence_concept_id : uuid <<FK>>
+    context_expression : text
+    confidence_score : numeric(8,5)
+    mapping_comment : text
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity health_deidentification_profiles {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+  * methodology_concept_id : uuid <<FK>>
+  * version : varchar
+    direct_identifier_rules_json : jsonb
+    quasi_identifier_rules_json : jsonb
+    date_shift_policy_json : jsonb
+    free_text_policy_json : jsonb
+    reidentification_key_secret_id : uuid <<FK>>
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity health_deidentification_runs <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * health_deidentification_profile_id : uuid <<FK>>
+  * purpose_concept_id : uuid <<FK>>
+    consent_directive_id : uuid <<FK>>
+  * started_at : timestamptz
+    completed_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+    input_manifest_file_id : uuid <<FK>>
+    output_manifest_file_id : uuid <<FK>>
+    records_processed : bigint
+    records_rejected : bigint
+    verification_summary_json : jsonb
+  * created_at : timestamptz
+}
+
+entity health_export_jobs <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * export_type_concept_id : uuid <<FK>>
+  * requested_by_user_id : uuid <<FK>>
+  * purpose_of_use_concept_id : uuid <<FK>>
+    patient_profile_id : uuid <<FK>>
+    cohort_definition_id : uuid <<FK>>
+    consent_directive_id : uuid <<FK>>
+    deidentification_run_id : uuid <<FK>>
+  * requested_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+    completed_at : timestamptz
+    expires_at : timestamptz
+    delivery_destination_json : jsonb
+  * created_at : timestamptz
+}
+
+entity health_export_manifests <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * health_export_job_id : uuid <<FK>>
+  * manifest_version : integer
+  * file_id : uuid <<FK>>
+  * content_hash : varchar
+  * record_count : bigint
+  * size_bytes : bigint
+    encryption_profile_id : uuid <<FK>>
+    retention_policy_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity omop_mapping_sets {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+  * omop_cdm_version : varchar
+  * source_model_version : varchar
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity omop_mapping_rules {
+  * id : uuid <<PK>>
+  --
+  * omop_mapping_set_id : uuid <<FK>>
+  * source_resource_type_concept_id : uuid <<FK>>
+  * target_table : varchar
+  * target_column : varchar
+  * mapping_expression : text
+    vocabulary_mapping_set_id : uuid <<FK>>
+    required : boolean
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity omop_transformation_runs <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * omop_mapping_set_id : uuid <<FK>>
+    health_ingestion_batch_id : uuid <<FK>>
+  * started_at : timestamptz
+    completed_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+    records_read : bigint
+    records_written : bigint
+    records_rejected : bigint
+    quality_summary_json : jsonb
+    lineage_job_run_id : uuid
+  * created_at : timestamptz
+}
+
+health_source_systems ||--o{ health_source_connections
+health_source_connections ||--o{ health_ingestion_batches
+health_ingestion_batches ||--o{ health_ingestion_records
+canonical_health_resources ||--o{ canonical_health_resource_versions
+canonical_health_resources ||--o{ canonical_resource_identifiers
+canonical_health_resources ||--o{ canonical_resource_relationships : source
+canonical_health_resources ||--o{ canonical_resource_relationships : target
+canonical_health_resources ||--o{ canonical_resource_bindings
+fhir_profile_definitions ||--o{ fhir_profile_versions
+fhir_profile_versions ||--o{ fhir_validation_runs
+fhir_validation_runs ||--o{ fhir_validation_issues
+patient_identity_clusters ||--o{ patient_identity_members
+patient_match_candidates ||--o| patient_match_decisions
+health_data_quality_rule_sets ||--o{ health_data_quality_rules
+health_data_quality_rule_sets ||--o{ health_data_quality_runs
+health_data_quality_runs ||--o{ health_data_quality_issues
+health_data_quality_rules ||--o{ health_data_quality_issues
+health_provenance_records ||--o{ health_provenance_targets
+health_terminology_mapping_sets ||--o{ health_terminology_mapping_rules
+health_deidentification_profiles ||--o{ health_deidentification_runs
+health_export_jobs ||--o{ health_export_manifests
+omop_mapping_sets ||--o{ omop_mapping_rules
+omop_mapping_sets ||--o{ omop_transformation_runs
+
+note right of canonical_health_resources
+  CANONICAL LONGITUDINAL RECORD
+  Source payloads are immutable/versioned; clinical domain tables remain the operational
+  source of truth. Bindings and lineage connect both representations without dual-write risk.
+end note
+
+note right of patient_identity_clusters
+  MASTER PATIENT INDEX
+  Matching candidates are never merged automatically when confidence or contradictions
+  require human review. Every decision is immutable and reversible through a new decision.
+end note
+
+note right of health_export_jobs
+  DATA RELEASE CONTROL
+  Every export requires purpose, authorization/consent where applicable, minimization,
+  optional de-identification, manifest hashing, expiration and auditable delivery.
+end note
+
+package "Physical Indexes" {
+entity "INDEXES · health_source_systems" as idxset_health_source_systems <<INDEX_SET>> {
+  PK pk_health_source_systems : (id) UNIQUE BTREE
+  IX ix_health_source_systems_tenant_id : (tenant_id) BTREE
+  IX ix_health_source_systems_source_type_concept_id : (source_type_concept_id) BTREE
+  IX ix_health_source_systems_organization_id : (organization_id) BTREE
+  IX ix_health_source_systems_trust_level_concept_id : (trust_level_concept_id) BTREE
+  IX ix_health_source_systems_state_concept_id : (state_concept_id) BTREE
+  IX ix_health_source_systems_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_health_source_systems_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_health_source_systems_tenant_created : (tenant_id, created_at DESC) BTREE
+  UK uk_health_source_systems_tenant_code : (tenant_id, code) UNIQUE BTREE
+}
+
+health_source_systems .. idxset_health_source_systems : indexed by
+
+entity "INDEXES · health_source_connections" as idxset_health_source_connections <<INDEX_SET>> {
+  PK pk_health_source_connections : (id) UNIQUE BTREE
+  IX ix_health_source_connections_health_source_system_id : (health_source_system_id) BTREE
+  IX ix_health_source_connections_connection_type_concept_id : (connection_type_concept_id) BTREE
+  IX ix_health_source_connections_credential_id : (credential_id) BTREE
+  IX ix_health_source_connections_network_policy_id : (network_policy_id) BTREE
+  IX ix_health_source_connections_format_concept_id : (format_concept_id) BTREE
+  IX ix_health_source_connections_cursor_strategy_concept_id : (cursor_strategy_concept_id) BTREE
+  IX ix_health_source_connections_status_concept_id : (status_concept_id) BTREE
+  IX ix_health_source_connections_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_health_source_connections_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_health_source_connections_system_type_endpoint : (health_source_system_id, connection_type_concept_id, endpoint_uri) UNIQUE BTREE
+}
+
+health_source_connections .. idxset_health_source_connections : indexed by
+
+entity "INDEXES · health_ingestion_batches" as idxset_health_ingestion_batches <<INDEX_SET>> {
+  PK pk_health_ingestion_batches : (id) UNIQUE BTREE
+  IX ix_health_ingestion_batches_tenant_id : (tenant_id) BTREE
+  IX ix_health_ingestion_batches_health_source_connection_id : (health_source_connection_id) BTREE
+  IX ix_health_ingestion_batches_ingestion_mode_concept_id : (ingestion_mode_concept_id) BTREE
+  IX ix_health_ingestion_batches_status_concept_id : (status_concept_id) BTREE
+  IX ix_health_ingestion_batches_payload_manifest_file_id : (payload_manifest_file_id) BTREE
+  IX ix_health_ingestion_batches_tenant_status : (tenant_id, status_concept_id, created_at DESC) BTREE
+  BRIN brin_health_ingestion_batches_created_at : (created_at) BRIN pages_per_range=128
+  UK uk_health_ingestion_batches_connection_identifier : (health_source_connection_id, batch_identifier) UNIQUE BTREE
+}
+
+health_ingestion_batches .. idxset_health_ingestion_batches : indexed by
+
+entity "INDEXES · health_ingestion_records" as idxset_health_ingestion_records <<INDEX_SET>> {
+  PK pk_health_ingestion_records : (id) UNIQUE BTREE
+  IX ix_health_ingestion_records_health_ingestion_batch_id : (health_ingestion_batch_id) BTREE
+  IX ix_health_ingestion_records_resource_type_concept_id : (resource_type_concept_id) BTREE
+  IX ix_health_ingestion_records_payload_file_id : (payload_file_id) BTREE
+  IX ix_health_ingestion_records_validation_status_concept_id : (validation_status_concept_id) BTREE
+  IX ix_health_ingestion_records_processing_status_concept_id : (processing_status_concept_id) BTREE
+  IX ix_health_ingestion_records_canonical_resource_id : (canonical_resource_id) BTREE
+  BRIN brin_health_ingestion_records_created_at : (created_at) BRIN pages_per_range=128
+  UK uk_health_ingestion_records_batch_source : (health_ingestion_batch_id, source_record_identifier, source_version) UNIQUE BTREE
+}
+
+health_ingestion_records .. idxset_health_ingestion_records : indexed by
+
+entity "INDEXES · canonical_health_resources" as idxset_canonical_health_resources <<INDEX_SET>> {
+  PK pk_canonical_health_resources : (id) UNIQUE BTREE
+  IX ix_canonical_health_resources_custodian_tenant_id : (custodian_tenant_id) BTREE
+  IX ix_canonical_health_resources_resource_type_concept_id : (resource_type_concept_id) BTREE
+  IX ix_canonical_health_resources_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_canonical_health_resources_encounter_id : (encounter_id) BTREE
+  IX ix_canonical_health_resources_source_system_id : (source_system_id) BTREE
+  IX ix_canonical_health_resources_current_version_id : (current_version_id) BTREE
+  IX ix_canonical_health_resources_lifecycle_status_concept_id : (lifecycle_status_concept_id) BTREE
+  IX ix_canonical_health_resources_retention_policy_id : (retention_policy_id) BTREE
+  UK uk_canonical_health_resources_tenant_type_logical : (custodian_tenant_id, resource_type_concept_id, logical_identifier) UNIQUE BTREE
+  IX ix_canonical_health_resources_patient_type : (custodian_tenant_id, patient_profile_id, resource_type_concept_id, updated_at DESC) BTREE
+}
+
+canonical_health_resources .. idxset_canonical_health_resources : indexed by
+
+entity "INDEXES · canonical_health_resource_versions" as idxset_canonical_health_resource_versions <<INDEX_SET>> {
+  PK pk_canonical_health_resource_versions : (id) UNIQUE BTREE
+  IX ix_canonical_health_resource_versions_canonical_health_e81f83a5 : (canonical_health_resource_id) BTREE
+  IX ix_canonical_health_resource_versions_health_ingestion_d6d6039b : (health_ingestion_record_id) BTREE
+  IX ix_canonical_health_resource_versions_change_type_concept_id : (change_type_concept_id) BTREE
+  IX ix_canonical_health_resource_versions_payload_format_concept_id : (payload_format_concept_id) BTREE
+  IX ix_canonical_health_resource_versions_original_payload_file_id : (original_payload_file_id) BTREE
+  IX ix_canonical_health_resource_versions_provenance_record_id : (provenance_record_id) BTREE
+  IX ix_canonical_health_resource_versions_supersedes_version_id : (supersedes_version_id) BTREE
+  BRIN brin_canonical_health_resource_versions_recorded_at : (recorded_at) BRIN pages_per_range=128
+  UK uk_canonical_health_resource_versions_resource_version : (canonical_health_resource_id, version_number) UNIQUE BTREE
+  GIN gin_canonical_health_versions_payload : (normalized_payload_json) GIN
+}
+
+canonical_health_resource_versions .. idxset_canonical_health_resource_versions : indexed by
+
+entity "INDEXES · canonical_resource_identifiers" as idxset_canonical_resource_identifiers <<INDEX_SET>> {
+  PK pk_canonical_resource_identifiers : (id) UNIQUE BTREE
+  IX ix_canonical_resource_identifiers_canonical_health_resource_id : (canonical_health_resource_id) BTREE
+  IX ix_canonical_resource_identifiers_identifier_type_concept_id : (identifier_type_concept_id) BTREE
+  UK uk_canonical_resource_identifiers_system_value : (identifier_system, identifier_value, canonical_health_resource_id) UNIQUE BTREE
+}
+
+canonical_resource_identifiers .. idxset_canonical_resource_identifiers : indexed by
+
+entity "INDEXES · canonical_resource_relationships" as idxset_canonical_resource_relationships <<INDEX_SET>> {
+  PK pk_canonical_resource_relationships : (id) UNIQUE BTREE
+  IX ix_canonical_resource_relationships_source_resource_id : (source_resource_id) BTREE
+  IX ix_canonical_resource_relationships_target_resource_id : (target_resource_id) BTREE
+  IX ix_canonical_resource_relationships_relationship_type__429279b9 : (relationship_type_concept_id) BTREE
+  IX ix_canonical_resource_relationships_relationship_role__312b7dc1 : (relationship_role_concept_id) BTREE
+  UK uk_canonical_resource_relationships_pair_type : (source_resource_id, target_resource_id, relationship_type_concept_id, effective_from) UNIQUE BTREE
+}
+
+canonical_resource_relationships .. idxset_canonical_resource_relationships : indexed by
+
+entity "INDEXES · canonical_resource_bindings" as idxset_canonical_resource_bindings <<INDEX_SET>> {
+  PK pk_canonical_resource_bindings : (id) UNIQUE BTREE
+  IX ix_canonical_resource_bindings_canonical_health_resource_id : (canonical_health_resource_id) BTREE
+  IX ix_canonical_resource_bindings_domain_entity_type_concept_id : (domain_entity_type_concept_id) BTREE
+  IX ix_canonical_resource_bindings_domain_entity_id : (domain_entity_id) BTREE
+  IX ix_canonical_resource_bindings_binding_role_concept_id : (binding_role_concept_id) BTREE
+  IX ix_canonical_resource_bindings_binding_status_concept_id : (binding_status_concept_id) BTREE
+  IX ix_canonical_resource_bindings_mapping_version_id : (mapping_version_id) BTREE
+  UK uk_canonical_resource_bindings_resource_target : (canonical_health_resource_id, domain_entity_type_concept_id, domain_entity_id, binding_role_concept_id) UNIQUE BTREE
+  IX ix_canonical_resource_bindings_target : (domain_entity_type_concept_id, domain_entity_id) BTREE
+}
+
+canonical_resource_bindings .. idxset_canonical_resource_bindings : indexed by
+
+entity "INDEXES · patient_timeline_entries" as idxset_patient_timeline_entries <<INDEX_SET>> {
+  PK pk_patient_timeline_entries : (id) UNIQUE BTREE
+  IX ix_patient_timeline_entries_custodian_tenant_id : (custodian_tenant_id) BTREE
+  IX ix_patient_timeline_entries_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_patient_timeline_entries_event_type_concept_id : (event_type_concept_id) BTREE
+  IX ix_patient_timeline_entries_source_entity_type_concept_id : (source_entity_type_concept_id) BTREE
+  IX ix_patient_timeline_entries_source_entity_id : (source_entity_id) BTREE
+  IX ix_patient_timeline_entries_encounter_id : (encounter_id) BTREE
+  IX ix_patient_timeline_entries_organization_id : (organization_id) BTREE
+  IX ix_patient_timeline_entries_clinical_priority_concept_id : (clinical_priority_concept_id) BTREE
+  IX ix_patient_timeline_entries_patient_visibility_concept_id : (patient_visibility_concept_id) BTREE
+  BRIN brin_patient_timeline_entries_created_at : (created_at) BRIN pages_per_range=128
+  UK uk_patient_timeline_entries_source : (source_entity_type_concept_id, source_entity_id, event_type_concept_id) UNIQUE BTREE
+  IX ix_patient_timeline_entries_patient_time : (custodian_tenant_id, patient_profile_id, event_time DESC) BTREE
+}
+
+patient_timeline_entries .. idxset_patient_timeline_entries : indexed by
+
+entity "INDEXES · fhir_profile_definitions" as idxset_fhir_profile_definitions <<INDEX_SET>> {
+  PK pk_fhir_profile_definitions : (id) UNIQUE BTREE
+  IX ix_fhir_profile_definitions_resource_type_concept_id : (resource_type_concept_id) BTREE
+  IX ix_fhir_profile_definitions_jurisdiction_concept_id : (jurisdiction_concept_id) BTREE
+  IX ix_fhir_profile_definitions_state_concept_id : (state_concept_id) BTREE
+  IX ix_fhir_profile_definitions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_fhir_profile_definitions_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_fhir_profile_definitions_url : (canonical_url) UNIQUE BTREE
+}
+
+fhir_profile_definitions .. idxset_fhir_profile_definitions : indexed by
+
+entity "INDEXES · fhir_profile_versions" as idxset_fhir_profile_versions <<INDEX_SET>> {
+  PK pk_fhir_profile_versions : (id) UNIQUE BTREE
+  IX ix_fhir_profile_versions_fhir_profile_definition_id : (fhir_profile_definition_id) BTREE
+  IX ix_fhir_profile_versions_fhir_release_concept_id : (fhir_release_concept_id) BTREE
+  IX ix_fhir_profile_versions_state_concept_id : (state_concept_id) BTREE
+  IX ix_fhir_profile_versions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_fhir_profile_versions_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_fhir_profile_versions_profile_version : (fhir_profile_definition_id, version) UNIQUE BTREE
+}
+
+fhir_profile_versions .. idxset_fhir_profile_versions : indexed by
+
+entity "INDEXES · fhir_validation_runs" as idxset_fhir_validation_runs <<INDEX_SET>> {
+  PK pk_fhir_validation_runs : (id) UNIQUE BTREE
+  IX ix_fhir_validation_runs_tenant_id : (tenant_id) BTREE
+  IX ix_fhir_validation_runs_canonical_health_resource_version_id : (canonical_health_resource_version_id) BTREE
+  IX ix_fhir_validation_runs_fhir_profile_version_id : (fhir_profile_version_id) BTREE
+  IX ix_fhir_validation_runs_result_concept_id : (result_concept_id) BTREE
+  IX ix_fhir_validation_runs_tenant_created : (tenant_id, created_at DESC) BTREE
+  BRIN brin_fhir_validation_runs_created_at : (created_at) BRIN pages_per_range=128
+}
+
+fhir_validation_runs .. idxset_fhir_validation_runs : indexed by
+
+entity "INDEXES · fhir_validation_issues" as idxset_fhir_validation_issues <<INDEX_SET>> {
+  PK pk_fhir_validation_issues : (id) UNIQUE BTREE
+  IX ix_fhir_validation_issues_fhir_validation_run_id : (fhir_validation_run_id) BTREE
+  IX ix_fhir_validation_issues_severity_concept_id : (severity_concept_id) BTREE
+  BRIN brin_fhir_validation_issues_created_at : (created_at) BRIN pages_per_range=128
+}
+
+fhir_validation_issues .. idxset_fhir_validation_issues : indexed by
+
+entity "INDEXES · patient_identity_clusters" as idxset_patient_identity_clusters <<INDEX_SET>> {
+  PK pk_patient_identity_clusters : (id) UNIQUE BTREE
+  IX ix_patient_identity_clusters_tenant_id : (tenant_id) BTREE
+  IX ix_patient_identity_clusters_master_patient_profile_id : (master_patient_profile_id) BTREE
+  IX ix_patient_identity_clusters_status_concept_id : (status_concept_id) BTREE
+  IX ix_patient_identity_clusters_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_patient_identity_clusters_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_patient_identity_clusters_tenant_status : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  UK uk_patient_identity_clusters_tenant_identifier : (tenant_id, cluster_identifier) UNIQUE BTREE
+}
+
+patient_identity_clusters .. idxset_patient_identity_clusters : indexed by
+
+entity "INDEXES · patient_identity_members" as idxset_patient_identity_members <<INDEX_SET>> {
+  PK pk_patient_identity_members : (id) UNIQUE BTREE
+  IX ix_patient_identity_members_patient_identity_cluster_id : (patient_identity_cluster_id) BTREE
+  IX ix_patient_identity_members_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_patient_identity_members_source_system_id : (source_system_id) BTREE
+  IX ix_patient_identity_members_member_role_concept_id : (member_role_concept_id) BTREE
+  IX ix_patient_identity_members_match_status_concept_id : (match_status_concept_id) BTREE
+  UK uk_patient_identity_members_cluster_patient : (patient_identity_cluster_id, patient_profile_id, effective_from) UNIQUE BTREE
+}
+
+patient_identity_members .. idxset_patient_identity_members : indexed by
+
+entity "INDEXES · patient_match_candidates" as idxset_patient_match_candidates <<INDEX_SET>> {
+  PK pk_patient_match_candidates : (id) UNIQUE BTREE
+  IX ix_patient_match_candidates_tenant_id : (tenant_id) BTREE
+  IX ix_patient_match_candidates_left_patient_profile_id : (left_patient_profile_id) BTREE
+  IX ix_patient_match_candidates_right_patient_profile_id : (right_patient_profile_id) BTREE
+  IX ix_patient_match_candidates_status_concept_id : (status_concept_id) BTREE
+  IX ix_patient_match_candidates_tenant_status : (tenant_id, status_concept_id, created_at DESC) BTREE
+  BRIN brin_patient_match_candidates_created_at : (created_at) BRIN pages_per_range=128
+  UK uk_patient_match_candidates_pair_algorithm : (tenant_id, left_patient_profile_id, right_patient_profile_id, algorithm_version) UNIQUE BTREE
+}
+
+patient_match_candidates .. idxset_patient_match_candidates : indexed by
+
+entity "INDEXES · patient_match_decisions" as idxset_patient_match_decisions <<INDEX_SET>> {
+  PK pk_patient_match_decisions : (id) UNIQUE BTREE
+  IX ix_patient_match_decisions_patient_match_candidate_id : (patient_match_candidate_id) BTREE
+  IX ix_patient_match_decisions_decision_concept_id : (decision_concept_id) BTREE
+  IX ix_patient_match_decisions_decided_by_user_id : (decided_by_user_id) BTREE
+  IX ix_patient_match_decisions_resulting_cluster_id : (resulting_cluster_id) BTREE
+  BRIN brin_patient_match_decisions_created_at : (created_at) BRIN pages_per_range=128
+  UK uk_patient_match_decisions_candidate : (patient_match_candidate_id) UNIQUE BTREE
+}
+
+patient_match_decisions .. idxset_patient_match_decisions : indexed by
+
+entity "INDEXES · health_data_quality_rule_sets" as idxset_health_data_quality_rule_sets <<INDEX_SET>> {
+  PK pk_health_data_quality_rule_sets : (id) UNIQUE BTREE
+  IX ix_health_data_quality_rule_sets_tenant_id : (tenant_id) BTREE
+  IX ix_health_data_quality_rule_sets_scope_concept_id : (scope_concept_id) BTREE
+  IX ix_health_data_quality_rule_sets_resource_type_concept_id : (resource_type_concept_id) BTREE
+  IX ix_health_data_quality_rule_sets_state_concept_id : (state_concept_id) BTREE
+  IX ix_health_data_quality_rule_sets_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_health_data_quality_rule_sets_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_health_data_quality_rule_sets_tenant_created : (tenant_id, created_at DESC) BTREE
+  UK uk_health_data_quality_rule_sets_tenant_code_version : (tenant_id, code, version) UNIQUE BTREE
+}
+
+health_data_quality_rule_sets .. idxset_health_data_quality_rule_sets : indexed by
+
+entity "INDEXES · health_data_quality_rules" as idxset_health_data_quality_rules <<INDEX_SET>> {
+  PK pk_health_data_quality_rules : (id) UNIQUE BTREE
+  IX ix_health_data_quality_rules_health_data_quality_rule_set_id : (health_data_quality_rule_set_id) BTREE
+  IX ix_health_data_quality_rules_dimension_concept_id : (dimension_concept_id) BTREE
+  IX ix_health_data_quality_rules_severity_concept_id : (severity_concept_id) BTREE
+  IX ix_health_data_quality_rules_expression_language_concept_id : (expression_language_concept_id) BTREE
+  IX ix_health_data_quality_rules_state_concept_id : (state_concept_id) BTREE
+  IX ix_health_data_quality_rules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_health_data_quality_rules_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_health_data_quality_rules_set_code : (health_data_quality_rule_set_id, rule_code) UNIQUE BTREE
+}
+
+health_data_quality_rules .. idxset_health_data_quality_rules : indexed by
+
+entity "INDEXES · health_data_quality_runs" as idxset_health_data_quality_runs <<INDEX_SET>> {
+  PK pk_health_data_quality_runs : (id) UNIQUE BTREE
+  IX ix_health_data_quality_runs_tenant_id : (tenant_id) BTREE
+  IX ix_health_data_quality_runs_health_data_quality_rule_set_id : (health_data_quality_rule_set_id) BTREE
+  IX ix_health_data_quality_runs_health_ingestion_batch_id : (health_ingestion_batch_id) BTREE
+  IX ix_health_data_quality_runs_canonical_resource_id : (canonical_resource_id) BTREE
+  IX ix_health_data_quality_runs_result_concept_id : (result_concept_id) BTREE
+  IX ix_health_data_quality_runs_tenant_created : (tenant_id, created_at DESC) BTREE
+  BRIN brin_health_data_quality_runs_created_at : (created_at) BRIN pages_per_range=128
+}
+
+health_data_quality_runs .. idxset_health_data_quality_runs : indexed by
+
+entity "INDEXES · health_data_quality_issues" as idxset_health_data_quality_issues <<INDEX_SET>> {
+  PK pk_health_data_quality_issues : (id) UNIQUE BTREE
+  IX ix_health_data_quality_issues_health_data_quality_run_id : (health_data_quality_run_id) BTREE
+  IX ix_health_data_quality_issues_health_data_quality_rule_id : (health_data_quality_rule_id) BTREE
+  IX ix_health_data_quality_issues_canonical_health_resource_id : (canonical_health_resource_id) BTREE
+  IX ix_health_data_quality_issues_canonical_resource_version_id : (canonical_resource_version_id) BTREE
+  IX ix_health_data_quality_issues_status_concept_id : (status_concept_id) BTREE
+  IX ix_health_data_quality_issues_assigned_user_id : (assigned_user_id) BTREE
+  BRIN brin_health_data_quality_issues_created_at : (created_at) BRIN pages_per_range=128
+}
+
+health_data_quality_issues .. idxset_health_data_quality_issues : indexed by
+
+entity "INDEXES · health_provenance_records" as idxset_health_provenance_records <<INDEX_SET>> {
+  PK pk_health_provenance_records : (id) UNIQUE BTREE
+  IX ix_health_provenance_records_custodian_tenant_id : (custodian_tenant_id) BTREE
+  IX ix_health_provenance_records_activity_concept_id : (activity_concept_id) BTREE
+  IX ix_health_provenance_records_source_system_id : (source_system_id) BTREE
+  IX ix_health_provenance_records_responsible_agent_type_concept_id : (responsible_agent_type_concept_id) BTREE
+  IX ix_health_provenance_records_responsible_agent_id : (responsible_agent_id) BTREE
+  IX ix_health_provenance_records_on_behalf_of_organization_id : (on_behalf_of_organization_id) BTREE
+  IX ix_health_provenance_records_signature_id : (signature_id) BTREE
+  BRIN brin_health_provenance_records_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+health_provenance_records .. idxset_health_provenance_records : indexed by
+
+entity "INDEXES · health_provenance_targets" as idxset_health_provenance_targets <<INDEX_SET>> {
+  PK pk_health_provenance_targets : (id) UNIQUE BTREE
+  IX ix_health_provenance_targets_health_provenance_record_id : (health_provenance_record_id) BTREE
+  IX ix_health_provenance_targets_target_type_concept_id : (target_type_concept_id) BTREE
+  IX ix_health_provenance_targets_target_id : (target_id) BTREE
+  IX ix_health_provenance_targets_role_concept_id : (role_concept_id) BTREE
+  UK uk_health_provenance_targets_record_target : (health_provenance_record_id, target_type_concept_id, target_id, role_concept_id) UNIQUE BTREE
+  IX ix_health_provenance_targets_target : (target_type_concept_id, target_id) BTREE
+}
+
+health_provenance_targets .. idxset_health_provenance_targets : indexed by
+
+entity "INDEXES · health_lineage_edges" as idxset_health_lineage_edges <<INDEX_SET>> {
+  PK pk_health_lineage_edges : (id) UNIQUE BTREE
+  IX ix_health_lineage_edges_tenant_id : (tenant_id) BTREE
+  IX ix_health_lineage_edges_source_type_concept_id : (source_type_concept_id) BTREE
+  IX ix_health_lineage_edges_source_id : (source_id) BTREE
+  IX ix_health_lineage_edges_target_type_concept_id : (target_type_concept_id) BTREE
+  IX ix_health_lineage_edges_target_id : (target_id) BTREE
+  IX ix_health_lineage_edges_transformation_type_concept_id : (transformation_type_concept_id) BTREE
+  IX ix_health_lineage_edges_job_run_id : (job_run_id) BTREE
+  IX ix_health_lineage_edges_tenant_created : (tenant_id, created_at DESC) BTREE
+  BRIN brin_health_lineage_edges_recorded_at : (recorded_at) BRIN pages_per_range=128
+  IX ix_health_lineage_edges_source : (source_type_concept_id, source_id, recorded_at DESC) BTREE
+  IX ix_health_lineage_edges_target : (target_type_concept_id, target_id, recorded_at DESC) BTREE
+}
+
+health_lineage_edges .. idxset_health_lineage_edges : indexed by
+
+entity "INDEXES · health_terminology_mapping_sets" as idxset_health_terminology_mapping_sets <<INDEX_SET>> {
+  PK pk_health_terminology_mapping_sets : (id) UNIQUE BTREE
+  IX ix_health_terminology_mapping_sets_tenant_id : (tenant_id) BTREE
+  IX ix_health_terminology_mapping_sets_source_code_system_id : (source_code_system_id) BTREE
+  IX ix_health_terminology_mapping_sets_target_code_system_id : (target_code_system_id) BTREE
+  IX ix_health_terminology_mapping_sets_state_concept_id : (state_concept_id) BTREE
+  IX ix_health_terminology_mapping_sets_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_health_terminology_mapping_sets_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_health_terminology_mapping_sets_tenant_created : (tenant_id, created_at DESC) BTREE
+  UK uk_health_terminology_mapping_sets_tenant_code_version : (tenant_id, code, version) UNIQUE BTREE
+}
+
+health_terminology_mapping_sets .. idxset_health_terminology_mapping_sets : indexed by
+
+entity "INDEXES · health_terminology_mapping_rules" as idxset_health_terminology_mapping_rules <<INDEX_SET>> {
+  PK pk_health_terminology_mapping_rules : (id) UNIQUE BTREE
+  IX ix_health_terminology_mapping_rules_health_terminology_f5718527 : (health_terminology_mapping_set_id) BTREE
+  IX ix_health_terminology_mapping_rules_target_concept_id : (target_concept_id) BTREE
+  IX ix_health_terminology_mapping_rules_equivalence_concept_id : (equivalence_concept_id) BTREE
+  IX ix_health_terminology_mapping_rules_state_concept_id : (state_concept_id) BTREE
+  IX ix_health_terminology_mapping_rules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_health_terminology_mapping_rules_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_health_terminology_mapping_rules_set_source_context : (health_terminology_mapping_set_id, source_code, context_expression) UNIQUE BTREE
+}
+
+health_terminology_mapping_rules .. idxset_health_terminology_mapping_rules : indexed by
+
+entity "INDEXES · health_deidentification_profiles" as idxset_health_deidentification_profiles <<INDEX_SET>> {
+  PK pk_health_deidentification_profiles : (id) UNIQUE BTREE
+  IX ix_health_deidentification_profiles_tenant_id : (tenant_id) BTREE
+  IX ix_health_deidentification_profiles_methodology_concept_id : (methodology_concept_id) BTREE
+  IX ix_health_deidentification_profiles_reidentification_k_57e6e028 : (reidentification_key_secret_id) BTREE
+  IX ix_health_deidentification_profiles_state_concept_id : (state_concept_id) BTREE
+  IX ix_health_deidentification_profiles_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_health_deidentification_profiles_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_health_deidentification_profiles_tenant_created : (tenant_id, created_at DESC) BTREE
+  UK uk_health_deidentification_profiles_tenant_code_version : (tenant_id, code, version) UNIQUE BTREE
+}
+
+health_deidentification_profiles .. idxset_health_deidentification_profiles : indexed by
+
+entity "INDEXES · health_deidentification_runs" as idxset_health_deidentification_runs <<INDEX_SET>> {
+  PK pk_health_deidentification_runs : (id) UNIQUE BTREE
+  IX ix_health_deidentification_runs_tenant_id : (tenant_id) BTREE
+  IX ix_health_deidentification_runs_health_deidentificatio_06745a39 : (health_deidentification_profile_id) BTREE
+  IX ix_health_deidentification_runs_purpose_concept_id : (purpose_concept_id) BTREE
+  IX ix_health_deidentification_runs_consent_directive_id : (consent_directive_id) BTREE
+  IX ix_health_deidentification_runs_status_concept_id : (status_concept_id) BTREE
+  IX ix_health_deidentification_runs_input_manifest_file_id : (input_manifest_file_id) BTREE
+  IX ix_health_deidentification_runs_output_manifest_file_id : (output_manifest_file_id) BTREE
+  IX ix_health_deidentification_runs_tenant_status : (tenant_id, status_concept_id, created_at DESC) BTREE
+  BRIN brin_health_deidentification_runs_created_at : (created_at) BRIN pages_per_range=128
+}
+
+health_deidentification_runs .. idxset_health_deidentification_runs : indexed by
+
+entity "INDEXES · health_export_jobs" as idxset_health_export_jobs <<INDEX_SET>> {
+  PK pk_health_export_jobs : (id) UNIQUE BTREE
+  IX ix_health_export_jobs_tenant_id : (tenant_id) BTREE
+  IX ix_health_export_jobs_export_type_concept_id : (export_type_concept_id) BTREE
+  IX ix_health_export_jobs_requested_by_user_id : (requested_by_user_id) BTREE
+  IX ix_health_export_jobs_purpose_of_use_concept_id : (purpose_of_use_concept_id) BTREE
+  IX ix_health_export_jobs_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_health_export_jobs_cohort_definition_id : (cohort_definition_id) BTREE
+  IX ix_health_export_jobs_consent_directive_id : (consent_directive_id) BTREE
+  IX ix_health_export_jobs_deidentification_run_id : (deidentification_run_id) BTREE
+  IX ix_health_export_jobs_status_concept_id : (status_concept_id) BTREE
+  IX ix_health_export_jobs_tenant_status : (tenant_id, status_concept_id, created_at DESC) BTREE
+  BRIN brin_health_export_jobs_created_at : (created_at) BRIN pages_per_range=128
+}
+
+health_export_jobs .. idxset_health_export_jobs : indexed by
+
+entity "INDEXES · health_export_manifests" as idxset_health_export_manifests <<INDEX_SET>> {
+  PK pk_health_export_manifests : (id) UNIQUE BTREE
+  IX ix_health_export_manifests_health_export_job_id : (health_export_job_id) BTREE
+  IX ix_health_export_manifests_file_id : (file_id) BTREE
+  IX ix_health_export_manifests_encryption_profile_id : (encryption_profile_id) BTREE
+  IX ix_health_export_manifests_retention_policy_id : (retention_policy_id) BTREE
+  BRIN brin_health_export_manifests_created_at : (created_at) BRIN pages_per_range=128
+  UK uk_health_export_manifests_job_version : (health_export_job_id, manifest_version) UNIQUE BTREE
+}
+
+health_export_manifests .. idxset_health_export_manifests : indexed by
+
+entity "INDEXES · omop_mapping_sets" as idxset_omop_mapping_sets <<INDEX_SET>> {
+  PK pk_omop_mapping_sets : (id) UNIQUE BTREE
+  IX ix_omop_mapping_sets_tenant_id : (tenant_id) BTREE
+  IX ix_omop_mapping_sets_state_concept_id : (state_concept_id) BTREE
+  IX ix_omop_mapping_sets_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_omop_mapping_sets_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_omop_mapping_sets_tenant_created : (tenant_id, created_at DESC) BTREE
+  UK uk_omop_mapping_sets_tenant_code_versions : (tenant_id, code, omop_cdm_version, source_model_version) UNIQUE BTREE
+}
+
+omop_mapping_sets .. idxset_omop_mapping_sets : indexed by
+
+entity "INDEXES · omop_mapping_rules" as idxset_omop_mapping_rules <<INDEX_SET>> {
+  PK pk_omop_mapping_rules : (id) UNIQUE BTREE
+  IX ix_omop_mapping_rules_omop_mapping_set_id : (omop_mapping_set_id) BTREE
+  IX ix_omop_mapping_rules_source_resource_type_concept_id : (source_resource_type_concept_id) BTREE
+  IX ix_omop_mapping_rules_vocabulary_mapping_set_id : (vocabulary_mapping_set_id) BTREE
+  IX ix_omop_mapping_rules_state_concept_id : (state_concept_id) BTREE
+  IX ix_omop_mapping_rules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_omop_mapping_rules_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_omop_mapping_rules_set_target : (omop_mapping_set_id, source_resource_type_concept_id, target_table, target_column) UNIQUE BTREE
+}
+
+omop_mapping_rules .. idxset_omop_mapping_rules : indexed by
+
+entity "INDEXES · omop_transformation_runs" as idxset_omop_transformation_runs <<INDEX_SET>> {
+  PK pk_omop_transformation_runs : (id) UNIQUE BTREE
+  IX ix_omop_transformation_runs_tenant_id : (tenant_id) BTREE
+  IX ix_omop_transformation_runs_omop_mapping_set_id : (omop_mapping_set_id) BTREE
+  IX ix_omop_transformation_runs_health_ingestion_batch_id : (health_ingestion_batch_id) BTREE
+  IX ix_omop_transformation_runs_status_concept_id : (status_concept_id) BTREE
+  IX ix_omop_transformation_runs_lineage_job_run_id : (lineage_job_run_id) BTREE
+  IX ix_omop_transformation_runs_tenant_status : (tenant_id, status_concept_id, created_at DESC) BTREE
+  BRIN brin_omop_transformation_runs_created_at : (created_at) BRIN pages_per_range=128
+}
+
+omop_transformation_runs .. idxset_omop_transformation_runs : indexed by
+}
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS) and load tests.
+end note
+
+@enduml

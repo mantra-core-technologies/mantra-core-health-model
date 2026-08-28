@@ -1,0 +1,485 @@
+@startuml SALUD_Module_28_telemetry
+title Module 28 — User Activity, Consent-Aware Tracking and Analytics\n(schema: telemetry)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_28_telemetry.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_28_telemetry
+  BUSINESS PURPOSE
+  Tracks application journeys for security, product and commercial analysis
+  while separating mandatory security audit from optional/regulated analytics.
+  Terms acceptance is evidence of disclosure, not a universal legal basis.
+end note
+
+entity tracking_purpose_definitions {
+  * id : uuid <<PK>>
+  --
+  * purpose_code : varchar <<UK>>
+  * name : varchar
+  * purpose_category_concept_id : uuid <<FK>>
+    legal_basis_concept_id : uuid <<FK>>
+    requires_consent : boolean
+    permits_marketing_use : boolean
+    permits_cross_tenant_aggregation : boolean
+    default_retention_days : integer
+  * version_number : integer
+  * effective_from : timestamptz
+    effective_to : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+
+entity activity_event_schema_definitions {
+  * id : uuid <<PK>>
+  --
+  * event_name : varchar
+  * schema_version : integer
+  * purpose_definition_id : uuid <<FK>>
+  * portal_type_concept_id : uuid <<FK>>
+    property_schema_json : jsonb
+    prohibited_property_patterns_json : jsonb
+    pii_classification_concept_id : uuid <<FK>>
+    phi_allowed : boolean
+  * status_concept_id : uuid <<FK>>
+  * effective_from : timestamptz
+    effective_to : timestamptz
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+
+entity analytics_subjects {
+  * id : uuid <<PK>>
+  --
+    user_id : uuid <<FK>>
+    patient_profile_id : uuid <<FK>>
+  * pseudonymous_subject_key : varchar <<UK>>
+    key_version : integer
+    rotated_from_subject_id : uuid <<FK>>
+    created_from_consent_id : uuid <<FK>>
+    deactivated_at : timestamptz
+  * created_at : timestamptz
+}
+
+entity tracking_consents {
+  * id : uuid <<PK>>
+  --
+  * user_id : uuid <<FK>>
+  * purpose_definition_id : uuid <<FK>>
+  * decision_concept_id : uuid <<FK>>
+    jurisdiction_concept_id : uuid <<FK>>
+    consent_version : varchar
+    granted_at : timestamptz
+    withdrawn_at : timestamptz
+    evidence_hash : varchar
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+
+entity tracking_disclosure_versions {
+  * id : uuid <<PK>>
+  --
+  * document_code : varchar
+  * version_number : integer
+  * jurisdiction_concept_id : uuid <<FK>>
+    file_id : uuid <<FK>>
+    content_hash : varchar
+    effective_from : timestamptz
+    effective_to : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+
+entity tracking_disclosure_acceptances {
+  * id : uuid <<PK>>
+  --
+  * tracking_disclosure_version_id : uuid <<FK>>
+  * user_id : uuid <<FK>>
+    session_id : uuid <<FK>>
+    accepted_at : timestamptz
+    ip_prefix_hash : varchar
+    user_agent_hash : varchar
+  * acceptance_status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity user_activity_events <<APPEND_ONLY>> {
+  * id : uuid <<PK>>
+  --
+  * event_schema_definition_id : uuid <<FK>>
+    analytics_subject_id : uuid <<FK>>
+    user_id : uuid <<FK>>
+    session_id : uuid <<FK>>
+    device_id : uuid <<FK>>
+    tenant_id : uuid <<FK>>
+  * portal_type_concept_id : uuid <<FK>>
+  * event_name : varchar
+  * event_idempotency_key : varchar
+    route_template : varchar
+    target_type_concept_id : uuid <<FK>>
+    target_entity_id : uuid
+    occurred_at : timestamptz
+    received_at : timestamptz
+    correlation_id : uuid
+    consent_snapshot_id : uuid <<FK>>
+    security_audit_event_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity user_activity_event_properties {
+  * id : uuid <<PK>>
+  --
+  * user_activity_event_id : uuid <<FK>>
+  * property_name : varchar
+  * value_type_concept_id : uuid <<FK>>
+    value_string : text
+    value_number : numeric
+    value_boolean : boolean
+    value_timestamp : timestamptz
+    value_concept_id : uuid <<FK>>
+    value_hash : varchar
+  * data_classification_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity session_journeys {
+  * id : uuid <<PK>>
+  --
+  * session_id : uuid <<FK>>
+    analytics_subject_id : uuid <<FK>>
+  * portal_type_concept_id : uuid <<FK>>
+    started_at : timestamptz
+    ended_at : timestamptz
+    entry_event_id : uuid <<FK>>
+    exit_event_id : uuid <<FK>>
+    event_count : integer
+  * journey_status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  * row_version : integer
+}
+
+entity funnel_definitions {
+  * id : uuid <<PK>>
+  --
+  * funnel_code : varchar <<UK>>
+  * name : varchar
+  * portal_type_concept_id : uuid <<FK>>
+  * purpose_definition_id : uuid <<FK>>
+  * version_number : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity funnel_steps {
+  * id : uuid <<PK>>
+  --
+  * funnel_definition_id : uuid <<FK>>
+  * step_number : integer
+  * event_schema_definition_id : uuid <<FK>>
+    qualification_rule_json : jsonb
+  * created_at : timestamptz
+}
+
+entity conversion_events {
+  * id : uuid <<PK>>
+  --
+  * funnel_definition_id : uuid <<FK>>
+  * analytics_subject_id : uuid <<FK>>
+    session_journey_id : uuid <<FK>>
+    completion_event_id : uuid <<FK>>
+    converted_at : timestamptz
+    attribution_json : jsonb
+  * created_at : timestamptz
+}
+
+tracking_purpose_definitions ||--o{ activity_event_schema_definitions
+tracking_purpose_definitions ||--o{ tracking_consents
+tracking_disclosure_versions ||--o{ tracking_disclosure_acceptances
+activity_event_schema_definitions ||--o{ user_activity_events
+analytics_subjects ||--o{ user_activity_events
+user_activity_events ||--o{ user_activity_event_properties
+funnel_definitions ||--o{ funnel_steps
+funnel_definitions ||--o{ conversion_events
+session_journeys |o--o{ conversion_events
+
+note as SEPARATION_diagram_28_telemetry
+  STRICT SEPARATION
+  Security/privacy audit is immutable, complete and access-restricted in audit.
+  Product analytics uses purpose-scoped, minimized, pseudonymous events here.
+  Clinical free text, diagnoses, lab values and document URLs are prohibited
+  event properties. Marketing export requires an explicit eligible purpose.
+end note
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_28b_user_activity_tracking_ext.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_28b_user_activity_tracking_ext
+  BUSINESS PURPOSE
+  Web-tracking extension. Adds a privacy-safe client/device/browser context per
+  session journey and Core Web Vitals (LCP, INP/FID, CLS, TTFB, FCP) per route,
+  closing two gaps for production web analytics. Coarse geo only; no PII in clear,
+  no PHI, no clinical free text — hashes and buckets only.
+end note
+
+entity client_contexts {
+  * id : uuid <<PK>>
+  --
+    session_journey_id : uuid <<FK>>
+    analytics_subject_id : uuid <<FK>>
+    session_id : uuid <<FK>>
+  * portal_type_concept_id : uuid <<FK>>
+    device_type_concept_id : uuid <<FK>>
+    os_family_concept_id : uuid <<FK>>
+    browser_family_concept_id : uuid <<FK>>
+    app_version : varchar
+    screen_class : varchar
+    viewport_bucket : varchar
+    locale : varchar
+    timezone_offset_minutes : integer
+    country_concept_id : uuid <<FK>>
+    region_coarse : varchar
+    ip_prefix_hash : varchar
+    user_agent_hash : varchar
+    is_bot : boolean
+  * data_classification_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+entity web_vitals <<APPEND_ONLY>> {
+  * id : uuid <<PK>>
+  --
+    user_activity_event_id : uuid <<FK>>
+    session_journey_id : uuid <<FK>>
+    analytics_subject_id : uuid <<FK>>
+    client_context_id : uuid <<FK>>
+  * portal_type_concept_id : uuid <<FK>>
+    route_template : varchar
+  * metric_concept_id : uuid <<FK>>
+    metric_value : numeric
+    rating_concept_id : uuid <<FK>>
+    navigation_type_concept_id : uuid <<FK>>
+    measured_at : timestamptz
+  * created_at : timestamptz
+}
+
+client_contexts |o--o{ web_vitals
+
+note as DEP_diagram_28b_user_activity_tracking_ext
+  Connects to the base telemetry diagram via:
+  telemetry.session_journeys, telemetry.analytics_subjects,
+  telemetry.user_activity_events, iam.sessions, terminology.catalog_concepts.
+  Same purpose/consent gating and prohibited-property rules as diagram_28 apply.
+end note
+
+note as HARDENING_diagram_28b_user_activity_tracking_ext
+  REC 3.4 — HARDENING (web tracking)
+  - client_contexts: no PII in clear — only *_hash + coarse geo; is_bot filters bots
+    out of product metrics; retention per telemetry.tracking_purpose_definitions.
+  - web_vitals: append-only; PARTITION BY created_at (monthly); CHECK metric_value >= 0;
+    index (route_template, metric_concept_id, measured_at).
+  - Same prohibited-property rules as diagram_28: no clinical free text, diagnoses,
+    lab values or document URLs.
+end note
+
+note as VALUE_SETS_diagram_28b_user_activity_tracking_ext
+  VALUE SETS
+  device_type->vs_device_type{desktop,mobile,tablet,bot,other};
+  os_family->vs_os_family{windows,macos,linux,ios,android,other};
+  browser_family->vs_browser_family{chrome,safari,firefox,edge,other};
+  metric->vs_web_vital{LCP,INP,FID,CLS,TTFB,FCP};
+  rating->vs_web_vital_rating{good,needs_improvement,poor};
+  navigation_type->vs_navigation_type{navigate,reload,back_forward,prerender}.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · tracking_purpose_definitions" as idxset_tracking_purpose_definitions <<INDEX_SET>> {
+  PK pk_tracking_purpose_definitions : (id) UNIQUE BTREE
+  UK uq_tracking_purpose_definitions_purpose_code : (purpose_code) UNIQUE BTREE
+  IX ix_tracking_purpose_definitions_purpose_category_concept_id : (purpose_category_concept_id) BTREE
+  IX ix_tracking_purpose_definitions_legal_basis_concept_id : (legal_basis_concept_id) BTREE
+  IX ix_tracking_purpose_definitions_status_concept_id : (status_concept_id) BTREE
+  IX ix_tracking_purpose_definitions_created_by_user_id : (created_by_user_id) BTREE
+}
+
+tracking_purpose_definitions .. idxset_tracking_purpose_definitions : indexed by
+
+entity "INDEXES · activity_event_schema_definitions" as idxset_activity_event_schema_definitions <<INDEX_SET>> {
+  PK pk_activity_event_schema_definitions : (id) UNIQUE BTREE
+  IX ix_activity_event_schema_definitions_purpose_definition_id : (purpose_definition_id) BTREE
+  IX ix_activity_event_schema_definitions_portal_type_concept_id : (portal_type_concept_id) BTREE
+  IX ix_activity_event_schema_definitions_pii_classificatio_2357b2ab : (pii_classification_concept_id) BTREE
+  IX ix_activity_event_schema_definitions_status_concept_id : (status_concept_id) BTREE
+  IX ix_activity_event_schema_definitions_created_by_user_id : (created_by_user_id) BTREE
+}
+
+activity_event_schema_definitions .. idxset_activity_event_schema_definitions : indexed by
+
+entity "INDEXES · analytics_subjects" as idxset_analytics_subjects <<INDEX_SET>> {
+  PK pk_analytics_subjects : (id) UNIQUE BTREE
+  UK uq_analytics_subjects_pseudonymous_subject_key : (pseudonymous_subject_key) UNIQUE BTREE
+  IX ix_analytics_subjects_user_id : (user_id) BTREE
+  IX ix_analytics_subjects_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_analytics_subjects_rotated_from_subject_id : (rotated_from_subject_id) BTREE
+  IX ix_analytics_subjects_created_from_consent_id : (created_from_consent_id) BTREE
+  IX ix_analytics_subjects_patient_profile_id_created_at : (patient_profile_id, created_at DESC) BTREE
+}
+
+analytics_subjects .. idxset_analytics_subjects : indexed by
+
+entity "INDEXES · tracking_consents" as idxset_tracking_consents <<INDEX_SET>> {
+  PK pk_tracking_consents : (id) UNIQUE BTREE
+  IX ix_tracking_consents_user_id : (user_id) BTREE
+  IX ix_tracking_consents_purpose_definition_id : (purpose_definition_id) BTREE
+  IX ix_tracking_consents_decision_concept_id : (decision_concept_id) BTREE
+  IX ix_tracking_consents_jurisdiction_concept_id : (jurisdiction_concept_id) BTREE
+  IX ix_tracking_consents_created_by_user_id : (created_by_user_id) BTREE
+}
+
+tracking_consents .. idxset_tracking_consents : indexed by
+
+entity "INDEXES · tracking_disclosure_versions" as idxset_tracking_disclosure_versions <<INDEX_SET>> {
+  PK pk_tracking_disclosure_versions : (id) UNIQUE BTREE
+  IX ix_tracking_disclosure_versions_jurisdiction_concept_id : (jurisdiction_concept_id) BTREE
+  IX ix_tracking_disclosure_versions_file_id : (file_id) BTREE
+  IX ix_tracking_disclosure_versions_status_concept_id : (status_concept_id) BTREE
+  IX ix_tracking_disclosure_versions_created_by_user_id : (created_by_user_id) BTREE
+  UK uq_tracking_disclosure_versions_file_id_version_number : (file_id, version_number) UNIQUE BTREE
+}
+
+tracking_disclosure_versions .. idxset_tracking_disclosure_versions : indexed by
+
+entity "INDEXES · tracking_disclosure_acceptances" as idxset_tracking_disclosure_acceptances <<INDEX_SET>> {
+  PK pk_tracking_disclosure_acceptances : (id) UNIQUE BTREE
+  IX ix_tracking_disclosure_acceptances_tracking_disclosure_ca448e76 : (tracking_disclosure_version_id) BTREE
+  IX ix_tracking_disclosure_acceptances_user_id : (user_id) BTREE
+  IX ix_tracking_disclosure_acceptances_session_id : (session_id) BTREE
+  IX ix_tracking_disclosure_acceptances_acceptance_status_concept_id : (acceptance_status_concept_id) BTREE
+}
+
+tracking_disclosure_acceptances .. idxset_tracking_disclosure_acceptances : indexed by
+
+entity "INDEXES · user_activity_events" as idxset_user_activity_events <<INDEX_SET>> {
+  PK pk_user_activity_events : (id) UNIQUE BTREE
+  IX ix_user_activity_events_event_schema_definition_id : (event_schema_definition_id) BTREE
+  IX ix_user_activity_events_analytics_subject_id : (analytics_subject_id) BTREE
+  IX ix_user_activity_events_user_id : (user_id) BTREE
+  IX ix_user_activity_events_session_id : (session_id) BTREE
+  IX ix_user_activity_events_device_id : (device_id) BTREE
+  IX ix_user_activity_events_tenant_id : (tenant_id) BTREE
+  IX ix_user_activity_events_portal_type_concept_id : (portal_type_concept_id) BTREE
+  IX ix_user_activity_events_target_type_concept_id : (target_type_concept_id) BTREE
+  IX ix_user_activity_events_consent_snapshot_id : (consent_snapshot_id) BTREE
+  IX ix_user_activity_events_security_audit_event_id : (security_audit_event_id) BTREE
+  IX ix_user_activity_events_tenant_id_created_at : (tenant_id, created_at DESC) BTREE
+  BRIN brin_user_activity_events_created_at : (created_at) BRIN pages_per_range=128
+}
+
+user_activity_events .. idxset_user_activity_events : indexed by
+
+entity "INDEXES · user_activity_event_properties" as idxset_user_activity_event_properties <<INDEX_SET>> {
+  PK pk_user_activity_event_properties : (id) UNIQUE BTREE
+  IX ix_user_activity_event_properties_user_activity_event_id : (user_activity_event_id) BTREE
+  IX ix_user_activity_event_properties_value_type_concept_id : (value_type_concept_id) BTREE
+  IX ix_user_activity_event_properties_value_concept_id : (value_concept_id) BTREE
+  IX ix_user_activity_event_properties_data_classification__18c7c7cf : (data_classification_concept_id) BTREE
+}
+
+user_activity_event_properties .. idxset_user_activity_event_properties : indexed by
+
+entity "INDEXES · session_journeys" as idxset_session_journeys <<INDEX_SET>> {
+  PK pk_session_journeys : (id) UNIQUE BTREE
+  IX ix_session_journeys_session_id : (session_id) BTREE
+  IX ix_session_journeys_analytics_subject_id : (analytics_subject_id) BTREE
+  IX ix_session_journeys_portal_type_concept_id : (portal_type_concept_id) BTREE
+  IX ix_session_journeys_entry_event_id : (entry_event_id) BTREE
+  IX ix_session_journeys_exit_event_id : (exit_event_id) BTREE
+  IX ix_session_journeys_journey_status_concept_id : (journey_status_concept_id) BTREE
+}
+
+session_journeys .. idxset_session_journeys : indexed by
+
+entity "INDEXES · funnel_definitions" as idxset_funnel_definitions <<INDEX_SET>> {
+  PK pk_funnel_definitions : (id) UNIQUE BTREE
+  UK uq_funnel_definitions_funnel_code : (funnel_code) UNIQUE BTREE
+  IX ix_funnel_definitions_portal_type_concept_id : (portal_type_concept_id) BTREE
+  IX ix_funnel_definitions_purpose_definition_id : (purpose_definition_id) BTREE
+  IX ix_funnel_definitions_status_concept_id : (status_concept_id) BTREE
+  IX ix_funnel_definitions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_funnel_definitions_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_funnel_definitions_purpose_definition_id_version_number : (purpose_definition_id, version_number) UNIQUE BTREE
+}
+
+funnel_definitions .. idxset_funnel_definitions : indexed by
+
+entity "INDEXES · funnel_steps" as idxset_funnel_steps <<INDEX_SET>> {
+  PK pk_funnel_steps : (id) UNIQUE BTREE
+  IX ix_funnel_steps_funnel_definition_id : (funnel_definition_id) BTREE
+  IX ix_funnel_steps_event_schema_definition_id : (event_schema_definition_id) BTREE
+}
+
+funnel_steps .. idxset_funnel_steps : indexed by
+
+entity "INDEXES · conversion_events" as idxset_conversion_events <<INDEX_SET>> {
+  PK pk_conversion_events : (id) UNIQUE BTREE
+  IX ix_conversion_events_funnel_definition_id : (funnel_definition_id) BTREE
+  IX ix_conversion_events_analytics_subject_id : (analytics_subject_id) BTREE
+  IX ix_conversion_events_session_journey_id : (session_journey_id) BTREE
+  IX ix_conversion_events_completion_event_id : (completion_event_id) BTREE
+}
+
+conversion_events .. idxset_conversion_events : indexed by
+
+entity "INDEXES · client_contexts" as idxset_client_contexts <<INDEX_SET>> {
+  PK pk_client_contexts : (id) UNIQUE BTREE
+  IX ix_client_contexts_session_journey_id : (session_journey_id) BTREE
+  IX ix_client_contexts_analytics_subject_id : (analytics_subject_id) BTREE
+  IX ix_client_contexts_session_id : (session_id) BTREE
+  IX ix_client_contexts_portal_type_concept_id : (portal_type_concept_id) BTREE
+  IX ix_client_contexts_device_type_concept_id : (device_type_concept_id) BTREE
+  IX ix_client_contexts_os_family_concept_id : (os_family_concept_id) BTREE
+  IX ix_client_contexts_browser_family_concept_id : (browser_family_concept_id) BTREE
+  IX ix_client_contexts_country_concept_id : (country_concept_id) BTREE
+  IX ix_client_contexts_data_classification_concept_id : (data_classification_concept_id) BTREE
+}
+
+client_contexts .. idxset_client_contexts : indexed by
+
+entity "INDEXES · web_vitals" as idxset_web_vitals <<INDEX_SET>> {
+  PK pk_web_vitals : (id) UNIQUE BTREE
+  IX ix_web_vitals_user_activity_event_id : (user_activity_event_id) BTREE
+  IX ix_web_vitals_session_journey_id : (session_journey_id) BTREE
+  IX ix_web_vitals_analytics_subject_id : (analytics_subject_id) BTREE
+  IX ix_web_vitals_client_context_id : (client_context_id) BTREE
+  IX ix_web_vitals_portal_type_concept_id : (portal_type_concept_id) BTREE
+  IX ix_web_vitals_metric_concept_id : (metric_concept_id) BTREE
+  IX ix_web_vitals_rating_concept_id : (rating_concept_id) BTREE
+  IX ix_web_vitals_navigation_type_concept_id : (navigation_type_concept_id) BTREE
+  BRIN brin_web_vitals_created_at : (created_at) BRIN pages_per_range=128
+}
+
+web_vitals .. idxset_web_vitals : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

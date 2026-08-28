@@ -1,0 +1,350 @@
+@startuml SALUD_Module_24_pharmacy
+title Module 24 — Pharmacy Identity, Sites, Catalog and Pricing\n(schema: pharmacy)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_24_pharmacy_core.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_24_pharmacy_core
+  BUSINESS PURPOSE
+  A pharmacy is an independent data-owning organization even when physically
+  located inside a hospital, office or nursing facility. It can operate through
+  direct backend integration or manual data entry without sharing unrestricted
+  access to the host organization's data.
+end note
+
+entity pharmacies {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK,UK>>
+  * code : varchar <<UK>>
+  * legal_name : varchar
+    trade_name : varchar
+    pharmacy_type_concept_id : uuid <<FK>>
+    ownership_type_concept_id : uuid <<FK>>
+    public_profile_id : uuid <<FK>>
+    default_currency_concept_id : uuid <<FK>>
+  * verification_status_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity pharmacy_sites {
+  * id : uuid <<PK>>
+  --
+  * pharmacy_id : uuid <<FK>>
+  * practice_site_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+    pharmacy_site_type_concept_id : uuid <<FK>>
+    dispensing_mode_concept_id : uuid <<FK>>
+    controlled_substance_capability_concept_id : uuid <<FK>>
+    home_delivery_available : boolean
+    pickup_available : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity pharmacy_licenses {
+  * id : uuid <<PK>>
+  --
+  * pharmacy_id : uuid <<FK>>
+    pharmacy_site_id : uuid <<FK>>
+  * license_type_concept_id : uuid <<FK>>
+  * license_number : varchar
+    issuing_authority_tenant_id : uuid <<FK>>
+    jurisdiction_concept_id : uuid <<FK>>
+    valid_from : date
+    valid_to : date
+    evidence_file_id : uuid <<FK>>
+  * verification_status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity pharmacy_products {
+  * id : uuid <<PK>>
+  --
+  * pharmacy_id : uuid <<FK>>
+  * product_code : varchar
+    medication_concept_id : uuid <<FK>>
+    inventory_item_concept_id : uuid <<FK>>
+    manufacturer_tenant_id : uuid <<FK>>
+    brand_name : varchar
+    generic_name : varchar
+    strength_text : varchar
+    dosage_form_concept_id : uuid <<FK>>
+    package_size_text : varchar
+    requires_prescription : boolean
+    cold_chain_required : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity pharmacy_product_identifiers {
+  * id : uuid <<PK>>
+  --
+  * pharmacy_product_id : uuid <<FK>>
+  * identifier_type_concept_id : uuid <<FK>>
+  * identifier_value : varchar
+    assigning_authority_tenant_id : uuid <<FK>>
+    jurisdiction_concept_id : uuid <<FK>>
+    valid_from : date
+    valid_to : date
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+
+entity pharmacy_price_lists {
+  * id : uuid <<PK>>
+  --
+  * pharmacy_id : uuid <<FK>>
+    pharmacy_site_id : uuid <<FK>>
+  * code : varchar
+  * price_list_type_concept_id : uuid <<FK>>
+    insurer_tenant_id : uuid <<FK>>
+    currency_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+    public_visibility : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity pharmacy_product_prices <<VERSIONED>> {
+  * id : uuid <<PK>>
+  --
+  * pharmacy_price_list_id : uuid <<FK>>
+  * pharmacy_product_id : uuid <<FK>>
+  * version_number : integer
+  * unit_amount : numeric
+    tax_amount : numeric
+    patient_amount : numeric
+    insurer_amount : numeric
+    minimum_quantity : numeric
+  * effective_from : timestamptz
+    effective_to : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+entity pharmacy_integration_connections {
+  * id : uuid <<PK>>
+  --
+  * pharmacy_id : uuid <<FK>>
+    pharmacy_site_id : uuid <<FK>>
+  * connection_id : uuid <<FK>>
+  * integration_mode_concept_id : uuid <<FK>>
+    inventory_authority_concept_id : uuid <<FK>>
+    supports_stock_query : boolean
+    supports_price_query : boolean
+    supports_reservation : boolean
+    supports_dispense_confirmation : boolean
+    manual_fallback_allowed : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity pharmacy_external_product_mappings {
+  * id : uuid <<PK>>
+  --
+  * pharmacy_integration_connection_id : uuid <<FK>>
+  * pharmacy_product_id : uuid <<FK>>
+  * external_product_code : varchar
+    external_unit_code : varchar
+    mapping_version : varchar
+  * verification_status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+pharmacies ||--o{ pharmacy_sites
+pharmacies ||--o{ pharmacy_licenses
+pharmacies ||--o{ pharmacy_products
+pharmacies ||--o{ pharmacy_price_lists
+pharmacies ||--o{ pharmacy_integration_connections
+pharmacy_products ||--o{ pharmacy_product_identifiers
+pharmacy_price_lists ||--o{ pharmacy_product_prices
+pharmacy_products ||--o{ pharmacy_product_prices
+pharmacy_integration_connections ||--o{ pharmacy_external_product_mappings
+pharmacy_products ||--o{ pharmacy_external_product_mappings
+
+note as ISOLATION_diagram_24_pharmacy_core
+  DATA OWNERSHIP
+  The pharmacy tenant owns product, price, inventory and dispensing records.
+  A host hospital relationship is an affiliation only. Access is granted by
+  explicit contracts, purpose-of-use policies and delegated memberships.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · pharmacies" as idxset_pharmacies <<INDEX_SET>> {
+  PK pk_pharmacies : (id) UNIQUE BTREE
+  UK uq_pharmacies_tenant_id : (tenant_id) UNIQUE BTREE
+  UK uq_pharmacies_code : (code) UNIQUE BTREE
+  IX ix_pharmacies_tenant_id : (tenant_id) BTREE
+  IX ix_pharmacies_pharmacy_type_concept_id : (pharmacy_type_concept_id) BTREE
+  IX ix_pharmacies_ownership_type_concept_id : (ownership_type_concept_id) BTREE
+  IX ix_pharmacies_public_profile_id : (public_profile_id) BTREE
+  IX ix_pharmacies_default_currency_concept_id : (default_currency_concept_id) BTREE
+  IX ix_pharmacies_verification_status_concept_id : (verification_status_concept_id) BTREE
+  IX ix_pharmacies_status_concept_id : (status_concept_id) BTREE
+  IX ix_pharmacies_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_pharmacies_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_pharmacies_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  GIN gin_pharmacies_search : to_tsvector('simple', concat_ws(' ', code)) GIN
+}
+
+pharmacies .. idxset_pharmacies : indexed by
+
+entity "INDEXES · pharmacy_sites" as idxset_pharmacy_sites <<INDEX_SET>> {
+  PK pk_pharmacy_sites : (id) UNIQUE BTREE
+  IX ix_pharmacy_sites_pharmacy_id : (pharmacy_id) BTREE
+  IX ix_pharmacy_sites_practice_site_id : (practice_site_id) BTREE
+  IX ix_pharmacy_sites_pharmacy_site_type_concept_id : (pharmacy_site_type_concept_id) BTREE
+  IX ix_pharmacy_sites_dispensing_mode_concept_id : (dispensing_mode_concept_id) BTREE
+  IX ix_pharmacy_sites_controlled_substance_capability_concept_id : (controlled_substance_capability_concept_id) BTREE
+  IX ix_pharmacy_sites_status_concept_id : (status_concept_id) BTREE
+  IX ix_pharmacy_sites_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_pharmacy_sites_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_pharmacy_sites_search : to_tsvector('simple', concat_ws(' ', name, code)) GIN
+}
+
+pharmacy_sites .. idxset_pharmacy_sites : indexed by
+
+entity "INDEXES · pharmacy_licenses" as idxset_pharmacy_licenses <<INDEX_SET>> {
+  PK pk_pharmacy_licenses : (id) UNIQUE BTREE
+  IX ix_pharmacy_licenses_pharmacy_id : (pharmacy_id) BTREE
+  IX ix_pharmacy_licenses_pharmacy_site_id : (pharmacy_site_id) BTREE
+  IX ix_pharmacy_licenses_license_type_concept_id : (license_type_concept_id) BTREE
+  IX ix_pharmacy_licenses_issuing_authority_tenant_id : (issuing_authority_tenant_id) BTREE
+  IX ix_pharmacy_licenses_jurisdiction_concept_id : (jurisdiction_concept_id) BTREE
+  IX ix_pharmacy_licenses_evidence_file_id : (evidence_file_id) BTREE
+  IX ix_pharmacy_licenses_verification_status_concept_id : (verification_status_concept_id) BTREE
+  IX ix_pharmacy_licenses_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_pharmacy_licenses_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+pharmacy_licenses .. idxset_pharmacy_licenses : indexed by
+
+entity "INDEXES · pharmacy_products" as idxset_pharmacy_products <<INDEX_SET>> {
+  PK pk_pharmacy_products : (id) UNIQUE BTREE
+  IX ix_pharmacy_products_pharmacy_id : (pharmacy_id) BTREE
+  IX ix_pharmacy_products_medication_concept_id : (medication_concept_id) BTREE
+  IX ix_pharmacy_products_inventory_item_concept_id : (inventory_item_concept_id) BTREE
+  IX ix_pharmacy_products_manufacturer_tenant_id : (manufacturer_tenant_id) BTREE
+  IX ix_pharmacy_products_dosage_form_concept_id : (dosage_form_concept_id) BTREE
+  IX ix_pharmacy_products_status_concept_id : (status_concept_id) BTREE
+  IX ix_pharmacy_products_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_pharmacy_products_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+pharmacy_products .. idxset_pharmacy_products : indexed by
+
+entity "INDEXES · pharmacy_product_identifiers" as idxset_pharmacy_product_identifiers <<INDEX_SET>> {
+  PK pk_pharmacy_product_identifiers : (id) UNIQUE BTREE
+  IX ix_pharmacy_product_identifiers_pharmacy_product_id : (pharmacy_product_id) BTREE
+  IX ix_pharmacy_product_identifiers_identifier_type_concept_id : (identifier_type_concept_id) BTREE
+  IX ix_pharmacy_product_identifiers_assigning_authority_tenant_id : (assigning_authority_tenant_id) BTREE
+  IX ix_pharmacy_product_identifiers_jurisdiction_concept_id : (jurisdiction_concept_id) BTREE
+  IX ix_pharmacy_product_identifiers_created_by_user_id : (created_by_user_id) BTREE
+}
+
+pharmacy_product_identifiers .. idxset_pharmacy_product_identifiers : indexed by
+
+entity "INDEXES · pharmacy_price_lists" as idxset_pharmacy_price_lists <<INDEX_SET>> {
+  PK pk_pharmacy_price_lists : (id) UNIQUE BTREE
+  IX ix_pharmacy_price_lists_pharmacy_id : (pharmacy_id) BTREE
+  IX ix_pharmacy_price_lists_pharmacy_site_id : (pharmacy_site_id) BTREE
+  IX ix_pharmacy_price_lists_price_list_type_concept_id : (price_list_type_concept_id) BTREE
+  IX ix_pharmacy_price_lists_insurer_tenant_id : (insurer_tenant_id) BTREE
+  IX ix_pharmacy_price_lists_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_pharmacy_price_lists_status_concept_id : (status_concept_id) BTREE
+  IX ix_pharmacy_price_lists_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_pharmacy_price_lists_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_pharmacy_price_lists_search : to_tsvector('simple', concat_ws(' ', code)) GIN
+  GIST gist_pharmacy_price_lists_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+}
+
+pharmacy_price_lists .. idxset_pharmacy_price_lists : indexed by
+
+entity "INDEXES · pharmacy_product_prices" as idxset_pharmacy_product_prices <<INDEX_SET>> {
+  PK pk_pharmacy_product_prices : (id) UNIQUE BTREE
+  IX ix_pharmacy_product_prices_pharmacy_price_list_id : (pharmacy_price_list_id) BTREE
+  IX ix_pharmacy_product_prices_pharmacy_product_id : (pharmacy_product_id) BTREE
+  IX ix_pharmacy_product_prices_status_concept_id : (status_concept_id) BTREE
+  IX ix_pharmacy_product_prices_recorded_by_user_id : (recorded_by_user_id) BTREE
+  UK uq_pharmacy_product_prices_pharmacy_price_list_id_vers_7ebb36be : (pharmacy_price_list_id, version_number) UNIQUE BTREE
+}
+
+pharmacy_product_prices .. idxset_pharmacy_product_prices : indexed by
+
+entity "INDEXES · pharmacy_integration_connections" as idxset_pharmacy_integration_connections <<INDEX_SET>> {
+  PK pk_pharmacy_integration_connections : (id) UNIQUE BTREE
+  IX ix_pharmacy_integration_connections_pharmacy_id : (pharmacy_id) BTREE
+  IX ix_pharmacy_integration_connections_pharmacy_site_id : (pharmacy_site_id) BTREE
+  IX ix_pharmacy_integration_connections_connection_id : (connection_id) BTREE
+  IX ix_pharmacy_integration_connections_integration_mode_concept_id : (integration_mode_concept_id) BTREE
+  IX ix_pharmacy_integration_connections_inventory_authorit_20c81904 : (inventory_authority_concept_id) BTREE
+  IX ix_pharmacy_integration_connections_status_concept_id : (status_concept_id) BTREE
+  IX ix_pharmacy_integration_connections_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_pharmacy_integration_connections_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+pharmacy_integration_connections .. idxset_pharmacy_integration_connections : indexed by
+
+entity "INDEXES · pharmacy_external_product_mappings" as idxset_pharmacy_external_product_mappings <<INDEX_SET>> {
+  PK pk_pharmacy_external_product_mappings : (id) UNIQUE BTREE
+  IX ix_pharmacy_external_product_mappings_pharmacy_integra_f6b3c236 : (pharmacy_integration_connection_id) BTREE
+  IX ix_pharmacy_external_product_mappings_pharmacy_product_id : (pharmacy_product_id) BTREE
+  IX ix_pharmacy_external_product_mappings_verification_sta_079f1a0f : (verification_status_concept_id) BTREE
+  IX ix_pharmacy_external_product_mappings_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_pharmacy_external_product_mappings_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+pharmacy_external_product_mappings .. idxset_pharmacy_external_product_mappings : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

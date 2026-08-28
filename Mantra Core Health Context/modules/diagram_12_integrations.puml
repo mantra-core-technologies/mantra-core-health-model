@@ -1,0 +1,343 @@
+@startuml SALUD_Module_12_integrations
+title Module 12 — External Connectivity and Messaging\n(schema: integrations)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_12_integrations.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_12_integrations
+  BUSINESS PURPOSE
+  The foundation to connect with external providers — labs, insurers,
+  pharmacies, government registries, payment and messaging services —
+  recording every request, response and retry, all versioned for
+  reliability and audit.
+end note
+
+entity external_providers {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * name : varchar
+  * provider_type_concept_id : uuid <<FK>>
+    base_url : text
+    auth_type_concept_id : uuid <<FK>>
+    doc_url : text
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity provider_connections {
+  * id : uuid <<PK>>
+  --
+  * provider_id : uuid <<FK>>
+  * tenant_id : uuid <<FK>>
+    environment_concept_id : uuid <<FK>>
+    config_json : jsonb
+    credential_id : uuid <<FK>>
+  * state_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity provider_credentials {
+  * id : uuid <<PK>>
+  --
+  * connection_id : uuid <<FK>>
+  * secret_type_concept_id : uuid <<FK>>
+    secret_ref : varchar
+    encrypted : boolean
+    rotated_at : timestamptz
+    expires_at : timestamptz
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity integration_endpoints {
+  * id : uuid <<PK>>
+  --
+  * provider_id : uuid <<FK>>
+  * code : varchar
+  * operation : varchar
+    http_method_concept_id : uuid <<FK>>
+    path : text
+    request_schema_json : jsonb
+    response_schema_json : jsonb
+  * version : varchar
+    timeout_ms : integer
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity outbound_messages {
+  * id : uuid <<PK>>
+  --
+  * connection_id : uuid <<FK>>
+    endpoint_id : uuid <<FK>>
+  * correlation_id : varchar
+    idempotency_key : varchar <<UK>>
+  * request_payload_json : jsonb
+    headers_json : jsonb
+  * payload_version : integer
+  * status_concept_id : uuid <<FK>>
+    scheduled_at : timestamptz
+    sent_at : timestamptz
+    source_resource_type : varchar
+    source_resource_id : uuid
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity inbound_messages {
+  * id : uuid <<PK>>
+  --
+  * connection_id : uuid <<FK>>
+    endpoint_id : uuid <<FK>>
+    correlation_id : varchar
+  * payload_json : jsonb
+    signature : varchar
+  * payload_version : integer
+  * status_concept_id : uuid <<FK>>
+    received_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity message_responses {
+  * id : uuid <<PK>>
+  --
+  * outbound_message_id : uuid <<FK>>
+    http_status : integer
+  * response_payload_json : jsonb
+    latency_ms : integer
+    is_success : boolean
+    received_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity message_retries {
+  * id : uuid <<PK>>
+  --
+  * outbound_message_id : uuid <<FK>>
+  * attempt_number : integer
+  * status_concept_id : uuid <<FK>>
+    error_text : text
+    request_snapshot_json : jsonb
+  * payload_version : integer
+    attempted_at : timestamptz
+    next_retry_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity webhook_subscriptions {
+  * id : uuid <<PK>>
+  --
+    provider_id : uuid <<FK>>
+    tenant_id : uuid <<FK>>
+  * event_type : varchar
+  * callback_url : text
+    secret_ref : varchar
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity integration_field_mappings {
+  * id : uuid <<PK>>
+  --
+  * endpoint_id : uuid <<FK>>
+  * source_path : varchar
+  * target_field : varchar
+    concept_map_id : uuid <<FK>>
+    transform_json : jsonb
+    direction_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+external_providers ||--o{ provider_connections
+provider_connections ||--o{ provider_credentials
+external_providers ||--o{ integration_endpoints
+provider_connections ||--o{ outbound_messages
+integration_endpoints |o--o{ outbound_messages
+provider_connections ||--o{ inbound_messages
+outbound_messages ||--o{ message_responses
+outbound_messages ||--o{ message_retries
+external_providers ||--o{ webhook_subscriptions
+integration_endpoints ||--o{ integration_field_mappings
+
+note as DEP_diagram_12_integrations
+  Connects to other modules via:
+  inbound_messages_history, integration_endpoints_history,
+  message_retries_history, outbound_messages_history,
+  provider_connections_history, tenants
+end note
+
+note as REC_POLY_INTEG_diagram_12_integrations
+  REC 3.1 — POLYMORPHIC SOURCE REFERENCE
+outbound_messages.(source_resource_type,source_resource_id) links a message
+back to the business record that triggered it. Polymorphic by nature;
+constrain source_resource_type to a closed value_set.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · external_providers" as idxset_external_providers <<INDEX_SET>> {
+  PK pk_external_providers : (id) UNIQUE BTREE
+  UK uq_external_providers_code : (code) UNIQUE BTREE
+  IX ix_external_providers_provider_type_concept_id : (provider_type_concept_id) BTREE
+  IX ix_external_providers_auth_type_concept_id : (auth_type_concept_id) BTREE
+  IX ix_external_providers_state_concept_id : (state_concept_id) BTREE
+  IX ix_external_providers_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_external_providers_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+external_providers .. idxset_external_providers : indexed by
+
+entity "INDEXES · provider_connections" as idxset_provider_connections <<INDEX_SET>> {
+  PK pk_provider_connections : (id) UNIQUE BTREE
+  IX ix_provider_connections_provider_id : (provider_id) BTREE
+  IX ix_provider_connections_tenant_id : (tenant_id) BTREE
+  IX ix_provider_connections_environment_concept_id : (environment_concept_id) BTREE
+  IX ix_provider_connections_credential_id : (credential_id) BTREE
+  IX ix_provider_connections_state_concept_id : (state_concept_id) BTREE
+  IX ix_provider_connections_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_provider_connections_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_provider_connections_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+}
+
+provider_connections .. idxset_provider_connections : indexed by
+
+entity "INDEXES · provider_credentials" as idxset_provider_credentials <<INDEX_SET>> {
+  PK pk_provider_credentials : (id) UNIQUE BTREE
+  IX ix_provider_credentials_connection_id : (connection_id) BTREE
+  IX ix_provider_credentials_secret_type_concept_id : (secret_type_concept_id) BTREE
+  IX ix_provider_credentials_state_concept_id : (state_concept_id) BTREE
+  IX ix_provider_credentials_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_provider_credentials_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+provider_credentials .. idxset_provider_credentials : indexed by
+
+entity "INDEXES · integration_endpoints" as idxset_integration_endpoints <<INDEX_SET>> {
+  PK pk_integration_endpoints : (id) UNIQUE BTREE
+  IX ix_integration_endpoints_provider_id : (provider_id) BTREE
+  IX ix_integration_endpoints_http_method_concept_id : (http_method_concept_id) BTREE
+  IX ix_integration_endpoints_state_concept_id : (state_concept_id) BTREE
+  IX ix_integration_endpoints_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_integration_endpoints_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_integration_endpoints_provider_id_version : (provider_id, version) UNIQUE BTREE
+}
+
+integration_endpoints .. idxset_integration_endpoints : indexed by
+
+entity "INDEXES · outbound_messages" as idxset_outbound_messages <<INDEX_SET>> {
+  PK pk_outbound_messages : (id) UNIQUE BTREE
+  UK uq_outbound_messages_idempotency_key : (idempotency_key) UNIQUE BTREE
+  IX ix_outbound_messages_connection_id : (connection_id) BTREE
+  IX ix_outbound_messages_endpoint_id : (endpoint_id) BTREE
+  IX ix_outbound_messages_status_concept_id : (status_concept_id) BTREE
+  IX ix_outbound_messages_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_outbound_messages_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+outbound_messages .. idxset_outbound_messages : indexed by
+
+entity "INDEXES · inbound_messages" as idxset_inbound_messages <<INDEX_SET>> {
+  PK pk_inbound_messages : (id) UNIQUE BTREE
+  IX ix_inbound_messages_connection_id : (connection_id) BTREE
+  IX ix_inbound_messages_endpoint_id : (endpoint_id) BTREE
+  IX ix_inbound_messages_status_concept_id : (status_concept_id) BTREE
+  IX ix_inbound_messages_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_inbound_messages_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+inbound_messages .. idxset_inbound_messages : indexed by
+
+entity "INDEXES · message_responses" as idxset_message_responses <<INDEX_SET>> {
+  PK pk_message_responses : (id) UNIQUE BTREE
+  IX ix_message_responses_outbound_message_id : (outbound_message_id) BTREE
+  IX ix_message_responses_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_message_responses_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+message_responses .. idxset_message_responses : indexed by
+
+entity "INDEXES · message_retries" as idxset_message_retries <<INDEX_SET>> {
+  PK pk_message_retries : (id) UNIQUE BTREE
+  IX ix_message_retries_outbound_message_id : (outbound_message_id) BTREE
+  IX ix_message_retries_status_concept_id : (status_concept_id) BTREE
+  IX ix_message_retries_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_message_retries_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_message_retries_outbound_message_id_attempt_number : (outbound_message_id, attempt_number) UNIQUE BTREE
+}
+
+message_retries .. idxset_message_retries : indexed by
+
+entity "INDEXES · webhook_subscriptions" as idxset_webhook_subscriptions <<INDEX_SET>> {
+  PK pk_webhook_subscriptions : (id) UNIQUE BTREE
+  IX ix_webhook_subscriptions_provider_id : (provider_id) BTREE
+  IX ix_webhook_subscriptions_tenant_id : (tenant_id) BTREE
+  IX ix_webhook_subscriptions_state_concept_id : (state_concept_id) BTREE
+  IX ix_webhook_subscriptions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_webhook_subscriptions_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_webhook_subscriptions_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+}
+
+webhook_subscriptions .. idxset_webhook_subscriptions : indexed by
+
+entity "INDEXES · integration_field_mappings" as idxset_integration_field_mappings <<INDEX_SET>> {
+  PK pk_integration_field_mappings : (id) UNIQUE BTREE
+  IX ix_integration_field_mappings_endpoint_id : (endpoint_id) BTREE
+  IX ix_integration_field_mappings_concept_map_id : (concept_map_id) BTREE
+  IX ix_integration_field_mappings_direction_concept_id : (direction_concept_id) BTREE
+  IX ix_integration_field_mappings_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_integration_field_mappings_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+integration_field_mappings .. idxset_integration_field_mappings : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

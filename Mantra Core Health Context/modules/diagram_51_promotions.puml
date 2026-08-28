@@ -1,0 +1,463 @@
+@startuml SALUD_Module_51_promotions
+title Module 51 — Loyalty, Discounts, Coupons and Referrals\n(schema: promotions)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_51_promotions.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_51_promotions
+  BUSINESS PURPOSE
+  The rewards and discount engine end users asked for: loyalty programs with tiers and a
+  points ledger, promotions with flexible discount rules, single/multi-use coupons and
+  promo codes with redemption tracking, app-usage rewards (earn points/credits for booking,
+  completing courses, referrals, streaks), and a referral program. Discounts apply at
+  checkout (module 42 payments / 17 billing) and credits settle into wallets
+  (module 42B). Fully auditable; abuse-resistant by construction.
+end note
+
+entity loyalty_programs {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * code : varchar <<UK>>
+  * name : varchar
+  * program_type_concept_id : uuid <<FK>>
+    points_currency_name : varchar
+    point_to_currency_rate : numeric
+    currency_concept_id : uuid <<FK>>
+    expiry_policy_concept_id : uuid <<FK>>
+    points_expiry_days : integer
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity loyalty_tiers {
+  * id : uuid <<PK>>
+  --
+  * loyalty_program_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+  * min_points : numeric
+    multiplier : numeric
+    benefits_json : jsonb
+    ordinal : integer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity loyalty_memberships {
+  * id : uuid <<PK>>
+  --
+  * loyalty_program_id : uuid <<FK>>
+  * member_type_concept_id : uuid <<FK>>
+  * member_ref_id : uuid
+    current_tier_id : uuid <<FK>>
+    points_balance : numeric
+    lifetime_points : numeric
+    enrolled_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity points_ledger_entries <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * loyalty_membership_id : uuid <<FK>>
+  * direction_concept_id : uuid <<FK>>
+  * points : numeric
+  * reason_concept_id : uuid <<FK>>
+    balance_after : numeric
+    source_type : varchar
+    source_ref_id : uuid
+    earning_rule_id : uuid <<FK>>
+    expires_at : timestamptz
+  * idempotency_key : varchar <<UK>>
+    occurred_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity earning_rules {
+  * id : uuid <<PK>>
+  --
+  * loyalty_program_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+  * event_type_concept_id : uuid <<FK>>
+  * award_type_concept_id : uuid <<FK>>
+    points_amount : numeric
+    credit_amount : numeric
+    currency_concept_id : uuid <<FK>>
+    condition_json : jsonb
+    cap_per_period : integer
+    period_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * is_active : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity promotions {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * code : varchar <<UK>>
+  * name : varchar
+  * promotion_type_concept_id : uuid <<FK>>
+    description : text
+    campaign_ref_id : uuid
+  * priority : integer
+    stackable : boolean
+    budget_amount : numeric
+    currency_concept_id : uuid <<FK>>
+    total_redemption_limit : integer
+    per_user_limit : integer
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity discount_rules {
+  * id : uuid <<PK>>
+  --
+  * promotion_id : uuid <<FK>>
+  * discount_type_concept_id : uuid <<FK>>
+    percentage : numeric
+    fixed_amount : numeric
+    currency_concept_id : uuid <<FK>>
+    max_discount_amount : numeric
+    min_purchase_amount : numeric
+    applies_to_concept_id : uuid <<FK>>
+    target_filter_json : jsonb
+    buy_quantity : integer
+    get_quantity : integer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity coupons {
+  * id : uuid <<PK>>
+  --
+  * promotion_id : uuid <<FK>>
+  * code : varchar <<UK>>
+  * coupon_type_concept_id : uuid <<FK>>
+    assigned_member_type_concept_id : uuid <<FK>>
+    assigned_member_ref_id : uuid
+    max_redemptions : integer
+    redemption_count : integer
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity redemptions {
+  * id : uuid <<PK>>
+  --
+  * promotion_id : uuid <<FK>>
+    coupon_id : uuid <<FK>>
+    discount_rule_id : uuid <<FK>>
+  * redeemer_type_concept_id : uuid <<FK>>
+  * redeemer_ref_id : uuid
+  * discount_amount : numeric
+  * currency_concept_id : uuid <<FK>>
+    order_ref_type : varchar
+    order_ref_id : uuid
+    payment_intent_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    redeemed_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity referral_programs {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * code : varchar <<UK>>
+  * name : varchar
+  * referrer_award_type_concept_id : uuid <<FK>>
+    referrer_award_amount : numeric
+  * referee_award_type_concept_id : uuid <<FK>>
+    referee_award_amount : numeric
+    currency_concept_id : uuid <<FK>>
+    qualifying_event_concept_id : uuid <<FK>>
+    max_referrals_per_user : integer
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity member_referrals {
+  * id : uuid <<PK>>
+  --
+  * referral_program_id : uuid <<FK>>
+  * referrer_user_id : uuid <<FK>>
+  * referral_code : varchar <<UK>>
+    referee_user_id : uuid <<FK>>
+    referee_contact : varchar
+  * status_concept_id : uuid <<FK>>
+    qualified_at : timestamptz
+    referrer_reward_ledger_id : uuid <<FK>>
+    referee_reward_ledger_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+loyalty_programs ||--o{ loyalty_tiers
+loyalty_programs ||--o{ loyalty_memberships
+loyalty_tiers |o--o{ loyalty_memberships
+loyalty_memberships ||--o{ points_ledger_entries
+loyalty_programs ||--o{ earning_rules
+earning_rules |o--o{ points_ledger_entries
+promotions ||--o{ discount_rules
+promotions ||--o{ coupons
+promotions ||--o{ redemptions
+coupons ||--o{ redemptions
+discount_rules |o--o{ redemptions
+referral_programs ||--o{ member_referrals
+
+note as DEP_diagram_51_promotions
+  Connects to other modules via:
+  directory.tenants, iam.users, payments.payment_intents (redemptions apply at checkout),
+  payments.wallets (credit awards settle to a rewards wallet via 42B), billing.invoices,
+  marketing.campaigns (campaign_ref_id), messaging.domain_events (earning_rules consume app
+  events: booking_completed, course_completed, referral_qualified), terminology.catalog_concepts.
+end note
+
+note as REC_DERIVED_diagram_51_promotions
+  REC 3.3 — DERIVED BALANCES
+  loyalty_memberships.points_balance/lifetime_points and current_tier_id are DERIVED
+  projections of the append-only points_ledger_entries (source of truth); maintain by trigger
+  with balance_after. coupons.redemption_count and promotions budget consumption are derived
+  and gate further redemptions.
+end note
+
+note as HARDENING_diagram_51_promotions
+  REC 3.4 — HARDENING (enforce at DDL)
+  - points_ledger_entries: append-only; UNIQUE(idempotency_key); PARTITION BY recorded_at;
+    CHECK points > 0. Earning is idempotent per (earning_rule, source_ref) to stop double-award.
+  - loyalty_memberships: UNIQUE(loyalty_program_id, member_type_concept_id, member_ref_id).
+  - coupons: UNIQUE(code); redemptions enforce per_user_limit & total_redemption_limit (trigger).
+  - redemptions: partial UNIQUE(coupon_id, redeemer_ref_id) when coupon single-use-per-user.
+  - member_referrals: UNIQUE(referral_code); CHECK referrer_user_id <> referee_user_id (no self-referral).
+end note
+
+note as VALUE_SETS_diagram_51_promotions
+  VALUE SETS (bind *_concept_id; do not hardcode)
+  program_type->vs_loyalty_type{points,cashback,tiered,visits,hybrid};
+  expiry_policy->vs_points_expiry{never,fixed_days,rolling,end_of_year};
+  member_type/redeemer_type->vs_reward_member{patient,practitioner,user,contact};
+  direction->vs_points_direction{earn,redeem,expire,adjust,transfer};
+  reason->vs_points_reason{booking,purchase,course_completion,referral,streak,review,signup,manual};
+  event_type->vs_app_event{app_open,booking_completed,payment_completed,course_completed,referral_qualified,review_posted};
+  award_type->vs_award_type{points,wallet_credit,discount,free_item};
+  period->vs_period{day,week,month,lifetime};
+  promotion_type->vs_promotion_type{percentage_off,fixed_off,bogo,free_shipping,bundle,first_purchase,app_usage};
+  discount_type->vs_discount_type{percentage,fixed,bogo,tiered};
+  applies_to->vs_discount_target{order,service,product,category,subscription,booking};
+  coupon_type->vs_coupon_type{public,single_use,personal,batch};
+  qualifying_event->vs_referral_qualifier{signup,first_booking,first_payment,course_enroll};
+  status/state->vs_lifecycle_state.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · loyalty_programs" as idxset_loyalty_programs <<INDEX_SET>> {
+  PK pk_loyalty_programs : (id) UNIQUE BTREE
+  UK uq_loyalty_programs_code : (code) UNIQUE BTREE
+  IX ix_loyalty_programs_tenant_id : (tenant_id) BTREE
+  IX ix_loyalty_programs_program_type_concept_id : (program_type_concept_id) BTREE
+  IX ix_loyalty_programs_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_loyalty_programs_expiry_policy_concept_id : (expiry_policy_concept_id) BTREE
+  IX ix_loyalty_programs_state_concept_id : (state_concept_id) BTREE
+  IX ix_loyalty_programs_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_loyalty_programs_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_loyalty_programs_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+  GIN gin_loyalty_programs_search : to_tsvector('simple', concat_ws(' ', name, code)) GIN
+}
+
+loyalty_programs .. idxset_loyalty_programs : indexed by
+
+entity "INDEXES · loyalty_tiers" as idxset_loyalty_tiers <<INDEX_SET>> {
+  PK pk_loyalty_tiers : (id) UNIQUE BTREE
+  IX ix_loyalty_tiers_loyalty_program_id : (loyalty_program_id) BTREE
+  IX ix_loyalty_tiers_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_loyalty_tiers_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_loyalty_tiers_search : to_tsvector('simple', concat_ws(' ', name, code)) GIN
+}
+
+loyalty_tiers .. idxset_loyalty_tiers : indexed by
+
+entity "INDEXES · loyalty_memberships" as idxset_loyalty_memberships <<INDEX_SET>> {
+  PK pk_loyalty_memberships : (id) UNIQUE BTREE
+  IX ix_loyalty_memberships_loyalty_program_id : (loyalty_program_id) BTREE
+  IX ix_loyalty_memberships_member_type_concept_id : (member_type_concept_id) BTREE
+  IX ix_loyalty_memberships_current_tier_id : (current_tier_id) BTREE
+  IX ix_loyalty_memberships_status_concept_id : (status_concept_id) BTREE
+  IX ix_loyalty_memberships_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_loyalty_memberships_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+loyalty_memberships .. idxset_loyalty_memberships : indexed by
+
+entity "INDEXES · points_ledger_entries" as idxset_points_ledger_entries <<INDEX_SET>> {
+  PK pk_points_ledger_entries : (id) UNIQUE BTREE
+  UK uq_points_ledger_entries_idempotency_key : (idempotency_key) UNIQUE BTREE
+  IX ix_points_ledger_entries_loyalty_membership_id : (loyalty_membership_id) BTREE
+  IX ix_points_ledger_entries_direction_concept_id : (direction_concept_id) BTREE
+  IX ix_points_ledger_entries_reason_concept_id : (reason_concept_id) BTREE
+  IX ix_points_ledger_entries_earning_rule_id : (earning_rule_id) BTREE
+  IX ix_points_ledger_entries_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_points_ledger_entries_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+points_ledger_entries .. idxset_points_ledger_entries : indexed by
+
+entity "INDEXES · earning_rules" as idxset_earning_rules <<INDEX_SET>> {
+  PK pk_earning_rules : (id) UNIQUE BTREE
+  IX ix_earning_rules_loyalty_program_id : (loyalty_program_id) BTREE
+  IX ix_earning_rules_event_type_concept_id : (event_type_concept_id) BTREE
+  IX ix_earning_rules_award_type_concept_id : (award_type_concept_id) BTREE
+  IX ix_earning_rules_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_earning_rules_period_concept_id : (period_concept_id) BTREE
+  IX ix_earning_rules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_earning_rules_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_earning_rules_search : to_tsvector('simple', concat_ws(' ', name, code)) GIN
+}
+
+earning_rules .. idxset_earning_rules : indexed by
+
+entity "INDEXES · promotions" as idxset_promotions <<INDEX_SET>> {
+  PK pk_promotions : (id) UNIQUE BTREE
+  UK uq_promotions_code : (code) UNIQUE BTREE
+  IX ix_promotions_tenant_id : (tenant_id) BTREE
+  IX ix_promotions_promotion_type_concept_id : (promotion_type_concept_id) BTREE
+  IX ix_promotions_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_promotions_status_concept_id : (status_concept_id) BTREE
+  IX ix_promotions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_promotions_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_promotions_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  GIN gin_promotions_search : to_tsvector('simple', concat_ws(' ', name, description)) GIN
+}
+
+promotions .. idxset_promotions : indexed by
+
+entity "INDEXES · discount_rules" as idxset_discount_rules <<INDEX_SET>> {
+  PK pk_discount_rules : (id) UNIQUE BTREE
+  IX ix_discount_rules_promotion_id : (promotion_id) BTREE
+  IX ix_discount_rules_discount_type_concept_id : (discount_type_concept_id) BTREE
+  IX ix_discount_rules_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_discount_rules_applies_to_concept_id : (applies_to_concept_id) BTREE
+  IX ix_discount_rules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_discount_rules_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+discount_rules .. idxset_discount_rules : indexed by
+
+entity "INDEXES · coupons" as idxset_coupons <<INDEX_SET>> {
+  PK pk_coupons : (id) UNIQUE BTREE
+  UK uq_coupons_code : (code) UNIQUE BTREE
+  IX ix_coupons_promotion_id : (promotion_id) BTREE
+  IX ix_coupons_coupon_type_concept_id : (coupon_type_concept_id) BTREE
+  IX ix_coupons_assigned_member_type_concept_id : (assigned_member_type_concept_id) BTREE
+  IX ix_coupons_status_concept_id : (status_concept_id) BTREE
+  IX ix_coupons_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_coupons_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_coupons_search : to_tsvector('simple', concat_ws(' ', code)) GIN
+}
+
+coupons .. idxset_coupons : indexed by
+
+entity "INDEXES · redemptions" as idxset_redemptions <<INDEX_SET>> {
+  PK pk_redemptions : (id) UNIQUE BTREE
+  IX ix_redemptions_promotion_id : (promotion_id) BTREE
+  IX ix_redemptions_coupon_id : (coupon_id) BTREE
+  IX ix_redemptions_discount_rule_id : (discount_rule_id) BTREE
+  IX ix_redemptions_redeemer_type_concept_id : (redeemer_type_concept_id) BTREE
+  IX ix_redemptions_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_redemptions_payment_intent_id : (payment_intent_id) BTREE
+  IX ix_redemptions_status_concept_id : (status_concept_id) BTREE
+  IX ix_redemptions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_redemptions_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+redemptions .. idxset_redemptions : indexed by
+
+entity "INDEXES · referral_programs" as idxset_referral_programs <<INDEX_SET>> {
+  PK pk_referral_programs : (id) UNIQUE BTREE
+  UK uq_referral_programs_code : (code) UNIQUE BTREE
+  IX ix_referral_programs_tenant_id : (tenant_id) BTREE
+  IX ix_referral_programs_referrer_award_type_concept_id : (referrer_award_type_concept_id) BTREE
+  IX ix_referral_programs_referee_award_type_concept_id : (referee_award_type_concept_id) BTREE
+  IX ix_referral_programs_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_referral_programs_qualifying_event_concept_id : (qualifying_event_concept_id) BTREE
+  IX ix_referral_programs_state_concept_id : (state_concept_id) BTREE
+  IX ix_referral_programs_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_referral_programs_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_referral_programs_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+  GIN gin_referral_programs_search : to_tsvector('simple', concat_ws(' ', name, code)) GIN
+}
+
+referral_programs .. idxset_referral_programs : indexed by
+
+entity "INDEXES · member_referrals" as idxset_member_referrals <<INDEX_SET>> {
+  PK pk_member_referrals : (id) UNIQUE BTREE
+  UK uq_member_referrals_referral_code : (referral_code) UNIQUE BTREE
+  IX ix_member_referrals_referral_program_id : (referral_program_id) BTREE
+  IX ix_member_referrals_referrer_user_id : (referrer_user_id) BTREE
+  IX ix_member_referrals_referee_user_id : (referee_user_id) BTREE
+  IX ix_member_referrals_status_concept_id : (status_concept_id) BTREE
+  IX ix_member_referrals_referrer_reward_ledger_id : (referrer_reward_ledger_id) BTREE
+  IX ix_member_referrals_referee_reward_ledger_id : (referee_reward_ledger_id) BTREE
+  IX ix_member_referrals_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_member_referrals_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+member_referrals .. idxset_member_referrals : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

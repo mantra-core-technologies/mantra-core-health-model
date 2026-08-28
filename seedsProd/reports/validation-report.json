@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "validated_at": "2026-07-19T00:00:00Z",
+  "declared_total_rows": 1441367,
+  "validated_bulk_rows": 1441348,
+  "inline_rows": 19,
+  "entity_counts": {
+    "catalog_concepts": 355237,
+    "concept_designations": 996321,
+    "concept_relationships": 89790,
+    "value_set_rules": 4
+  },
+  "errors": [],
+  "checks": [
+    "json_parse",
+    "shard_sha256",
+    "shard_record_count",
+    "required_concept_fields"
+  ]
+}

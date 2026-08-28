@@ -1,0 +1,3 @@
+-- SALUD v4.0.1 · módulo 00 · schema platform
+-- Generado de diagram_00_platform.puml — NO editar a mano.
+-- NOTA: Módulo sin claves foráneas diferidas cruzadas (0 tablas).

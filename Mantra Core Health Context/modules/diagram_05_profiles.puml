@@ -1,0 +1,684 @@
+@startuml SALUD_Module_05_profiles
+title Module 05 — Persons, Patients and General Health Workforce\n(schema: profiles)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+note as BIZ
+  BUSINESS PURPOSE
+  Separates the human person from login accounts and from domain roles. A person
+  may be a patient, practitioner, related person, representative or operator and
+  may have zero, one or multiple authentication accounts over time. Patient and
+  practitioner records therefore remain valid for newborns, emergencies, imported
+  records, external professionals and deceased persons without portal access.
+end note
+
+entity persons <<MASTER_IDENTITY>> {
+  * id : uuid <<PK>>
+  --
+  * person_status_concept_id : uuid <<FK>>
+    name : varchar
+    middle_name : varchar
+    last_name : varchar
+    mother_last_name : varchar
+    display_name : varchar
+    photo_file_id : uuid <<FK>>
+    birth_date : date
+    administrative_gender_concept_id : uuid <<FK>>
+    sex_at_birth_concept_id : uuid <<FK>>
+    gender_identity_concept_id : uuid <<FK>>
+    vital_status_concept_id : uuid <<FK>>
+    deceased_at : timestamptz
+    nationality_concept_id : uuid <<FK>>
+    preferred_language_concept_id : uuid <<FK>>
+  ' + v4.1.8 — ocupación de la persona. Son DOS columnas y no una a propósito: el
+  ' registro de procesos pide el catálogo con búsqueda por texto y, al final, una
+  ' entrada libre «para que él pueda detallar la ocupación que no encontró si no
+  ' está en ese detalle». El concepto gana cuando vienen los dos; el texto libre
+  ' sólo tiene sentido sin concepto.
+  ' Value set: VS_BO_OCCUPATION, que NO siembra el paquete del modelo — lo publica
+  ' la API al arrancar (`bo-geography-seed.service.ts`, 606 entradas COB-2023 del
+  ' INE). Un solo dueño del conjunto, a propósito: es lo que evitó repetir el
+  ' problema del módulo 64.
+    occupation_concept_id : uuid <<FK>>
+    occupation_free_text : varchar
+    merge_survivor_person_id : uuid <<FK>>
+    anonymized_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity person_account_links <<VERSIONED>> {
+  * id : uuid <<PK>>
+  --
+  * person_id : uuid <<FK>>
+  * user_id : uuid <<FK>>
+  * link_type_concept_id : uuid <<FK>>
+  * verification_status_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity person_profiles {
+  * id : uuid <<PK>>
+  --
+  * person_id : uuid <<FK>>
+  * profile_type_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity patient_profiles {
+  * profile_id : uuid <<PK,FK>>
+  --
+  * patient_code : varchar <<UK>>
+    master_patient_index_code : varchar <<UK>>
+    abo_group_concept_id : uuid <<FK>>
+    rh_factor_concept_id : uuid <<FK>>
+    insurance_status_concept_id : uuid <<FK>>
+    clinical_language_concept_id : uuid <<FK>>
+    record_linkage_status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity patient_identity_links {
+  * id : uuid <<PK>>
+  --
+  * patient_profile_id : uuid <<FK>>
+  * source_tenant_id : uuid <<FK>>
+  * source_patient_identifier : varchar
+    source_system_uri : text
+  * link_type_concept_id : uuid <<FK>>
+  * confidence_score : numeric
+  * verification_status_concept_id : uuid <<FK>>
+    verified_by_user_id : uuid <<FK>>
+    verified_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity patient_merge_events <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * surviving_patient_profile_id : uuid <<FK>>
+  * merged_patient_profile_id : uuid <<FK>>
+  * reason_concept_id : uuid <<FK>>
+  * decision_status_concept_id : uuid <<FK>>
+    approved_by_user_id : uuid <<FK>>
+    reversal_of_event_id : uuid <<FK>>
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+entity health_practitioner_profiles {
+  * profile_id : uuid <<PK,FK>>
+  --
+  * practitioner_code : varchar <<UK>>
+  * practitioner_category_concept_id : uuid <<FK>>
+    professional_title : varchar
+  * verification_status_concept_id : uuid <<FK>>
+  * practice_status_concept_id : uuid <<FK>>
+    professional_bio : text
+    photo_file_id : uuid <<FK>>
+    accepts_new_patients : boolean
+    telehealth_available : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity professional_credentials {
+  * id : uuid <<PK>>
+  --
+  * practitioner_profile_id : uuid <<FK>>
+  * credential_type_concept_id : uuid <<FK>>
+  * number : varchar
+    issuing_authority_tenant_id : uuid <<FK>>
+    issuing_institution_text : varchar
+    issuing_country_concept_id : uuid <<FK>>
+    issue_date : date
+    expiry_date : date
+  * state_concept_id : uuid <<FK>>
+    file_id : uuid <<FK>>
+    verification_source_uri : text
+    verified_by_user_id : uuid <<FK>>
+    verified_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity practitioner_specialties {
+  * id : uuid <<PK>>
+  --
+  * practitioner_profile_id : uuid <<FK>>
+  * specialty_concept_id : uuid <<FK>>
+    supporting_credential_id : uuid <<FK>>
+    specialty_role_concept_id : uuid <<FK>>
+    is_primary : boolean
+    board_certified : boolean
+    practice_scope_text : text
+  * verification_status_concept_id : uuid <<FK>>
+    valid_from : date
+    valid_to : date
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity practitioner_languages {
+  * id : uuid <<PK>>
+  --
+  * practitioner_profile_id : uuid <<FK>>
+  * language_concept_id : uuid <<FK>>
+    proficiency_concept_id : uuid <<FK>>
+    clinical_interpretation_allowed : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity jurisdiction_authorizations {
+  * id : uuid <<PK>>
+  --
+  * practitioner_profile_id : uuid <<FK>>
+  * jurisdiction_concept_id : uuid <<FK>>
+  * license_number : varchar
+    regulatory_authority : varchar
+    practice_scope_concept_id : uuid <<FK>>
+  * state_concept_id : uuid <<FK>>
+    valid_from : date
+    valid_to : date
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity practitioner_affiliations {
+  * id : uuid <<PK>>
+  --
+  * practitioner_profile_id : uuid <<FK>>
+  * organization_name : varchar
+    practice_site_id : uuid <<FK>>
+  ' + v4.1.9 — la institución como concepto del padrón oficial. Apunta a los 503
+  ' establecimientos de VS_BO_HEALTH_FACILITY, conjunto que NO siembra el paquete
+  ' del modelo: lo publica la API al arrancar (`bolivia-facilities-seed.service.ts`),
+  ' un solo dueño, como VS_BO_OCCUPATION en `persons`. CONVIVE con
+  ' `organization_name` y no lo reemplaza: el padrón es de Santa Cruz y la mayoría
+  ' de los lugares donde alguien trabajó no están en él. Nullable y SIN migración
+  ' por parecido de nombre —se probó: «Hospital Obrero N.º 1» da 9 candidatos y
+  ' dos de las tres filas vivas son de La Paz—; se llena hacia adelante.
+    health_facility_concept_id : uuid <<FK>>
+  * role_title : varchar
+    department_text : varchar
+    affiliation_type_concept_id : uuid <<FK>>
+  * start_date : date
+    end_date : date
+  ' v4.1.9 — `status_concept_id` deja de ser el estado del REGISTRO y pasa a ser
+  ' el de la APROBACIÓN del vínculo: pendiente · declarado · aprobado · rechazado
+  ' · revocado (conjunto `practitioner-affiliation-status`, dueño la API). La
+  ' vigencia laboral la sigue diciendo `end_date`.
+  * status_concept_id : uuid <<FK>>
+  ' + v4.1.9 — por qué se rechazó o se revocó, escrito por quien decidió y leído
+  ' por el profesional: un rechazo sin motivo es mudo para quien lo recibe. Texto
+  ' libre a propósito —categorizar motivos que ninguna organización pidió sería
+  ' inventarlos—; el tope de 500 vive en el DTO, como el resto del módulo.
+    decision_reason_text : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity related_persons {
+  * id : uuid <<PK>>
+  --
+  * patient_profile_id : uuid <<FK>>
+  * person_id : uuid <<FK>>
+  * relationship_concept_id : uuid <<FK>>
+  * is_emergency_contact : boolean
+  * is_legal_guardian : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity patient_portal_proxies {
+  * id : uuid <<PK>>
+  --
+  * patient_profile_id : uuid <<FK>>
+  * proxy_user_id : uuid <<FK>>
+    related_person_id : uuid <<FK>>
+  * scope_value_set_id : uuid <<FK>>
+  * legal_basis_record_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity insurance_representative_profiles {
+  * profile_id : uuid <<PK,FK>>
+  --
+  * representative_type_concept_id : uuid <<FK>>
+    role_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity provider_operator_profiles {
+  * profile_id : uuid <<PK,FK>>
+  --
+  * operator_type_concept_id : uuid <<FK>>
+    role_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity emergency_staff_profiles {
+  * profile_id : uuid <<PK,FK>>
+  --
+  * staff_type_concept_id : uuid <<FK>>
+    availability_status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity administrator_profiles {
+  * profile_id : uuid <<PK,FK>>
+  --
+  * administrator_type_concept_id : uuid <<FK>>
+  * administrative_level_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity secretary_profiles {
+  * profile_id : uuid <<PK,FK>>
+  --
+    role_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+persons ||--o{ person_account_links
+persons ||--o{ person_profiles
+person_profiles ||--o| patient_profiles
+person_profiles ||--o| health_practitioner_profiles
+person_profiles ||--o| insurance_representative_profiles
+person_profiles ||--o| provider_operator_profiles
+person_profiles ||--o| emergency_staff_profiles
+person_profiles ||--o| administrator_profiles
+person_profiles ||--o| secretary_profiles
+patient_profiles ||--o{ patient_identity_links
+patient_profiles ||--o{ patient_merge_events : survivor
+patient_profiles ||--o{ related_persons
+persons ||--o{ related_persons
+patient_profiles ||--o{ patient_portal_proxies
+health_practitioner_profiles ||--o{ professional_credentials
+health_practitioner_profiles ||--o{ practitioner_specialties
+health_practitioner_profiles ||--o{ practitioner_languages
+health_practitioner_profiles ||--o{ jurisdiction_authorizations
+health_practitioner_profiles ||--o{ practitioner_affiliations
+professional_credentials |o--o{ practitioner_specialties
+
+note as PERSON_NAME
+  PERSON NAME
+  A person's name is stored in its four parts -given name, middle name, paternal
+  surname, maternal surname- because that is how names are issued and matched in
+  the jurisdictions this platform serves: the identity document carries both
+  surnames, and record linkage compares them separately. A single free-text field
+  cannot answer "same paternal surname" without parsing, and parsing a name is a
+  guess that fails on compound given names and on multi-word surnames.
+
+  display_name stays as the derived, ready-to-show form. It is what every screen
+  renders and what search matches against, so it is kept in sync with the parts
+  rather than recomposed on every read. All five are optional: a newborn, an
+  unidentified emergency admission or an imported record may arrive with none.
+end note
+
+note as IDENTITY_BOUNDARY
+  IDENTITY BOUNDARY
+  Person, patient, practitioner and account are separate records. A portal account
+  is optional. Demographic facts live on persons; role-specific facts live on the
+  corresponding profile. person_account_links must be unique for one active account
+  link and preserve historical validity.
+end note
+
+note as GENERALIST
+  GENERALIST WORKFORCE RULE
+  Do not create nurse_profiles or doctor_profiles. A nurse, physician, midwife,
+  pharmacist, dentist, therapist or technician is a health_practitioner_profile
+  whose category, qualifications, specialties, licenses and organization role
+  authorize the relevant scope of practice.
+end note
+
+note as IDENTITY_SAFETY
+  PATIENT IDENTITY SAFETY
+  Merge is a governed, reversible event; never silently repoint clinical records.
+  Preserve source identifiers, confidence, approvals, lineage and complete audit.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · persons" as idxset_persons <<INDEX_SET>> {
+  PK pk_persons : (id) UNIQUE BTREE
+  IX ix_persons_person_status_concept_id : (person_status_concept_id) BTREE
+  IX ix_persons_administrative_gender_concept_id : (administrative_gender_concept_id) BTREE
+  IX ix_persons_sex_at_birth_concept_id : (sex_at_birth_concept_id) BTREE
+  IX ix_persons_gender_identity_concept_id : (gender_identity_concept_id) BTREE
+  IX ix_persons_vital_status_concept_id : (vital_status_concept_id) BTREE
+  IX ix_persons_nationality_concept_id : (nationality_concept_id) BTREE
+  IX ix_persons_preferred_language_concept_id : (preferred_language_concept_id) BTREE
+  IX ix_persons_occupation_concept_id : (occupation_concept_id) BTREE
+  IX ix_persons_merge_survivor_person_id : (merge_survivor_person_id) BTREE
+  IX ix_persons_photo_file_id : (photo_file_id) BTREE
+  IX ix_persons_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_persons_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_persons_search : to_tsvector('simple', concat_ws(' ', display_name)) GIN
+}
+
+persons .. idxset_persons : indexed by
+
+entity "INDEXES · person_account_links" as idxset_person_account_links <<INDEX_SET>> {
+  PK pk_person_account_links : (id) UNIQUE BTREE
+  IX ix_person_account_links_person_id : (person_id) BTREE
+  IX ix_person_account_links_user_id : (user_id) BTREE
+  IX ix_person_account_links_link_type_concept_id : (link_type_concept_id) BTREE
+  IX ix_person_account_links_verification_status_concept_id : (verification_status_concept_id) BTREE
+  IX ix_person_account_links_status_concept_id : (status_concept_id) BTREE
+  IX ix_person_account_links_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_person_account_links_updated_by_user_id : (updated_by_user_id) BTREE
+  GIST gist_person_account_links_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+  UK uq_person_account_links_active_user : (user_id) UNIQUE BTREE WHERE status_concept_id = active_status()
+}
+
+person_account_links .. idxset_person_account_links : indexed by
+
+entity "INDEXES · person_profiles" as idxset_person_profiles <<INDEX_SET>> {
+  PK pk_person_profiles : (id) UNIQUE BTREE
+  IX ix_person_profiles_person_id : (person_id) BTREE
+  IX ix_person_profiles_profile_type_concept_id : (profile_type_concept_id) BTREE
+  IX ix_person_profiles_status_concept_id : (status_concept_id) BTREE
+  IX ix_person_profiles_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_person_profiles_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_person_profiles_person_type : (person_id, profile_type_concept_id) UNIQUE BTREE
+}
+
+person_profiles .. idxset_person_profiles : indexed by
+
+entity "INDEXES · patient_profiles" as idxset_patient_profiles <<INDEX_SET>> {
+  PK pk_patient_profiles : (profile_id) UNIQUE BTREE
+  UK uq_patient_profiles_patient_code : (patient_code) UNIQUE BTREE
+  UK uq_patient_profiles_master_patient_index_code : (master_patient_index_code) UNIQUE BTREE
+  IX ix_patient_profiles_abo_group_concept_id : (abo_group_concept_id) BTREE
+  IX ix_patient_profiles_rh_factor_concept_id : (rh_factor_concept_id) BTREE
+  IX ix_patient_profiles_insurance_status_concept_id : (insurance_status_concept_id) BTREE
+  IX ix_patient_profiles_clinical_language_concept_id : (clinical_language_concept_id) BTREE
+  IX ix_patient_profiles_record_linkage_status_concept_id : (record_linkage_status_concept_id) BTREE
+  IX ix_patient_profiles_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_patient_profiles_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+patient_profiles .. idxset_patient_profiles : indexed by
+
+entity "INDEXES · patient_identity_links" as idxset_patient_identity_links <<INDEX_SET>> {
+  PK pk_patient_identity_links : (id) UNIQUE BTREE
+  IX ix_patient_identity_links_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_patient_identity_links_source_tenant_id : (source_tenant_id) BTREE
+  IX ix_patient_identity_links_link_type_concept_id : (link_type_concept_id) BTREE
+  IX ix_patient_identity_links_verification_status_concept_id : (verification_status_concept_id) BTREE
+  IX ix_patient_identity_links_verified_by_user_id : (verified_by_user_id) BTREE
+  IX ix_patient_identity_links_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_patient_identity_links_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_patient_identity_links_source_tenant_id_updated_at : (source_tenant_id, updated_at DESC) BTREE
+  IX ix_patient_identity_links_patient_profile_id_updated_at : (source_tenant_id, patient_profile_id, updated_at DESC) BTREE
+  UK uq_patient_identity_source : (source_tenant_id, source_system_uri, source_patient_identifier) UNIQUE BTREE
+}
+
+patient_identity_links .. idxset_patient_identity_links : indexed by
+
+entity "INDEXES · patient_merge_events" as idxset_patient_merge_events <<INDEX_SET>> {
+  PK pk_patient_merge_events : (id) UNIQUE BTREE
+  IX ix_patient_merge_events_surviving_patient_profile_id : (surviving_patient_profile_id) BTREE
+  IX ix_patient_merge_events_merged_patient_profile_id : (merged_patient_profile_id) BTREE
+  IX ix_patient_merge_events_reason_concept_id : (reason_concept_id) BTREE
+  IX ix_patient_merge_events_decision_status_concept_id : (decision_status_concept_id) BTREE
+  IX ix_patient_merge_events_approved_by_user_id : (approved_by_user_id) BTREE
+  IX ix_patient_merge_events_reversal_of_event_id : (reversal_of_event_id) BTREE
+  IX ix_patient_merge_events_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_patient_merge_events_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+patient_merge_events .. idxset_patient_merge_events : indexed by
+
+entity "INDEXES · health_practitioner_profiles" as idxset_health_practitioner_profiles <<INDEX_SET>> {
+  PK pk_health_practitioner_profiles : (profile_id) UNIQUE BTREE
+  UK uq_health_practitioner_profiles_practitioner_code : (practitioner_code) UNIQUE BTREE
+  IX ix_health_practitioner_profiles_practitioner_category__a69797c8 : (practitioner_category_concept_id) BTREE
+  IX ix_health_practitioner_profiles_verification_status_concept_id : (verification_status_concept_id) BTREE
+  IX ix_health_practitioner_profiles_practice_status_concept_id : (practice_status_concept_id) BTREE
+  IX ix_health_practitioner_profiles_photo_file_id : (photo_file_id) BTREE
+  IX ix_health_practitioner_profiles_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_health_practitioner_profiles_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+health_practitioner_profiles .. idxset_health_practitioner_profiles : indexed by
+
+entity "INDEXES · professional_credentials" as idxset_professional_credentials <<INDEX_SET>> {
+  PK pk_professional_credentials : (id) UNIQUE BTREE
+  IX ix_professional_credentials_practitioner_profile_id : (practitioner_profile_id) BTREE
+  IX ix_professional_credentials_credential_type_concept_id : (credential_type_concept_id) BTREE
+  IX ix_professional_credentials_issuing_authority_tenant_id : (issuing_authority_tenant_id) BTREE
+  IX ix_professional_credentials_issuing_country_concept_id : (issuing_country_concept_id) BTREE
+  IX ix_professional_credentials_state_concept_id : (state_concept_id) BTREE
+  IX ix_professional_credentials_file_id : (file_id) BTREE
+  IX ix_professional_credentials_verified_by_user_id : (verified_by_user_id) BTREE
+  IX ix_professional_credentials_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_professional_credentials_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+professional_credentials .. idxset_professional_credentials : indexed by
+
+entity "INDEXES · practitioner_specialties" as idxset_practitioner_specialties <<INDEX_SET>> {
+  PK pk_practitioner_specialties : (id) UNIQUE BTREE
+  IX ix_practitioner_specialties_practitioner_profile_id : (practitioner_profile_id) BTREE
+  IX ix_practitioner_specialties_specialty_concept_id : (specialty_concept_id) BTREE
+  IX ix_practitioner_specialties_supporting_credential_id : (supporting_credential_id) BTREE
+  IX ix_practitioner_specialties_specialty_role_concept_id : (specialty_role_concept_id) BTREE
+  IX ix_practitioner_specialties_verification_status_concept_id : (verification_status_concept_id) BTREE
+  IX ix_practitioner_specialties_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_practitioner_specialties_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_practitioner_specialty_active : (practitioner_profile_id, specialty_concept_id) UNIQUE BTREE WHERE valid_to IS NULL
+}
+
+practitioner_specialties .. idxset_practitioner_specialties : indexed by
+
+entity "INDEXES · practitioner_languages" as idxset_practitioner_languages <<INDEX_SET>> {
+  PK pk_practitioner_languages : (id) UNIQUE BTREE
+  IX ix_practitioner_languages_practitioner_profile_id : (practitioner_profile_id) BTREE
+  IX ix_practitioner_languages_language_concept_id : (language_concept_id) BTREE
+  IX ix_practitioner_languages_proficiency_concept_id : (proficiency_concept_id) BTREE
+  IX ix_practitioner_languages_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_practitioner_languages_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+practitioner_languages .. idxset_practitioner_languages : indexed by
+
+entity "INDEXES · jurisdiction_authorizations" as idxset_jurisdiction_authorizations <<INDEX_SET>> {
+  PK pk_jurisdiction_authorizations : (id) UNIQUE BTREE
+  IX ix_jurisdiction_authorizations_practitioner_profile_id : (practitioner_profile_id) BTREE
+  IX ix_jurisdiction_authorizations_jurisdiction_concept_id : (jurisdiction_concept_id) BTREE
+  IX ix_jurisdiction_authorizations_practice_scope_concept_id : (practice_scope_concept_id) BTREE
+  IX ix_jurisdiction_authorizations_state_concept_id : (state_concept_id) BTREE
+  IX ix_jurisdiction_authorizations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_jurisdiction_authorizations_updated_by_user_id : (updated_by_user_id) BTREE
+  GIST gist_jurisdiction_authorizations_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+}
+
+jurisdiction_authorizations .. idxset_jurisdiction_authorizations : indexed by
+
+entity "INDEXES · practitioner_affiliations" as idxset_practitioner_affiliations <<INDEX_SET>> {
+  PK pk_practitioner_affiliations : (id) UNIQUE BTREE
+  IX ix_practitioner_affiliations_practitioner_profile_id : (practitioner_profile_id) BTREE
+  IX ix_practitioner_affiliations_practice_site_id : (practice_site_id) BTREE
+  ' + v4.1.9 — un IX por columna FK, como el resto del módulo.
+  IX ix_practitioner_affiliations_health_facility_concept_id : (health_facility_concept_id) BTREE
+  IX ix_practitioner_affiliations_affiliation_type_concept_id : (affiliation_type_concept_id) BTREE
+  IX ix_practitioner_affiliations_status_concept_id : (status_concept_id) BTREE
+  IX ix_practitioner_affiliations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_practitioner_affiliations_updated_by_user_id : (updated_by_user_id) BTREE
+  ' v4.1.9 — `uq_practitioner_affiliation_same` (único total por organization_name)
+  ' se reemplaza por DOS únicos PARCIALES complementarios. Postgres considera cada
+  ' NULL distinto de los demás, así que un único total que incluyera
+  ' `health_facility_concept_id` dejaría sin acotar todas las filas de texto libre
+  ' —probado contra la base: admitió tres duplicados—. Con establecimiento manda el
+  ' concepto; sin él, el nombre. Los predicados son complementarios: ninguna fila
+  ' queda fuera de los dos. En base viva se crean ANTES de borrar el viejo.
+  UX ux_practitioner_affiliations_same_health_facility : (practitioner_profile_id, health_facility_concept_id, role_title, start_date) UNIQUE BTREE WHERE health_facility_concept_id IS NOT NULL
+  UX ux_practitioner_affiliations_same_organization_name : (practitioner_profile_id, organization_name, role_title, start_date) UNIQUE BTREE WHERE health_facility_concept_id IS NULL
+}
+
+practitioner_affiliations .. idxset_practitioner_affiliations : indexed by
+
+entity "INDEXES · related_persons" as idxset_related_persons <<INDEX_SET>> {
+  PK pk_related_persons : (id) UNIQUE BTREE
+  IX ix_related_persons_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_related_persons_person_id : (person_id) BTREE
+  IX ix_related_persons_relationship_concept_id : (relationship_concept_id) BTREE
+  IX ix_related_persons_status_concept_id : (status_concept_id) BTREE
+  IX ix_related_persons_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_related_persons_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_related_persons_patient_profile_id_updated_at : (patient_profile_id, updated_at DESC) BTREE
+}
+
+related_persons .. idxset_related_persons : indexed by
+
+entity "INDEXES · patient_portal_proxies" as idxset_patient_portal_proxies <<INDEX_SET>> {
+  PK pk_patient_portal_proxies : (id) UNIQUE BTREE
+  IX ix_patient_portal_proxies_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_patient_portal_proxies_proxy_user_id : (proxy_user_id) BTREE
+  IX ix_patient_portal_proxies_related_person_id : (related_person_id) BTREE
+  IX ix_patient_portal_proxies_scope_value_set_id : (scope_value_set_id) BTREE
+  IX ix_patient_portal_proxies_legal_basis_record_id : (legal_basis_record_id) BTREE
+  IX ix_patient_portal_proxies_status_concept_id : (status_concept_id) BTREE
+  IX ix_patient_portal_proxies_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_patient_portal_proxies_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_patient_portal_proxies_patient_profile_id_updated_at : (patient_profile_id, updated_at DESC) BTREE
+}
+
+patient_portal_proxies .. idxset_patient_portal_proxies : indexed by
+
+entity "INDEXES · insurance_representative_profiles" as idxset_insurance_representative_profiles <<INDEX_SET>> {
+  PK pk_insurance_representative_profiles : (profile_id) UNIQUE BTREE
+  IX ix_insurance_representative_profiles_representative_ty_e1930540 : (representative_type_concept_id) BTREE
+  IX ix_insurance_representative_profiles_role_concept_id : (role_concept_id) BTREE
+  IX ix_insurance_representative_profiles_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_insurance_representative_profiles_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+insurance_representative_profiles .. idxset_insurance_representative_profiles : indexed by
+
+entity "INDEXES · provider_operator_profiles" as idxset_provider_operator_profiles <<INDEX_SET>> {
+  PK pk_provider_operator_profiles : (profile_id) UNIQUE BTREE
+  IX ix_provider_operator_profiles_operator_type_concept_id : (operator_type_concept_id) BTREE
+  IX ix_provider_operator_profiles_role_concept_id : (role_concept_id) BTREE
+  IX ix_provider_operator_profiles_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_provider_operator_profiles_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+provider_operator_profiles .. idxset_provider_operator_profiles : indexed by
+
+entity "INDEXES · emergency_staff_profiles" as idxset_emergency_staff_profiles <<INDEX_SET>> {
+  PK pk_emergency_staff_profiles : (profile_id) UNIQUE BTREE
+  IX ix_emergency_staff_profiles_staff_type_concept_id : (staff_type_concept_id) BTREE
+  IX ix_emergency_staff_profiles_availability_status_concept_id : (availability_status_concept_id) BTREE
+  IX ix_emergency_staff_profiles_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_emergency_staff_profiles_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+emergency_staff_profiles .. idxset_emergency_staff_profiles : indexed by
+
+entity "INDEXES · administrator_profiles" as idxset_administrator_profiles <<INDEX_SET>> {
+  PK pk_administrator_profiles : (profile_id) UNIQUE BTREE
+  IX ix_administrator_profiles_administrator_type_concept_id : (administrator_type_concept_id) BTREE
+  IX ix_administrator_profiles_administrative_level_concept_id : (administrative_level_concept_id) BTREE
+  IX ix_administrator_profiles_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_administrator_profiles_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+administrator_profiles .. idxset_administrator_profiles : indexed by
+
+entity "INDEXES · secretary_profiles" as idxset_secretary_profiles <<INDEX_SET>> {
+  PK pk_secretary_profiles : (profile_id) UNIQUE BTREE
+  IX ix_secretary_profiles_role_concept_id : (role_concept_id) BTREE
+  IX ix_secretary_profiles_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_secretary_profiles_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+secretary_profiles .. idxset_secretary_profiles : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

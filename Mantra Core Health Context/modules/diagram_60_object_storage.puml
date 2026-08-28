@@ -1,0 +1,402 @@
+@startuml SALUD_Module_60_object_storage
+title Module 60 — Object Storage, Medical Media and PACS Catalog\n(S3/MinIO-compatible object storage and DICOM catalog)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+note as BIZ_object_storage
+  BUSINESS PURPOSE
+  Stores large immutable or versioned binaries: DICOM, reports, PDFs, videos, signed evidence, exports, backups and raw payloads.
+  The database stores metadata, hashes, retention, encryption, legal hold and object locations; binary content remains in object storage/PACS.
+end note
+
+entity "directory.tenants" as directory_tenants <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "profiles.patient_profiles" as profiles_patient_profiles <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "diagnostics.imaging_studies" as diagnostics_imaging_studies <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "common.files" as common_files <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity object_namespaces <<OBJECT_CATALOG>> {
+  * id : uuid <<PK>>
+  * code : varchar
+  * backend_code : varchar
+  * region_code : varchar
+  * bucket_or_container : varchar
+  * object_key_prefix : varchar
+  * default_storage_class : varchar
+  * versioning_enabled : boolean
+  * object_lock_enabled : boolean
+  * state : varchar
+}
+
+entity object_manifests <<OBJECT_CATALOG>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * namespace_id : uuid
+  * logical_object_id : uuid
+  * object_type : varchar
+  * patient_profile_id : uuid
+  * current_version_id : uuid
+  * lifecycle_state : varchar
+  * retention_policy_code : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+}
+
+entity object_versions <<OBJECT_CATALOG>> {
+  * id : uuid <<PK>>
+  * object_manifest_id : uuid
+  * version_number : integer
+  * provider_version_id : varchar
+  * object_key : varchar
+  * mime_type : varchar
+  * size_bytes : bigint
+  * sha256 : varchar
+  * etag : varchar
+  * compression : varchar
+  * created_at : timestamptz
+  * supersedes_version_id : uuid
+}
+
+entity object_locations <<OBJECT_CATALOG>> {
+  * id : uuid <<PK>>
+  * object_version_id : uuid
+  * namespace_id : uuid
+  * placement_role : varchar
+  * provider_uri : varchar
+  * storage_class : varchar
+  * replication_state : varchar
+  * verified_at : timestamptz
+}
+
+entity object_checksums <<OBJECT_CATALOG>> {
+  * id : uuid <<PK>>
+  * object_version_id : uuid
+  * algorithm : varchar
+  * checksum : varchar
+  * source : varchar
+  * verified_at : timestamptz
+  * verification_status : varchar
+}
+
+entity object_encryption_envelopes <<OBJECT_CATALOG>> {
+  * id : uuid <<PK>>
+  * object_version_id : uuid
+  * algorithm : varchar
+  * key_management_provider : varchar
+  * encrypted_data_key : bytea
+  * key_version : varchar
+  * encryption_context_hash : varchar
+  * created_at : timestamptz
+}
+
+entity object_retention_locks <<OBJECT_CATALOG>> {
+  * id : uuid <<PK>>
+  * object_version_id : uuid
+  * lock_mode : varchar
+  * retain_until : timestamptz
+  * policy_code : varchar
+  * applied_at : timestamptz
+  * released_at : timestamptz
+}
+
+entity object_legal_holds <<OBJECT_CATALOG>> {
+  * id : uuid <<PK>>
+  * object_version_id : uuid
+  * legal_case_reference : varchar
+  * hold_state : varchar
+  * placed_by_user_id : uuid
+  * placed_at : timestamptz
+  * released_at : timestamptz
+}
+
+entity multipart_uploads <<OBJECT_CATALOG>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * namespace_id : uuid
+  * provider_upload_id : varchar
+  * target_object_key : varchar
+  * expected_size_bytes : bigint
+  * received_size_bytes : bigint
+  * status : varchar
+  * expires_at : timestamptz
+  * created_at : timestamptz
+}
+
+entity large_payload_manifests <<OBJECT_CATALOG>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * payload_type : varchar
+  * source_entity_type : varchar
+  * source_entity_id : uuid
+  * object_manifest_id : uuid
+  * content_hash : varchar
+  * contains_phi : boolean
+  * created_at : timestamptz
+}
+
+entity dicom_study_manifests <<OBJECT_CATALOG>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * patient_profile_id : uuid
+  * imaging_study_id : uuid
+  * study_instance_uid : varchar
+  * accession_number : varchar
+  * study_date : date
+  * modality_codes : varchar[]
+  * series_count : integer
+  * instance_count : integer
+  * lifecycle_state : varchar
+}
+
+entity dicom_series_manifests <<OBJECT_CATALOG>> {
+  * id : uuid <<PK>>
+  * dicom_study_manifest_id : uuid
+  * series_instance_uid : varchar
+  * modality : varchar
+  * series_number : integer
+  * body_part_examined : varchar
+  * instance_count : integer
+  * thumbnail_object_manifest_id : uuid
+}
+
+entity dicom_instance_manifests <<OBJECT_CATALOG>> {
+  * id : uuid <<PK>>
+  * dicom_series_manifest_id : uuid
+  * sop_instance_uid : varchar
+  * sop_class_uid : varchar
+  * instance_number : integer
+  * transfer_syntax_uid : varchar
+  * object_manifest_id : uuid
+  * frame_count : integer
+  * metadata_json : jsonb
+}
+
+entity dicomweb_access_logs <<OBJECT_CATALOG>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * principal_id : uuid
+  * operation : varchar
+  * study_instance_uid : varchar
+    series_instance_uid : varchar
+    sop_instance_uid : varchar
+  * purpose_of_use_code : varchar
+  * outcome : varchar
+  * occurred_at : timestamptz
+}
+
+entity archive_manifests <<OBJECT_CATALOG>> {
+  * id : uuid <<PK>>
+  * tenant_id : uuid
+  * archive_type : varchar
+  * source_scope_json : jsonb
+  * object_manifest_id : uuid
+  * record_count : bigint
+  * manifest_hash : varchar
+  * created_at : timestamptz
+  * verified_at : timestamptz
+}
+
+entity object_integrity_checks <<OBJECT_CATALOG>> {
+  * id : uuid <<PK>>
+  * object_version_id : uuid
+  * check_type : varchar
+  * expected_hash : varchar
+  * actual_hash : varchar
+  * status : varchar
+  * checked_at : timestamptz
+  * repair_job_id : uuid
+}
+
+entity object_deletion_markers <<OBJECT_CATALOG>> {
+  * id : uuid <<PK>>
+  * object_manifest_id : uuid
+  * requested_by_job_id : uuid
+  * provider_delete_marker : varchar
+  * requested_at : timestamptz
+  * effective_at : timestamptz
+  * verification_status : varchar
+}
+
+
+object_namespaces -- object_manifests : contains
+object_manifests -- object_versions : versions
+object_versions -- object_locations : replicated to
+object_versions -- object_checksums : verified by
+object_versions -- object_encryption_envelopes : encrypted by
+object_versions -- object_retention_locks : locked by
+object_versions -- object_legal_holds : held by
+dicom_study_manifests -- dicom_series_manifests : contains
+dicom_series_manifests -- dicom_instance_manifests : contains
+dicom_instance_manifests -- object_manifests : stored as
+diagnostics_imaging_studies -- dicom_study_manifests : maps to
+profiles_patient_profiles -- dicom_study_manifests : subject
+large_payload_manifests -- object_manifests : points to
+
+package "Physical Indexes and Access Patterns" {
+entity "INDEXES · object_namespaces" as idxset_object_namespaces <<INDEX_SET>> {
+  PK pk_object_namespaces : (id)
+  UK uq_object_namespace_code : (code)
+  UK uq_object_namespace_location : (backend_code, region_code, bucket_or_container, object_key_prefix)
+}
+
+object_namespaces .. idxset_object_namespaces : indexed by
+
+entity "INDEXES · object_manifests" as idxset_object_manifests <<INDEX_SET>> {
+  PK pk_object_manifests : (id)
+  UK uq_object_manifest_logical : (tenant_id, logical_object_id)
+  IX ix_object_manifest_patient : (tenant_id, patient_profile_id, updated_at DESC) PARTIAL patient_profile_id not null
+  IX ix_object_manifest_state : (tenant_id, lifecycle_state, updated_at DESC)
+}
+
+object_manifests .. idxset_object_manifests : indexed by
+
+entity "INDEXES · object_versions" as idxset_object_versions <<INDEX_SET>> {
+  PK pk_object_versions : (id)
+  UK uq_object_version_number : (object_manifest_id, version_number)
+  UK uq_object_version_provider : (object_manifest_id, provider_version_id)
+  UK uq_object_version_sha : (object_manifest_id, sha256)
+  IX ix_object_version_created : (object_manifest_id, created_at DESC)
+}
+
+object_versions .. idxset_object_versions : indexed by
+
+entity "INDEXES · object_locations" as idxset_object_locations <<INDEX_SET>> {
+  PK pk_object_locations : (id)
+  UK uq_object_location_role : (object_version_id, namespace_id, placement_role)
+  IX ix_object_location_replication : (namespace_id, replication_state, verified_at ASC)
+}
+
+object_locations .. idxset_object_locations : indexed by
+
+entity "INDEXES · object_checksums" as idxset_object_checksums <<INDEX_SET>> {
+  PK pk_object_checksums : (id)
+  UK uq_object_checksum_algorithm_source : (object_version_id, algorithm, source)
+  IX ix_object_checksum_status : (verification_status, verified_at ASC)
+}
+
+object_checksums .. idxset_object_checksums : indexed by
+
+entity "INDEXES · object_encryption_envelopes" as idxset_object_encryption_envelopes <<INDEX_SET>> {
+  PK pk_object_encryption_envelopes : (id)
+  UK uq_object_encryption_version : (object_version_id)
+  IX ix_object_encryption_key_version : (key_management_provider, key_version)
+}
+
+object_encryption_envelopes .. idxset_object_encryption_envelopes : indexed by
+
+entity "INDEXES · object_retention_locks" as idxset_object_retention_locks <<INDEX_SET>> {
+  PK pk_object_retention_locks : (id)
+  UK uq_object_retention_active : (object_version_id) PARTIAL released_at null
+  IX ix_object_retention_until : (retain_until)
+}
+
+object_retention_locks .. idxset_object_retention_locks : indexed by
+
+entity "INDEXES · object_legal_holds" as idxset_object_legal_holds <<INDEX_SET>> {
+  PK pk_object_legal_holds : (id)
+  IX ix_object_hold_active : (object_version_id, hold_state)
+  IX ix_object_hold_case : (legal_case_reference, hold_state)
+}
+
+object_legal_holds .. idxset_object_legal_holds : indexed by
+
+entity "INDEXES · multipart_uploads" as idxset_multipart_uploads <<INDEX_SET>> {
+  PK pk_multipart_uploads : (id)
+  UK uq_multipart_provider_upload : (namespace_id, provider_upload_id)
+  IX ix_multipart_expiry : (status, expires_at)
+  IX ix_multipart_tenant_created : (tenant_id, created_at DESC)
+}
+
+multipart_uploads .. idxset_multipart_uploads : indexed by
+
+entity "INDEXES · large_payload_manifests" as idxset_large_payload_manifests <<INDEX_SET>> {
+  PK pk_large_payload_manifests : (id)
+  UK uq_large_payload_source : (tenant_id, source_entity_type, source_entity_id, payload_type)
+  IX ix_large_payload_object : (object_manifest_id)
+}
+
+large_payload_manifests .. idxset_large_payload_manifests : indexed by
+
+entity "INDEXES · dicom_study_manifests" as idxset_dicom_study_manifests <<INDEX_SET>> {
+  PK pk_dicom_study_manifests : (id)
+  UK uq_dicom_study_uid : (tenant_id, study_instance_uid)
+  IX ix_dicom_study_patient_date : (tenant_id, patient_profile_id, study_date DESC)
+  IX ix_dicom_study_accession : (tenant_id, accession_number)
+}
+
+dicom_study_manifests .. idxset_dicom_study_manifests : indexed by
+
+entity "INDEXES · dicom_series_manifests" as idxset_dicom_series_manifests <<INDEX_SET>> {
+  PK pk_dicom_series_manifests : (id)
+  UK uq_dicom_series_uid : (dicom_study_manifest_id, series_instance_uid)
+  IX ix_dicom_series_modality : (modality, body_part_examined)
+}
+
+dicom_series_manifests .. idxset_dicom_series_manifests : indexed by
+
+entity "INDEXES · dicom_instance_manifests" as idxset_dicom_instance_manifests <<INDEX_SET>> {
+  PK pk_dicom_instance_manifests : (id)
+  UK uq_dicom_instance_uid : (dicom_series_manifest_id, sop_instance_uid)
+  IX ix_dicom_instance_number : (dicom_series_manifest_id, instance_number)
+  GIN gin_dicom_instance_metadata : (metadata_json) jsonb_path_ops
+}
+
+dicom_instance_manifests .. idxset_dicom_instance_manifests : indexed by
+
+entity "INDEXES · dicomweb_access_logs" as idxset_dicomweb_access_logs <<INDEX_SET>> {
+  PK pk_dicomweb_access_logs : (id)
+  IX ix_dicomweb_principal_time : (tenant_id, principal_id, occurred_at DESC)
+  IX ix_dicomweb_study_time : (tenant_id, study_instance_uid, occurred_at DESC)
+  BRIN brin_dicomweb_occurred : (occurred_at)
+}
+
+dicomweb_access_logs .. idxset_dicomweb_access_logs : indexed by
+
+entity "INDEXES · archive_manifests" as idxset_archive_manifests <<INDEX_SET>> {
+  PK pk_archive_manifests : (id)
+  UK uq_archive_manifest_hash : (tenant_id, manifest_hash)
+  IX ix_archive_manifest_created : (tenant_id, archive_type, created_at DESC)
+}
+
+archive_manifests .. idxset_archive_manifests : indexed by
+
+entity "INDEXES · object_integrity_checks" as idxset_object_integrity_checks <<INDEX_SET>> {
+  PK pk_object_integrity_checks : (id)
+  IX ix_object_integrity_version_time : (object_version_id, checked_at DESC)
+  IX ix_object_integrity_status : (status, checked_at ASC)
+}
+
+object_integrity_checks .. idxset_object_integrity_checks : indexed by
+
+entity "INDEXES · object_deletion_markers" as idxset_object_deletion_markers <<INDEX_SET>> {
+  PK pk_object_deletion_markers : (id)
+  IX ix_object_delete_manifest : (object_manifest_id, requested_at DESC)
+  IX ix_object_delete_verification : (verification_status, requested_at ASC)
+}
+
+object_deletion_markers .. idxset_object_deletion_markers : indexed by
+
+}
+
+
+note as INDEX_POLICY_object_storage
+  INDEX AND ACCESS-PATTERN POLICY
+  - Object keys are opaque and never expose patient names or medical identifiers.
+  - Every object version has content hash, encryption envelope and governed retention.
+  - WORM/object lock and legal hold override deletion workflows.
+  - DICOM UID uniqueness and study-series-instance hierarchy are enforced in the metadata catalog.
+end note
+
+@enduml

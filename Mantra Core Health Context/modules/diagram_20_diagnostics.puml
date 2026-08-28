@@ -1,0 +1,1215 @@
+@startuml SALUD_Module_20_diagnostics
+title Module 20 — Laboratory, Medical Imaging and Clinical Media\n(schema: diagnostics)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_20_diagnostics.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_20_diagnostics
+  BUSINESS PURPOSE
+  Connects laboratory and imaging workflows to the patient chart while the
+  heavy binary content remains in PACS/VNA or governed object storage.
+  Supports one report with many result observations, specimens, images and
+  attachments instead of a single file link.
+end note
+
+entity specimens {
+  * id : uuid <<PK>>
+  --
+  * patient_profile_id : uuid <<FK>>
+    service_request_id : uuid <<FK>>
+    encounter_id : uuid <<FK>>
+  * specimen_type_concept_id : uuid <<FK>>
+    accession_identifier : varchar
+    body_site_concept_id : uuid <<FK>>
+    collection_method_concept_id : uuid <<FK>>
+    collected_at : timestamptz
+    received_at : timestamptz
+    collector_profile_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    container_type_concept_id : uuid <<FK>>
+    quantity_decimal : numeric
+    quantity_unit_concept_id : uuid <<FK>>
+  * custodian_tenant_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity specimen_processing_steps {
+  * id : uuid <<PK>>
+  --
+  * specimen_id : uuid <<FK>>
+  * procedure_concept_id : uuid <<FK>>
+    additive_concept_id : uuid <<FK>>
+    description : text
+    performed_at : timestamptz
+    performer_profile_id : uuid <<FK>>
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+entity observation_specimens {
+  * id : uuid <<PK>>
+  --
+  * observation_id : uuid <<FK>>
+  * specimen_id : uuid <<FK>>
+  * relationship_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+entity diagnostic_report_versions <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * diagnostic_report_id : uuid <<FK>>
+  * version_number : integer
+  * clinical_status_concept_id : uuid <<FK>>
+    conclusion_text : text
+    issued_at : timestamptz
+    performer_tenant_id : uuid <<FK>>
+    author_profile_id : uuid <<FK>>
+    supersedes_version_id : uuid <<FK>>
+    amendment_reason_concept_id : uuid <<FK>>
+    amendment_reason_text : text
+    content_hash : varchar
+    release_eligibility_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+  * custodian_tenant_id : uuid <<FK>>
+  source_system_id : uuid <<FK>>
+  provenance_record_id : uuid <<FK>>
+}
+entity diagnostic_report_results {
+  * id : uuid <<PK>>
+  --
+  * diagnostic_report_version_id : uuid <<FK>>
+  * observation_id : uuid <<FK>>
+    result_role_concept_id : uuid <<FK>>
+    ordinal : integer
+  * created_at : timestamptz
+}
+entity diagnostic_report_files {
+  * id : uuid <<PK>>
+  --
+  * diagnostic_report_version_id : uuid <<FK>>
+  * file_id : uuid <<FK>>
+  * content_role_concept_id : uuid <<FK>>
+    presentation_format_concept_id : uuid <<FK>>
+    ordinal : integer
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+entity imaging_endpoints {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * endpoint_type_concept_id : uuid <<FK>>
+  * base_uri : text
+    connection_id : uuid <<FK>>
+    storage_region_concept_id : uuid <<FK>>
+    dicom_conformance_statement_uri : text
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity imaging_studies {
+  * id : uuid <<PK>>
+  --
+  * patient_profile_id : uuid <<FK>>
+    encounter_id : uuid <<FK>>
+    service_request_id : uuid <<FK>>
+    diagnostic_report_id : uuid <<FK>>
+  * imaging_endpoint_id : uuid <<FK>>
+  * dicom_study_instance_uid : varchar <<UK>>
+    accession_number : varchar
+    modality_value_set_id : uuid <<FK>>
+    body_site_concept_id : uuid <<FK>>
+    reason_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    started_at : timestamptz
+    number_of_series : integer
+    number_of_instances : integer
+    referring_practitioner_profile_id : uuid <<FK>>
+  * custodian_tenant_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity imaging_series {
+  * id : uuid <<PK>>
+  --
+  * imaging_study_id : uuid <<FK>>
+  * dicom_series_instance_uid : varchar <<UK>>
+  * modality_concept_id : uuid <<FK>>
+    body_site_concept_id : uuid <<FK>>
+    laterality_concept_id : uuid <<FK>>
+    series_number : integer
+    description : varchar
+    number_of_instances : integer
+    started_at : timestamptz
+  * created_at : timestamptz
+}
+entity imaging_instances {
+  * id : uuid <<PK>>
+  --
+  * imaging_series_id : uuid <<FK>>
+  * dicom_sop_instance_uid : varchar <<UK>>
+  * sop_class_concept_id : uuid <<FK>>
+    instance_number : integer
+    frames_count : integer
+    retrieval_uri : text
+    metadata_hash : varchar
+  * created_at : timestamptz
+}
+entity clinical_media {
+  * id : uuid <<PK>>
+  --
+  * patient_profile_id : uuid <<FK>>
+    encounter_id : uuid <<FK>>
+    diagnostic_report_id : uuid <<FK>>
+  * media_type_concept_id : uuid <<FK>>
+    body_site_concept_id : uuid <<FK>>
+    view_concept_id : uuid <<FK>>
+  * file_id : uuid <<FK>>
+    captured_at : timestamptz
+    captured_by_profile_id : uuid <<FK>>
+    device_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    patient_visibility_concept_id : uuid <<FK>>
+  * custodian_tenant_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity media_annotations {
+  * id : uuid <<PK>>
+  --
+  * clinical_media_id : uuid <<FK>>
+    imaging_instance_id : uuid <<FK>>
+  * annotation_type_concept_id : uuid <<FK>>
+    geometry_json : jsonb
+    label_concept_id : uuid <<FK>>
+    label_text : varchar
+    confidence_score : numeric
+    author_profile_id : uuid <<FK>>
+    algorithm_model_reference : varchar
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity diagnostic_release_events <<LOG>> {
+  * id : uuid <<PK>>
+  --
+    diagnostic_report_version_id : uuid <<FK>>
+    imaging_study_id : uuid <<FK>>
+  * action_concept_id : uuid <<FK>>
+  * patient_visibility_concept_id : uuid <<FK>>
+    reason_concept_id : uuid <<FK>>
+    policy_version : varchar
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+diagnostic_report_versions |o--o{ diagnostic_report_versions : supersedes
+diagnostic_report_versions ||--o{ diagnostic_report_results
+diagnostic_report_versions ||--o{ diagnostic_report_files
+diagnostic_report_versions ||--o{ diagnostic_release_events
+specimens ||--o{ specimen_processing_steps
+specimens ||--o{ observation_specimens
+imaging_endpoints ||--o{ imaging_studies
+imaging_studies ||--o{ imaging_series
+imaging_series ||--o{ imaging_instances
+clinical_media ||--o{ media_annotations
+
+note as DICOMWEB_diagram_20_diagnostics
+  DICOM / FILE RULES
+  DICOM UIDs and stable retrieval URIs identify studies. Binary images remain
+  in PACS/VNA or object storage. DICOMweb QIDO-RS queries, WADO-RS retrieval
+  and STOW-RS storage are integration behaviors, not public URLs in tables.
+end note
+
+note as RESULTS_diagram_20_diagnostics
+  RESULT INTEGRITY
+  DiagnosticReport content is stored in immutable versions. Observation status
+  and specimen chain-of-custody remain independently auditable. Corrections
+  create an amended report version linked to the exact observations and files;
+  they never overwrite a previously released clinical meaning.
+end note
+
+entity specimen_identifiers {
+  * id : uuid <<PK>>
+  --
+  * specimen_id : uuid <<FK>>
+  * identifier_system : varchar
+  * identifier_value : varchar
+  * identifier_type_concept_id : uuid <<FK>>
+    assigning_organization_id : uuid <<FK>>
+  * is_primary : boolean
+  * effective_from : timestamptz
+    effective_to : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity specimen_parent_links <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * child_specimen_id : uuid <<FK>>
+  * parent_specimen_id : uuid <<FK>>
+  * relationship_type_concept_id : uuid <<FK>>
+    quantity_decimal : numeric(20,6)
+    quantity_unit_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity specimen_collection_events <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * specimen_id : uuid <<FK>>
+  * occurred_at : timestamptz
+  * event_type_concept_id : uuid <<FK>>
+    collector_profile_id : uuid <<FK>>
+    collection_site_id : uuid <<FK>>
+    body_site_concept_id : uuid <<FK>>
+    method_concept_id : uuid <<FK>>
+    fasting_status_concept_id : uuid <<FK>>
+    condition_json : jsonb
+    notes : text
+  * created_at : timestamptz
+}
+
+entity specimen_containers {
+  * id : uuid <<PK>>
+  --
+  * specimen_id : uuid <<FK>>
+  * container_identifier : varchar
+  * container_type_concept_id : uuid <<FK>>
+    additive_concept_id : uuid <<FK>>
+    capacity_decimal : numeric(20,6)
+    capacity_unit_concept_id : uuid <<FK>>
+    specimen_quantity_decimal : numeric(20,6)
+    specimen_quantity_unit_concept_id : uuid <<FK>>
+    parent_container_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity specimen_container_events <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * specimen_container_id : uuid <<FK>>
+  * occurred_at : timestamptz
+  * event_type_concept_id : uuid <<FK>>
+    source_location_id : uuid <<FK>>
+    destination_location_id : uuid <<FK>>
+    actor_profile_id : uuid <<FK>>
+    temperature_celsius : numeric(8,3)
+    condition_json : jsonb
+    notes : text
+  * created_at : timestamptz
+}
+
+entity specimen_chain_of_custody_events <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * specimen_id : uuid <<FK>>
+    specimen_container_id : uuid <<FK>>
+  * occurred_at : timestamptz
+  * custody_event_type_concept_id : uuid <<FK>>
+    from_party_type_concept_id : uuid <<FK>>
+    from_party_id : uuid
+    to_party_type_concept_id : uuid <<FK>>
+    to_party_id : uuid
+    location_id : uuid <<FK>>
+    seal_identifier : varchar
+    evidence_hash : varchar
+    signed_by_user_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity specimen_rejection_events <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * specimen_id : uuid <<FK>>
+  * rejected_at : timestamptz
+  * rejection_reason_concept_id : uuid <<FK>>
+    rejected_by_profile_id : uuid <<FK>>
+    notes : text
+    recollection_required : boolean
+    recollection_service_request_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity laboratory_accessions {
+  * id : uuid <<PK>>
+  --
+  * custodian_tenant_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+    encounter_id : uuid <<FK>>
+    service_request_id : uuid <<FK>>
+  * accession_number : varchar
+  * received_at : timestamptz
+    receiving_site_id : uuid <<FK>>
+    laboratory_unit_id : uuid <<FK>>
+  * priority_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    source_system_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity accession_specimens {
+  * id : uuid <<PK>>
+  --
+  * laboratory_accession_id : uuid <<FK>>
+  * specimen_id : uuid <<FK>>
+  * sequence_number : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity laboratory_work_orders {
+  * id : uuid <<PK>>
+  --
+  * custodian_tenant_id : uuid <<FK>>
+  * laboratory_accession_id : uuid <<FK>>
+  * work_order_number : varchar
+    assigned_laboratory_unit_id : uuid <<FK>>
+    assigned_profile_id : uuid <<FK>>
+  * priority_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    scheduled_at : timestamptz
+    started_at : timestamptz
+    completed_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity laboratory_work_order_tests {
+  * id : uuid <<PK>>
+  --
+  * laboratory_work_order_id : uuid <<FK>>
+  * service_request_id : uuid <<FK>>
+  * test_code_concept_id : uuid <<FK>>
+    specimen_id : uuid <<FK>>
+    method_concept_id : uuid <<FK>>
+    analyzer_device_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    started_at : timestamptz
+    completed_at : timestamptz
+    observation_id : uuid <<FK>>
+    diagnostic_report_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity analyzer_runs <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * custodian_tenant_id : uuid <<FK>>
+  * analyzer_device_id : uuid <<FK>>
+  * run_identifier : varchar
+    reagent_lot_id : uuid <<FK>>
+    calibration_reference : varchar
+    quality_control_run_id : uuid <<FK>>
+  * started_at : timestamptz
+    ended_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+    operator_profile_id : uuid <<FK>>
+    metadata_json : jsonb
+  * created_at : timestamptz
+}
+
+entity analyzer_result_messages <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * analyzer_run_id : uuid <<FK>>
+    laboratory_work_order_test_id : uuid <<FK>>
+  * received_at : timestamptz
+  * message_format_concept_id : uuid <<FK>>
+    message_control_id : varchar
+    raw_message_file_id : uuid <<FK>>
+  * payload_hash : varchar
+  * validation_status_concept_id : uuid <<FK>>
+    mapped_observation_id : uuid <<FK>>
+    processing_error_json : jsonb
+  * created_at : timestamptz
+}
+
+entity result_verifications <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * custodian_tenant_id : uuid <<FK>>
+  * verifiable_type_concept_id : uuid <<FK>>
+  * verifiable_id : uuid
+  * verification_level_concept_id : uuid <<FK>>
+  * result_concept_id : uuid <<FK>>
+  * verified_by_profile_id : uuid <<FK>>
+  * verified_at : timestamptz
+    verification_comment : text
+    previous_verification_id : uuid <<FK>>
+    signature_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity critical_result_notifications {
+  * id : uuid <<PK>>
+  --
+  * custodian_tenant_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+  * observation_id : uuid <<FK>>
+    diagnostic_report_id : uuid <<FK>>
+  * criticality_concept_id : uuid <<FK>>
+  * detected_at : timestamptz
+    detected_by_profile_id : uuid <<FK>>
+  * notification_status_concept_id : uuid <<FK>>
+    notified_profile_id : uuid <<FK>>
+    notified_at : timestamptz
+    acknowledged_by_profile_id : uuid <<FK>>
+    acknowledged_at : timestamptz
+    escalation_policy_id : uuid <<FK>>
+    escalation_due_at : timestamptz
+    communication_evidence_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity imaging_procedure_steps {
+  * id : uuid <<PK>>
+  --
+  * imaging_study_id : uuid <<FK>>
+    procedure_id : uuid <<FK>>
+  * step_number : integer
+  * code_concept_id : uuid <<FK>>
+    modality_concept_id : uuid <<FK>>
+    body_site_concept_id : uuid <<FK>>
+    performed_by_profile_id : uuid <<FK>>
+    started_at : timestamptz
+    ended_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+    protocol_reference : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity imaging_selections {
+  * id : uuid <<PK>>
+  --
+  * custodian_tenant_id : uuid <<FK>>
+  * imaging_study_id : uuid <<FK>>
+  * selection_uid : varchar
+  * title : varchar
+    description : text
+    author_profile_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity imaging_selection_items {
+  * id : uuid <<PK>>
+  --
+  * imaging_selection_id : uuid <<FK>>
+    imaging_series_id : uuid <<FK>>
+    imaging_instance_id : uuid <<FK>>
+    frames_json : jsonb
+    region_of_interest_json : jsonb
+    order_index : integer
+  * created_at : timestamptz
+}
+
+entity dicom_object_locations {
+  * id : uuid <<PK>>
+  --
+  * imaging_instance_id : uuid <<FK>>
+  * storage_backend_id : uuid <<FK>>
+  * object_key : varchar
+    object_version_id : varchar
+    transfer_syntax_uid : varchar
+  * content_hash : varchar
+  * size_bytes : bigint
+    encryption_profile_id : uuid <<FK>>
+    retention_policy_id : uuid <<FK>>
+    legal_hold_id : uuid <<FK>>
+    is_primary : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity dicom_structured_reports {
+  * id : uuid <<PK>>
+  --
+  * imaging_study_id : uuid <<FK>>
+    imaging_instance_id : uuid <<FK>>
+  * sop_instance_uid : varchar
+  * document_title_concept_id : uuid <<FK>>
+    diagnostic_report_id : uuid <<FK>>
+    file_id : uuid <<FK>>
+  * content_hash : varchar
+  * status_concept_id : uuid <<FK>>
+    verified_by_profile_id : uuid <<FK>>
+    verified_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity radiation_dose_events <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * custodian_tenant_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+  * imaging_study_id : uuid <<FK>>
+    imaging_series_id : uuid <<FK>>
+  * recorded_at : timestamptz
+    dose_length_product : numeric(20,6)
+    computed_tomography_dose_index : numeric(20,6)
+    dose_area_product : numeric(20,6)
+    effective_dose_msv : numeric(20,6)
+    unit_concept_id : uuid <<FK>>
+    source_sop_instance_uid : varchar
+    device_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity diagnostic_data_quality_events <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * custodian_tenant_id : uuid <<FK>>
+  * target_type_concept_id : uuid <<FK>>
+  * target_id : uuid
+  * occurred_at : timestamptz
+  * rule_code : varchar
+  * severity_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    details_json : jsonb
+    resolution_text : text
+    resolved_at : timestamptz
+    resolved_by_user_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity diagnostic_provenance_links <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * custodian_tenant_id : uuid <<FK>>
+  * target_type_concept_id : uuid <<FK>>
+  * target_id : uuid
+  * source_type_concept_id : uuid <<FK>>
+  * source_id : uuid
+  * activity_concept_id : uuid <<FK>>
+    agent_profile_id : uuid <<FK>>
+    source_system_id : uuid <<FK>>
+  * recorded_at : timestamptz
+  * content_hash : varchar
+  * created_at : timestamptz
+}
+
+specimens ||--o{ specimen_identifiers
+specimens ||--o{ specimen_parent_links : child
+specimens ||--o{ specimen_parent_links : parent
+specimens ||--o{ specimen_collection_events
+specimens ||--o{ specimen_containers
+specimen_containers ||--o{ specimen_container_events
+specimens ||--o{ specimen_chain_of_custody_events
+specimens ||--o{ specimen_rejection_events
+laboratory_accessions ||--o{ accession_specimens
+specimens ||--o{ accession_specimens
+laboratory_accessions ||--o{ laboratory_work_orders
+laboratory_work_orders ||--o{ laboratory_work_order_tests
+analyzer_runs ||--o{ analyzer_result_messages
+laboratory_work_order_tests ||--o{ analyzer_result_messages
+imaging_studies ||--o{ imaging_procedure_steps
+imaging_studies ||--o{ imaging_selections
+imaging_selections ||--o{ imaging_selection_items
+imaging_instances ||--o{ dicom_object_locations
+imaging_studies ||--o{ dicom_structured_reports
+imaging_studies ||--o{ radiation_dose_events
+
+note right of laboratory_accessions
+  INTERNATIONAL LAB TRACEABILITY
+  Order -> accession -> specimen/container custody -> work order/test -> analyzer message
+  -> observation/report -> verification -> critical-result communication.
+end note
+
+note right of dicom_object_locations
+  DICOM payloads remain in PACS/object storage. PostgreSQL stores governed identifiers,
+  hashes, storage/version metadata, retention, encryption and clinical relationships.
+end note
+
+package "Physical Indexes" {
+entity "INDEXES · specimens" as idxset_specimens <<INDEX_SET>> {
+  PK pk_specimens : (id) UNIQUE BTREE
+  IX ix_specimens_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_specimens_service_request_id : (service_request_id) BTREE
+  IX ix_specimens_encounter_id : (encounter_id) BTREE
+  IX ix_specimens_specimen_type_concept_id : (specimen_type_concept_id) BTREE
+  IX ix_specimens_body_site_concept_id : (body_site_concept_id) BTREE
+  IX ix_specimens_collection_method_concept_id : (collection_method_concept_id) BTREE
+  IX ix_specimens_collector_profile_id : (collector_profile_id) BTREE
+  IX ix_specimens_status_concept_id : (status_concept_id) BTREE
+  IX ix_specimens_container_type_concept_id : (container_type_concept_id) BTREE
+  IX ix_specimens_quantity_unit_concept_id : (quantity_unit_concept_id) BTREE
+  IX ix_specimens_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_specimens_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_specimens_patient_profile_id_updated_at : (patient_profile_id, updated_at DESC) BTREE
+  IX ix_specimens_custodian_tenant_id : (custodian_tenant_id) BTREE
+}
+
+specimens .. idxset_specimens : indexed by
+
+entity "INDEXES · specimen_processing_steps" as idxset_specimen_processing_steps <<INDEX_SET>> {
+  PK pk_specimen_processing_steps : (id) UNIQUE BTREE
+  IX ix_specimen_processing_steps_specimen_id : (specimen_id) BTREE
+  IX ix_specimen_processing_steps_procedure_concept_id : (procedure_concept_id) BTREE
+  IX ix_specimen_processing_steps_additive_concept_id : (additive_concept_id) BTREE
+  IX ix_specimen_processing_steps_performer_profile_id : (performer_profile_id) BTREE
+  IX ix_specimen_processing_steps_created_by_user_id : (created_by_user_id) BTREE
+}
+
+specimen_processing_steps .. idxset_specimen_processing_steps : indexed by
+
+entity "INDEXES · observation_specimens" as idxset_observation_specimens <<INDEX_SET>> {
+  PK pk_observation_specimens : (id) UNIQUE BTREE
+  IX ix_observation_specimens_observation_id : (observation_id) BTREE
+  IX ix_observation_specimens_specimen_id : (specimen_id) BTREE
+  IX ix_observation_specimens_relationship_concept_id : (relationship_concept_id) BTREE
+}
+
+observation_specimens .. idxset_observation_specimens : indexed by
+
+entity "INDEXES · diagnostic_report_versions" as idxset_diagnostic_report_versions <<INDEX_SET>> {
+  PK pk_diagnostic_report_versions : (id) UNIQUE BTREE
+  IX ix_diagnostic_report_versions_diagnostic_report_id : (diagnostic_report_id) BTREE
+  IX ix_diagnostic_report_versions_clinical_status_concept_id : (clinical_status_concept_id) BTREE
+  IX ix_diagnostic_report_versions_performer_tenant_id : (performer_tenant_id) BTREE
+  IX ix_diagnostic_report_versions_author_profile_id : (author_profile_id) BTREE
+  IX ix_diagnostic_report_versions_supersedes_version_id : (supersedes_version_id) BTREE
+  IX ix_diagnostic_report_versions_amendment_reason_concept_id : (amendment_reason_concept_id) BTREE
+  IX ix_diagnostic_report_versions_release_eligibility_concept_id : (release_eligibility_concept_id) BTREE
+  IX ix_diagnostic_report_versions_recorded_by_user_id : (recorded_by_user_id) BTREE
+  UK uq_diagnostic_report_versions_diagnostic_report_id_ver_f2f11b3b : (diagnostic_report_id, version_number) UNIQUE BTREE
+  BRIN brin_diagnostic_report_versions_recorded_at : (recorded_at) BRIN pages_per_range=128
+  IX ix_diagnostic_report_versions_tenant_report : (custodian_tenant_id, diagnostic_report_id, version_number DESC) BTREE
+  IX ix_diagnostic_report_versions_source_system : (source_system_id) BTREE
+}
+
+diagnostic_report_versions .. idxset_diagnostic_report_versions : indexed by
+
+entity "INDEXES · diagnostic_report_results" as idxset_diagnostic_report_results <<INDEX_SET>> {
+  PK pk_diagnostic_report_results : (id) UNIQUE BTREE
+  IX ix_diagnostic_report_results_diagnostic_report_version_id : (diagnostic_report_version_id) BTREE
+  IX ix_diagnostic_report_results_observation_id : (observation_id) BTREE
+  IX ix_diagnostic_report_results_result_role_concept_id : (result_role_concept_id) BTREE
+}
+
+diagnostic_report_results .. idxset_diagnostic_report_results : indexed by
+
+entity "INDEXES · diagnostic_report_files" as idxset_diagnostic_report_files <<INDEX_SET>> {
+  PK pk_diagnostic_report_files : (id) UNIQUE BTREE
+  IX ix_diagnostic_report_files_diagnostic_report_version_id : (diagnostic_report_version_id) BTREE
+  IX ix_diagnostic_report_files_file_id : (file_id) BTREE
+  IX ix_diagnostic_report_files_content_role_concept_id : (content_role_concept_id) BTREE
+  IX ix_diagnostic_report_files_presentation_format_concept_id : (presentation_format_concept_id) BTREE
+  IX ix_diagnostic_report_files_created_by_user_id : (created_by_user_id) BTREE
+}
+
+diagnostic_report_files .. idxset_diagnostic_report_files : indexed by
+
+entity "INDEXES · imaging_endpoints" as idxset_imaging_endpoints <<INDEX_SET>> {
+  PK pk_imaging_endpoints : (id) UNIQUE BTREE
+  IX ix_imaging_endpoints_tenant_id : (tenant_id) BTREE
+  IX ix_imaging_endpoints_endpoint_type_concept_id : (endpoint_type_concept_id) BTREE
+  IX ix_imaging_endpoints_connection_id : (connection_id) BTREE
+  IX ix_imaging_endpoints_storage_region_concept_id : (storage_region_concept_id) BTREE
+  IX ix_imaging_endpoints_status_concept_id : (status_concept_id) BTREE
+  IX ix_imaging_endpoints_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_imaging_endpoints_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_imaging_endpoints_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+imaging_endpoints .. idxset_imaging_endpoints : indexed by
+
+entity "INDEXES · imaging_studies" as idxset_imaging_studies <<INDEX_SET>> {
+  PK pk_imaging_studies : (id) UNIQUE BTREE
+  UK uq_imaging_studies_dicom_study_instance_uid : (dicom_study_instance_uid) UNIQUE BTREE
+  IX ix_imaging_studies_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_imaging_studies_encounter_id : (encounter_id) BTREE
+  IX ix_imaging_studies_service_request_id : (service_request_id) BTREE
+  IX ix_imaging_studies_diagnostic_report_id : (diagnostic_report_id) BTREE
+  IX ix_imaging_studies_imaging_endpoint_id : (imaging_endpoint_id) BTREE
+  IX ix_imaging_studies_modality_value_set_id : (modality_value_set_id) BTREE
+  IX ix_imaging_studies_body_site_concept_id : (body_site_concept_id) BTREE
+  IX ix_imaging_studies_reason_concept_id : (reason_concept_id) BTREE
+  IX ix_imaging_studies_status_concept_id : (status_concept_id) BTREE
+  IX ix_imaging_studies_referring_practitioner_profile_id : (referring_practitioner_profile_id) BTREE
+  IX ix_imaging_studies_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_imaging_studies_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_imaging_studies_patient_profile_id_updated_at : (patient_profile_id, updated_at DESC) BTREE
+  IX ix_imaging_studies_custodian_tenant_id : (custodian_tenant_id) BTREE
+}
+
+imaging_studies .. idxset_imaging_studies : indexed by
+
+entity "INDEXES · imaging_series" as idxset_imaging_series <<INDEX_SET>> {
+  PK pk_imaging_series : (id) UNIQUE BTREE
+  UK uq_imaging_series_dicom_series_instance_uid : (dicom_series_instance_uid) UNIQUE BTREE
+  IX ix_imaging_series_imaging_study_id : (imaging_study_id) BTREE
+  IX ix_imaging_series_modality_concept_id : (modality_concept_id) BTREE
+  IX ix_imaging_series_body_site_concept_id : (body_site_concept_id) BTREE
+  IX ix_imaging_series_laterality_concept_id : (laterality_concept_id) BTREE
+}
+
+imaging_series .. idxset_imaging_series : indexed by
+
+entity "INDEXES · imaging_instances" as idxset_imaging_instances <<INDEX_SET>> {
+  PK pk_imaging_instances : (id) UNIQUE BTREE
+  UK uq_imaging_instances_dicom_sop_instance_uid : (dicom_sop_instance_uid) UNIQUE BTREE
+  IX ix_imaging_instances_imaging_series_id : (imaging_series_id) BTREE
+  IX ix_imaging_instances_sop_class_concept_id : (sop_class_concept_id) BTREE
+}
+
+imaging_instances .. idxset_imaging_instances : indexed by
+
+entity "INDEXES · clinical_media" as idxset_clinical_media <<INDEX_SET>> {
+  PK pk_clinical_media : (id) UNIQUE BTREE
+  IX ix_clinical_media_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_clinical_media_encounter_id : (encounter_id) BTREE
+  IX ix_clinical_media_diagnostic_report_id : (diagnostic_report_id) BTREE
+  IX ix_clinical_media_media_type_concept_id : (media_type_concept_id) BTREE
+  IX ix_clinical_media_body_site_concept_id : (body_site_concept_id) BTREE
+  IX ix_clinical_media_view_concept_id : (view_concept_id) BTREE
+  IX ix_clinical_media_file_id : (file_id) BTREE
+  IX ix_clinical_media_captured_by_profile_id : (captured_by_profile_id) BTREE
+  IX ix_clinical_media_device_id : (device_id) BTREE
+  IX ix_clinical_media_status_concept_id : (status_concept_id) BTREE
+  IX ix_clinical_media_patient_visibility_concept_id : (patient_visibility_concept_id) BTREE
+  IX ix_clinical_media_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_clinical_media_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_clinical_media_patient_profile_id_updated_at : (patient_profile_id, updated_at DESC) BTREE
+  IX ix_clinical_media_custodian_tenant_id : (custodian_tenant_id) BTREE
+}
+
+clinical_media .. idxset_clinical_media : indexed by
+
+entity "INDEXES · media_annotations" as idxset_media_annotations <<INDEX_SET>> {
+  PK pk_media_annotations : (id) UNIQUE BTREE
+  IX ix_media_annotations_clinical_media_id : (clinical_media_id) BTREE
+  IX ix_media_annotations_imaging_instance_id : (imaging_instance_id) BTREE
+  IX ix_media_annotations_annotation_type_concept_id : (annotation_type_concept_id) BTREE
+  IX ix_media_annotations_label_concept_id : (label_concept_id) BTREE
+  IX ix_media_annotations_author_profile_id : (author_profile_id) BTREE
+  IX ix_media_annotations_status_concept_id : (status_concept_id) BTREE
+  IX ix_media_annotations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_media_annotations_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+media_annotations .. idxset_media_annotations : indexed by
+
+entity "INDEXES · diagnostic_release_events" as idxset_diagnostic_release_events <<INDEX_SET>> {
+  PK pk_diagnostic_release_events : (id) UNIQUE BTREE
+  IX ix_diagnostic_release_events_diagnostic_report_version_id : (diagnostic_report_version_id) BTREE
+  IX ix_diagnostic_release_events_imaging_study_id : (imaging_study_id) BTREE
+  IX ix_diagnostic_release_events_action_concept_id : (action_concept_id) BTREE
+  IX ix_diagnostic_release_events_patient_visibility_concept_id : (patient_visibility_concept_id) BTREE
+  IX ix_diagnostic_release_events_reason_concept_id : (reason_concept_id) BTREE
+  IX ix_diagnostic_release_events_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_diagnostic_release_events_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+diagnostic_release_events .. idxset_diagnostic_release_events : indexed by
+
+entity "INDEXES · specimen_identifiers" as idxset_specimen_identifiers <<INDEX_SET>> {
+  PK pk_specimen_identifiers : (id) UNIQUE BTREE
+  IX ix_specimen_identifiers_specimen_id : (specimen_id) BTREE
+  IX ix_specimen_identifiers_identifier_type_concept_id : (identifier_type_concept_id) BTREE
+  IX ix_specimen_identifiers_assigning_organization_id : (assigning_organization_id) BTREE
+  IX ix_specimen_identifiers_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_specimen_identifiers_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_specimen_identifiers_system_value : (identifier_system, identifier_value) UNIQUE BTREE
+}
+
+specimen_identifiers .. idxset_specimen_identifiers : indexed by
+
+entity "INDEXES · specimen_parent_links" as idxset_specimen_parent_links <<INDEX_SET>> {
+  PK pk_specimen_parent_links : (id) UNIQUE BTREE
+  IX ix_specimen_parent_links_child_specimen_id : (child_specimen_id) BTREE
+  IX ix_specimen_parent_links_parent_specimen_id : (parent_specimen_id) BTREE
+  IX ix_specimen_parent_links_relationship_type_concept_id : (relationship_type_concept_id) BTREE
+  IX ix_specimen_parent_links_quantity_unit_concept_id : (quantity_unit_concept_id) BTREE
+  BRIN brin_specimen_parent_links_created_at : (created_at) BRIN pages_per_range=128
+  UK uk_specimen_parent_links_pair_type : (child_specimen_id, parent_specimen_id, relationship_type_concept_id) UNIQUE BTREE
+}
+
+specimen_parent_links .. idxset_specimen_parent_links : indexed by
+
+entity "INDEXES · specimen_collection_events" as idxset_specimen_collection_events <<INDEX_SET>> {
+  PK pk_specimen_collection_events : (id) UNIQUE BTREE
+  IX ix_specimen_collection_events_specimen_id : (specimen_id) BTREE
+  IX ix_specimen_collection_events_event_type_concept_id : (event_type_concept_id) BTREE
+  IX ix_specimen_collection_events_collector_profile_id : (collector_profile_id) BTREE
+  IX ix_specimen_collection_events_collection_site_id : (collection_site_id) BTREE
+  IX ix_specimen_collection_events_body_site_concept_id : (body_site_concept_id) BTREE
+  IX ix_specimen_collection_events_method_concept_id : (method_concept_id) BTREE
+  IX ix_specimen_collection_events_fasting_status_concept_id : (fasting_status_concept_id) BTREE
+  BRIN brin_specimen_collection_events_occurred_at : (occurred_at) BRIN pages_per_range=128
+}
+
+specimen_collection_events .. idxset_specimen_collection_events : indexed by
+
+entity "INDEXES · specimen_containers" as idxset_specimen_containers <<INDEX_SET>> {
+  PK pk_specimen_containers : (id) UNIQUE BTREE
+  IX ix_specimen_containers_specimen_id : (specimen_id) BTREE
+  IX ix_specimen_containers_container_type_concept_id : (container_type_concept_id) BTREE
+  IX ix_specimen_containers_additive_concept_id : (additive_concept_id) BTREE
+  IX ix_specimen_containers_capacity_unit_concept_id : (capacity_unit_concept_id) BTREE
+  IX ix_specimen_containers_specimen_quantity_unit_concept_id : (specimen_quantity_unit_concept_id) BTREE
+  IX ix_specimen_containers_parent_container_id : (parent_container_id) BTREE
+  IX ix_specimen_containers_status_concept_id : (status_concept_id) BTREE
+  IX ix_specimen_containers_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_specimen_containers_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_specimen_containers_specimen_identifier : (specimen_id, container_identifier) UNIQUE BTREE
+}
+
+specimen_containers .. idxset_specimen_containers : indexed by
+
+entity "INDEXES · specimen_container_events" as idxset_specimen_container_events <<INDEX_SET>> {
+  PK pk_specimen_container_events : (id) UNIQUE BTREE
+  IX ix_specimen_container_events_specimen_container_id : (specimen_container_id) BTREE
+  IX ix_specimen_container_events_event_type_concept_id : (event_type_concept_id) BTREE
+  IX ix_specimen_container_events_source_location_id : (source_location_id) BTREE
+  IX ix_specimen_container_events_destination_location_id : (destination_location_id) BTREE
+  IX ix_specimen_container_events_actor_profile_id : (actor_profile_id) BTREE
+  BRIN brin_specimen_container_events_occurred_at : (occurred_at) BRIN pages_per_range=128
+}
+
+specimen_container_events .. idxset_specimen_container_events : indexed by
+
+entity "INDEXES · specimen_chain_of_custody_events" as idxset_specimen_chain_of_custody_events <<INDEX_SET>> {
+  PK pk_specimen_chain_of_custody_events : (id) UNIQUE BTREE
+  IX ix_specimen_chain_of_custody_events_specimen_id : (specimen_id) BTREE
+  IX ix_specimen_chain_of_custody_events_specimen_container_id : (specimen_container_id) BTREE
+  IX ix_specimen_chain_of_custody_events_custody_event_type_cbadcc6c : (custody_event_type_concept_id) BTREE
+  IX ix_specimen_chain_of_custody_events_from_party_type_concept_id : (from_party_type_concept_id) BTREE
+  IX ix_specimen_chain_of_custody_events_from_party_id : (from_party_id) BTREE
+  IX ix_specimen_chain_of_custody_events_to_party_type_concept_id : (to_party_type_concept_id) BTREE
+  IX ix_specimen_chain_of_custody_events_to_party_id : (to_party_id) BTREE
+  IX ix_specimen_chain_of_custody_events_location_id : (location_id) BTREE
+  IX ix_specimen_chain_of_custody_events_signed_by_user_id : (signed_by_user_id) BTREE
+  BRIN brin_specimen_chain_of_custody_events_occurred_at : (occurred_at) BRIN pages_per_range=128
+}
+
+specimen_chain_of_custody_events .. idxset_specimen_chain_of_custody_events : indexed by
+
+entity "INDEXES · specimen_rejection_events" as idxset_specimen_rejection_events <<INDEX_SET>> {
+  PK pk_specimen_rejection_events : (id) UNIQUE BTREE
+  IX ix_specimen_rejection_events_specimen_id : (specimen_id) BTREE
+  IX ix_specimen_rejection_events_rejection_reason_concept_id : (rejection_reason_concept_id) BTREE
+  IX ix_specimen_rejection_events_rejected_by_profile_id : (rejected_by_profile_id) BTREE
+  IX ix_specimen_rejection_events_recollection_service_request_id : (recollection_service_request_id) BTREE
+  BRIN brin_specimen_rejection_events_created_at : (created_at) BRIN pages_per_range=128
+}
+
+specimen_rejection_events .. idxset_specimen_rejection_events : indexed by
+
+entity "INDEXES · laboratory_accessions" as idxset_laboratory_accessions <<INDEX_SET>> {
+  PK pk_laboratory_accessions : (id) UNIQUE BTREE
+  IX ix_laboratory_accessions_custodian_tenant_id : (custodian_tenant_id) BTREE
+  IX ix_laboratory_accessions_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_laboratory_accessions_encounter_id : (encounter_id) BTREE
+  IX ix_laboratory_accessions_service_request_id : (service_request_id) BTREE
+  IX ix_laboratory_accessions_receiving_site_id : (receiving_site_id) BTREE
+  IX ix_laboratory_accessions_laboratory_unit_id : (laboratory_unit_id) BTREE
+  IX ix_laboratory_accessions_priority_concept_id : (priority_concept_id) BTREE
+  IX ix_laboratory_accessions_status_concept_id : (status_concept_id) BTREE
+  IX ix_laboratory_accessions_source_system_id : (source_system_id) BTREE
+  IX ix_laboratory_accessions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_laboratory_accessions_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_laboratory_accessions_tenant_number : (custodian_tenant_id, accession_number) UNIQUE BTREE
+  IX ix_laboratory_accessions_patient_received : (custodian_tenant_id, patient_profile_id, received_at DESC) BTREE
+}
+
+laboratory_accessions .. idxset_laboratory_accessions : indexed by
+
+entity "INDEXES · accession_specimens" as idxset_accession_specimens <<INDEX_SET>> {
+  PK pk_accession_specimens : (id) UNIQUE BTREE
+  IX ix_accession_specimens_laboratory_accession_id : (laboratory_accession_id) BTREE
+  IX ix_accession_specimens_specimen_id : (specimen_id) BTREE
+  IX ix_accession_specimens_status_concept_id : (status_concept_id) BTREE
+  UK uk_accession_specimens_accession_specimen : (laboratory_accession_id, specimen_id) UNIQUE BTREE
+}
+
+accession_specimens .. idxset_accession_specimens : indexed by
+
+entity "INDEXES · laboratory_work_orders" as idxset_laboratory_work_orders <<INDEX_SET>> {
+  PK pk_laboratory_work_orders : (id) UNIQUE BTREE
+  IX ix_laboratory_work_orders_custodian_tenant_id : (custodian_tenant_id) BTREE
+  IX ix_laboratory_work_orders_laboratory_accession_id : (laboratory_accession_id) BTREE
+  IX ix_laboratory_work_orders_assigned_laboratory_unit_id : (assigned_laboratory_unit_id) BTREE
+  IX ix_laboratory_work_orders_assigned_profile_id : (assigned_profile_id) BTREE
+  IX ix_laboratory_work_orders_priority_concept_id : (priority_concept_id) BTREE
+  IX ix_laboratory_work_orders_status_concept_id : (status_concept_id) BTREE
+  IX ix_laboratory_work_orders_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_laboratory_work_orders_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_lab_work_orders_tenant_number : (custodian_tenant_id, work_order_number) UNIQUE BTREE
+}
+
+laboratory_work_orders .. idxset_laboratory_work_orders : indexed by
+
+entity "INDEXES · laboratory_work_order_tests" as idxset_laboratory_work_order_tests <<INDEX_SET>> {
+  PK pk_laboratory_work_order_tests : (id) UNIQUE BTREE
+  IX ix_laboratory_work_order_tests_laboratory_work_order_id : (laboratory_work_order_id) BTREE
+  IX ix_laboratory_work_order_tests_service_request_id : (service_request_id) BTREE
+  IX ix_laboratory_work_order_tests_test_code_concept_id : (test_code_concept_id) BTREE
+  IX ix_laboratory_work_order_tests_specimen_id : (specimen_id) BTREE
+  IX ix_laboratory_work_order_tests_method_concept_id : (method_concept_id) BTREE
+  IX ix_laboratory_work_order_tests_analyzer_device_id : (analyzer_device_id) BTREE
+  IX ix_laboratory_work_order_tests_status_concept_id : (status_concept_id) BTREE
+  IX ix_laboratory_work_order_tests_observation_id : (observation_id) BTREE
+  IX ix_laboratory_work_order_tests_diagnostic_report_id : (diagnostic_report_id) BTREE
+  IX ix_laboratory_work_order_tests_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_laboratory_work_order_tests_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_lab_work_order_tests_order_request_code : (laboratory_work_order_id, service_request_id, test_code_concept_id) UNIQUE BTREE
+}
+
+laboratory_work_order_tests .. idxset_laboratory_work_order_tests : indexed by
+
+entity "INDEXES · analyzer_runs" as idxset_analyzer_runs <<INDEX_SET>> {
+  PK pk_analyzer_runs : (id) UNIQUE BTREE
+  IX ix_analyzer_runs_custodian_tenant_id : (custodian_tenant_id) BTREE
+  IX ix_analyzer_runs_analyzer_device_id : (analyzer_device_id) BTREE
+  IX ix_analyzer_runs_reagent_lot_id : (reagent_lot_id) BTREE
+  IX ix_analyzer_runs_quality_control_run_id : (quality_control_run_id) BTREE
+  IX ix_analyzer_runs_status_concept_id : (status_concept_id) BTREE
+  IX ix_analyzer_runs_operator_profile_id : (operator_profile_id) BTREE
+  BRIN brin_analyzer_runs_created_at : (created_at) BRIN pages_per_range=128
+  UK uk_analyzer_runs_device_identifier : (analyzer_device_id, run_identifier) UNIQUE BTREE
+}
+
+analyzer_runs .. idxset_analyzer_runs : indexed by
+
+entity "INDEXES · analyzer_result_messages" as idxset_analyzer_result_messages <<INDEX_SET>> {
+  PK pk_analyzer_result_messages : (id) UNIQUE BTREE
+  IX ix_analyzer_result_messages_analyzer_run_id : (analyzer_run_id) BTREE
+  IX ix_analyzer_result_messages_laboratory_work_order_test_id : (laboratory_work_order_test_id) BTREE
+  IX ix_analyzer_result_messages_message_format_concept_id : (message_format_concept_id) BTREE
+  IX ix_analyzer_result_messages_message_control_id : (message_control_id) BTREE
+  IX ix_analyzer_result_messages_raw_message_file_id : (raw_message_file_id) BTREE
+  IX ix_analyzer_result_messages_validation_status_concept_id : (validation_status_concept_id) BTREE
+  IX ix_analyzer_result_messages_mapped_observation_id : (mapped_observation_id) BTREE
+  BRIN brin_analyzer_result_messages_created_at : (created_at) BRIN pages_per_range=128
+  UK uk_analyzer_result_messages_run_control : (analyzer_run_id, message_control_id) UNIQUE BTREE
+}
+
+analyzer_result_messages .. idxset_analyzer_result_messages : indexed by
+
+entity "INDEXES · result_verifications" as idxset_result_verifications <<INDEX_SET>> {
+  PK pk_result_verifications : (id) UNIQUE BTREE
+  IX ix_result_verifications_custodian_tenant_id : (custodian_tenant_id) BTREE
+  IX ix_result_verifications_verifiable_type_concept_id : (verifiable_type_concept_id) BTREE
+  IX ix_result_verifications_verifiable_id : (verifiable_id) BTREE
+  IX ix_result_verifications_verification_level_concept_id : (verification_level_concept_id) BTREE
+  IX ix_result_verifications_result_concept_id : (result_concept_id) BTREE
+  IX ix_result_verifications_verified_by_profile_id : (verified_by_profile_id) BTREE
+  IX ix_result_verifications_previous_verification_id : (previous_verification_id) BTREE
+  IX ix_result_verifications_signature_id : (signature_id) BTREE
+  BRIN brin_result_verifications_created_at : (created_at) BRIN pages_per_range=128
+  IX ix_result_verifications_target : (verifiable_type_concept_id, verifiable_id, verified_at DESC) BTREE
+}
+
+result_verifications .. idxset_result_verifications : indexed by
+
+entity "INDEXES · critical_result_notifications" as idxset_critical_result_notifications <<INDEX_SET>> {
+  PK pk_critical_result_notifications : (id) UNIQUE BTREE
+  IX ix_critical_result_notifications_custodian_tenant_id : (custodian_tenant_id) BTREE
+  IX ix_critical_result_notifications_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_critical_result_notifications_observation_id : (observation_id) BTREE
+  IX ix_critical_result_notifications_diagnostic_report_id : (diagnostic_report_id) BTREE
+  IX ix_critical_result_notifications_criticality_concept_id : (criticality_concept_id) BTREE
+  IX ix_critical_result_notifications_detected_by_profile_id : (detected_by_profile_id) BTREE
+  IX ix_critical_result_notifications_notification_status_concept_id : (notification_status_concept_id) BTREE
+  IX ix_critical_result_notifications_notified_profile_id : (notified_profile_id) BTREE
+  IX ix_critical_result_notifications_acknowledged_by_profile_id : (acknowledged_by_profile_id) BTREE
+  IX ix_critical_result_notifications_escalation_policy_id : (escalation_policy_id) BTREE
+  IX ix_critical_result_notifications_communication_evidence_id : (communication_evidence_id) BTREE
+  IX ix_critical_result_notifications_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_critical_result_notifications_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_critical_results_patient_status_detected : (custodian_tenant_id, patient_profile_id, notification_status_concept_id, detected_at DESC) BTREE
+}
+
+critical_result_notifications .. idxset_critical_result_notifications : indexed by
+
+entity "INDEXES · imaging_procedure_steps" as idxset_imaging_procedure_steps <<INDEX_SET>> {
+  PK pk_imaging_procedure_steps : (id) UNIQUE BTREE
+  IX ix_imaging_procedure_steps_imaging_study_id : (imaging_study_id) BTREE
+  IX ix_imaging_procedure_steps_procedure_id : (procedure_id) BTREE
+  IX ix_imaging_procedure_steps_code_concept_id : (code_concept_id) BTREE
+  IX ix_imaging_procedure_steps_modality_concept_id : (modality_concept_id) BTREE
+  IX ix_imaging_procedure_steps_body_site_concept_id : (body_site_concept_id) BTREE
+  IX ix_imaging_procedure_steps_performed_by_profile_id : (performed_by_profile_id) BTREE
+  IX ix_imaging_procedure_steps_status_concept_id : (status_concept_id) BTREE
+  IX ix_imaging_procedure_steps_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_imaging_procedure_steps_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_imaging_procedure_steps_study_step : (imaging_study_id, step_number) UNIQUE BTREE
+}
+
+imaging_procedure_steps .. idxset_imaging_procedure_steps : indexed by
+
+entity "INDEXES · imaging_selections" as idxset_imaging_selections <<INDEX_SET>> {
+  PK pk_imaging_selections : (id) UNIQUE BTREE
+  IX ix_imaging_selections_custodian_tenant_id : (custodian_tenant_id) BTREE
+  IX ix_imaging_selections_imaging_study_id : (imaging_study_id) BTREE
+  IX ix_imaging_selections_author_profile_id : (author_profile_id) BTREE
+  IX ix_imaging_selections_status_concept_id : (status_concept_id) BTREE
+  IX ix_imaging_selections_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_imaging_selections_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_imaging_selections_study_uid : (imaging_study_id, selection_uid) UNIQUE BTREE
+}
+
+imaging_selections .. idxset_imaging_selections : indexed by
+
+entity "INDEXES · imaging_selection_items" as idxset_imaging_selection_items <<INDEX_SET>> {
+  PK pk_imaging_selection_items : (id) UNIQUE BTREE
+  IX ix_imaging_selection_items_imaging_selection_id : (imaging_selection_id) BTREE
+  IX ix_imaging_selection_items_imaging_series_id : (imaging_series_id) BTREE
+  IX ix_imaging_selection_items_imaging_instance_id : (imaging_instance_id) BTREE
+  IX ix_imaging_selection_items_selection_order : (imaging_selection_id, order_index) BTREE
+}
+
+imaging_selection_items .. idxset_imaging_selection_items : indexed by
+
+entity "INDEXES · dicom_object_locations" as idxset_dicom_object_locations <<INDEX_SET>> {
+  PK pk_dicom_object_locations : (id) UNIQUE BTREE
+  IX ix_dicom_object_locations_imaging_instance_id : (imaging_instance_id) BTREE
+  IX ix_dicom_object_locations_storage_backend_id : (storage_backend_id) BTREE
+  IX ix_dicom_object_locations_object_version_id : (object_version_id) BTREE
+  IX ix_dicom_object_locations_encryption_profile_id : (encryption_profile_id) BTREE
+  IX ix_dicom_object_locations_retention_policy_id : (retention_policy_id) BTREE
+  IX ix_dicom_object_locations_legal_hold_id : (legal_hold_id) BTREE
+  IX ix_dicom_object_locations_status_concept_id : (status_concept_id) BTREE
+  IX ix_dicom_object_locations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_dicom_object_locations_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_dicom_object_locations_backend_key_version : (storage_backend_id, object_key, object_version_id) UNIQUE BTREE
+}
+
+dicom_object_locations .. idxset_dicom_object_locations : indexed by
+
+entity "INDEXES · dicom_structured_reports" as idxset_dicom_structured_reports <<INDEX_SET>> {
+  PK pk_dicom_structured_reports : (id) UNIQUE BTREE
+  IX ix_dicom_structured_reports_imaging_study_id : (imaging_study_id) BTREE
+  IX ix_dicom_structured_reports_imaging_instance_id : (imaging_instance_id) BTREE
+  IX ix_dicom_structured_reports_document_title_concept_id : (document_title_concept_id) BTREE
+  IX ix_dicom_structured_reports_diagnostic_report_id : (diagnostic_report_id) BTREE
+  IX ix_dicom_structured_reports_file_id : (file_id) BTREE
+  IX ix_dicom_structured_reports_status_concept_id : (status_concept_id) BTREE
+  IX ix_dicom_structured_reports_verified_by_profile_id : (verified_by_profile_id) BTREE
+  IX ix_dicom_structured_reports_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_dicom_structured_reports_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_dicom_structured_reports_sop_uid : (sop_instance_uid) UNIQUE BTREE
+}
+
+dicom_structured_reports .. idxset_dicom_structured_reports : indexed by
+
+entity "INDEXES · radiation_dose_events" as idxset_radiation_dose_events <<INDEX_SET>> {
+  PK pk_radiation_dose_events : (id) UNIQUE BTREE
+  IX ix_radiation_dose_events_custodian_tenant_id : (custodian_tenant_id) BTREE
+  IX ix_radiation_dose_events_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_radiation_dose_events_imaging_study_id : (imaging_study_id) BTREE
+  IX ix_radiation_dose_events_imaging_series_id : (imaging_series_id) BTREE
+  IX ix_radiation_dose_events_unit_concept_id : (unit_concept_id) BTREE
+  IX ix_radiation_dose_events_device_id : (device_id) BTREE
+  BRIN brin_radiation_dose_events_recorded_at : (recorded_at) BRIN pages_per_range=128
+  IX ix_radiation_dose_patient_time : (custodian_tenant_id, patient_profile_id, recorded_at DESC) BTREE
+}
+
+radiation_dose_events .. idxset_radiation_dose_events : indexed by
+
+entity "INDEXES · diagnostic_data_quality_events" as idxset_diagnostic_data_quality_events <<INDEX_SET>> {
+  PK pk_diagnostic_data_quality_events : (id) UNIQUE BTREE
+  IX ix_diagnostic_data_quality_events_custodian_tenant_id : (custodian_tenant_id) BTREE
+  IX ix_diagnostic_data_quality_events_target_type_concept_id : (target_type_concept_id) BTREE
+  IX ix_diagnostic_data_quality_events_target_id : (target_id) BTREE
+  IX ix_diagnostic_data_quality_events_severity_concept_id : (severity_concept_id) BTREE
+  IX ix_diagnostic_data_quality_events_status_concept_id : (status_concept_id) BTREE
+  IX ix_diagnostic_data_quality_events_resolved_by_user_id : (resolved_by_user_id) BTREE
+  BRIN brin_diagnostic_data_quality_events_occurred_at : (occurred_at) BRIN pages_per_range=128
+  IX ix_diagnostic_quality_target : (target_type_concept_id, target_id, occurred_at DESC) BTREE
+}
+
+diagnostic_data_quality_events .. idxset_diagnostic_data_quality_events : indexed by
+
+entity "INDEXES · diagnostic_provenance_links" as idxset_diagnostic_provenance_links <<INDEX_SET>> {
+  PK pk_diagnostic_provenance_links : (id) UNIQUE BTREE
+  IX ix_diagnostic_provenance_links_custodian_tenant_id : (custodian_tenant_id) BTREE
+  IX ix_diagnostic_provenance_links_target_type_concept_id : (target_type_concept_id) BTREE
+  IX ix_diagnostic_provenance_links_target_id : (target_id) BTREE
+  IX ix_diagnostic_provenance_links_source_type_concept_id : (source_type_concept_id) BTREE
+  IX ix_diagnostic_provenance_links_source_id : (source_id) BTREE
+  IX ix_diagnostic_provenance_links_activity_concept_id : (activity_concept_id) BTREE
+  IX ix_diagnostic_provenance_links_agent_profile_id : (agent_profile_id) BTREE
+  IX ix_diagnostic_provenance_links_source_system_id : (source_system_id) BTREE
+  BRIN brin_diagnostic_provenance_links_recorded_at : (recorded_at) BRIN pages_per_range=128
+  IX ix_diagnostic_provenance_target : (target_type_concept_id, target_id, recorded_at DESC) BTREE
+  IX ix_diagnostic_provenance_source : (source_type_concept_id, source_id) BTREE
+}
+
+diagnostic_provenance_links .. idxset_diagnostic_provenance_links : indexed by
+
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

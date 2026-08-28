@@ -1,0 +1,520 @@
+@startuml SALUD_Module_06_authz
+title Module 06 — Authorization, Purpose of Use and Field Masking\n(schema: authz)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_06_authz.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_06_authz
+  BUSINESS PURPOSE
+  Fine-grained control of who can do what, down to the individual field
+  and the individual patient record. Combines role-based permissions,
+  per-person exceptions and attribute rules to enforce least-privilege
+  access.
+end note
+
+entity permission_categories {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * name : varchar
+    description : text
+    ordinal : integer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity permissions {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+    category_id : uuid <<FK>>
+  * name : varchar
+  * resource : varchar
+  * action_concept_id : uuid <<FK>>
+    default_scope_concept_id : uuid <<FK>>
+    is_field_level : boolean
+    is_dangerous : boolean
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+  ' + v4.0.1
+  * is_role_restricted : boolean
+    required_role_code : varchar
+  * allow_direct_user_grant : boolean
+}
+entity roles {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+    parent_role_id : uuid <<FK>>
+    base_role_concept_id : uuid <<FK>>
+    scope_concept_id : uuid <<FK>>
+  * is_system : boolean
+  * is_assignable : boolean
+    priority : integer
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity role_permissions {
+  * id : uuid <<PK>>
+  --
+  * role_id : uuid <<FK>>
+  * permission_id : uuid <<FK>>
+  * effect_concept_id : uuid <<FK>>
+    scope_concept_id : uuid <<FK>>
+    constraint_json : jsonb
+    field_value_set_id : uuid <<FK>>
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity user_role_assignments {
+  * id : uuid <<PK>>
+  --
+  * user_id : uuid <<FK>>
+  * role_id : uuid <<FK>>
+    tenant_id : uuid <<FK>>
+    branch_id : uuid <<FK>>
+    practice_id : uuid <<FK>>
+    assigned_by_user_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity user_permission_grants {
+  * id : uuid <<PK>>
+  --
+  * user_id : uuid <<FK>>
+  * permission_id : uuid <<FK>>
+  * effect_concept_id : uuid <<FK>>
+    scope_concept_id : uuid <<FK>>
+    resource_selector_json : jsonb
+    tenant_id : uuid <<FK>>
+    reason : varchar
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity field_permissions {
+  * id : uuid <<PK>>
+  --
+  * role_id : uuid <<FK>>
+  * entity : varchar
+  * column_name : varchar
+  * can_read : boolean
+  * can_write : boolean
+    mask_strategy_concept_id : uuid <<FK>>
+    condition_json : jsonb
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity resource_scope_grants {
+  * id : uuid <<PK>>
+  --
+  * subject_type_concept_id : uuid <<FK>>
+  * subject_id : uuid
+  * permission_id : uuid <<FK>>
+  * resource_type_concept_id : uuid <<FK>>
+  * resource_id : uuid
+  * effect_concept_id : uuid <<FK>>
+    tenant_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity access_policies {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * name : varchar
+  * effect_concept_id : uuid <<FK>>
+    target_resource : varchar
+    condition_json : jsonb
+    priority : integer
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity clinical_access_grants {
+  * id : uuid <<PK>>
+  --
+  * patient_profile_id : uuid <<FK>>
+  * granted_user_id : uuid <<FK>>
+  * tenant_id : uuid <<FK>>
+    branch_id : uuid <<FK>>
+    encounter_id : uuid <<FK>>
+    consent_id : uuid <<FK>>
+  * reason_concept_id : uuid <<FK>>
+  * access_level_concept_id : uuid <<FK>>
+  * state_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+  * valid_to : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+roles ||--o{ role_permissions
+permissions ||--o{ role_permissions
+permission_categories ||--o{ permissions
+roles |o--o{ roles : parent
+roles ||--o{ user_role_assignments
+permissions ||--o{ user_permission_grants
+roles ||--o{ field_permissions
+permissions ||--o{ resource_scope_grants
+
+note as DEP_diagram_06_authz
+  Connects to other modules via:
+  consents, patient_profiles, tenants, users
+end note
+
+note as REC_POLY_AUTHZ_diagram_06_authz
+  REC 3.1 — POLYMORPHIC GRANTS (no DB-level FK)
+resource_scope_grants uses (subject_type_concept_id, subject_id) and
+(resource_type_concept_id, resource_id). Validate both discriminators
+against closed value_sets and via triggers; monitor for orphaned ids.
+end note
+
+
+' ===== v4.0.1 (scheduled campaigns / site-admin / tracking) =====
+entity service_principals {
+  * id : uuid <<PK>>
+  --
+}
+
+' ===== v4.0.1 (scheduled campaigns / site-admin / tracking) ===== (fin entidades)
+
+package "Physical Indexes" {
+entity "INDEXES · permission_categories" as idxset_permission_categories <<INDEX_SET>> {
+  PK pk_permission_categories : (id) UNIQUE BTREE
+  UK uq_permission_categories_code : (code) UNIQUE BTREE
+  IX ix_permission_categories_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_permission_categories_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+permission_categories .. idxset_permission_categories : indexed by
+
+entity "INDEXES · permissions" as idxset_permissions <<INDEX_SET>> {
+  PK pk_permissions : (id) UNIQUE BTREE
+  UK uq_permissions_code : (code) UNIQUE BTREE
+  IX ix_permissions_category_id : (category_id) BTREE
+  IX ix_permissions_action_concept_id : (action_concept_id) BTREE
+  IX ix_permissions_default_scope_concept_id : (default_scope_concept_id) BTREE
+  IX ix_permissions_state_concept_id : (state_concept_id) BTREE
+  IX ix_permissions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_permissions_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+permissions .. idxset_permissions : indexed by
+
+entity "INDEXES · roles" as idxset_roles <<INDEX_SET>> {
+  PK pk_roles : (id) UNIQUE BTREE
+  IX ix_roles_tenant_id : (tenant_id) BTREE
+  IX ix_roles_parent_role_id : (parent_role_id) BTREE
+  IX ix_roles_base_role_concept_id : (base_role_concept_id) BTREE
+  IX ix_roles_scope_concept_id : (scope_concept_id) BTREE
+  IX ix_roles_state_concept_id : (state_concept_id) BTREE
+  IX ix_roles_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_roles_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_roles_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+}
+
+roles .. idxset_roles : indexed by
+
+entity "INDEXES · role_permissions" as idxset_role_permissions <<INDEX_SET>> {
+  PK pk_role_permissions : (id) UNIQUE BTREE
+  IX ix_role_permissions_role_id : (role_id) BTREE
+  IX ix_role_permissions_permission_id : (permission_id) BTREE
+  IX ix_role_permissions_effect_concept_id : (effect_concept_id) BTREE
+  IX ix_role_permissions_scope_concept_id : (scope_concept_id) BTREE
+  IX ix_role_permissions_field_value_set_id : (field_value_set_id) BTREE
+  IX ix_role_permissions_state_concept_id : (state_concept_id) BTREE
+  IX ix_role_permissions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_role_permissions_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+role_permissions .. idxset_role_permissions : indexed by
+
+entity "INDEXES · user_role_assignments" as idxset_user_role_assignments <<INDEX_SET>> {
+  PK pk_user_role_assignments : (id) UNIQUE BTREE
+  IX ix_user_role_assignments_user_id : (user_id) BTREE
+  IX ix_user_role_assignments_role_id : (role_id) BTREE
+  IX ix_user_role_assignments_tenant_id : (tenant_id) BTREE
+  IX ix_user_role_assignments_branch_id : (branch_id) BTREE
+  IX ix_user_role_assignments_practice_id : (practice_id) BTREE
+  IX ix_user_role_assignments_assigned_by_user_id : (assigned_by_user_id) BTREE
+  IX ix_user_role_assignments_status_concept_id : (status_concept_id) BTREE
+  IX ix_user_role_assignments_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_user_role_assignments_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_user_role_assignments_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  GIST gist_user_role_assignments_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+}
+
+user_role_assignments .. idxset_user_role_assignments : indexed by
+
+entity "INDEXES · user_permission_grants" as idxset_user_permission_grants <<INDEX_SET>> {
+  PK pk_user_permission_grants : (id) UNIQUE BTREE
+  IX ix_user_permission_grants_user_id : (user_id) BTREE
+  IX ix_user_permission_grants_permission_id : (permission_id) BTREE
+  IX ix_user_permission_grants_effect_concept_id : (effect_concept_id) BTREE
+  IX ix_user_permission_grants_scope_concept_id : (scope_concept_id) BTREE
+  IX ix_user_permission_grants_tenant_id : (tenant_id) BTREE
+  IX ix_user_permission_grants_state_concept_id : (state_concept_id) BTREE
+  IX ix_user_permission_grants_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_user_permission_grants_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_user_permission_grants_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+}
+
+user_permission_grants .. idxset_user_permission_grants : indexed by
+
+entity "INDEXES · field_permissions" as idxset_field_permissions <<INDEX_SET>> {
+  PK pk_field_permissions : (id) UNIQUE BTREE
+  IX ix_field_permissions_role_id : (role_id) BTREE
+  IX ix_field_permissions_mask_strategy_concept_id : (mask_strategy_concept_id) BTREE
+  IX ix_field_permissions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_field_permissions_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+field_permissions .. idxset_field_permissions : indexed by
+
+entity "INDEXES · resource_scope_grants" as idxset_resource_scope_grants <<INDEX_SET>> {
+  PK pk_resource_scope_grants : (id) UNIQUE BTREE
+  IX ix_resource_scope_grants_subject_type_concept_id : (subject_type_concept_id) BTREE
+  IX ix_resource_scope_grants_permission_id : (permission_id) BTREE
+  IX ix_resource_scope_grants_resource_type_concept_id : (resource_type_concept_id) BTREE
+  IX ix_resource_scope_grants_effect_concept_id : (effect_concept_id) BTREE
+  IX ix_resource_scope_grants_tenant_id : (tenant_id) BTREE
+  IX ix_resource_scope_grants_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_resource_scope_grants_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_resource_scope_grants_tenant_id_updated_at : (tenant_id, updated_at DESC) BTREE
+}
+
+resource_scope_grants .. idxset_resource_scope_grants : indexed by
+
+entity "INDEXES · access_policies" as idxset_access_policies <<INDEX_SET>> {
+  PK pk_access_policies : (id) UNIQUE BTREE
+  IX ix_access_policies_tenant_id : (tenant_id) BTREE
+  IX ix_access_policies_effect_concept_id : (effect_concept_id) BTREE
+  IX ix_access_policies_state_concept_id : (state_concept_id) BTREE
+  IX ix_access_policies_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_access_policies_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_access_policies_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+}
+
+access_policies .. idxset_access_policies : indexed by
+
+entity "INDEXES · clinical_access_grants" as idxset_clinical_access_grants <<INDEX_SET>> {
+  PK pk_clinical_access_grants : (id) UNIQUE BTREE
+  IX ix_clinical_access_grants_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_clinical_access_grants_granted_user_id : (granted_user_id) BTREE
+  IX ix_clinical_access_grants_tenant_id : (tenant_id) BTREE
+  IX ix_clinical_access_grants_branch_id : (branch_id) BTREE
+  IX ix_clinical_access_grants_encounter_id : (encounter_id) BTREE
+  IX ix_clinical_access_grants_consent_id : (consent_id) BTREE
+  IX ix_clinical_access_grants_reason_concept_id : (reason_concept_id) BTREE
+  IX ix_clinical_access_grants_access_level_concept_id : (access_level_concept_id) BTREE
+  IX ix_clinical_access_grants_state_concept_id : (state_concept_id) BTREE
+  IX ix_clinical_access_grants_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_clinical_access_grants_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_clinical_access_grants_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+  IX ix_clinical_access_grants_patient_profile_id_updated_at : (tenant_id, patient_profile_id, updated_at DESC) BTREE
+}
+
+clinical_access_grants .. idxset_clinical_access_grants : indexed by
+' ===== v4.0.1 (scheduled campaigns / site-admin / tracking) ===== (index sets)
+entity "INDEXES · service_principals" as idxset_service_principals <<INDEX_SET>> {
+  PK pk_service_principals : (id) UNIQUE BTREE
+}
+service_principals .. idxset_service_principals : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+
+' ===== v4.0.6 (endurecimiento de seguridad) =====
+
+entity break_glass_sessions {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * user_id : uuid <<FK>>
+  * patient_ref_id : uuid
+  * patient_ref_type_concept_id : uuid <<FK>>
+  * justification : varchar
+  * reason_concept_id : uuid <<FK>>
+    granted_by_policy_id : uuid <<FK>>
+    activated_at : timestamptz
+    expires_at : timestamptz
+    deactivated_at : timestamptz
+    reviewed_by_user_id : uuid <<FK>>
+    reviewed_at : timestamptz
+    review_outcome_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity ip_access_rules {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * scope_concept_id : uuid <<FK>>
+    subject_ref_id : uuid
+    subject_ref_type_concept_id : uuid <<FK>>
+  * rule_type_concept_id : uuid <<FK>>
+  * cidr : varchar
+    description : varchar
+    priority : integer
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' ===== v4.0.6 (endurecimiento de seguridad) ===== (index sets)
+
+entity "INDEXES · break_glass_sessions" as idxset_break_glass_sessions <<INDEX_SET>> {
+  PK pk_break_glass_sessions : (id) UNIQUE BTREE
+  IX ix_break_glass_sessions_user_id : (user_id) BTREE
+  IX ix_break_glass_sessions_tenant_id : (tenant_id) BTREE
+  IX ix_break_glass_sessions_patient_ref_id : (patient_ref_id) BTREE
+  IX ix_break_glass_sessions_status_concept_id : (status_concept_id) BTREE
+  IX ix_break_glass_sessions_review_outcome_concept_id : (review_outcome_concept_id) BTREE
+}
+break_glass_sessions .. idxset_break_glass_sessions : indexed by
+
+entity "INDEXES · ip_access_rules" as idxset_ip_access_rules <<INDEX_SET>> {
+  PK pk_ip_access_rules : (id) UNIQUE BTREE
+  IX ix_ip_access_rules_tenant_id : (tenant_id) BTREE
+  IX ix_ip_access_rules_scope_concept_id : (scope_concept_id) BTREE
+  IX ix_ip_access_rules_rule_type_concept_id : (rule_type_concept_id) BTREE
+}
+ip_access_rules .. idxset_ip_access_rules : indexed by
+
+' ===== v4.0.6 (endurecimiento de seguridad) ===== (relaciones)
+
+access_policies ||--o{ break_glass_sessions
+
+' ==============================================================================
+' ===== v4.0.8 (REDESA — vínculos que alimentan al PDP) =====
+' ==============================================================================
+' Ambas tablas las exigen las reglas REDESA CAN-AUTH-001, C-06, C-07 y A-03, y
+' alimentan al PDP junto con clinical_access_grants. Llegaron primero como DDL
+' suelto en el repositorio de la API (database/SQL/99_migrations/) y se
+' materializaban solas al arrancar con ORM_SCHEMA_SYNC=safe; se incorporan aquí
+' para que la única fuente de verdad vuelva a ser el modelo.
+
+' Relación asistencial practicante↔paciente: vínculo tratante / consultor /
+' emergencia, con vigencia acotada. Fail-closed: sin fila vigente no hay acceso.
+entity care_relationships {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+  * practitioner_profile_id : uuid <<FK>>
+  * relationship_type_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    purpose_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+    established_by_user_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' Representación legal del paciente (tutor, apoderado). `document_ref` guarda la
+' referencia al instrumento que la acredita, no el documento.
+entity patient_legal_representations {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+  * representative_user_id : uuid <<FK>>
+  * representation_type_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+    document_ref : varchar(200)
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity "INDEXES · care_relationships" as idxset_care_relationships <<INDEX_SET>> {
+  PK pk_care_relationships : (id) UNIQUE BTREE
+  IX ix_care_relationships_tenant_id : (tenant_id) BTREE
+  IX ix_care_relationships_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_care_relationships_practitioner_profile_id : (practitioner_profile_id) BTREE
+}
+care_relationships .. idxset_care_relationships : indexed by
+
+entity "INDEXES · patient_legal_representations" as idxset_patient_legal_representations <<INDEX_SET>> {
+  PK pk_patient_legal_representations : (id) UNIQUE BTREE
+  IX ix_patient_legal_representations_tenant_id : (tenant_id) BTREE
+  IX ix_patient_legal_representations_patient_profile_id : (patient_profile_id) BTREE
+}
+patient_legal_representations .. idxset_patient_legal_representations : indexed by
+
+@enduml

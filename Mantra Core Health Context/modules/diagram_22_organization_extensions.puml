@@ -1,0 +1,244 @@
+@startuml SALUD_Module_22_organization_extensions
+title Module 22 — Healthcare Organization Specializations\n(schema: organization_extensions)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_22_organization_extensions.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_22_organization_extensions
+  BUSINESS PURPOSE
+  Keeps one generic infrastructure model while giving hospitals, diagnostic
+  units and pharmacies explicit domain identities. Specialized records extend
+  an existing tenant/practice instead of duplicating organization, location,
+  membership, public-profile or authorization data.
+end note
+
+entity hospitals {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK,UK>>
+  * practice_id : uuid <<FK,UK>>
+    primary_practice_site_id : uuid <<FK>>
+    public_profile_id : uuid <<FK>>
+  * hospital_type_concept_id : uuid <<FK>>
+    care_level_concept_id : uuid <<FK>>
+    ownership_type_concept_id : uuid <<FK>>
+    teaching_status_concept_id : uuid <<FK>>
+    emergency_capability_concept_id : uuid <<FK>>
+    licensed_bed_capacity : integer
+    operational_bed_capacity : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity hospital_service_lines {
+  * id : uuid <<PK>>
+  --
+  * hospital_id : uuid <<FK>>
+    clinical_unit_id : uuid <<FK>>
+    healthcare_service_id : uuid <<FK>>
+  * service_line_concept_id : uuid <<FK>>
+    specialty_concept_id : uuid <<FK>>
+    acuity_level_concept_id : uuid <<FK>>
+    referral_required : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity facility_licenses {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+    practice_site_id : uuid <<FK>>
+  * facility_type_concept_id : uuid <<FK>>
+  * license_type_concept_id : uuid <<FK>>
+  * license_number : varchar
+    issuing_authority_tenant_id : uuid <<FK>>
+    issuing_authority_name : varchar
+    jurisdiction_concept_id : uuid <<FK>>
+    valid_from : date
+    valid_to : date
+    evidence_file_id : uuid <<FK>>
+  * verification_status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity organization_affiliations {
+  * id : uuid <<PK>>
+  --
+  * primary_tenant_id : uuid <<FK>>
+  * participating_tenant_id : uuid <<FK>>
+  * affiliation_type_concept_id : uuid <<FK>>
+    host_practice_site_id : uuid <<FK>>
+    healthcare_service_id : uuid <<FK>>
+    contract_reference : varchar
+    data_use_agreement_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity organization_data_boundaries {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * boundary_type_concept_id : uuid <<FK>>
+  * data_controller_tenant_id : uuid <<FK>>
+    data_processor_tenant_id : uuid <<FK>>
+    jurisdiction_concept_id : uuid <<FK>>
+    residency_region_concept_id : uuid <<FK>>
+    allowed_purpose_value_set_id : uuid <<FK>>
+    isolation_schema_name : varchar
+    isolation_policy_version : varchar
+  * status_concept_id : uuid <<FK>>
+  * effective_from : timestamptz
+    effective_to : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+hospitals ||--o{ hospital_service_lines
+hospitals ||--o{ facility_licenses
+organization_affiliations }o--|| organization_data_boundaries : participating boundary
+
+note as RULES_diagram_22_organization_extensions
+  INTEGRITY RULES
+  - A hospital is a one-to-one specialization of a practice and tenant.
+  - An independent pharmacy or diagnostic unit has its own tenant and data
+    boundary even when physically hosted inside a hospital or office.
+  - Host relationships use organization_affiliations; they do not imply
+    ownership, shared credentials or unrestricted data access.
+  - Public profiles reference the specialized entity through entity_registry.
+end note
+
+note as FHIR_diagram_22_organization_extensions
+  FHIR ALIGNMENT
+  Organization represents the accountable entity; Location represents where
+  care occurs; HealthcareService describes the service; OrganizationAffiliation
+  represents non-hierarchical relationships between separate organizations.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · hospitals" as idxset_hospitals <<INDEX_SET>> {
+  PK pk_hospitals : (id) UNIQUE BTREE
+  UK uq_hospitals_tenant_id : (tenant_id) UNIQUE BTREE
+  UK uq_hospitals_practice_id : (practice_id) UNIQUE BTREE
+  IX ix_hospitals_tenant_id : (tenant_id) BTREE
+  IX ix_hospitals_practice_id : (practice_id) BTREE
+  IX ix_hospitals_primary_practice_site_id : (primary_practice_site_id) BTREE
+  IX ix_hospitals_public_profile_id : (public_profile_id) BTREE
+  IX ix_hospitals_hospital_type_concept_id : (hospital_type_concept_id) BTREE
+  IX ix_hospitals_care_level_concept_id : (care_level_concept_id) BTREE
+  IX ix_hospitals_ownership_type_concept_id : (ownership_type_concept_id) BTREE
+  IX ix_hospitals_teaching_status_concept_id : (teaching_status_concept_id) BTREE
+  IX ix_hospitals_emergency_capability_concept_id : (emergency_capability_concept_id) BTREE
+  IX ix_hospitals_status_concept_id : (status_concept_id) BTREE
+  IX ix_hospitals_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_hospitals_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_hospitals_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+hospitals .. idxset_hospitals : indexed by
+
+entity "INDEXES · hospital_service_lines" as idxset_hospital_service_lines <<INDEX_SET>> {
+  PK pk_hospital_service_lines : (id) UNIQUE BTREE
+  IX ix_hospital_service_lines_hospital_id : (hospital_id) BTREE
+  IX ix_hospital_service_lines_clinical_unit_id : (clinical_unit_id) BTREE
+  IX ix_hospital_service_lines_healthcare_service_id : (healthcare_service_id) BTREE
+  IX ix_hospital_service_lines_service_line_concept_id : (service_line_concept_id) BTREE
+  IX ix_hospital_service_lines_specialty_concept_id : (specialty_concept_id) BTREE
+  IX ix_hospital_service_lines_acuity_level_concept_id : (acuity_level_concept_id) BTREE
+  IX ix_hospital_service_lines_status_concept_id : (status_concept_id) BTREE
+  IX ix_hospital_service_lines_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_hospital_service_lines_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+hospital_service_lines .. idxset_hospital_service_lines : indexed by
+
+entity "INDEXES · facility_licenses" as idxset_facility_licenses <<INDEX_SET>> {
+  PK pk_facility_licenses : (id) UNIQUE BTREE
+  IX ix_facility_licenses_tenant_id : (tenant_id) BTREE
+  IX ix_facility_licenses_practice_site_id : (practice_site_id) BTREE
+  IX ix_facility_licenses_facility_type_concept_id : (facility_type_concept_id) BTREE
+  IX ix_facility_licenses_license_type_concept_id : (license_type_concept_id) BTREE
+  IX ix_facility_licenses_issuing_authority_tenant_id : (issuing_authority_tenant_id) BTREE
+  IX ix_facility_licenses_jurisdiction_concept_id : (jurisdiction_concept_id) BTREE
+  IX ix_facility_licenses_evidence_file_id : (evidence_file_id) BTREE
+  IX ix_facility_licenses_verification_status_concept_id : (verification_status_concept_id) BTREE
+  IX ix_facility_licenses_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_facility_licenses_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_facility_licenses_tenant_id_updated_at : (tenant_id, updated_at DESC) BTREE
+}
+
+facility_licenses .. idxset_facility_licenses : indexed by
+
+entity "INDEXES · organization_affiliations" as idxset_organization_affiliations <<INDEX_SET>> {
+  PK pk_organization_affiliations : (id) UNIQUE BTREE
+  IX ix_organization_affiliations_primary_tenant_id : (primary_tenant_id) BTREE
+  IX ix_organization_affiliations_participating_tenant_id : (participating_tenant_id) BTREE
+  IX ix_organization_affiliations_affiliation_type_concept_id : (affiliation_type_concept_id) BTREE
+  IX ix_organization_affiliations_host_practice_site_id : (host_practice_site_id) BTREE
+  IX ix_organization_affiliations_healthcare_service_id : (healthcare_service_id) BTREE
+  IX ix_organization_affiliations_data_use_agreement_id : (data_use_agreement_id) BTREE
+  IX ix_organization_affiliations_status_concept_id : (status_concept_id) BTREE
+  IX ix_organization_affiliations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_organization_affiliations_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+organization_affiliations .. idxset_organization_affiliations : indexed by
+
+entity "INDEXES · organization_data_boundaries" as idxset_organization_data_boundaries <<INDEX_SET>> {
+  PK pk_organization_data_boundaries : (id) UNIQUE BTREE
+  IX ix_organization_data_boundaries_tenant_id : (tenant_id) BTREE
+  IX ix_organization_data_boundaries_boundary_type_concept_id : (boundary_type_concept_id) BTREE
+  IX ix_organization_data_boundaries_data_controller_tenant_id : (data_controller_tenant_id) BTREE
+  IX ix_organization_data_boundaries_data_processor_tenant_id : (data_processor_tenant_id) BTREE
+  IX ix_organization_data_boundaries_jurisdiction_concept_id : (jurisdiction_concept_id) BTREE
+  IX ix_organization_data_boundaries_residency_region_concept_id : (residency_region_concept_id) BTREE
+  IX ix_organization_data_boundaries_allowed_purpose_value_set_id : (allowed_purpose_value_set_id) BTREE
+  IX ix_organization_data_boundaries_status_concept_id : (status_concept_id) BTREE
+  IX ix_organization_data_boundaries_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_organization_data_boundaries_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_organization_data_boundaries_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+organization_data_boundaries .. idxset_organization_data_boundaries : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

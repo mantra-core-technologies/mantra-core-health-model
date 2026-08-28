@@ -1,0 +1,475 @@
+{
+  "status": "PASS",
+  "verified_at": "2026-07-19T00:00:00Z",
+  "module_count": 64,
+  "boot_records": 4736,
+  "mock_records": 18789,
+  "total_records": 23525,
+  "unique_ids": 20729,
+  "duplicate_ids": 0,
+  "record_count_mismatches": [],
+  "residual_filler_dicts": 0,
+  "non_mock_emails": 0,
+  "cross_module_id_refs": {
+    "distinct": 6705,
+    "resolved_in_package": 4921,
+    "external_or_reference_only": 1784
+  },
+  "amplification": {
+    "scope": "all 64 modules (boot+mock)",
+    "total_rows_before": 13769,
+    "total_rows_after": 23525,
+    "method": "bounded generalized enrichment (~1.7x): realistic per-field variety (timestamps, amounts, statuses), distinct payload vs metadata envelope, generic filler removed, deterministic UUIDv5, FKs preserved",
+    "messaging_event_backbone": "hand-crafted connected flows (25 events / 14 subs / 47 deliveries) preserved"
+  },
+  "per_module": [
+    {
+      "number": 0,
+      "code": "platform",
+      "boot": 0,
+      "mock": 0,
+      "sha256": "f92c192051cbb75bca2967d9e3e8482504f3afc65117f3307d391ef40cc9317f"
+    },
+    {
+      "number": 1,
+      "code": "iam",
+      "boot": 20,
+      "mock": 124,
+      "sha256": "545e229372a7ac20d14bc6ef17381122673f720fcb4495f2ec9a0a8752af11aa"
+    },
+    {
+      "number": 2,
+      "code": "common",
+      "boot": 0,
+      "mock": 112,
+      "sha256": "23d2636824b6aeb0a10dbcce479b1e7dfb2a34c1d805ea0f75cd8a74c1a921e0"
+    },
+    {
+      "number": 3,
+      "code": "terminology",
+      "boot": 1701,
+      "mock": 180,
+      "sha256": "c8aadeacb3a4e60b8bb7abcd16453e8d8a7ea552ca59e129bca5789b3471d1c2"
+    },
+    {
+      "number": 4,
+      "code": "directory",
+      "boot": 20,
+      "mock": 64,
+      "sha256": "d9d1cca6edd082aa05e73411cfcf3c735c06a332286500f7b35c10d4b0373c91"
+    },
+    {
+      "number": 5,
+      "code": "profiles",
+      "boot": 0,
+      "mock": 288,
+      "sha256": "35e2eb4201cc5812680cd8bad99bf15e4262d67f83a3c1f7d94dfb9b81899784"
+    },
+    {
+      "number": 6,
+      "code": "authz",
+      "boot": 385,
+      "mock": 160,
+      "sha256": "cfafd86654f7457cc61da5da149644cba0b7f3156496288ffafe176e605b84e2"
+    },
+    {
+      "number": 7,
+      "code": "consent",
+      "boot": 20,
+      "mock": 160,
+      "sha256": "caa08ac7fef40e43b50dbf0923cba119353e78abff549e323ce427b1d736eb1c"
+    },
+    {
+      "number": 8,
+      "code": "clinical",
+      "boot": 0,
+      "mock": 336,
+      "sha256": "a7a40427226edcd05bde4269317a60690a135fecada7d490da1aa4794b08593b"
+    },
+    {
+      "number": 9,
+      "code": "forms",
+      "boot": 90,
+      "mock": 256,
+      "sha256": "91324cd989000e7b56b58dd93fc1e0daf626a065fc5d7de287a7658639f80e84"
+    },
+    {
+      "number": 10,
+      "code": "audit",
+      "boot": 0,
+      "mock": 1968,
+      "sha256": "539d83ef194e3f719e488779e6c62e36bc2c01f79bf1713f5af2e2abebdb7fd5"
+    },
+    {
+      "number": 11,
+      "code": "system_ops",
+      "boot": 110,
+      "mock": 384,
+      "sha256": "9b9bfced61b8bce5e9f73a2a2ee99658ec903729d494dd290c61d320e9c4835e"
+    },
+    {
+      "number": 12,
+      "code": "integrations",
+      "boot": 40,
+      "mock": 160,
+      "sha256": "34de74717207aa2ab4a604f71de83e31280cb1c928eaade3bceac050cf1ad4fc"
+    },
+    {
+      "number": 13,
+      "code": "geo",
+      "boot": 0,
+      "mock": 96,
+      "sha256": "b994394b3c540a736d1047b7d20ad554811b4e3edd45b70b23b74b46e8c55923"
+    },
+    {
+      "number": 14,
+      "code": "practice",
+      "boot": 60,
+      "mock": 176,
+      "sha256": "d3e294fa919971d2e4bdcd983a0cdfe2eefb223bc43b7fb7ae5726550ffa0a40"
+    },
+    {
+      "number": 15,
+      "code": "chart",
+      "boot": 20,
+      "mock": 176,
+      "sha256": "b335badf9a5c75e7ff596389117abb149c2dedbac45ea5743972bc6cd146da7f"
+    },
+    {
+      "number": 16,
+      "code": "accounting",
+      "boot": 110,
+      "mock": 671,
+      "sha256": "45f6f1dc99c225a7e101289689dffab6b6d191f59046d1ec1d49b6a6edbb2745"
+    },
+    {
+      "number": 17,
+      "code": "billing",
+      "boot": 20,
+      "mock": 316,
+      "sha256": "c0cdc92e66b470bba760d5985cd926a463d54e4aafa0a126907c7924ebb30f87"
+    },
+    {
+      "number": 18,
+      "code": "clinical_ext",
+      "boot": 50,
+      "mock": 192,
+      "sha256": "1bb1d7af26337a61b3ca2b8e601befdbfd2b9e61adea2d991b1bbefaa8dbbf6d"
+    },
+    {
+      "number": 19,
+      "code": "community",
+      "boot": 20,
+      "mock": 528,
+      "sha256": "ffdfbe81f230688bd36b30151d2209bf53b74e87690d6bf914303185946a693c"
+    },
+    {
+      "number": 20,
+      "code": "diagnostics",
+      "boot": 10,
+      "mock": 576,
+      "sha256": "95efc7e589e5cf308d2d9061266308562115d51e32cc9f655cf4611a21e7e8fa"
+    },
+    {
+      "number": 21,
+      "code": "deployment",
+      "boot": 0,
+      "mock": 0,
+      "sha256": "9d03cedd04705317aa7e4f5e618462878b748b99eb1104cf784211d39d4bf4e3"
+    },
+    {
+      "number": 22,
+      "code": "organization_extensions",
+      "boot": 0,
+      "mock": 80,
+      "sha256": "ad1a3ed95dbb43099b0aed3c7c46a5676b9c550c41f028a785aa1d6a3292b370"
+    },
+    {
+      "number": 23,
+      "code": "diagnostic_units",
+      "boot": 0,
+      "mock": 160,
+      "sha256": "1436e065ef3484bb5f014d6dd298209c72883c4f13d1314dd27b27ab9f4760e5"
+    },
+    {
+      "number": 24,
+      "code": "pharmacy",
+      "boot": 0,
+      "mock": 144,
+      "sha256": "3815ce827df5e4d011c569148cf25c36abc941703422823ec27df5f1edba28b0"
+    },
+    {
+      "number": 25,
+      "code": "pharmacy_inventory",
+      "boot": 0,
+      "mock": 304,
+      "sha256": "9ab03ca2eae532a375efb11a774ac1bf3aedf265386c08ae8a6e523e3e9f2af9"
+    },
+    {
+      "number": 26,
+      "code": "insurance",
+      "boot": 0,
+      "mock": 456,
+      "sha256": "8ed429c430d9a502fedf656bce34815719bec160bd969adf4bc8a45915f73701"
+    },
+    {
+      "number": 27,
+      "code": "identity_assurance",
+      "boot": 30,
+      "mock": 176,
+      "sha256": "d649f85523c773de613db0b1a25eb1361e6a7e0660c987453b816cdce73df041"
+    },
+    {
+      "number": 28,
+      "code": "telemetry",
+      "boot": 50,
+      "mock": 224,
+      "sha256": "94a854e16f1d783e900dd769f1a6f81f20fc3355e29b1188575bb27aeb128991"
+    },
+    {
+      "number": 29,
+      "code": "delegated_access",
+      "boot": 20,
+      "mock": 112,
+      "sha256": "db487df8d02649966c66528945cdc93073dfcedbdb6dae95e25ca50b70bd1ada"
+    },
+    {
+      "number": 30,
+      "code": "read_models",
+      "boot": 110,
+      "mock": 208,
+      "sha256": "8ef540b32b49b507115094f14b3c8320860b9f1b3cf6d06bae0b0c5f700cc95b"
+    },
+    {
+      "number": 31,
+      "code": "integration_contracts",
+      "boot": 30,
+      "mock": 144,
+      "sha256": "06b5721448319d9bfc0430427e8302c7caf2ecaa320c50a46b94a85ceee6214d"
+    },
+    {
+      "number": 32,
+      "code": "workflow",
+      "boot": 240,
+      "mock": 128,
+      "sha256": "d25e2a1966d9e46773da2f67df5bf471d527a41ca196dfde40b51154ae07ba35"
+    },
+    {
+      "number": 33,
+      "code": "integrity",
+      "boot": 0,
+      "mock": 0,
+      "sha256": "eac4feef6ed9e0d850d529f09fbce3083f64dd0b82733d30089afb465b5d3399"
+    },
+    {
+      "number": 34,
+      "code": "portal_catalog",
+      "boot": 0,
+      "mock": 0,
+      "sha256": "c8474d8de236795404868af6f8a173e692163672306d0341aeb713c96b4cb1e7"
+    },
+    {
+      "number": 35,
+      "code": "messaging",
+      "boot": 68,
+      "mock": 294,
+      "sha256": "62f31a99e62e1438fe85ad3d34a33d0c13eef63d760d545225d790bed05ab51b"
+    },
+    {
+      "number": 36,
+      "code": "qa_lab",
+      "boot": 60,
+      "mock": 208,
+      "sha256": "269c78ebbe843568136a4dceda6c8766d975fb6b1a1b39919cebb1467f23d925"
+    },
+    {
+      "number": 37,
+      "code": "tracking",
+      "boot": 20,
+      "mock": 128,
+      "sha256": "02f2a37243b41f324c2ca0a4053080af594e5d83291acf94c1bd168cf5d51381"
+    },
+    {
+      "number": 38,
+      "code": "erp",
+      "boot": 20,
+      "mock": 816,
+      "sha256": "4bb3e89f77237c67f64c70661b43355d19f893ed970ca7e88e9137e01dcd4272"
+    },
+    {
+      "number": 39,
+      "code": "reporting",
+      "boot": 92,
+      "mock": 192,
+      "sha256": "c1a5675f5b7e6e284aa4c335628ea4c48667c7340bf2533de8b4a243ccfd3dde"
+    },
+    {
+      "number": 40,
+      "code": "auth_providers",
+      "boot": 50,
+      "mock": 144,
+      "sha256": "58c212559ef73ad413231ed616d8c63d14c9855454f5309b61780602c6211027"
+    },
+    {
+      "number": 41,
+      "code": "scheduling",
+      "boot": 10,
+      "mock": 224,
+      "sha256": "9a7d1e2a13d981f591eac2187bc1174383e59b6a49ed1a5b5076660cfd5815d7"
+    },
+    {
+      "number": 42,
+      "code": "payments",
+      "boot": 90,
+      "mock": 738,
+      "sha256": "cb7a7667c4b78199562abc29997a002b3b97b0d5b71142e12e72ffff318c1f27"
+    },
+    {
+      "number": 43,
+      "code": "ads",
+      "boot": 40,
+      "mock": 1168,
+      "sha256": "ae0e88740c87af719ceb18d57fd3f00d84bf5e53afbf422b7e7c5244f52dd6c2"
+    },
+    {
+      "number": 44,
+      "code": "health_context",
+      "boot": 30,
+      "mock": 160,
+      "sha256": "14ca4edff8d650731c2cc28f38cc944a8636de3c7e19197d65e6a604c8e77161"
+    },
+    {
+      "number": 45,
+      "code": "system_context",
+      "boot": 62,
+      "mock": 144,
+      "sha256": "0955a53618a9815375d8572ae574e09d2f4c1b1e1d9b1300c77eab6cdcea9ea9"
+    },
+    {
+      "number": 46,
+      "code": "platform_ops",
+      "boot": 225,
+      "mock": 608,
+      "sha256": "7fe7c3494da360ae3f83399eddef6b4703229d61af42a30ee942a30df36fe351"
+    },
+    {
+      "number": 47,
+      "code": "education",
+      "boot": 0,
+      "mock": 240,
+      "sha256": "8933f580f959916a245a5a1506294315c3916a5d802a9f8b64f77ef9aea4f577"
+    },
+    {
+      "number": 48,
+      "code": "automation",
+      "boot": 100,
+      "mock": 256,
+      "sha256": "fb3fe7723591b6bbc93f4d2490f8af339c5c1cb2fbf74f62539cb232bd62e64d"
+    },
+    {
+      "number": 49,
+      "code": "crm",
+      "boot": 40,
+      "mock": 492,
+      "sha256": "2949e0f1a610001fcf36120ef81603d15137aece11b3c12a90b763afaf82a672"
+    },
+    {
+      "number": 50,
+      "code": "marketing",
+      "boot": 40,
+      "mock": 176,
+      "sha256": "2c9b319690df3b6ca016d051423b0384d14e08f7176a24969190396be5bb0e27"
+    },
+    {
+      "number": 51,
+      "code": "promotions",
+      "boot": 70,
+      "mock": 176,
+      "sha256": "87c6edd8eb097baa5bc72ed14694d43abbbd13006a7a8209c52f922e720cddac"
+    },
+    {
+      "number": 52,
+      "code": "health_data",
+      "boot": 100,
+      "mock": 544,
+      "sha256": "cbd59d2fe8679555502a53993c5ea61213e3230b2e445d82b9592a498316977b"
+    },
+    {
+      "number": 53,
+      "code": "procedures_perioperative",
+      "boot": 0,
+      "mock": 560,
+      "sha256": "f646fd15947bb360d7ffb72047b3eb7dc055d68ddcd2e71bfd3460035d941c6c"
+    },
+    {
+      "number": 54,
+      "code": "polyglot_storage",
+      "boot": 231,
+      "mock": 320,
+      "sha256": "384c370816c29bf4d79603d17433659a4422012a3b34872312214cebd7b21d29"
+    },
+    {
+      "number": 55,
+      "code": "document_store",
+      "boot": 0,
+      "mock": 208,
+      "sha256": "72e83c263dc69217ee5992b848fa92bf7f10c552d341f665fc61bf1c35990507"
+    },
+    {
+      "number": 56,
+      "code": "redis_runtime",
+      "boot": 0,
+      "mock": 224,
+      "sha256": "93522c351d2b0829bffee50b06f2d83df6035ae8270b8254c70fc787edc0eb69"
+    },
+    {
+      "number": 57,
+      "code": "search_platform",
+      "boot": 12,
+      "mock": 208,
+      "sha256": "9a02780c559eb31416577de7601f283dcb2ed12de44a689c334aeb3f41980fd8"
+    },
+    {
+      "number": 58,
+      "code": "time_series",
+      "boot": 0,
+      "mock": 192,
+      "sha256": "4da98191616ed130d071dfaacf71f0db43221af38f180fe69a3f0c91324b6ed1"
+    },
+    {
+      "number": 59,
+      "code": "vector_rag",
+      "boot": 40,
+      "mock": 224,
+      "sha256": "21cea38efa483db7c4265faa746464df994e171ba6300b7f272cc6963f2ef30a"
+    },
+    {
+      "number": 60,
+      "code": "object_storage",
+      "boot": 10,
+      "mock": 272,
+      "sha256": "5f871d0a055c6a018e5306263d5e81175850c80f7b2b123b24149126157485ca"
+    },
+    {
+      "number": 61,
+      "code": "graph_intelligence",
+      "boot": 30,
+      "mock": 208,
+      "sha256": "2edc1d0d6e6a6392a45b4efcb6166b400eadcef1e6a8e99ba98c247e498babb4"
+    },
+    {
+      "number": 62,
+      "code": "cross_store_consistency",
+      "boot": 40,
+      "mock": 320,
+      "sha256": "a31c21d0c0ad80f7adb01081d148f6b2a563018fdd853ed8f76d007c38a1bc91"
+    },
+    {
+      "number": 63,
+      "code": "lakehouse",
+      "boot": 100,
+      "mock": 286,
+      "sha256": "cbae9a0b5759e9737aee03515ab7bf4783087ec8496c7d3f0c40c4776e1f694f"
+    }
+  ]
+}

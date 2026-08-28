@@ -1,0 +1,195 @@
+@startuml SALUD_Module_64_audio_assets
+title Module 64 — Audio Assets (cache-first TTS)\n(schema: audio_assets)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: promoted from mantra-core-health-api/src/modules/audio_assets
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_64_audio_assets
+  BUSINESS PURPOSE
+  Cache-first text-to-speech for onboarding and other bounded experiences.
+  Only registered templates are ever synthesized — there is no free-text TTS
+  endpoint. A rendered text is hashed into a stable asset identity, so the same
+  phrase is generated once and served from own storage from then on. Monthly
+  provider spend is reserved before generating and settled — or returned — when
+  the asset reaches a terminal state.
+end note
+
+entity audio_templates {
+  * id : uuid <<PK>>
+  --
+  * template_key : varchar
+  * version : integer
+  * strategy : varchar
+  * language : varchar
+  * text_template : text
+    fallback_text : text
+  * dynamic_fields_json : jsonb
+  * voice_profile : varchar
+  * enabled : boolean
+  * metadata : jsonb
+  * created_at : timestamptz
+  * updated_at : timestamptz
+}
+entity audio_assets {
+  * id : uuid <<PK>>
+  --
+  * asset_key : char(64)
+    tenant_id : uuid <<FK>>
+  * template_key : varchar
+  * template_version : integer
+  * strategy : varchar
+  * language : varchar
+    normalized_value_hash : char(64)
+  * display_value_encrypted : text
+  * rendered_text_hash : char(64)
+  * provider : varchar
+  * provider_model : varchar
+  * voice_profile : varchar
+    voice_provider_ref : varchar
+  * voice_version : integer
+  * normalizer_version : integer
+  * audio_format : varchar
+    sample_rate : integer
+    storage_provider : varchar
+    storage_key : varchar
+    bytes : integer
+    duration_ms : integer
+    checksum_sha256 : char(64)
+  * generation_status : varchar
+    failure_code : varchar
+    budget_reserved_units : integer
+    budget_period_key : varchar(7)
+    generated_at : timestamptz
+    last_used_at : timestamptz
+  * use_count : integer
+  * metadata : jsonb
+  * created_at : timestamptz
+  * updated_at : timestamptz
+}
+entity audio_generation_events {
+  * id : uuid <<PK>>
+  --
+    asset_key : char(64)
+  * event_type : varchar
+    provider : varchar
+    template_key : varchar
+  * outcome : varchar
+    error_code : varchar
+    duration_ms : integer
+    estimated_cost_units : integer
+    correlation_id : varchar
+    trace_id : varchar
+  * metadata : jsonb
+  * created_at : timestamptz
+}
+entity audio_generation_usage {
+  * id : uuid <<PK>>
+  --
+  * period_key : varchar
+  * provider : varchar
+  * estimated_credits : integer
+    consumed_credits : integer
+  * request_count : integer
+  * success_count : integer
+  * failure_count : integer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+}
+
+audio_templates ||--o{ audio_assets
+audio_assets ||--o{ audio_generation_events
+
+note as DEP_diagram_64_audio_assets
+  Connects to other modules via:
+  tenants
+end note
+
+note as REC_KEY_AUDIO_diagram_64_audio_assets
+  REC 64.1 — NATURAL-KEY LINKS, NOT FOREIGN KEYS
+audio_assets.template_key and audio_generation_events.asset_key/template_key
+carry the natural key of their counterpart, not its surrogate id, and no FK
+constraint enforces them. That is deliberate on the events side: the log has to
+survive the asset it describes, including generations that failed before any
+asset row reached a terminal state. On audio_assets.template_key it is a
+consequence — the template's business key is (template_key, version), so a
+single-column FK could not reference it. Revisit together with any change to
+the template versioning scheme.
+end note
+
+note as REC_TENANT_AUDIO_diagram_64_audio_assets
+  REC 64.2 — TENANT SCOPE IS PART OF THE IDENTITY
+tenant_id is NULL for platform-shared audio (STATIC, FALLBACK and ENUMERATED
+renders, which cannot identify anybody) and set for renders that substituted a
+PERSON_NAME or SAFE_TEXT field. It also participates in asset_key and in the
+reusable-binary lookup: sharing the row across tenants would turn a cache hit
+into proof that a given name exists in the other tenant. Any query that reads
+assets by hash must filter with IS NOT DISTINCT FROM, never =, or shared audio
+stops being reusable.
+end note
+
+note as REC_BUDGET_AUDIO_diagram_64_audio_assets
+  REC 64.3 — RESERVATIONS CLOSE IN THEIR OWN WINDOW
+budget_reserved_units is settled into audio_generation_usage.consumed_credits
+on success and returned to estimated_credits on FAILED_PERMANENT or
+FALLBACK_ONLY. Both paths must charge budget_period_key — the window the
+reservation was taken in — and not the clock: an asset reserved on the 31st and
+generated on the 1st would otherwise update no row at all, losing the
+consumption and stranding the previous month's credit. Exactly-once is enforced
+by reading the row FOR UPDATE and nulling budget_reserved_units in the same
+transaction.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · audio_templates" as idxset_audio_templates <<INDEX_SET>> {
+  PK pk_audio_templates : (id) UNIQUE BTREE
+  UK uq_audio_templates_key_version : (template_key, version) UNIQUE BTREE
+}
+
+audio_templates .. idxset_audio_templates : indexed by
+
+entity "INDEXES · audio_assets" as idxset_audio_assets <<INDEX_SET>> {
+  PK pk_audio_assets : (id) UNIQUE BTREE
+  UK uq_audio_assets_asset_key : (asset_key) UNIQUE BTREE
+  IX ix_audio_assets_template_status : (template_key, template_version, generation_status) BTREE
+  IX ix_audio_assets_last_used_at : (last_used_at) BTREE
+  IX ix_audio_assets_synthesis_reuse : (rendered_text_hash, provider, provider_model, voice_version, generation_status) BTREE
+  IX ix_audio_assets_tenant_reuse : (tenant_id, rendered_text_hash, generation_status) BTREE
+  IX ix_audio_assets_tenant_id : (tenant_id) BTREE
+}
+
+audio_assets .. idxset_audio_assets : indexed by
+
+entity "INDEXES · audio_generation_events" as idxset_audio_generation_events <<INDEX_SET>> {
+  PK pk_audio_generation_events : (id) UNIQUE BTREE
+  IX ix_audio_generation_events_asset_created : (asset_key, created_at DESC) BTREE
+  IX ix_audio_generation_events_template_created : (template_key, created_at DESC) BTREE
+}
+
+audio_generation_events .. idxset_audio_generation_events : indexed by
+
+entity "INDEXES · audio_generation_usage" as idxset_audio_generation_usage <<INDEX_SET>> {
+  PK pk_audio_generation_usage : (id) UNIQUE BTREE
+  UK uq_audio_generation_usage_period_provider : (period_key, provider) UNIQUE BTREE
+}
+
+audio_generation_usage .. idxset_audio_generation_usage : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

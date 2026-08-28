@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://salud.example.invalid/schemas/module-seed.schema.json",
+  "title": "SALUD Module Seed File",
+  "type": "object",
+  "required": [
+    "module",
+    "environment_policy",
+    "boot",
+    "mock",
+    "integrity_contract"
+  ],
+  "properties": {
+    "module": {
+      "type": "object",
+      "required": [
+        "number",
+        "code",
+        "source_file",
+        "source_sha256"
+      ]
+    },
+    "environment_policy": {
+      "type": "object",
+      "required": [
+        "boot",
+        "mock"
+      ]
+    },
+    "boot": {
+      "type": "object",
+      "required": [
+        "load_order",
+        "record_count",
+        "records",
+        "entity_seed_policies"
+      ]
+    },
+    "mock": {
+      "type": "object",
+      "required": [
+        "load_order",
+        "record_count",
+        "records"
+      ]
+    },
+    "integrity_contract": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": true
+}

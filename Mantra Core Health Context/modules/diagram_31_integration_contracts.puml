@@ -1,0 +1,311 @@
+@startuml SALUD_Module_31_integration_contracts
+title Module 31 — Governed Backend-to-Backend Contracts\n(schema: integration_contracts)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_31_integration_contracts.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_31_integration_contracts
+  BUSINESS PURPOSE
+  Supports ministries, government data centers, insurers, pharmacies,
+  diagnostic units and other external systems through versioned contracts,
+  sender-constrained authentication, idempotency and complete exchange evidence.
+end note
+
+entity integration_contracts {
+  * id : uuid <<PK>>
+  --
+  * external_provider_id : uuid <<FK>>
+  * contract_code : varchar
+  * capability_concept_id : uuid <<FK>>
+    data_classification_concept_id : uuid <<FK>>
+    legal_basis_concept_id : uuid <<FK>>
+    allowed_purpose_value_set_id : uuid <<FK>>
+    data_use_agreement_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity integration_contract_versions {
+  * id : uuid <<PK>>
+  --
+  * integration_contract_id : uuid <<FK>>
+  * version_number : integer
+    request_schema_file_id : uuid <<FK>>
+    response_schema_file_id : uuid <<FK>>
+    openapi_file_id : uuid <<FK>>
+    mapping_profile_id : uuid <<FK>>
+    effective_from : timestamptz
+    effective_to : timestamptz
+    contract_hash : varchar
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+
+entity integration_auth_profiles {
+  * id : uuid <<PK>>
+  --
+  * integration_contract_id : uuid <<FK>>
+  * auth_profile_concept_id : uuid <<FK>>
+    oauth_issuer_uri : text
+    client_identifier : varchar
+    credential_secret_reference : text
+    token_binding_concept_id : uuid <<FK>>
+    mtls_certificate_reference : text
+    dpop_key_reference : text
+    scopes_json : jsonb
+    audience : varchar
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity integration_exchange_records <<APPEND_ONLY>> {
+  * id : uuid <<PK>>
+  --
+  * integration_contract_version_id : uuid <<FK>>
+  * direction_concept_id : uuid <<FK>>
+  * message_type_concept_id : uuid <<FK>>
+    business_identifier : varchar
+    idempotency_key : varchar
+    correlation_id : uuid
+    subject_type_concept_id : uuid <<FK>>
+    subject_entity_id : uuid
+    request_hash : varchar
+    response_hash : varchar
+    payload_file_id : uuid <<FK>>
+    received_at : timestamptz
+    completed_at : timestamptz
+  * outcome_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity integration_exchange_attempts <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * integration_exchange_record_id : uuid <<FK>>
+  * attempt_number : integer
+    endpoint_id : uuid <<FK>>
+    started_at : timestamptz
+    completed_at : timestamptz
+    http_status : integer
+    provider_error_code : varchar
+    retry_decision_concept_id : uuid <<FK>>
+    next_retry_at : timestamptz
+    trace_id : varchar
+  * outcome_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity integration_idempotency_records {
+  * id : uuid <<PK>>
+  --
+  * integration_contract_id : uuid <<FK>>
+  * idempotency_key : varchar
+  * operation_concept_id : uuid <<FK>>
+    request_hash : varchar
+    first_exchange_record_id : uuid <<FK>>
+    response_reference : varchar
+    expires_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity integration_sync_cursors {
+  * id : uuid <<PK>>
+  --
+  * integration_contract_id : uuid <<FK>>
+  * cursor_scope : varchar
+  * cursor_value : text
+    watermark_at : timestamptz
+    last_successful_exchange_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  * row_version : integer
+}
+
+entity contract_webhook_subscriptions {
+  * id : uuid <<PK>>
+  --
+  * integration_contract_id : uuid <<FK>>
+  * event_type_concept_id : uuid <<FK>>
+    callback_uri : text
+    signing_key_reference : text
+    secret_reference : text
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity webhook_delivery_evidence <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * webhook_subscription_id : uuid <<FK>>
+  * integration_exchange_record_id : uuid <<FK>>
+    signature_algorithm : varchar
+    signature_verification_concept_id : uuid <<FK>>
+    delivered_at : timestamptz
+    acknowledged_at : timestamptz
+  * outcome_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+integration_contracts ||--o{ integration_contract_versions
+integration_contracts ||--o{ integration_auth_profiles
+integration_contract_versions ||--o{ integration_exchange_records
+integration_exchange_records ||--o{ integration_exchange_attempts
+integration_contracts ||--o{ integration_idempotency_records
+integration_contracts ||--o{ integration_sync_cursors
+integration_contracts ||--o{ contract_webhook_subscriptions
+contract_webhook_subscriptions ||--o{ webhook_delivery_evidence
+
+note as SECURITY_diagram_31_integration_contracts
+  HIGH-VALUE API PROFILE
+  Prefer OAuth 2.0 confidential clients with mTLS or DPoP sender-constrained
+  tokens, strict TLS, audience restriction and versioned scopes. Credentials are
+  secret-manager references, never stored plaintext. Message signing is added
+  when non-repudiation is contractually required.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · integration_contracts" as idxset_integration_contracts <<INDEX_SET>> {
+  PK pk_integration_contracts : (id) UNIQUE BTREE
+  IX ix_integration_contracts_external_provider_id : (external_provider_id) BTREE
+  IX ix_integration_contracts_capability_concept_id : (capability_concept_id) BTREE
+  IX ix_integration_contracts_data_classification_concept_id : (data_classification_concept_id) BTREE
+  IX ix_integration_contracts_legal_basis_concept_id : (legal_basis_concept_id) BTREE
+  IX ix_integration_contracts_allowed_purpose_value_set_id : (allowed_purpose_value_set_id) BTREE
+  IX ix_integration_contracts_data_use_agreement_id : (data_use_agreement_id) BTREE
+  IX ix_integration_contracts_status_concept_id : (status_concept_id) BTREE
+  IX ix_integration_contracts_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_integration_contracts_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+integration_contracts .. idxset_integration_contracts : indexed by
+
+entity "INDEXES · integration_contract_versions" as idxset_integration_contract_versions <<INDEX_SET>> {
+  PK pk_integration_contract_versions : (id) UNIQUE BTREE
+  IX ix_integration_contract_versions_integration_contract_id : (integration_contract_id) BTREE
+  IX ix_integration_contract_versions_request_schema_file_id : (request_schema_file_id) BTREE
+  IX ix_integration_contract_versions_response_schema_file_id : (response_schema_file_id) BTREE
+  IX ix_integration_contract_versions_openapi_file_id : (openapi_file_id) BTREE
+  IX ix_integration_contract_versions_mapping_profile_id : (mapping_profile_id) BTREE
+  IX ix_integration_contract_versions_status_concept_id : (status_concept_id) BTREE
+  IX ix_integration_contract_versions_created_by_user_id : (created_by_user_id) BTREE
+  UK uq_integration_contract_versions_integration_contract__74f90c0c : (integration_contract_id, version_number) UNIQUE BTREE
+}
+
+integration_contract_versions .. idxset_integration_contract_versions : indexed by
+
+entity "INDEXES · integration_auth_profiles" as idxset_integration_auth_profiles <<INDEX_SET>> {
+  PK pk_integration_auth_profiles : (id) UNIQUE BTREE
+  IX ix_integration_auth_profiles_integration_contract_id : (integration_contract_id) BTREE
+  IX ix_integration_auth_profiles_auth_profile_concept_id : (auth_profile_concept_id) BTREE
+  IX ix_integration_auth_profiles_token_binding_concept_id : (token_binding_concept_id) BTREE
+  IX ix_integration_auth_profiles_status_concept_id : (status_concept_id) BTREE
+  IX ix_integration_auth_profiles_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_integration_auth_profiles_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+integration_auth_profiles .. idxset_integration_auth_profiles : indexed by
+
+entity "INDEXES · integration_exchange_records" as idxset_integration_exchange_records <<INDEX_SET>> {
+  PK pk_integration_exchange_records : (id) UNIQUE BTREE
+  IX ix_integration_exchange_records_integration_contract_version_id : (integration_contract_version_id) BTREE
+  IX ix_integration_exchange_records_direction_concept_id : (direction_concept_id) BTREE
+  IX ix_integration_exchange_records_message_type_concept_id : (message_type_concept_id) BTREE
+  IX ix_integration_exchange_records_subject_type_concept_id : (subject_type_concept_id) BTREE
+  IX ix_integration_exchange_records_payload_file_id : (payload_file_id) BTREE
+  IX ix_integration_exchange_records_outcome_concept_id : (outcome_concept_id) BTREE
+  UK uq_integration_exchange_records_idempotency : (idempotency_key) UNIQUE BTREE
+  BRIN brin_integration_exchange_records_created_at : (created_at) BRIN pages_per_range=128
+}
+
+integration_exchange_records .. idxset_integration_exchange_records : indexed by
+
+entity "INDEXES · integration_exchange_attempts" as idxset_integration_exchange_attempts <<INDEX_SET>> {
+  PK pk_integration_exchange_attempts : (id) UNIQUE BTREE
+  IX ix_integration_exchange_attempts_integration_exchange_record_id : (integration_exchange_record_id) BTREE
+  IX ix_integration_exchange_attempts_endpoint_id : (endpoint_id) BTREE
+  IX ix_integration_exchange_attempts_retry_decision_concept_id : (retry_decision_concept_id) BTREE
+  IX ix_integration_exchange_attempts_outcome_concept_id : (outcome_concept_id) BTREE
+  UK uq_integration_exchange_attempts_integration_exchange__2d126a36 : (integration_exchange_record_id, attempt_number) UNIQUE BTREE
+  BRIN brin_integration_exchange_attempts_created_at : (created_at) BRIN pages_per_range=128
+}
+
+integration_exchange_attempts .. idxset_integration_exchange_attempts : indexed by
+
+entity "INDEXES · integration_idempotency_records" as idxset_integration_idempotency_records <<INDEX_SET>> {
+  PK pk_integration_idempotency_records : (id) UNIQUE BTREE
+  IX ix_integration_idempotency_records_integration_contract_id : (integration_contract_id) BTREE
+  IX ix_integration_idempotency_records_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_integration_idempotency_records_first_exchange_record_id : (first_exchange_record_id) BTREE
+  IX ix_integration_idempotency_records_status_concept_id : (status_concept_id) BTREE
+  UK uq_integration_idempotency_records_idempotency : (idempotency_key) UNIQUE BTREE
+}
+
+integration_idempotency_records .. idxset_integration_idempotency_records : indexed by
+
+entity "INDEXES · integration_sync_cursors" as idxset_integration_sync_cursors <<INDEX_SET>> {
+  PK pk_integration_sync_cursors : (id) UNIQUE BTREE
+  IX ix_integration_sync_cursors_integration_contract_id : (integration_contract_id) BTREE
+  IX ix_integration_sync_cursors_last_successful_exchange_id : (last_successful_exchange_id) BTREE
+  IX ix_integration_sync_cursors_status_concept_id : (status_concept_id) BTREE
+}
+
+integration_sync_cursors .. idxset_integration_sync_cursors : indexed by
+
+entity "INDEXES · contract_webhook_subscriptions" as idxset_contract_webhook_subscriptions <<INDEX_SET>> {
+  PK pk_contract_webhook_subscriptions : (id) UNIQUE BTREE
+  IX ix_contract_webhook_subscriptions_integration_contract_id : (integration_contract_id) BTREE
+  IX ix_contract_webhook_subscriptions_event_type_concept_id : (event_type_concept_id) BTREE
+  IX ix_contract_webhook_subscriptions_status_concept_id : (status_concept_id) BTREE
+  IX ix_contract_webhook_subscriptions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_contract_webhook_subscriptions_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+contract_webhook_subscriptions .. idxset_contract_webhook_subscriptions : indexed by
+
+entity "INDEXES · webhook_delivery_evidence" as idxset_webhook_delivery_evidence <<INDEX_SET>> {
+  PK pk_webhook_delivery_evidence : (id) UNIQUE BTREE
+  IX ix_webhook_delivery_evidence_webhook_subscription_id : (webhook_subscription_id) BTREE
+  IX ix_webhook_delivery_evidence_integration_exchange_record_id : (integration_exchange_record_id) BTREE
+  IX ix_webhook_delivery_evidence_signature_verification_concept_id : (signature_verification_concept_id) BTREE
+  IX ix_webhook_delivery_evidence_outcome_concept_id : (outcome_concept_id) BTREE
+  BRIN brin_webhook_delivery_evidence_created_at : (created_at) BRIN pages_per_range=128
+}
+
+webhook_delivery_evidence .. idxset_webhook_delivery_evidence : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

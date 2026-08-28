@@ -1,0 +1,276 @@
+@startuml SALUD_Module_56_redis_runtime
+title Module 56 — Redis Runtime Cache, Ephemeral Security and Coordination\n(Redis keyspaces, streams and sorted sets)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+note as BIZ_redis_runtime
+  BUSINESS PURPOSE
+  Contains only reconstructable or explicitly ephemeral state: sessions, challenges, rate limits, locks, caches, presence, job progress and consumer deduplication.
+  Redis is never the sole source for clinical records, balances, stock, contracts, consent evidence or audit history.
+end note
+
+entity "directory.tenants" as directory_tenants <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "iam.users" as iam_users <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "scheduling.appointments" as scheduling_appointments <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity "messaging.outbox_events" as messaging_outbox_events <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity session_cache_entries <<REDIS_KEYSPACE>> {
+  * key : session:{tenant}:{session_id} <<PK>>
+  * value : encrypted session projection
+  * user_id : uuid
+  * session_version : integer
+  * issued_at : epoch
+  * expires_at : epoch
+  * ttl_seconds : integer
+}
+
+entity refresh_family_cache_entries <<REDIS_KEYSPACE>> {
+  * key : refresh-family:{tenant}:{family_id} <<PK>>
+  * value : status, current_generation, user_id
+  * revoked_at : epoch
+  * expires_at : epoch
+  * ttl_seconds : integer
+}
+
+entity mfa_challenge_entries <<REDIS_KEYSPACE>> {
+  * key : mfa:{tenant}:{challenge_id} <<PK>>
+  * value : user_id, method, hash, attempt_count
+  * expires_at : epoch
+  * ttl_seconds : integer
+}
+
+entity password_reset_entries <<REDIS_KEYSPACE>> {
+  * key : pwd-reset:{tenant}:{token_hash} <<PK>>
+  * value : user_id, requested_at, used_at
+  * ttl_seconds : integer
+}
+
+entity rate_limit_buckets <<REDIS_KEYSPACE>> {
+  * key : rate:{tenant}:{scope}:{subject}:{window} <<PK>>
+  * value : counter or token-bucket state
+  * limit : integer
+  * reset_at : epoch
+  * ttl_seconds : integer
+}
+
+entity idempotency_entries <<REDIS_KEYSPACE>> {
+  * key : idem:{tenant}:{operation}:{idempotency_key} <<PK>>
+  * value : request_hash, response_ref, status
+  * locked_until : epoch
+  * expires_at : epoch
+  * ttl_seconds : integer
+}
+
+entity authorization_cache_entries <<REDIS_KEYSPACE>> {
+  * key : authz:{tenant}:{principal}:{resource}:{context_hash} <<PK>>
+  * value : decision, field_mask, policy_version
+  * expires_at : epoch
+  * ttl_seconds : integer
+}
+
+entity availability_cache_entries <<REDIS_KEYSPACE>> {
+  * key : availability:{tenant}:{resource}:{date} <<PK>>
+  * value : slot projection
+  * source_version : bigint
+  * expires_at : epoch
+  * ttl_seconds : integer
+}
+
+entity distributed_lock_entries <<REDIS_KEYSPACE>> {
+  * key : lock:{tenant}:{lock_name}:{resource_id} <<PK>>
+  * value : owner_token, fencing_token
+  * acquired_at : epoch
+  * expires_at : epoch
+  * ttl_seconds : integer
+}
+
+entity realtime_presence_entries <<REDIS_KEYSPACE>> {
+  * key : presence:{tenant}:{user_id} <<PK>>
+  * value : status, connection_ids, last_seen_at
+  * ttl_seconds : integer
+}
+
+entity job_progress_entries <<REDIS_KEYSPACE>> {
+  * key : job:{tenant}:{job_type}:{job_id} <<PK>>
+  * value : state, progress, heartbeat, result_ref
+  * expires_at : epoch
+  * ttl_seconds : integer
+}
+
+entity notification_debounce_entries <<REDIS_KEYSPACE>> {
+  * key : debounce:{tenant}:{recipient}:{template}:{dedup_key} <<PK>>
+  * value : count, first_event_at, last_event_at
+  * ttl_seconds : integer
+}
+
+entity cache_invalidation_stream <<REDIS_KEYSPACE>> {
+  * key : stream:cache-invalidation <<PK>>
+  * entry_id : stream id
+  * tenant_id : uuid
+  * dataset_code : varchar
+  * entity_id : uuid
+  * version : bigint
+  * occurred_at : epoch
+}
+
+entity outbox_delivery_dedup_entries <<REDIS_KEYSPACE>> {
+  * key : outbox-dedup:{consumer}:{event_id} <<PK>>
+  * value : processed_at, payload_hash
+  * ttl_seconds : integer
+}
+
+
+iam_users -- session_cache_entries : sessions
+iam_users -- mfa_challenge_entries : challenges
+iam_users -- authorization_cache_entries : decisions
+scheduling_appointments -- availability_cache_entries : invalidates
+messaging_outbox_events -- cache_invalidation_stream : publishes
+messaging_outbox_events -- outbox_delivery_dedup_entries : deduplicates
+
+package "Physical Indexes and Access Patterns" {
+entity "INDEXES · session_cache_entries" as idxset_session_cache_entries <<INDEX_SET>> {
+  KEY key_session : session:{tenant}:{session_id}
+  SET set_user_sessions : sessions-by-user:{tenant}:{user_id} members=session_id
+  TTL ttl_session : expires_at-now
+  POLICY no_key_scan : direct lookup only
+}
+
+session_cache_entries .. idxset_session_cache_entries : indexed by
+
+entity "INDEXES · refresh_family_cache_entries" as idxset_refresh_family_cache_entries <<INDEX_SET>> {
+  KEY key_refresh_family : refresh-family:{tenant}:{family_id}
+  SET set_user_refresh_families : refresh-families:{tenant}:{user_id}
+  TTL ttl_refresh_family : token-family expiry
+}
+
+refresh_family_cache_entries .. idxset_refresh_family_cache_entries : indexed by
+
+entity "INDEXES · mfa_challenge_entries" as idxset_mfa_challenge_entries <<INDEX_SET>> {
+  KEY key_mfa : mfa:{tenant}:{challenge_id}
+  SET set_mfa_by_user : mfa-by-user:{tenant}:{user_id}
+  TTL ttl_mfa : challenge lifetime
+  POLICY atomic_attempt_increment : Lua or transaction
+}
+
+mfa_challenge_entries .. idxset_mfa_challenge_entries : indexed by
+
+entity "INDEXES · password_reset_entries" as idxset_password_reset_entries <<INDEX_SET>> {
+  KEY key_password_reset : pwd-reset:{tenant}:{token_hash}
+  TTL ttl_password_reset : reset-token lifetime
+  POLICY one_time_use : atomic GETDEL
+}
+
+password_reset_entries .. idxset_password_reset_entries : indexed by
+
+entity "INDEXES · rate_limit_buckets" as idxset_rate_limit_buckets <<INDEX_SET>> {
+  KEY key_rate_bucket : rate:{tenant}:{scope}:{subject}:{window}
+  ZSET zset_rate_sliding : rate-events:{tenant}:{scope}:{subject}
+  TTL ttl_rate_bucket : window plus safety margin
+  POLICY atomic_bucket_update : Lua
+}
+
+rate_limit_buckets .. idxset_rate_limit_buckets : indexed by
+
+entity "INDEXES · idempotency_entries" as idxset_idempotency_entries <<INDEX_SET>> {
+  KEY key_idempotency : idem:{tenant}:{operation}:{idempotency_key}
+  TTL ttl_idempotency : operation-specific retention
+  POLICY atomic_claim : SET NX with fencing
+  HASH request_hash_guard : reject same key with different hash
+}
+
+idempotency_entries .. idxset_idempotency_entries : indexed by
+
+entity "INDEXES · authorization_cache_entries" as idxset_authorization_cache_entries <<INDEX_SET>> {
+  KEY key_authz : authz:{tenant}:{principal}:{resource}:{context_hash}
+  SET set_authz_policy_version : authz-policy:{tenant}:{policy_version}
+  TTL ttl_authz : short-lived decision cache
+  PUBSUB invalidate_authz : authz.invalidate.{tenant}
+}
+
+authorization_cache_entries .. idxset_authorization_cache_entries : indexed by
+
+entity "INDEXES · availability_cache_entries" as idxset_availability_cache_entries <<INDEX_SET>> {
+  KEY key_availability : availability:{tenant}:{resource}:{date}
+  ZSET zset_slots : slots:{tenant}:{resource}:{date} score=start_epoch
+  TTL ttl_availability : short horizon
+  PUBSUB invalidate_schedule : schedule.invalidate.{tenant}.{resource}
+}
+
+availability_cache_entries .. idxset_availability_cache_entries : indexed by
+
+entity "INDEXES · distributed_lock_entries" as idxset_distributed_lock_entries <<INDEX_SET>> {
+  KEY key_lock : lock:{tenant}:{lock_name}:{resource_id}
+  COUNTER fencing_counter : fence:{tenant}:{lock_name}:{resource_id}
+  TTL ttl_lock : bounded lease
+  POLICY release_by_owner : compare-and-delete Lua
+}
+
+distributed_lock_entries .. idxset_distributed_lock_entries : indexed by
+
+entity "INDEXES · realtime_presence_entries" as idxset_realtime_presence_entries <<INDEX_SET>> {
+  KEY key_presence : presence:{tenant}:{user_id}
+  SET set_online_users : online:{tenant}
+  SET set_connections : connections:{tenant}:{user_id}
+  TTL ttl_presence : heartbeat window
+}
+
+realtime_presence_entries .. idxset_realtime_presence_entries : indexed by
+
+entity "INDEXES · job_progress_entries" as idxset_job_progress_entries <<INDEX_SET>> {
+  KEY key_job_progress : job:{tenant}:{job_type}:{job_id}
+  ZSET zset_jobs_by_state : jobs:{tenant}:{job_type}:{state} score=updated_epoch
+  TTL ttl_job_result : configured result window
+}
+
+job_progress_entries .. idxset_job_progress_entries : indexed by
+
+entity "INDEXES · notification_debounce_entries" as idxset_notification_debounce_entries <<INDEX_SET>> {
+  KEY key_debounce : debounce:{tenant}:{recipient}:{template}:{dedup_key}
+  ZSET zset_debounce_due : debounce-due:{tenant} score=flush_epoch
+  TTL ttl_debounce : flush window plus safety margin
+}
+
+notification_debounce_entries .. idxset_notification_debounce_entries : indexed by
+
+entity "INDEXES · cache_invalidation_stream" as idxset_cache_invalidation_stream <<INDEX_SET>> {
+  STREAM stream_cache_invalidation : stream:cache-invalidation
+  GROUP group_cache_consumers : one group per projection service
+  TRIM maxlen_cache_stream : approximate bounded history
+  POLICY idempotent_version_check : ignore older entity versions
+}
+
+cache_invalidation_stream .. idxset_cache_invalidation_stream : indexed by
+
+entity "INDEXES · outbox_delivery_dedup_entries" as idxset_outbox_delivery_dedup_entries <<INDEX_SET>> {
+  KEY key_outbox_dedup : outbox-dedup:{consumer}:{event_id}
+  TTL ttl_outbox_dedup : greater than outbox retention
+  POLICY atomic_mark : SET NX
+}
+
+outbox_delivery_dedup_entries .. idxset_outbox_delivery_dedup_entries : indexed by
+
+}
+
+
+note as INDEX_POLICY_redis_runtime
+  INDEX AND ACCESS-PATTERN POLICY
+  - Every key is tenant-scoped except global infrastructure streams with tenant in each entry.
+  - Every ephemeral key has an explicit TTL; durable projections can always be rebuilt.
+  - Locks use fencing tokens; a Redis lease alone never proves ownership after expiry.
+  - Keyspace scans are prohibited in runtime paths; secondary access uses sets, sorted sets or streams.
+end note
+
+@enduml

@@ -1,0 +1,410 @@
+@startuml SALUD_Module_07_consent
+title Module 07 — Privacy Directives, Legal Bases and Consent Evidence\n(schema: consent)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+note as BIZ
+  BUSINESS PURPOSE
+  Separates legal authority for processing from patient consent, HIPAA-style
+  authorizations, treatment informed consent, privacy restrictions and objections.
+  Consent is never treated as the universal basis for treatment, payment, operations
+  or every use of health data. Every decision is jurisdiction-, purpose- and
+  version-aware and retains reproducible evidence.
+end note
+
+entity processing_purposes {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * name : varchar
+  * purpose_category_concept_id : uuid <<FK>>
+    description : text
+    purpose_of_use_concept_id : uuid <<FK>>
+    default_retention_class_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity processing_legal_bases <<VERSIONED>> {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * processing_purpose_id : uuid <<FK>>
+  * jurisdiction_concept_id : uuid <<FK>>
+  * general_legal_basis_concept_id : uuid <<FK>>
+    special_category_condition_concept_id : uuid <<FK>>
+    policy_version : varchar
+    legal_reference_uri : text
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity consents <<FHIR_CONSENT_DIRECTIVE>> {
+  * id : uuid <<PK>>
+  --
+  * patient_profile_id : uuid <<FK>>
+    granted_by_user_id : uuid <<FK>>
+    granted_by_related_person_id : uuid <<FK>>
+  * category_concept_id : uuid <<FK>>
+  * processing_purpose_id : uuid <<FK>>
+    processing_legal_basis_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    policy_uri : text
+    policy_version : varchar
+    tenant_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+    withdrawal_reason_concept_id : uuid <<FK>>
+    withdrawn_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity consent_provisions {
+  * id : uuid <<PK>>
+  --
+  * consent_id : uuid <<FK>>
+  * provision_type_concept_id : uuid <<FK>>
+  * action_concept_id : uuid <<FK>>
+    data_class_concept_id : uuid <<FK>>
+    actor_tenant_id : uuid <<FK>>
+    actor_user_id : uuid <<FK>>
+    actor_role_concept_id : uuid <<FK>>
+    purpose_of_use_concept_id : uuid <<FK>>
+    security_label_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity hipaa_authorizations <<VERSIONED>> {
+  * id : uuid <<PK>>
+  --
+  * patient_profile_id : uuid <<FK>>
+  * tenant_id : uuid <<FK>>
+  * processing_purpose_id : uuid <<FK>>
+  * recipient_description : varchar
+  * information_description : text
+  * expiration_type_concept_id : uuid <<FK>>
+    expires_at : timestamptz
+    expiration_event_text : text
+  * status_concept_id : uuid <<FK>>
+    signed_at : timestamptz
+    revoked_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity treatment_informed_consents <<VERSIONED>> {
+  * id : uuid <<PK>>
+  --
+  * patient_profile_id : uuid <<FK>>
+  * tenant_id : uuid <<FK>>
+  * encounter_id : uuid <<FK>>
+    procedure_code_concept_id : uuid <<FK>>
+    information_version : varchar
+    interpreter_user_id : uuid <<FK>>
+    witness_user_id : uuid <<FK>>
+  * decision_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    signed_at : timestamptz
+    withdrawn_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity privacy_restrictions {
+  * id : uuid <<PK>>
+  --
+  * patient_profile_id : uuid <<FK>>
+  * tenant_id : uuid <<FK>>
+  * restriction_type_concept_id : uuid <<FK>>
+  * data_class_concept_id : uuid <<FK>>
+    target_actor_type_concept_id : uuid <<FK>>
+    target_actor_id : uuid
+    reason_text : text
+  * status_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity patient_objections {
+  * id : uuid <<PK>>
+  --
+  * patient_profile_id : uuid <<FK>>
+  * tenant_id : uuid <<FK>>
+  * processing_purpose_id : uuid <<FK>>
+  * objection_type_concept_id : uuid <<FK>>
+    reason_text : text
+  * status_concept_id : uuid <<FK>>
+    raised_at : timestamptz
+    resolved_at : timestamptz
+    resolution_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity consent_evidence <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * subject_type_concept_id : uuid <<FK>>
+  * subject_id : uuid
+  * evidence_type_concept_id : uuid <<FK>>
+    document_file_id : uuid <<FK>>
+    signature_id : uuid <<FK>>
+    captured_channel_concept_id : uuid <<FK>>
+    policy_snapshot_hash : varchar
+    evidence_hash : varchar
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+entity consent_events <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * subject_type_concept_id : uuid <<FK>>
+  * subject_id : uuid
+  * event_type_concept_id : uuid <<FK>>
+  * previous_status_concept_id : uuid <<FK>>
+  * new_status_concept_id : uuid <<FK>>
+    reason_concept_id : uuid <<FK>>
+    correlation_id : uuid
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+processing_purposes ||--o{ processing_legal_bases
+processing_purposes ||--o{ consents
+processing_purposes ||--o{ hipaa_authorizations
+processing_purposes ||--o{ patient_objections
+processing_legal_bases |o--o{ consents
+consents ||--o{ consent_provisions
+consents ||--o{ consent_evidence
+hipaa_authorizations ||--o{ consent_evidence
+treatment_informed_consents ||--o{ consent_evidence
+
+note as LEGAL_MODEL
+  LEGAL MODEL
+  A processing decision evaluates: jurisdiction + controller/tenant + purpose +
+  general legal basis + any special-category condition + restrictions/objections +
+  authorization/consent when required. A consent row alone never grants blanket
+  access. Policy and evidence versions are retained for historical reconstruction.
+end note
+
+note as POLYMORPHIC_SAFETY
+  POLYMORPHIC SAFETY
+  subject_type/subject_id and target_actor_type/target_actor_id are validated against
+  closed value sets and system_ops.entity_registry. Orphan detection and immutable
+  audit are mandatory.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · processing_purposes" as idxset_processing_purposes <<INDEX_SET>> {
+  PK pk_processing_purposes : (id) UNIQUE BTREE
+  UK uq_processing_purposes_code : (code) UNIQUE BTREE
+  IX ix_processing_purposes_purpose_category_concept_id : (purpose_category_concept_id) BTREE
+  IX ix_processing_purposes_purpose_of_use_concept_id : (purpose_of_use_concept_id) BTREE
+  IX ix_processing_purposes_default_retention_class_concept_id : (default_retention_class_concept_id) BTREE
+  IX ix_processing_purposes_status_concept_id : (status_concept_id) BTREE
+  IX ix_processing_purposes_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_processing_purposes_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+processing_purposes .. idxset_processing_purposes : indexed by
+
+entity "INDEXES · processing_legal_bases" as idxset_processing_legal_bases <<INDEX_SET>> {
+  PK pk_processing_legal_bases : (id) UNIQUE BTREE
+  IX ix_processing_legal_bases_tenant_id : (tenant_id) BTREE
+  IX ix_processing_legal_bases_processing_purpose_id : (processing_purpose_id) BTREE
+  IX ix_processing_legal_bases_jurisdiction_concept_id : (jurisdiction_concept_id) BTREE
+  IX ix_processing_legal_bases_general_legal_basis_concept_id : (general_legal_basis_concept_id) BTREE
+  IX ix_processing_legal_bases_special_category_condition_concept_id : (special_category_condition_concept_id) BTREE
+  IX ix_processing_legal_bases_status_concept_id : (status_concept_id) BTREE
+  IX ix_processing_legal_bases_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_processing_legal_bases_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_processing_legal_bases_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  GIST gist_processing_legal_bases_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+  UK uq_processing_legal_basis_version : (tenant_id, processing_purpose_id, jurisdiction_concept_id, valid_from) UNIQUE BTREE
+}
+
+processing_legal_bases .. idxset_processing_legal_bases : indexed by
+
+entity "INDEXES · consents" as idxset_consents <<INDEX_SET>> {
+  PK pk_consents : (id) UNIQUE BTREE
+  IX ix_consents_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_consents_granted_by_user_id : (granted_by_user_id) BTREE
+  IX ix_consents_granted_by_related_person_id : (granted_by_related_person_id) BTREE
+  IX ix_consents_category_concept_id : (category_concept_id) BTREE
+  IX ix_consents_processing_purpose_id : (processing_purpose_id) BTREE
+  IX ix_consents_processing_legal_basis_id : (processing_legal_basis_id) BTREE
+  IX ix_consents_status_concept_id : (status_concept_id) BTREE
+  IX ix_consents_tenant_id : (tenant_id) BTREE
+  IX ix_consents_withdrawal_reason_concept_id : (withdrawal_reason_concept_id) BTREE
+  IX ix_consents_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_consents_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_consents_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  IX ix_consents_patient_profile_id_updated_at : (tenant_id, patient_profile_id, updated_at DESC) BTREE
+  GIST gist_consents_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+  IX ix_consents_patient_purpose_status : (patient_profile_id, processing_purpose_id, status_concept_id, valid_from DESC) BTREE
+}
+
+consents .. idxset_consents : indexed by
+
+entity "INDEXES · consent_provisions" as idxset_consent_provisions <<INDEX_SET>> {
+  PK pk_consent_provisions : (id) UNIQUE BTREE
+  IX ix_consent_provisions_consent_id : (consent_id) BTREE
+  IX ix_consent_provisions_provision_type_concept_id : (provision_type_concept_id) BTREE
+  IX ix_consent_provisions_action_concept_id : (action_concept_id) BTREE
+  IX ix_consent_provisions_data_class_concept_id : (data_class_concept_id) BTREE
+  IX ix_consent_provisions_actor_tenant_id : (actor_tenant_id) BTREE
+  IX ix_consent_provisions_actor_user_id : (actor_user_id) BTREE
+  IX ix_consent_provisions_actor_role_concept_id : (actor_role_concept_id) BTREE
+  IX ix_consent_provisions_purpose_of_use_concept_id : (purpose_of_use_concept_id) BTREE
+  IX ix_consent_provisions_security_label_concept_id : (security_label_concept_id) BTREE
+  IX ix_consent_provisions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_consent_provisions_updated_by_user_id : (updated_by_user_id) BTREE
+  GIST gist_consent_provisions_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+}
+
+consent_provisions .. idxset_consent_provisions : indexed by
+
+entity "INDEXES · hipaa_authorizations" as idxset_hipaa_authorizations <<INDEX_SET>> {
+  PK pk_hipaa_authorizations : (id) UNIQUE BTREE
+  IX ix_hipaa_authorizations_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_hipaa_authorizations_tenant_id : (tenant_id) BTREE
+  IX ix_hipaa_authorizations_processing_purpose_id : (processing_purpose_id) BTREE
+  IX ix_hipaa_authorizations_expiration_type_concept_id : (expiration_type_concept_id) BTREE
+  IX ix_hipaa_authorizations_status_concept_id : (status_concept_id) BTREE
+  IX ix_hipaa_authorizations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_hipaa_authorizations_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_hipaa_authorizations_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  IX ix_hipaa_authorizations_patient_profile_id_updated_at : (tenant_id, patient_profile_id, updated_at DESC) BTREE
+}
+
+hipaa_authorizations .. idxset_hipaa_authorizations : indexed by
+
+entity "INDEXES · treatment_informed_consents" as idxset_treatment_informed_consents <<INDEX_SET>> {
+  PK pk_treatment_informed_consents : (id) UNIQUE BTREE
+  IX ix_treatment_informed_consents_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_treatment_informed_consents_tenant_id : (tenant_id) BTREE
+  IX ix_treatment_informed_consents_encounter_id : (encounter_id) BTREE
+  IX ix_treatment_informed_consents_procedure_code_concept_id : (procedure_code_concept_id) BTREE
+  IX ix_treatment_informed_consents_interpreter_user_id : (interpreter_user_id) BTREE
+  IX ix_treatment_informed_consents_witness_user_id : (witness_user_id) BTREE
+  IX ix_treatment_informed_consents_decision_concept_id : (decision_concept_id) BTREE
+  IX ix_treatment_informed_consents_status_concept_id : (status_concept_id) BTREE
+  IX ix_treatment_informed_consents_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_treatment_informed_consents_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_treatment_informed_consents_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  IX ix_treatment_informed_consents_patient_profile_id_updated_at : (tenant_id, patient_profile_id, updated_at DESC) BTREE
+}
+
+treatment_informed_consents .. idxset_treatment_informed_consents : indexed by
+
+entity "INDEXES · privacy_restrictions" as idxset_privacy_restrictions <<INDEX_SET>> {
+  PK pk_privacy_restrictions : (id) UNIQUE BTREE
+  IX ix_privacy_restrictions_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_privacy_restrictions_tenant_id : (tenant_id) BTREE
+  IX ix_privacy_restrictions_restriction_type_concept_id : (restriction_type_concept_id) BTREE
+  IX ix_privacy_restrictions_data_class_concept_id : (data_class_concept_id) BTREE
+  IX ix_privacy_restrictions_target_actor_type_concept_id : (target_actor_type_concept_id) BTREE
+  IX ix_privacy_restrictions_status_concept_id : (status_concept_id) BTREE
+  IX ix_privacy_restrictions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_privacy_restrictions_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_privacy_restrictions_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  IX ix_privacy_restrictions_patient_profile_id_updated_at : (tenant_id, patient_profile_id, updated_at DESC) BTREE
+  GIST gist_privacy_restrictions_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+}
+
+privacy_restrictions .. idxset_privacy_restrictions : indexed by
+
+entity "INDEXES · patient_objections" as idxset_patient_objections <<INDEX_SET>> {
+  PK pk_patient_objections : (id) UNIQUE BTREE
+  IX ix_patient_objections_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_patient_objections_tenant_id : (tenant_id) BTREE
+  IX ix_patient_objections_processing_purpose_id : (processing_purpose_id) BTREE
+  IX ix_patient_objections_objection_type_concept_id : (objection_type_concept_id) BTREE
+  IX ix_patient_objections_status_concept_id : (status_concept_id) BTREE
+  IX ix_patient_objections_resolution_concept_id : (resolution_concept_id) BTREE
+  IX ix_patient_objections_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_patient_objections_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_patient_objections_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  IX ix_patient_objections_patient_profile_id_updated_at : (tenant_id, patient_profile_id, updated_at DESC) BTREE
+}
+
+patient_objections .. idxset_patient_objections : indexed by
+
+entity "INDEXES · consent_evidence" as idxset_consent_evidence <<INDEX_SET>> {
+  PK pk_consent_evidence : (id) UNIQUE BTREE
+  IX ix_consent_evidence_subject_type_concept_id : (subject_type_concept_id) BTREE
+  IX ix_consent_evidence_evidence_type_concept_id : (evidence_type_concept_id) BTREE
+  IX ix_consent_evidence_document_file_id : (document_file_id) BTREE
+  IX ix_consent_evidence_signature_id : (signature_id) BTREE
+  IX ix_consent_evidence_captured_channel_concept_id : (captured_channel_concept_id) BTREE
+  IX ix_consent_evidence_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_consent_evidence_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+consent_evidence .. idxset_consent_evidence : indexed by
+
+entity "INDEXES · consent_events" as idxset_consent_events <<INDEX_SET>> {
+  PK pk_consent_events : (id) UNIQUE BTREE
+  IX ix_consent_events_subject_type_concept_id : (subject_type_concept_id) BTREE
+  IX ix_consent_events_event_type_concept_id : (event_type_concept_id) BTREE
+  IX ix_consent_events_previous_status_concept_id : (previous_status_concept_id) BTREE
+  IX ix_consent_events_new_status_concept_id : (new_status_concept_id) BTREE
+  IX ix_consent_events_reason_concept_id : (reason_concept_id) BTREE
+  IX ix_consent_events_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_consent_events_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+consent_events .. idxset_consent_events : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

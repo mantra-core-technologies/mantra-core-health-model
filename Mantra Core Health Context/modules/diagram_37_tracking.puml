@@ -1,0 +1,311 @@
+@startuml SALUD_Module_37_tracking
+title Module 37 — Shipments, Milestones and Status Timelines\n(schema: tracking)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_37_tracking.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_37_tracking
+  BUSINESS PURPOSE
+  Business-level tracking of anything that moves or progresses: pharmacy deliveries,
+  lab specimen transport, ambulance dispatch, referral fulfilment, claim processing.
+  Provides a generic trackable subject with a tracking number, a status timeline of
+  milestones, carrier/handoff records, ETA estimates and proof-of-delivery. Consumes
+  raw GPS from module 13 (geo) but adds the business meaning geo does not carry.
+end note
+
+entity trackable_subjects {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * subject_type_concept_id : uuid <<FK>>
+  * subject_ref_type : varchar
+  * subject_ref_id : uuid
+  * tracking_number : varchar <<UK>>
+    current_status_concept_id : uuid <<FK>>
+    current_milestone_id : uuid <<FK>>
+    priority_concept_id : uuid <<FK>>
+    opened_at : timestamptz
+    closed_at : timestamptz
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity milestone_definitions {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * subject_type_concept_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+  * milestone_status_concept_id : uuid <<FK>>
+    ordinal : integer
+    is_terminal : boolean
+    sla_minutes : integer
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity tracking_events <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * trackable_subject_id : uuid <<FK>>
+    milestone_definition_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    description : text
+    location_text : varchar
+    latitude : numeric
+    longitude : numeric
+    location_ping_id : uuid <<FK>>
+    actor_user_id : uuid <<FK>>
+    source_concept_id : uuid <<FK>>
+    occurred_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity tracking_carriers {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * code : varchar <<UK>>
+  * name : varchar
+  * carrier_type_concept_id : uuid <<FK>>
+    contact_json : jsonb
+    external_provider_id : uuid <<FK>>
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity shipments {
+  * id : uuid <<PK>>
+  --
+  * trackable_subject_id : uuid <<FK>>
+    carrier_id : uuid <<FK>>
+    tenant_id : uuid <<FK>>
+  * shipment_number : varchar <<UK>>
+    origin_address_id : uuid <<FK>>
+    destination_address_id : uuid <<FK>>
+    assigned_courier_user_id : uuid <<FK>>
+    tracked_subject_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    dispatched_at : timestamptz
+    estimated_arrival_at : timestamptz
+    delivered_at : timestamptz
+    distance_m : numeric
+    temperature_controlled : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity shipment_handoffs <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * shipment_id : uuid <<FK>>
+  * handoff_type_concept_id : uuid <<FK>>
+    from_party_type : varchar
+    from_party_id : uuid
+    to_party_type : varchar
+    to_party_id : uuid
+    location_text : varchar
+    occurred_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity eta_estimates <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * trackable_subject_id : uuid <<FK>>
+    shipment_id : uuid <<FK>>
+  * estimated_arrival_at : timestamptz
+    confidence_pct : integer
+    method_concept_id : uuid <<FK>>
+    computed_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity delivery_proofs {
+  * id : uuid <<PK>>
+  --
+  * shipment_id : uuid <<FK>>
+  * proof_type_concept_id : uuid <<FK>>
+    recipient_name : varchar
+    signature_file_id : uuid <<FK>>
+    photo_file_id : uuid <<FK>>
+    latitude : numeric
+    longitude : numeric
+    captured_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+trackable_subjects ||--o{ tracking_events
+milestone_definitions |o--o{ tracking_events
+trackable_subjects ||--o{ shipments
+tracking_carriers ||--o{ shipments
+shipments ||--o{ shipment_handoffs
+trackable_subjects ||--o{ eta_estimates
+shipments |o--o{ eta_estimates
+shipments ||--o{ delivery_proofs
+
+note as DEP_diagram_37_tracking
+  Connects to other modules via:
+  directory.tenants, iam.users, common.addresses, common.files,
+  geo.location_pings (tracking_events.location_ping_id),
+  geo.tracked_subjects (shipments.tracked_subject_id),
+  integrations.external_providers, terminology.catalog_concepts. Subjects reference
+  pharmacy.medication_dispensations, diagnostics.specimens, clinical_ext.referrals, etc.
+end note
+
+note as REC_POLY_TRACK_diagram_37_tracking
+  REC 3.1 — POLYMORPHIC SUBJECT (no DB-level FK)
+  trackable_subjects.(subject_ref_type,subject_ref_id) and
+  shipment_handoffs.(from_party_type/id, to_party_type/id) are polymorphic; constrain
+  the discriminators to a closed value_set and validate via trigger. tracking_number
+  is the externally shareable handle; keep it opaque (no PII).
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · trackable_subjects" as idxset_trackable_subjects <<INDEX_SET>> {
+  PK pk_trackable_subjects : (id) UNIQUE BTREE
+  UK uq_trackable_subjects_tracking_number : (tracking_number) UNIQUE BTREE
+  IX ix_trackable_subjects_tenant_id : (tenant_id) BTREE
+  IX ix_trackable_subjects_subject_type_concept_id : (subject_type_concept_id) BTREE
+  IX ix_trackable_subjects_current_status_concept_id : (current_status_concept_id) BTREE
+  IX ix_trackable_subjects_current_milestone_id : (current_milestone_id) BTREE
+  IX ix_trackable_subjects_priority_concept_id : (priority_concept_id) BTREE
+  IX ix_trackable_subjects_state_concept_id : (state_concept_id) BTREE
+  IX ix_trackable_subjects_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_trackable_subjects_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_trackable_subjects_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+}
+
+trackable_subjects .. idxset_trackable_subjects : indexed by
+
+entity "INDEXES · milestone_definitions" as idxset_milestone_definitions <<INDEX_SET>> {
+  PK pk_milestone_definitions : (id) UNIQUE BTREE
+  IX ix_milestone_definitions_tenant_id : (tenant_id) BTREE
+  IX ix_milestone_definitions_subject_type_concept_id : (subject_type_concept_id) BTREE
+  IX ix_milestone_definitions_milestone_status_concept_id : (milestone_status_concept_id) BTREE
+  IX ix_milestone_definitions_state_concept_id : (state_concept_id) BTREE
+  IX ix_milestone_definitions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_milestone_definitions_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_milestone_definitions_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+}
+
+milestone_definitions .. idxset_milestone_definitions : indexed by
+
+entity "INDEXES · tracking_events" as idxset_tracking_events <<INDEX_SET>> {
+  PK pk_tracking_events : (id) UNIQUE BTREE
+  IX ix_tracking_events_trackable_subject_id : (trackable_subject_id) BTREE
+  IX ix_tracking_events_milestone_definition_id : (milestone_definition_id) BTREE
+  IX ix_tracking_events_status_concept_id : (status_concept_id) BTREE
+  IX ix_tracking_events_location_ping_id : (location_ping_id) BTREE
+  IX ix_tracking_events_actor_user_id : (actor_user_id) BTREE
+  IX ix_tracking_events_source_concept_id : (source_concept_id) BTREE
+  IX ix_tracking_events_recorded_by_user_id : (recorded_by_user_id) BTREE
+  GIST gist_tracking_events_location : geography_point GIST
+  BRIN brin_tracking_events_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+tracking_events .. idxset_tracking_events : indexed by
+
+entity "INDEXES · tracking_carriers" as idxset_tracking_carriers <<INDEX_SET>> {
+  PK pk_tracking_carriers : (id) UNIQUE BTREE
+  UK uq_tracking_carriers_code : (code) UNIQUE BTREE
+  IX ix_tracking_carriers_tenant_id : (tenant_id) BTREE
+  IX ix_tracking_carriers_carrier_type_concept_id : (carrier_type_concept_id) BTREE
+  IX ix_tracking_carriers_external_provider_id : (external_provider_id) BTREE
+  IX ix_tracking_carriers_state_concept_id : (state_concept_id) BTREE
+  IX ix_tracking_carriers_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_tracking_carriers_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_tracking_carriers_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+}
+
+tracking_carriers .. idxset_tracking_carriers : indexed by
+
+entity "INDEXES · shipments" as idxset_shipments <<INDEX_SET>> {
+  PK pk_shipments : (id) UNIQUE BTREE
+  UK uq_shipments_shipment_number : (shipment_number) UNIQUE BTREE
+  IX ix_shipments_trackable_subject_id : (trackable_subject_id) BTREE
+  IX ix_shipments_carrier_id : (carrier_id) BTREE
+  IX ix_shipments_tenant_id : (tenant_id) BTREE
+  IX ix_shipments_origin_address_id : (origin_address_id) BTREE
+  IX ix_shipments_destination_address_id : (destination_address_id) BTREE
+  IX ix_shipments_assigned_courier_user_id : (assigned_courier_user_id) BTREE
+  IX ix_shipments_tracked_subject_id : (tracked_subject_id) BTREE
+  IX ix_shipments_status_concept_id : (status_concept_id) BTREE
+  IX ix_shipments_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_shipments_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_shipments_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+shipments .. idxset_shipments : indexed by
+
+entity "INDEXES · shipment_handoffs" as idxset_shipment_handoffs <<INDEX_SET>> {
+  PK pk_shipment_handoffs : (id) UNIQUE BTREE
+  IX ix_shipment_handoffs_shipment_id : (shipment_id) BTREE
+  IX ix_shipment_handoffs_handoff_type_concept_id : (handoff_type_concept_id) BTREE
+  IX ix_shipment_handoffs_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_shipment_handoffs_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+shipment_handoffs .. idxset_shipment_handoffs : indexed by
+
+entity "INDEXES · eta_estimates" as idxset_eta_estimates <<INDEX_SET>> {
+  PK pk_eta_estimates : (id) UNIQUE BTREE
+  IX ix_eta_estimates_trackable_subject_id : (trackable_subject_id) BTREE
+  IX ix_eta_estimates_shipment_id : (shipment_id) BTREE
+  IX ix_eta_estimates_method_concept_id : (method_concept_id) BTREE
+  IX ix_eta_estimates_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_eta_estimates_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+eta_estimates .. idxset_eta_estimates : indexed by
+
+entity "INDEXES · delivery_proofs" as idxset_delivery_proofs <<INDEX_SET>> {
+  PK pk_delivery_proofs : (id) UNIQUE BTREE
+  IX ix_delivery_proofs_shipment_id : (shipment_id) BTREE
+  IX ix_delivery_proofs_proof_type_concept_id : (proof_type_concept_id) BTREE
+  IX ix_delivery_proofs_signature_file_id : (signature_file_id) BTREE
+  IX ix_delivery_proofs_photo_file_id : (photo_file_id) BTREE
+  IX ix_delivery_proofs_status_concept_id : (status_concept_id) BTREE
+  IX ix_delivery_proofs_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_delivery_proofs_updated_by_user_id : (updated_by_user_id) BTREE
+  GIST gist_delivery_proofs_location : geography_point GIST
+}
+
+delivery_proofs .. idxset_delivery_proofs : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

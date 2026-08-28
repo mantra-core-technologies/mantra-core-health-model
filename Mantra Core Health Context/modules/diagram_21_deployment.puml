@@ -1,0 +1,121 @@
+@startuml SALUD_Module_21_deployment
+title Module 21 — Deployment, Data Centers and Regional Topology\n(schema: deployment)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_Deployment_21_data_center.puml
+' ------------------------------------------------------------------------------
+cloud "Global Edge" as EDGE {
+  component "Authoritative DNS" as DNS
+  component "DDoS Protection / WAF" as WAF
+  component "Regional Traffic Policy" as TRAFFIC
+}
+
+node "Regional Data Cell\n(one legal data-residency region)" as CELL {
+  node "Ingress Zone" as INGRESS {
+    component "API Gateway / mTLS" as APIGW
+    component "OIDC / MFA" as OIDC
+  }
+  node "Application Zone" as APP {
+    component "Stateless API Cluster" as API
+    component "Persistent Worker Cluster" as WORKERS
+    component "FHIR / Interoperability Gateway" as FHIR
+    component "DICOMweb Gateway" as DICOMGW
+  }
+  database "PostgreSQL HA\nwriter + synchronous standby" as PG
+  database "Read Replica(s)" as READER
+  queue "Durable Queue / Outbox" as QUEUE
+  node "Clinical Binary Zone" as BINARY {
+    storage "Encrypted Versioned Object Storage" as OBJECTS
+    storage "PACS / VNA" as PACS
+    storage "Immutable Audit / WORM Vault" as WORM
+  }
+  node "Security Services" as SEC {
+    component "Regional KMS / HSM" as KMS
+    component "Secrets Manager" as SECRETS
+    component "SIEM / Detection" as SIEM
+  }
+  node "Observability" as OBS {
+    component "Metrics" as METRICS
+    component "Logs with PHI Redaction" as LOGS
+    component "Distributed Traces" as TRACES
+  }
+  node "Recovery Zone" as DR {
+    storage "Encrypted Backup Vault" as BACKUP
+    component "Automated Restore Testing" as RESTORE
+  }
+}
+
+node "Global Control Plane\n(no patient PHI)" as CONTROL {
+  component "Tenant Routing Metadata" as ROUTING
+  component "Configuration Releases" as CONFIG
+  component "Compliance Evidence Catalog" as EVIDENCE
+}
+
+DNS --> WAF
+WAF --> TRAFFIC
+TRAFFIC --> APIGW
+APIGW --> API
+OIDC --> API
+API --> PG
+API --> READER
+API --> QUEUE
+WORKERS --> QUEUE
+WORKERS --> PG
+FHIR --> API
+DICOMGW --> PACS
+API --> OBJECTS
+API --> PACS
+API --> KMS
+WORKERS --> KMS
+API --> SECRETS
+PG --> WORM : audit batches
+API --> WORM : access events
+PG --> BACKUP
+OBJECTS --> BACKUP
+PACS --> BACKUP
+BACKUP --> RESTORE
+API --> METRICS
+API --> LOGS
+API --> TRACES
+WORKERS --> METRICS
+WORKERS --> LOGS
+SIEM <-- LOGS
+CONTROL ..> TRAFFIC : routing only
+CONTROL ..> API : signed configuration
+
+note right of CELL
+  Deploy one independent cell for each approved residency region.
+  PHI does not traverse cells by default. Cross-border exchange requires
+  an approved legal basis, recipient authorization, consent/purpose check,
+  encryption, transfer log and jurisdiction-specific policy.
+end note
+
+note bottom of DR
+  RPO and RTO are approved per tenant/data class and stored as policy.
+  Backups are encrypted, versioned and periodically restored in isolated
+  tests. "Backup succeeded" is not equivalent to "recovery is proven".
+end note
+
+note as STANDARDS_diagram_Deployment_21_data_center
+  CONTROL FAMILIES TO MAP DURING IMPLEMENTATION
+  - Healthcare interoperability: HL7 FHIR profiles, DICOM/DICOMweb,
+    SNOMED CT, LOINC, ICD, UCUM and jurisdictional implementation guides.
+  - Security/privacy: ISO/IEC 27001, ISO 27799, ISO/IEC 27701,
+    NIST CSF and NIST SP 800-66; HIPAA where applicable; GDPR and EHDS
+    in the EU; local LATAM health/privacy law per country.
+  - Continuity/facility: ISO 22301, ISO/IEC 22237 and/or ANSI/TIA-942.
+  Certification or legal compliance requires external assessment and
+  deployment evidence; a data model alone cannot confer compliance.
+end note
+
+note as INDEX_SCOPE
+  INDEX SCOPE
+  This module is architectural/use-case/deployment documentation and has no
+  owned relational tables. Physical indexes are declared in the owning data modules.
+end note
+
+@enduml

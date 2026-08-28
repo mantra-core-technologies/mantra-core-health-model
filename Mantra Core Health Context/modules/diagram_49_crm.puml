@@ -1,0 +1,1236 @@
+@startuml SALUD_Module_49_crm
+title Module 49 — Customer and Partner Relationship Management\n(schema: crm)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_49_crm.puml
+' ------------------------------------------------------------------------------
+
+entity "erp.business_partners" as erp_business_partners <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "erp.sales_orders" as erp_sales_orders <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "billing.invoices" as billing_invoices <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+
+note as BIZ_diagram_49_crm
+  BUSINESS PURPOSE
+  The internal CRM the clients asked for: a first-class contact and company (account)
+  database, lead capture and qualification, sales/partnership pipelines with stages and
+  opportunities, a logged activity timeline (calls, emails, meetings, notes, tasks), and a
+  dedicated partnerships/alliances registry that ties commercial relationships to formal
+  contracts (module 38 ERP) and advertising partners (module 43 ads). This is the
+  commercial system-of-record for the operator, kept separate from clinical patient data.
+end note
+
+entity contracts <<external>> {
+  .. defined in module 38 erp ..
+  * id : uuid <<PK>>
+}
+entity ad_partners <<external>> {
+  .. defined in module 43 ads ..
+  * id : uuid <<PK>>
+}
+
+entity crm_accounts {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * name : varchar
+  * account_type_concept_id : uuid <<FK>>
+    industry_concept_id : uuid <<FK>>
+    parent_account_id : uuid <<FK>>
+    website : varchar
+    tax_id : varchar
+    linked_tenant_id : uuid <<FK>>
+    business_partner_id : uuid <<FK>>
+    linked_org_ref_type : varchar
+    linked_org_ref_id : uuid
+    owner_user_id : uuid <<FK>>
+    annual_value : numeric
+    currency_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity contacts {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+    crm_account_id : uuid <<FK>>
+  * first_name : varchar
+    last_name : varchar
+  * contact_type_concept_id : uuid <<FK>>
+    job_title : varchar
+    linked_user_id : uuid <<FK>>
+    linked_profile_ref_type : varchar
+    linked_profile_ref_id : uuid
+    owner_user_id : uuid <<FK>>
+    lifecycle_stage_concept_id : uuid <<FK>>
+    source_concept_id : uuid <<FK>>
+    do_not_contact : boolean
+    marketing_consent_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity contact_channels {
+  * id : uuid <<PK>>
+  --
+  * contact_id : uuid <<FK>>
+  * channel_type_concept_id : uuid <<FK>>
+  * value : varchar
+    is_primary : boolean
+    is_verified : boolean
+    opt_in_status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity leads {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * lead_source_concept_id : uuid <<FK>>
+    contact_id : uuid <<FK>>
+    crm_account_id : uuid <<FK>>
+    full_name : varchar
+    email : varchar
+    phone : varchar
+    interest_text : varchar
+    lead_score : numeric
+  * lead_status_concept_id : uuid <<FK>>
+    owner_user_id : uuid <<FK>>
+    campaign_ref_id : uuid
+    converted_opportunity_id : uuid <<FK>>
+    converted_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity pipelines {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * code : varchar <<UK>>
+  * name : varchar
+  * pipeline_type_concept_id : uuid <<FK>>
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity pipeline_stages {
+  * id : uuid <<PK>>
+  --
+  * pipeline_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+    ordinal : integer
+    probability_percent : numeric
+    is_won : boolean
+    is_lost : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity opportunities {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * pipeline_id : uuid <<FK>>
+  * stage_id : uuid <<FK>>
+  * name : varchar
+    crm_account_id : uuid <<FK>>
+    primary_contact_id : uuid <<FK>>
+    amount : numeric
+    currency_concept_id : uuid <<FK>>
+    expected_close_date : date
+    probability_percent : numeric
+    owner_user_id : uuid <<FK>>
+    contract_id : uuid <<FK>>
+    sales_order_id : uuid <<FK>>
+    lost_reason_concept_id : uuid <<FK>>
+    won_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity crm_activities {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * activity_type_concept_id : uuid <<FK>>
+  * subject_type_concept_id : uuid <<FK>>
+  * subject_ref_id : uuid
+    contact_id : uuid <<FK>>
+    crm_account_id : uuid <<FK>>
+  * direction_concept_id : uuid <<FK>>
+    subject : varchar
+    body_text : text
+    outcome_concept_id : uuid <<FK>>
+    due_at : timestamptz
+    completed_at : timestamptz
+    owner_user_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity partnerships {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * name : varchar
+  * partnership_type_concept_id : uuid <<FK>>
+  * partner_ref_type : varchar
+  * partner_ref_id : uuid
+    crm_account_id : uuid <<FK>>
+    ad_partner_id : uuid <<FK>>
+    contract_id : uuid <<FK>>
+    tier_concept_id : uuid <<FK>>
+    revenue_share_percent : numeric
+    start_date : date
+    end_date : date
+    owner_user_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity partnership_agreements {
+  * id : uuid <<PK>>
+  --
+  * partnership_id : uuid <<FK>>
+  * agreement_type_concept_id : uuid <<FK>>
+    contract_id : uuid <<FK>>
+    terms_json : jsonb
+    commitment_amount : numeric
+    currency_concept_id : uuid <<FK>>
+    valid_from : date
+    valid_to : date
+    document_file_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+crm_accounts |o--o{ crm_accounts : parent
+crm_accounts ||--o{ contacts
+contacts ||--o{ contact_channels
+crm_accounts ||--o{ leads
+contacts |o--o{ leads
+pipelines ||--o{ pipeline_stages
+pipelines ||--o{ opportunities
+pipeline_stages ||--o{ opportunities
+crm_accounts ||--o{ opportunities
+leads |o--o{ opportunities
+crm_accounts ||--o{ crm_activities
+contacts ||--o{ crm_activities
+crm_accounts ||--o{ partnerships
+partnerships ||--o{ partnership_agreements
+ad_partners |o--o{ partnerships
+contracts |o--o{ partnerships
+
+note as DEP_diagram_49_crm
+  Connects to other modules via:
+  directory.tenants, iam.users, erp.contracts (partnerships/agreements), ads.ad_partners,
+  consent.consents (contacts.marketing_consent_id), common.files, marketing.campaigns
+  (leads.campaign_ref_id), directory.tenants (crm_accounts.linked_tenant_id links a CRM
+  account to a real platform organization), terminology.catalog_concepts.
+end note
+
+note as PHI_BOUNDARY_diagram_49_crm
+  COMMERCIAL, NOT CLINICAL. CRM stores commercial contacts/companies. When a contact maps
+  to a real patient/practitioner it references the profile by id (linked_profile_ref) — it
+  does NOT copy clinical data. Marketing outreach requires consent (do_not_contact / consent).
+end note
+
+note as REC_DERIVED_diagram_49_crm
+  REC 3.3 — DERIVED
+  opportunities.probability_percent may default from its stage; forecast rollups and
+  lead_score are DERIVED/recomputed. leads.converted_opportunity_id is set on conversion.
+end note
+
+note as HARDENING_diagram_49_crm
+  REC 3.4 — HARDENING (enforce at DDL)
+  - contact_channels: partial UNIQUE(contact_id, channel_type_concept_id) WHERE is_primary.
+  - pipeline_stages: UNIQUE(pipeline_id, code); exactly one is_won and one is_lost per pipeline (trigger).
+  - opportunities: CHECK probability_percent BETWEEN 0 AND 100.
+  - partnerships/partnership_agreements: (partner_ref_type,partner_ref_id) polymorphic -> value_set + trigger.
+  - contacts.linked_profile_ref / crm_accounts.linked_org_ref polymorphic -> value_set + trigger.
+end note
+
+note as VALUE_SETS_diagram_49_crm
+  VALUE SETS (bind *_concept_id; do not hardcode)
+  account_type->vs_crm_account_type{prospect,customer,partner,supplier,insurer,pharmacy,hospital};
+  contact_type->vs_contact_type{lead,customer,partner,influencer,staff};
+  lifecycle_stage->vs_lifecycle_stage{subscriber,lead,mql,sql,opportunity,customer,evangelist};
+  channel_type->vs_contact_channel{email,phone,mobile,whatsapp,linkedin,address};
+  opt_in_status->vs_opt_in{unknown,opted_in,opted_out};
+  lead_source/source->vs_lead_source{web,referral,event,ad,partner,inbound_call,import};
+  lead_status->vs_lead_status{new,working,nurturing,qualified,unqualified,converted};
+  pipeline_type->vs_pipeline_type{sales,partnership,onboarding,renewal};
+  activity_type->vs_activity_type{call,email,meeting,note,task,whatsapp,demo};
+  direction->vs_direction{inbound,outbound,internal};
+  outcome->vs_activity_outcome{connected,no_answer,scheduled,completed,declined};
+  partnership_type->vs_partnership_type{reseller,referral,integration,sponsorship,alliance,affiliate};
+  tier->vs_partner_tier{bronze,silver,gold,platinum};
+  agreement_type->vs_agreement_type{mou,nda,commercial,revenue_share,sla};
+  partner_ref_type->vs_partner_ref{crm_account,ad_partner,tenant,vendor};
+  status/state->vs_lifecycle_state.
+end note
+
+
+entity account_contact_relations {
+  * id : uuid <<PK>>
+  --
+  * crm_account_id : uuid <<FK>>
+  * contact_id : uuid <<FK>>
+  * relation_role_concept_id : uuid <<FK>>
+  is_primary : boolean
+  valid_from : date
+  valid_to : date
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity account_team_members {
+  * id : uuid <<PK>>
+  --
+  * crm_account_id : uuid <<FK>>
+  * user_id : uuid <<FK>>
+  * team_role_concept_id : uuid <<FK>>
+  access_level_concept_id : uuid <<FK>>
+  valid_from : date
+  valid_to : date
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+}
+
+entity opportunity_contact_roles {
+  * id : uuid <<PK>>
+  --
+  * opportunity_id : uuid <<FK>>
+  * contact_id : uuid <<FK>>
+  * role_concept_id : uuid <<FK>>
+  is_primary : boolean
+  influence_percent : numeric
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity opportunity_line_items {
+  * id : uuid <<PK>>
+  --
+  * opportunity_id : uuid <<FK>>
+  * line_number : integer
+  product_or_service_type_concept_id : uuid <<FK>>
+  product_or_service_ref_id : uuid
+  description : varchar
+  quantity : numeric
+  unit_price : numeric
+  discount_percent : numeric
+  total_amount : numeric
+  currency_concept_id : uuid <<FK>>
+  contract_line_item_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity opportunity_stage_history {
+  * id : uuid <<PK>>
+  --
+  * opportunity_id : uuid <<FK>>
+  from_stage_id : uuid <<FK>>
+  * to_stage_id : uuid <<FK>>
+  changed_at : timestamptz
+  changed_by_user_id : uuid <<FK>>
+  amount_at_change : numeric
+  probability_at_change : numeric
+  reason_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity crm_activity_relations {
+  * id : uuid <<PK>>
+  --
+  * crm_activity_id : uuid <<FK>>
+  * relation_kind_concept_id : uuid <<FK>>
+  * related_entity_type_concept_id : uuid <<FK>>
+  crm_account_id : uuid <<FK>>
+  contact_id : uuid <<FK>>
+  lead_id : uuid <<FK>>
+  opportunity_id : uuid <<FK>>
+  partnership_id : uuid <<FK>>
+  contract_id : uuid <<FK>>
+  case_id : uuid <<FK>>
+  related_user_id : uuid <<FK>>
+  is_primary : boolean
+  is_invitee : boolean
+  participant_role_concept_id : uuid <<FK>>
+  response_status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+}
+
+entity crm_activity_assignments {
+  * id : uuid <<PK>>
+  --
+  * crm_activity_id : uuid <<FK>>
+  * assignee_user_id : uuid <<FK>>
+  assignment_role_concept_id : uuid <<FK>>
+  assigned_at : timestamptz
+  accepted_at : timestamptz
+  completed_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+}
+
+entity crm_tasks {
+  * id : uuid <<PK>>
+  --
+  * crm_activity_id : uuid <<FK>>
+  * task_subtype_concept_id : uuid <<FK>>
+  priority_concept_id : uuid <<FK>>
+  due_date : date
+  reminder_at : timestamptz
+  is_recurring : boolean
+  recurrence_rule_id : uuid <<FK>>
+  completed_at : timestamptz
+  completion_note : text
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity crm_events {
+  * id : uuid <<PK>>
+  --
+  * crm_activity_id : uuid <<FK>>
+  * event_subtype_concept_id : uuid <<FK>>
+  start_at : timestamptz
+  end_at : timestamptz
+  is_all_day : boolean
+  time_zone : varchar
+  location_text : varchar
+  meeting_url : varchar
+  organizer_user_id : uuid <<FK>>
+  recurrence_rule_id : uuid <<FK>>
+  parent_event_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity crm_recurrence_rules {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * recurrence_frequency_concept_id : uuid <<FK>>
+  interval_count : integer
+  by_day_json : jsonb
+  count_limit : integer
+  until_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity crm_activity_reminders {
+  * id : uuid <<PK>>
+  --
+  * crm_activity_id : uuid <<FK>>
+  * recipient_user_id : uuid <<FK>>
+  * channel_concept_id : uuid <<FK>>
+  remind_at : timestamptz
+  sent_at : timestamptz
+  delivery_status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+}
+
+entity crm_email_messages {
+  * id : uuid <<PK>>
+  --
+  * crm_activity_id : uuid <<FK>>
+  thread_reference : varchar
+  internet_message_id : varchar
+  from_address : varchar
+  subject : varchar
+  body_text : text
+  body_html_file_id : uuid <<FK>>
+  sent_at : timestamptz
+  received_at : timestamptz
+  delivery_status_concept_id : uuid <<FK>>
+  is_inbound : boolean
+  * created_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+}
+
+entity crm_email_recipients {
+  * id : uuid <<PK>>
+  --
+  * crm_email_message_id : uuid <<FK>>
+  * recipient_type_concept_id : uuid <<FK>>
+  contact_id : uuid <<FK>>
+  lead_id : uuid <<FK>>
+  user_id : uuid <<FK>>
+  email_address : varchar
+  delivery_status_concept_id : uuid <<FK>>
+  opened_at : timestamptz
+  clicked_at : timestamptz
+  * created_at : timestamptz
+}
+
+entity crm_call_logs {
+  * id : uuid <<PK>>
+  --
+  * crm_activity_id : uuid <<FK>>
+  * call_direction_concept_id : uuid <<FK>>
+  started_at : timestamptz
+  ended_at : timestamptz
+  duration_seconds : integer
+  from_number_masked : varchar
+  to_number_masked : varchar
+  outcome_concept_id : uuid <<FK>>
+  recording_file_id : uuid <<FK>>
+  external_call_id : varchar
+  * created_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+}
+
+entity crm_notes {
+  * id : uuid <<PK>>
+  --
+  * crm_activity_id : uuid <<FK>>
+  * note_text : text
+  is_private : boolean
+  is_pinned : boolean
+  document_file_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity crm_cases {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * case_number : varchar
+  * subject : varchar
+  description : text
+  crm_account_id : uuid <<FK>>
+  primary_contact_id : uuid <<FK>>
+  business_partner_id : uuid <<FK>>
+  contract_id : uuid <<FK>>
+  invoice_id : uuid <<FK>>
+  case_type_concept_id : uuid <<FK>>
+  origin_concept_id : uuid <<FK>>
+  priority_concept_id : uuid <<FK>>
+  owner_user_id : uuid <<FK>>
+  parent_case_id : uuid <<FK>>
+  opened_at : timestamptz
+  closed_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity crm_case_contacts {
+  * id : uuid <<PK>>
+  --
+  * crm_case_id : uuid <<FK>>
+  * contact_id : uuid <<FK>>
+  * role_concept_id : uuid <<FK>>
+  is_primary : boolean
+  * created_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+}
+
+entity crm_case_comments {
+  * id : uuid <<PK>>
+  --
+  * crm_case_id : uuid <<FK>>
+  * comment_text : text
+  is_public : boolean
+  author_user_id : uuid <<FK>>
+  attachment_file_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity crm_case_status_history {
+  * id : uuid <<PK>>
+  --
+  * crm_case_id : uuid <<FK>>
+  from_status_concept_id : uuid <<FK>>
+  * to_status_concept_id : uuid <<FK>>
+  changed_at : timestamptz
+  changed_by_user_id : uuid <<FK>>
+  reason_text : varchar
+  * created_at : timestamptz
+}
+
+entity crm_entitlements {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * name : varchar
+  crm_account_id : uuid <<FK>>
+  business_partner_id : uuid <<FK>>
+  contract_id : uuid <<FK>>
+  entitlement_type_concept_id : uuid <<FK>>
+  start_date : date
+  end_date : date
+  response_time_minutes : integer
+  resolution_time_minutes : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity crm_case_milestones {
+  * id : uuid <<PK>>
+  --
+  * crm_case_id : uuid <<FK>>
+  crm_entitlement_id : uuid <<FK>>
+  * milestone_type_concept_id : uuid <<FK>>
+  target_at : timestamptz
+  completed_at : timestamptz
+  breached_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  created_by_user_id : uuid <<FK>>
+  updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+
+erp_business_partners |o--o{ crm_accounts
+crm_accounts ||--o{ account_contact_relations
+contacts ||--o{ account_contact_relations
+crm_accounts ||--o{ account_team_members
+opportunities ||--o{ opportunity_contact_roles
+contacts ||--o{ opportunity_contact_roles
+opportunities ||--o{ opportunity_line_items
+opportunities ||--o{ opportunity_stage_history
+pipeline_stages |o--o{ opportunity_stage_history : from/to
+contracts |o--o{ opportunities
+erp_sales_orders |o--o{ opportunities
+crm_activities ||--o{ crm_activity_relations
+crm_accounts |o--o{ crm_activity_relations
+contacts |o--o{ crm_activity_relations
+leads |o--o{ crm_activity_relations
+opportunities |o--o{ crm_activity_relations
+partnerships |o--o{ crm_activity_relations
+contracts |o--o{ crm_activity_relations
+crm_cases |o--o{ crm_activity_relations
+crm_activities ||--o{ crm_activity_assignments
+crm_activities ||--|| crm_tasks
+crm_activities ||--|| crm_events
+crm_recurrence_rules |o--o{ crm_tasks
+crm_recurrence_rules |o--o{ crm_events
+crm_activities ||--o{ crm_activity_reminders
+crm_activities ||--|| crm_email_messages
+crm_email_messages ||--o{ crm_email_recipients
+contacts |o--o{ crm_email_recipients
+leads |o--o{ crm_email_recipients
+crm_activities ||--|| crm_call_logs
+crm_activities ||--|| crm_notes
+crm_accounts ||--o{ crm_cases
+contacts |o--o{ crm_cases
+contracts |o--o{ crm_cases
+billing_invoices |o--o{ crm_cases
+erp_business_partners |o--o{ crm_cases
+crm_cases |o--o{ crm_cases : parent
+crm_cases ||--o{ crm_case_contacts
+contacts ||--o{ crm_case_contacts
+crm_cases ||--o{ crm_case_comments
+crm_cases ||--o{ crm_case_status_history
+crm_accounts |o--o{ crm_entitlements
+contracts |o--o{ crm_entitlements
+erp_business_partners |o--o{ crm_entitlements
+crm_cases ||--o{ crm_case_milestones
+crm_entitlements |o--o{ crm_case_milestones
+
+note as SALESFORCE_ACTIVITY_ALIGNMENT
+  SALESFORCE-STYLE ACTIVITY MODEL
+  - crm_activities is the common timeline parent.
+  - crm_tasks, crm_events, email messages, call logs and notes hold subtype-specific data.
+  - crm_activity_relations supports multiple WHO participants and WHAT records, including
+    account, contact, lead, opportunity, contract, partnership and service case.
+  - assignments, reminders, recurrence, invitee response and account/contact roles are
+    explicit; no single subject_ref_id is relied upon for the complete relationship graph.
+end note
+
+' ===== v4.0.1 (scheduled campaigns / site-admin / tracking) =====
+entity contact_channel_endpoints {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+    contact_id : uuid <<FK>>
+    lead_id : uuid <<FK>>
+    user_id : uuid <<FK>>
+  * endpoint_type_concept_id : uuid <<FK>>
+  * normalized_value : varchar
+  * masked_display_value : varchar
+  * value_hash : varchar
+  * is_primary : boolean
+  * verification_status_concept_id : uuid <<FK>>
+    verified_at : timestamptz
+  * deliverability_status_concept_id : uuid <<FK>>
+    last_success_at : timestamptz
+    last_failure_at : timestamptz
+  * do_not_contact : boolean
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  * created_by_user_id : uuid <<FK>>
+  * updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' ===== v4.0.1 (scheduled campaigns / site-admin / tracking) ===== (fin entidades)
+
+package "Physical Indexes" {
+entity "INDEXES · account_contact_relations" as idxset_account_contact_relations <<INDEX_SET>> {
+  PK pk_account_contact_relations : (id) UNIQUE BTREE
+  UK uq_account_contact_relations_crm_account_id_contact_id_6579264d : (crm_account_id, contact_id, relation_role_concept_id, valid_from) UNIQUE BTREE
+  IX ix_account_contact_relations_crm_account_id : (crm_account_id) BTREE
+  IX ix_account_contact_relations_contact_id : (contact_id) BTREE
+  IX ix_account_contact_relations_relation_role_concept_id : (relation_role_concept_id) BTREE
+  IX ix_account_contact_relations_status_concept_id : (status_concept_id) BTREE
+  IX ix_account_contact_relations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_account_contact_relations_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+account_contact_relations .. idxset_account_contact_relations : indexed by
+
+entity "INDEXES · account_team_members" as idxset_account_team_members <<INDEX_SET>> {
+  PK pk_account_team_members : (id) UNIQUE BTREE
+  UK uq_account_team_members_crm_account_id_user_id_team_ro_099044e1 : (crm_account_id, user_id, team_role_concept_id, valid_from) UNIQUE BTREE
+  IX ix_account_team_members_crm_account_id : (crm_account_id) BTREE
+  IX ix_account_team_members_user_id : (user_id) BTREE
+  IX ix_account_team_members_team_role_concept_id : (team_role_concept_id) BTREE
+  IX ix_account_team_members_access_level_concept_id : (access_level_concept_id) BTREE
+  IX ix_account_team_members_status_concept_id : (status_concept_id) BTREE
+  IX ix_account_team_members_created_by_user_id : (created_by_user_id) BTREE
+}
+
+account_team_members .. idxset_account_team_members : indexed by
+
+entity "INDEXES · opportunity_contact_roles" as idxset_opportunity_contact_roles <<INDEX_SET>> {
+  PK pk_opportunity_contact_roles : (id) UNIQUE BTREE
+  UK uq_opportunity_contact_roles_opportunity_id_contact_id_06ce3ee3 : (opportunity_id, contact_id, role_concept_id) UNIQUE BTREE
+  IX ix_opportunity_contact_roles_opportunity_id : (opportunity_id) BTREE
+  IX ix_opportunity_contact_roles_contact_id : (contact_id) BTREE
+  IX ix_opportunity_contact_roles_role_concept_id : (role_concept_id) BTREE
+  IX ix_opportunity_contact_roles_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_opportunity_contact_roles_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+opportunity_contact_roles .. idxset_opportunity_contact_roles : indexed by
+
+entity "INDEXES · opportunity_line_items" as idxset_opportunity_line_items <<INDEX_SET>> {
+  PK pk_opportunity_line_items : (id) UNIQUE BTREE
+  UK uq_opportunity_line_items_opportunity_id_line_number : (opportunity_id, line_number) UNIQUE BTREE
+  IX ix_opportunity_line_items_opportunity_id : (opportunity_id) BTREE
+  IX ix_opportunity_line_items_product_or_service_type_concept_id : (product_or_service_type_concept_id) BTREE
+  IX ix_opportunity_line_items_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_opportunity_line_items_contract_line_item_id : (contract_line_item_id) BTREE
+  IX ix_opportunity_line_items_status_concept_id : (status_concept_id) BTREE
+  IX ix_opportunity_line_items_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_opportunity_line_items_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+opportunity_line_items .. idxset_opportunity_line_items : indexed by
+
+entity "INDEXES · opportunity_stage_history" as idxset_opportunity_stage_history <<INDEX_SET>> {
+  PK pk_opportunity_stage_history : (id) UNIQUE BTREE
+  IX ix_opportunity_stage_history_opportunity_id : (opportunity_id) BTREE
+  IX ix_opportunity_stage_history_from_stage_id : (from_stage_id) BTREE
+  IX ix_opportunity_stage_history_to_stage_id : (to_stage_id) BTREE
+  IX ix_opportunity_stage_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_opportunity_stage_history_reason_concept_id : (reason_concept_id) BTREE
+  IX ix_opportunity_stage_history_opportunity_changed : (opportunity_id, changed_at DESC) BTREE
+  BRIN brin_opportunity_stage_history_created_at : (created_at) BRIN pages_per_range=128
+}
+
+opportunity_stage_history .. idxset_opportunity_stage_history : indexed by
+
+entity "INDEXES · crm_activity_relations" as idxset_crm_activity_relations <<INDEX_SET>> {
+  PK pk_crm_activity_relations : (id) UNIQUE BTREE
+  IX ix_crm_activity_relations_crm_activity_id : (crm_activity_id) BTREE
+  IX ix_crm_activity_relations_relation_kind_concept_id : (relation_kind_concept_id) BTREE
+  IX ix_crm_activity_relations_related_entity_type_concept_id : (related_entity_type_concept_id) BTREE
+  IX ix_crm_activity_relations_crm_account_id : (crm_account_id) BTREE
+  IX ix_crm_activity_relations_contact_id : (contact_id) BTREE
+  IX ix_crm_activity_relations_lead_id : (lead_id) BTREE
+  IX ix_crm_activity_relations_opportunity_id : (opportunity_id) BTREE
+  IX ix_crm_activity_relations_partnership_id : (partnership_id) BTREE
+  IX ix_crm_activity_relations_contract_id : (contract_id) BTREE
+  IX ix_crm_activity_relations_case_id : (case_id) BTREE
+  IX ix_crm_activity_relations_related_user_id : (related_user_id) BTREE
+  IX ix_crm_activity_relations_participant_role_concept_id : (participant_role_concept_id) BTREE
+  IX ix_crm_activity_relations_response_status_concept_id : (response_status_concept_id) BTREE
+  IX ix_crm_activity_relations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_crm_activity_relations_activity_kind : (crm_activity_id, relation_kind_concept_id) BTREE
+  IX ix_crm_activity_relations_account_activity : (crm_account_id, crm_activity_id) BTREE
+  IX ix_crm_activity_relations_contact_activity : (contact_id, crm_activity_id) BTREE
+  IX ix_crm_activity_relations_opportunity_activity : (opportunity_id, crm_activity_id) BTREE
+  IX ix_crm_activity_relations_case_activity : (case_id, crm_activity_id) BTREE
+}
+
+crm_activity_relations .. idxset_crm_activity_relations : indexed by
+
+entity "INDEXES · crm_activity_assignments" as idxset_crm_activity_assignments <<INDEX_SET>> {
+  PK pk_crm_activity_assignments : (id) UNIQUE BTREE
+  UK uq_crm_activity_assignments_crm_activity_id_assignee_u_669bd146 : (crm_activity_id, assignee_user_id, assignment_role_concept_id) UNIQUE BTREE
+  IX ix_crm_activity_assignments_crm_activity_id : (crm_activity_id) BTREE
+  IX ix_crm_activity_assignments_assignee_user_id : (assignee_user_id) BTREE
+  IX ix_crm_activity_assignments_assignment_role_concept_id : (assignment_role_concept_id) BTREE
+  IX ix_crm_activity_assignments_status_concept_id : (status_concept_id) BTREE
+  IX ix_crm_activity_assignments_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_crm_activity_assignments_assignee_status_assigned : (assignee_user_id, status_concept_id, assigned_at DESC) BTREE
+}
+
+crm_activity_assignments .. idxset_crm_activity_assignments : indexed by
+
+entity "INDEXES · crm_tasks" as idxset_crm_tasks <<INDEX_SET>> {
+  PK pk_crm_tasks : (id) UNIQUE BTREE
+  UK uq_crm_tasks_crm_activity_id : (crm_activity_id) UNIQUE BTREE
+  IX ix_crm_tasks_crm_activity_id : (crm_activity_id) BTREE
+  IX ix_crm_tasks_task_subtype_concept_id : (task_subtype_concept_id) BTREE
+  IX ix_crm_tasks_priority_concept_id : (priority_concept_id) BTREE
+  IX ix_crm_tasks_recurrence_rule_id : (recurrence_rule_id) BTREE
+  IX ix_crm_tasks_status_concept_id : (status_concept_id) BTREE
+  IX ix_crm_tasks_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_crm_tasks_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_crm_tasks_status_due : (status_concept_id, due_date) BTREE
+}
+
+crm_tasks .. idxset_crm_tasks : indexed by
+
+entity "INDEXES · crm_events" as idxset_crm_events <<INDEX_SET>> {
+  PK pk_crm_events : (id) UNIQUE BTREE
+  UK uq_crm_events_crm_activity_id : (crm_activity_id) UNIQUE BTREE
+  IX ix_crm_events_crm_activity_id : (crm_activity_id) BTREE
+  IX ix_crm_events_event_subtype_concept_id : (event_subtype_concept_id) BTREE
+  IX ix_crm_events_organizer_user_id : (organizer_user_id) BTREE
+  IX ix_crm_events_recurrence_rule_id : (recurrence_rule_id) BTREE
+  IX ix_crm_events_parent_event_id : (parent_event_id) BTREE
+  IX ix_crm_events_status_concept_id : (status_concept_id) BTREE
+  IX ix_crm_events_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_crm_events_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_crm_events_start_end : (start_at, end_at) BTREE
+}
+
+crm_events .. idxset_crm_events : indexed by
+
+entity "INDEXES · crm_recurrence_rules" as idxset_crm_recurrence_rules <<INDEX_SET>> {
+  PK pk_crm_recurrence_rules : (id) UNIQUE BTREE
+  IX ix_crm_recurrence_rules_tenant_id : (tenant_id) BTREE
+  IX ix_crm_recurrence_rules_recurrence_frequency_concept_id : (recurrence_frequency_concept_id) BTREE
+  IX ix_crm_recurrence_rules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_crm_recurrence_rules_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_crm_recurrence_rules_tenant_until : (tenant_id, until_at) BTREE
+}
+
+crm_recurrence_rules .. idxset_crm_recurrence_rules : indexed by
+
+entity "INDEXES · crm_activity_reminders" as idxset_crm_activity_reminders <<INDEX_SET>> {
+  PK pk_crm_activity_reminders : (id) UNIQUE BTREE
+  UK uq_crm_activity_reminders_crm_activity_id_recipient_us_595aad96 : (crm_activity_id, recipient_user_id, remind_at) UNIQUE BTREE
+  IX ix_crm_activity_reminders_crm_activity_id : (crm_activity_id) BTREE
+  IX ix_crm_activity_reminders_recipient_user_id : (recipient_user_id) BTREE
+  IX ix_crm_activity_reminders_channel_concept_id : (channel_concept_id) BTREE
+  IX ix_crm_activity_reminders_delivery_status_concept_id : (delivery_status_concept_id) BTREE
+  IX ix_crm_activity_reminders_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_crm_activity_reminders_delivery_remind : (delivery_status_concept_id, remind_at) BTREE
+}
+
+crm_activity_reminders .. idxset_crm_activity_reminders : indexed by
+
+entity "INDEXES · crm_email_messages" as idxset_crm_email_messages <<INDEX_SET>> {
+  PK pk_crm_email_messages : (id) UNIQUE BTREE
+  UK uq_crm_email_messages_crm_activity_id : (crm_activity_id) UNIQUE BTREE
+  IX ix_crm_email_messages_crm_activity_id : (crm_activity_id) BTREE
+  IX ix_crm_email_messages_body_html_file_id : (body_html_file_id) BTREE
+  IX ix_crm_email_messages_delivery_status_concept_id : (delivery_status_concept_id) BTREE
+  IX ix_crm_email_messages_created_by_user_id : (created_by_user_id) BTREE
+}
+
+crm_email_messages .. idxset_crm_email_messages : indexed by
+
+entity "INDEXES · crm_email_recipients" as idxset_crm_email_recipients <<INDEX_SET>> {
+  PK pk_crm_email_recipients : (id) UNIQUE BTREE
+  IX ix_crm_email_recipients_crm_email_message_id : (crm_email_message_id) BTREE
+  IX ix_crm_email_recipients_recipient_type_concept_id : (recipient_type_concept_id) BTREE
+  IX ix_crm_email_recipients_contact_id : (contact_id) BTREE
+  IX ix_crm_email_recipients_lead_id : (lead_id) BTREE
+  IX ix_crm_email_recipients_user_id : (user_id) BTREE
+  IX ix_crm_email_recipients_delivery_status_concept_id : (delivery_status_concept_id) BTREE
+  IX ix_crm_email_recipients_message_type : (crm_email_message_id, recipient_type_concept_id) BTREE
+}
+
+crm_email_recipients .. idxset_crm_email_recipients : indexed by
+
+entity "INDEXES · crm_call_logs" as idxset_crm_call_logs <<INDEX_SET>> {
+  PK pk_crm_call_logs : (id) UNIQUE BTREE
+  UK uq_crm_call_logs_crm_activity_id : (crm_activity_id) UNIQUE BTREE
+  IX ix_crm_call_logs_crm_activity_id : (crm_activity_id) BTREE
+  IX ix_crm_call_logs_call_direction_concept_id : (call_direction_concept_id) BTREE
+  IX ix_crm_call_logs_outcome_concept_id : (outcome_concept_id) BTREE
+  IX ix_crm_call_logs_recording_file_id : (recording_file_id) BTREE
+  IX ix_crm_call_logs_created_by_user_id : (created_by_user_id) BTREE
+}
+
+crm_call_logs .. idxset_crm_call_logs : indexed by
+
+entity "INDEXES · crm_notes" as idxset_crm_notes <<INDEX_SET>> {
+  PK pk_crm_notes : (id) UNIQUE BTREE
+  UK uq_crm_notes_crm_activity_id : (crm_activity_id) UNIQUE BTREE
+  IX ix_crm_notes_crm_activity_id : (crm_activity_id) BTREE
+  IX ix_crm_notes_document_file_id : (document_file_id) BTREE
+  IX ix_crm_notes_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_crm_notes_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+crm_notes .. idxset_crm_notes : indexed by
+
+entity "INDEXES · crm_cases" as idxset_crm_cases <<INDEX_SET>> {
+  PK pk_crm_cases : (id) UNIQUE BTREE
+  UK uq_crm_cases_tenant_id_case_number : (tenant_id, case_number) UNIQUE BTREE
+  IX ix_crm_cases_tenant_id : (tenant_id) BTREE
+  IX ix_crm_cases_crm_account_id : (crm_account_id) BTREE
+  IX ix_crm_cases_primary_contact_id : (primary_contact_id) BTREE
+  IX ix_crm_cases_business_partner_id : (business_partner_id) BTREE
+  IX ix_crm_cases_contract_id : (contract_id) BTREE
+  IX ix_crm_cases_invoice_id : (invoice_id) BTREE
+  IX ix_crm_cases_case_type_concept_id : (case_type_concept_id) BTREE
+  IX ix_crm_cases_origin_concept_id : (origin_concept_id) BTREE
+  IX ix_crm_cases_priority_concept_id : (priority_concept_id) BTREE
+  IX ix_crm_cases_owner_user_id : (owner_user_id) BTREE
+  IX ix_crm_cases_parent_case_id : (parent_case_id) BTREE
+  IX ix_crm_cases_status_concept_id : (status_concept_id) BTREE
+  IX ix_crm_cases_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_crm_cases_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_crm_cases_tenant_status_priority_updated : (tenant_id, status_concept_id, priority_concept_id, updated_at DESC) BTREE
+  IX ix_crm_cases_owner_status_updated : (owner_user_id, status_concept_id, updated_at DESC) BTREE
+  GIN gin_crm_cases_search : to_tsvector('simple', concat_ws(' ', case_number, subject)) GIN
+}
+
+crm_cases .. idxset_crm_cases : indexed by
+
+entity "INDEXES · crm_case_contacts" as idxset_crm_case_contacts <<INDEX_SET>> {
+  PK pk_crm_case_contacts : (id) UNIQUE BTREE
+  UK uq_crm_case_contacts_crm_case_id_contact_id_role_concept_id : (crm_case_id, contact_id, role_concept_id) UNIQUE BTREE
+  IX ix_crm_case_contacts_crm_case_id : (crm_case_id) BTREE
+  IX ix_crm_case_contacts_contact_id : (contact_id) BTREE
+  IX ix_crm_case_contacts_role_concept_id : (role_concept_id) BTREE
+  IX ix_crm_case_contacts_created_by_user_id : (created_by_user_id) BTREE
+}
+
+crm_case_contacts .. idxset_crm_case_contacts : indexed by
+
+entity "INDEXES · crm_case_comments" as idxset_crm_case_comments <<INDEX_SET>> {
+  PK pk_crm_case_comments : (id) UNIQUE BTREE
+  IX ix_crm_case_comments_crm_case_id : (crm_case_id) BTREE
+  IX ix_crm_case_comments_author_user_id : (author_user_id) BTREE
+  IX ix_crm_case_comments_attachment_file_id : (attachment_file_id) BTREE
+  IX ix_crm_case_comments_case_created : (crm_case_id, created_at DESC) BTREE
+  BRIN brin_crm_case_comments_created_at : (created_at) BRIN pages_per_range=128
+}
+
+crm_case_comments .. idxset_crm_case_comments : indexed by
+
+entity "INDEXES · crm_case_status_history" as idxset_crm_case_status_history <<INDEX_SET>> {
+  PK pk_crm_case_status_history : (id) UNIQUE BTREE
+  IX ix_crm_case_status_history_crm_case_id : (crm_case_id) BTREE
+  IX ix_crm_case_status_history_from_status_concept_id : (from_status_concept_id) BTREE
+  IX ix_crm_case_status_history_to_status_concept_id : (to_status_concept_id) BTREE
+  IX ix_crm_case_status_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_crm_case_status_history_case_changed : (crm_case_id, changed_at DESC) BTREE
+  BRIN brin_crm_case_status_history_created_at : (created_at) BRIN pages_per_range=128
+}
+
+crm_case_status_history .. idxset_crm_case_status_history : indexed by
+
+entity "INDEXES · crm_entitlements" as idxset_crm_entitlements <<INDEX_SET>> {
+  PK pk_crm_entitlements : (id) UNIQUE BTREE
+  IX ix_crm_entitlements_tenant_id : (tenant_id) BTREE
+  IX ix_crm_entitlements_crm_account_id : (crm_account_id) BTREE
+  IX ix_crm_entitlements_business_partner_id : (business_partner_id) BTREE
+  IX ix_crm_entitlements_contract_id : (contract_id) BTREE
+  IX ix_crm_entitlements_entitlement_type_concept_id : (entitlement_type_concept_id) BTREE
+  IX ix_crm_entitlements_status_concept_id : (status_concept_id) BTREE
+  IX ix_crm_entitlements_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_crm_entitlements_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_crm_entitlements_account_status_end : (crm_account_id, status_concept_id, end_date) BTREE
+  GIN gin_crm_entitlements_search : to_tsvector('simple', concat_ws(' ', name)) GIN
+}
+
+crm_entitlements .. idxset_crm_entitlements : indexed by
+
+entity "INDEXES · crm_case_milestones" as idxset_crm_case_milestones <<INDEX_SET>> {
+  PK pk_crm_case_milestones : (id) UNIQUE BTREE
+  IX ix_crm_case_milestones_crm_case_id : (crm_case_id) BTREE
+  IX ix_crm_case_milestones_crm_entitlement_id : (crm_entitlement_id) BTREE
+  IX ix_crm_case_milestones_milestone_type_concept_id : (milestone_type_concept_id) BTREE
+  IX ix_crm_case_milestones_status_concept_id : (status_concept_id) BTREE
+  IX ix_crm_case_milestones_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_crm_case_milestones_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_crm_case_milestones_status_target : (status_concept_id, target_at) BTREE
+}
+
+crm_case_milestones .. idxset_crm_case_milestones : indexed by
+
+entity "INDEXES · crm_accounts" as idxset_crm_accounts <<INDEX_SET>> {
+  PK pk_crm_accounts : (id) UNIQUE BTREE
+  IX ix_crm_accounts_tenant_id : (tenant_id) BTREE
+  IX ix_crm_accounts_account_type_concept_id : (account_type_concept_id) BTREE
+  IX ix_crm_accounts_industry_concept_id : (industry_concept_id) BTREE
+  IX ix_crm_accounts_parent_account_id : (parent_account_id) BTREE
+  IX ix_crm_accounts_linked_tenant_id : (linked_tenant_id) BTREE
+  IX ix_crm_accounts_business_partner_id : (business_partner_id) BTREE
+  IX ix_crm_accounts_owner_user_id : (owner_user_id) BTREE
+  IX ix_crm_accounts_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_crm_accounts_status_concept_id : (status_concept_id) BTREE
+  IX ix_crm_accounts_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_crm_accounts_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_crm_accounts_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  GIN gin_crm_accounts_search : to_tsvector('simple', concat_ws(' ', name)) GIN
+}
+
+crm_accounts .. idxset_crm_accounts : indexed by
+
+entity "INDEXES · contacts" as idxset_contacts <<INDEX_SET>> {
+  PK pk_contacts : (id) UNIQUE BTREE
+  IX ix_contacts_tenant_id : (tenant_id) BTREE
+  IX ix_contacts_crm_account_id : (crm_account_id) BTREE
+  IX ix_contacts_contact_type_concept_id : (contact_type_concept_id) BTREE
+  IX ix_contacts_linked_user_id : (linked_user_id) BTREE
+  IX ix_contacts_owner_user_id : (owner_user_id) BTREE
+  IX ix_contacts_lifecycle_stage_concept_id : (lifecycle_stage_concept_id) BTREE
+  IX ix_contacts_source_concept_id : (source_concept_id) BTREE
+  IX ix_contacts_marketing_consent_id : (marketing_consent_id) BTREE
+  IX ix_contacts_status_concept_id : (status_concept_id) BTREE
+  IX ix_contacts_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_contacts_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_contacts_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+contacts .. idxset_contacts : indexed by
+
+entity "INDEXES · contact_channels" as idxset_contact_channels <<INDEX_SET>> {
+  PK pk_contact_channels : (id) UNIQUE BTREE
+  IX ix_contact_channels_contact_id : (contact_id) BTREE
+  IX ix_contact_channels_channel_type_concept_id : (channel_type_concept_id) BTREE
+  IX ix_contact_channels_opt_in_status_concept_id : (opt_in_status_concept_id) BTREE
+  IX ix_contact_channels_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_contact_channels_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+contact_channels .. idxset_contact_channels : indexed by
+
+entity "INDEXES · leads" as idxset_leads <<INDEX_SET>> {
+  PK pk_leads : (id) UNIQUE BTREE
+  IX ix_leads_tenant_id : (tenant_id) BTREE
+  IX ix_leads_lead_source_concept_id : (lead_source_concept_id) BTREE
+  IX ix_leads_contact_id : (contact_id) BTREE
+  IX ix_leads_crm_account_id : (crm_account_id) BTREE
+  IX ix_leads_lead_status_concept_id : (lead_status_concept_id) BTREE
+  IX ix_leads_owner_user_id : (owner_user_id) BTREE
+  IX ix_leads_converted_opportunity_id : (converted_opportunity_id) BTREE
+  IX ix_leads_status_concept_id : (status_concept_id) BTREE
+  IX ix_leads_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_leads_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_leads_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+leads .. idxset_leads : indexed by
+
+entity "INDEXES · pipelines" as idxset_pipelines <<INDEX_SET>> {
+  PK pk_pipelines : (id) UNIQUE BTREE
+  UK uq_pipelines_code : (code) UNIQUE BTREE
+  IX ix_pipelines_tenant_id : (tenant_id) BTREE
+  IX ix_pipelines_pipeline_type_concept_id : (pipeline_type_concept_id) BTREE
+  IX ix_pipelines_state_concept_id : (state_concept_id) BTREE
+  IX ix_pipelines_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_pipelines_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_pipelines_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+  GIN gin_pipelines_search : to_tsvector('simple', concat_ws(' ', name, code)) GIN
+}
+
+pipelines .. idxset_pipelines : indexed by
+
+entity "INDEXES · pipeline_stages" as idxset_pipeline_stages <<INDEX_SET>> {
+  PK pk_pipeline_stages : (id) UNIQUE BTREE
+  IX ix_pipeline_stages_pipeline_id : (pipeline_id) BTREE
+  IX ix_pipeline_stages_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_pipeline_stages_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_pipeline_stages_search : to_tsvector('simple', concat_ws(' ', name, code)) GIN
+}
+
+pipeline_stages .. idxset_pipeline_stages : indexed by
+
+entity "INDEXES · opportunities" as idxset_opportunities <<INDEX_SET>> {
+  PK pk_opportunities : (id) UNIQUE BTREE
+  IX ix_opportunities_tenant_id : (tenant_id) BTREE
+  IX ix_opportunities_pipeline_id : (pipeline_id) BTREE
+  IX ix_opportunities_stage_id : (stage_id) BTREE
+  IX ix_opportunities_crm_account_id : (crm_account_id) BTREE
+  IX ix_opportunities_primary_contact_id : (primary_contact_id) BTREE
+  IX ix_opportunities_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_opportunities_owner_user_id : (owner_user_id) BTREE
+  IX ix_opportunities_contract_id : (contract_id) BTREE
+  IX ix_opportunities_sales_order_id : (sales_order_id) BTREE
+  IX ix_opportunities_lost_reason_concept_id : (lost_reason_concept_id) BTREE
+  IX ix_opportunities_status_concept_id : (status_concept_id) BTREE
+  IX ix_opportunities_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_opportunities_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_opportunities_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  GIN gin_opportunities_search : to_tsvector('simple', concat_ws(' ', name)) GIN
+}
+
+opportunities .. idxset_opportunities : indexed by
+
+entity "INDEXES · crm_activities" as idxset_crm_activities <<INDEX_SET>> {
+  PK pk_crm_activities : (id) UNIQUE BTREE
+  IX ix_crm_activities_tenant_id : (tenant_id) BTREE
+  IX ix_crm_activities_activity_type_concept_id : (activity_type_concept_id) BTREE
+  IX ix_crm_activities_subject_type_concept_id : (subject_type_concept_id) BTREE
+  IX ix_crm_activities_contact_id : (contact_id) BTREE
+  IX ix_crm_activities_crm_account_id : (crm_account_id) BTREE
+  IX ix_crm_activities_direction_concept_id : (direction_concept_id) BTREE
+  IX ix_crm_activities_outcome_concept_id : (outcome_concept_id) BTREE
+  IX ix_crm_activities_owner_user_id : (owner_user_id) BTREE
+  IX ix_crm_activities_status_concept_id : (status_concept_id) BTREE
+  IX ix_crm_activities_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_crm_activities_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_crm_activities_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  GIN gin_crm_activities_search : to_tsvector('simple', concat_ws(' ', body_text)) GIN
+}
+
+crm_activities .. idxset_crm_activities : indexed by
+
+entity "INDEXES · partnerships" as idxset_partnerships <<INDEX_SET>> {
+  PK pk_partnerships : (id) UNIQUE BTREE
+  IX ix_partnerships_tenant_id : (tenant_id) BTREE
+  IX ix_partnerships_partnership_type_concept_id : (partnership_type_concept_id) BTREE
+  IX ix_partnerships_crm_account_id : (crm_account_id) BTREE
+  IX ix_partnerships_ad_partner_id : (ad_partner_id) BTREE
+  IX ix_partnerships_contract_id : (contract_id) BTREE
+  IX ix_partnerships_tier_concept_id : (tier_concept_id) BTREE
+  IX ix_partnerships_owner_user_id : (owner_user_id) BTREE
+  IX ix_partnerships_status_concept_id : (status_concept_id) BTREE
+  IX ix_partnerships_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_partnerships_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_partnerships_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  GIN gin_partnerships_search : to_tsvector('simple', concat_ws(' ', name)) GIN
+}
+
+partnerships .. idxset_partnerships : indexed by
+
+entity "INDEXES · partnership_agreements" as idxset_partnership_agreements <<INDEX_SET>> {
+  PK pk_partnership_agreements : (id) UNIQUE BTREE
+  IX ix_partnership_agreements_partnership_id : (partnership_id) BTREE
+  IX ix_partnership_agreements_agreement_type_concept_id : (agreement_type_concept_id) BTREE
+  IX ix_partnership_agreements_contract_id : (contract_id) BTREE
+  IX ix_partnership_agreements_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_partnership_agreements_document_file_id : (document_file_id) BTREE
+  IX ix_partnership_agreements_status_concept_id : (status_concept_id) BTREE
+  IX ix_partnership_agreements_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_partnership_agreements_updated_by_user_id : (updated_by_user_id) BTREE
+  GIST gist_partnership_agreements_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+}
+
+partnership_agreements .. idxset_partnership_agreements : indexed by
+' ===== v4.0.1 (scheduled campaigns / site-admin / tracking) ===== (index sets)
+entity "INDEXES · contact_channel_endpoints" as idxset_contact_channel_endpoints <<INDEX_SET>> {
+  PK pk_contact_channel_endpoints : (id) UNIQUE BTREE
+  UK uq_contact_channel_endpoints_endpoint_type_concept_id : (endpoint_type_concept_id, value_hash, tenant_scope_normalizado) UNIQUE BTREE
+  IX ix_contact_channel_endpoints_tenant_id : (tenant_id) BTREE
+  IX ix_contact_channel_endpoints_contact_id : (contact_id) BTREE
+  IX ix_contact_channel_endpoints_lead_id : (lead_id) BTREE
+  IX ix_contact_channel_endpoints_user_id : (user_id) BTREE
+  IX ix_contact_channel_endpoints_endpoint_type_concept_id : (endpoint_type_concept_id) BTREE
+  IX ix_contact_channel_endpoints_verification_status_concept_id : (verification_status_concept_id) BTREE
+  IX ix_contact_channel_endpoints_deliverability_status_concept_id : (deliverability_status_concept_id) BTREE
+  IX ix_contact_channel_endpoints_state_concept_id : (state_concept_id) BTREE
+  IX ix_contact_channel_endpoints_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_contact_channel_endpoints_updated_by_user_id : (updated_by_user_id) BTREE
+}
+contact_channel_endpoints .. idxset_contact_channel_endpoints : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

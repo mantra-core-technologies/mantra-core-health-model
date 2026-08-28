@@ -1,0 +1,533 @@
+@startuml SALUD_Module_18_clinical_ext
+title Module 18 — Care Coordination, Alerts and Decision Support\n(schema: clinical_ext)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_18_clinical_ext.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_18_clinical_ext
+  Coordinates multidisciplinary care, referrals, alerts, practitioner availability,
+  virtual encounters and structured family/social history.
+end note
+
+entity care_teams {
+  * id : uuid <<PK>>
+  --
+  * patient_profile_id : uuid <<FK>>
+    episode_id : uuid <<FK>>
+  * tenant_id : uuid <<FK>>
+    name : varchar
+    category_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    period_start : timestamptz
+    period_end : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity care_team_members {
+  * id : uuid <<PK>>
+  --
+  * care_team_id : uuid <<FK>>
+    practitioner_profile_id : uuid <<FK>>
+    related_person_id : uuid <<FK>>
+  * member_role_concept_id : uuid <<FK>>
+    is_responsible : boolean
+    period_start : timestamptz
+    period_end : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity referrals {
+  * id : uuid <<PK>>
+  --
+  * patient_profile_id : uuid <<FK>>
+    source_encounter_id : uuid <<FK>>
+    referring_profile_id : uuid <<FK>>
+    target_profile_id : uuid <<FK>>
+    target_tenant_id : uuid <<FK>>
+    specialty_concept_id : uuid <<FK>>
+    service_request_id : uuid <<FK>>
+    reason_concept_id : uuid <<FK>>
+    reason_text : text
+    priority_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    valid_until : date
+    responded_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity clinical_alerts {
+  * id : uuid <<PK>>
+  --
+  * patient_profile_id : uuid <<FK>>
+    encounter_id : uuid <<FK>>
+  * alert_type_concept_id : uuid <<FK>>
+  * severity_concept_id : uuid <<FK>>
+    source_resource_type : varchar
+    source_resource_id : uuid
+    trigger_concept_id : uuid <<FK>>
+    rule_id : uuid <<FK>>
+    detail_text : text
+  * status_concept_id : uuid <<FK>>
+    overridden_by_user_id : uuid <<FK>>
+    override_reason : text
+    overridden_at : timestamptz
+  * detected_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+
+
+entity virtual_encounters {
+  * id : uuid <<PK>>
+  --
+  * encounter_id : uuid <<FK>>
+    platform_concept_id : uuid <<FK>>
+    meeting_url : text
+    meeting_id : varchar
+    recording_file_id : uuid <<FK>>
+    joined_at : timestamptz
+    ended_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+
+
+care_teams ||--o{ care_team_members
+
+note as BOUNDARY_diagram_18_clinical_ext
+  Scheduling availability is not a reservation guarantee. Appointment booking
+  uses database constraints/idempotency and a bounded lock workflow in clinical.
+end note
+
+note as PRIVACY_diagram_18_clinical_ext
+  Family and social history are clinical data and must not flow into product
+  analytics or public community content.
+end note
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_18b_clinical_decision_support.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_18b_clinical_decision_support
+  Contains governed CDS knowledge, order sets, reference ranges, care-gap
+  projections, notifications and internal clinical-supply tracking.
+end note
+
+entity cds_rules {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * code : varchar <<UK>>
+  * name : varchar
+  * rule_type_concept_id : uuid <<FK>>
+  * severity_concept_id : uuid <<FK>>
+    logic_json : jsonb
+    message_template : text
+  * is_active : boolean
+    version : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity drug_interactions {
+  * id : uuid <<PK>>
+  --
+  * substance_a_concept_id : uuid <<FK>>
+  * substance_b_concept_id : uuid <<FK>>
+  * severity_concept_id : uuid <<FK>>
+    mechanism_text : text
+    management_text : text
+    evidence_level_concept_id : uuid <<FK>>
+    source : varchar
+    source_version : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity reference_ranges {
+  * id : uuid <<PK>>
+  --
+  * code_concept_id : uuid <<FK>>
+    unit_concept_id : uuid <<FK>>
+    sex_concept_id : uuid <<FK>>
+    age_min_days : integer
+    age_max_days : integer
+    condition_concept_id : uuid <<FK>>
+    low_value : numeric
+    high_value : numeric
+    critical_low : numeric
+    critical_high : numeric
+    interpretation_text : text
+    source : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity order_sets {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+    specialty_concept_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+    description : text
+    condition_concept_id : uuid <<FK>>
+  * version : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity order_set_items {
+  * id : uuid <<PK>>
+  --
+  * order_set_id : uuid <<FK>>
+  * item_type_concept_id : uuid <<FK>>
+  * code_concept_id : uuid <<FK>>
+    default_dose_text : varchar
+    default_route_concept_id : uuid <<FK>>
+    default_frequency_text : varchar
+    is_selected_default : boolean
+    ordinal : integer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' + v4.1.6 — Favoritos de prescripción del profesional.
+' Es una plantilla PERSONAL: la amoxicilina 500 mg c/8 h × 7 días que un
+' odontólogo indica diez veces por día. Vive en clinical_ext y no en clinical
+' porque no es historia del paciente —no hay paciente— sino una comodidad de
+' captura del profesional, pariente de order_sets (que es la plantilla de la
+' organización). Aplicar un favorito produce una medication_requests normal:
+' esta tabla no participa de la máquina de estados de la receta.
+'
+' Sin status_concept_id a propósito: una lista de conveniencia se borra, no se
+' archiva. No hay obligación de conservación clínica sobre un atajo de tipeo, y
+' un value set nuevo para modelar "activo/borrado" sería vocabulario sin lector.
+'
+' name es el rótulo con el que el profesional la reconoce en su lista, y es
+' único por profesional: guardar dos veces el mismo nombre pisa en silencio la
+' anterior, que es peor que rechazar.
+entity prescription_favorites {
+  * id : uuid <<PK>>
+  --
+  * practitioner_profile_id : uuid <<FK,UK>>
+  * name : varchar <<UK>>
+  * medication_concept_id : uuid <<FK>>
+    substance_atc_concept_id : uuid <<FK>>
+    dose_text : varchar
+    route_concept_id : uuid <<FK>>
+    frequency_text : varchar
+    quantity_decimal : numeric
+    unit_concept_id : uuid <<FK>>
+    patient_instructions_text : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity immunization_schedules {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * vaccine_concept_id : uuid <<FK>>
+  * name : varchar
+    recommended_age_days : integer
+    dose_number : integer
+    interval_days : integer
+    jurisdiction_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity care_gaps {
+  * id : uuid <<PK>>
+  --
+  * patient_profile_id : uuid <<FK>>
+  * gap_type_concept_id : uuid <<FK>>
+    measure_concept_id : uuid <<FK>>
+    due_date : date
+  * status_concept_id : uuid <<FK>>
+    closed_at : timestamptz
+    closed_by_resource_type : varchar
+    closed_by_resource_id : uuid
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+
+
+
+entity vital_signs_view <<VIEW>> {
+  --
+    patient_profile_id : uuid
+    encounter_id : uuid
+    code_concept_id : uuid
+    value_decimal : numeric
+    unit_concept_id : uuid
+    interpretation_concept_id : uuid
+    effective_at : timestamptz
+}
+
+
+
+
+cds_rules ||--o{ clinical_alerts
+order_sets ||--o{ order_set_items
+
+note as PHARMACY_BOUNDARY_diagram_18b_clinical_decision_support
+  clinical_ext.inventory_* tracks internal clinical supplies only. Sellable
+  pharmacy stock, lots, reservations, dispensing and valuation are governed by
+  the dedicated pharmacy schema.
+end note
+
+note as CDS_diagram_18b_clinical_decision_support
+  Decision-support rules require versioning, clinical governance, effective
+  periods, evidence references, monitoring and a safe rollback strategy.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · care_teams" as idxset_care_teams <<INDEX_SET>> {
+  PK pk_care_teams : (id) UNIQUE BTREE
+  IX ix_care_teams_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_care_teams_episode_id : (episode_id) BTREE
+  IX ix_care_teams_tenant_id : (tenant_id) BTREE
+  IX ix_care_teams_category_concept_id : (category_concept_id) BTREE
+  IX ix_care_teams_status_concept_id : (status_concept_id) BTREE
+  IX ix_care_teams_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_care_teams_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_care_teams_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  IX ix_care_teams_patient_profile_id_updated_at : (tenant_id, patient_profile_id, updated_at DESC) BTREE
+}
+
+care_teams .. idxset_care_teams : indexed by
+
+entity "INDEXES · care_team_members" as idxset_care_team_members <<INDEX_SET>> {
+  PK pk_care_team_members : (id) UNIQUE BTREE
+  IX ix_care_team_members_care_team_id : (care_team_id) BTREE
+  IX ix_care_team_members_practitioner_profile_id : (practitioner_profile_id) BTREE
+  IX ix_care_team_members_related_person_id : (related_person_id) BTREE
+  IX ix_care_team_members_member_role_concept_id : (member_role_concept_id) BTREE
+  IX ix_care_team_members_status_concept_id : (status_concept_id) BTREE
+  IX ix_care_team_members_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_care_team_members_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+care_team_members .. idxset_care_team_members : indexed by
+
+entity "INDEXES · referrals" as idxset_referrals <<INDEX_SET>> {
+  PK pk_referrals : (id) UNIQUE BTREE
+  IX ix_referrals_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_referrals_source_encounter_id : (source_encounter_id) BTREE
+  IX ix_referrals_referring_profile_id : (referring_profile_id) BTREE
+  IX ix_referrals_target_profile_id : (target_profile_id) BTREE
+  IX ix_referrals_target_tenant_id : (target_tenant_id) BTREE
+  IX ix_referrals_specialty_concept_id : (specialty_concept_id) BTREE
+  IX ix_referrals_service_request_id : (service_request_id) BTREE
+  IX ix_referrals_reason_concept_id : (reason_concept_id) BTREE
+  IX ix_referrals_priority_concept_id : (priority_concept_id) BTREE
+  IX ix_referrals_status_concept_id : (status_concept_id) BTREE
+  IX ix_referrals_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_referrals_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_referrals_patient_profile_id_updated_at : (patient_profile_id, updated_at DESC) BTREE
+}
+
+referrals .. idxset_referrals : indexed by
+
+entity "INDEXES · clinical_alerts" as idxset_clinical_alerts <<INDEX_SET>> {
+  PK pk_clinical_alerts : (id) UNIQUE BTREE
+  IX ix_clinical_alerts_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_clinical_alerts_encounter_id : (encounter_id) BTREE
+  IX ix_clinical_alerts_alert_type_concept_id : (alert_type_concept_id) BTREE
+  IX ix_clinical_alerts_severity_concept_id : (severity_concept_id) BTREE
+  IX ix_clinical_alerts_trigger_concept_id : (trigger_concept_id) BTREE
+  IX ix_clinical_alerts_rule_id : (rule_id) BTREE
+  IX ix_clinical_alerts_status_concept_id : (status_concept_id) BTREE
+  IX ix_clinical_alerts_overridden_by_user_id : (overridden_by_user_id) BTREE
+  IX ix_clinical_alerts_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_clinical_alerts_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_clinical_alerts_patient_profile_id_updated_at : (patient_profile_id, updated_at DESC) BTREE
+}
+
+clinical_alerts .. idxset_clinical_alerts : indexed by
+
+entity "INDEXES · virtual_encounters" as idxset_virtual_encounters <<INDEX_SET>> {
+  PK pk_virtual_encounters : (id) UNIQUE BTREE
+  IX ix_virtual_encounters_encounter_id : (encounter_id) BTREE
+  IX ix_virtual_encounters_platform_concept_id : (platform_concept_id) BTREE
+  IX ix_virtual_encounters_recording_file_id : (recording_file_id) BTREE
+  IX ix_virtual_encounters_status_concept_id : (status_concept_id) BTREE
+  IX ix_virtual_encounters_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_virtual_encounters_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+virtual_encounters .. idxset_virtual_encounters : indexed by
+
+entity "INDEXES · cds_rules" as idxset_cds_rules <<INDEX_SET>> {
+  PK pk_cds_rules : (id) UNIQUE BTREE
+  UK uq_cds_rules_code : (code) UNIQUE BTREE
+  IX ix_cds_rules_tenant_id : (tenant_id) BTREE
+  IX ix_cds_rules_rule_type_concept_id : (rule_type_concept_id) BTREE
+  IX ix_cds_rules_severity_concept_id : (severity_concept_id) BTREE
+  IX ix_cds_rules_status_concept_id : (status_concept_id) BTREE
+  IX ix_cds_rules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_cds_rules_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_cds_rules_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+cds_rules .. idxset_cds_rules : indexed by
+
+entity "INDEXES · drug_interactions" as idxset_drug_interactions <<INDEX_SET>> {
+  PK pk_drug_interactions : (id) UNIQUE BTREE
+  IX ix_drug_interactions_substance_a_concept_id : (substance_a_concept_id) BTREE
+  IX ix_drug_interactions_substance_b_concept_id : (substance_b_concept_id) BTREE
+  IX ix_drug_interactions_severity_concept_id : (severity_concept_id) BTREE
+  IX ix_drug_interactions_evidence_level_concept_id : (evidence_level_concept_id) BTREE
+  IX ix_drug_interactions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_drug_interactions_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+drug_interactions .. idxset_drug_interactions : indexed by
+
+entity "INDEXES · reference_ranges" as idxset_reference_ranges <<INDEX_SET>> {
+  PK pk_reference_ranges : (id) UNIQUE BTREE
+  IX ix_reference_ranges_code_concept_id : (code_concept_id) BTREE
+  IX ix_reference_ranges_unit_concept_id : (unit_concept_id) BTREE
+  IX ix_reference_ranges_sex_concept_id : (sex_concept_id) BTREE
+  IX ix_reference_ranges_condition_concept_id : (condition_concept_id) BTREE
+  IX ix_reference_ranges_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_reference_ranges_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+reference_ranges .. idxset_reference_ranges : indexed by
+
+entity "INDEXES · order_sets" as idxset_order_sets <<INDEX_SET>> {
+  PK pk_order_sets : (id) UNIQUE BTREE
+  IX ix_order_sets_tenant_id : (tenant_id) BTREE
+  IX ix_order_sets_specialty_concept_id : (specialty_concept_id) BTREE
+  IX ix_order_sets_condition_concept_id : (condition_concept_id) BTREE
+  IX ix_order_sets_status_concept_id : (status_concept_id) BTREE
+  IX ix_order_sets_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_order_sets_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_order_sets_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+order_sets .. idxset_order_sets : indexed by
+
+entity "INDEXES · order_set_items" as idxset_order_set_items <<INDEX_SET>> {
+  PK pk_order_set_items : (id) UNIQUE BTREE
+  IX ix_order_set_items_order_set_id : (order_set_id) BTREE
+  IX ix_order_set_items_item_type_concept_id : (item_type_concept_id) BTREE
+  IX ix_order_set_items_code_concept_id : (code_concept_id) BTREE
+  IX ix_order_set_items_default_route_concept_id : (default_route_concept_id) BTREE
+  IX ix_order_set_items_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_order_set_items_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+order_set_items .. idxset_order_set_items : indexed by
+
+entity "INDEXES · prescription_favorites" as idxset_prescription_favorites <<INDEX_SET>> {
+  PK pk_prescription_favorites : (id) UNIQUE BTREE
+  IX ix_prescription_favorites_practitioner_profile_id : (practitioner_profile_id) BTREE
+  IX ix_prescription_favorites_medication_concept_id : (medication_concept_id) BTREE
+  IX ix_prescription_favorites_substance_atc_concept_id : (substance_atc_concept_id) BTREE
+  IX ix_prescription_favorites_route_concept_id : (route_concept_id) BTREE
+  IX ix_prescription_favorites_unit_concept_id : (unit_concept_id) BTREE
+  IX ix_prescription_favorites_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_prescription_favorites_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_prescription_favorites_practitioner_name : (practitioner_profile_id, name) UNIQUE BTREE
+}
+
+prescription_favorites .. idxset_prescription_favorites : indexed by
+
+entity "INDEXES · immunization_schedules" as idxset_immunization_schedules <<INDEX_SET>> {
+  PK pk_immunization_schedules : (id) UNIQUE BTREE
+  IX ix_immunization_schedules_tenant_id : (tenant_id) BTREE
+  IX ix_immunization_schedules_vaccine_concept_id : (vaccine_concept_id) BTREE
+  IX ix_immunization_schedules_jurisdiction_concept_id : (jurisdiction_concept_id) BTREE
+  IX ix_immunization_schedules_status_concept_id : (status_concept_id) BTREE
+  IX ix_immunization_schedules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_immunization_schedules_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_immunization_schedules_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+immunization_schedules .. idxset_immunization_schedules : indexed by
+
+entity "INDEXES · care_gaps" as idxset_care_gaps <<INDEX_SET>> {
+  PK pk_care_gaps : (id) UNIQUE BTREE
+  IX ix_care_gaps_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_care_gaps_gap_type_concept_id : (gap_type_concept_id) BTREE
+  IX ix_care_gaps_measure_concept_id : (measure_concept_id) BTREE
+  IX ix_care_gaps_status_concept_id : (status_concept_id) BTREE
+  IX ix_care_gaps_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_care_gaps_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_care_gaps_patient_profile_id_updated_at : (patient_profile_id, updated_at DESC) BTREE
+}
+
+care_gaps .. idxset_care_gaps : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

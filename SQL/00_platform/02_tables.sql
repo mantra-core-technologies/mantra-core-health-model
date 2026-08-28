@@ -1,0 +1,3 @@
+-- SALUD v4.0.1 · módulo 00 · schema platform
+-- Generado de diagram_00_platform.puml — NO editar a mano.
+-- NOTA: Módulo de arquitectura e índice canónico sin tablas físicas relacionales propias (0 tablas).

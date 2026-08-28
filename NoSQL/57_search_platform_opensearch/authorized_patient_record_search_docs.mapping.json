@@ -1,0 +1,57 @@
+{
+  "mappings": {
+    "properties": {
+      "tenant_id": {
+        "type": "keyword"
+      },
+      "source_entity_id": {
+        "type": "keyword"
+      },
+      "source_version": {
+        "type": "long"
+      },
+      "lifecycle_state": {
+        "type": "keyword"
+      },
+      "updated_at": {
+        "type": "date"
+      },
+      "routing_key": {
+        "type": "keyword"
+      },
+      "patient_profile_id": {
+        "type": "keyword"
+      },
+      "clinical_resource_id": {
+        "type": "keyword"
+      },
+      "resource_type": {
+        "type": "keyword"
+      },
+      "event_at": {
+        "type": "date"
+      },
+      "title_redacted": {
+        "type": "text"
+      },
+      "summary_redacted": {
+        "type": "text"
+      },
+      "terminology_codes": {
+        "type": "keyword"
+      },
+      "security_labels": {
+        "type": "keyword"
+      },
+      "purpose_of_use_codes": {
+        "type": "keyword"
+      },
+      "allowed_principal_ids": {
+        "type": "keyword"
+      },
+      "authz_projection_version": {
+        "type": "keyword"
+      }
+    }
+  }
+}

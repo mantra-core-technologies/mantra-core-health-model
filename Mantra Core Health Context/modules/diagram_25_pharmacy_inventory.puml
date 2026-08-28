@@ -1,0 +1,833 @@
+@startuml SALUD_Module_25_pharmacy_inventory
+title Module 25 — Pharmacy Inventory, Supply and Dispensing\n(schema: pharmacy_inventory)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_25_pharmacy_inventory.puml
+' ------------------------------------------------------------------------------
+
+entity "erp.business_partners" as erp_business_partners <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "erp.purchase_orders" as erp_purchase_orders <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "erp.purchase_order_items" as erp_purchase_order_items <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "erp.goods_receipts" as erp_goods_receipts <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "erp.goods_receipt_items" as erp_goods_receipt_items <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "accounting.ledger_entries" as accounting_ledger_entries <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+
+note as BIZ_diagram_25_pharmacy_inventory
+  BUSINESS PURPOSE
+  Prevents overselling and untraceable adjustments under concurrent manual,
+  API, dispensing and receiving operations. The immutable ledger is the source
+  of truth; stock positions are transactional projections optimized for reads.
+end note
+
+entity inventory_locations {
+  * id : uuid <<PK>>
+  --
+  * pharmacy_site_id : uuid <<FK>>
+    parent_location_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+  * location_type_concept_id : uuid <<FK>>
+    temperature_zone_concept_id : uuid <<FK>>
+    controlled_access : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity inventory_lots {
+  * id : uuid <<PK>>
+  --
+  * pharmacy_product_id : uuid <<FK>>
+  * lot_number : varchar
+    manufacturer_lot_number : varchar
+    manufactured_at : date
+    expires_at : date
+    received_at : timestamptz
+    quarantine_status_concept_id : uuid <<FK>>
+    recall_status_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity inventory_serials {
+  * id : uuid <<PK>>
+  --
+  * inventory_lot_id : uuid <<FK>>
+  * serial_number : varchar
+    verification_identifier : varchar
+  * status_concept_id : uuid <<FK>>
+    current_inventory_location_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity inventory_stock_positions {
+  * id : uuid <<PK>>
+  --
+  * inventory_location_id : uuid <<FK>>
+  * pharmacy_product_id : uuid <<FK>>
+    inventory_lot_id : uuid <<FK>>
+  * on_hand_quantity : numeric
+  * reserved_quantity : numeric
+  * quarantine_quantity : numeric
+  * available_quantity : numeric <<DERIVED>>
+  * last_ledger_sequence : bigint
+  * updated_at : timestamptz
+  * row_version : integer
+}
+
+entity inventory_ledger_entries <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * pharmacy_id : uuid <<FK>>
+  * pharmacy_site_id : uuid <<FK>>
+  * inventory_location_id : uuid <<FK>>
+  * pharmacy_product_id : uuid <<FK>>
+    inventory_lot_id : uuid <<FK>>
+    inventory_serial_id : uuid <<FK>>
+  * ledger_sequence : bigint
+  * movement_type_concept_id : uuid <<FK>>
+  * quantity_delta : numeric
+    reservation_delta : numeric
+    quarantine_delta : numeric
+    unit_cost_amount : numeric
+    currency_concept_id : uuid <<FK>>
+    source_type_concept_id : uuid <<FK>>
+    source_id : uuid
+    idempotency_key : varchar
+    correlation_id : uuid
+    erp_goods_receipt_item_id : uuid <<FK>>
+    accounting_ledger_entry_id : uuid <<FK>>
+  * occurred_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+entity inventory_reservations {
+  * id : uuid <<PK>>
+  --
+  * pharmacy_id : uuid <<FK>>
+  * pharmacy_site_id : uuid <<FK>>
+    patient_profile_id : uuid <<FK>>
+    medication_request_id : uuid <<FK>>
+    quotation_id : uuid <<FK>>
+  * reservation_status_concept_id : uuid <<FK>>
+  * expires_at : timestamptz
+    confirmed_at : timestamptz
+    released_at : timestamptz
+    idempotency_key : varchar
+  ' + v4.2.1 — los datos comerciales del PEDIDO DE PACIENTE (FAR-E1/E3). Una fila de
+  ' esta tabla con estado `PINV_ORDER_*` ES un pedido: lo que sigue es lo que el
+  ' pedido tiene y la reserva de mostrador no, y por eso es todo nullable.
+  '
+  ' Cómo llega el pedido a la persona: RETIRO · DOMICILIO · TRABAJO. Conjunto
+  ' dinámico cuyo dueño es la API (`pharmacy_inventory.concepts.ts`), SIN nota
+  ' `vs_*` ni entrada en VS_OWNER: declararlo dos veces daría dos catálogos con ids
+  ' distintos peleando por la misma columna (el problema del módulo 64). Que un
+  ' pedido siempre tenga modalidad, y que la sede pueda con ella
+  ' (`pharmacy_sites.pickup_available` / `home_delivery_available`), es regla de
+  ' servicio: la reserva de mostrador comparte tabla y no la lleva.
+    delivery_mode_concept_id : uuid <<FK>>
+  ' + v4.2.1 — la dirección elegida cuando la modalidad es de envío. Es una dirección
+  ' YA cargada de la persona, no texto libre. `common.addresses` es polimórfica
+  ' (owner_type + owner_id, sin FK), así que esta FK garantiza que la fila existe
+  ' pero NO que sea del paciente del pedido: eso lo comprueba el servicio.
+    delivery_address_id : uuid <<FK>>
+  ' + v4.2.1 — el total CONGELADO al crear el pedido, con su moneda. Congelado y no
+  ' derivado: recalcularlo contra las listas vigentes haría que una lista nueva
+  ' reescribiera en silencio lo que decía un pedido histórico. `numeric` y no un
+  ' entero de centavos, como el resto de los montos del módulo.
+  '
+  ' La moneda se COPIA de la lista de precios que se usó
+  ' (`pharmacy.pharmacy_price_lists.currency_concept_id`); no hay conjunto propio de
+  ' monedas en el modelo y la lectura las compara por `code`, así que inventar un
+  ' concepto acá haría que el total congelado y el recalculado no se reconocieran.
+  '
+  ' «Congelado» NO es «inmutable»: aceptar una sustitución RECALCULA el total, porque el
+  ' genérico cuesta otra cosa y el comprobante tiene que decir lo que se va a cobrar — se
+  ' vuelve a congelar en cada aceptación. Por eso esta columna NO lleva guarda de
+  ' inmutabilidad, a diferencia del precio de la dispensación, que se escribe una sola vez.
+    total_amount : numeric
+    currency_concept_id : uuid <<FK>>
+  ' + v4.2.1 — el código que el mostrador pide al entregar. Lo genera y lo sella el
+  ' backend al pasar a LISTO_PARA_RETIRO: 6 caracteres de un alfabeto legible sin
+  ' ambiguos, único mientras exista (índice PARCIAL, abajo). Un solo código por
+  ' pedido, válido para todas las entregas parciales hasta RETIRADO — rotarlo por
+  ' entrega obligaría a avisar de nuevo a alguien que ya está en el mostrador.
+  ' Caduca con `expires_at`: sin ventana propia, una sola fecha que se renueva.
+    pickup_code : varchar
+  ' + v4.2.1 — por qué la farmacia rechazó el pedido, escrito por quien decidió y
+  ' LEÍDO POR EL PACIENTE: un rechazo sin motivo es mudo para quien lo recibe.
+  ' Texto libre y `varchar`, como `decision_reason_text` (v4.1.9) — categorizar
+  ' motivos que ninguna farmacia pidió sería inventarlos. El tope de 500 vive en el
+  ' DTO, que ya lo declara.
+    rejection_reason_text : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity inventory_reservation_lines {
+  * id : uuid <<PK>>
+  --
+  * inventory_reservation_id : uuid <<FK>>
+  * pharmacy_product_id : uuid <<FK>>
+    inventory_lot_id : uuid <<FK>>
+    inventory_location_id : uuid <<FK>>
+  * requested_quantity : numeric
+  * reserved_quantity : numeric
+    fulfilled_quantity : numeric
+  * status_concept_id : uuid <<FK>>
+  ' + v4.2.1 — precio unitario CONGELADO al crear el pedido, con su moneda. Mismo
+  ' patrón que `medication_dispensation_lines.unit_price_amount`, dos tablas más
+  ' abajo, que ya congela el precio al dispensar: acá se congela antes, al pedir.
+  ' `null` cuando el producto no tiene precio publicado — el contrato dice «sin
+  ' precio», que no es lo mismo que cero.
+    unit_price_amount : numeric
+    currency_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' + v4.2.1 — Propuestas de sustitución, por línea del pedido.
+' «Te proponen genérico X (Bs 25) en lugar de marca Y (Bs 60)»: la farmacia lo
+' propone al confirmar y la decisión es SIEMPRE del paciente — aceptar o preferir el
+' original. Es una tabla y no dos columnas porque una propuesta tiene dos puntas con
+' precio propio, un estado que evoluciona y una historia que el pedido debe mostrar.
+'
+' Cuelga de la LÍNEA además del pedido: la sustitución es de un renglón concreto y un
+' pedido puede tener varias propuestas vivas a la vez. La línea alcanza para llegar al
+' pedido, pero el pedido se guarda igual porque toda lectura del pedido las trae.
+'
+' `medication_dispensations.substitution_reason_concept_id` NO es esto: aquél es el
+' motivo que el mostrador registra AL DISPENSAR, no la propuesta previa que el paciente
+' todavía puede rechazar. Reutilizarlo sería darle una semántica que no tiene.
+'
+' Estado propio (`PINV_SUBSTITUTION_*`, dueño la API) y no el del pedido: el pedido
+' entero está ACEPTACION_PENDIENTE mientras quede UNA propuesta sin decidir, pero cada
+' propuesta se acepta o se rechaza por separado. `RETIRADA` cubre el pedido que muere
+' —vence o se cancela— con la propuesta todavía en pie: sin ese estado, una propuesta
+' quedaría PROPUESTA para siempre sobre un pedido que ya no existe.
+entity pharmacy_order_substitutions {
+  * id : uuid <<PK>>
+  --
+  * inventory_reservation_id : uuid <<FK>>
+  * inventory_reservation_line_id : uuid <<FK>>
+  * original_pharmacy_product_id : uuid <<FK>>
+  * proposed_pharmacy_product_id : uuid <<FK>>
+    original_unit_price_amount : numeric
+    proposed_unit_price_amount : numeric
+    currency_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    decided_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity inventory_count_sessions {
+  * id : uuid <<PK>>
+  --
+  * pharmacy_site_id : uuid <<FK>>
+  * inventory_location_id : uuid <<FK>>
+  * count_type_concept_id : uuid <<FK>>
+    freeze_mode_concept_id : uuid <<FK>>
+    started_at : timestamptz
+    completed_at : timestamptz
+    approved_at : timestamptz
+    approved_by_user_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity inventory_count_lines {
+  * id : uuid <<PK>>
+  --
+  * inventory_count_session_id : uuid <<FK>>
+  * pharmacy_product_id : uuid <<FK>>
+    inventory_lot_id : uuid <<FK>>
+  * expected_quantity : numeric
+  * counted_quantity : numeric
+  * variance_quantity : numeric <<DERIVED>>
+    variance_reason_concept_id : uuid <<FK>>
+    adjustment_ledger_entry_id : uuid <<FK>>
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+
+entity inventory_recall_holds {
+  * id : uuid <<PK>>
+  --
+  * pharmacy_product_id : uuid <<FK>>
+    inventory_lot_id : uuid <<FK>>
+  * recall_reference : varchar
+  * recall_class_concept_id : uuid <<FK>>
+  * hold_status_concept_id : uuid <<FK>>
+    initiated_at : timestamptz
+    released_at : timestamptz
+    source_authority_tenant_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+inventory_locations |o--o{ inventory_locations : parent
+inventory_locations ||--o{ inventory_stock_positions
+inventory_lots ||--o{ inventory_serials
+inventory_lots |o--o{ inventory_stock_positions
+inventory_reservations ||--o{ inventory_reservation_lines
+inventory_reservations ||--o{ pharmacy_order_substitutions
+inventory_reservation_lines ||--o{ pharmacy_order_substitutions
+inventory_count_sessions ||--o{ inventory_count_lines
+inventory_lots |o--o{ inventory_recall_holds
+
+note as CONCURRENCY_diagram_25_pharmacy_inventory
+  CONCURRENCY CONTRACT
+  1. Lock the exact stock-position rows with SELECT ... FOR UPDATE.
+  2. Recalculate available quantity inside the transaction.
+  3. Reject negative availability; write ledger and projection atomically.
+  4. Enforce unique idempotency keys per pharmacy/source operation.
+  5. Retry serialization failures with bounded backoff.
+  6. Use SKIP LOCKED only for queue workers, never to decide patient stock.
+  7. Expired reservations are released by an idempotent persistent worker.
+end note
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_25b_pharmacy_supply_dispensing.puml
+' ------------------------------------------------------------------------------
+entity pharmacy_suppliers {
+  * id : uuid <<PK>>
+  --
+  * pharmacy_id : uuid <<FK>>
+  * supplier_tenant_id : uuid <<FK>>
+    supplier_code : varchar
+    business_partner_id : uuid <<FK>>
+    payment_terms_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity pharmacy_purchase_orders {
+  * id : uuid <<PK>>
+  --
+  * pharmacy_id : uuid <<FK>>
+  * pharmacy_site_id : uuid <<FK>>
+  * pharmacy_supplier_id : uuid <<FK>>
+  * purchase_order_number : varchar
+  * status_concept_id : uuid <<FK>>
+    ordered_at : timestamptz
+    expected_at : timestamptz
+    currency_concept_id : uuid <<FK>>
+    idempotency_key : varchar
+    erp_purchase_order_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity pharmacy_purchase_order_lines {
+  * id : uuid <<PK>>
+  --
+  * pharmacy_purchase_order_id : uuid <<FK>>
+  * pharmacy_product_id : uuid <<FK>>
+    erp_purchase_order_item_id : uuid <<FK>>
+  * ordered_quantity : numeric
+    received_quantity : numeric
+    unit_cost_amount : numeric
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity pharmacy_goods_receipts {
+  * id : uuid <<PK>>
+  --
+  * pharmacy_purchase_order_id : uuid <<FK>>
+  * pharmacy_site_id : uuid <<FK>>
+    erp_goods_receipt_id : uuid <<FK>>
+  * receipt_number : varchar
+  * received_at : timestamptz
+    supplier_delivery_reference : varchar
+    source_document_file_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    idempotency_key : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity pharmacy_goods_receipt_lines {
+  * id : uuid <<PK>>
+  --
+  * pharmacy_goods_receipt_id : uuid <<FK>>
+  * pharmacy_purchase_order_line_id : uuid <<FK>>
+    erp_goods_receipt_item_id : uuid <<FK>>
+  * pharmacy_product_id : uuid <<FK>>
+    inventory_lot_id : uuid <<FK>>
+    inventory_location_id : uuid <<FK>>
+  * received_quantity : numeric
+    accepted_quantity : numeric
+    rejected_quantity : numeric
+    unit_cost_amount : numeric
+    ledger_entry_id : uuid <<FK>>
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+
+entity medication_dispensations {
+  * id : uuid <<PK>>
+  --
+  * pharmacy_id : uuid <<FK>>
+  * pharmacy_site_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+    medication_request_id : uuid <<FK>>
+    insurance_claim_id : uuid <<FK>>
+    inventory_reservation_id : uuid <<FK>>
+  * dispensation_status_concept_id : uuid <<FK>>
+    dispensed_at : timestamptz
+    dispenser_practitioner_profile_id : uuid <<FK>>
+    substitution_reason_concept_id : uuid <<FK>>
+    idempotency_key : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity medication_dispensation_lines {
+  * id : uuid <<PK>>
+  --
+  * medication_dispensation_id : uuid <<FK>>
+  * pharmacy_product_id : uuid <<FK>>
+    inventory_lot_id : uuid <<FK>>
+    inventory_serial_id : uuid <<FK>>
+  * dispensed_quantity : numeric
+    unit_price_amount : numeric
+    patient_amount : numeric
+    insurer_amount : numeric
+    ledger_entry_id : uuid <<FK>>
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+
+entity pharmacy_inventory_sync_batches {
+  * id : uuid <<PK>>
+  --
+  * pharmacy_integration_connection_id : uuid <<FK>>
+  * direction_concept_id : uuid <<FK>>
+  * source_batch_identifier : varchar
+    sync_cursor_before : varchar
+    sync_cursor_after : varchar
+    received_at : timestamptz
+    completed_at : timestamptz
+    item_count : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity pharmacy_inventory_sync_items {
+  * id : uuid <<PK>>
+  --
+  * pharmacy_inventory_sync_batch_id : uuid <<FK>>
+    pharmacy_product_id : uuid <<FK>>
+    external_product_code : varchar
+    external_location_code : varchar
+    external_lot_number : varchar
+    external_quantity : numeric
+    normalized_quantity : numeric
+    idempotency_key : varchar
+  * reconciliation_status_concept_id : uuid <<FK>>
+    error_code : varchar
+    error_detail : text
+  * created_at : timestamptz
+}
+
+pharmacy_suppliers ||--o{ pharmacy_purchase_orders
+pharmacy_purchase_orders ||--o{ pharmacy_purchase_order_lines
+pharmacy_purchase_orders ||--o{ pharmacy_goods_receipts
+pharmacy_goods_receipts ||--o{ pharmacy_goods_receipt_lines
+medication_dispensations ||--o{ medication_dispensation_lines
+pharmacy_inventory_sync_batches ||--o{ pharmacy_inventory_sync_items
+
+note as FLOW_diagram_25b_pharmacy_supply_dispensing
+  RECEIVING AND DISPENSING
+  Procurement/receiving and patient dispensing create immutable inventory
+  ledger entries in the same database transaction as their operational record.
+  External sync never overwrites stock directly; discrepancies become
+  reconciliation items requiring a governed resolution.
+end note
+
+
+
+erp_business_partners |o--o{ pharmacy_suppliers
+erp_purchase_orders |o--o{ pharmacy_purchase_orders
+erp_purchase_order_items |o--o{ pharmacy_purchase_order_lines
+erp_goods_receipts |o--o{ pharmacy_goods_receipts
+erp_goods_receipt_items |o--o{ pharmacy_goods_receipt_lines
+erp_goods_receipt_items |o--o{ inventory_ledger_entries
+accounting_ledger_entries |o--o{ inventory_ledger_entries
+
+note as PHARMACY_ERP_BRIDGE
+  Pharmacy inventory remains specialized for lot/serial/dispensing control, but its
+  supplier, purchase-order and receipt records are explicitly linked to the central ERP
+  document flow. Inventory movements can be reconciled to the exact ERP receipt item and
+  accounting ledger line without relying only on a polymorphic source_id.
+end note
+
+package "Physical Indexes" {
+entity "INDEXES · inventory_locations" as idxset_inventory_locations <<INDEX_SET>> {
+  PK pk_inventory_locations : (id) UNIQUE BTREE
+  IX ix_inventory_locations_pharmacy_site_id : (pharmacy_site_id) BTREE
+  IX ix_inventory_locations_parent_location_id : (parent_location_id) BTREE
+  IX ix_inventory_locations_location_type_concept_id : (location_type_concept_id) BTREE
+  IX ix_inventory_locations_temperature_zone_concept_id : (temperature_zone_concept_id) BTREE
+  IX ix_inventory_locations_status_concept_id : (status_concept_id) BTREE
+  IX ix_inventory_locations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_inventory_locations_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+inventory_locations .. idxset_inventory_locations : indexed by
+
+entity "INDEXES · inventory_lots" as idxset_inventory_lots <<INDEX_SET>> {
+  PK pk_inventory_lots : (id) UNIQUE BTREE
+  IX ix_inventory_lots_pharmacy_product_id : (pharmacy_product_id) BTREE
+  IX ix_inventory_lots_quarantine_status_concept_id : (quarantine_status_concept_id) BTREE
+  IX ix_inventory_lots_recall_status_concept_id : (recall_status_concept_id) BTREE
+  IX ix_inventory_lots_status_concept_id : (status_concept_id) BTREE
+  IX ix_inventory_lots_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_inventory_lots_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+inventory_lots .. idxset_inventory_lots : indexed by
+
+entity "INDEXES · inventory_serials" as idxset_inventory_serials <<INDEX_SET>> {
+  PK pk_inventory_serials : (id) UNIQUE BTREE
+  IX ix_inventory_serials_inventory_lot_id : (inventory_lot_id) BTREE
+  IX ix_inventory_serials_status_concept_id : (status_concept_id) BTREE
+  IX ix_inventory_serials_current_inventory_location_id : (current_inventory_location_id) BTREE
+  IX ix_inventory_serials_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_inventory_serials_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+inventory_serials .. idxset_inventory_serials : indexed by
+
+entity "INDEXES · inventory_stock_positions" as idxset_inventory_stock_positions <<INDEX_SET>> {
+  PK pk_inventory_stock_positions : (id) UNIQUE BTREE
+  IX ix_inventory_stock_positions_inventory_location_id : (inventory_location_id) BTREE
+  IX ix_inventory_stock_positions_pharmacy_product_id : (pharmacy_product_id) BTREE
+  IX ix_inventory_stock_positions_inventory_lot_id : (inventory_lot_id) BTREE
+  UK uq_inventory_position_lot : (pharmacy_site_id, product_id, lot_id) UNIQUE BTREE
+}
+
+inventory_stock_positions .. idxset_inventory_stock_positions : indexed by
+
+entity "INDEXES · inventory_ledger_entries" as idxset_inventory_ledger_entries <<INDEX_SET>> {
+  PK pk_inventory_ledger_entries : (id) UNIQUE BTREE
+  IX ix_inventory_ledger_entries_pharmacy_id : (pharmacy_id) BTREE
+  IX ix_inventory_ledger_entries_pharmacy_site_id : (pharmacy_site_id) BTREE
+  IX ix_inventory_ledger_entries_inventory_location_id : (inventory_location_id) BTREE
+  IX ix_inventory_ledger_entries_pharmacy_product_id : (pharmacy_product_id) BTREE
+  IX ix_inventory_ledger_entries_inventory_lot_id : (inventory_lot_id) BTREE
+  IX ix_inventory_ledger_entries_inventory_serial_id : (inventory_serial_id) BTREE
+  IX ix_inventory_ledger_entries_movement_type_concept_id : (movement_type_concept_id) BTREE
+  IX ix_inventory_ledger_entries_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_inventory_ledger_entries_erp_goods_receipt_item_id : (erp_goods_receipt_item_id) BTREE
+  IX ix_inventory_ledger_entries_accounting_ledger_entry_id : (accounting_ledger_entry_id) BTREE
+  IX ix_inventory_ledger_entries_source_type_concept_id : (source_type_concept_id) BTREE
+  IX ix_inventory_ledger_entries_recorded_by_user_id : (recorded_by_user_id) BTREE
+  UK uq_inventory_ledger_entries_pharmacy_id_ledger_sequence : (pharmacy_id, ledger_sequence) UNIQUE BTREE
+  UK uq_inventory_ledger_entries_idempotency : (idempotency_key) UNIQUE BTREE
+  BRIN brin_inventory_ledger_entries_recorded_at : (recorded_at) BRIN pages_per_range=128
+  UK uq_inventory_ledger_idempotency : (pharmacy_id, idempotency_key) UNIQUE BTREE
+}
+
+inventory_ledger_entries .. idxset_inventory_ledger_entries : indexed by
+
+entity "INDEXES · inventory_reservations" as idxset_inventory_reservations <<INDEX_SET>> {
+  PK pk_inventory_reservations : (id) UNIQUE BTREE
+  IX ix_inventory_reservations_pharmacy_id : (pharmacy_id) BTREE
+  IX ix_inventory_reservations_pharmacy_site_id : (pharmacy_site_id) BTREE
+  IX ix_inventory_reservations_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_inventory_reservations_medication_request_id : (medication_request_id) BTREE
+  IX ix_inventory_reservations_quotation_id : (quotation_id) BTREE
+  IX ix_inventory_reservations_reservation_status_concept_id : (reservation_status_concept_id) BTREE
+  ' + v4.2.1 — un IX por columna FK, como el resto del módulo.
+  IX ix_inventory_reservations_delivery_mode_concept_id : (delivery_mode_concept_id) BTREE
+  IX ix_inventory_reservations_delivery_address_id : (delivery_address_id) BTREE
+  IX ix_inventory_reservations_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_inventory_reservations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_inventory_reservations_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_inventory_reservations_patient_profile_id_updated_at : (patient_profile_id, updated_at DESC) BTREE
+  UK uq_inventory_reservations_idempotency : (idempotency_key) UNIQUE BTREE
+  ' v4.2.2 — `ux_inventory_reservations_pickup_code` (único GLOBAL por código) se
+  ' reemplaza por el mismo parcial acotado POR SEDE. El código se muestra y se canjea
+  ' siempre en UNA sede: dos farmacias que no se conocen pueden emitir el mismo sin que
+  ' nadie se confunda, porque nadie va a presentarlo en la otra. Acotarlo achica además
+  ' el espacio de colisión que el generador tiene que evitar: con 6 caracteres, la
+  ' unicidad global obliga a más reintentos a medida que crece el volumen de la red.
+  ' Decisión de producto de Justin (27/08). En base viva se crea ANTES de borrar el
+  ' viejo: el global es más estricto, así que no hay ventana en la que algo se cuele.
+  '
+  ' Sigue siendo PARCIAL, y por la misma razón que en v4.2.1: la enorme mayoría de las
+  ' filas —reservas de mostrador y pedidos que todavía no llegaron a LISTO_PARA_RETIRO—
+  ' no tienen código, y Postgres considera cada NULL distinto de los demás, así que un
+  ' único sin predicado no acotaría nada mientras obliga a razonar sobre NULLs en cada
+  ' lectura. `pharmacy_site_id` es NOT NULL, así que la partición nunca es nula.
+  '
+  ' Prefijo `ux_` y no `uq_`: en este módulo todos los únicos son `uq_`, pero la
+  ' convención del modelo para un único PARCIAL es `ux_` (v4.0.9 en iam, v4.1.9 en
+  ' profiles). Manda la naturaleza del índice, no la vecindad.
+  UX ux_inventory_reservations_pharmacy_site_pickup_code : (pharmacy_site_id, pickup_code) UNIQUE BTREE WHERE pickup_code IS NOT NULL
+}
+
+inventory_reservations .. idxset_inventory_reservations : indexed by
+
+entity "INDEXES · inventory_reservation_lines" as idxset_inventory_reservation_lines <<INDEX_SET>> {
+  PK pk_inventory_reservation_lines : (id) UNIQUE BTREE
+  IX ix_inventory_reservation_lines_inventory_reservation_id : (inventory_reservation_id) BTREE
+  IX ix_inventory_reservation_lines_pharmacy_product_id : (pharmacy_product_id) BTREE
+  IX ix_inventory_reservation_lines_inventory_lot_id : (inventory_lot_id) BTREE
+  IX ix_inventory_reservation_lines_inventory_location_id : (inventory_location_id) BTREE
+  IX ix_inventory_reservation_lines_status_concept_id : (status_concept_id) BTREE
+  ' + v4.2.1 — un IX por columna FK, como el resto del módulo.
+  IX ix_inventory_reservation_lines_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_inventory_reservation_lines_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_inventory_reservation_lines_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+inventory_reservation_lines .. idxset_inventory_reservation_lines : indexed by
+
+entity "INDEXES · pharmacy_order_substitutions" as idxset_pharmacy_order_substitutions <<INDEX_SET>> {
+  PK pk_pharmacy_order_substitutions : (id) UNIQUE BTREE
+  ' + v4.2.1 — la lectura que importa es «las propuestas de ESTE pedido», que toda
+  ' vista del pedido dispara; el resto es un IX por columna FK, como el módulo entero.
+  ' Sin único: la misma línea puede recibir una segunda propuesta si la primera se
+  ' rechazó, y la historia es justamente lo que hay que poder mostrar.
+  IX ix_pharmacy_order_substitutions_inventory_reservation_id : (inventory_reservation_id) BTREE
+  IX ix_pharmacy_order_substitutions_inventory_reservation_line_id : (inventory_reservation_line_id) BTREE
+  IX ix_pharmacy_order_substitutions_original_pharmacy_product_id : (original_pharmacy_product_id) BTREE
+  IX ix_pharmacy_order_substitutions_proposed_pharmacy_product_id : (proposed_pharmacy_product_id) BTREE
+  IX ix_pharmacy_order_substitutions_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_pharmacy_order_substitutions_status_concept_id : (status_concept_id) BTREE
+  IX ix_pharmacy_order_substitutions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_pharmacy_order_substitutions_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+pharmacy_order_substitutions .. idxset_pharmacy_order_substitutions : indexed by
+
+entity "INDEXES · inventory_count_sessions" as idxset_inventory_count_sessions <<INDEX_SET>> {
+  PK pk_inventory_count_sessions : (id) UNIQUE BTREE
+  IX ix_inventory_count_sessions_pharmacy_site_id : (pharmacy_site_id) BTREE
+  IX ix_inventory_count_sessions_inventory_location_id : (inventory_location_id) BTREE
+  IX ix_inventory_count_sessions_count_type_concept_id : (count_type_concept_id) BTREE
+  IX ix_inventory_count_sessions_freeze_mode_concept_id : (freeze_mode_concept_id) BTREE
+  IX ix_inventory_count_sessions_approved_by_user_id : (approved_by_user_id) BTREE
+  IX ix_inventory_count_sessions_status_concept_id : (status_concept_id) BTREE
+  IX ix_inventory_count_sessions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_inventory_count_sessions_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+inventory_count_sessions .. idxset_inventory_count_sessions : indexed by
+
+entity "INDEXES · inventory_count_lines" as idxset_inventory_count_lines <<INDEX_SET>> {
+  PK pk_inventory_count_lines : (id) UNIQUE BTREE
+  IX ix_inventory_count_lines_inventory_count_session_id : (inventory_count_session_id) BTREE
+  IX ix_inventory_count_lines_pharmacy_product_id : (pharmacy_product_id) BTREE
+  IX ix_inventory_count_lines_inventory_lot_id : (inventory_lot_id) BTREE
+  IX ix_inventory_count_lines_variance_reason_concept_id : (variance_reason_concept_id) BTREE
+  IX ix_inventory_count_lines_adjustment_ledger_entry_id : (adjustment_ledger_entry_id) BTREE
+  IX ix_inventory_count_lines_created_by_user_id : (created_by_user_id) BTREE
+}
+
+inventory_count_lines .. idxset_inventory_count_lines : indexed by
+
+entity "INDEXES · inventory_recall_holds" as idxset_inventory_recall_holds <<INDEX_SET>> {
+  PK pk_inventory_recall_holds : (id) UNIQUE BTREE
+  IX ix_inventory_recall_holds_pharmacy_product_id : (pharmacy_product_id) BTREE
+  IX ix_inventory_recall_holds_inventory_lot_id : (inventory_lot_id) BTREE
+  IX ix_inventory_recall_holds_recall_class_concept_id : (recall_class_concept_id) BTREE
+  IX ix_inventory_recall_holds_hold_status_concept_id : (hold_status_concept_id) BTREE
+  IX ix_inventory_recall_holds_source_authority_tenant_id : (source_authority_tenant_id) BTREE
+  IX ix_inventory_recall_holds_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_inventory_recall_holds_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+inventory_recall_holds .. idxset_inventory_recall_holds : indexed by
+
+entity "INDEXES · pharmacy_suppliers" as idxset_pharmacy_suppliers <<INDEX_SET>> {
+  PK pk_pharmacy_suppliers : (id) UNIQUE BTREE
+  IX ix_pharmacy_suppliers_pharmacy_id : (pharmacy_id) BTREE
+  IX ix_pharmacy_suppliers_supplier_tenant_id : (supplier_tenant_id) BTREE
+  IX ix_pharmacy_suppliers_payment_terms_concept_id : (payment_terms_concept_id) BTREE
+  IX ix_pharmacy_suppliers_business_partner_id : (business_partner_id) BTREE
+  IX ix_pharmacy_suppliers_status_concept_id : (status_concept_id) BTREE
+  IX ix_pharmacy_suppliers_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_pharmacy_suppliers_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+pharmacy_suppliers .. idxset_pharmacy_suppliers : indexed by
+
+entity "INDEXES · pharmacy_purchase_orders" as idxset_pharmacy_purchase_orders <<INDEX_SET>> {
+  PK pk_pharmacy_purchase_orders : (id) UNIQUE BTREE
+  IX ix_pharmacy_purchase_orders_pharmacy_id : (pharmacy_id) BTREE
+  IX ix_pharmacy_purchase_orders_pharmacy_site_id : (pharmacy_site_id) BTREE
+  IX ix_pharmacy_purchase_orders_pharmacy_supplier_id : (pharmacy_supplier_id) BTREE
+  IX ix_pharmacy_purchase_orders_status_concept_id : (status_concept_id) BTREE
+  IX ix_pharmacy_purchase_orders_erp_purchase_order_id : (erp_purchase_order_id) BTREE
+  IX ix_pharmacy_purchase_orders_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_pharmacy_purchase_orders_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_pharmacy_purchase_orders_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_pharmacy_purchase_orders_idempotency : (idempotency_key) UNIQUE BTREE
+}
+
+pharmacy_purchase_orders .. idxset_pharmacy_purchase_orders : indexed by
+
+entity "INDEXES · pharmacy_purchase_order_lines" as idxset_pharmacy_purchase_order_lines <<INDEX_SET>> {
+  PK pk_pharmacy_purchase_order_lines : (id) UNIQUE BTREE
+  IX ix_pharmacy_purchase_order_lines_pharmacy_purchase_order_id : (pharmacy_purchase_order_id) BTREE
+  IX ix_pharmacy_purchase_order_lines_pharmacy_product_id : (pharmacy_product_id) BTREE
+  IX ix_pharmacy_purchase_order_lines_erp_purchase_order_item_id : (erp_purchase_order_item_id) BTREE
+  IX ix_pharmacy_purchase_order_lines_status_concept_id : (status_concept_id) BTREE
+  IX ix_pharmacy_purchase_order_lines_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_pharmacy_purchase_order_lines_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+pharmacy_purchase_order_lines .. idxset_pharmacy_purchase_order_lines : indexed by
+
+entity "INDEXES · pharmacy_goods_receipts" as idxset_pharmacy_goods_receipts <<INDEX_SET>> {
+  PK pk_pharmacy_goods_receipts : (id) UNIQUE BTREE
+  IX ix_pharmacy_goods_receipts_pharmacy_purchase_order_id : (pharmacy_purchase_order_id) BTREE
+  IX ix_pharmacy_goods_receipts_erp_goods_receipt_id : (erp_goods_receipt_id) BTREE
+  IX ix_pharmacy_goods_receipts_pharmacy_site_id : (pharmacy_site_id) BTREE
+  IX ix_pharmacy_goods_receipts_source_document_file_id : (source_document_file_id) BTREE
+  IX ix_pharmacy_goods_receipts_status_concept_id : (status_concept_id) BTREE
+  IX ix_pharmacy_goods_receipts_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_pharmacy_goods_receipts_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_pharmacy_goods_receipts_idempotency : (idempotency_key) UNIQUE BTREE
+}
+
+pharmacy_goods_receipts .. idxset_pharmacy_goods_receipts : indexed by
+
+entity "INDEXES · pharmacy_goods_receipt_lines" as idxset_pharmacy_goods_receipt_lines <<INDEX_SET>> {
+  PK pk_pharmacy_goods_receipt_lines : (id) UNIQUE BTREE
+  IX ix_pharmacy_goods_receipt_lines_pharmacy_goods_receipt_id : (pharmacy_goods_receipt_id) BTREE
+  IX ix_pharmacy_goods_receipt_lines_pharmacy_purchase_order_line_id : (pharmacy_purchase_order_line_id) BTREE
+  IX ix_pharmacy_goods_receipt_lines_erp_goods_receipt_item_id : (erp_goods_receipt_item_id) BTREE
+  IX ix_pharmacy_goods_receipt_lines_pharmacy_product_id : (pharmacy_product_id) BTREE
+  IX ix_pharmacy_goods_receipt_lines_inventory_lot_id : (inventory_lot_id) BTREE
+  IX ix_pharmacy_goods_receipt_lines_inventory_location_id : (inventory_location_id) BTREE
+  IX ix_pharmacy_goods_receipt_lines_ledger_entry_id : (ledger_entry_id) BTREE
+  IX ix_pharmacy_goods_receipt_lines_created_by_user_id : (created_by_user_id) BTREE
+}
+
+pharmacy_goods_receipt_lines .. idxset_pharmacy_goods_receipt_lines : indexed by
+
+entity "INDEXES · medication_dispensations" as idxset_medication_dispensations <<INDEX_SET>> {
+  PK pk_medication_dispensations : (id) UNIQUE BTREE
+  IX ix_medication_dispensations_pharmacy_id : (pharmacy_id) BTREE
+  IX ix_medication_dispensations_pharmacy_site_id : (pharmacy_site_id) BTREE
+  IX ix_medication_dispensations_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_medication_dispensations_medication_request_id : (medication_request_id) BTREE
+  IX ix_medication_dispensations_insurance_claim_id : (insurance_claim_id) BTREE
+  IX ix_medication_dispensations_inventory_reservation_id : (inventory_reservation_id) BTREE
+  IX ix_medication_dispensations_dispensation_status_concept_id : (dispensation_status_concept_id) BTREE
+  IX ix_medication_dispensations_dispenser_practitioner_profile_id : (dispenser_practitioner_profile_id) BTREE
+  IX ix_medication_dispensations_substitution_reason_concept_id : (substitution_reason_concept_id) BTREE
+  IX ix_medication_dispensations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_medication_dispensations_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_medication_dispensations_patient_profile_id_updated_at : (patient_profile_id, updated_at DESC) BTREE
+  UK uq_medication_dispensations_idempotency : (idempotency_key) UNIQUE BTREE
+}
+
+medication_dispensations .. idxset_medication_dispensations : indexed by
+
+entity "INDEXES · medication_dispensation_lines" as idxset_medication_dispensation_lines <<INDEX_SET>> {
+  PK pk_medication_dispensation_lines : (id) UNIQUE BTREE
+  IX ix_medication_dispensation_lines_medication_dispensation_id : (medication_dispensation_id) BTREE
+  IX ix_medication_dispensation_lines_pharmacy_product_id : (pharmacy_product_id) BTREE
+  IX ix_medication_dispensation_lines_inventory_lot_id : (inventory_lot_id) BTREE
+  IX ix_medication_dispensation_lines_inventory_serial_id : (inventory_serial_id) BTREE
+  IX ix_medication_dispensation_lines_ledger_entry_id : (ledger_entry_id) BTREE
+  IX ix_medication_dispensation_lines_created_by_user_id : (created_by_user_id) BTREE
+}
+
+medication_dispensation_lines .. idxset_medication_dispensation_lines : indexed by
+
+entity "INDEXES · pharmacy_inventory_sync_batches" as idxset_pharmacy_inventory_sync_batches <<INDEX_SET>> {
+  PK pk_pharmacy_inventory_sync_batches : (id) UNIQUE BTREE
+  IX ix_pharmacy_inventory_sync_batches_pharmacy_integratio_1a78cf50 : (pharmacy_integration_connection_id) BTREE
+  IX ix_pharmacy_inventory_sync_batches_direction_concept_id : (direction_concept_id) BTREE
+  IX ix_pharmacy_inventory_sync_batches_status_concept_id : (status_concept_id) BTREE
+  IX ix_pharmacy_inventory_sync_batches_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_pharmacy_inventory_sync_batches_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+pharmacy_inventory_sync_batches .. idxset_pharmacy_inventory_sync_batches : indexed by
+
+entity "INDEXES · pharmacy_inventory_sync_items" as idxset_pharmacy_inventory_sync_items <<INDEX_SET>> {
+  PK pk_pharmacy_inventory_sync_items : (id) UNIQUE BTREE
+  IX ix_pharmacy_inventory_sync_items_pharmacy_inventory_sy_f46e49ba : (pharmacy_inventory_sync_batch_id) BTREE
+  IX ix_pharmacy_inventory_sync_items_pharmacy_product_id : (pharmacy_product_id) BTREE
+  IX ix_pharmacy_inventory_sync_items_reconciliation_status_ef599848 : (reconciliation_status_concept_id) BTREE
+  UK uq_pharmacy_inventory_sync_items_idempotency : (idempotency_key) UNIQUE BTREE
+}
+
+pharmacy_inventory_sync_items .. idxset_pharmacy_inventory_sync_items : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

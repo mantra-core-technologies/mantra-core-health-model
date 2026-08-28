@@ -1,0 +1,363 @@
+@startuml SALUD_Module_44_health_context
+title Module 44 — Country Health Environment Context\n(schema: health_context)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_44_health_environment_context.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_44_health_environment_context
+  BUSINESS PURPOSE
+  Stores country-level health-environment context collected periodically by
+  governed agents. Raw observations, evidence, structured facts and approved
+  versioned summaries remain traceable to source and collection run.
+end note
+
+entity context_agents {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * name : varchar
+  * agent_type_concept_id : uuid <<FK>>
+    provider_id : uuid <<FK>>
+    implementation_ref : varchar
+    owner_tenant_id : uuid <<FK>>
+    last_heartbeat_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity country_context_schedules {
+  * id : uuid <<PK>>
+  --
+  * country_concept_id : uuid <<FK>>
+  * agent_id : uuid <<FK>>
+  * schedule_expression : varchar
+    timezone_concept_id : uuid <<FK>>
+    lookback_days : integer
+    freshness_ttl_seconds : integer
+    next_run_at : timestamptz
+    last_success_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity health_context_sources {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * name : varchar
+  * source_type_concept_id : uuid <<FK>>
+    owner_name : varchar
+    canonical_url : text
+    country_concept_id : uuid <<FK>>
+    license_text : text
+    trust_tier_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity context_collection_runs <<LOG>> {
+  * id : uuid <<PK>>
+  --
+    schedule_id : uuid <<FK>>
+  * agent_id : uuid <<FK>>
+  * country_concept_id : uuid <<FK>>
+  * idempotency_key : varchar <<UK>>
+  * trigger_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * started_at : timestamptz
+    finished_at : timestamptz
+    source_count : integer
+    observations_read : bigint
+    observations_accepted : bigint
+    observations_rejected : bigint
+    continuation_cursor_json : jsonb
+    error_summary : text
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+entity context_source_observations <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * collection_run_id : uuid <<FK>>
+  * source_id : uuid <<FK>>
+  * country_concept_id : uuid <<FK>>
+  * source_locator : text
+    published_at : timestamptz
+  * retrieved_at : timestamptz
+    media_type : varchar
+    raw_payload_file_id : uuid <<FK>>
+    extracted_payload_json : jsonb
+  * content_hash : varchar
+  * status_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+entity country_health_contexts {
+  * id : uuid <<PK>>
+  --
+  * country_concept_id : uuid <<FK>>
+  * context_domain_concept_id : uuid <<FK>>
+  * context_key : varchar
+  * title : varchar
+    description : text
+    current_version_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity country_health_context_versions <<VERSIONED>> {
+  * id : uuid <<PK>>
+  --
+  * country_health_context_id : uuid <<FK>>
+  * version_number : integer
+  * collection_run_id : uuid <<FK>>
+  * schema_version : varchar
+    summary : text
+  * context_payload_json : jsonb
+  * observed_at : timestamptz
+  * effective_from : timestamptz
+    effective_to : timestamptz
+    expires_at : timestamptz
+    confidence_score : numeric
+  * content_hash : varchar
+  * status_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+entity health_context_facts <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * context_version_id : uuid <<FK>>
+  * fact_key : varchar
+  * metric_concept_id : uuid <<FK>>
+  * value_type : technical_data_type
+  * value_json : jsonb
+    unit_concept_id : uuid <<FK>>
+    period_start : date
+    period_end : date
+    confidence_score : numeric
+  * status_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+entity context_fact_evidence <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * health_context_fact_id : uuid <<FK>>
+  * source_observation_id : uuid <<FK>>
+    evidence_locator_json : jsonb
+    relevance_score : numeric
+    evidence_hash : varchar
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+entity context_quality_reviews <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * context_version_id : uuid <<FK>>
+    reviewer_agent_id : uuid <<FK>>
+    reviewed_by_user_id : uuid <<FK>>
+  * review_type_concept_id : uuid <<FK>>
+  * outcome_concept_id : uuid <<FK>>
+    issues_json : jsonb
+    notes : text
+  * recorded_at : timestamptz
+}
+
+context_agents ||--o{ country_context_schedules
+context_agents ||--o{ context_collection_runs
+country_context_schedules |o--o{ context_collection_runs
+health_context_sources ||--o{ context_source_observations
+context_collection_runs ||--o{ context_source_observations
+country_health_contexts ||--o{ country_health_context_versions
+context_collection_runs ||--o{ country_health_context_versions
+country_health_context_versions ||--o{ health_context_facts
+health_context_facts ||--o{ context_fact_evidence
+context_source_observations ||--o{ context_fact_evidence
+country_health_context_versions ||--o{ context_quality_reviews
+
+note as CONTRACT_diagram_44_health_environment_context
+  COUNTRY CONTEXT CONTRACT
+  - UK: country_health_contexts(country, domain, context_key).
+  - UK: country_health_context_versions(context, version_number).
+  - A successful scheduled run is idempotent by idempotency_key.
+  - current_version_id must point to a version owned by the same context.
+  - Published context is time-bounded, freshness-aware and evidence-backed.
+end note
+
+note as SAFETY_diagram_44_health_environment_context
+  DATA SAFETY
+  This schema is for country-level public, licensed or authorized aggregate
+  context. Patient-level PHI is prohibited. Agent output is not accepted as
+  fact without retained source observations, hashes and quality status.
+end note
+
+note as DEP_diagram_44_health_environment_context
+  Connects to other modules via:
+  terminology.catalog_concepts, integrations.external_providers,
+  common.files, directory.tenants and iam.users.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · context_agents" as idxset_context_agents <<INDEX_SET>> {
+  PK pk_context_agents : (id) UNIQUE BTREE
+  UK uq_context_agents_code : (code) UNIQUE BTREE
+  IX ix_context_agents_agent_type_concept_id : (agent_type_concept_id) BTREE
+  IX ix_context_agents_provider_id : (provider_id) BTREE
+  IX ix_context_agents_owner_tenant_id : (owner_tenant_id) BTREE
+  IX ix_context_agents_status_concept_id : (status_concept_id) BTREE
+  IX ix_context_agents_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_context_agents_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+context_agents .. idxset_context_agents : indexed by
+
+entity "INDEXES · country_context_schedules" as idxset_country_context_schedules <<INDEX_SET>> {
+  PK pk_country_context_schedules : (id) UNIQUE BTREE
+  IX ix_country_context_schedules_country_concept_id : (country_concept_id) BTREE
+  IX ix_country_context_schedules_agent_id : (agent_id) BTREE
+  IX ix_country_context_schedules_timezone_concept_id : (timezone_concept_id) BTREE
+  IX ix_country_context_schedules_status_concept_id : (status_concept_id) BTREE
+  IX ix_country_context_schedules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_country_context_schedules_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+country_context_schedules .. idxset_country_context_schedules : indexed by
+
+entity "INDEXES · health_context_sources" as idxset_health_context_sources <<INDEX_SET>> {
+  PK pk_health_context_sources : (id) UNIQUE BTREE
+  UK uq_health_context_sources_code : (code) UNIQUE BTREE
+  IX ix_health_context_sources_source_type_concept_id : (source_type_concept_id) BTREE
+  IX ix_health_context_sources_country_concept_id : (country_concept_id) BTREE
+  IX ix_health_context_sources_trust_tier_concept_id : (trust_tier_concept_id) BTREE
+  IX ix_health_context_sources_status_concept_id : (status_concept_id) BTREE
+  IX ix_health_context_sources_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_health_context_sources_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+health_context_sources .. idxset_health_context_sources : indexed by
+
+entity "INDEXES · context_collection_runs" as idxset_context_collection_runs <<INDEX_SET>> {
+  PK pk_context_collection_runs : (id) UNIQUE BTREE
+  UK uq_context_collection_runs_idempotency_key : (idempotency_key) UNIQUE BTREE
+  IX ix_context_collection_runs_schedule_id : (schedule_id) BTREE
+  IX ix_context_collection_runs_agent_id : (agent_id) BTREE
+  IX ix_context_collection_runs_country_concept_id : (country_concept_id) BTREE
+  IX ix_context_collection_runs_trigger_concept_id : (trigger_concept_id) BTREE
+  IX ix_context_collection_runs_status_concept_id : (status_concept_id) BTREE
+  IX ix_context_collection_runs_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_context_collection_runs_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+context_collection_runs .. idxset_context_collection_runs : indexed by
+
+entity "INDEXES · context_source_observations" as idxset_context_source_observations <<INDEX_SET>> {
+  PK pk_context_source_observations : (id) UNIQUE BTREE
+  IX ix_context_source_observations_collection_run_id : (collection_run_id) BTREE
+  IX ix_context_source_observations_source_id : (source_id) BTREE
+  IX ix_context_source_observations_country_concept_id : (country_concept_id) BTREE
+  IX ix_context_source_observations_raw_payload_file_id : (raw_payload_file_id) BTREE
+  IX ix_context_source_observations_status_concept_id : (status_concept_id) BTREE
+  IX ix_context_source_observations_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_context_source_observations_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+context_source_observations .. idxset_context_source_observations : indexed by
+
+entity "INDEXES · country_health_contexts" as idxset_country_health_contexts <<INDEX_SET>> {
+  PK pk_country_health_contexts : (id) UNIQUE BTREE
+  IX ix_country_health_contexts_country_concept_id : (country_concept_id) BTREE
+  IX ix_country_health_contexts_context_domain_concept_id : (context_domain_concept_id) BTREE
+  IX ix_country_health_contexts_current_version_id : (current_version_id) BTREE
+  IX ix_country_health_contexts_status_concept_id : (status_concept_id) BTREE
+  IX ix_country_health_contexts_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_country_health_contexts_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+country_health_contexts .. idxset_country_health_contexts : indexed by
+
+entity "INDEXES · country_health_context_versions" as idxset_country_health_context_versions <<INDEX_SET>> {
+  PK pk_country_health_context_versions : (id) UNIQUE BTREE
+  IX ix_country_health_context_versions_country_health_context_id : (country_health_context_id) BTREE
+  IX ix_country_health_context_versions_collection_run_id : (collection_run_id) BTREE
+  IX ix_country_health_context_versions_status_concept_id : (status_concept_id) BTREE
+  IX ix_country_health_context_versions_recorded_by_user_id : (recorded_by_user_id) BTREE
+  UK uq_country_health_context_versions_country_health_cont_2ef6a520 : (country_health_context_id, version_number) UNIQUE BTREE
+}
+
+country_health_context_versions .. idxset_country_health_context_versions : indexed by
+
+entity "INDEXES · health_context_facts" as idxset_health_context_facts <<INDEX_SET>> {
+  PK pk_health_context_facts : (id) UNIQUE BTREE
+  IX ix_health_context_facts_context_version_id : (context_version_id) BTREE
+  IX ix_health_context_facts_metric_concept_id : (metric_concept_id) BTREE
+  IX ix_health_context_facts_unit_concept_id : (unit_concept_id) BTREE
+  IX ix_health_context_facts_status_concept_id : (status_concept_id) BTREE
+  IX ix_health_context_facts_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_health_context_facts_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+health_context_facts .. idxset_health_context_facts : indexed by
+
+entity "INDEXES · context_fact_evidence" as idxset_context_fact_evidence <<INDEX_SET>> {
+  PK pk_context_fact_evidence : (id) UNIQUE BTREE
+  IX ix_context_fact_evidence_health_context_fact_id : (health_context_fact_id) BTREE
+  IX ix_context_fact_evidence_source_observation_id : (source_observation_id) BTREE
+  IX ix_context_fact_evidence_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_context_fact_evidence_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+context_fact_evidence .. idxset_context_fact_evidence : indexed by
+
+entity "INDEXES · context_quality_reviews" as idxset_context_quality_reviews <<INDEX_SET>> {
+  PK pk_context_quality_reviews : (id) UNIQUE BTREE
+  IX ix_context_quality_reviews_context_version_id : (context_version_id) BTREE
+  IX ix_context_quality_reviews_reviewer_agent_id : (reviewer_agent_id) BTREE
+  IX ix_context_quality_reviews_reviewed_by_user_id : (reviewed_by_user_id) BTREE
+  IX ix_context_quality_reviews_review_type_concept_id : (review_type_concept_id) BTREE
+  IX ix_context_quality_reviews_outcome_concept_id : (outcome_concept_id) BTREE
+  BRIN brin_context_quality_reviews_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+context_quality_reviews .. idxset_context_quality_reviews : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

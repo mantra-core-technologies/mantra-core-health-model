@@ -1,0 +1,637 @@
+@startuml SALUD_Module_50_marketing
+title Module 50 — Marketing Automation, Journeys and Attribution\n(schema: marketing)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_50_marketing.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_50_marketing
+  BUSINESS PURPOSE
+  Multi-channel marketing on top of the CRM (module 49), the messaging fabric (module 35)
+  and the loyalty/promotions engine (module 51). Defines audience segments, marketing
+  campaigns and their members, multi-step journeys/flows with triggers and waits, reusable
+  content templates, trackable UTM links, and multi-touch attribution. Ties campaigns to
+  paid advertising (module 43 ads) and to promotions so spend, reach and conversions are
+  measurable end to end. Consent-gated; no clinical PHI is used for targeting.
+end note
+
+entity segments {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * code : varchar <<UK>>
+  * name : varchar
+  * segment_type_concept_id : uuid <<FK>>
+    definition_json : jsonb
+    source_read_model_id : uuid <<FK>>
+    estimated_size : bigint
+    last_refreshed_at : timestamptz
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity segment_members {
+  * id : uuid <<PK>>
+  --
+  * segment_id : uuid <<FK>>
+  * member_type_concept_id : uuid <<FK>>
+  * member_ref_id : uuid
+    score : numeric
+    added_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity marketing_campaigns {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * code : varchar <<UK>>
+  * name : varchar
+  * campaign_type_concept_id : uuid <<FK>>
+  * objective_concept_id : uuid <<FK>>
+    channel_concept_id : uuid <<FK>>
+    segment_id : uuid <<FK>>
+    budget_amount : numeric
+    currency_concept_id : uuid <<FK>>
+    ad_campaign_ref_id : uuid
+    promotion_id : uuid <<FK>>
+    start_at : timestamptz
+    end_at : timestamptz
+    owner_user_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+  ' + v4.0.1
+    governance_scope_concept_id : uuid <<FK>>
+    requires_explicit_publish : boolean
+    published_version : integer
+    published_at : timestamptz
+    published_by_user_id : uuid <<FK>>
+    approved_content_hash : varchar
+    approved_audience_hash : varchar
+    cancellation_reason : varchar
+    cancelled_at : timestamptz
+    cancelled_by_user_id : uuid <<FK>>
+}
+entity campaign_members {
+  * id : uuid <<PK>>
+  --
+  * campaign_id : uuid <<FK>>
+  * member_type_concept_id : uuid <<FK>>
+  * member_ref_id : uuid
+  * member_status_concept_id : uuid <<FK>>
+    added_at : timestamptz
+    responded_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+  ' + v4.0.1
+    source_segment_member_id : uuid <<FK>>
+    first_dispatch_id : uuid <<FK>>
+    last_dispatch_id : uuid <<FK>>
+    total_dispatches : integer
+}
+entity content_templates {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+  * channel_concept_id : uuid <<FK>>
+    language_concept_id : uuid <<FK>>
+    subject : varchar
+    body_template : text
+    variables_json : jsonb
+    messaging_template_id : uuid <<FK>>
+  * version : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity journeys {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * code : varchar <<UK>>
+  * name : varchar
+  * entry_trigger_concept_id : uuid <<FK>>
+    entry_segment_id : uuid <<FK>>
+    goal_metric_concept_id : uuid <<FK>>
+    definition_json : jsonb
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity journey_steps {
+  * id : uuid <<PK>>
+  --
+  * journey_id : uuid <<FK>>
+  * step_code : varchar
+  * step_type_concept_id : uuid <<FK>>
+    channel_concept_id : uuid <<FK>>
+    content_template_id : uuid <<FK>>
+    wait_duration_minutes : integer
+    condition_json : jsonb
+    next_step_id : uuid <<FK>>
+    branch_step_id : uuid <<FK>>
+    ordinal : integer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity journey_enrollments {
+  * id : uuid <<PK>>
+  --
+  * journey_id : uuid <<FK>>
+  * member_type_concept_id : uuid <<FK>>
+  * member_ref_id : uuid
+    current_step_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    entered_at : timestamptz
+    exited_at : timestamptz
+    exit_reason_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity tracked_links {
+  * id : uuid <<PK>>
+  --
+    campaign_id : uuid <<FK>>
+  * code : varchar <<UK>>
+  * target_url : text
+    utm_source : varchar
+    utm_medium : varchar
+    utm_campaign : varchar
+    utm_content : varchar
+    click_count : bigint
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity marketing_touchpoints <<LOG>> {
+  * id : uuid <<PK>>
+  --
+    campaign_id : uuid <<FK>>
+    journey_id : uuid <<FK>>
+    tracked_link_id : uuid <<FK>>
+  * member_type_concept_id : uuid <<FK>>
+  * member_ref_id : uuid
+  * touch_type_concept_id : uuid <<FK>>
+  * channel_concept_id : uuid <<FK>>
+    content_template_id : uuid <<FK>>
+    metadata_json : jsonb
+    occurred_at : timestamptz
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+  ' + v4.0.1
+    dispatch_id : uuid <<FK>>
+    dispatch_recipient_id : uuid <<FK>>
+    notification_request_id : uuid <<FK>>
+    notification_delivery_id : uuid <<FK>>
+    tracking_event_id : uuid <<FK>>
+}
+entity attribution_touches {
+  * id : uuid <<PK>>
+  --
+  * conversion_ref_type : varchar
+  * conversion_ref_id : uuid
+  * marketing_touchpoint_id : uuid <<FK>>
+  * attribution_model_concept_id : uuid <<FK>>
+  * weight : numeric
+    attributed_value : numeric
+    currency_concept_id : uuid <<FK>>
+    position_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+segments ||--o{ segment_members
+segments |o--o{ marketing_campaigns
+marketing_campaigns ||--o{ campaign_members
+marketing_campaigns ||--o{ tracked_links
+journeys ||--o{ journey_steps
+journeys ||--o{ journey_enrollments
+journey_steps |o--o{ journey_enrollments
+content_templates |o--o{ journey_steps
+marketing_campaigns ||--o{ marketing_touchpoints
+journeys |o--o{ marketing_touchpoints
+tracked_links ||--o{ marketing_touchpoints
+marketing_touchpoints ||--o{ attribution_touches
+
+note as DEP_diagram_50_marketing
+  Connects to other modules via:
+  directory.tenants, iam.users, crm.contacts/leads (segment/campaign members),
+  messaging.message_templates & notification_requests (delivery), ads.campaigns
+  (ad_campaign_ref_id), promotions.promotions (promotion_id), read_models (segment source),
+  consent.consents (marketing legal basis), terminology.catalog_concepts.
+end note
+
+note as PHI_BOUNDARY_diagram_50_marketing
+  CONSENT-GATED, NO PHI. Segments/journeys target commercial contacts by id/reference, never
+  by clinical condition. Marketing sends require an opt-in/consent; suppression honours
+  crm.contacts.do_not_contact and messaging.recipient_preferences.
+end note
+
+note as REC_DERIVED_diagram_50_marketing
+  REC 3.3 — DERIVED
+  segments.estimated_size, tracked_links.click_count and campaign response rates are DERIVED
+  counters (trigger/recompute). marketing_touchpoints is append-only; attribution_touches are
+  computed from touchpoints per attribution_model and must sum weight=1 per conversion.
+end note
+
+note as HARDENING_diagram_50_marketing
+  REC 3.4 — HARDENING (enforce at DDL)
+  - segment_members / campaign_members: UNIQUE(segment_id|campaign_id, member_type_concept_id, member_ref_id).
+  - journey_enrollments: partial UNIQUE(journey_id, member_type_concept_id, member_ref_id) WHERE status='active'.
+  - tracked_links: UNIQUE(code); marketing_touchpoints: append-only, PARTITION BY recorded_at.
+  - attribution_touches: trigger CHECK SUM(weight)=1 per (conversion_ref_type, conversion_ref_id).
+  - polymorphic member_ref/conversion_ref -> value_set + trigger.
+end note
+
+note as VALUE_SETS_diagram_50_marketing
+  VALUE SETS (bind *_concept_id; do not hardcode)
+  segment_type->vs_segment_type{static,dynamic,imported,lookalike};
+  member_type->vs_marketing_member{contact,lead,patient,user};
+  campaign_type->vs_marketing_campaign_type{email,sms,whatsapp,push,ads,multichannel,event};
+  objective->vs_marketing_objective{awareness,acquisition,retention,reactivation,upsell,referral};
+  channel->vs_marketing_channel{email,sms,whatsapp,push,in_app,ads,web};
+  member_status->vs_campaign_member_status{targeted,sent,delivered,opened,clicked,converted,bounced,unsubscribed};
+  entry_trigger->vs_journey_trigger{segment_entry,event,date,manual,api};
+  step_type->vs_journey_step{send,wait,branch,goal,update,exit,webhook};
+  touch_type->vs_touch_type{impression,open,click,visit,conversion,reply};
+  attribution_model->vs_attribution_model{first_touch,last_touch,linear,time_decay,position_based,data_driven};
+  position->vs_touch_position{first,middle,last};
+  conversion_ref_type->vs_conversion_ref{opportunity,enrollment,payment_intent,appointment_booking,order};
+  status/state->vs_lifecycle_state.
+end note
+
+
+' ===== v4.0.1 (scheduled campaigns / site-admin / tracking) =====
+entity campaign_dispatches {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * campaign_id : uuid <<FK>>
+    schedule_id : uuid <<FK>>
+    journey_id : uuid <<FK>>
+    journey_step_id : uuid <<FK>>
+  * occurrence_key : varchar
+  * planned_at : timestamptz
+    audience_snapshot_at : timestamptz
+    started_at : timestamptz
+    finished_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * source_concept_id : uuid <<FK>>
+  * content_template_id : uuid <<FK>>
+  * content_template_version : integer
+  * content_hash : varchar
+  * audience_definition_hash : varchar
+  * total_candidates : bigint
+  * total_eligible : bigint
+  * total_suppressed : bigint
+  * total_requests : bigint
+  * total_accepted : bigint
+  * total_delivered : bigint
+  * total_seen : bigint
+  * total_read : bigint
+  * total_failed : bigint
+  * total_cancelled : bigint
+  * idempotency_key : varchar
+  * authorized_by_user_id : uuid <<FK>>
+  * authorization_snapshot_json : jsonb
+    failure_code : varchar
+    failure_detail : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  * created_by_user_id : uuid <<FK>>
+  * updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity campaign_dispatch_recipients {
+  * id : uuid <<PK>>
+  --
+  * dispatch_id : uuid <<FK>>
+  * member_type_concept_id : uuid <<FK>>
+  * member_ref_id : uuid
+    recipient_endpoint_id : uuid <<FK>>
+    recipient_user_id : uuid <<FK>>
+  * channel_id : uuid <<FK>>
+    language_concept_id : uuid <<FK>>
+    timezone_name : varchar
+    consent_id : uuid <<FK>>
+  * consent_status_concept_id : uuid <<FK>>
+    preference_snapshot_json : jsonb
+  * eligibility_status_concept_id : uuid <<FK>>
+    suppression_reason_concept_id : uuid <<FK>>
+    suppression_detail : varchar
+  * scheduled_at : timestamptz
+    notification_request_id : uuid <<FK>>
+    current_delivery_id : uuid <<FK>>
+  * current_status_concept_id : uuid <<FK>>
+  * idempotency_key : varchar
+  * snapshot_json : jsonb
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  * created_by_user_id : uuid <<FK>>
+  * updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity campaign_schedules {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+    campaign_id : uuid <<FK>>
+    journey_id : uuid <<FK>>
+  * schedule_type_concept_id : uuid <<FK>>
+  * timezone_name : varchar
+    scheduled_once_at : timestamptz
+    cron_expression : varchar
+    recurrence_rule_json : jsonb
+  * valid_from : timestamptz
+    valid_until : timestamptz
+    allowed_weekdays_json : jsonb
+    allowed_time_window_json : jsonb
+  * missed_run_policy_concept_id : uuid <<FK>>
+  * overlap_policy_concept_id : uuid <<FK>>
+    next_run_at : timestamptz
+    last_run_at : timestamptz
+    max_occurrences : integer
+  * completed_occurrences : integer
+  * status_concept_id : uuid <<FK>>
+  * schedule_version : integer
+  * published_content_hash : varchar
+  * published_audience_hash : varchar
+  * authorized_by_user_id : uuid <<FK>>
+  * authorized_at : timestamptz
+  * authorization_snapshot_json : jsonb
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  * created_by_user_id : uuid <<FK>>
+  * updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+marketing_campaigns ||--o{ campaign_schedules
+marketing_campaigns ||--o{ campaign_dispatches
+campaign_schedules ||--o{ campaign_dispatches
+campaign_dispatches ||--o{ campaign_dispatch_recipients
+' ===== v4.0.1 (scheduled campaigns / site-admin / tracking) ===== (fin entidades)
+
+package "Physical Indexes" {
+entity "INDEXES · segments" as idxset_segments <<INDEX_SET>> {
+  PK pk_segments : (id) UNIQUE BTREE
+  UK uq_segments_code : (code) UNIQUE BTREE
+  IX ix_segments_tenant_id : (tenant_id) BTREE
+  IX ix_segments_segment_type_concept_id : (segment_type_concept_id) BTREE
+  IX ix_segments_source_read_model_id : (source_read_model_id) BTREE
+  IX ix_segments_state_concept_id : (state_concept_id) BTREE
+  IX ix_segments_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_segments_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_segments_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+  GIN gin_segments_search : to_tsvector('simple', concat_ws(' ', name, code)) GIN
+}
+
+segments .. idxset_segments : indexed by
+
+entity "INDEXES · segment_members" as idxset_segment_members <<INDEX_SET>> {
+  PK pk_segment_members : (id) UNIQUE BTREE
+  IX ix_segment_members_segment_id : (segment_id) BTREE
+  IX ix_segment_members_member_type_concept_id : (member_type_concept_id) BTREE
+  IX ix_segment_members_status_concept_id : (status_concept_id) BTREE
+  IX ix_segment_members_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_segment_members_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+segment_members .. idxset_segment_members : indexed by
+
+entity "INDEXES · marketing_campaigns" as idxset_marketing_campaigns <<INDEX_SET>> {
+  PK pk_marketing_campaigns : (id) UNIQUE BTREE
+  UK uq_marketing_campaigns_code : (code) UNIQUE BTREE
+  IX ix_marketing_campaigns_tenant_id : (tenant_id) BTREE
+  IX ix_marketing_campaigns_campaign_type_concept_id : (campaign_type_concept_id) BTREE
+  IX ix_marketing_campaigns_objective_concept_id : (objective_concept_id) BTREE
+  IX ix_marketing_campaigns_channel_concept_id : (channel_concept_id) BTREE
+  IX ix_marketing_campaigns_segment_id : (segment_id) BTREE
+  IX ix_marketing_campaigns_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_marketing_campaigns_promotion_id : (promotion_id) BTREE
+  IX ix_marketing_campaigns_owner_user_id : (owner_user_id) BTREE
+  IX ix_marketing_campaigns_status_concept_id : (status_concept_id) BTREE
+  IX ix_marketing_campaigns_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_marketing_campaigns_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_marketing_campaigns_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  GIN gin_marketing_campaigns_search : to_tsvector('simple', concat_ws(' ', name, code)) GIN
+}
+
+marketing_campaigns .. idxset_marketing_campaigns : indexed by
+
+entity "INDEXES · campaign_members" as idxset_campaign_members <<INDEX_SET>> {
+  PK pk_campaign_members : (id) UNIQUE BTREE
+  IX ix_campaign_members_campaign_id : (campaign_id) BTREE
+  IX ix_campaign_members_member_type_concept_id : (member_type_concept_id) BTREE
+  IX ix_campaign_members_member_status_concept_id : (member_status_concept_id) BTREE
+  IX ix_campaign_members_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_campaign_members_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+campaign_members .. idxset_campaign_members : indexed by
+
+entity "INDEXES · content_templates" as idxset_content_templates <<INDEX_SET>> {
+  PK pk_content_templates : (id) UNIQUE BTREE
+  IX ix_content_templates_tenant_id : (tenant_id) BTREE
+  IX ix_content_templates_channel_concept_id : (channel_concept_id) BTREE
+  IX ix_content_templates_language_concept_id : (language_concept_id) BTREE
+  IX ix_content_templates_messaging_template_id : (messaging_template_id) BTREE
+  IX ix_content_templates_status_concept_id : (status_concept_id) BTREE
+  IX ix_content_templates_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_content_templates_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_content_templates_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  UK uq_content_templates_messaging_template_id_version : (messaging_template_id, version) UNIQUE BTREE
+  GIN gin_content_templates_search : to_tsvector('simple', concat_ws(' ', name, code)) GIN
+}
+
+content_templates .. idxset_content_templates : indexed by
+
+entity "INDEXES · journeys" as idxset_journeys <<INDEX_SET>> {
+  PK pk_journeys : (id) UNIQUE BTREE
+  UK uq_journeys_code : (code) UNIQUE BTREE
+  IX ix_journeys_tenant_id : (tenant_id) BTREE
+  IX ix_journeys_entry_trigger_concept_id : (entry_trigger_concept_id) BTREE
+  IX ix_journeys_entry_segment_id : (entry_segment_id) BTREE
+  IX ix_journeys_goal_metric_concept_id : (goal_metric_concept_id) BTREE
+  IX ix_journeys_state_concept_id : (state_concept_id) BTREE
+  IX ix_journeys_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_journeys_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_journeys_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+  GIN gin_journeys_search : to_tsvector('simple', concat_ws(' ', name, code)) GIN
+}
+
+journeys .. idxset_journeys : indexed by
+
+entity "INDEXES · journey_steps" as idxset_journey_steps <<INDEX_SET>> {
+  PK pk_journey_steps : (id) UNIQUE BTREE
+  IX ix_journey_steps_journey_id : (journey_id) BTREE
+  IX ix_journey_steps_step_type_concept_id : (step_type_concept_id) BTREE
+  IX ix_journey_steps_channel_concept_id : (channel_concept_id) BTREE
+  IX ix_journey_steps_content_template_id : (content_template_id) BTREE
+  IX ix_journey_steps_next_step_id : (next_step_id) BTREE
+  IX ix_journey_steps_branch_step_id : (branch_step_id) BTREE
+  IX ix_journey_steps_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_journey_steps_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+journey_steps .. idxset_journey_steps : indexed by
+
+entity "INDEXES · journey_enrollments" as idxset_journey_enrollments <<INDEX_SET>> {
+  PK pk_journey_enrollments : (id) UNIQUE BTREE
+  IX ix_journey_enrollments_journey_id : (journey_id) BTREE
+  IX ix_journey_enrollments_member_type_concept_id : (member_type_concept_id) BTREE
+  IX ix_journey_enrollments_current_step_id : (current_step_id) BTREE
+  IX ix_journey_enrollments_status_concept_id : (status_concept_id) BTREE
+  IX ix_journey_enrollments_exit_reason_concept_id : (exit_reason_concept_id) BTREE
+  IX ix_journey_enrollments_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_journey_enrollments_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+journey_enrollments .. idxset_journey_enrollments : indexed by
+
+entity "INDEXES · tracked_links" as idxset_tracked_links <<INDEX_SET>> {
+  PK pk_tracked_links : (id) UNIQUE BTREE
+  UK uq_tracked_links_code : (code) UNIQUE BTREE
+  IX ix_tracked_links_campaign_id : (campaign_id) BTREE
+  IX ix_tracked_links_state_concept_id : (state_concept_id) BTREE
+  IX ix_tracked_links_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_tracked_links_updated_by_user_id : (updated_by_user_id) BTREE
+  GIN gin_tracked_links_search : to_tsvector('simple', concat_ws(' ', code)) GIN
+}
+
+tracked_links .. idxset_tracked_links : indexed by
+
+entity "INDEXES · marketing_touchpoints" as idxset_marketing_touchpoints <<INDEX_SET>> {
+  PK pk_marketing_touchpoints : (id) UNIQUE BTREE
+  IX ix_marketing_touchpoints_campaign_id : (campaign_id) BTREE
+  IX ix_marketing_touchpoints_journey_id : (journey_id) BTREE
+  IX ix_marketing_touchpoints_tracked_link_id : (tracked_link_id) BTREE
+  IX ix_marketing_touchpoints_member_type_concept_id : (member_type_concept_id) BTREE
+  IX ix_marketing_touchpoints_touch_type_concept_id : (touch_type_concept_id) BTREE
+  IX ix_marketing_touchpoints_channel_concept_id : (channel_concept_id) BTREE
+  IX ix_marketing_touchpoints_content_template_id : (content_template_id) BTREE
+  IX ix_marketing_touchpoints_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_marketing_touchpoints_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+marketing_touchpoints .. idxset_marketing_touchpoints : indexed by
+
+entity "INDEXES · attribution_touches" as idxset_attribution_touches <<INDEX_SET>> {
+  PK pk_attribution_touches : (id) UNIQUE BTREE
+  IX ix_attribution_touches_marketing_touchpoint_id : (marketing_touchpoint_id) BTREE
+  IX ix_attribution_touches_attribution_model_concept_id : (attribution_model_concept_id) BTREE
+  IX ix_attribution_touches_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_attribution_touches_position_concept_id : (position_concept_id) BTREE
+  IX ix_attribution_touches_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_attribution_touches_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+attribution_touches .. idxset_attribution_touches : indexed by
+' ===== v4.0.1 (scheduled campaigns / site-admin / tracking) ===== (index sets)
+entity "INDEXES · campaign_dispatches" as idxset_campaign_dispatches <<INDEX_SET>> {
+  PK pk_campaign_dispatches : (id) UNIQUE BTREE
+  UK uq_campaign_dispatches_idempotency_key : (idempotency_key) UNIQUE BTREE
+  UK uq_campaign_dispatches_schedule_id : (schedule_id, occurrence_key) UNIQUE BTREE
+  IX ix_campaign_dispatches_tenant_id : (tenant_id) BTREE
+  IX ix_campaign_dispatches_campaign_id : (campaign_id) BTREE
+  IX ix_campaign_dispatches_schedule_id : (schedule_id) BTREE
+  IX ix_campaign_dispatches_journey_id : (journey_id) BTREE
+  IX ix_campaign_dispatches_journey_step_id : (journey_step_id) BTREE
+  IX ix_campaign_dispatches_status_concept_id : (status_concept_id) BTREE
+  IX ix_campaign_dispatches_source_concept_id : (source_concept_id) BTREE
+  IX ix_campaign_dispatches_content_template_id : (content_template_id) BTREE
+  IX ix_campaign_dispatches_authorized_by_user_id : (authorized_by_user_id) BTREE
+  IX ix_campaign_dispatches_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_campaign_dispatches_updated_by_user_id : (updated_by_user_id) BTREE
+}
+campaign_dispatches .. idxset_campaign_dispatches : indexed by
+entity "INDEXES · campaign_dispatch_recipients" as idxset_campaign_dispatch_recipients <<INDEX_SET>> {
+  PK pk_campaign_dispatch_recipients : (id) UNIQUE BTREE
+  UK uq_campaign_dispatch_recipients_dispatch_id : (dispatch_id, member_type_concept_id, member_ref_id, channel_id) UNIQUE BTREE
+  UK uq_campaign_dispatch_recipients_idempotency_key : (idempotency_key) UNIQUE BTREE
+  IX ix_campaign_dispatch_recipients_dispatch_id : (dispatch_id) BTREE
+  IX ix_campaign_dispatch_recipients_member_type_concept_id : (member_type_concept_id) BTREE
+  IX ix_campaign_dispatch_recipients_recipient_endpoint_id : (recipient_endpoint_id) BTREE
+  IX ix_campaign_dispatch_recipients_recipient_user_id : (recipient_user_id) BTREE
+  IX ix_campaign_dispatch_recipients_channel_id : (channel_id) BTREE
+  IX ix_campaign_dispatch_recipients_language_concept_id : (language_concept_id) BTREE
+  IX ix_campaign_dispatch_recipients_consent_id : (consent_id) BTREE
+  IX ix_campaign_dispatch_recipients_consent_status_concept_id : (consent_status_concept_id) BTREE
+  IX ix_campaign_dispatch_recipients_eligibility_status_concept_id : (eligibility_status_concept_id) BTREE
+  IX ix_campaign_dispatch_recipients_suppression_reason_concept_id : (suppression_reason_concept_id) BTREE
+  IX ix_campaign_dispatch_recipients_notification_request_id : (notification_request_id) BTREE
+  IX ix_campaign_dispatch_recipients_current_delivery_id : (current_delivery_id) BTREE
+  IX ix_campaign_dispatch_recipients_current_status_concept_id : (current_status_concept_id) BTREE
+  IX ix_campaign_dispatch_recipients_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_campaign_dispatch_recipients_updated_by_user_id : (updated_by_user_id) BTREE
+}
+campaign_dispatch_recipients .. idxset_campaign_dispatch_recipients : indexed by
+entity "INDEXES · campaign_schedules" as idxset_campaign_schedules <<INDEX_SET>> {
+  PK pk_campaign_schedules : (id) UNIQUE BTREE
+  UK uq_campaign_schedules_campaign_id : (campaign_id, schedule_version) UNIQUE BTREE
+  IX ix_campaign_schedules_tenant_id : (tenant_id) BTREE
+  IX ix_campaign_schedules_campaign_id : (campaign_id) BTREE
+  IX ix_campaign_schedules_journey_id : (journey_id) BTREE
+  IX ix_campaign_schedules_schedule_type_concept_id : (schedule_type_concept_id) BTREE
+  IX ix_campaign_schedules_missed_run_policy_concept_id : (missed_run_policy_concept_id) BTREE
+  IX ix_campaign_schedules_overlap_policy_concept_id : (overlap_policy_concept_id) BTREE
+  IX ix_campaign_schedules_status_concept_id : (status_concept_id) BTREE
+  IX ix_campaign_schedules_authorized_by_user_id : (authorized_by_user_id) BTREE
+  IX ix_campaign_schedules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_campaign_schedules_updated_by_user_id : (updated_by_user_id) BTREE
+}
+campaign_schedules .. idxset_campaign_schedules : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

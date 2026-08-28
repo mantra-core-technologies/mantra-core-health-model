@@ -1,0 +1,376 @@
+@startuml SALUD_Module_15_chart
+title Module 15 — Versioned Patient Chart, Notes and Documents\n(schema: chart)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_15_chart.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_15_chart
+  BUSINESS PURPOSE
+  A patient chart with immutable, signed clinical-note versions; explicit
+  release to the patient; addenda instead of destructive edits; and a
+  document cabinet that supports multiple governed file versions.
+end note
+
+entity patient_timeline_view <<VIEW>> {
+  --
+    patient_profile_id : uuid
+    event_type : varchar
+    resource_type : varchar
+    resource_id : uuid
+    resource_version_id : uuid
+    event_at : timestamptz
+    summary : text
+    author_profile_id : uuid
+    encounter_id : uuid
+    patient_visibility_concept_id : uuid
+}
+entity clinical_note_headers {
+  * id : uuid <<PK>>
+  --
+  * patient_profile_id : uuid <<FK>>
+    encounter_id : uuid <<FK>>
+  * note_type_concept_id : uuid <<FK>>
+  * lifecycle_status_concept_id : uuid <<FK>>
+    current_version_id : uuid <<FK>>
+    current_released_version_id : uuid <<FK>>
+    patient_release_status_concept_id : uuid <<FK>>
+    confidentiality_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity clinical_note_versions <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * clinical_note_id : uuid <<FK>>
+  * version_number : integer
+  * author_profile_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    chief_complaint_text : text
+    subjective_text : text
+    objective_text : text
+    assessment_text : text
+    plan_text : text
+    supersedes_version_id : uuid <<FK>>
+    amendment_reason_concept_id : uuid <<FK>>
+    amendment_reason_text : text
+    signed_by_profile_id : uuid <<FK>>
+    signed_at : timestamptz
+    content_hash : varchar
+    release_eligibility_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity clinical_note_signatures <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * clinical_note_version_id : uuid <<FK>>
+  * signer_profile_id : uuid <<FK>>
+  * signature_type_concept_id : uuid <<FK>>
+    signature_value_encrypted : text
+    certificate_thumbprint : varchar
+    signed_content_hash : varchar
+  * signed_at : timestamptz
+}
+entity note_release_events <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * clinical_note_version_id : uuid <<FK>>
+  * action_concept_id : uuid <<FK>>
+    patient_profile_id : uuid <<FK>>
+  * resulting_visibility_concept_id : uuid <<FK>>
+    reason_concept_id : uuid <<FK>>
+    policy_version : varchar
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity physical_exam_findings {
+  * id : uuid <<PK>>
+  --
+  * clinical_note_version_id : uuid <<FK>>
+  * body_system_concept_id : uuid <<FK>>
+    finding_concept_id : uuid <<FK>>
+    is_normal : boolean
+    finding_text : text
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+entity care_plans {
+  * id : uuid <<PK>>
+  --
+  * patient_profile_id : uuid <<FK>>
+    condition_id : uuid <<FK>>
+    encounter_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    intent_concept_id : uuid <<FK>>
+    goal_text : text
+    start_date : date
+    end_date : date
+    author_profile_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity care_plan_activities {
+  * id : uuid <<PK>>
+  --
+  * care_plan_id : uuid <<FK>>
+  * activity_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    scheduled_at : timestamptz
+    detail_text : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity document_records {
+  * id : uuid <<PK>>
+  --
+  * patient_profile_id : uuid <<FK>>
+  * tenant_id : uuid <<FK>>
+    encounter_id : uuid <<FK>>
+  * category_concept_id : uuid <<FK>>
+  * title : varchar
+    source_concept_id : uuid <<FK>>
+    document_date : date
+    author_text : varchar
+    is_external : boolean
+  * status_concept_id : uuid <<FK>>
+    confidentiality_concept_id : uuid <<FK>>
+    patient_visibility_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity document_record_files {
+  * id : uuid <<PK>>
+  --
+  * document_record_id : uuid <<FK>>
+  * file_id : uuid <<FK>>
+  * content_role_concept_id : uuid <<FK>>
+    ordinal : integer
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+entity specialty_chart_templates {
+  * id : uuid <<PK>>
+  --
+  * specialty_concept_id : uuid <<FK>>
+    tenant_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+    section_id : uuid <<FK>>
+  * version : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity chart_template_assignments {
+  * id : uuid <<PK>>
+  --
+  * template_id : uuid <<FK>>
+    practice_id : uuid <<FK>>
+    practitioner_profile_id : uuid <<FK>>
+  * is_default : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+clinical_note_headers ||--o{ clinical_note_versions
+clinical_note_versions |o--o{ clinical_note_versions : supersedes
+clinical_note_versions ||--o{ clinical_note_signatures
+clinical_note_versions ||--o{ note_release_events
+clinical_note_versions ||--o{ physical_exam_findings
+care_plans ||--o{ care_plan_activities
+document_records ||--o{ document_record_files
+specialty_chart_templates ||--o{ chart_template_assignments
+
+note as IMMUTABILITY_diagram_15_chart
+  VERSIONING RULE
+  Signed versions are immutable. Corrections create a new version or addendum
+  linked by supersedes_version_id. Database audit history is not a substitute
+  for clinical version history. The patient can view every released version;
+  withholding requires an explicit legal/clinical reason and audit event.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · clinical_note_headers" as idxset_clinical_note_headers <<INDEX_SET>> {
+  PK pk_clinical_note_headers : (id) UNIQUE BTREE
+  IX ix_clinical_note_headers_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_clinical_note_headers_encounter_id : (encounter_id) BTREE
+  IX ix_clinical_note_headers_note_type_concept_id : (note_type_concept_id) BTREE
+  IX ix_clinical_note_headers_lifecycle_status_concept_id : (lifecycle_status_concept_id) BTREE
+  IX ix_clinical_note_headers_current_version_id : (current_version_id) BTREE
+  IX ix_clinical_note_headers_current_released_version_id : (current_released_version_id) BTREE
+  IX ix_clinical_note_headers_patient_release_status_concept_id : (patient_release_status_concept_id) BTREE
+  IX ix_clinical_note_headers_confidentiality_concept_id : (confidentiality_concept_id) BTREE
+  IX ix_clinical_note_headers_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_clinical_note_headers_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_clinical_note_headers_patient_profile_id_updated_at : (patient_profile_id, updated_at DESC) BTREE
+}
+
+clinical_note_headers .. idxset_clinical_note_headers : indexed by
+
+entity "INDEXES · clinical_note_versions" as idxset_clinical_note_versions <<INDEX_SET>> {
+  PK pk_clinical_note_versions : (id) UNIQUE BTREE
+  IX ix_clinical_note_versions_clinical_note_id : (clinical_note_id) BTREE
+  IX ix_clinical_note_versions_author_profile_id : (author_profile_id) BTREE
+  IX ix_clinical_note_versions_status_concept_id : (status_concept_id) BTREE
+  IX ix_clinical_note_versions_supersedes_version_id : (supersedes_version_id) BTREE
+  IX ix_clinical_note_versions_amendment_reason_concept_id : (amendment_reason_concept_id) BTREE
+  IX ix_clinical_note_versions_signed_by_profile_id : (signed_by_profile_id) BTREE
+  IX ix_clinical_note_versions_release_eligibility_concept_id : (release_eligibility_concept_id) BTREE
+  IX ix_clinical_note_versions_recorded_by_user_id : (recorded_by_user_id) BTREE
+  UK uq_clinical_note_versions_clinical_note_id_version_number : (clinical_note_id, version_number) UNIQUE BTREE
+  BRIN brin_clinical_note_versions_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+clinical_note_versions .. idxset_clinical_note_versions : indexed by
+
+entity "INDEXES · clinical_note_signatures" as idxset_clinical_note_signatures <<INDEX_SET>> {
+  PK pk_clinical_note_signatures : (id) UNIQUE BTREE
+  IX ix_clinical_note_signatures_clinical_note_version_id : (clinical_note_version_id) BTREE
+  IX ix_clinical_note_signatures_signer_profile_id : (signer_profile_id) BTREE
+  IX ix_clinical_note_signatures_signature_type_concept_id : (signature_type_concept_id) BTREE
+}
+
+clinical_note_signatures .. idxset_clinical_note_signatures : indexed by
+
+entity "INDEXES · note_release_events" as idxset_note_release_events <<INDEX_SET>> {
+  PK pk_note_release_events : (id) UNIQUE BTREE
+  IX ix_note_release_events_clinical_note_version_id : (clinical_note_version_id) BTREE
+  IX ix_note_release_events_action_concept_id : (action_concept_id) BTREE
+  IX ix_note_release_events_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_note_release_events_resulting_visibility_concept_id : (resulting_visibility_concept_id) BTREE
+  IX ix_note_release_events_reason_concept_id : (reason_concept_id) BTREE
+  IX ix_note_release_events_recorded_by_user_id : (recorded_by_user_id) BTREE
+  IX ix_note_release_events_patient_profile_id_recorded_at : (patient_profile_id, recorded_at DESC) BTREE
+  BRIN brin_note_release_events_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+note_release_events .. idxset_note_release_events : indexed by
+
+entity "INDEXES · physical_exam_findings" as idxset_physical_exam_findings <<INDEX_SET>> {
+  PK pk_physical_exam_findings : (id) UNIQUE BTREE
+  IX ix_physical_exam_findings_clinical_note_version_id : (clinical_note_version_id) BTREE
+  IX ix_physical_exam_findings_body_system_concept_id : (body_system_concept_id) BTREE
+  IX ix_physical_exam_findings_finding_concept_id : (finding_concept_id) BTREE
+  IX ix_physical_exam_findings_created_by_user_id : (created_by_user_id) BTREE
+}
+
+physical_exam_findings .. idxset_physical_exam_findings : indexed by
+
+entity "INDEXES · care_plans" as idxset_care_plans <<INDEX_SET>> {
+  PK pk_care_plans : (id) UNIQUE BTREE
+  IX ix_care_plans_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_care_plans_condition_id : (condition_id) BTREE
+  IX ix_care_plans_encounter_id : (encounter_id) BTREE
+  IX ix_care_plans_status_concept_id : (status_concept_id) BTREE
+  IX ix_care_plans_intent_concept_id : (intent_concept_id) BTREE
+  IX ix_care_plans_author_profile_id : (author_profile_id) BTREE
+  IX ix_care_plans_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_care_plans_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_care_plans_patient_profile_id_updated_at : (patient_profile_id, updated_at DESC) BTREE
+}
+
+care_plans .. idxset_care_plans : indexed by
+
+entity "INDEXES · care_plan_activities" as idxset_care_plan_activities <<INDEX_SET>> {
+  PK pk_care_plan_activities : (id) UNIQUE BTREE
+  IX ix_care_plan_activities_care_plan_id : (care_plan_id) BTREE
+  IX ix_care_plan_activities_activity_concept_id : (activity_concept_id) BTREE
+  IX ix_care_plan_activities_status_concept_id : (status_concept_id) BTREE
+  IX ix_care_plan_activities_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_care_plan_activities_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+care_plan_activities .. idxset_care_plan_activities : indexed by
+
+entity "INDEXES · document_records" as idxset_document_records <<INDEX_SET>> {
+  PK pk_document_records : (id) UNIQUE BTREE
+  IX ix_document_records_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_document_records_tenant_id : (tenant_id) BTREE
+  IX ix_document_records_encounter_id : (encounter_id) BTREE
+  IX ix_document_records_category_concept_id : (category_concept_id) BTREE
+  IX ix_document_records_source_concept_id : (source_concept_id) BTREE
+  IX ix_document_records_status_concept_id : (status_concept_id) BTREE
+  IX ix_document_records_confidentiality_concept_id : (confidentiality_concept_id) BTREE
+  IX ix_document_records_patient_visibility_concept_id : (patient_visibility_concept_id) BTREE
+  IX ix_document_records_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_document_records_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_document_records_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  IX ix_document_records_patient_profile_id_updated_at : (tenant_id, patient_profile_id, updated_at DESC) BTREE
+}
+
+document_records .. idxset_document_records : indexed by
+
+entity "INDEXES · document_record_files" as idxset_document_record_files <<INDEX_SET>> {
+  PK pk_document_record_files : (id) UNIQUE BTREE
+  IX ix_document_record_files_document_record_id : (document_record_id) BTREE
+  IX ix_document_record_files_file_id : (file_id) BTREE
+  IX ix_document_record_files_content_role_concept_id : (content_role_concept_id) BTREE
+  IX ix_document_record_files_created_by_user_id : (created_by_user_id) BTREE
+}
+
+document_record_files .. idxset_document_record_files : indexed by
+
+entity "INDEXES · specialty_chart_templates" as idxset_specialty_chart_templates <<INDEX_SET>> {
+  PK pk_specialty_chart_templates : (id) UNIQUE BTREE
+  IX ix_specialty_chart_templates_specialty_concept_id : (specialty_concept_id) BTREE
+  IX ix_specialty_chart_templates_tenant_id : (tenant_id) BTREE
+  IX ix_specialty_chart_templates_section_id : (section_id) BTREE
+  IX ix_specialty_chart_templates_status_concept_id : (status_concept_id) BTREE
+  IX ix_specialty_chart_templates_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_specialty_chart_templates_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_specialty_chart_templates_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  UK uq_specialty_chart_templates_section_id_version : (section_id, version) UNIQUE BTREE
+}
+
+specialty_chart_templates .. idxset_specialty_chart_templates : indexed by
+
+entity "INDEXES · chart_template_assignments" as idxset_chart_template_assignments <<INDEX_SET>> {
+  PK pk_chart_template_assignments : (id) UNIQUE BTREE
+  IX ix_chart_template_assignments_template_id : (template_id) BTREE
+  IX ix_chart_template_assignments_practice_id : (practice_id) BTREE
+  IX ix_chart_template_assignments_practitioner_profile_id : (practitioner_profile_id) BTREE
+  IX ix_chart_template_assignments_status_concept_id : (status_concept_id) BTREE
+  IX ix_chart_template_assignments_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_chart_template_assignments_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+chart_template_assignments .. idxset_chart_template_assignments : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

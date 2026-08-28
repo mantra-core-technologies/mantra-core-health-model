@@ -1,0 +1,745 @@
+model:
+  name: SALUD
+  version: 4.0.10
+  status: canonical-polyglot-nosql-health-platform
+  generated_at: '2026-08-06'
+  design_patches:
+  - id: patch-01-plan-scheduled-campaigns-tracking
+    role: normative-master-plan
+    doc: docs/architecture/plan-v4.0.1-scheduled-campaigns-tracking.md
+    source_file: SALUD_v4.0_plan_correccion_envios_programados_tracking_admin_sitio.md
+    status: materialized-in-er
+    summary: >-
+      Plan maestro normativo. Define esquema completo (campos, constraints,
+      value sets, workers, índices, fases, criterios de aceptación) para envíos
+      programados, gobierno exclusivo SITE_ADMINISTRATION y tracking multicanal
+      en 3 capas. Fuente de los § que cita el patch-02.
+  - id: patch-02-use-cases-scheduled-campaigns-tracking
+    role: use-case-derivation
+    doc: docs/architecture/patch-v4.0.1-scheduled-campaigns-tracking.md
+    source_file: PATCH_v4.0_casos_uso_envios_programados_tracking.md
+    status: materialized-in-er
+    summary: >-
+      37 casos de uso (UC-06/10/30/35/48/49/50-*) derivados del patch-01, en 7
+      módulos. Nombres normalizados a los canónicos: audit_events→audit_log,
+      outbox_events→outbox_messages.
+  - id: patch-v4.0.2-agenda-prestigio-bloqueos-buzon
+    role: product-features
+    doc: vault (SALUD/🧩 Patch v4.0.2 — Agenda, Prestigio, Bloqueos y Buzón)
+    status: materialized-physically
+    summary: >-
+      Horarios del profesional, puntos de prestigio, bloqueos de agenda por
+      vacaciones y buzón de reclamos. +6 entidades (community.prestige_scores/
+      prestige_awards/feedback_tickets/feedback_ticket_comments/
+      feedback_ticket_events, scheduling.calendar_absences) + 6 index sets ·
+      9 value sets · 2 máquinas de estado · 11 casos de uso.
+  - id: patch-v4.0.3-documentos-legales-afiliacion
+    role: product-features
+    doc: vault (SALUD/🧩 Patch v4.0.3 — Documentos legales de afiliación)
+    status: materialized-physically
+    summary: >-
+      Wrap sobre common.files para documentos legales de afiliación.
+      +1 entidad (directory.tenant_affiliation_documents) + 1 index set ·
+      3 value sets · 1 máquina de estado · 4 casos de uso.
+  - id: patch-v4.0.4-endurecimiento-datacenter
+    role: hardening
+    doc: vault (SALUD/🧩 Patch v4.0.4 — Endurecimiento datacenter)
+    status: materialized-physically
+    summary: >-
+      Particionado físico + cierre de huecos de afiliación. +3 entidades
+      (system_ops.partition_specs, directory.tenant_legal_representatives,
+      directory.tenant_web_configs) + 3 index sets · +5 columnas
+      (entity_registry.partition_spec_id; account_holder_name/tax_id en
+      accounting.company_bank_accounts y erp.business_partner_bank_accounts) ·
+      4 value sets · 4 casos de uso · estándar data-modeling-standards (10 reglas).
+  - id: patch-v4.0.5-planes-suscripcion
+    role: product-features
+    doc: vault (SALUD/🧩 Patch v4.0.5 — Planes de suscripción (Free · PRO · MAX))
+    status: materialized-physically
+    summary: >-
+      Planes SaaS Free/PRO/MAX para consultorios y enfermerías. +5 entidades
+      (payments.plan_prices/plan_features/plan_quotas/plan_eligibility_rules/
+      subscription_usage_counters) + 5 index sets · +3 columnas en
+      payments.subscription_plans (tier_concept_id, is_default, is_public) ·
+      5 value sets · 1 máquina de estado · 5 casos de uso.
+  - id: patch-v4.0.6-endurecimiento-seguridad
+    role: hardening
+    doc: vault (SALUD/🧩 Patch v4.0.6 — Endurecimiento de seguridad)
+    status: materialized-physically
+    summary: >-
+      Controles STRIDE grado salud. +9 entidades (iam.api_keys/api_key_scopes/
+      account_lockouts, authz.break_glass_sessions/ip_access_rules,
+      system_ops.encryption_keys/key_rotation_events/security_incidents/
+      breach_notifications) + 9 index sets · 12 value sets · 2 máquinas de
+      estado · 7 casos de uso.
+  - id: patch-v4.0.7-registro-atomico-cti
+    role: standard-audit
+    doc: vault (SALUD/🧩 Patch v4.0.7 — Registro atómico de perfiles (CTI))
+    status: no-schema-change
+    summary: >-
+      Auditoría de los 68 casos de uso (0 violaciones del antipatrón de clase
+      hija CTI) + regla 11 del estándar (padre e hija en la misma transacción,
+      persons → person_profiles → *_profiles) + 4 casos de uso ejemplares
+      UC-05-01..04.
+  - id: patch-v4.0.8-promocion-reglas-redesa
+    role: drift-correction
+    doc: docs/architecture/physical-materialization.md (§ v4.0.8)
+    status: materialized-in-er
+    summary: >-
+      Corrección de deriva en la dirección prohibida. El backend
+      (mantra-core-health-api) había declarado DDL propio en database/SQL/
+      —6 migraciones, 1 política RLS y 1 seed— fuera de los .puml y de SQL/. Ese
+      DDL no lo aplicaba docker/db-init, así que la deriva estaba latente y no
+      consumada: al inspeccionar la base antes del rebuild las 5 tablas no
+      existían. El vector sí era real: con ORM_SCHEMA_SYNC en su default 'safe'
+      y las entidades ya en el ORM, el siguiente arranque las habría creado.
+      Se promueven al modelo 5 tablas (authz.care_relationships,
+      authz.patient_legal_representations,
+      clinical.prescription_signature_policies,
+      scheduling.booking_confirmation_rules, iam.account_activations), 5 index
+      sets y 11 extensiones de columnas (journal_transactions.approved_at/
+      approved_by_user_id; medication_requests.signed_at/signed_by_user_id/
+      issued_at/status_reason_text/replaces_request_id/replaced_by_request_id/
+      renewed_from_request_id; appointment_bookings.cancellation_policy_snapshot;
+      iam.users.must_change_password), en los módulos 01/06/08/16/41. Reglas
+      REDESA que las sostienen: CAN-AUTH-001, C-06, C-07, A-03, C-11, C-17, C-18,
+      D-05, CAN-RX, CAN-APT, CAN-IDENT. Las FKs que las migraciones declaraban
+      como comentario son ahora constraints reales; eso destapó que
+      care_relationships.practitioner_profile_id apuntaba a
+      profiles.practitioner_profiles, que no existe (la real es
+      profiles.health_practitioner_profiles, resuelta por nota FK del vault
+      contra su PK CTI profile_id). mantra-core-health-api/database/ se eliminó.
+  - id: patch-v4.0.9-promocion-verificacion-y-reset
+    role: drift-correction
+    doc: docs/architecture/physical-materialization.md (§ v4.0.9)
+    status: materialized-in-er
+    summary: >-
+      Segunda corrección de deriva del mismo origen que v4.0.8, y por la misma
+      causa: un merge de dev devolvió mantra-core-health-api/database/ junto con
+      los montajes del compose apuntando a esa copia interna, y encima de ella se
+      siguieron escribiendo migraciones sueltas. Esta vez la deriva SÍ estaba
+      consumada en su efecto: iam.email_verifications no existía en base limpia y
+      los 27 casos de registro del smoke fallaban con 500. Se promueven al modelo
+      2 tablas (iam.email_verifications, iam.password_resets), 2 index sets, 1
+      extensión de columna (clinical.medication_requests.issue_idempotency_key) y
+      2 índices únicos PARCIALES: uq_medication_requests_issue_idempotency_key y
+      ux_authentication_credentials_live_password_subject, el primero del modelo
+      que lleva concept_id como UUID literales — excepción consciente a la regla
+      de no hardcodear conceptos, porque el predicado de un índice parcial debe
+      ser inmutable y Postgres no admite subconsultas ahí. Reglas REDESA que las
+      sostienen: CAN-IDENT, CAN §6 (MISSING_IDEMPOTENCY). De paso se corrigió el
+      generador del catálogo del ORM, que ignoraba la etiqueta UX y descartaba el
+      predicado WHERE: por eso ux_account_activations_token_hash (v4.0.8) se había
+      perdido del catálogo y un índice parcial habría salido como UNIQUE total.
+      mantra-core-health-api/database/ se eliminó otra vez, ahora con un chequeo
+      (salud-db/check_ddl_sources.py) que convierte su regreso en un fallo
+      ruidoso. Política escrita en docs/architecture/ddl-sources.md.
+  - id: patch-v4.0.10-endurecimiento-pipeline
+    role: pipeline-hardening
+    doc: docs/architecture/physical-materialization.md (§ v4.0.10)
+    status: materialized-in-er
+    summary: >-
+      Cierre de las tres deudas de generador que destapó v4.0.9, sin tablas ni
+      columnas nuevas. (1) Identificadores > 63 bytes: gen_ddl.py emitía 58
+      nombres de FK y 1 de índice que PostgreSQL truncaba EN SILENCIO, y la capa
+      06 del bootstrap del ORM —que sí acorta con prefijo 54 + sha1-8— los daba
+      por ausentes y proponía recrearlos en cada arranque; pg_ident() porta ese
+      algoritmo a gen_ddl.py (paridad verificada 58/58 byte-idéntica), SQL/
+      renombra los 59, y las bases vivas migran con el patch
+      2026-08-06_v4010_rename_long_identifiers.sql. (2) WORM de auditoría
+      (CAN-AUDIT-001/C-19): promovido de patch suelto a la matriz del módulo 33
+      — audit_log prohíbe UPDATE+DELETE (trg_forbid_mutation) y data_access_log
+      SOLO UPDATE (trg_forbid_update, clave nueva `UPDATE : forbidden` en
+      gen_integrity.py): el DELETE queda para la purga de retención UC-10-09.
+      Nace SQL/10_audit/05_constraints.sql y gen_apply lo engancha solo. (3)
+      Entidades: la regeneración vuelve a ser segura — gen_entities.py preserva
+      los bloques JSDoc existentes y el barrel conserva exports ajenos (las 6
+      tablas fantasma y los .types.ts de contratos jsonb); los contratos
+      RuleCondition y CancellationPolicySnapshot salen de las entidades a
+      archivos .types.ts propios. Política en ADR-0022: cuerpo por
+      gen_entities.py, formato por prettier, JSDoc por docs:tsdoc; orm:gen
+      retirado (declaraba un flujo por introspección que nunca produjo las
+      entidades del repo). Los +2 entity declarations son los stubs de la
+      matriz del módulo 33 (audit_log, data_access_log), no tablas nuevas.
+  materialization_note: >-
+    v4.0.1 materializado en el ER (fuente: el vault/grafo). Se añadieron 14
+    entidades nuevas (marketing.campaign_schedules/dispatches/dispatch_recipients,
+    crm.contact_channel_endpoints, messaging.adapter_tracking_capabilities/
+    adapter_event_mappings/adapter_inbound_events/delivery_tracking_events/
+    delivery_status_transitions/delivery_reconciliation_runs, authz.service_principals,
+    read_models.campaign_dispatch_summary/recipient_delivery_timeline/adapter_health_summary)
+    + 10 extensiones de columnas + 11 index sets, en modules 06/30/35/48/49/50.
+    Nombres normalizados: audit_events->audit_log, outbox_events->outbox_messages.
+  inventory:
+    modules_puml: 64
+    schemas: 52
+    entity_declarations_total: 2671
+    table_like_elements: 1245
+    view_elements: 81
+    index_sets: 1225
+    reference_only_stubs: 120
+    fk_references: 6672
+    note: >-
+      Cifras producidas por tools/model_inventory.py (fuente única reproducible:
+      clasifica cada `entity` en una sola clase, suma == total). v4.0 base
+      (2582 entity / 1201 tablas / 78 vistas / 1183 idx / 6336 FK) + v4.0.1
+      (14 entidades = 11 tablas + 3 vistas · 11 index sets · 10 extensiones de
+      columnas · +116 FK) => 2607 entity / 1212 tablas / 81 vistas / 1194 idx /
+      6452 FK / 120 ref / 52 schemas. + v4.0.2–v4.0.6 (24 tablas · 24 index
+      sets · 8 extensiones de columnas · +174 FK, módulos 01/04/06/11/16/19/
+      38/41/42) => 2655 entity / 1236 tablas / 81 vistas / 1218 idx / 6626 FK /
+      120 ref / 52 schemas. v4.0.7 no altera el inventario. + v4.0.8
+      (5 tablas · 5 index sets · 11 extensiones de columnas · +38 FK, módulos
+      01/06/08/16/41) => 2665 entity / 1241 tablas / 81 vistas / 1223 idx /
+      6664 FK / 120 ref / 52 schemas. + v4.0.9 (2 tablas · 2 index sets · 1
+      extensión de columna · +8 FK, módulos 01/08) => 2669 entity / 1243 tablas /
+      81 vistas / 1225 idx / 6672 FK / 120 ref / 52 schemas. + v4.0.10 (2 stubs
+      de la matriz del módulo 33, sin tablas nuevas — model_inventory los
+      clasifica en table_like por llevar IMMUTABLE/APPEND_ONLY además de
+      REFERENCE_ONLY, igual que los 13 preexistentes de la matriz) => 2671
+      entity / 1245 table_like / 81 vistas / 1225 idx / 6672 FK / 120 ref /
+      52 schemas.
+  database: PostgreSQL canonical + governed specialized stores
+  rules:
+    one_puml_per_module: true
+    indexes_embedded_in_each_data_module: true
+    public_schema_objects_allowed: false
+    dynamic_postgresql_enums_allowed: false
+    postgresql_is_canonical_source_of_truth: true
+    unsafe_dual_writes_allowed: false
+    cross_store_deletion_verification_required: true
+  standards_alignment:
+  - AWS Well-Architected Operational Excellence concepts
+  - Meta Marketing API / Conversions API concepts
+  - Libélula multichannel payment integration concepts
+  - HL7 FHIR R5 clinical and diagnostics resources
+  - DICOMweb imaging access concepts
+  - ISO 15189 medical laboratory quality and competence
+  - LOINC terminology for observations and laboratory results
+  - OHDSI OMOP Common Data Model transformation governance
+  - WHO Surgical Safety Checklist phases
+  - SAP S/4HANA financial/ERP concepts
+  - Salesforce activity relationship concepts
+  - Polyglot persistence governance and transactional outbox projection patterns
+  - MongoDB-compatible document validation, compound, multikey and TTL indexing concepts
+  - Redis keyspace, TTL, stream, fencing and atomic idempotency concepts
+  - OpenSearch-compatible template, alias, routing, full-text and lifecycle concepts
+  - Time-series partitioning, compression, retention and rollup concepts
+  - Vector retrieval, evidence, metadata filtering and deletion propagation concepts
+  - Object storage versioning, encryption, WORM and DICOM hierarchy concepts
+  - Property graph projection and scoped traversal concepts
+  - Lakehouse data product, schema, quality, lineage and controlled research release
+    concepts
+modules:
+- number: 0
+  code: platform
+  title: SALUD v4.0 — Canonical Platform and Polyglot Data Architecture
+  file: modules/diagram_00_platform.puml
+  table_like_elements: 0
+  view_elements: 0
+  index_sets: 0
+  status: active
+- number: 1
+  code: iam
+  title: Identity & Access — User Accounts and Security
+  file: modules/diagram_01_iam.puml
+  table_like_elements: 8
+  view_elements: 0
+  index_sets: 8
+  status: active
+- number: 2
+  code: common
+  title: Shared Identifiers, Contacts, Addresses and Files
+  file: modules/diagram_02_common.puml
+  table_like_elements: 7
+  view_elements: 0
+  index_sets: 7
+  status: active
+- number: 3
+  code: terminology
+  title: Terminology, Value Sets and Dynamic Catalogs
+  file: modules/diagram_03_terminology.puml
+  table_like_elements: 15
+  view_elements: 0
+  index_sets: 15
+  status: active
+- number: 4
+  code: directory
+  title: Tenants, Organizations, Sites and Directory
+  file: modules/diagram_04_directory.puml
+  table_like_elements: 4
+  view_elements: 0
+  index_sets: 4
+  status: active
+- number: 5
+  code: profiles
+  title: Persons, Patients and Health Workforce
+  file: modules/diagram_05_profiles.puml
+  table_like_elements: 18
+  view_elements: 0
+  index_sets: 18
+  status: active
+- number: 6
+  code: authz
+  title: Authorization, Purpose of Use and Field Masking
+  file: modules/diagram_06_authz.puml
+  table_like_elements: 11
+  view_elements: 0
+  index_sets: 11
+  status: active
+- number: 7
+  code: consent
+  title: Privacy Directives, Legal Bases and Consent Evidence
+  file: modules/diagram_07_consent.puml
+  table_like_elements: 10
+  view_elements: 0
+  index_sets: 10
+  status: active
+- number: 8
+  code: clinical
+  title: Core Clinical Record, Orders and Encounter Logistics
+  file: modules/diagram_08_clinical.puml
+  table_like_elements: 21
+  view_elements: 0
+  index_sets: 21
+  status: active
+- number: 9
+  code: forms
+  title: Dynamic Forms and Extensibility Governance
+  file: modules/diagram_09_forms.puml
+  table_like_elements: 16
+  view_elements: 1
+  index_sets: 16
+  status: active
+- number: 10
+  code: audit
+  title: Audit, Provenance and Version Histories
+  file: modules/diagram_10_audit.puml
+  table_like_elements: 123
+  view_elements: 0
+  index_sets: 123
+  status: active
+- number: 11
+  code: system_ops
+  title: Data Governance and System Operations
+  file: modules/diagram_11_system_ops.puml
+  table_like_elements: 24
+  view_elements: 0
+  index_sets: 24
+  status: active
+- number: 12
+  code: integrations
+  title: External Connectivity and Messaging
+  file: modules/diagram_12_integrations.puml
+  table_like_elements: 10
+  view_elements: 0
+  index_sets: 10
+  status: active
+- number: 13
+  code: geo
+  title: Geolocation and Mobile Tracking
+  file: modules/diagram_13_geo.puml
+  table_like_elements: 6
+  view_elements: 0
+  index_sets: 6
+  status: active
+- number: 14
+  code: practice
+  title: Care Organizations, Sites, Units, Spaces and Workforce
+  file: modules/diagram_14_practice.puml
+  table_like_elements: 11
+  view_elements: 0
+  index_sets: 11
+  status: active
+- number: 15
+  code: chart
+  title: Versioned Patient Chart, Notes and Documents
+  file: modules/diagram_15_chart.puml
+  table_like_elements: 11
+  view_elements: 1
+  index_sets: 11
+  status: active
+- number: 16
+  code: accounting
+  title: General Ledger and Accounting Subledgers
+  file: modules/diagram_16_accounting.puml
+  table_like_elements: 42
+  view_elements: 0
+  index_sets: 42
+  status: active
+- number: 17
+  code: billing
+  title: Billing, Receivables, Payables and Financial Planning
+  file: modules/diagram_17_billing.puml
+  table_like_elements: 20
+  view_elements: 1
+  index_sets: 20
+  status: active
+- number: 18
+  code: clinical_ext
+  title: Care Coordination, Alerts and Decision Support
+  file: modules/diagram_18_clinical_ext.puml
+  table_like_elements: 12
+  view_elements: 1
+  index_sets: 12
+  status: active
+- number: 19
+  code: community
+  title: Public Profiles, Social Graph, Messaging and Moderation
+  file: modules/diagram_19_community.puml
+  table_like_elements: 33
+  view_elements: 1
+  index_sets: 34
+  status: active
+- number: 20
+  code: diagnostics
+  title: Laboratory, Medical Imaging and Clinical Media
+  file: modules/diagram_20_diagnostics.puml
+  table_like_elements: 36
+  view_elements: 0
+  index_sets: 36
+  status: active
+- number: 21
+  code: deployment
+  title: Deployment, Data Centers and Regional Topology
+  file: modules/diagram_21_deployment.puml
+  table_like_elements: 0
+  view_elements: 0
+  index_sets: 0
+  status: active
+- number: 22
+  code: organization_extensions
+  title: Healthcare Organization Specializations
+  file: modules/diagram_22_organization_extensions.puml
+  table_like_elements: 5
+  view_elements: 0
+  index_sets: 5
+  status: active
+- number: 23
+  code: diagnostic_units
+  title: Diagnostic Units, Studies, Specialists and Prices
+  file: modules/diagram_23_diagnostic_units.puml
+  table_like_elements: 10
+  view_elements: 0
+  index_sets: 10
+  status: active
+- number: 24
+  code: pharmacy
+  title: Pharmacy Identity, Sites, Catalog and Pricing
+  file: modules/diagram_24_pharmacy.puml
+  table_like_elements: 9
+  view_elements: 0
+  index_sets: 9
+  status: active
+- number: 25
+  code: pharmacy_inventory
+  title: Pharmacy Inventory, Supply and Dispensing
+  file: modules/diagram_25_pharmacy_inventory.puml
+  table_like_elements: 20
+  view_elements: 0
+  index_sets: 20
+  status: active
+- number: 26
+  code: insurance
+  title: Insurance Networks, Operations, Appeals and Reconciliation
+  file: modules/diagram_26_insurance.puml
+  table_like_elements: 29
+  view_elements: 0
+  index_sets: 29
+  status: active
+- number: 27
+  code: identity_assurance
+  title: Identity Proofing, Assertions and Fraud Controls
+  file: modules/diagram_27_identity_assurance.puml
+  table_like_elements: 11
+  view_elements: 0
+  index_sets: 11
+  status: active
+- number: 28
+  code: telemetry
+  title: User Activity, Consent-Aware Tracking and Analytics
+  file: modules/diagram_28_telemetry.puml
+  table_like_elements: 14
+  view_elements: 0
+  index_sets: 14
+  status: active
+- number: 29
+  code: delegated_access
+  title: Delegated Access and Scoped Infrastructure Users
+  file: modules/diagram_29_delegated_access.puml
+  table_like_elements: 7
+  view_elements: 0
+  index_sets: 7
+  status: active
+- number: 30
+  code: read_models
+  title: Frontend View Contracts and Read Models
+  file: modules/diagram_30_read_models.puml
+  table_like_elements: 13
+  view_elements: 76
+  index_sets: 17
+  status: active
+- number: 31
+  code: integration_contracts
+  title: Governed Backend-to-Backend Contracts
+  file: modules/diagram_31_integration_contracts.puml
+  table_like_elements: 9
+  view_elements: 0
+  index_sets: 9
+  status: active
+- number: 32
+  code: workflow
+  title: State Machines and Cross-Domain Workflows
+  file: modules/diagram_32_workflow.puml
+  table_like_elements: 17
+  view_elements: 0
+  index_sets: 8
+  status: active
+- number: 33
+  code: integrity
+  title: Concurrency, Constraints and Integrity Matrix
+  file: modules/diagram_33_integrity.puml
+  table_like_elements: 7
+  view_elements: 0
+  index_sets: 0
+  status: active
+- number: 34
+  code: portal_catalog
+  title: Portal Catalogue and Frontend Navigation
+  file: modules/diagram_34_portal_catalog.puml
+  table_like_elements: 0
+  view_elements: 0
+  index_sets: 0
+  status: active
+- number: 35
+  code: messaging
+  title: Domain Events, Outbox, Queues and Notification Delivery
+  file: modules/diagram_35_messaging.puml
+  table_like_elements: 22
+  view_elements: 0
+  index_sets: 22
+  status: active
+- number: 36
+  code: qa_lab
+  title: Quality Assurance Lab and Test Evidence
+  file: modules/diagram_36_qa_lab.puml
+  table_like_elements: 13
+  view_elements: 0
+  index_sets: 13
+  status: active
+- number: 37
+  code: tracking
+  title: Shipments, Milestones and Status Timelines
+  file: modules/diagram_37_tracking.puml
+  table_like_elements: 8
+  view_elements: 0
+  index_sets: 8
+  status: active
+- number: 38
+  code: erp
+  title: Internal ERP, Contracts, HR and Organization
+  file: modules/diagram_38_erp.puml
+  table_like_elements: 52
+  view_elements: 0
+  index_sets: 51
+  status: active
+- number: 39
+  code: reporting
+  title: Reporting, Dashboards and Scheduled Distribution
+  file: modules/diagram_39_reporting.puml
+  table_like_elements: 12
+  view_elements: 0
+  index_sets: 12
+  status: active
+- number: 40
+  code: auth_providers
+  title: Federated Authentication Providers and Identity Linking
+  file: modules/diagram_40_auth_providers.puml
+  table_like_elements: 10
+  view_elements: 0
+  index_sets: 9
+  status: active
+- number: 41
+  code: scheduling
+  title: Appointments, Availability, Holds and Waitlists
+  file: modules/diagram_41_scheduling.puml
+  table_like_elements: 15
+  view_elements: 0
+  index_sets: 14
+  status: active
+- number: 42
+  code: payments
+  title: Payment Gateways, Transactions, Refunds and Payouts
+  file: modules/diagram_42_payments.puml
+  table_like_elements: 49
+  view_elements: 0
+  index_sets: 47
+  status: active
+- number: 43
+  code: ads
+  title: Advertising, Assets, Delivery, Commerce and Optimization
+  file: modules/diagram_43_ads.puml
+  table_like_elements: 73
+  view_elements: 0
+  index_sets: 73
+  status: active
+- number: 44
+  code: health_context
+  title: Country Health Environment Context
+  file: modules/diagram_44_health_context.puml
+  table_like_elements: 10
+  view_elements: 0
+  index_sets: 10
+  status: active
+- number: 45
+  code: system_context
+  title: System Context and Dynamic Enumerations
+  file: modules/diagram_45_system_context.puml
+  table_like_elements: 9
+  view_elements: 0
+  index_sets: 9
+  status: active
+- number: 46
+  code: platform_ops
+  title: Platform Operations, Observability and Releases
+  file: modules/diagram_46_platform_ops.puml
+  table_like_elements: 38
+  view_elements: 0
+  index_sets: 38
+  status: active
+- number: 47
+  code: education
+  title: Medical Education and Continuing Professional Development
+  file: modules/diagram_47_education.puml
+  table_like_elements: 15
+  view_elements: 0
+  index_sets: 15
+  status: active
+- number: 48
+  code: automation
+  title: Automation and Multi-Agent Orchestration
+  file: modules/diagram_48_automation.puml
+  table_like_elements: 16
+  view_elements: 0
+  index_sets: 16
+  status: active
+- number: 49
+  code: crm
+  title: Customer and Partner Relationship Management
+  file: modules/diagram_49_crm.puml
+  table_like_elements: 34
+  view_elements: 0
+  index_sets: 32
+  status: active
+- number: 50
+  code: marketing
+  title: Marketing Automation, Journeys and Attribution
+  file: modules/diagram_50_marketing.puml
+  table_like_elements: 14
+  view_elements: 0
+  index_sets: 14
+  status: active
+- number: 51
+  code: promotions
+  title: Loyalty, Discounts, Coupons and Referrals
+  file: modules/diagram_51_promotions.puml
+  table_like_elements: 11
+  view_elements: 0
+  index_sets: 11
+  status: active
+- number: 52
+  code: health_data
+  title: International Health Data Platform, Interoperability and Longitudinal Record
+  file: modules/diagram_52_health_data_platform.puml
+  status: active
+  table_like_elements: 34
+  view_elements: 0
+  index_sets: 34
+- number: 53
+  code: procedures_perioperative
+  title: Medical Interventions, Surgery and Perioperative Care
+  file: modules/diagram_53_procedures_perioperative.puml
+  status: active
+  table_like_elements: 35
+  view_elements: 0
+  index_sets: 35
+- number: 54
+  code: polyglot_storage
+  title: Polyglot Storage Governance and Data Placement
+  file: modules/diagram_54_polyglot_storage.puml
+  table_like_elements: 20
+  view_elements: 0
+  index_sets: 20
+  status: active
+- number: 55
+  code: document_store
+  title: Document Store for FHIR, Variable Payloads and Versioned Snapshots
+  file: modules/diagram_55_document_store.puml
+  table_like_elements: 13
+  view_elements: 0
+  index_sets: 13
+  status: active
+- number: 56
+  code: redis_runtime
+  title: Redis Runtime Cache, Ephemeral Security and Coordination
+  file: modules/diagram_56_redis_runtime.puml
+  table_like_elements: 14
+  view_elements: 0
+  index_sets: 14
+  status: active
+- number: 57
+  code: search_platform
+  title: Search and Operational Index Projections
+  file: modules/diagram_57_search_platform.puml
+  table_like_elements: 13
+  view_elements: 0
+  index_sets: 13
+  status: active
+- number: 58
+  code: time_series
+  title: High-Volume Time Series and Event Analytics
+  file: modules/diagram_58_time_series.puml
+  table_like_elements: 12
+  view_elements: 0
+  index_sets: 12
+  status: active
+- number: 59
+  code: vector_rag
+  title: Vector Search, RAG Evidence and Embedding Governance
+  file: modules/diagram_59_vector_rag.puml
+  table_like_elements: 14
+  view_elements: 0
+  index_sets: 14
+  status: active
+- number: 60
+  code: object_storage
+  title: Object Storage, Medical Media and PACS Catalog
+  file: modules/diagram_60_object_storage.puml
+  table_like_elements: 17
+  view_elements: 0
+  index_sets: 17
+  status: active
+- number: 61
+  code: graph_intelligence
+  title: Graph Projections for Relationships, Referrals and Risk
+  file: modules/diagram_61_graph_intelligence.puml
+  table_like_elements: 13
+  view_elements: 0
+  index_sets: 13
+  status: active
+- number: 62
+  code: cross_store_consistency
+  title: Outbox Projection, Reconciliation and Deletion Propagation
+  file: modules/diagram_62_cross_store_consistency.puml
+  table_like_elements: 20
+  view_elements: 0
+  index_sets: 20
+  status: active
+- number: 63
+  code: lakehouse
+  title: Lakehouse, Analytical Data Products and Research Releases
+  file: modules/diagram_63_lakehouse.puml
+  table_like_elements: 18
+  view_elements: 0
+  index_sets: 18
+  status: active

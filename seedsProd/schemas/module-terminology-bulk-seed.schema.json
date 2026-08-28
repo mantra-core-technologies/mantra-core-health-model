@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:salud:schema:module-terminology-bulk-seed",
+  "title": "SALUD terminology bulk seed manifest",
+  "type": "object",
+  "required": [
+    "module",
+    "environment_policy",
+    "boot",
+    "mock",
+    "integrity_contract"
+  ],
+  "properties": {
+    "module": {
+      "type": "object",
+      "required": [
+        "number",
+        "code",
+        "seed_revision"
+      ]
+    },
+    "boot": {
+      "type": "object",
+      "required": [
+        "load_order",
+        "record_count",
+        "records",
+        "bulk_files"
+      ],
+      "properties": {
+        "record_count": {
+          "type": "integer",
+          "minimum": 1000000
+        },
+        "bulk_files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "entity",
+              "path",
+              "record_count",
+              "sha256"
+            ]
+          }
+        }
+      }
+    },
+    "mock": {
+      "type": "object"
+    },
+    "integrity_contract": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": true
+}

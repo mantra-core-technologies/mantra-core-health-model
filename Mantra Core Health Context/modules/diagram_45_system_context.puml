@@ -1,0 +1,350 @@
+@startuml SALUD_Module_45_system_context
+title Module 45 — System Context and Dynamic Enumerations\n(schema: system_context)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_45_system_context.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_45_system_context
+  BUSINESS PURPOSE
+  Provides versioned system context for agents, modules and workflows, and
+  database-driven enumerations resolved from governed terminology value sets.
+  Consumers receive reproducible context instead of ad-hoc JSON or hard-coded lists.
+end note
+
+entity system_contexts {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * name : varchar
+    description : text
+  * context_type_concept_id : uuid <<FK>>
+  * scope_type_concept_id : uuid <<FK>>
+    tenant_id : uuid <<FK>>
+    country_concept_id : uuid <<FK>>
+    locale_concept_id : uuid <<FK>>
+    current_version_id : uuid <<FK>>
+    refresh_policy_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity system_context_refresh_runs <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * system_context_id : uuid <<FK>>
+  * idempotency_key : varchar <<UK>>
+  * trigger_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * started_at : timestamptz
+    finished_at : timestamptz
+    input_count : integer
+    output_content_hash : varchar
+    error_summary : text
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+entity system_context_versions <<VERSIONED>> {
+  * id : uuid <<PK>>
+  --
+  * system_context_id : uuid <<FK>>
+  * version_number : integer
+    refresh_run_id : uuid <<FK>>
+  * schema_version : varchar
+  * context_json : jsonb
+  * content_hash : varchar
+    generated_by_agent_id : uuid <<FK>>
+  * effective_from : timestamptz
+    effective_to : timestamptz
+    expires_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+entity system_context_inputs <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * system_context_version_id : uuid <<FK>>
+  * source_type_concept_id : uuid <<FK>>
+  * source_schema_name : varchar
+  * source_entity_name : varchar
+  * source_record_id : uuid
+    source_version_id : uuid
+  * source_content_hash : varchar
+    source_freshness_at : timestamptz
+    precedence : integer
+    required : boolean
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+entity system_context_bindings {
+  * id : uuid <<PK>>
+  --
+  * system_context_id : uuid <<FK>>
+  * consumer_type_concept_id : uuid <<FK>>
+  * consumer_id : uuid
+    tenant_id : uuid <<FK>>
+    country_concept_id : uuid <<FK>>
+    activation_rule_json : jsonb
+    priority : integer
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity dynamic_enum_definitions {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * name : varchar
+    description : text
+  * value_set_id : uuid <<FK>>
+  * scope_type_concept_id : uuid <<FK>>
+    tenant_id : uuid <<FK>>
+    country_concept_id : uuid <<FK>>
+    selection_mode_concept_id : uuid <<FK>>
+    allow_tenant_extension : boolean
+    allow_custom_value : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity dynamic_enum_versions <<VERSIONED>> {
+  * id : uuid <<PK>>
+  --
+  * dynamic_enum_definition_id : uuid <<FK>>
+  * version_number : integer
+  * value_set_version_id : uuid <<FK>>
+  * schema_version : varchar
+    cache_token : varchar
+  * effective_from : timestamptz
+    effective_to : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+entity dynamic_enum_options <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * dynamic_enum_version_id : uuid <<FK>>
+  * concept_id : uuid <<FK>>
+  * code : varchar
+  * display : varchar
+    ordinal : integer
+    is_default : boolean
+    enabled : boolean
+    metadata_json : jsonb
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+entity dynamic_enum_bindings {
+  * id : uuid <<PK>>
+  --
+  * dynamic_enum_definition_id : uuid <<FK>>
+  * target_schema_name : varchar
+  * target_entity_name : varchar
+  * target_field_name : varchar
+    system_context_id : uuid <<FK>>
+    required : boolean
+    fallback_concept_id : uuid <<FK>>
+    validation_mode_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+system_contexts ||--o{ system_context_refresh_runs
+system_contexts ||--o{ system_context_versions
+system_context_refresh_runs |o--o{ system_context_versions
+system_context_versions ||--o{ system_context_inputs
+system_contexts ||--o{ system_context_bindings
+dynamic_enum_definitions ||--o{ dynamic_enum_versions
+dynamic_enum_versions ||--o{ dynamic_enum_options
+dynamic_enum_definitions ||--o{ dynamic_enum_bindings
+system_contexts |o--o{ dynamic_enum_bindings
+
+note as CONTEXT_CONTRACT_diagram_45_system_context
+  SYSTEM CONTEXT CONTRACT
+  - UK: system_context_versions(context, version_number).
+  - current_version_id must point to a version owned by the same context.
+  - Every input is snapshotted by source identity, version/hash and freshness.
+  - Secrets are never stored in context_json; only governed references are allowed.
+end note
+
+note as ENUM_CONTRACT_diagram_45_system_context
+  DYNAMIC ENUM CONTRACT
+  Dynamic enums are NOT PostgreSQL ENUM types. A definition points to a
+  terminology.value_set; each published version snapshots ordered concept options.
+  Resolution considers effective time, tenant, country and optional system context,
+  preserving historical validation while allowing values to change without deploys.
+end note
+
+note as POLY_diagram_45_system_context
+  POLYMORPHIC REFERENCES
+  system_context_inputs and system_context_bindings use governed discriminators.
+  Validate schema/entity/consumer types against system_ops.entity_registry and
+  closed terminology value sets before accepting a reference.
+end note
+
+note as DEP_diagram_45_system_context
+  Connects to other modules via:
+  terminology.value_sets/value_set_versions/catalog_concepts,
+  health_context.country_health_context_versions, directory.tenants and iam.users.
+end note
+
+
+package "Physical Indexes" {
+entity "INDEXES · system_contexts" as idxset_system_contexts <<INDEX_SET>> {
+  PK pk_system_contexts : (id) UNIQUE BTREE
+  UK uq_system_contexts_code : (code) UNIQUE BTREE
+  IX ix_system_contexts_context_type_concept_id : (context_type_concept_id) BTREE
+  IX ix_system_contexts_scope_type_concept_id : (scope_type_concept_id) BTREE
+  IX ix_system_contexts_tenant_id : (tenant_id) BTREE
+  IX ix_system_contexts_country_concept_id : (country_concept_id) BTREE
+  IX ix_system_contexts_locale_concept_id : (locale_concept_id) BTREE
+  IX ix_system_contexts_current_version_id : (current_version_id) BTREE
+  IX ix_system_contexts_refresh_policy_concept_id : (refresh_policy_concept_id) BTREE
+  IX ix_system_contexts_status_concept_id : (status_concept_id) BTREE
+  IX ix_system_contexts_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_system_contexts_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_system_contexts_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+system_contexts .. idxset_system_contexts : indexed by
+
+entity "INDEXES · system_context_refresh_runs" as idxset_system_context_refresh_runs <<INDEX_SET>> {
+  PK pk_system_context_refresh_runs : (id) UNIQUE BTREE
+  UK uq_system_context_refresh_runs_idempotency_key : (idempotency_key) UNIQUE BTREE
+  IX ix_system_context_refresh_runs_system_context_id : (system_context_id) BTREE
+  IX ix_system_context_refresh_runs_trigger_concept_id : (trigger_concept_id) BTREE
+  IX ix_system_context_refresh_runs_status_concept_id : (status_concept_id) BTREE
+  IX ix_system_context_refresh_runs_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_system_context_refresh_runs_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+system_context_refresh_runs .. idxset_system_context_refresh_runs : indexed by
+
+entity "INDEXES · system_context_versions" as idxset_system_context_versions <<INDEX_SET>> {
+  PK pk_system_context_versions : (id) UNIQUE BTREE
+  IX ix_system_context_versions_system_context_id : (system_context_id) BTREE
+  IX ix_system_context_versions_refresh_run_id : (refresh_run_id) BTREE
+  IX ix_system_context_versions_generated_by_agent_id : (generated_by_agent_id) BTREE
+  IX ix_system_context_versions_status_concept_id : (status_concept_id) BTREE
+  IX ix_system_context_versions_recorded_by_user_id : (recorded_by_user_id) BTREE
+  UK uq_system_context_versions_system_context_id_version_number : (system_context_id, version_number) UNIQUE BTREE
+}
+
+system_context_versions .. idxset_system_context_versions : indexed by
+
+entity "INDEXES · system_context_inputs" as idxset_system_context_inputs <<INDEX_SET>> {
+  PK pk_system_context_inputs : (id) UNIQUE BTREE
+  IX ix_system_context_inputs_system_context_version_id : (system_context_version_id) BTREE
+  IX ix_system_context_inputs_source_type_concept_id : (source_type_concept_id) BTREE
+  IX ix_system_context_inputs_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_system_context_inputs_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+system_context_inputs .. idxset_system_context_inputs : indexed by
+
+entity "INDEXES · system_context_bindings" as idxset_system_context_bindings <<INDEX_SET>> {
+  PK pk_system_context_bindings : (id) UNIQUE BTREE
+  IX ix_system_context_bindings_system_context_id : (system_context_id) BTREE
+  IX ix_system_context_bindings_consumer_type_concept_id : (consumer_type_concept_id) BTREE
+  IX ix_system_context_bindings_tenant_id : (tenant_id) BTREE
+  IX ix_system_context_bindings_country_concept_id : (country_concept_id) BTREE
+  IX ix_system_context_bindings_status_concept_id : (status_concept_id) BTREE
+  IX ix_system_context_bindings_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_system_context_bindings_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_system_context_bindings_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+system_context_bindings .. idxset_system_context_bindings : indexed by
+
+entity "INDEXES · dynamic_enum_definitions" as idxset_dynamic_enum_definitions <<INDEX_SET>> {
+  PK pk_dynamic_enum_definitions : (id) UNIQUE BTREE
+  UK uq_dynamic_enum_definitions_code : (code) UNIQUE BTREE
+  IX ix_dynamic_enum_definitions_value_set_id : (value_set_id) BTREE
+  IX ix_dynamic_enum_definitions_scope_type_concept_id : (scope_type_concept_id) BTREE
+  IX ix_dynamic_enum_definitions_tenant_id : (tenant_id) BTREE
+  IX ix_dynamic_enum_definitions_country_concept_id : (country_concept_id) BTREE
+  IX ix_dynamic_enum_definitions_selection_mode_concept_id : (selection_mode_concept_id) BTREE
+  IX ix_dynamic_enum_definitions_status_concept_id : (status_concept_id) BTREE
+  IX ix_dynamic_enum_definitions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_dynamic_enum_definitions_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_dynamic_enum_definitions_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+dynamic_enum_definitions .. idxset_dynamic_enum_definitions : indexed by
+
+entity "INDEXES · dynamic_enum_versions" as idxset_dynamic_enum_versions <<INDEX_SET>> {
+  PK pk_dynamic_enum_versions : (id) UNIQUE BTREE
+  IX ix_dynamic_enum_versions_dynamic_enum_definition_id : (dynamic_enum_definition_id) BTREE
+  IX ix_dynamic_enum_versions_value_set_version_id : (value_set_version_id) BTREE
+  IX ix_dynamic_enum_versions_status_concept_id : (status_concept_id) BTREE
+  IX ix_dynamic_enum_versions_recorded_by_user_id : (recorded_by_user_id) BTREE
+  UK uq_dynamic_enum_versions_dynamic_enum_definition_id_ve_fe5c676f : (dynamic_enum_definition_id, version_number) UNIQUE BTREE
+}
+
+dynamic_enum_versions .. idxset_dynamic_enum_versions : indexed by
+
+entity "INDEXES · dynamic_enum_options" as idxset_dynamic_enum_options <<INDEX_SET>> {
+  PK pk_dynamic_enum_options : (id) UNIQUE BTREE
+  IX ix_dynamic_enum_options_dynamic_enum_version_id : (dynamic_enum_version_id) BTREE
+  IX ix_dynamic_enum_options_concept_id : (concept_id) BTREE
+  IX ix_dynamic_enum_options_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_dynamic_enum_options_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+dynamic_enum_options .. idxset_dynamic_enum_options : indexed by
+
+entity "INDEXES · dynamic_enum_bindings" as idxset_dynamic_enum_bindings <<INDEX_SET>> {
+  PK pk_dynamic_enum_bindings : (id) UNIQUE BTREE
+  IX ix_dynamic_enum_bindings_dynamic_enum_definition_id : (dynamic_enum_definition_id) BTREE
+  IX ix_dynamic_enum_bindings_system_context_id : (system_context_id) BTREE
+  IX ix_dynamic_enum_bindings_fallback_concept_id : (fallback_concept_id) BTREE
+  IX ix_dynamic_enum_bindings_validation_mode_concept_id : (validation_mode_concept_id) BTREE
+  IX ix_dynamic_enum_bindings_status_concept_id : (status_concept_id) BTREE
+  IX ix_dynamic_enum_bindings_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_dynamic_enum_bindings_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+dynamic_enum_bindings .. idxset_dynamic_enum_bindings : indexed by
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+@enduml

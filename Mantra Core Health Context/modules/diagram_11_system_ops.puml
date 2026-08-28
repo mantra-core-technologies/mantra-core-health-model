@@ -1,0 +1,997 @@
+@startuml SALUD_Module_11_system_ops
+title Module 11 — Data Governance and System Operations\n(schema: system_ops)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_11_system_ops.puml
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_11_system_ops
+  BUSINESS PURPOSE
+  A control tower over the data: a registry of every table with its
+  sensitivity, retention rules and allowed write operations, plus
+  anonymization rules and a generic draft store. Turns governance from
+  policy into enforced practice.
+end note
+
+entity data_classifications {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * name : varchar
+    rank : integer
+    is_pii : boolean
+    is_phi : boolean
+  * handling_rules_json : jsonb
+    state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity data_domains {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * name : varchar
+    description : text
+    owner_team : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity entity_registry {
+  * id : uuid <<PK>>
+  --
+  * schema_name : varchar
+  * table_name : varchar
+    domain_id : uuid <<FK>>
+    classification_id : uuid <<FK>>
+  * is_append_only : boolean
+  * is_soft_delete : boolean
+  * has_history : boolean
+    history_table : varchar
+    retention_policy_id : uuid <<FK>>
+  ' + v4.0.4
+    partition_spec_id : uuid <<FK>>
+    write_policy_id : uuid <<FK>>
+    owner_team : varchar
+    contains_pii : boolean
+    contains_phi : boolean
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity field_registry {
+  * id : uuid <<PK>>
+  --
+  * entity_registry_id : uuid <<FK>>
+  * column_name : varchar
+    classification_id : uuid <<FK>>
+    is_pii : boolean
+    is_phi : boolean
+    masking_strategy_concept_id : uuid <<FK>>
+    anonymization_rule_id : uuid <<FK>>
+    notes : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity write_policies {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * name : varchar
+  * insert_mode_concept_id : uuid <<FK>>
+  * update_mode_concept_id : uuid <<FK>>
+  * delete_mode_concept_id : uuid <<FK>>
+    requires_reason : boolean
+    requires_approval : boolean
+    max_batch_size : integer
+    dual_control : boolean
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity retention_policies {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * name : varchar
+    retention_period_days : integer
+    legal_basis_concept_id : uuid <<FK>>
+    disposition_concept_id : uuid <<FK>>
+    jurisdiction_concept_id : uuid <<FK>>
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity anonymization_rules {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * technique_concept_id : uuid <<FK>>
+    parameters_json : jsonb
+    description : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity retention_executions <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * retention_policy_id : uuid <<FK>>
+    entity_registry_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    started_at : timestamptz
+    finished_at : timestamptz
+    total_scanned : bigint
+    total_deleted : bigint
+    total_anonymized : bigint
+    total_archived : bigint
+    error_text : text
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity governance_change_log <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * target_type : varchar
+  * target_id : uuid
+  * action_concept_id : uuid <<FK>>
+  * changed_by_user_id : uuid <<FK>>
+    previous_snapshot_json : jsonb
+    new_snapshot_json : jsonb
+    reason : text
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity record_revisions <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * schema_name : varchar
+  * table_name : varchar
+  * record_id : uuid
+  * row_version : integer
+  * operation_concept_id : uuid <<FK>>
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity draft_records {
+  * id : uuid <<PK>>
+  --
+  * schema_name : varchar
+  * table_name : varchar
+    target_record_id : uuid
+  * owner_user_id : uuid <<FK>>
+    tenant_id : uuid <<FK>>
+    draft_label : varchar
+  * payload_json : jsonb
+  * status_concept_id : uuid <<FK>>
+    schema_version : integer
+    published_record_id : uuid
+    expires_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+data_domains ||--o{ entity_registry
+data_classifications ||--o{ entity_registry
+retention_policies ||--o{ entity_registry
+write_policies ||--o{ entity_registry
+entity_registry ||--o{ field_registry
+data_classifications ||--o{ field_registry
+anonymization_rules ||--o{ field_registry
+retention_policies ||--o{ retention_executions
+entity_registry |o--o{ retention_executions
+
+note as REC_POLY_SYS_diagram_11_system_ops
+  REC 3.1 — POLYMORPHIC GOVERNANCE LOG
+governance_change_log/(record_revisions) use (target_type/schema+table,
+target_id/record_id). Keep polymorphic (audit spans all tables) but
+validate schema_name/table_name against entity_registry.
+end note
+
+note as REC_HISTORY_SYNC_diagram_11_system_ops
+  REC 3.6 — HISTORY COVERAGE MUST STAY IN SYNC
+entity_registry.has_history / history_table must match 1:1 the *_history
+tables defined in schema audit. Add a CI check that fails if a table with
+has_history=true has no corresponding audit.*_history (this gap occurred
+for the module 18 clinical_ext tables).
+end note
+
+note as DATA_GOV_REF_diagram_11_system_ops
+  INTERNATIONAL DATA GOVERNANCE
+  Regional residency, legal hold, cross-border transfer, backup policy and
+  restore-test evidence are specified in diagram_11b_data_governance.
+end note
+
+' ------------------------------------------------------------------------------
+' SOURCE CONSOLIDATED: diagram_11b_data_governance.puml
+' ------------------------------------------------------------------------------
+entity data_residency_policies {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * jurisdiction_concept_id : uuid <<FK>>
+  * data_classification_id : uuid <<FK>>
+  * allowed_storage_region_value_set_id : uuid <<FK>>
+    allowed_processing_region_value_set_id : uuid <<FK>>
+    cross_border_transfer_basis_concept_id : uuid <<FK>>
+    transfer_impact_assessment_required : boolean
+    encryption_key_region_locked : boolean
+  * status_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity tenant_residency_bindings {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * residency_policy_id : uuid <<FK>>
+  * primary_region_concept_id : uuid <<FK>>
+    disaster_recovery_region_concept_id : uuid <<FK>>
+    effective_from : timestamptz
+    effective_to : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity legal_holds {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * target_type_concept_id : uuid <<FK>>
+  * target_id : uuid
+  * reason_concept_id : uuid <<FK>>
+    authority_reference : varchar
+    starts_at : timestamptz
+    ends_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity backup_policies {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * resource_scope_concept_id : uuid <<FK>>
+  * backup_type_concept_id : uuid <<FK>>
+    rpo_seconds : integer
+    rto_seconds : integer
+    retention_days : integer
+    immutable_copy_required : boolean
+    encryption_required : boolean
+    restore_test_frequency_days : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity restore_test_runs <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * backup_policy_id : uuid <<FK>>
+    backup_reference : varchar
+  * outcome_concept_id : uuid <<FK>>
+    measured_rpo_seconds : integer
+    measured_rto_seconds : integer
+    integrity_check_passed : boolean
+    evidence_file_id : uuid <<FK>>
+  * started_at : timestamptz
+    finished_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+entity cross_border_transfer_events <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * data_category_concept_id : uuid <<FK>>
+  * source_region_concept_id : uuid <<FK>>
+  * destination_region_concept_id : uuid <<FK>>
+  * transfer_basis_concept_id : uuid <<FK>>
+    recipient_tenant_id : uuid <<FK>>
+    transfer_reference : varchar
+    approved_by_user_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+data_residency_policies ||--o{ tenant_residency_bindings
+backup_policies ||--o{ restore_test_runs
+
+note as RULE_diagram_11b_data_governance
+  GOVERNANCE RULE
+  RPO/RTO are business-approved policy values, not hard-coded defaults.
+  Backup completion is insufficient evidence: restore tests and measured
+  recovery objectives are retained as operational records.
+end note
+
+entity operational_frameworks {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * name : varchar
+  * provider_concept_id : uuid <<FK>>
+  * version : varchar
+    source_url : varchar
+    published_at : timestamptz
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity operational_framework_controls {
+  * id : uuid <<PK>>
+  --
+  * operational_framework_id : uuid <<FK>>
+    parent_control_id : uuid <<FK>>
+  * control_code : varchar
+  * title : varchar
+    pillar_concept_id : uuid <<FK>>
+    objective_text : text
+    evidence_requirements_json : jsonb
+    assessment_guidance_json : jsonb
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity workload_assessments {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * operational_framework_id : uuid <<FK>>
+  * workload_code : varchar
+  * workload_name : varchar
+    service_component_id : uuid <<FK>>
+  * assessment_type_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    assessment_period_start : date
+    assessment_period_end : date
+    facilitator_user_id : uuid <<FK>>
+    approved_by_user_id : uuid <<FK>>
+    approved_at : timestamptz
+    summary_json : jsonb
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity assessment_control_results {
+  * id : uuid <<PK>>
+  --
+  * workload_assessment_id : uuid <<FK>>
+  * operational_framework_control_id : uuid <<FK>>
+  * result_concept_id : uuid <<FK>>
+    maturity_level_concept_id : uuid <<FK>>
+    evidence_summary : text
+    evidence_links_json : jsonb
+    assessor_user_id : uuid <<FK>>
+  * assessed_at : timestamptz
+    risk_score : numeric(8,4)
+    accepted_risk_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity assessment_findings {
+  * id : uuid <<PK>>
+  --
+  * workload_assessment_id : uuid <<FK>>
+    assessment_control_result_id : uuid <<FK>>
+  * finding_code : varchar
+  * title : varchar
+    description : text
+  * severity_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    owner_team : varchar
+    due_at : timestamptz
+    risk_acceptance_expires_at : timestamptz
+    closed_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity remediation_plans {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * workload_assessment_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+  * status_concept_id : uuid <<FK>>
+    owner_user_id : uuid <<FK>>
+    target_completion_at : timestamptz
+    approved_by_user_id : uuid <<FK>>
+    approved_at : timestamptz
+    notes : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity remediation_actions {
+  * id : uuid <<PK>>
+  --
+  * remediation_plan_id : uuid <<FK>>
+  * assessment_finding_id : uuid <<FK>>
+  * action_code : varchar
+  * description : text
+  * status_concept_id : uuid <<FK>>
+    assigned_user_id : uuid <<FK>>
+    assigned_team : varchar
+    due_at : timestamptz
+    completed_at : timestamptz
+    verification_user_id : uuid <<FK>>
+    verification_at : timestamptz
+    verification_evidence_json : jsonb
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+operational_frameworks ||--o{ operational_framework_controls
+operational_framework_controls ||--o{ operational_framework_controls : parent
+operational_frameworks ||--o{ workload_assessments
+workload_assessments ||--o{ assessment_control_results
+operational_framework_controls ||--o{ assessment_control_results
+workload_assessments ||--o{ assessment_findings
+assessment_control_results ||--o{ assessment_findings
+workload_assessments ||--o{ remediation_plans
+remediation_plans ||--o{ remediation_actions
+assessment_findings ||--o{ remediation_actions
+
+note right of workload_assessments
+  Governance stores framework version, evidence, findings and remediation.
+  Runtime incidents, changes, SLOs and runbooks remain owned by Module 46.
+end note
+
+package "Physical Indexes" {
+entity "INDEXES · data_classifications" as idxset_data_classifications <<INDEX_SET>> {
+  PK pk_data_classifications : (id) UNIQUE BTREE
+  UK uq_data_classifications_code : (code) UNIQUE BTREE
+  IX ix_data_classifications_state_concept_id : (state_concept_id) BTREE
+  IX ix_data_classifications_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_data_classifications_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+data_classifications .. idxset_data_classifications : indexed by
+
+entity "INDEXES · data_domains" as idxset_data_domains <<INDEX_SET>> {
+  PK pk_data_domains : (id) UNIQUE BTREE
+  UK uq_data_domains_code : (code) UNIQUE BTREE
+  IX ix_data_domains_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_data_domains_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+data_domains .. idxset_data_domains : indexed by
+
+entity "INDEXES · entity_registry" as idxset_entity_registry <<INDEX_SET>> {
+  PK pk_entity_registry : (id) UNIQUE BTREE
+  IX ix_entity_registry_domain_id : (domain_id) BTREE
+  IX ix_entity_registry_classification_id : (classification_id) BTREE
+  IX ix_entity_registry_retention_policy_id : (retention_policy_id) BTREE
+  IX ix_entity_registry_write_policy_id : (write_policy_id) BTREE
+  IX ix_entity_registry_state_concept_id : (state_concept_id) BTREE
+  IX ix_entity_registry_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_entity_registry_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+entity_registry .. idxset_entity_registry : indexed by
+
+entity "INDEXES · field_registry" as idxset_field_registry <<INDEX_SET>> {
+  PK pk_field_registry : (id) UNIQUE BTREE
+  IX ix_field_registry_entity_registry_id : (entity_registry_id) BTREE
+  IX ix_field_registry_classification_id : (classification_id) BTREE
+  IX ix_field_registry_masking_strategy_concept_id : (masking_strategy_concept_id) BTREE
+  IX ix_field_registry_anonymization_rule_id : (anonymization_rule_id) BTREE
+  IX ix_field_registry_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_field_registry_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+field_registry .. idxset_field_registry : indexed by
+
+entity "INDEXES · write_policies" as idxset_write_policies <<INDEX_SET>> {
+  PK pk_write_policies : (id) UNIQUE BTREE
+  UK uq_write_policies_code : (code) UNIQUE BTREE
+  IX ix_write_policies_insert_mode_concept_id : (insert_mode_concept_id) BTREE
+  IX ix_write_policies_update_mode_concept_id : (update_mode_concept_id) BTREE
+  IX ix_write_policies_delete_mode_concept_id : (delete_mode_concept_id) BTREE
+  IX ix_write_policies_state_concept_id : (state_concept_id) BTREE
+  IX ix_write_policies_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_write_policies_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+write_policies .. idxset_write_policies : indexed by
+
+entity "INDEXES · retention_policies" as idxset_retention_policies <<INDEX_SET>> {
+  PK pk_retention_policies : (id) UNIQUE BTREE
+  UK uq_retention_policies_code : (code) UNIQUE BTREE
+  IX ix_retention_policies_legal_basis_concept_id : (legal_basis_concept_id) BTREE
+  IX ix_retention_policies_disposition_concept_id : (disposition_concept_id) BTREE
+  IX ix_retention_policies_jurisdiction_concept_id : (jurisdiction_concept_id) BTREE
+  IX ix_retention_policies_state_concept_id : (state_concept_id) BTREE
+  IX ix_retention_policies_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_retention_policies_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+retention_policies .. idxset_retention_policies : indexed by
+
+entity "INDEXES · anonymization_rules" as idxset_anonymization_rules <<INDEX_SET>> {
+  PK pk_anonymization_rules : (id) UNIQUE BTREE
+  UK uq_anonymization_rules_code : (code) UNIQUE BTREE
+  IX ix_anonymization_rules_technique_concept_id : (technique_concept_id) BTREE
+  IX ix_anonymization_rules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_anonymization_rules_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+anonymization_rules .. idxset_anonymization_rules : indexed by
+
+entity "INDEXES · retention_executions" as idxset_retention_executions <<INDEX_SET>> {
+  PK pk_retention_executions : (id) UNIQUE BTREE
+  IX ix_retention_executions_retention_policy_id : (retention_policy_id) BTREE
+  IX ix_retention_executions_entity_registry_id : (entity_registry_id) BTREE
+  IX ix_retention_executions_status_concept_id : (status_concept_id) BTREE
+  IX ix_retention_executions_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_retention_executions_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+retention_executions .. idxset_retention_executions : indexed by
+
+entity "INDEXES · governance_change_log" as idxset_governance_change_log <<INDEX_SET>> {
+  PK pk_governance_change_log : (id) UNIQUE BTREE
+  IX ix_governance_change_log_action_concept_id : (action_concept_id) BTREE
+  IX ix_governance_change_log_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_governance_change_log_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_governance_change_log_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+governance_change_log .. idxset_governance_change_log : indexed by
+
+entity "INDEXES · record_revisions" as idxset_record_revisions <<INDEX_SET>> {
+  PK pk_record_revisions : (id) UNIQUE BTREE
+  IX ix_record_revisions_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_record_revisions_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_record_revisions_change_reason_concept_id : (change_reason_concept_id) BTREE
+  IX ix_record_revisions_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_record_revisions_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+record_revisions .. idxset_record_revisions : indexed by
+
+entity "INDEXES · draft_records" as idxset_draft_records <<INDEX_SET>> {
+  PK pk_draft_records : (id) UNIQUE BTREE
+  IX ix_draft_records_owner_user_id : (owner_user_id) BTREE
+  IX ix_draft_records_tenant_id : (tenant_id) BTREE
+  IX ix_draft_records_status_concept_id : (status_concept_id) BTREE
+  IX ix_draft_records_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_draft_records_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_draft_records_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+draft_records .. idxset_draft_records : indexed by
+
+entity "INDEXES · data_residency_policies" as idxset_data_residency_policies <<INDEX_SET>> {
+  PK pk_data_residency_policies : (id) UNIQUE BTREE
+  UK uq_data_residency_policies_code : (code) UNIQUE BTREE
+  IX ix_data_residency_policies_jurisdiction_concept_id : (jurisdiction_concept_id) BTREE
+  IX ix_data_residency_policies_data_classification_id : (data_classification_id) BTREE
+  IX ix_data_residency_policies_allowed_storage_region_value_set_id : (allowed_storage_region_value_set_id) BTREE
+  IX ix_data_residency_policies_allowed_processing_region_v_e59a2240 : (allowed_processing_region_value_set_id) BTREE
+  IX ix_data_residency_policies_cross_border_transfer_basis_1b4c4437 : (cross_border_transfer_basis_concept_id) BTREE
+  IX ix_data_residency_policies_status_concept_id : (status_concept_id) BTREE
+  IX ix_data_residency_policies_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_data_residency_policies_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+data_residency_policies .. idxset_data_residency_policies : indexed by
+
+entity "INDEXES · tenant_residency_bindings" as idxset_tenant_residency_bindings <<INDEX_SET>> {
+  PK pk_tenant_residency_bindings : (id) UNIQUE BTREE
+  IX ix_tenant_residency_bindings_tenant_id : (tenant_id) BTREE
+  IX ix_tenant_residency_bindings_residency_policy_id : (residency_policy_id) BTREE
+  IX ix_tenant_residency_bindings_primary_region_concept_id : (primary_region_concept_id) BTREE
+  IX ix_tenant_residency_bindings_disaster_recovery_region__5ff5dc29 : (disaster_recovery_region_concept_id) BTREE
+  IX ix_tenant_residency_bindings_status_concept_id : (status_concept_id) BTREE
+  IX ix_tenant_residency_bindings_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_tenant_residency_bindings_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_tenant_residency_bindings_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+tenant_residency_bindings .. idxset_tenant_residency_bindings : indexed by
+
+entity "INDEXES · legal_holds" as idxset_legal_holds <<INDEX_SET>> {
+  PK pk_legal_holds : (id) UNIQUE BTREE
+  IX ix_legal_holds_tenant_id : (tenant_id) BTREE
+  IX ix_legal_holds_target_type_concept_id : (target_type_concept_id) BTREE
+  IX ix_legal_holds_reason_concept_id : (reason_concept_id) BTREE
+  IX ix_legal_holds_status_concept_id : (status_concept_id) BTREE
+  IX ix_legal_holds_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_legal_holds_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_legal_holds_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+legal_holds .. idxset_legal_holds : indexed by
+
+entity "INDEXES · backup_policies" as idxset_backup_policies <<INDEX_SET>> {
+  PK pk_backup_policies : (id) UNIQUE BTREE
+  IX ix_backup_policies_tenant_id : (tenant_id) BTREE
+  IX ix_backup_policies_resource_scope_concept_id : (resource_scope_concept_id) BTREE
+  IX ix_backup_policies_backup_type_concept_id : (backup_type_concept_id) BTREE
+  IX ix_backup_policies_status_concept_id : (status_concept_id) BTREE
+  IX ix_backup_policies_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_backup_policies_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_backup_policies_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+}
+
+backup_policies .. idxset_backup_policies : indexed by
+
+entity "INDEXES · restore_test_runs" as idxset_restore_test_runs <<INDEX_SET>> {
+  PK pk_restore_test_runs : (id) UNIQUE BTREE
+  IX ix_restore_test_runs_backup_policy_id : (backup_policy_id) BTREE
+  IX ix_restore_test_runs_outcome_concept_id : (outcome_concept_id) BTREE
+  IX ix_restore_test_runs_evidence_file_id : (evidence_file_id) BTREE
+  IX ix_restore_test_runs_recorded_by_user_id : (recorded_by_user_id) BTREE
+  BRIN brin_restore_test_runs_started_at : (started_at) BRIN pages_per_range=128
+}
+
+restore_test_runs .. idxset_restore_test_runs : indexed by
+
+entity "INDEXES · cross_border_transfer_events" as idxset_cross_border_transfer_events <<INDEX_SET>> {
+  PK pk_cross_border_transfer_events : (id) UNIQUE BTREE
+  IX ix_cross_border_transfer_events_tenant_id : (tenant_id) BTREE
+  IX ix_cross_border_transfer_events_data_category_concept_id : (data_category_concept_id) BTREE
+  IX ix_cross_border_transfer_events_source_region_concept_id : (source_region_concept_id) BTREE
+  IX ix_cross_border_transfer_events_destination_region_concept_id : (destination_region_concept_id) BTREE
+  IX ix_cross_border_transfer_events_transfer_basis_concept_id : (transfer_basis_concept_id) BTREE
+  IX ix_cross_border_transfer_events_recipient_tenant_id : (recipient_tenant_id) BTREE
+  IX ix_cross_border_transfer_events_approved_by_user_id : (approved_by_user_id) BTREE
+  IX ix_cross_border_transfer_events_tenant_id_recorded_at : (tenant_id, recorded_at DESC) BTREE
+  BRIN brin_cross_border_transfer_events_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+cross_border_transfer_events .. idxset_cross_border_transfer_events : indexed by
+
+entity "INDEXES · operational_frameworks" as idxset_operational_frameworks <<INDEX_SET>> {
+  PK pk_operational_frameworks : (id) UNIQUE BTREE
+  IX ix_operational_frameworks_provider_concept_id : (provider_concept_id) BTREE
+  IX ix_operational_frameworks_state_concept_id : (state_concept_id) BTREE
+  IX ix_operational_frameworks_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_operational_frameworks_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_operational_frameworks_code_version : (code, version) UNIQUE BTREE
+}
+
+operational_frameworks .. idxset_operational_frameworks : indexed by
+
+entity "INDEXES · operational_framework_controls" as idxset_operational_framework_controls <<INDEX_SET>> {
+  PK pk_operational_framework_controls : (id) UNIQUE BTREE
+  IX ix_operational_framework_controls_operational_framework_id : (operational_framework_id) BTREE
+  IX ix_operational_framework_controls_parent_control_id : (parent_control_id) BTREE
+  IX ix_operational_framework_controls_pillar_concept_id : (pillar_concept_id) BTREE
+  IX ix_operational_framework_controls_state_concept_id : (state_concept_id) BTREE
+  IX ix_operational_framework_controls_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_operational_framework_controls_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_operational_framework_controls_framework_code : (operational_framework_id, control_code) UNIQUE BTREE
+}
+
+operational_framework_controls .. idxset_operational_framework_controls : indexed by
+
+entity "INDEXES · workload_assessments" as idxset_workload_assessments <<INDEX_SET>> {
+  PK pk_workload_assessments : (id) UNIQUE BTREE
+  IX ix_workload_assessments_tenant_id : (tenant_id) BTREE
+  IX ix_workload_assessments_operational_framework_id : (operational_framework_id) BTREE
+  IX ix_workload_assessments_service_component_id : (service_component_id) BTREE
+  IX ix_workload_assessments_assessment_type_concept_id : (assessment_type_concept_id) BTREE
+  IX ix_workload_assessments_status_concept_id : (status_concept_id) BTREE
+  IX ix_workload_assessments_facilitator_user_id : (facilitator_user_id) BTREE
+  IX ix_workload_assessments_approved_by_user_id : (approved_by_user_id) BTREE
+  IX ix_workload_assessments_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_workload_assessments_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_workload_assessments_tenant_status : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  IX ix_workload_assessments_tenant_workload : (tenant_id, workload_code, created_at DESC) BTREE
+}
+
+workload_assessments .. idxset_workload_assessments : indexed by
+
+entity "INDEXES · assessment_control_results" as idxset_assessment_control_results <<INDEX_SET>> {
+  PK pk_assessment_control_results : (id) UNIQUE BTREE
+  IX ix_assessment_control_results_workload_assessment_id : (workload_assessment_id) BTREE
+  IX ix_assessment_control_results_operational_framework_control_id : (operational_framework_control_id) BTREE
+  IX ix_assessment_control_results_result_concept_id : (result_concept_id) BTREE
+  IX ix_assessment_control_results_maturity_level_concept_id : (maturity_level_concept_id) BTREE
+  IX ix_assessment_control_results_assessor_user_id : (assessor_user_id) BTREE
+  IX ix_assessment_control_results_accepted_risk_id : (accepted_risk_id) BTREE
+  IX ix_assessment_control_results_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_assessment_control_results_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_assessment_control_results_assessment_control : (workload_assessment_id, operational_framework_control_id) UNIQUE BTREE
+}
+
+assessment_control_results .. idxset_assessment_control_results : indexed by
+
+entity "INDEXES · assessment_findings" as idxset_assessment_findings <<INDEX_SET>> {
+  PK pk_assessment_findings : (id) UNIQUE BTREE
+  IX ix_assessment_findings_workload_assessment_id : (workload_assessment_id) BTREE
+  IX ix_assessment_findings_assessment_control_result_id : (assessment_control_result_id) BTREE
+  IX ix_assessment_findings_severity_concept_id : (severity_concept_id) BTREE
+  IX ix_assessment_findings_status_concept_id : (status_concept_id) BTREE
+  IX ix_assessment_findings_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_assessment_findings_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_assessment_findings_assessment_code : (workload_assessment_id, finding_code) UNIQUE BTREE
+}
+
+assessment_findings .. idxset_assessment_findings : indexed by
+
+entity "INDEXES · remediation_plans" as idxset_remediation_plans <<INDEX_SET>> {
+  PK pk_remediation_plans : (id) UNIQUE BTREE
+  IX ix_remediation_plans_tenant_id : (tenant_id) BTREE
+  IX ix_remediation_plans_workload_assessment_id : (workload_assessment_id) BTREE
+  IX ix_remediation_plans_status_concept_id : (status_concept_id) BTREE
+  IX ix_remediation_plans_owner_user_id : (owner_user_id) BTREE
+  IX ix_remediation_plans_approved_by_user_id : (approved_by_user_id) BTREE
+  IX ix_remediation_plans_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_remediation_plans_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_remediation_plans_tenant_status : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  UK uk_remediation_plans_tenant_code : (tenant_id, code) UNIQUE BTREE
+}
+
+remediation_plans .. idxset_remediation_plans : indexed by
+
+entity "INDEXES · remediation_actions" as idxset_remediation_actions <<INDEX_SET>> {
+  PK pk_remediation_actions : (id) UNIQUE BTREE
+  IX ix_remediation_actions_remediation_plan_id : (remediation_plan_id) BTREE
+  IX ix_remediation_actions_assessment_finding_id : (assessment_finding_id) BTREE
+  IX ix_remediation_actions_status_concept_id : (status_concept_id) BTREE
+  IX ix_remediation_actions_assigned_user_id : (assigned_user_id) BTREE
+  IX ix_remediation_actions_verification_user_id : (verification_user_id) BTREE
+  IX ix_remediation_actions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_remediation_actions_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uk_remediation_actions_plan_code : (remediation_plan_id, action_code) UNIQUE BTREE
+}
+
+remediation_actions .. idxset_remediation_actions : indexed by
+
+}
+
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary and unique indexes enforce identity and business keys.
+  - Every foreign key used for joins/deletes has a supporting BTREE index.
+  - Tenant/patient/status/time composites support RLS and operational queues.
+  - GIN/GiST/BRIN are used only for justified search, range, geospatial or append-only access.
+  - Partial indexes reference stable seeded concept IDs/functions in migrations, never labels.
+  - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
+    cardinality and production-like load tests; unused/redundant indexes are rejected.
+end note
+
+
+' ===== v4.0.4 (endurecimiento datacenter) =====
+
+entity partition_specs {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * schema_name : varchar
+  * table_name : varchar
+    entity_registry_id : uuid <<FK>>
+  * partition_strategy_concept_id : uuid <<FK>>
+    partition_key : varchar
+    partition_interval_concept_id : uuid <<FK>>
+    subpartition_key : varchar
+    hot_tier_days : integer
+    warm_tier_days : integer
+    cold_tier_days : integer
+    archive_target_concept_id : uuid <<FK>>
+    retention_policy_id : uuid <<FK>>
+    is_time_series : boolean
+    enforces_tenant_isolation : boolean
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' ===== v4.0.4 (endurecimiento datacenter) ===== (index sets)
+
+entity "INDEXES · partition_specs" as idxset_partition_specs <<INDEX_SET>> {
+  PK pk_partition_specs : (id) UNIQUE BTREE
+  UK uk_partition_specs_code : (code) UNIQUE BTREE
+  UK uk_partition_specs_table : (schema_name, table_name) UNIQUE BTREE
+  IX ix_partition_specs_entity_registry_id : (entity_registry_id) BTREE
+  IX ix_partition_specs_strategy_concept_id : (partition_strategy_concept_id) BTREE
+  IX ix_partition_specs_retention_policy_id : (retention_policy_id) BTREE
+}
+partition_specs .. idxset_partition_specs : indexed by
+
+' ===== v4.0.4 (endurecimiento datacenter) ===== (relaciones)
+
+entity_registry ||--o{ partition_specs
+
+retention_policies ||--o{ partition_specs
+
+' ===== v4.0.6 (endurecimiento de seguridad) =====
+
+entity encryption_keys {
+  * id : uuid <<PK>>
+  --
+  * key_alias : varchar <<UK>>
+  * key_purpose_concept_id : uuid <<FK>>
+  * algorithm_concept_id : uuid <<FK>>
+    provider_concept_id : uuid <<FK>>
+    external_key_ref : varchar
+    key_version : integer
+    is_primary : boolean
+    rotation_period_days : integer
+    last_rotated_at : timestamptz
+    next_rotation_at : timestamptz
+    retention_policy_id : uuid <<FK>>
+  * state_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity key_rotation_events <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * encryption_key_id : uuid <<FK>>
+  * event_type_concept_id : uuid <<FK>>
+    from_version : integer
+    to_version : integer
+    reason : varchar
+    performed_by_user_id : uuid <<FK>>
+  * occurred_at : timestamptz
+  * recorded_at : timestamptz
+}
+
+entity security_incidents {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+    tenant_id : uuid <<FK>>
+  * severity_concept_id : uuid <<FK>>
+  * category_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    vector_concept_id : uuid <<FK>>
+    detected_at : timestamptz
+    contained_at : timestamptz
+    resolved_at : timestamptz
+    affected_records_estimate : bigint
+    is_reportable : boolean
+    assigned_to_user_id : uuid <<FK>>
+    data_classification_id : uuid <<FK>>
+    summary : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity breach_notifications {
+  * id : uuid <<PK>>
+  --
+  * security_incident_id : uuid <<FK>>
+  * authority_concept_id : uuid <<FK>>
+    jurisdiction_concept_id : uuid <<FK>>
+    regulation_concept_id : uuid <<FK>>
+    deadline_at : timestamptz
+    notified_at : timestamptz
+    affected_subjects : integer
+    notification_channel_concept_id : uuid <<FK>>
+    reference_number : varchar
+    subjects_notified : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' ===== v4.0.6 (endurecimiento de seguridad) ===== (index sets)
+
+entity "INDEXES · encryption_keys" as idxset_encryption_keys <<INDEX_SET>> {
+  PK pk_encryption_keys : (id) UNIQUE BTREE
+  UK uk_encryption_keys_key_alias : (key_alias) UNIQUE BTREE
+  IX ix_encryption_keys_purpose_concept_id : (key_purpose_concept_id) BTREE
+  IX ix_encryption_keys_next_rotation_at : (next_rotation_at) BTREE
+  IX ix_encryption_keys_state_concept_id : (state_concept_id) BTREE
+}
+encryption_keys .. idxset_encryption_keys : indexed by
+
+entity "INDEXES · key_rotation_events" as idxset_key_rotation_events <<INDEX_SET>> {
+  PK pk_key_rotation_events : (id) UNIQUE BTREE
+  IX ix_key_rotation_events_encryption_key_id : (encryption_key_id) BTREE
+  IX ix_key_rotation_events_occurred_at : (occurred_at) BTREE
+}
+key_rotation_events .. idxset_key_rotation_events : indexed by
+
+entity "INDEXES · security_incidents" as idxset_security_incidents <<INDEX_SET>> {
+  PK pk_security_incidents : (id) UNIQUE BTREE
+  UK uk_security_incidents_code : (code) UNIQUE BTREE
+  IX ix_security_incidents_severity_concept_id : (severity_concept_id) BTREE
+  IX ix_security_incidents_status_concept_id : (status_concept_id) BTREE
+  IX ix_security_incidents_detected_at : (detected_at) BTREE
+}
+security_incidents .. idxset_security_incidents : indexed by
+
+entity "INDEXES · breach_notifications" as idxset_breach_notifications <<INDEX_SET>> {
+  PK pk_breach_notifications : (id) UNIQUE BTREE
+  IX ix_breach_notifications_security_incident_id : (security_incident_id) BTREE
+  IX ix_breach_notifications_authority_concept_id : (authority_concept_id) BTREE
+  IX ix_breach_notifications_deadline_at : (deadline_at) BTREE
+  IX ix_breach_notifications_status_concept_id : (status_concept_id) BTREE
+}
+breach_notifications .. idxset_breach_notifications : indexed by
+
+' ===== v4.0.6 (endurecimiento de seguridad) ===== (relaciones)
+
+data_classifications ||--o{ security_incidents
+
+encryption_keys ||--o{ key_rotation_events
+
+retention_policies ||--o{ encryption_keys
+
+security_incidents ||--o{ breach_notifications
+
+@enduml
