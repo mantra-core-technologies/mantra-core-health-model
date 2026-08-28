@@ -46,6 +46,12 @@ Es decir, este repo se clona **junto a** los otros, no adentro de ninguno:
 git clone https://github.com/mantra-core-technologies/mantra-core-health-model.git
 ```
 
+> **En Windows, si el workspace está en una ruta profunda, el checkout falla a medias.** Los
+> nombres de acá son largos (`Mantra Core Health Context/docs/architecture/…`) y el límite
+> clásico es 260 caracteres: git clona bien pero deja el árbol incompleto, avisando «Clone
+> succeeded, but checkout failed». Se arregla de una vez con
+> `git config --global core.longpaths true` y después `git restore --source=HEAD :/`.
+
 La bóveda **debe** llamarse `Mantra Core Health Vault`: `gen_ddl.py` lee de ahí las notas de
 FK y `gen_seeds.py` las de value sets. Si tenés los repos en otra disposición, `SALUD_WORKSPACE`
 reapunta la raíz sin tocar código (y del lado de la API existe `SALUD_VAULT`).
