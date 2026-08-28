@@ -208,6 +208,37 @@ VS_DISPLAY = {
         "bioquimica_clinica": "Bioquímica Clínica",
         "obstetricia": "Obstetricia",
         "medicina_deportiva": "Medicina Deportiva",
+        # --- 18 del SNRM (Ministerio de Salud y Deportes, listado de residencia
+        #     médica 2022). Se declaran acá porque `titleize` no pone tildes y
+        #     «Anatomia Patologica» no es castellano.
+        "anatomia_patologica": "Anatomía Patológica",
+        "cirugia_bucomaxilofacial": "Cirugía Bucomaxilofacial",
+        "cirugia_pediatrica": "Cirugía Pediátrica",
+        "medicina_del_trabajo": "Medicina del Trabajo",
+        "medicina_fisica_rehabilitacion": "Medicina Física y Rehabilitación",
+        "salud_familiar_comunitaria_intercultural": "Salud Familiar Comunitaria Intercultural",
+        "cirugia_oncologica": "Cirugía Oncológica",
+        "coloproctologia": "Coloproctología",
+        "cardiologia_pediatrica": "Cardiología Pediátrica",
+        "infectologia_pediatrica": "Infectología Pediátrica",
+        "medicina_del_dolor": "Medicina del Dolor",
+        "medicina_materno_fetal": "Medicina Materno Fetal",
+        "neonatologia": "Neonatología",
+        "neurologia_pediatrica": "Neurología Pediátrica",
+        "oncologia_ginecologica": "Oncología Ginecológica",
+        "oncologia_pediatrica": "Oncología Pediátrica",
+        "ortopedia_pediatrica": "Ortopedia Pediátrica",
+        "terapia_intensiva_pediatrica": "Terapia Intensiva Pediátrica",
+        # --- 9 odontológicas, del listado del stakeholder del 2026-08-27.
+        "endodoncia": "Endodoncia",
+        "ortodoncia": "Ortodoncia",
+        "periodoncia": "Periodoncia",
+        "estetica_dental": "Estética Dental",
+        "rehabilitacion_oral": "Rehabilitación Oral",
+        "cirugia_oral_maxilofacial": "Cirugía Oral y Maxilofacial",
+        "odontopediatria": "Odontopediatría",
+        "implantologia_oral": "Implantología Oral",
+        "armonizacion_orofacial": "Armonización Orofacial",
     },
     # Los códigos son las siglas de expedición que imprime el carnet (SEGIP);
     # sin este mapa, titleize() produciría «Sc», que no le dice nada a nadie.

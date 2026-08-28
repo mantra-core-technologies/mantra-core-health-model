@@ -49,7 +49,7 @@
       "dynamic_enum_options",
       "dynamic_enum_bindings"
     ],
-    "record_count": 376,
+    "record_count": 745,
     "records": {
       "system_contexts": [
         {
@@ -11020,6 +11020,438 @@
           },
           "recorded_at": "2026-09-18T16:35:00Z",
           "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "4743559b-29c6-5668-869f-6ecf88835f43",
+          "dynamic_enum_version_id": "e62ede1f-b329-5055-9baa-b7a0b00d4ae9",
+          "concept_id": "4c1cc395-e302-5954-9335-33a0462e9213",
+          "code": "ANATOMIA_PATOLOGICA",
+          "display": "Anatomía Patológica",
+          "ordinal": 37,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_medical_specialty",
+            "patch": "v4.0.11"
+          },
+          "recorded_at": "2026-10-20T09:58:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "009555ea-672d-5439-a4ec-2a1fdccb7d4f",
+          "dynamic_enum_version_id": "e62ede1f-b329-5055-9baa-b7a0b00d4ae9",
+          "concept_id": "33aab7c6-6ec5-55dc-8b61-b434e99a12f8",
+          "code": "CIRUGIA_BUCOMAXILOFACIAL",
+          "display": "Cirugía Bucomaxilofacial",
+          "ordinal": 38,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_medical_specialty",
+            "patch": "v4.0.11"
+          },
+          "recorded_at": "2026-09-03T07:07:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "122f274a-ff44-5214-ab48-132d68157ad0",
+          "dynamic_enum_version_id": "e62ede1f-b329-5055-9baa-b7a0b00d4ae9",
+          "concept_id": "1fe378b8-51bc-5c5f-8a65-4c44d9ff84b2",
+          "code": "CIRUGIA_PEDIATRICA",
+          "display": "Cirugía Pediátrica",
+          "ordinal": 39,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_medical_specialty",
+            "patch": "v4.0.11"
+          },
+          "recorded_at": "2026-09-27T05:04:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "175f9881-b169-5f6b-8b7a-649653e0c0b3",
+          "dynamic_enum_version_id": "e62ede1f-b329-5055-9baa-b7a0b00d4ae9",
+          "concept_id": "34357c72-91db-53eb-b7ee-f9ce62cf78b1",
+          "code": "MEDICINA_DEL_TRABAJO",
+          "display": "Medicina del Trabajo",
+          "ordinal": 40,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_medical_specialty",
+            "patch": "v4.0.11"
+          },
+          "recorded_at": "2026-08-03T14:50:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "171632ae-3480-5bc3-bc59-e00bced040cc",
+          "dynamic_enum_version_id": "e62ede1f-b329-5055-9baa-b7a0b00d4ae9",
+          "concept_id": "b6dfc399-681d-5638-8799-3d5f7336a4c3",
+          "code": "MEDICINA_FISICA_REHABILITACION",
+          "display": "Medicina Física y Rehabilitación",
+          "ordinal": 41,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_medical_specialty",
+            "patch": "v4.0.11"
+          },
+          "recorded_at": "2026-07-28T10:50:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "fd769216-3d2f-58b9-adb7-f44ed7743d02",
+          "dynamic_enum_version_id": "e62ede1f-b329-5055-9baa-b7a0b00d4ae9",
+          "concept_id": "879cf045-0230-5a9b-b97e-8ae0e2bd10d2",
+          "code": "SALUD_FAMILIAR_COMUNITARIA_INTERCULTURAL",
+          "display": "Salud Familiar Comunitaria Intercultural",
+          "ordinal": 42,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_medical_specialty",
+            "patch": "v4.0.11"
+          },
+          "recorded_at": "2026-08-17T06:47:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "9b97579d-af3e-5e21-ba0e-f95dc438a95a",
+          "dynamic_enum_version_id": "e62ede1f-b329-5055-9baa-b7a0b00d4ae9",
+          "concept_id": "5de84e8c-7740-58a3-9c53-e96a389a88d0",
+          "code": "CIRUGIA_ONCOLOGICA",
+          "display": "Cirugía Oncológica",
+          "ordinal": 43,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_medical_specialty",
+            "patch": "v4.0.11"
+          },
+          "recorded_at": "2026-09-01T12:58:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "39ed2ca6-8731-5880-83d8-25019ad42d74",
+          "dynamic_enum_version_id": "e62ede1f-b329-5055-9baa-b7a0b00d4ae9",
+          "concept_id": "612ae01f-5c20-5614-be7f-10d286547850",
+          "code": "COLOPROCTOLOGIA",
+          "display": "Coloproctología",
+          "ordinal": 44,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_medical_specialty",
+            "patch": "v4.0.11"
+          },
+          "recorded_at": "2026-09-07T12:13:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "0b757366-282f-5253-bfaf-cf8094bbb192",
+          "dynamic_enum_version_id": "e62ede1f-b329-5055-9baa-b7a0b00d4ae9",
+          "concept_id": "d56d9d12-3400-5185-a5a0-935b5664672e",
+          "code": "CARDIOLOGIA_PEDIATRICA",
+          "display": "Cardiología Pediátrica",
+          "ordinal": 45,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_medical_specialty",
+            "patch": "v4.0.11"
+          },
+          "recorded_at": "2026-10-11T22:01:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "1050ac26-c409-53ef-baa7-0e0785754b8a",
+          "dynamic_enum_version_id": "e62ede1f-b329-5055-9baa-b7a0b00d4ae9",
+          "concept_id": "4213c3d6-634b-548c-8f05-aaffa954d2a4",
+          "code": "INFECTOLOGIA_PEDIATRICA",
+          "display": "Infectología Pediátrica",
+          "ordinal": 46,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_medical_specialty",
+            "patch": "v4.0.11"
+          },
+          "recorded_at": "2026-10-16T12:39:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "fd346067-c676-50a9-9511-1f4820bfbd43",
+          "dynamic_enum_version_id": "e62ede1f-b329-5055-9baa-b7a0b00d4ae9",
+          "concept_id": "c075009d-e19c-50e0-ad98-8572397e63fe",
+          "code": "MEDICINA_DEL_DOLOR",
+          "display": "Medicina del Dolor",
+          "ordinal": 47,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_medical_specialty",
+            "patch": "v4.0.11"
+          },
+          "recorded_at": "2026-08-13T19:14:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "fe052939-9ef0-5b21-87f3-4e5dc96d408f",
+          "dynamic_enum_version_id": "e62ede1f-b329-5055-9baa-b7a0b00d4ae9",
+          "concept_id": "c4e6e4bc-9e35-5786-aa98-56c23f59d1af",
+          "code": "MEDICINA_MATERNO_FETAL",
+          "display": "Medicina Materno Fetal",
+          "ordinal": 48,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_medical_specialty",
+            "patch": "v4.0.11"
+          },
+          "recorded_at": "2026-09-28T22:29:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "15bb3706-4e79-5888-b8e8-8e38e15c752e",
+          "dynamic_enum_version_id": "e62ede1f-b329-5055-9baa-b7a0b00d4ae9",
+          "concept_id": "9515a7c6-11bd-58d0-903f-9647f8bb9da8",
+          "code": "NEONATOLOGIA",
+          "display": "Neonatología",
+          "ordinal": 49,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_medical_specialty",
+            "patch": "v4.0.11"
+          },
+          "recorded_at": "2026-09-06T04:01:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "63db17ad-d619-5173-9816-bee45774fcf9",
+          "dynamic_enum_version_id": "e62ede1f-b329-5055-9baa-b7a0b00d4ae9",
+          "concept_id": "20d973bb-7e1c-5e6f-9979-dd92a5d2c827",
+          "code": "NEUROLOGIA_PEDIATRICA",
+          "display": "Neurología Pediátrica",
+          "ordinal": 50,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_medical_specialty",
+            "patch": "v4.0.11"
+          },
+          "recorded_at": "2026-09-02T16:04:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "44e9397a-2f19-5071-8777-8706045883fb",
+          "dynamic_enum_version_id": "e62ede1f-b329-5055-9baa-b7a0b00d4ae9",
+          "concept_id": "58a6fbb3-2be3-50dd-82c8-def8f0e570ef",
+          "code": "ONCOLOGIA_GINECOLOGICA",
+          "display": "Oncología Ginecológica",
+          "ordinal": 51,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_medical_specialty",
+            "patch": "v4.0.11"
+          },
+          "recorded_at": "2026-10-06T21:48:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "4ed2c156-ccb9-5af3-81b5-83a03c0fbf0f",
+          "dynamic_enum_version_id": "e62ede1f-b329-5055-9baa-b7a0b00d4ae9",
+          "concept_id": "0f40adba-a4c9-5455-acbf-e4da70722739",
+          "code": "ONCOLOGIA_PEDIATRICA",
+          "display": "Oncología Pediátrica",
+          "ordinal": 52,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_medical_specialty",
+            "patch": "v4.0.11"
+          },
+          "recorded_at": "2026-08-26T11:29:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "330e7cc9-5fa5-51ff-bc9c-b28c4df285cf",
+          "dynamic_enum_version_id": "e62ede1f-b329-5055-9baa-b7a0b00d4ae9",
+          "concept_id": "b9f54f85-7d5b-559d-99fa-863bba86d503",
+          "code": "ORTOPEDIA_PEDIATRICA",
+          "display": "Ortopedia Pediátrica",
+          "ordinal": 53,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_medical_specialty",
+            "patch": "v4.0.11"
+          },
+          "recorded_at": "2026-09-22T11:43:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "38cb9a3f-0971-5fff-a8b0-f32ecfd3ce4b",
+          "dynamic_enum_version_id": "e62ede1f-b329-5055-9baa-b7a0b00d4ae9",
+          "concept_id": "f008c91f-9e3f-5066-8fa8-7e0e9346ef4b",
+          "code": "TERAPIA_INTENSIVA_PEDIATRICA",
+          "display": "Terapia Intensiva Pediátrica",
+          "ordinal": 54,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_medical_specialty",
+            "patch": "v4.0.11"
+          },
+          "recorded_at": "2026-09-22T04:00:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "bb70ab20-e391-5d50-bd4e-70e523a88476",
+          "dynamic_enum_version_id": "e62ede1f-b329-5055-9baa-b7a0b00d4ae9",
+          "concept_id": "9433c18e-52aa-5466-85ed-32a5593fd054",
+          "code": "ENDODONCIA",
+          "display": "Endodoncia",
+          "ordinal": 55,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_medical_specialty",
+            "patch": "v4.0.11"
+          },
+          "recorded_at": "2026-08-09T08:29:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "6846d29e-0591-540e-bd4f-05c3462e6158",
+          "dynamic_enum_version_id": "e62ede1f-b329-5055-9baa-b7a0b00d4ae9",
+          "concept_id": "1ac3fd02-674e-55b8-a111-97da1b43b2cb",
+          "code": "ORTODONCIA",
+          "display": "Ortodoncia",
+          "ordinal": 56,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_medical_specialty",
+            "patch": "v4.0.11"
+          },
+          "recorded_at": "2026-10-12T16:00:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "6f458b3b-c22a-5e21-ad52-9b9a4090f517",
+          "dynamic_enum_version_id": "e62ede1f-b329-5055-9baa-b7a0b00d4ae9",
+          "concept_id": "f508888c-4363-521f-bbed-c2fb2172fcf9",
+          "code": "PERIODONCIA",
+          "display": "Periodoncia",
+          "ordinal": 57,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_medical_specialty",
+            "patch": "v4.0.11"
+          },
+          "recorded_at": "2026-09-10T00:18:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "962ae86d-5114-52b2-8d14-0b86343f1007",
+          "dynamic_enum_version_id": "e62ede1f-b329-5055-9baa-b7a0b00d4ae9",
+          "concept_id": "82f2d8db-1acf-5ffc-b788-87ed150be3be",
+          "code": "ESTETICA_DENTAL",
+          "display": "Estética Dental",
+          "ordinal": 58,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_medical_specialty",
+            "patch": "v4.0.11"
+          },
+          "recorded_at": "2026-09-15T03:14:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "3c1792bb-2b44-5b75-8fa4-14d6649d367d",
+          "dynamic_enum_version_id": "e62ede1f-b329-5055-9baa-b7a0b00d4ae9",
+          "concept_id": "b608c454-2bb6-5845-b099-607425e4b5cd",
+          "code": "REHABILITACION_ORAL",
+          "display": "Rehabilitación Oral",
+          "ordinal": 59,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_medical_specialty",
+            "patch": "v4.0.11"
+          },
+          "recorded_at": "2026-09-28T06:21:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "44253e59-133c-5658-95e4-a31e9e17ba68",
+          "dynamic_enum_version_id": "e62ede1f-b329-5055-9baa-b7a0b00d4ae9",
+          "concept_id": "1817292e-df05-5370-9c20-020d78f3d7c3",
+          "code": "CIRUGIA_ORAL_MAXILOFACIAL",
+          "display": "Cirugía Oral y Maxilofacial",
+          "ordinal": 60,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_medical_specialty",
+            "patch": "v4.0.11"
+          },
+          "recorded_at": "2026-09-25T06:00:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "7f4b46b5-9a7f-529c-9d03-2364026c5a53",
+          "dynamic_enum_version_id": "e62ede1f-b329-5055-9baa-b7a0b00d4ae9",
+          "concept_id": "d3230db6-b17e-5c8d-aaf8-a4f0e65d8a2e",
+          "code": "ODONTOPEDIATRIA",
+          "display": "Odontopediatría",
+          "ordinal": 61,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_medical_specialty",
+            "patch": "v4.0.11"
+          },
+          "recorded_at": "2026-08-04T00:18:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "ea0d2fa5-dfec-576d-ae81-316cd27b3538",
+          "dynamic_enum_version_id": "e62ede1f-b329-5055-9baa-b7a0b00d4ae9",
+          "concept_id": "b546451e-68e3-5fa8-97af-16a8924c34ce",
+          "code": "IMPLANTOLOGIA_ORAL",
+          "display": "Implantología Oral",
+          "ordinal": 62,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_medical_specialty",
+            "patch": "v4.0.11"
+          },
+          "recorded_at": "2026-08-11T15:34:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "00739d87-52fa-549f-921b-90ce94e118ee",
+          "dynamic_enum_version_id": "e62ede1f-b329-5055-9baa-b7a0b00d4ae9",
+          "concept_id": "adad9d44-509a-5e1e-8338-13858fd5cc54",
+          "code": "ARMONIZACION_OROFACIAL",
+          "display": "Armonización Orofacial",
+          "ordinal": 63,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_medical_specialty",
+            "patch": "v4.0.11"
+          },
+          "recorded_at": "2026-09-05T14:27:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
         }
       ],
       "dynamic_enum_bindings": [
@@ -11989,7 +12421,7 @@
       }
     ],
     "summary": {
-      "record_count": 376,
+      "record_count": 745,
       "entity_count": 6,
       "populated_entity_count": 6,
       "scenario_count": null,
