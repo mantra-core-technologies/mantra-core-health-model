@@ -36,6 +36,16 @@ entity identifiers {
   ' unificó en el nombre que el código ya usaba, para no arrastrar el conflicto.
     issuer_administrative_area_concept_id : uuid <<FK>>
     assigner_tenant_id : uuid <<FK>>
+  ' + v4.2.2 — a nombre de quién sale el comprobante. El registro de procesos pide
+  ' para el paciente «Nombre o Razón social» Y «Número de NIT» (PACIENTE §1.15), y
+  ' hasta ahora sólo existía el número: la ficha mostraba el NIT y no de quién era.
+  ' Va ACÁ y no en `persons` porque es el titular DEL IDENTIFICADOR, no un dato de
+  ' la persona: alguien puede facturar a nombre de su empresa, y el día que cambie
+  ' de NIT la razón social cambia con él. La versión la da `valid_to`, que esta
+  ' tabla ya tiene.
+  ' Nullable a propósito: un CI no tiene razón social, y sólo se llena para los
+  ' identificadores de tipo fiscal.
+    holder_name : varchar
     valid_from : date
     valid_to : date
   * state_concept_id : uuid <<FK>>
