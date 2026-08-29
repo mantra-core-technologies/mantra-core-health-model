@@ -2,7 +2,7 @@
   "package": "SALUD_v4.0_module_seeds_enhanced",
   "seed_revision": "2.5.0-v4.1.4",
   "module_count": 64,
-  "boot_record_count": 5955,
+  "boot_record_count": 7428,
   "mock_record_count": 18943,
   "validation_status": "PASS",
   "mock_production_policy": "hard-fail",
@@ -38,10 +38,10 @@
       "number": 3,
       "code": "terminology",
       "file": "modules/03_terminology.seeds.json",
-      "boot_records": 2504,
+      "boot_records": 3608,
       "mock_records": 180,
-      "line_count": 55603,
-      "sha256": "c63e7ae50a916cd9f94f16a76f3e3dfe58fefaf452e162c300ac6476fede5794"
+      "line_count": 56764,
+      "sha256": "2b80e7281ffc8573f466fe9997ded60667871337bce0fe91c9d4bd6642b912bd"
     },
     {
       "number": 4,
@@ -416,10 +416,10 @@
       "number": 45,
       "code": "system_context",
       "file": "modules/45_system_context.seeds.json",
-      "boot_records": 376,
+      "boot_records": 745,
       "mock_records": 144,
-      "line_count": 14815,
-      "sha256": "5467f056117f9bb44d8b37e034850571fc25bd4485b5c4461db3c7eec850c5da"
+      "line_count": 15247,
+      "sha256": "64505cbb082710121511e48200c9861519b3bfab6d8d518259f2b059163eb127"
     },
     {
       "number": 46,
