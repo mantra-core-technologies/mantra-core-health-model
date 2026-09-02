@@ -61,12 +61,55 @@ compila, el ORM arranca, y el error aparece en la primera consulta que la toca.
 
 `salud-db/check_ddl_sources.py` falla con código 1 si encuentra:
 
-1. `mantra-core-health-api/database/SQL`, `/NoSQL`, `/Mantra Core Health Context`
-   o `/salud-db` — copias que ya volvieron una vez.
-2. Un `docker-compose.yml` que monte `./database/...` en un servicio de init: la
-   base se inicializaría desde la copia y no desde `SQL/`. Los montajes canónicos
-   son `../SQL` y `../NoSQL`.
-3. Cualquier `.sql` con `CREATE TABLE` fuera de `SQL/` y `NoSQL/`.
+1. `mantra-core-health-api/database/Mantra Core Health Context` o `/salud-db` —
+   copias del toolkit que ya volvieron una vez. Nadie las genera ni las verifica.
+2. **`database/SQL` o `database/NoSQL` desfasadas** respecto de `SQL/` y `NoSQL/`
+   — ver la excepción de abajo.
+3. Un `docker-compose.yml` que monte `./database/...` en un servicio de init: la
+   base de **desarrollo** se inicializaría desde la copia y no desde `SQL/`. Los
+   montajes canónicos son `../mantra-core-health-model/SQL` y `.../NoSQL`.
+   `docker-compose.coolify.yml` **sí** monta `./database/...`, y es correcto: es
+   el compose de despliegue, donde el repositorio del modelo no existe.
+4. Cualquier `.sql` con `CREATE TABLE` fuera de `SQL/` y `NoSQL/`. Los archivos
+   dentro de la copia de despliegue no se enumeran uno por uno: son el mismo DDL
+   legítimo, y su desfase se reporta en el punto 2, en un solo hallazgo.
+
+El barrido va sobre el **workspace entero**, porque lo que persigue vive fuera de
+este repositorio. Ignora `node_modules`, `.git`, `dist`, `coverage`, `graphify-out`
+y **`_New Skills`** — esta última son los paquetes de skills tal como llegaron, que
+no pertenecen a ningún repositorio y que nada aplica. Uno de ellos
+(`medical-terminology-fable-skill-complete`) trae migraciones de Prisma y de
+PostgreSQL, y **se rechazó su instalación precisamente por eso**: choca con
+ADR-0021 y con el servidor terminológico que ya existe. El guion bajo del nombre
+marca que quedó afuera. Su DDL es documentación de lo que **no** se hace acá.
+
+## La excepción: `database/SQL` y `database/NoSQL` como copia de despliegue
+
+Desde el **2026-09-02** esos dos árboles vuelven a existir, y esta vez a propósito.
+Coolify clona **un** repositorio, así que el contenedor de init no puede montar
+`../mantra-core-health-model/SQL`: sin una copia dentro del repo de la API, la base
+del servidor arranca sin una sola tabla. La copia la escribe
+`scripts/db/vendor-ddl.sh` desde el modelo y CI la comprueba con
+`yarn db:vendor:check`.
+
+**Una copia generada y verificada no es una segunda verdad: es un artefacto de
+build.** Lo que sí sería una segunda verdad es esa copia desfasada — que es
+exactamente el fallo silencioso que esta política persigue. Por eso el chequeo no
+la exime por existir, sino **por coincidir**: la compara contra `SQL/` y `NoSQL/` y
+solo falla cuando difieren de verdad. Un `CREATE TABLE` escrito a mano ahí dentro
+sigue apareciendo, porque hace que la copia deje de coincidir.
+
+La comparación **ignora el fin de línea**. En Windows el repositorio del modelo se
+descarga con CRLF y la copia se escribe con LF: comparar bytes daría ~300 archivos
+«distintos» que son el mismo texto. (`vendor-ddl.sh --check` usa `rsync`, que sí
+compara bytes, así que en Windows su salida es ruidosa por este motivo.)
+
+Cuando el chequeo reporte el desfase, la corrección es una sola línea, en
+`mantra-core-health-api/`:
+
+```bash
+yarn db:vendor
+```
 
 Corre como paso **0/4** de `rebuild_stack.py`, antes del `down -v`: reconstruir
 desde una fuente equivocada produce una base que parece correcta, y descubrirlo
