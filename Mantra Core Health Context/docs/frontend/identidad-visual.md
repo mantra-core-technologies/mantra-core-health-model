@@ -429,7 +429,13 @@ identificadores en inglés): las familias de rampa se traducen — `--c-azul-*`�
 `--c-menta-*`→`--c-mint-*` · `--c-ambar-*`→`--c-amber-*` · `--c-salvia-*`→`--c-sage-*` ·
 `--c-marfil-*`→`--c-ivory-*` (aqua y neutral no cambian). Los **valores** siguen siendo
 literales del HTML del diseñador, que sigue siendo la spec de componentes. Los 14 tokens en
-castellano del sistema anterior (`--fondo`, `--marca`…) fueron eliminados.
+castellano del **sistema anterior de `styles.css`** (`--fondo`, `--marca`…) fueron eliminados.
+
+> [!warning] Eso no incluye a `redsat.css`
+> `mantra-core-health/src/styles/redsat.css` es una hoja **separada** —el «marco REDSAT»,
+> declarado después de `styles.css` en `angular.json`— con su **propia** familia de tokens en
+> castellano (`--fondo-*`, `--sup-*`, `--nav-*`, `--tinta-*`…), viva y sin relación con la
+> frase de arriba. Detalle en **§9.1.3**.
 
 Lo que se conservó de nuestra implementación (mejor que la del HTML, que solo usa `data-theme`):
 
@@ -609,6 +615,64 @@ observación donde se expone cada pieza de `shared/components` a medida que exis
 > Nota operativa: `security.allowedHosts` de `angular.json` pasó de `[]` a `["localhost"]` —
 > con la lista vacía el server de `yarn serve:ssr:mantra-core-health` rechazaba el header
 > `host` y **toda** ruta caía a CSR. Al desplegar, agregar el dominio real.
+
+### 9.1.3 · El fondo reactivo — `redsat.css` (TAREA-08, 2026-09-02)
+
+No es parte del sistema de tokens de `styles.css`: vive en
+`mantra-core-health/src/styles/redsat.css`, el «marco REDSAT», con su propia familia de
+tokens en castellano (§9.1, advertencia de arriba). Lo mueve
+`src/app/core/redsat/redsat-runtime.service.ts` (método `fondoReactivo()`), instalado una
+sola vez por `app.ts` — por eso está en **todas las rutas**, no en una pantalla.
+
+**Los cuatro focos son tokens** (`--fondo-a` … `--fondo-d`, dos por capa: `body::before` cerca,
+`body::after` lejos, cada una con su propio `radial-gradient`), y sólo el bloque **claro**
+cambió — el oscuro sigue exactamente igual, a propósito (ver más abajo):
+
+| Token | Antes (v4.0–v4.2) | Ahora (v4.3) | Tono |
+|---|---|---|---|
+| `--fondo-a` | `rgba(159, 216, 208, .82)` | `rgba(159, 216, 208, .40)` | menta, capa cercana |
+| `--fondo-b` | `rgba(79, 179, 169, .48)` | `rgba(79, 179, 169, .24)` | aguamarina, capa cercana |
+| `--fondo-c` | `rgba(122, 191, 232, .62)` | `rgba(122, 191, 232, .30)` | celeste, capa lejana |
+| `--fondo-d` | `rgba(159, 216, 208, .58)` | `rgba(159, 216, 208, .26)` | menta, capa lejana |
+
+**El pedido tenía dos partes** («invertí el balance de colores» + «que el celeste aparezca al
+hacer hover») y se resolvieron con dos mecanismos distintos, no uno solo:
+
+1. **Bajar los cuatro alfas** (la tabla de arriba) hace que, aun con el fondo a su opacidad
+   plena, la mancha sea bastante más tenue que antes — el «balance invertido» de base.
+2. **`--fondo-presencia`**, una variable numérica (0–1) nueva, multiplica la opacidad de
+   `body::before`/`body::after` completos: `opacity: var(--fondo-presencia, .35)`. `.35` es el
+   valor de **respaldo** — lo que se ve antes de que el servicio corra (SSR, primer pintado) y
+   lo que queda tras **650 ms sin mover el mouse**—, y `fondoReactivo()` la sube a `1` en la
+   misma tanda de `requestAnimationFrame` que ya escribía `--raton-x`/`--raton-y`, con un único
+   `setTimeout` reprogramado en cada movimiento (nunca un `setInterval`) que la vuelve a bajar
+   al reposo. Así el celeste **aparece** con el puntero activo y **se retira** al quedarse
+   quieto, sin agregar ni un `requestAnimationFrame` de más por cuadro.
+
+> [!important] El interruptor de presencia es SOLO de modo claro
+> `:root[data-tema="oscuro"] body::before, … { opacity: 1; }` anula `--fondo-presencia` en
+> oscuro: el fondo nocturno **no** se apaga con el reposo — sigue viéndose exactamente como
+> siempre. El pedido de «invertir el balance» era del modo claro, y así se acotó.
+
+**Bajo `prefers-reduced-motion: reduce`**, `fondoReactivo()` nunca instala el oyente de
+`mousemove` (guard preexistente, sin cambios): `--fondo-presencia` no se define jamás, así
+que el fondo queda fijo en el `.35` de respaldo — legible, sin manchas a medio camino, y sin
+depender de un puntero que en ese contexto no importa. Mismo resultado a 390 px táctil: sin
+puntero fino, la variable tampoco se define, y el reposo es el estado terminado, no uno
+«apagado» esperando algo que no va a llegar.
+
+**Sin hex nuevo**: la inversión se hizo con los cuatro tokens que ya existían y un número
+(`--fondo-presencia`) — ningún color nuevo entró al sistema.
+
+Verificado con Playwright: `playwright/lane-08-reactive-background.spec.ts` capturas de `/` y
+`/auth` en 390×844 / 768×1024 / 1440×900, claro y oscuro, puntero en reposo; más el ciclo
+completo aparece/se-retira con `--fondo-presencia` en `1` y en `.35`, y el
+`prefers-reduced-motion` que nunca la toca. Las rutas con sesión (`/dashboard`,
+`/medical-records`, `/glossary`) quedaron **fuera** de esta corrida: este entorno no tiene una
+cuenta `PRACTITIONER` sembrada (`tools/redesa/` no existe) — pendiente, no maquillado.
+
+`src/app/core/redsat/redsat-runtime.service.spec.ts` ganó 3 casos (`describe('fondoReactivo')`):
+antes cubría todo **menos** este método.
 
 ## 9.2 · Flutter — `mantra_core_health_mobile/lib/theme/`
 
