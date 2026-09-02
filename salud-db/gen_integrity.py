@@ -128,7 +128,40 @@ def rule_line(sch, tbl, k, v):
         return (f"-- TODO EXCLUDE ({v}): "
                 f'ALTER TABLE "{sch}"."{tbl}" ADD CONSTRAINT "ex_{tbl}_..." '
                 f"EXCLUDE USING gist (... WITH =, tstzrange(...) WITH &&) [WHERE ...];")
+    if k == "EXCLUDE_SQL":
+        return exclude_concreto(sch, tbl, v)
     return f"--   {k}: {v}"
+
+
+def exclude_concreto(schema, table, decl):
+    """Un EXCLUDE con la expresión que el MODELO declara, no una inventada.
+
+    `EXCLUDE : <prosa>` sigue saliendo como scaffold TODO, porque el modelo la
+    declara en palabras y completarla sería adivinar columnas. `EXCLUDE_SQL` es
+    la otra mitad: el modelo ya trae la expresión exacta y acá sólo se la
+    envuelve. Temperatura-0 intacta — este generador no compone ningún predicado.
+
+    Formato de la declaración, separado por `|`:
+
+        <nombre> | <elementos gist> | <predicado>
+
+    El predicado es opcional: sin él sale un EXCLUDE total. Los `concept_id` van
+    como UUID literales y no como llamada a función, porque el predicado de un
+    EXCLUDE tiene que ser inmutable. Es la lección de
+    `gist_appointments_practitioner_time`, que quedó comentado justamente por
+    llamar a funciones que nunca se definieron.
+    """
+    partes = [p.strip() for p in decl.split("|")]
+    if len(partes) < 2:
+        return f"--   EXCLUDE_SQL mal declarado (faltan partes): {decl}"
+    nombre, elementos = partes[0], partes[1]
+    predicado = partes[2] if len(partes) > 2 and partes[2] else None
+    where = f" WHERE ({predicado})" if predicado else ""
+    t = f'"{schema}"."{table}"'
+    return (f"-- EXCLUDE concreto declarado por el modelo (EXCLUDE_SQL).\n"
+            f"ALTER TABLE {t} DROP CONSTRAINT IF EXISTS \"{nombre}\";\n"
+            f"ALTER TABLE {t} ADD CONSTRAINT \"{nombre}\"\n"
+            f"    EXCLUDE USING gist ({elementos}){where};\n")
 
 
 def entity_block(e):
