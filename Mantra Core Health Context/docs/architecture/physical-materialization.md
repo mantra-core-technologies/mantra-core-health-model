@@ -49,6 +49,47 @@ comentados como TODO. FK envueltas en `DO … EXCEPTION WHEN duplicate_object` (
 
 ## 3. Estado actual del build
 
+### TAREA-07 — índice de búsqueda por CI en `common.identifiers` (2026-09-02)
+
+`ChartReadService` necesita buscar pacientes por tipo de documento + valor (AC-07-3); el
+`<<INDEX_SET>>` de `identifiers` solo tenía columnas sueltas (`type_concept_id` sola, entre
+otras), ninguna sirve para `WHERE type_concept_id = $1 AND value = $2`. Promoción por el
+pipeline canónico: `.puml` (módulo 02, `idxset_identifiers`) → `gen_ddl.py 02` (diff de una
+línea en `SQL/02_common/04_indexes.sql`) → patch `2026-09-02_t07_identifiers_search_index.sql`
+→ nota de bóveda `E common.idxset_identifiers.md` → `yarn orm:catalog` (diff acotado a
+`common.idx.ts`, +1 tupla). No `UNIQUE`: el departamento emisor no participa de la unicidad y
+hay filas históricas superpuestas por `valid_from`/`valid_to`.
+
+**Aplicado contra el stack `mantra-redesa` (`localhost:5433`):**
+
+| Medida | Antes | Después |
+|---|---|---|
+| Tablas | 1 229 | **1 229** |
+| FKs (excluyendo `_timescaledb%`) | 6 730 | **6 730** |
+| Índices | 9 183 | **9 184** |
+| Índices de `common.identifiers` | 10 | **11** |
+
+`check_ddl_sources.py` y `gen_seeds.py --dry` en verde (verificado con el fix de
+`mantra-core-health-model#4`, aún no mergeado a `dev` cuando se ramificó este cambio — ver
+abajo); `yarn typecheck` en 0 en la API.
+
+**El `EXPLAIN` no dio lo que el criterio de aceptación esperaba, y se documenta tal cual en vez
+de maquillarlo.** Con datos de `seedsGenerales` (`--skip-prod --refresh`, 27 filas en
+`common.identifiers`, que ocupan **una sola página de 8 KB**), el planner elige `Seq Scan`
+— es la decisión correcta por costo: para una tabla de una página, cualquier índice es
+estrictamente más caro que leer la página entera. Se verificó que el índice es estructuralmente
+correcto forzándolo (`SET enable_seqscan = off`): `Index Scan using
+ix_identifiers_type_concept_id_value`, `Index Cond` sobre las dos columnas, plan válido. La
+demostración de `Index Scan` **natural** contra volumen real queda pendiente de un stack con más
+identificadores por persona que el paquete de seeds de desarrollo produce hoy — no es una
+regresión de este cambio, es el tamaño de la tabla en este entorno.
+
+**Deuda que este cambio destapó, sin resolver:** la copia de despliegue vendorizada
+(`mantra-core-health-api/database/SQL`) queda un patch atrás hasta que alguien corra
+`yarn db:vendor` después de que este PR se mergee — mecanismo esperado, no un defecto (ver
+`ddl-sources.md` §«La excepción»). Y `yarn orm:catalog` sigue rompiendo `surveys` al
+regenerar (B-10, preexistente): se revirtió a mano, como en cada promoción anterior.
+
 ### 3.0 · Jornada del 2026-08-15 — lo que cambió el estado documentado
 
 **La cadena de seeds estaba caída entera, y el arranque no lo decía.** Dos definiciones del
