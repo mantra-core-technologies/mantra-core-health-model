@@ -204,6 +204,7 @@ entity "INDEXES · identifiers" as idxset_identifiers <<INDEX_SET>> {
   IX ix_identifiers_owner_type_concept_id : (owner_type_concept_id) BTREE
   IX ix_identifiers_use_concept_id : (use_concept_id) BTREE
   IX ix_identifiers_type_concept_id : (type_concept_id) BTREE
+  IX ix_identifiers_type_concept_id_value : (type_concept_id, value) BTREE
   IX ix_identifiers_issuer_country_concept_id : (issuer_country_concept_id) BTREE
   IX ix_identifiers_issuer_administrative_area_concept_id : (issuer_administrative_area_concept_id) BTREE
   IX ix_identifiers_assigner_tenant_id : (assigner_tenant_id) BTREE
