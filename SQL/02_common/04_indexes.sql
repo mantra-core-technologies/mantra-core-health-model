@@ -8,6 +8,8 @@ CREATE INDEX IF NOT EXISTS "ix_identifiers_use_concept_id" ON "common"."identifi
 
 CREATE INDEX IF NOT EXISTS "ix_identifiers_type_concept_id" ON "common"."identifiers" ("type_concept_id");
 
+CREATE INDEX IF NOT EXISTS "ix_identifiers_type_concept_id_value" ON "common"."identifiers" ("type_concept_id", "value");
+
 CREATE INDEX IF NOT EXISTS "ix_identifiers_issuer_country_concept_id" ON "common"."identifiers" ("issuer_country_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_identifiers_issuer_administrative_area_concept_id" ON "common"."identifiers" ("issuer_administrative_area_concept_id");
