@@ -53,8 +53,30 @@ entity practitioner_delegate_assignments <<REFERENCE_ONLY>> {
   EXCLUDE : incompatible overlapping assignments
   CHECK : signature permission requires authorized role
 }
+' + v4.2.3 (H-1) — la regla madre, ahora fisica.
+' "El profesional no puede estar en dos lugares a la vez" se cumplia SOLO en el
+' servicio (assertRangoLibre + SELECT FOR UPDATE sobre el cupo). Eso dejaba dos
+' huecos: el camino que crea el cupo en la misma transaccion no tiene fila previa
+' que trabar, y cualquier escritura futura que no pase por ese servicio no ve la
+' regla. El defecto se observo: dos pacientes reservaron 14:00-14:30 y 14:15-14:45
+' con el MISMO medico en dos agendas distintas y las dos quedaron confirmadas.
+'
+' EXCLUDE_SQL declara la expresion CONCRETA para que gen_integrity no tenga que
+' inventarla (temperatura-0). Formato: nombre | elementos gist | predicado.
+' Los estados van como UUID literales y no como funcion: el predicado de un
+' EXCLUDE tiene que ser inmutable — es la misma razon por la que
+' ux_authentication_credentials_live_password_subject (v4.0.9) los lleva literales,
+' y es exactamente por lo que gist_appointments_practitioner_time quedo comentado:
+' su predicado llamaba a held_status()/confirmed_status(), que nunca se definieron.
+'
+' Los dos estados elegidos son los MISMOS que ya comprueba assertRangoLibre:
+' APPOINTMENT_BOOKED y APPOINTMENT_CHECKED_IN. No entra PENDING —dos pacientes
+' pueden pedir el mismo horario y el medico elige— ni FULFILLED ni CANCELLED. La
+' base pasa a rechazar exactamente lo que el servicio ya rechazaba, ni mas ni
+' menos: es una red, no una regla nueva.
 entity appointments <<REFERENCE_ONLY>> {
   EXCLUDE : practitioner/location time overlap
+  EXCLUDE_SQL : ex_appointments_practitioner_time | "practitioner_profile_id" WITH =, tstzrange("start_at", "end_at", '[)') WITH && | "practitioner_profile_id" IS NOT NULL AND "end_at" IS NOT NULL AND "status_concept_id" IN ('51530fd7-05b1-5c29-80c4-da740ede4d27', '37dded87-7a7a-5a24-86f6-0ef48cccb482')
   LOCK : reservation confirmation transaction
 }
 
