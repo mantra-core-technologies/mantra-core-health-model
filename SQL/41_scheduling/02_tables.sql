@@ -309,3 +309,19 @@ CREATE TABLE IF NOT EXISTS "scheduling"."calendar_absences" (
     "row_version" integer NOT NULL DEFAULT 1,
     CONSTRAINT "pk_calendar_absences" PRIMARY KEY ("id")
 );
+
+CREATE TABLE IF NOT EXISTS "scheduling"."appointment_payment_states" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "appointment_booking_id" uuid NOT NULL,
+    "status_concept_id" uuid NOT NULL,
+    "insurance_used" boolean NOT NULL,
+    "marked_by_user_id" uuid NOT NULL,
+    "marked_at" timestamptz NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_appointment_payment_states" PRIMARY KEY ("id")
+);

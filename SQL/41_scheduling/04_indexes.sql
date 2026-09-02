@@ -229,3 +229,11 @@ CREATE INDEX IF NOT EXISTS "ix_calendar_absences_range" ON "scheduling"."calenda
 CREATE INDEX IF NOT EXISTS "ix_calendar_absences_approval_status_concept_id" ON "scheduling"."calendar_absences" ("approval_status_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_calendar_absences_time_off_request_id" ON "scheduling"."calendar_absences" ("time_off_request_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_appointment_payment_states_booking" ON "scheduling"."appointment_payment_states" ("appointment_booking_id");
+
+CREATE INDEX IF NOT EXISTS "ix_appointment_payment_states_tenant_status" ON "scheduling"."appointment_payment_states" ("tenant_id", "status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_appointment_payment_states_status_concept_id" ON "scheduling"."appointment_payment_states" ("status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_appointment_payment_states_marked_by_user_id" ON "scheduling"."appointment_payment_states" ("marked_by_user_id");

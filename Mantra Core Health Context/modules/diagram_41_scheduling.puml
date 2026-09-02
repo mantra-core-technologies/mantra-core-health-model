@@ -613,4 +613,64 @@ availability_exceptions ||--o{ calendar_absences
 
 schedulable_resources ||--o{ calendar_absences
 
+' ===== v4.2.4 (TAREA-13 punto 5: el estado de pago de una cita) =====
+
+' El estado de pago vive en su PROPIA tabla y no como columna de
+' `appointment_bookings`, por decisión del propietario. Dos razones que se
+' sostienen solas:
+'
+'   1. Es un dato financiero. Meterlo en la tabla de agenda acopla la agenda
+'      con finanzas, que es justamente lo que el resto del modelo evita:
+'      `billing` cuelga de `clinical.encounters` y `payments` no referencia
+'      reservas.
+'   2. La regla que el propietario dio son DOS EJES, no uno. Una cita pendiente,
+'      aceptada o realizada puede estar en cualquiera de los tres estados de
+'      pago; una rechazada o cancelada no admite ninguno. «Sin fila» expresa esa
+'      ausencia mejor que un `NULL` en una columna que existe siempre.
+'
+' Es una fila POR RESERVA (de ahí el índice único), mutable, con quién y cuándo
+' la marcó. El rastro de los cambios no se guarda acá: cada marca agrega una
+' revisión a `audit.appointment_bookings_history`, que ya existe y que
+' `scheduling` ya escribe. Dos líneas de tiempo para la misma cita serían dos
+' verdades.
+entity appointment_payment_states {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * appointment_booking_id : uuid <<FK>>
+  ' pendiente de pago / parcialmente pagada / pagada. Estado cerrado, así que
+  ' es un concepto de terminología y nunca un enum ni un booleano.
+  * status_concept_id : uuid <<FK>>
+  ' La marca de seguro es SEPARADA del estado, por decisión del propietario:
+  ' una cita puede estar parcialmente pagada con seguro o sin él, y meter el
+  ' seguro dentro del estado daría seis valores para dos preguntas distintas.
+  ' Booleano y no concepto porque no es un estado cerrado: es un sí o un no.
+  * insurance_used : boolean
+  ' Quién y cuándo: es el «nada se pisa en silencio» de AC-13-10.
+  * marked_by_user_id : uuid <<FK>>
+  * marked_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' ===== v4.2.4 (TAREA-13 punto 5: el estado de pago de una cita) ===== (index sets)
+
+entity "INDEXES · appointment_payment_states" as idxset_appointment_payment_states <<INDEX_SET>> {
+  PK pk_appointment_payment_states : (id) UNIQUE BTREE
+  UX ux_appointment_payment_states_booking : (appointment_booking_id) UNIQUE BTREE
+  IX ix_appointment_payment_states_tenant_status : (tenant_id, status_concept_id) BTREE
+  IX ix_appointment_payment_states_status_concept_id : (status_concept_id) BTREE
+  IX ix_appointment_payment_states_marked_by_user_id : (marked_by_user_id) BTREE
+}
+appointment_payment_states .. idxset_appointment_payment_states : indexed by
+
+' ===== v4.2.4 (TAREA-13 punto 5: el estado de pago de una cita) ===== (relaciones)
+
+' Uno a lo sumo uno: el índice único sobre `appointment_booking_id` es lo que lo
+' hace cierto en la base, no esta flecha.
+appointment_bookings ||--o| appointment_payment_states
+
 @enduml

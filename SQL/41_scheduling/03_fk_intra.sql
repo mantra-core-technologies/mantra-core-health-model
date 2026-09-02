@@ -121,3 +121,9 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_calendar_absences_resource_id" FOREIGN KEY ("resource_id")
         REFERENCES "scheduling"."schedulable_resources" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "scheduling"."appointment_payment_states"
+        ADD CONSTRAINT "fk_appointment_payment_states_appointment_booking_id" FOREIGN KEY ("appointment_booking_id")
+        REFERENCES "scheduling"."appointment_bookings" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
