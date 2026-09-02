@@ -74,6 +74,15 @@ compila, el ORM arranca, y el error aparece en la primera consulta que la toca.
    dentro de la copia de despliegue no se enumeran uno por uno: son el mismo DDL
    legítimo, y su desfase se reporta en el punto 2, en un solo hallazgo.
 
+El barrido va sobre el **workspace entero**, porque lo que persigue vive fuera de
+este repositorio. Ignora `node_modules`, `.git`, `dist`, `coverage`, `graphify-out`
+y **`_New Skills`** — esta última son los paquetes de skills tal como llegaron, que
+no pertenecen a ningún repositorio y que nada aplica. Uno de ellos
+(`medical-terminology-fable-skill-complete`) trae migraciones de Prisma y de
+PostgreSQL, y **se rechazó su instalación precisamente por eso**: choca con
+ADR-0021 y con el servidor terminológico que ya existe. El guion bajo del nombre
+marca que quedó afuera. Su DDL es documentación de lo que **no** se hace acá.
+
 ## La excepción: `database/SQL` y `database/NoSQL` como copia de despliegue
 
 Desde el **2026-09-02** esos dos árboles vuelven a existir, y esta vez a propósito.

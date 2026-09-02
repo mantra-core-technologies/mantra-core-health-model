@@ -87,7 +87,15 @@ CREATE_TABLE_RE = re.compile(r"^\s*CREATE\s+TABLE", re.IGNORECASE | re.MULTILINE
 MONTAJE_LOCAL_RE = re.compile(r"^\s*-\s*\./database/(SQL|NoSQL)\b", re.MULTILINE)
 
 # Ruido conocido: dependencias y artefactos que no son fuente de nada.
-EXCLUIDOS = ("node_modules", ".git", "dist", "coverage", "graphify-out")
+#
+# `_New Skills` son los paquetes de skills tal como llegaron, guardados como
+# referencia. No pertenecen a ningún repositorio —el workspace no es uno— y nada
+# los aplica. Uno de ellos, `medical-terminology-fable-skill-complete`, trae
+# migraciones de Prisma y de PostgreSQL: se rechazó su instalación precisamente
+# por eso (choca con ADR-0021 y con el servidor terminológico que ya existe), y el
+# guion bajo del nombre marca que quedó afuera. Su DDL es documentación de lo que
+# NO se hace acá, no una fuente que compita con `SQL/`.
+EXCLUIDOS = ("node_modules", ".git", "dist", "coverage", "graphify-out", "_New Skills")
 
 
 def _relativa(path: Path) -> str:
