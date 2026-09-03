@@ -82,6 +82,7 @@ PATCH_V4011 = "4.0.11"
 # v4.1.4 — namespace de las aseguradoras reales que reemplazan a las 12 demo del
 # módulo 26 (y de sus tenants, NIT y direcciones). Las filas anteriores conservan el suyo.
 PATCH_V414 = "4.1.4"
+PATCH_V416 = "4.1.6"   # farmacias reales + su ficha pública
 
 # Mismo namespace que seedsGenerales/tools/generate-deep-seeds.py::stable_uuid.
 # El concepto FREE ya insertado en la BD viva se deriva con este esquema:
@@ -475,6 +476,34 @@ DIAGNOSTIC_UNITS_BACKEND_CONCEPTS = [
         ("diagnostic_units:ASSIGNMENT_ACTIVE", "Practitioner assignment active"),
     ]
 ]
+# v4.1.6 · los cinco tipos de ficha pública (community.concepts.ts).
+#
+# Sin espejarlos acá, cualquier fila del paquete que declare el tipo real de una
+# ficha —«esto es una farmacia»— queda con una FK a un concepto que el paquete no
+# tiene, y la fase 2b la «repara» apuntándola a un concepto genérico al azar. Es
+# lo que le pasaba a las 16 fichas de demostración: nacían con
+# `DEFAULT_TARGET_TYPE` y por eso el buscador público no podía clasificar
+# ninguna, y devolvía cero en las cinco verticales.
+COMMUNITY_PROFILE_TARGET_CONCEPTS = [
+    ("community:PROFILE_TARGET_USER", "PROFILE_TARGET_USER", "User public profile"),
+    ("community:PROFILE_TARGET_PRACTITIONER", "PROFILE_TARGET_PRACTITIONER",
+     "Practitioner public profile"),
+    ("community:PROFILE_TARGET_ORGANIZATION", "PROFILE_TARGET_ORGANIZATION",
+     "Organization public profile"),
+    ("community:PROFILE_TARGET_PHARMACY", "PROFILE_TARGET_PHARMACY",
+     "Pharmacy public profile"),
+    ("community:PROFILE_TARGET_DIAGNOSTIC_UNIT", "PROFILE_TARGET_DIAGNOSTIC_UNIT",
+     "Diagnostic unit public profile"),
+    ("community:PROFILE_TARGET_INSURER", "PROFILE_TARGET_INSURER",
+     "Insurer public profile"),
+    # La visibilidad va en el mismo puente y por el mismo motivo: sin espejarla,
+    # la fase 2b repara la FK contra un concepto al azar y la ficha deja de ser
+    # pública sin que nadie lo note.
+    ("community:PROFILE_VISIBILITY_PUBLIC", "PROFILE_VISIBILITY_PUBLIC",
+     "Profile listed on the public directory"),
+]
+
+BACKEND_CONCEPTS += COMMUNITY_PROFILE_TARGET_CONCEPTS
 BACKEND_CONCEPTS += DIAGNOSTIC_UNITS_BACKEND_CONCEPTS
 
 # --- v4.1.4 · los 2 conceptos del módulo 26 que usa el builder de aseguradoras ---
@@ -1695,6 +1724,197 @@ def curate_diagnostic_addresses(docs) -> int:
     return corregidas
 
 
+
+# --- v4.1.6 · las farmacias reales de Santa Cruz ---------------------------
+# Fuente: `RealDataSeeds/LISTA DE FARMACIAS, LABORATORIOS Y ANALISIS MEDICOS.md`,
+# planilla del negocio leída el 2026-09-03. El archivo llega en UTF-16 con el
+# texto mal decodificado (cp850 sobre latin-1: «Chßvez»); acá va ya corregido.
+#
+# El NIT va como identificador oficial del tenant en `common.identifiers`
+# (TAX_ID), igual que las aseguradoras — no en un campo propio de la farmacia,
+# que el modelo no tiene.
+#
+# Sin dirección ni coordenadas **a propósito**: la planilla no las trae para las
+# farmacias (sí para los laboratorios) y no se inventan. Sin lat/lng, «la más
+# cercana» no las considera; aparecen en el directorio, que es lo que se pidió.
+FARMACIAS_BOLIVIA = [
+    dict(code='FARMACORP_SA', nit='1015447026',
+         legal_name='Farmacias Corporativas S.A.',
+         trade_name='FARMACORP S.A.'),
+    dict(code='FARMACIA_CHAVEZ', nit='133795023',
+         legal_name='Farmacia Chávez S.A.',
+         trade_name='FARMACIA CHAVEZ'),
+    dict(code='FARMACIA_HIPERMAXI', nit='1028627025',
+         legal_name='HIPERMAXI S.A.',
+         trade_name='FARMACIA HIPERMAXI'),
+    dict(code='FARMACIA_NOSTAS', nit='364402022',
+         legal_name='FARMACIA NOSTAS S.R.L.',
+         trade_name='FARMACIA NOSTAS'),
+    dict(code='FARMACIA_TELCHI', nit='1015307021',
+         legal_name='TELCHI LITEL LTDA.',
+         trade_name='FARMACIA TELCHI'),
+    dict(code='FARMACIA_ARTESANAL', nit='1012471029',
+         legal_name='FARMACIA E IMPORTADORA ARTESANAL S.R.L.',
+         trade_name='FARMACIA ARTESANAL'),
+    dict(code='FARMACIA_OKINAWA', nit='345298024',
+         legal_name='FARMACIA OKINAWA S.R.L.',
+         trade_name='FARMACIA OKINAWA'),
+]
+
+
+# --- v4.1.6 · laboratorios y clínicas reales de Santa Cruz ------------------
+# Misma fuente y mismo criterio que FARMACIAS_BOLIVIA: planilla del negocio del
+# 2026-09-03, con la codificación ya corregida. Los laboratorios y las clínicas
+# SÍ traen dirección y teléfono; van como texto porque es lo que la planilla da
+# —sin lat/lng, así que la búsqueda por cercanía no los considera—. Los códigos
+# van en ASCII: son clave natural y una tilde en un `code` es un problema que
+# aparece tres capas más abajo.
+LABORATORIOS_BOLIVIA = [
+    dict(code='LABORATORIO_IBC', nit='189982028', phone='3371222',
+         legal_name='INSTITUTO BIO-CLÍNICO CRUCEÑO LTDA.',
+         trade_name='Laboratorio IBC',
+         lines='Calle España esquina Andrés Ibáñez N° S/N, Zona Central (Casco Viejo), Santa Cruz de la Sierra'),
+    dict(code='LABORATORIO_BIOCELL', nit='3209949014', phone='3546281',
+         legal_name='PALACIOS VEGA FLORINDA',
+         trade_name='Laboratorio BIO-CELL',
+         lines='Av. Cañoto #700, Esquina calle México (1er Anillo)'),
+    dict(code='PLEXUS_LABORATORIO', nit='351478025', phone='',
+         legal_name='PLEXUS LABORATORIOS S.R.L.',
+         trade_name='Plexus Laboratorio',
+         lines='Av. Marcelo Terceros Bánzer #24 (Zona Equipetrol)'),
+    dict(code='LABORATORIO_DR_ZUNA', nit='1476497010', phone='3441838',
+         legal_name='LABORATORIO DR. ZUNA S.R.L.',
+         trade_name='Laboratorio Dr. Zuna',
+         lines='Av. Alemana #2065 (a dos cuadras del 2do Anillo)'),
+    dict(code='LES_ENDOGENETICA', nit='1013877027', phone='3364746',
+         legal_name='ENDOGENETICA SANTA CRUZ S.R.L.',
+         trade_name='L.E.S. Endogenética',
+         lines='Calle Sara N° 439, entre Cuéllar y Seoane'),
+    dict(code='LABORATORIO_CLINICO_ANTELO', nit='147446021', phone='3324546',
+         legal_name='BARRIOS ANTELO S.R.L.',
+         trade_name='Laboratorio Clínico Antelo S.R.L.',
+         lines='Calle Libertad N° 402, esquina Florida (Zona Central / Casco Viejo)'),
+    dict(code='LABOGEN_SRL', nit='192916023', phone='77506494',
+         legal_name='LABORATORIO DE GENÉTICA Y DIAGNÓSTICO MOLECULAR LABOGEN S.R.L.',
+         trade_name='LABOGEN S.R.L.',
+         lines='Calle Macororó N° 4 (casi Av. Alemana, entre 3er y 4to Anillo)'),
+    dict(code='LABORATORIO_MULTIFUNCIONAL', nit='1023211026', phone='3579232',
+         legal_name='CLINICA SAN PEDRO S.R.L.',
+         trade_name='Laboratorio Multifuncional San Pedro',
+         lines='Tercer Anillo Externo #3105 (o N° 37), Radial 15, Zona Alto San Pedro, Santa Cruz de la Sierra'),
+    dict(code='LABORATORIO_CATEDRAL', nit='1012539022', phone='3333305',
+         legal_name='LABORATORIO CATEDRAL SEC. PAT. CLÍNICA S.R.L.',
+         trade_name='Laboratorio Catedral',
+         lines='Calle Andrés Ibáñez N° 115 (Zona Central / Casco Viejo)'),
+    dict(code='LABORATORIO_OMEGA', nit='', phone='3327610',
+         legal_name='LABORATORIO DE ANÁLISIS CLÍNICOS OMEGA S.R.L.',
+         trade_name='LABORATORIO OMEGA',
+         lines='Av. Cañoto N° 604, esquina calle Cuéllar, Santa Cruz de la Sierra.'),
+    dict(code='FUTURE__IMAGENES_MEDICAS', nit='', phone='3143333 / 72193615',
+         legal_name='FUTURE S.R.L.',
+         trade_name='FUTURE - IMAGENES MEDICAS',
+         lines='Av. Cañoto N° 580, Planta Baja (dentro de las instalaciones del Centro Médico Niño Jesús).'),
+    dict(code='DIACOR_SA', nit='', phone='3362244',
+         legal_name='DIACOR S.A.',
+         trade_name='DIACOR S.A.',
+         lines='Av. Irala N° 534'),
+    dict(code='INSTITUTO_DE_DIAGNOSTICO_M', nit='', phone='3368811 / 77047134',
+         legal_name='Instituto de Diagnóstico Médico (IDM)',
+         trade_name='Instituto de Diagnóstico Médico (IDM)',
+         lines='Av. Landívar N° 456.'),
+]
+
+CLINICAS_BOLIVIA = [
+    dict(code='CLINICA_LAS_AMERICAS', nit='316258024', phone='800101055',
+         legal_name='Clínica Metropolitana de las Américas S.A.',
+         trade_name='CLINICA LAS AMERICAS',
+         lines='Av. Sexto Anillo esq. Beni # 5100'),
+    dict(code='CLINICA_FOIANINI', nit='1028455022', phone='3362211',
+         legal_name='Clínica Angel Foianini S.R.L.',
+         trade_name='CLINICA FOIANINI',
+         lines='Av. Irala # 468 / Calle Chuquisaca # 737'),
+    dict(code='CLINICA_UNIVERSITARIO_MART', nit='4010340662', phone='3180060',
+         legal_name='Operadora Lativ Administración S.A.',
+         trade_name='CLINICA UNIVERSITARIO MARTIN DOCKWEILER',
+         lines='Av. Noel Kempff Mercado (3er anillo interno)'),
+    dict(code='CLINICA_INCOR', nit='1012499022', phone='3520444',
+         legal_name='Clínica Incor S.R.L.',
+         trade_name='CLINICA INCOR',
+         lines='Av. 26 de Febrero, calle caranda'),
+    dict(code='CLINICA_URBARI', nit='1028441025', phone='3534000',
+         legal_name='CLINICA URBARÍ S.A.',
+         trade_name='CLINICA URBARI',
+         lines='Barrio Urbarí, Calle Igmiri # 555'),
+    dict(code='CLINICA_NINO_JESUS', nit='1028557028', phone='3366969',
+         legal_name='Clínica Privada de Asistencia Médica Niño Jesús S.A.',
+         trade_name='CLINICA NIÑO JESUS',
+         lines='Av. Cañoto esq. Rafael Peña, primer anillo, zona central'),
+    dict(code='CLINICA_NINO_JESUS_II', nit='1028557028', phone='78456019',
+         legal_name='Clinica Privada De Asistencia Medica Niño Jesus S.A.',
+         trade_name='CLINICA NIÑO JESUS II',
+         lines='Calle Ballivián # 747'),
+    dict(code='CLINICA_MONTALVO', nit='1012565021', phone='3581919',
+         legal_name='Clínica Bioginecológica Montalvo S.R.L.',
+         trade_name='CLINICA MONTALVO',
+         lines='Barrio Urbarí, Av. Universo # 641.'),
+    dict(code='CLINICA_SIRANI', nit='122079029', phone='3352200',
+         legal_name='Clinica Medica Sirani Ltda.',
+         trade_name='CLINICA SIRANI',
+         lines='René Moreno # 667'),
+    dict(code='CLINICA_LOURDES', nit='', phone='3325518',
+         legal_name='CLINICA LOURDES',
+         trade_name='CLINICA LOURDES',
+         lines='René Moreno # 352.'),
+    dict(code='CLINICA_ITALIA', nit='', phone='67718675',
+         legal_name='CLINICA ITALIA',
+         trade_name='CLINICA ITALIA',
+         lines='Calle Colón Nº 345, entre las calles Pari y Mercado, zona de las siete calles'),
+    dict(code='CLINICA_SANTA_MARIA', nit='1453397017', phone='3352002',
+         legal_name='CLINICA SANTA MARIA',
+         trade_name='CLINICA SANTA MARIA',
+         lines='Av. Viedma # 754'),
+    dict(code='CLINICA_SAN_PEDRO', nit='1023211026', phone='70090283',
+         legal_name='Clínica San Pedro S.R.L.',
+         trade_name='CLINICA SAN PEDRO',
+         lines='3er Anillo Externo Radial 15, # 37, zona Alto San Pedro'),
+    dict(code='CLINICA_COSALUD', nit='148758024', phone='3393960',
+         legal_name='Corporación de Salud Cosalud S.R.L.',
+         trade_name='CLINICA COSALUD',
+         lines='Oruro # 366'),
+    dict(code='CLINICA_CRISTO_REY', nit='', phone='3523841',
+         legal_name='CLINICA CRISTO REY',
+         trade_name='CLINICA CRISTO REY',
+         lines='Av. Roca y Coronado calle Chilón # 2025'),
+    dict(code='CLINICA_DE_OJOS_SANTA_CRUZ', nit='4035895', phone='3327327',
+         legal_name='CLINICA DE OJOS SANTA CRUZ LTDA.',
+         trade_name='CLINICA DE OJOS SANTA CRUZ',
+         lines='Av. Centenario, Pasillo A. Barbery'),
+    dict(code='CLINICA_EL_TROMPILLO', nit='3729982013', phone='3590011',
+         legal_name='Clínica Médica Quirúrgica El Trompillo',
+         trade_name='CLINICA EL TROMPILLO',
+         lines='Barrio El Trompillo, calle Zoilo Flores # 164'),
+    dict(code='CLINICA_GRUMEDSO', nit='136935024', phone='3584050',
+         legal_name='GRUPO MEDICO SOLIDARIO S.R.L.',
+         trade_name='CLINICA GRUMEDSO',
+         lines='Av. Moscu 6to. Anillo, Zona de la Cuchilla (frente a la Universidad Evangélica Boliviana'),
+    dict(code='CLINICA_KAMIYA', nit='1015047023', phone='3363400',
+         legal_name='CLINICA KAMIYA S.R.L.',
+         trade_name='CLINICA KAMIYA',
+         lines='Av. Monseñor Rivero # 265.'),
+    dict(code='CLINICA_MELENDRES', nit='136165029', phone='3520982',
+         legal_name='Clínica Médica Melendres S.R.L.',
+         trade_name='CLINICA MELENDRES',
+         lines='Av. Grigotá # 2450 / 3er. Anillo.'),
+    dict(code='CLINICA_SAN_JOSE', nit='1013979025', phone='3521542',
+         legal_name='CLINICA SAN JOSE S.R.L.',
+         trade_name='CLINICA SAN JOSE',
+         lines='Calle Ingavi # 720'),
+    dict(code='CLINICA_UNIVERSITARIA_UCEB', nit='1026225020', phone='3221317',
+         legal_name='CLINICA UNIVERSITARIA UCEBOL',
+         trade_name='CLINICA UNIVERSITARIA UCEBOL',
+         lines='Carretera al Norte, Km. 5'),
+]
+
 # --- v4.1.4 · las 9 aseguradoras reales de Bolivia --------------------------
 # Datos provistos por el negocio el 2026-08-20 (nombre legal, sigla comercial, NIT
 # y domicilio). `depto` es el código de vs_administrative_area (v4.1.4) del
@@ -1847,6 +2067,267 @@ def canonical_insurance_carriers(docs, value_sets) -> dict:
             ("valid_from", base.date().isoformat()), ("valid_to", None),
             *auditoria]))
     return packs
+
+
+
+def build_real_pharmacies(docs, value_sets) -> dict:
+    """Las farmacias reales de la planilla, **con su ficha pública**.
+
+    La ficha no es un adorno: el buscador público lee `community.public_profiles`
+    y no las tablas de cada vertical, así que una farmacia sin ficha existe en el
+    sistema y no aparece en ninguna búsqueda. Es exactamente lo que pasaba con
+    las 16 de demostración —las 16 apuntaban a una ficha, pero la ficha no
+    apuntaba a ninguna farmacia y su tipo era el marcador `DEFAULT_TARGET_TYPE`,
+    porque esa columna no tiene binding declarado en el modelo—.
+
+    Acá el vínculo se declara en los dos sentidos: la farmacia guarda su
+    `public_profile_id` y la ficha guarda `target_id` + el tipo real
+    (`community:PROFILE_TARGET_PHARMACY`), que es lo que el buscador traduce a
+    vertical.
+
+    Los conceptos de tipo, propiedad, moneda y estado salen del molde mock ya
+    existente: son los mismos que el módulo usa hoy, y acuñar otros sería
+    inventar semántica que nadie pidió.
+    """
+    packs = {"tenants": [], "pharmacies": [], "identifiers": [], "public_profiles": []}
+
+    tenant_molde = docs["04"]["mock"]["records"]["tenants"][0]
+    farm_molde = docs["24"]["mock"]["records"]["pharmacies"][0]
+    perfil_molde = docs["19"]["mock"]["records"]["public_profiles"][0]
+
+    def new_id(table: str, *parts) -> str:
+        return stable_uuid("SALUD", PATCH_V416, "mock", table, "id", *parts)
+
+    for farm in FARMACIAS_BOLIVIA:
+        base = det_time(MOCK_BASE, "pharmacies", farm["code"])
+        stamp = iso(base)
+        tenant_id = new_id("directory.tenants", farm["code"])
+        farmacia_id = new_id("pharmacy.pharmacies", farm["code"])
+        perfil_id = new_id("community.public_profiles", farm["code"])
+        auditoria = [("created_at", stamp), ("updated_at", stamp),
+                     ("created_by_user_id", SEED_USER_ID),
+                     ("updated_by_user_id", SEED_USER_ID), ("row_version", 1)]
+
+        packs["tenants"].append(OrderedDict([
+            ("id", tenant_id), ("code", "FARM_" + farm["code"]),
+            ("tenant_type_concept_id", backend_id("directory:tenant-type:provider")),
+            ("legal_name", farm["legal_name"]), ("trade_name", farm["trade_name"]),
+            ("legal_entity_type_concept_id", backend_id("directory:legal-entity:company")),
+            ("status_concept_id", backend_id("directory:tenant-status:active")),
+            ("verification_status_concept_id",
+             backend_id("directory:tenant-verification:verified")),
+            ("country_concept_id", JURISDICTION_CONCEPT_ID),
+            ("jurisdiction_concept_id", JURISDICTION_CONCEPT_ID),
+            ("data_residency_region_concept_id",
+             tenant_molde["data_residency_region_concept_id"]),
+            ("currency_concept_id", tenant_molde["currency_concept_id"]),
+            ("time_zone", "America/La_Paz"), ("parent_tenant_id", None),
+            *auditoria]))
+
+        packs["pharmacies"].append(OrderedDict([
+            ("id", farmacia_id), ("tenant_id", tenant_id),
+            ("code", farm["code"]),
+            ("legal_name", farm["legal_name"]), ("trade_name", farm["trade_name"]),
+            ("pharmacy_type_concept_id", farm_molde["pharmacy_type_concept_id"]),
+            ("ownership_type_concept_id", farm_molde["ownership_type_concept_id"]),
+            ("public_profile_id", perfil_id),
+            ("default_currency_concept_id", farm_molde["default_currency_concept_id"]),
+            ("verification_status_concept_id", farm_molde["verification_status_concept_id"]),
+            ("status_concept_id", farm_molde["status_concept_id"]),
+            *auditoria]))
+
+        packs["identifiers"].append(OrderedDict([
+            ("id", new_id("common.identifiers", farm["code"])),
+            ("owner_type_concept_id", backend_id("common:owner-type:tenant")),
+            ("owner_id", tenant_id),
+            ("use_concept_id", backend_id("common:use:official")),
+            ("type_concept_id", backend_id("common:id-type:tax")),
+            ("system", None), ("value", farm["nit"]),
+            ("issuer_country_concept_id", JURISDICTION_CONCEPT_ID),
+            ("assigner_tenant_id", None),
+            ("valid_from", base.date().isoformat()), ("valid_to", None),
+            ("state_concept_id", backend_id("state:active")),
+            *auditoria]))
+
+        packs["public_profiles"].append(OrderedDict([
+            ("id", perfil_id), ("tenant_id", tenant_id),
+            # El tipo REAL, no el marcador: es lo que el buscador traduce a
+            # «farmacia» para responder /public/search/pharmacies.
+            ("target_type_concept_id", backend_id("community:PROFILE_TARGET_PHARMACY")),
+            ("target_id", farmacia_id),
+            ("slug", slug_de(farm["trade_name"])),
+            ("display_name", farm["trade_name"]),
+            ("headline", "Farmacia"),
+            ("biography", None),
+            ("avatar_file_id", None), ("cover_file_id", None),
+            ("verification_status_concept_id",
+             perfil_molde["verification_status_concept_id"]),
+            # Pública, y no la del molde: el molde trae el marcador
+            # `DEFAULT_VISIBILITY` y el buscador exige visibilidad pública
+            # explícita. Una ficha creada para el directorio que nace sin ser
+            # pública es una ficha que no existe para nadie.
+            ("visibility_concept_id", backend_id("community:PROFILE_VISIBILITY_PUBLIC")),
+            # El ACTIVE **del backend**, no el del paquete. Hay dos conceptos
+            # con ese código —`CONCEPT_ACTIVE` es el ancla del catálogo boot y
+            # `backend_id("state:active")` el que siembra la app— y el buscador
+            # filtra por el segundo. Con el del paquete la ficha existe, es
+            # pública, apunta bien... y no aparece en ninguna búsqueda.
+            ("status_concept_id", backend_id("state:active")),
+            *[(k, v) for k, v in perfil_molde.items()
+              if k not in {"id", "tenant_id", "target_type_concept_id", "target_id",
+                           "slug", "display_name", "headline", "biography",
+                           "avatar_file_id", "cover_file_id",
+                           "verification_status_concept_id", "visibility_concept_id",
+                           "status_concept_id",
+                           "created_at", "updated_at", "created_by_user_id",
+                           "updated_by_user_id", "row_version"}],
+            *auditoria]))
+    return packs
+
+
+
+def build_real_labs_and_clinics(docs) -> dict:
+    """Laboratorios y clínicas reales, cada uno con su ficha pública y su dirección.
+
+    Mismo camino que las farmacias, y por el mismo motivo: sin ficha con el tipo
+    real, la visibilidad pública y el ACTIVE **del backend**, la entidad existe y
+    no aparece en ninguna búsqueda. Los tres desajustes se descubrieron uno por
+    uno probando contra la base viva.
+
+    La dirección va como texto, sin coordenadas: la planilla no las trae y no se
+    inventan. La consecuencia está asumida y es explícita — «los más cercanos»
+    no los considera; aparecen en el directorio, que es lo que se pidió.
+
+    Las clínicas entran como `directory.tenants` y no como una entidad propia: el
+    modelo no tiene «clínica», tiene organizaciones que prestan servicios. La
+    ficha pública las declara `PROFILE_TARGET_ORGANIZATION`, que es el tipo con
+    el que el buscador las agrupa.
+    """
+    packs = {"tenants": [], "diagnostic_units": [], "identifiers": [],
+             "addresses": [], "public_profiles": []}
+
+    tenant_molde = docs["04"]["mock"]["records"]["tenants"][0]
+    addr_molde = docs["02"]["mock"]["records"]["addresses"][0]
+    unidad_molde = docs["23"]["mock"]["records"]["diagnostic_units"][0]
+    perfil_molde = docs["19"]["mock"]["records"]["public_profiles"][0]
+
+    def new_id(table: str, *parts) -> str:
+        return stable_uuid("SALUD", PATCH_V416, "mock", table, "id", *parts)
+
+    def comunes(codigo, prefijo, entrada, target_key, target_id, headline):
+        base = det_time(MOCK_BASE, prefijo, codigo)
+        stamp = iso(base)
+        tenant_id = new_id("directory.tenants", prefijo, codigo)
+        auditoria = [("created_at", stamp), ("updated_at", stamp),
+                     ("created_by_user_id", SEED_USER_ID),
+                     ("updated_by_user_id", SEED_USER_ID), ("row_version", 1)]
+
+        packs["tenants"].append(OrderedDict([
+            ("id", tenant_id), ("code", prefijo + "_" + codigo),
+            ("tenant_type_concept_id", backend_id("directory:tenant-type:provider")),
+            ("legal_name", entrada["legal_name"]), ("trade_name", entrada["trade_name"]),
+            ("legal_entity_type_concept_id", backend_id("directory:legal-entity:company")),
+            ("status_concept_id", backend_id("directory:tenant-status:active")),
+            ("verification_status_concept_id",
+             backend_id("directory:tenant-verification:verified")),
+            ("country_concept_id", JURISDICTION_CONCEPT_ID),
+            ("jurisdiction_concept_id", JURISDICTION_CONCEPT_ID),
+            ("data_residency_region_concept_id",
+             tenant_molde["data_residency_region_concept_id"]),
+            ("currency_concept_id", tenant_molde["currency_concept_id"]),
+            ("time_zone", "America/La_Paz"), ("parent_tenant_id", None),
+            *auditoria]))
+
+        if entrada.get("nit"):
+            packs["identifiers"].append(OrderedDict([
+                ("id", new_id("common.identifiers", prefijo, codigo)),
+                ("owner_type_concept_id", backend_id("common:owner-type:tenant")),
+                ("owner_id", tenant_id),
+                ("use_concept_id", backend_id("common:use:official")),
+                ("type_concept_id", backend_id("common:id-type:tax")),
+                ("system", None), ("value", entrada["nit"]),
+                ("issuer_country_concept_id", JURISDICTION_CONCEPT_ID),
+                ("assigner_tenant_id", None),
+                ("valid_from", base.date().isoformat()), ("valid_to", None),
+                ("state_concept_id", backend_id("state:active")),
+                *auditoria]))
+
+        if entrada.get("lines"):
+            packs["addresses"].append(OrderedDict([
+                ("id", new_id("common.addresses", prefijo, codigo)),
+                ("owner_type_concept_id", backend_id("common:owner-type:tenant")),
+                ("owner_id", tenant_id),
+                ("use_concept_id", addr_molde["use_concept_id"]),
+                ("type_concept_id", addr_molde["type_concept_id"]),
+                ("lines", entrada["lines"]), ("city", "Santa Cruz de la Sierra"),
+                ("administrative_area_concept_id",
+                 addr_molde["administrative_area_concept_id"]),
+                ("postal_code", None),
+                ("country_concept_id", JURISDICTION_CONCEPT_ID),
+                # Sin coordenadas: la planilla no las trae. Es lo que deja a
+                # estas sedes fuera de «la más cercana», y está asumido.
+                ("latitude", None), ("longitude", None),
+                ("valid_from", base.date().isoformat()), ("valid_to", None),
+                *auditoria]))
+
+        perfil_id = new_id("community.public_profiles", prefijo, codigo)
+        packs["public_profiles"].append(OrderedDict([
+            ("id", perfil_id), ("tenant_id", tenant_id),
+            ("target_type_concept_id", backend_id(target_key)),
+            ("target_id", target_id or tenant_id),
+            ("slug", slug_de(entrada["trade_name"])),
+            ("display_name", entrada["trade_name"]),
+            ("headline", headline),
+            ("biography", None),
+            ("avatar_file_id", None), ("cover_file_id", None),
+            ("verification_status_concept_id",
+             perfil_molde["verification_status_concept_id"]),
+            ("visibility_concept_id", backend_id("community:PROFILE_VISIBILITY_PUBLIC")),
+            ("status_concept_id", backend_id("state:active")),
+            *[(k, v) for k, v in perfil_molde.items()
+              if k not in {"id", "tenant_id", "target_type_concept_id", "target_id",
+                           "slug", "display_name", "headline", "biography",
+                           "avatar_file_id", "cover_file_id",
+                           "verification_status_concept_id", "visibility_concept_id",
+                           "status_concept_id",
+                           "created_at", "updated_at", "created_by_user_id",
+                           "updated_by_user_id", "row_version"}],
+            *auditoria]))
+        return tenant_id, perfil_id, auditoria
+
+    for lab in LABORATORIOS_BOLIVIA:
+        unidad_id = new_id("diagnostic_units.diagnostic_units", lab["code"])
+        tenant_id, perfil_id, auditoria = comunes(
+            lab["code"], "LAB", lab,
+            "community:PROFILE_TARGET_DIAGNOSTIC_UNIT", unidad_id, "Laboratorio")
+        packs["diagnostic_units"].append(OrderedDict([
+            ("id", unidad_id), ("tenant_id", tenant_id),
+            ("practice_id", unidad_molde["practice_id"]),
+            ("primary_practice_site_id", unidad_molde["primary_practice_site_id"]),
+            ("code", lab["code"]), ("name", lab["trade_name"]),
+            ("diagnostic_unit_type_concept_id",
+             unidad_molde["diagnostic_unit_type_concept_id"]),
+            ("ownership_type_concept_id", unidad_molde["ownership_type_concept_id"]),
+            ("public_profile_id", perfil_id),
+            ("accepts_external_orders", True), ("walk_in_available", True),
+            ("home_collection_available", False),
+            ("verification_status_concept_id",
+             unidad_molde["verification_status_concept_id"]),
+            ("status_concept_id", unidad_molde["status_concept_id"]),
+            *auditoria]))
+
+    for clin in CLINICAS_BOLIVIA:
+        comunes(clin["code"], "CLI", clin,
+                "community:PROFILE_TARGET_ORGANIZATION", None, "Clínica")
+
+    return packs
+
+
+def slug_de(nombre: str) -> str:
+    """Slug ASCII estable para la ruta corta de la ficha pública."""
+    base = unicodedata.normalize("NFKD", nombre).encode("ascii", "ignore").decode().lower()
+    limpio = re.sub(r"[^a-z0-9]+", "-", base).strip("-")
+    return limpio or "ficha"
 
 
 def repoint_carrier_references(docs, carrier_ids) -> int:
@@ -2143,6 +2624,30 @@ def phase_tables(docs, ddl, fks, value_sets, uniques) -> dict:
         docs, [r["id"] for r in aseg_pack["insurance_carriers"]])
     if n:
         stats["insurance.* (insurance_carrier_id repuntadas)"] = n
+
+    # --- v4.1.6 · farmacias reales, con su ficha pública ---------------------
+    farm_pack = build_real_pharmacies(docs, value_sets)
+    for module, entity, tkey in (("04", "tenants", "directory.tenants"),
+                                 ("02", "identifiers", "common.identifiers"),
+                                 ("24", "pharmacies", "pharmacy.pharmacies"),
+                                 ("19", "public_profiles", "community.public_profiles")):
+        n = upsert_rows(docs[module], "mock", entity, farm_pack[entity])
+        if n:
+            stats[tkey + " (farmacias reales)"] = n
+        id_index.setdefault(tkey, []).extend(r["id"] for r in farm_pack[entity])
+
+    # --- v4.1.6 · laboratorios y clínicas reales ----------------------------
+    lab_pack = build_real_labs_and_clinics(docs)
+    for module, entity, tkey in (
+            ("04", "tenants", "directory.tenants"),
+            ("02", "identifiers", "common.identifiers"),
+            ("02", "addresses", "common.addresses"),
+            ("23", "diagnostic_units", "diagnostic_units.diagnostic_units"),
+            ("19", "public_profiles", "community.public_profiles")):
+        n = upsert_rows(docs[module], "mock", entity, lab_pack[entity])
+        if n:
+            stats[tkey + " (labs y clínicas reales)"] = n
+        id_index.setdefault(tkey, []).extend(r["id"] for r in lab_pack[entity])
     return stats
 
 
