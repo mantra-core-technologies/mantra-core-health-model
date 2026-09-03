@@ -46,22 +46,63 @@
 
 CREATE EXTENSION IF NOT EXISTS btree_gist;  -- requerido por EXCLUDE
 
--- Antes de crear la restricción: si la base ya tiene solapes, esto FALLA y hay
--- que limpiarlos primero. Falla ruidosamente a propósito — crear la restricción
--- «como se pueda» dejaría datos que la violan y nadie se enteraría.
-ALTER TABLE "clinical"."appointments"
-    DROP CONSTRAINT IF EXISTS "ex_appointments_practitioner_time";
+-- Si la base ya tiene solapes, la restricción no se puede crear. Eso se dice
+-- fuerte y con el número de casos —crearla «como se pueda» dejaría datos que la
+-- violan y nadie se enteraría—, pero NO se aborta.
+--
+-- El matiz importa desde que este archivo se aplica de verdad: los `patches/`
+-- corren en cada arranque bajo `ON_ERROR_STOP`, así que un error acá deja
+-- `postgres-init` en rojo y la API no levanta nunca. Un puñado de citas
+-- solapadas heredadas —94 en la base de desarrollo cuando se escribió esto— no
+-- puede ser motivo de que el sistema entero no arranque. Se avisa en cada pasada
+-- y la restricción entra sola en cuanto los datos estén limpios.
+--
+-- Para verlos:
+--   SELECT a.id, b.id, a.practitioner_profile_id, a.start_at, a.end_at
+--     FROM clinical.appointments a
+--     JOIN clinical.appointments b
+--       ON a.practitioner_profile_id = b.practitioner_profile_id
+--      AND a.id < b.id
+--      AND tstzrange(a.start_at, a.end_at, '[)') && tstzrange(b.start_at, b.end_at, '[)')
+--    WHERE a.status_concept_id IN ('51530fd7-…', '37dded87-…');
+DO $$
+DECLARE n bigint;
+BEGIN
+    SELECT count(*) INTO n
+      FROM "clinical"."appointments" a
+      JOIN "clinical"."appointments" b
+        ON a."practitioner_profile_id" = b."practitioner_profile_id"
+       AND a."id" < b."id"
+       AND tstzrange(a."start_at", a."end_at", '[)')
+        && tstzrange(b."start_at", b."end_at", '[)')
+     WHERE a."practitioner_profile_id" IS NOT NULL AND a."end_at" IS NOT NULL
+       AND b."practitioner_profile_id" IS NOT NULL AND b."end_at" IS NOT NULL
+       AND a."status_concept_id" IN (
+             '51530fd7-05b1-5c29-80c4-da740ede4d27',
+             '37dded87-7a7a-5a24-86f6-0ef48cccb482')
+       AND b."status_concept_id" IN (
+             '51530fd7-05b1-5c29-80c4-da740ede4d27',
+             '37dded87-7a7a-5a24-86f6-0ef48cccb482');
 
-ALTER TABLE "clinical"."appointments"
-    ADD CONSTRAINT "ex_appointments_practitioner_time"
-    EXCLUDE USING gist (
-        "practitioner_profile_id" WITH =,
-        tstzrange("start_at", "end_at", '[)') WITH &&
-    ) WHERE (
-        "practitioner_profile_id" IS NOT NULL
-        AND "end_at" IS NOT NULL
-        AND "status_concept_id" IN (
-            '51530fd7-05b1-5c29-80c4-da740ede4d27',
-            '37dded87-7a7a-5a24-86f6-0ef48cccb482'
-        )
-    );
+    IF n > 0 THEN
+        RAISE WARNING 'AGENDA: % par(es) de citas solapadas del mismo profesional. NO se crea ex_appointments_practitioner_time: hay que limpiarlos (consulta en la cabecera del parche).', n;
+        RETURN;
+    END IF;
+
+    ALTER TABLE "clinical"."appointments"
+        DROP CONSTRAINT IF EXISTS "ex_appointments_practitioner_time";
+
+    ALTER TABLE "clinical"."appointments"
+        ADD CONSTRAINT "ex_appointments_practitioner_time"
+        EXCLUDE USING gist (
+            "practitioner_profile_id" WITH =,
+            tstzrange("start_at", "end_at", '[)') WITH &&
+        ) WHERE (
+            "practitioner_profile_id" IS NOT NULL
+            AND "end_at" IS NOT NULL
+            AND "status_concept_id" IN (
+                '51530fd7-05b1-5c29-80c4-da740ede4d27',
+                '37dded87-7a7a-5a24-86f6-0ef48cccb482'
+            )
+        );
+END $$;
