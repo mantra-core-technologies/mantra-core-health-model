@@ -80,7 +80,9 @@ END $$;
 
 -- 3. RLS + política de aislamiento en cada tabla con `tenant_id uuid` ----------
 DO $$
-DECLARE r record;
+DECLARE
+  r record;
+  sin_rls text[] := '{}';
 BEGIN
   FOR r IN
     SELECT c.table_schema, c.table_name
@@ -93,11 +95,30 @@ BEGIN
       AND c.data_type   = 'uuid'
       AND c.table_schema NOT LIKE 'pg\_%'
       AND c.table_schema NOT IN ('information_schema')
+      -- Los esquemas internos de TimescaleDB quedan fuera. Los *chunks* de una
+      -- hypertable heredan las columnas de su padre, así que aparecen aquí con
+      -- su `tenant_id`, pero no admiten RLS: el ALTER muere con «operation not
+      -- supported on materialization tables» y se lleva por delante el parche
+      -- entero. No se pierde aislamiento — la política se aplica sobre la
+      -- hypertable, que es por donde entra toda consulta.
+      AND c.table_schema NOT LIKE '\_timescaledb%'
+      AND c.table_schema NOT IN ('timescaledb_information', 'timescaledb_experimental')
   LOOP
-    EXECUTE format('ALTER TABLE %I.%I ENABLE ROW LEVEL SECURITY', r.table_schema, r.table_name);
-    EXECUTE format('ALTER TABLE %I.%I FORCE ROW LEVEL SECURITY', r.table_schema, r.table_name);
-    EXECUTE format('DROP POLICY IF EXISTS tenant_isolation ON %I.%I', r.table_schema, r.table_name);
-    EXECUTE format($pol$
+    -- Una hypertable de TimescaleDB con *columnstore* no admite RLS: el ALTER
+    -- muere con «operation not supported on hypertables that have columnstore
+    -- enabled» (SQLSTATE 0A000). Es una limitación del motor, no algo que este
+    -- parche pueda sortear.
+    --
+    -- Antes eso abortaba la transacción y con ella el parche entero, así que NO
+    -- quedaba con RLS ni esa tabla ni ninguna de las otras ~700. Ahora la que no
+    -- se puede se anota y se sigue; al final se listan. Saltarlas en silencio no
+    -- es una opción: son tablas con `tenant_id` que se quedan sin aislamiento
+    -- por fila, y quien lea el arranque tiene que verlo.
+    BEGIN
+      EXECUTE format('ALTER TABLE %I.%I ENABLE ROW LEVEL SECURITY', r.table_schema, r.table_name);
+      EXECUTE format('ALTER TABLE %I.%I FORCE ROW LEVEL SECURITY', r.table_schema, r.table_name);
+      EXECUTE format('DROP POLICY IF EXISTS tenant_isolation ON %I.%I', r.table_schema, r.table_name);
+      EXECUTE format($pol$
       CREATE POLICY tenant_isolation ON %I.%I
         USING (
           tenant_id = NULLIF(
@@ -113,6 +134,14 @@ BEGIN
           )::uuid
           OR current_setting('app.system_context', true) = 'true'
         )
-    $pol$, r.table_schema, r.table_name);
+      $pol$, r.table_schema, r.table_name);
+    EXCEPTION WHEN feature_not_supported THEN
+      sin_rls := sin_rls || format('%I.%I', r.table_schema, r.table_name);
+    END;
   END LOOP;
+
+  IF array_length(sin_rls, 1) > 0 THEN
+    RAISE WARNING 'RLS: % tabla(s) con tenant_id se quedaron SIN aislamiento por fila (limitación de TimescaleDB): %',
+      array_length(sin_rls, 1), array_to_string(sin_rls, ', ');
+  END IF;
 END $$;

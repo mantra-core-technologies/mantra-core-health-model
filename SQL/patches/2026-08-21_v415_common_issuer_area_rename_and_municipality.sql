@@ -67,24 +67,47 @@ DO $$ BEGIN
 END $$;
 
 DO $$ BEGIN
+    -- El guardia mira los DOS nombres, no sólo el viejo. Con
+    -- `ORM_SCHEMA_SYNC=safe` la entidad ya crea el índice con el nombre nuevo,
+    -- así que los dos conviven y el `RENAME` chocaba con
+    -- «relation ... already exists», tumbando el parche entero.
     IF EXISTS (
         SELECT 1 FROM pg_indexes
         WHERE schemaname = 'common'
           AND indexname = 'ix_identifiers_issuing_administrative_area_concept_id'
     ) THEN
-        ALTER INDEX "common"."ix_identifiers_issuing_administrative_area_concept_id"
-            RENAME TO "ix_identifiers_issuer_administrative_area_concept_id";
+        IF EXISTS (
+            SELECT 1 FROM pg_indexes
+            WHERE schemaname = 'common'
+              AND indexname = 'ix_identifiers_issuer_administrative_area_concept_id'
+        ) THEN
+            -- El destino ya está: el viejo sobra y se retira.
+            DROP INDEX "common"."ix_identifiers_issuing_administrative_area_concept_id";
+        ELSE
+            ALTER INDEX "common"."ix_identifiers_issuing_administrative_area_concept_id"
+                RENAME TO "ix_identifiers_issuer_administrative_area_concept_id";
+        END IF;
     END IF;
 END $$;
 
 DO $$ BEGIN
+    -- Los dos nombres, como en el renombrado de la columna de más arriba: si el
+    -- destino ya existe —lo crea la capa 06 del arranque— el RENAME choca.
     IF EXISTS (
         SELECT 1 FROM pg_constraint
         WHERE conname = 'fk_identifiers_issuing_administrative_area_concept_id'
     ) THEN
-        ALTER TABLE "common"."identifiers"
-            RENAME CONSTRAINT "fk_identifiers_issuing_administrative_area_concept_id"
-                           TO "fk_identifiers_issuer_administrative_area_concept_id";
+        IF EXISTS (
+            SELECT 1 FROM pg_constraint
+            WHERE conname = 'fk_identifiers_issuer_administrative_area_concept_id'
+        ) THEN
+            ALTER TABLE "common"."identifiers"
+                DROP CONSTRAINT "fk_identifiers_issuing_administrative_area_concept_id";
+        ELSE
+            ALTER TABLE "common"."identifiers"
+                RENAME CONSTRAINT "fk_identifiers_issuing_administrative_area_concept_id"
+                               TO "fk_identifiers_issuer_administrative_area_concept_id";
+        END IF;
     END IF;
 END $$;
 
