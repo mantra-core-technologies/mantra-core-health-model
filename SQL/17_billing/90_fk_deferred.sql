@@ -15,6 +15,13 @@ DO $$ BEGIN
         REFERENCES "practice"."practices" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- destino: common.files (requiere schema common)
+DO $$ BEGIN
+    ALTER TABLE "billing"."service_catalog"
+        ADD CONSTRAINT "fk_service_catalog_image_file_id" FOREIGN KEY ("image_file_id")
+        REFERENCES "common"."files" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "billing"."service_catalog"
