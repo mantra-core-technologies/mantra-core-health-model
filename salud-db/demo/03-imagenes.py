@@ -14,12 +14,21 @@ por fotos de verdad reemplazando los bytes y el hash, sin tocar el resto.
 La guarda de `downloadPublicMedia` exige categoría IMAGE y sensibilidad NORMAL:
 un archivo que no las tenga no se sirve al anónimo aunque exista.
 
-Uso:  python imagenes.py [--salida DIR]
+Con `--retratos` el avatar deja de ser las iniciales y pasa a ser un retrato
+generado por IA —una persona que no existe, así que no hay derecho de imagen de
+nadie—. Es la diferencia entre «hay una imagen» y «parece un directorio
+médico»: las iniciales sobre color se ven idénticas al placeholder que dibuja
+el front cuando no hay foto, y el cambio no se nota.
+
+Uso:  python imagenes.py [--salida DIR] [--retratos]
 """
 import argparse
 import hashlib
 import sys
+import time
+import urllib.request
 import uuid
+from io import BytesIO
 from pathlib import Path
 
 import psycopg
@@ -84,6 +93,32 @@ def avatar(nombre, clave):
     return img
 
 
+RETRATOS_URL = "https://thispersondoesnotexist.com/random-person.jpeg"
+
+
+def retrato(intentos=4):
+    """Un rostro generado por IA, recortado a 512×512.
+
+    Cada petición devuelve una cara distinta, así que la única forma de repetir
+    es que el servicio sirva la misma dos veces seguidas; el llamador compara
+    hashes y reintenta.
+    """
+    for intento in range(1, intentos + 1):
+        try:
+            peticion = urllib.request.Request(
+                RETRATOS_URL, headers={"User-Agent": "alovida-demo-seed/1.0"}
+            )
+            with urllib.request.urlopen(peticion, timeout=30) as respuesta:
+                datos = respuesta.read()
+            img = Image.open(BytesIO(datos)).convert("RGB")
+            return img.resize((512, 512), Image.LANCZOS)
+        except Exception as error:  # red inestable: reintentar, no abortar
+            if intento == intentos:
+                raise
+            print(f"    reintento {intento} tras {error}")
+            time.sleep(2 * intento)
+
+
 def portada(titular, nombre, clave):
     """Tarjeta de la publicación: especialidad grande, autor al pie."""
     ancho, alto = 1200, 630
@@ -105,22 +140,28 @@ def portada(titular, nombre, clave):
     return img
 
 
-def guardar(img, destino_raiz):
-    """Deja el PNG bajo `<sha[:2]>/<sha>` y devuelve (hash, bytes, ruta).
+def guardar(img, destino_raiz, formato="PNG"):
+    """Deja la imagen bajo `<sha[:2]>/<sha>` y devuelve (hash, bytes, ruta, mime).
 
     El prefijo de `FILE_STORAGE_S3_PREFIX` NO va acá: se agrega al subir y en
     las filas. Así el árbol local se sube tal cual bajo el prefijo que toque.
-    """
-    from io import BytesIO
 
+    Los retratos van en JPEG y las piezas generadas en PNG: una foto en PNG
+    pesa cinco veces más sin verse mejor, y el tipo declarado tiene que ser el
+    que la API deduce de los primeros bytes, no el que uno diga.
+    """
     buf = BytesIO()
-    img.save(buf, format="PNG", optimize=True)
+    if formato == "JPEG":
+        img.save(buf, format="JPEG", quality=86, optimize=True, progressive=True)
+    else:
+        img.save(buf, format="PNG", optimize=True)
     datos = buf.getvalue()
     sha = hashlib.sha256(datos).hexdigest()
     ruta = destino_raiz / sha[:2] / sha
     ruta.parent.mkdir(parents=True, exist_ok=True)
     ruta.write_bytes(datos)
-    return sha, len(datos), ruta
+    mime = "image/jpeg" if formato == "JPEG" else "image/png"
+    return sha, len(datos), ruta, mime
 
 
 def conceptos(conn):
@@ -145,7 +186,8 @@ def conceptos(conn):
     return mapa
 
 
-def registrar(conn, cc, tenant_id, nombre_original, sha, tamano, bucket, prefijo):
+def registrar(conn, cc, tenant_id, nombre_original, sha, tamano, bucket,
+              prefijo, mime="image/png"):
     """Crea el archivo y su versión. Idempotente por uuid5 sobre el hash.
 
     `parseOwnedKey` del adaptador S3 vuelve a derivar la clave desde el hash y
@@ -171,10 +213,10 @@ def registrar(conn, cc, tenant_id, nombre_original, sha, tamano, bucket, prefijo
         " checksum_algorithm_concept_id, content_hash,"
         " encryption_status_concept_id, malware_scan_status_concept_id,"
         " uploaded_at, recorded_at)"
-        " VALUES (%s,%s,1,%s,%s,%s,%s,%s,'image/png',%s,%s,%s,%s,%s, now(), now())"
+        " VALUES (%s,%s,1,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s, now(), now())"
         " ON CONFLICT (id) DO NOTHING",
         (version_id, file_id, cc["S3"], cc["REGION_DEFAULT"], bucket,
-         clave, f"s3://{bucket}/{clave}", tamano,
+         clave, f"s3://{bucket}/{clave}", mime, tamano,
          cc["SHA256"], sha, cc["ENC_NONE"], cc["SCAN_CLEAN"]),
     )
     conn.execute(
@@ -187,6 +229,8 @@ def registrar(conn, cc, tenant_id, nombre_original, sha, tamano, bucket, prefijo
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--salida", default="/tmp/imagenes-alovida")
+    parser.add_argument("--retratos", action="store_true",
+                        help="usa rostros generados por IA en vez de iniciales")
     args = parser.parse_args()
 
     cfg = load_seeds.load_config()
@@ -207,10 +251,21 @@ def main():
             "SELECT id, tenant_id, display_name, coalesce(headline, '')"
             "  FROM community.public_profiles ORDER BY display_name"
         ).fetchall()
+        vistos = set()
         for pid, tenant, nombre, _titular in vitrinas:
-            sha, tam, _ = guardar(avatar(nombre, str(pid)), raiz)
-            file_id = registrar(conn, cc, tenant, f"avatar-{nombre}.png",
-                                sha, tam, bucket, prefijo)
+            if args.retratos:
+                for _ in range(3):          # un rostro repetido no sirve de avatar
+                    sha, tam, _ruta, mime = guardar(retrato(), raiz, "JPEG")
+                    if sha not in vistos:
+                        break
+                    time.sleep(1)
+                vistos.add(sha)
+                extension = "jpg"
+            else:
+                sha, tam, _ruta, mime = guardar(avatar(nombre, str(pid)), raiz)
+                extension = "png"
+            file_id = registrar(conn, cc, tenant, f"avatar-{nombre}.{extension}",
+                                sha, tam, bucket, prefijo, mime)
             conn.execute(
                 "UPDATE community.public_profiles"
                 "   SET avatar_file_id = %s, updated_at = now() WHERE id = %s",
@@ -226,9 +281,9 @@ def main():
             " ORDER BY sp.published_at"
         ).fetchall()
         for post_id, tenant, nombre, titular in publicaciones:
-            sha, tam, _ = guardar(portada(titular, nombre, str(post_id)), raiz)
+            sha, tam, _ruta, mime = guardar(portada(titular, nombre, str(post_id)), raiz)
             file_id = registrar(conn, cc, tenant, f"post-{post_id}.png",
-                                sha, tam, bucket, prefijo)
+                                sha, tam, bucket, prefijo, mime)
             medio_id = str(uuid.uuid5(NS, f"media:{post_id}"))
             conn.execute(
                 "INSERT INTO community.post_media (id, post_id, file_id,"
