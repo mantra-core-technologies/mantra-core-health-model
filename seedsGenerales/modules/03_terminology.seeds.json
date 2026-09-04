@@ -53,7 +53,7 @@
       "value_set_members",
       "tenant_catalog_policies"
     ],
-    "record_count": 3608,
+    "record_count": 3615,
     "records": {
       "terminology_sources": [
         {
@@ -26522,6 +26522,83 @@
           "updated_at": "2026-09-05T14:47:00Z",
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "bd64fd9d-04b3-5ac4-b753-b54de047cafc",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "PROFILE_TARGET_USER",
+          "display": "User public profile",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "45d61ae6-f540-5b5f-90ef-c1f2dcad6e2d",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "PROFILE_TARGET_PRACTITIONER",
+          "display": "Practitioner public profile",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "edab30f0-f274-50e6-bc62-b77247930126",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "PROFILE_TARGET_ORGANIZATION",
+          "display": "Organization public profile",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "0f353861-9bd2-5f9a-a634-d789da0b2dbf",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "PROFILE_TARGET_PHARMACY",
+          "display": "Pharmacy public profile",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "e029ecf7-31f1-5b1f-aa50-7bf6e20b2914",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "PROFILE_TARGET_DIAGNOSTIC_UNIT",
+          "display": "Diagnostic unit public profile",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "a8fa5093-7714-5467-a0d0-76c07790a2fe",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "PROFILE_TARGET_INSURER",
+          "display": "Insurer public profile",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "0006f171-fd25-503d-906e-b77423a5f1d0",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "PROFILE_VISIBILITY_PUBLIC",
+          "display": "Profile listed on the public directory",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
           "row_version": 1
         }
       ],
@@ -53933,7 +54010,7 @@
       }
     ],
     "summary": {
-      "record_count": 3608,
+      "record_count": 3615,
       "entity_count": 10,
       "populated_entity_count": 10,
       "scenario_count": null,
