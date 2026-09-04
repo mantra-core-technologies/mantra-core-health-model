@@ -37,6 +37,8 @@ entity service_catalog {
   * practice_id : uuid <<FK>>
   * code : varchar
   * name : varchar
+    description_text : text
+    image_file_id : uuid <<FK>>
     service_concept_id : uuid <<FK>>
   * default_price : numeric
     currency_concept_id : uuid <<FK>>
@@ -574,6 +576,7 @@ dunning_items .. idxset_dunning_items : indexed by
 entity "INDEXES · service_catalog" as idxset_service_catalog <<INDEX_SET>> {
   PK pk_service_catalog : (id) UNIQUE BTREE
   IX ix_service_catalog_practice_id : (practice_id) BTREE
+  IX ix_service_catalog_image_file_id : (image_file_id) BTREE
   IX ix_service_catalog_service_concept_id : (service_concept_id) BTREE
   IX ix_service_catalog_currency_concept_id : (currency_concept_id) BTREE
   IX ix_service_catalog_tax_code_id : (tax_code_id) BTREE
