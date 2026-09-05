@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-apply_redesa_all.py — Script unificado para la inyección de esquemas y DDLs de REDESA.
+apply_alovida_all.py — Script unificado para la inyección de esquemas y DDLs de ALOVIDA.
 
 Conecta a los puertos expuestos en la máquina host (+1):
   - PostgreSQL (relacional + TimescaleDB + pgvector): localhost:5433
@@ -9,7 +9,7 @@ Conecta a los puertos expuestos en la máquina host (+1):
   - MinIO (object storage): localhost:9002
 
 Uso:
-  python salud-db/apply_redesa_all.py
+  python salud-db/apply_alovida_all.py
 """
 import json
 import os
@@ -44,7 +44,7 @@ def run_psql(sql_filepath: Path):
     
     # Intentar ejecutar con docker exec si el contenedor existe, o psql nativo
     cmd_docker = [
-        "docker", "exec", "-i", "redesa-postgres",
+        "docker", "exec", "-i", "alovida-postgres",
         "psql", "-U", PG_USER, "-d", PG_DB, "-v", "ON_ERROR_STOP=1"
     ]
     
@@ -99,7 +99,7 @@ def apply_opensearch():
 
 def main():
     print("=" * 60)
-    print("🚀 REDESA - Inyector Unificado de DDL y Esquemas NoSQL")
+    print("🚀 ALOVIDA - Inyector Unificado de DDL y Esquemas NoSQL")
     print("=" * 60)
 
     # 1. Base Relacional SQL (Módulos 00-54)
@@ -125,7 +125,7 @@ def main():
     apply_opensearch()
 
     print("\n" + "=" * 60)
-    print("🎉 Inyección de Esquemas REDESA Finalizada.")
+    print("🎉 Inyección de Esquemas ALOVIDA Finalizada.")
     print("=" * 60)
 
 

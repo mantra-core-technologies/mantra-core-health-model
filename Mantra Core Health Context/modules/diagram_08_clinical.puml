@@ -342,7 +342,7 @@ entity medication_requests {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
-  ' + v4.0.8 (REDESA D-05 / CAN-RX): firma de la receta y máquina de estados.
+  ' + v4.0.8 (ALOVIDA D-05 / CAN-RX): firma de la receta y máquina de estados.
   ' Todas NULLABLE: una receta sin firmar tiene signed_at/signed_by en NULL, y la
   ' firma solo se exige cuando una prescription_signature_policies vigente lo pide.
     signed_at : timestamptz
@@ -355,7 +355,7 @@ entity medication_requests {
     replaces_request_id : uuid <<FK>>
     replaced_by_request_id : uuid <<FK>>
     renewed_from_request_id : uuid <<FK>>
-  ' + v4.0.9 (REDESA CAN §6, MISSING_IDEMPOTENCY): la emisión de una receta no era
+  ' + v4.0.9 (ALOVIDA CAN §6, MISSING_IDEMPOTENCY): la emisión de una receta no era
   ' idempotente y un reintento del cliente podía re-ejecutar el sellado. Con la
   ' clave, el reintento devuelve la receta ya emitida en vez de emitir otra.
   ' Nullable: las emisiones históricas no la traen, y por eso su índice único es
@@ -363,7 +363,7 @@ entity medication_requests {
     issue_idempotency_key : varchar
 }
 
-' + v4.0.8 (REDESA D-05) — Política PARAMETRIZABLE de firma de receta.
+' + v4.0.8 (ALOVIDA D-05) — Política PARAMETRIZABLE de firma de receta.
 ' Las dimensiones NULLABLE actúan de comodín ("aplica a todas"): gana la política
 ' vigente más específica, con desempate por effective_from más reciente. Diseño
 ' fail-safe: sin política aplicable NO se exige firma.

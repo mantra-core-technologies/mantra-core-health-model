@@ -23,7 +23,7 @@
 -- (la convención por nombre no alcanzaba: el subtipo CTI comparte PK y el
 -- destino es `health_practitioner_profiles(profile_id)`, no `id`).
 --
--- Reemplaza a `mantra-core-health-api/tools/redesa/2026-08-15_c05_practitioner_affiliations.sql`,
+-- Reemplaza a `mantra-core-health-api/tools/alovida/2026-08-15_c05_practitioner_affiliations.sql`,
 -- que declaraba la misma tabla FUERA de SQL/ y por eso hacía fallar el paso 0/4
 -- de rebuild_stack.py (`check_ddl_sources.py`) para todo el equipo. Ese archivo
 -- se elimina en el mismo cambio.

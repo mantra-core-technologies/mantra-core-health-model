@@ -219,13 +219,13 @@ entity appointment_bookings {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
-  ' + v4.0.8 (REDESA CAN-APT): copia congelada de la política de cancelación tal
+  ' + v4.0.8 (ALOVIDA CAN-APT): copia congelada de la política de cancelación tal
   ' como se aceptó al reservar. Se guarda el snapshot, no una FK, justamente para
   ' que un cambio posterior de la política no reescriba lo que el paciente aceptó.
     cancellation_policy_snapshot : jsonb
 }
 
-' + v4.0.8 (REDESA C-11) — Motor de confirmación automática de reservas.
+' + v4.0.8 (ALOVIDA C-11) — Motor de confirmación automática de reservas.
 ' Reglas deterministas que deciden si una solicitud se auto-confirma, se
 ' auto-rechaza o va a revisión manual. No se borran en duro: se desactivan
 ' (`enabled`) y se versionan (`version`). La evaluación corre siempre contra los

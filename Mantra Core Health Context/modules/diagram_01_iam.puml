@@ -39,12 +39,12 @@ entity users <<ACCOUNT>> {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
-  ' + v4.0.8 (REDESA C-18): la cuenta creada por registro asistido queda obligada
+  ' + v4.0.8 (ALOVIDA C-18): la cuenta creada por registro asistido queda obligada
   ' a fijar su propia contraseña en el primer ingreso.
     must_change_password : boolean
 }
 
-' + v4.0.8 (REDESA C-18 / CAN-IDENT) — Registro asistido de pacientes.
+' + v4.0.8 (ALOVIDA C-18 / CAN-IDENT) — Registro asistido de pacientes.
 ' Un clínico crea la cuenta de alguien que no puede hacerlo por sí mismo. El
 ' creador NUNCA conoce la contraseña definitiva: se emite un token de activación
 ' de un solo uso del que se persiste SOLO el hash, con caducidad, y el titular fija
@@ -80,7 +80,7 @@ entity "INDEXES · account_activations" as idxset_account_activations <<INDEX_SE
 }
 account_activations .. idxset_account_activations : indexed by
 
-' + v4.0.9 (REDESA CAN-IDENT) — Verificación del correo del auto-registro.
+' + v4.0.9 (ALOVIDA CAN-IDENT) — Verificación del correo del auto-registro.
 ' El paciente que se registra por sí mismo con su documento elige su contraseña,
 ' así que la cuenta nace ACTIVA. El correo es OPCIONAL y verificarlo NO condiciona
 ' el acceso: si lo aporta se emite un token de un solo uso del que se persiste
@@ -112,7 +112,7 @@ entity "INDEXES · email_verifications" as idxset_email_verifications <<INDEX_SE
 }
 email_verifications .. idxset_email_verifications : indexed by
 
-' + v4.0.9 (REDESA CAN-IDENT) — Restablecimiento de contraseña.
+' + v4.0.9 (ALOVIDA CAN-IDENT) — Restablecimiento de contraseña.
 ' Comparte forma con email_verifications pero NO significado, y por eso no
 ' comparte tabla: consumir un token de verificación marca un correo como probado;
 ' consumir uno de restablecimiento cambia una credencial y mata todas las
@@ -300,7 +300,7 @@ entity "INDEXES · users" as idxset_users <<INDEX_SET>> {
 
 users .. idxset_users : indexed by
 
-' + v4.0.9 (REDESA CAN-IDENT): ux_authentication_credentials_live_password_subject
+' + v4.0.9 (ALOVIDA CAN-IDENT): ux_authentication_credentials_live_password_subject
 ' impide dos credenciales de contraseña VIVAS para el mismo external_subject (correo
 ' o documento). Sin él, dos altas concurrentes pasaban ambas el "¿ya existe?" bajo
 ' READ COMMITTED y creaban dos cuentas para el mismo documento.

@@ -34,7 +34,7 @@ aparte, siempre con ORM_SCHEMA_SYNC=off o dry-run — jamás safe.
 
 Valores de referencia al escribir esto (informativos, no se asertan): 1 180
 tablas · 6 661 FKs · 9 107 índices · ~1 465 927 filas · 7 avisos · tablas
-REDESA v4.0.8 en 8/8/27/8/8. Las dos tablas de v4.0.9 (iam.email_verifications,
+ALOVIDA v4.0.8 en 8/8/27/8/8. Las dos tablas de v4.0.9 (iam.email_verifications,
 iam.password_resets) quedan VACÍAS a propósito: son tokens de runtime.
 
 Uso:  python salud-db/rebuild_stack.py [--yes]

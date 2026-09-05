@@ -1,7 +1,7 @@
 <!-- Espejo plano de Mantra Core Health Vault/SALUD/Arquitectura/identidad-visual.md.
      Los dos archivos se actualizan JUNTOS (convención de CLAUDE.md).
      La versión del vault es la que tiene los wikilinks al grafo. -->
-# Identidad visual — Sistema de Diseño REDSAT y marca corporativa
+# Identidad visual — Sistema de Diseño ALOVIDA y marca corporativa
 
 > Espejo plano: `Mantra Core Health Context/docs/frontend/identidad-visual.md`.
 > **Los dos se actualizan juntos** (convención de `CLAUDE.md`). Esta versión del vault es la que
@@ -10,11 +10,11 @@
 > Dos sistemas distintos, y no hay que confundirlos:
 > **Mantra Core Technologies** es la empresa padre y tiene su propia identidad (Parte 1,
 > extraída del portafolio corporativo). El **sistema médico** que desarrolla es un producto
-> aparte, cuya identidad es el **Sistema de Diseño REDSAT v1.0** (Parte 2 en adelante).
+> aparte, cuya identidad es el **Sistema de Diseño ALOVIDA v1.0** (Parte 2 en adelante).
 
-> **INFO** — Adopción del Sistema de Diseño REDSAT (2026-07-29)
-> El diseñador (Mateo Ribera Caballero, Área Comercial) entregó `REDSAT_Sistema_de_Diseno.html`
-> (raíz del repo): la traducción del **Manual de Identidad Corporativa REDSAT v1.0 — julio 2026**
+> **INFO** — Adopción del Sistema de Diseño ALOVIDA (2026-07-29)
+> El diseñador (Mateo Ribera Caballero, Área Comercial) entregó `ALOVIDA_Sistema_de_Diseno.html`
+> (raíz del repo): la traducción del **Manual de Identidad Corporativa ALOVIDA v1.0 — julio 2026**
 > a sistema de producto digital. Se adoptó como **identidad oficial** con estas decisiones:
 > 1. **Reemplazo total** del sistema anterior (que ya compartía los mismos 6 colores de marca).
 > 2. **Tipografía Opción A**: Poppins (display) + Inter (cuerpo y datos). Las alternativas del
@@ -22,7 +22,7 @@
 > 3. **El hex del manual manda**: si un par no llega al umbral WCAG, no se ajusta el tono — se
 >    registra como excepción (Parte 8) y se avisa al diseñador.
 > 4. **Solo tokens, sin renombrar**: la UI sigue diciendo *Mantra Core Health* hasta que la marca
->    REDSAT se confirme como nombre de producto. Repos y paquetes no se tocan.
+>    ALOVIDA se confirme como nombre de producto. Repos y paquetes no se tocan.
 >
 > El HTML del diseñador queda como **spec viva de componentes** (botones, inputs, badges,
 > modales, tablas, header/sidebar): no se portan a Angular/Flutter hasta que existan pantallas.
@@ -90,14 +90,14 @@ Erratas del portafolio:
 
 ## 1.4 · Relación con el producto
 
-El azul corporativo `#1E2B44` (H 217°) y el **Azul Petróleo** `#0B557E` (H 201°) de REDSAT son
+El azul corporativo `#1E2B44` (H 217°) y el **Azul Petróleo** `#0B557E` (H 201°) de ALOVIDA son
 primos: ambos azules profundos, el del producto algo más cian y mucho más saturado. Hay
 continuidad de familia sin que el producto herede la paleta de la empresa. **Ninguno de los
 12 colores de la Parte 1 se usa en el sistema médico.**
 
 ---
 
-# Parte 2 · Paleta REDSAT — familia de marca y rampas
+# Parte 2 · Paleta ALOVIDA — familia de marca y rampas
 
 Los **seis colores de marca** son los mismos del manual original — la continuidad es total:
 
@@ -116,7 +116,7 @@ Los **seis colores de marca** son los mismos del manual original — la continui
 
 ## 2.1 · Rampas extendidas 50–900
 
-Lo nuevo de REDSAT: cada familia se expande a 10 escalones (el **500 es la base** del manual,
+Lo nuevo de ALOVIDA: cada familia se expande a 10 escalones (el **500 es la base** del manual,
 salvo en marfil donde la base es el 500 y los 600–900 son tintas derivadas). Valores literales
 del HTML (`:root`, líneas 11–121) — **no se recalculan, se copian**:
 
@@ -132,7 +132,7 @@ del HTML (`:root`, líneas 11–121) — **no se recalculan, se copian**:
 
 ## 2.2 · Rampas semánticas — la escala de estados que antes no existía
 
-REDSAT llena el hueco más grande del sistema anterior (que declaraba explícitamente «sin estados
+ALOVIDA llena el hueco más grande del sistema anterior (que declaraba explícitamente «sin estados
 semánticos»). Cuatro familias, también 50–900:
 
 | Rampa | 50 | 100 | 200 | 300 | 400 | **500** | 600 | 700 | 800 | 900 |
@@ -217,14 +217,14 @@ Dos desvíos deliberados del patrón, ambos medidos:
 # Parte 4 · Modo oscuro — el azul estructura, la aguamarina acciona
 
 El principio del sistema anterior sobrevive («en oscuro el petróleo deja de ser tinta y pasa a
-ser tierra»), pero REDSAT lo resuelve **sin inventar colores**:
+ser tierra»), pero ALOVIDA lo resuelve **sin inventar colores**:
 
 > **IMPORTANT** — En oscuro las superficies SON la rampa del azul petróleo
 > `#0A1C27 → #0A2B3D → #0B3953` son azul-900/800/700 del propio manual. Y como el azul ya no
 > puede ser el color de acción sobre sí mismo, **la aguamarina toma el rol de primario de
 > interacción** (`#70C1B9`, aqua-400) — *«garantizando contraste suficiente sin introducir un
 > color ajeno a la marca»*. El `#4FA3CC` (petróleo aclarado) del sistema anterior **queda
-> retirado**: era un color inventado, y REDSAT lo reemplaza con un escalón real de la rampa aqua.
+> retirado**: era un color inventado, y ALOVIDA lo reemplaza con un escalón real de la rampa aqua.
 
 Adaptaciones de la regla de proporción:
 
@@ -244,7 +244,7 @@ dark mode genérico.
 # Parte 5 · Tipografía — Poppins + Inter
 
 El manual define Poppins para marca e Inter para cuerpo. Cuatro roles anclados a los cuatro
-valores corporativos de REDSAT:
+valores corporativos de ALOVIDA:
 
 | Valor | Tipografía | Uso |
 |---|---|---|
@@ -322,7 +322,7 @@ múltiplo de 4 px** y **a mayor jerarquía visual, mayor espacio**.
 | `--r-full` | 999 | avatares, píldoras, botón de ícono |
 
 > **WARNING** — Radio de firma `28px 4px 28px 4px` — uso especial, no estructural
-> Forma asimétrica que cita la diagonal del símbolo REDSAT. **Un único elemento destacado por
+> Forma asimétrica que cita la diagonal del símbolo ALOVIDA. **Un único elemento destacado por
 > pantalla** (una tarjeta hero, un dato protagonista) — la misma disciplina de «un solo acento»
 > del ámbar. **Prohibido** en botones, inputs y tarjetas de lista.
 
@@ -350,7 +350,7 @@ múltiplo de 4 px** y **a mayor jerarquía visual, mayor espacio**.
 > degrada cuando una pantalla crece — se vigila en revisión de UI y hay un widget test que la
 > cuenta.
 
-Otras reglas literales del documento REDSAT:
+Otras reglas literales del documento ALOVIDA:
 
 - **Badges**: fondo claro + texto oscuro del mismo tono, *nunca* color sólido con texto blanco.
 - **Inputs**: el estado se comunica cambiando el **borde**, nunca solo el fondo.
@@ -406,7 +406,7 @@ rellenos de acento llevan tinta oscura, jamás blanca.
 > | E4 | `st-warning` claro: warning-700 `#8B6A47` sobre warning-50 `#FBF2E8` | 4,46 | 4,5 | Marginal (−0,04). Los badges siempre llevan icono + texto (regla de 3 canales). |
 >
 > Nota E5 (heredada, no es nueva): `--border-default` `#CDD9D5` da 1,31–1,45 — **solo divisor
-> decorativo**, jamás delimita un control. Eso ya era ley en el sistema anterior y REDSAT lo
+> decorativo**, jamás delimita un control. Eso ya era ley en el sistema anterior y ALOVIDA lo
 > respeta al declarar `--border-strong` aparte… salvo en el spec de inputs (ver E3).
 
 > **BUG** — La lección del 2026-07-27 que originó este protocolo
@@ -431,8 +431,8 @@ identificadores en inglés): las familias de rampa se traducen — `--c-azul-*`�
 literales del HTML del diseñador, que sigue siendo la spec de componentes. Los 14 tokens en
 castellano del **sistema anterior de `styles.css`** (`--fondo`, `--marca`…) fueron eliminados.
 
-> [!warning] Eso no incluye a `redsat.css`
-> `mantra-core-health/src/styles/redsat.css` es una hoja **separada** —el «marco REDSAT»,
+> [!warning] Eso no incluye a `alovida.css`
+> `mantra-core-health/src/styles/alovida.css` es una hoja **separada** —el «marco ALOVIDA»,
 > declarado después de `styles.css` en `angular.json`— con su **propia** familia de tokens en
 > castellano (`--fondo-*`, `--sup-*`, `--nav-*`, `--tinta-*`…), viva y sin relación con la
 > frase de arriba. Detalle en **§9.1.3**.
@@ -443,7 +443,7 @@ Lo que se conservó de nuestra implementación (mejor que la del HTML, que solo 
   `:root:not([data-theme='light'])` → `:root[data-theme='dark']` (el toggle manual gana en las
   dos direcciones).
 - `color-scheme: light dark`, `.cifras-tabulares` (alias `.tabular-nums`, el nombre del spec
-  REDSAT), `prefers-reduced-motion`.
+  ALOVIDA), `prefers-reduced-motion`.
 - Focus visible accesible: anillo `--focus-ring` + `outline` transparente de respaldo para
   modo alto contraste.
 
@@ -509,7 +509,7 @@ scaffold vacío).
   `#fff` del danger/spinner que el propio spec fija (en oscuro `--text-inverse` es petrol-900
   y el diseñador quiere blanco en ambos temas). `type="button"` por defecto.
 
-> **WARNING** — `outline` es extensión propia — NO está en el spec REDSAT
+> **WARNING** — `outline` es extensión propia — NO está en el spec ALOVIDA
 > El diseñador solo define una variante con borde (`btn-secondary`, borde de marca). `outline`
 > (decisión del usuario 2026-07-29) es un outline **neutro**: borde `--border-strong`, tinta
 > `--text-primary`, hover `--bg-inset` — solo tokens, cero hex nuevos. Pendiente de validación
@@ -616,12 +616,12 @@ observación donde se expone cada pieza de `shared/components` a medida que exis
 > con la lista vacía el server de `yarn serve:ssr:mantra-core-health` rechazaba el header
 > `host` y **toda** ruta caía a CSR. Al desplegar, agregar el dominio real.
 
-### 9.1.3 · El fondo reactivo — `redsat.css` (TAREA-08, 2026-09-02)
+### 9.1.3 · El fondo reactivo — `alovida.css` (TAREA-08, 2026-09-02)
 
 No es parte del sistema de tokens de `styles.css`: vive en
-`mantra-core-health/src/styles/redsat.css`, el «marco REDSAT», con su propia familia de
+`mantra-core-health/src/styles/alovida.css`, el «marco ALOVIDA», con su propia familia de
 tokens en castellano (§9.1, advertencia de arriba). Lo mueve
-`src/app/core/redsat/redsat-runtime.service.ts` (método `fondoReactivo()`), instalado una
+`src/app/core/alovida/alovida-runtime.service.ts` (método `fondoReactivo()`), instalado una
 sola vez por `app.ts` — por eso está en **todas las rutas**, no en una pantalla.
 
 **Los cuatro focos son tokens** (`--fondo-a` … `--fondo-d`, dos por capa: `body::before` cerca,
@@ -669,9 +669,9 @@ Verificado con Playwright: `playwright/lane-08-reactive-background.spec.ts` capt
 completo aparece/se-retira con `--fondo-presencia` en `1` y en `.35`, y el
 `prefers-reduced-motion` que nunca la toca. Las rutas con sesión (`/dashboard`,
 `/medical-records`, `/glossary`) quedaron **fuera** de esta corrida: este entorno no tiene una
-cuenta `PRACTITIONER` sembrada (`tools/redesa/` no existe) — pendiente, no maquillado.
+cuenta `PRACTITIONER` sembrada (`tools/alovida/` no existe) — pendiente, no maquillado.
 
-`src/app/core/redsat/redsat-runtime.service.spec.ts` ganó 3 casos (`describe('fondoReactivo')`):
+`src/app/core/alovida/alovida-runtime.service.spec.ts` ganó 3 casos (`describe('fondoReactivo')`):
 antes cubría todo **menos** este método.
 
 ## 9.2 · Flutter — `mantra_core_health_mobile/lib/theme/`
@@ -681,10 +681,10 @@ Misma estructura de 4 archivos + geometría nueva:
 | Archivo | Qué contiene |
 |---|---|
 | `mantra_ramp.dart` | tipo `MantraRamp`: una familia como **un valor** (10 escalones, `ramp[700]`, `colors`). Habilita barrer una rampa entera o elegir el escalón por cálculo |
-| `mantra_palette.dart` | los 6 de marca + **las 11 rampas REDSAT completas**, literales del HTML, más los alias `warning*`≡ámbar / `info*`≡aqua y los 3 hex fuera de rampa (`insetBlue`, bordes translúcidos oscuros). Expone además las 9 familias como `petrolRamp`…`errorRamp` y el índice `ramps`, **derivadas de las constantes planas** (cada hex escrito una sola vez). Nada más entra acá |
+| `mantra_palette.dart` | los 6 de marca + **las 11 rampas ALOVIDA completas**, literales del HTML, más los alias `warning*`≡ámbar / `info*`≡aqua y los 3 hex fuera de rampa (`insetBlue`, bordes translúcidos oscuros). Expone además las 9 familias como `petrolRamp`…`errorRamp` y el índice `ramps`, **derivadas de las constantes planas** (cada hex escrito una sola vez). Nada más entra acá |
 | `mantra_tokens.dart` | `MantraState` (terna bg/fg/bd) + `ThemeExtension<MantraTokens>` con lo que Material no expresa: `action`/`overAction`, superficies alt/inset y los 4 estados `st*` **+ los tonos de marca `stPrimary`/`stSecondary`** (espejo de `--st-primary-*`/`--st-secondary-*`, con sus dos desvíos medidos). Constantes `MantraTokens.light` / `.dark` |
 | `mantra_geometry.dart` | `MantraPadding` (`sp1..sp20`), `MantraRadius` (`xs..full` + **radio de firma**), `MantraStroke` (`hairline` / `focus`) y `MantraMotion` (`fast` = 150 ms + `of(context)`, que honra «reducir movimiento») |
-| `mantra_typography.dart` | Poppins (display, estática) + Inter (UI, variable), escala REDSAT → `TextTheme` M3 |
+| `mantra_typography.dart` | Poppins (display, estática) + Inter (UI, variable), escala ALOVIDA → `TextTheme` M3 |
 | `mantra_theme.dart` | `MantraTheme.light` / `.dark` + extensiones `context.colors` · `context.texts` · `context.mantra` |
 
 Primer componente (2026-07-29): **`MantraButton`** en `lib/shared/atoms/button/`
@@ -782,12 +782,12 @@ el diseñador valide.
 > `sage*` / `ivory*` (mismas familias que los `--c-*` de la web), marca
 > `petrolBlue` / `aquamarine` / `lightMint` / `sandAmber` / `sageGray` / `ivory`,
 > rampas `petrolRamp`…`errorRamp` + índice `ramps`, inset `insetPetrol`. Las dos excepciones deliberadas son `MantraRadius.firma` y
-> `MantraTypography.cifrasTabulares`: nombran conceptos del manual REDSAT que
+> `MantraTypography.cifrasTabulares`: nombran conceptos del manual ALOVIDA que
 > no tienen traducción sin perder la referencia.
 
 Correspondencia `ColorScheme` (lo que Material sabe expresar no se duplica en la extensión):
 
-| Token REDSAT | Material 3 claro | Material 3 oscuro |
+| Token ALOVIDA | Material 3 claro | Material 3 oscuro |
 |---|---|---|
 | `--brand-primary` | `primary #0B557E` | `primary #70C1B9` (aqua-400) |
 | `--brand-secondary` | `secondary #4FB3A9` | `secondary #C3E7E2` (menta-300) |
@@ -810,7 +810,7 @@ azul en oscuro), ordenadas por luminancia — sin colores inventados. La quinta 
 
 `test/theme_test.dart` + `test/widget_test.dart` + `test/mantra_button_test.dart`
 (**106 tests**): la paleta contra el manual
-REDSAT, el barrido de contraste sobre las cinco superficies de cada modo (con las excepciones
+ALOVIDA, el barrido de contraste sobre las cinco superficies de cada modo (con las excepciones
 E1–E4 fijadas con su ratio y razón), los asertos negativos (blanco sobre aqua/ámbar, un solo
 ámbar por pantalla), los contratos tipográficos (Poppins display estática, Inter variable con
 eje `wght`, cifras tabulares), la equivalencia de los alias `warning`/`info` con sus rampas y el
@@ -841,7 +841,7 @@ disabled resuelto antes que hover, foco siempre aqua/menta, **ninguna variante u
 
 ## 10.2 · Breakpoints — dos vocabularios, uno por plataforma
 
-**Web adopta los de REDSAT** (decisión 2026-07-29 — son los que el diseñador usará en cada
+**Web adopta los de ALOVIDA** (decisión 2026-07-29 — son los que el diseñador usará en cada
 spec de pantalla):
 
 | Punto de quiebre | Rango | Qué cambia |
@@ -869,7 +869,7 @@ Reglas que acompañan (heredadas, siguen vigentes):
 
 # Parte 11 · Estado y pendientes
 
-**Materializado el 2026-07-29 en las dos superficies** (adopción REDSAT v1.0):
+**Materializado el 2026-07-29 en las dos superficies** (adopción ALOVIDA v1.0):
 
 | Superficie | Dónde | Verificado con |
 |---|---|---|
@@ -878,7 +878,7 @@ Reglas que acompañan (heredadas, siguen vigentes):
 
 Pendientes reales:
 
-1. **Confirmar REDSAT como nombre de producto.** El manual corporativo ya se llama REDSAT, pero
+1. **Confirmar ALOVIDA como nombre de producto.** El manual corporativo ya se llama ALOVIDA, pero
    la decisión de UI (2026-07-29) fue «solo tokens, sin renombrar»: wordmark y títulos siguen en
    *Mantra Core Health* hasta confirmación. Al confirmarse: renombre de carpeta + `package.json`
    + `angular.json` + título + `pubspec.yaml`.
@@ -888,7 +888,7 @@ Pendientes reales:
    medidos) y las **extensiones del AppButton** (§9.1.2): la variante `outline` neutra y el tratamiento
    disabled de las variantes transparentes, que el spec no define.
 3. **Escala de severidad clínica** (crítico / alerta / estable / indeterminado) — sigue sin
-   definir. Los `st-*` de REDSAT son semántica de producto y no la sustituyen; cuando se defina,
+   definir. Los `st-*` de ALOVIDA son semántica de producto y no la sustituyen; cuando se defina,
    derivarla de las rampas de la Parte 2.2 en armonía. El `error` de Material sigue siendo
    validación de formulario, no severidad.
 4. **Ninguna pantalla de PORTAL consume los tokens todavía.** En web ya existen el AppButton y

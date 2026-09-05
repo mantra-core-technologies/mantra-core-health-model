@@ -453,9 +453,9 @@ ip_access_rules .. idxset_ip_access_rules : indexed by
 access_policies ||--o{ break_glass_sessions
 
 ' ==============================================================================
-' ===== v4.0.8 (REDESA — vínculos que alimentan al PDP) =====
+' ===== v4.0.8 (ALOVIDA — vínculos que alimentan al PDP) =====
 ' ==============================================================================
-' Ambas tablas las exigen las reglas REDESA CAN-AUTH-001, C-06, C-07 y A-03, y
+' Ambas tablas las exigen las reglas ALOVIDA CAN-AUTH-001, C-06, C-07 y A-03, y
 ' alimentan al PDP junto con clinical_access_grants. Llegaron primero como DDL
 ' suelto en el repositorio de la API (database/SQL/99_migrations/) y se
 ' materializaban solas al arrancar con ORM_SCHEMA_SYNC=safe; se incorporan aquí

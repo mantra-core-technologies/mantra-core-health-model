@@ -23,7 +23,7 @@ Qué hace (cada fase es independiente e idempotente):
                     al arrancar (TerminologySeedService, namespace propio) y el tenant DEFAULT:
                     las tablas v4.0.8 referencian esos ids y los servicios comparan contra ellos.
   2. TABLAS NUEVAS— boot/mock para las 24 tablas de los patches v4.0.2–v4.0.6 y las 5 de
-                    v4.0.8 (REDESA), resolviendo los *_concept_id contra los conceptos
+                    v4.0.8 (ALOVIDA), resolviendo los *_concept_id contra los conceptos
                     sembrados y las FK contra filas del paquete. Incluye la política D-05
                     de firma de recetas (una comodín `signature_required=true` por tenant).
   3. NOT NULL     — rellena columnas NOT NULL sin default ausentes en filas ya existentes
@@ -72,7 +72,7 @@ SOURCE_MODEL_VERSION = "4.0.9"
 RELEASE_LABEL = "4.0.9"
 SEED_REVISION = "2.5.0-v4.1.4"
 # Namespace uuid5 por patch, misma regla que MODEL_VERSION: identifica las filas de las
-# 5 tablas REDESA ya sembradas. v4.0.9 no añade uno propio porque no trae tablas que
+# 5 tablas ALOVIDA ya sembradas. v4.0.9 no añade uno propio porque no trae tablas que
 # sembrar — `iam.email_verifications` y `iam.password_resets` guardan tokens de runtime
 # y nacen vacías a propósito.
 PATCH_V408 = "4.0.8"
@@ -532,7 +532,7 @@ BACKEND_SEED = dict(
     tenant_code="DEFAULT",
 )
 
-# --- las 5 tablas de la promoción REDESA v4.0.8 -----------------------------
+# --- las 5 tablas de la promoción ALOVIDA v4.0.8 -----------------------------
 # Claves extra sobre el formato de NEW_TABLES:
 #   patch   — deriva la PK bajo su propio patch (las de v4.0.7 siguen intactas).
 #   fixed   — overrides constantes (conceptos del backend, NULL explícitos).
@@ -1325,7 +1325,7 @@ def v408_overrides(cfg: dict, tkey: str, section: str, pk: str, index: int) -> d
 
 
 def canonical_signature_policies(docs) -> dict:
-    """D-05 (REDESA): una política comodín `signature_required = true` por tenant.
+    """D-05 (ALOVIDA): una política comodín `signature_required = true` por tenant.
 
     Cierra el fail-open de la emisión de recetas: con la tabla vacía,
     `isSignatureRequired` devuelve false y la firma no se exige nunca. La política
@@ -1548,7 +1548,7 @@ def canonical_diagnostic_units(docs, value_sets) -> dict:
     código), pero el reemplazo se conserva por los otros dos motivos: los datos reales y
     los conceptos correctos.
 
-    Sustituye además a `tools/redesa/seed-diagnostic-units.mjs`, que hacía lo mismo con
+    Sustituye además a `tools/alovida/seed-diagnostic-units.mjs`, que hacía lo mismo con
     `INSERT` crudos por fuera del paquete: dos dueños del mismo dato con ids distintos es
     exactamente lo que la política de seeds evita.
     """

@@ -12,7 +12,7 @@
 --
 -- Qué cierra: la deriva que dejó el PR #171 de la API (rotulado «Patch v4.0.8 —
 -- estado clínico y cronicidad», rótulo que además chocaba con el v4.0.8 real, la
--- promoción REDESA del 2026-07-30). Ese PR agregó `clinicalCourseConceptId` a
+-- promoción ALOVIDA del 2026-07-30). Ese PR agregó `clinicalCourseConceptId` a
 -- `clinical/entities/conditions.entity.ts` y dos value sets dinámicos
 -- (`condition-clinical-status`, `condition-clinical-course`) al
 -- DYNAMIC_ENUM_CATALOG, pero la columna no existía en ninguna de las otras tres

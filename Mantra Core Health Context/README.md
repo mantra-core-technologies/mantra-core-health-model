@@ -25,7 +25,7 @@ leen de ahí — no la repitas cableada en código ni en cabeceras.
 > (`salud-db/check_ddl_sources.py`) que impide su regreso silencioso. Política:
 > [`docs/architecture/ddl-sources.md`](docs/architecture/ddl-sources.md).
 >
-> **v4.0.8 — Promoción de las reglas de negocio REDESA (corrección de deriva).**
+> **v4.0.8 — Promoción de las reglas de negocio ALOVIDA (corrección de deriva).**
 > El backend (`mantra-core-health-api`) había declarado DDL propio en `database/SQL/`,
 > fuera de los `.puml` y de `SQL/`: una segunda fuente de verdad del esquema. No había
 > llegado a la base (se verificó antes del rebuild: las tablas no existían), pero el

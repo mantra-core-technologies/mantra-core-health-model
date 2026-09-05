@@ -168,7 +168,7 @@ entity journal_transactions {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
-  ' + v4.0.8 (REDESA C-17): traza de aprobación del asiento. Los estados en sí
+  ' + v4.0.8 (ALOVIDA C-17): traza de aprobación del asiento. Los estados en sí
   ' viven en status_concept_id (DRAFT → AUTO_CLASSIFIED → PENDING_REVIEW →
   ' APPROVED → POSTED → REVERSED); estas dos columnas solo sellan quién aprobó y
   ' cuándo, en paralelo a posted_at/posted_by_user_id.

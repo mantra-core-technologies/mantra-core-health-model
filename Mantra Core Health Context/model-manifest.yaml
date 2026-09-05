@@ -81,7 +81,7 @@ model:
       hija CTI) + regla 11 del estándar (padre e hija en la misma transacción,
       persons → person_profiles → *_profiles) + 4 casos de uso ejemplares
       UC-05-01..04.
-  - id: patch-v4.0.8-promocion-reglas-redesa
+  - id: patch-v4.0.8-promocion-reglas-alovida
     role: drift-correction
     doc: docs/architecture/physical-materialization.md (§ v4.0.8)
     status: materialized-in-er
@@ -102,7 +102,7 @@ model:
       issued_at/status_reason_text/replaces_request_id/replaced_by_request_id/
       renewed_from_request_id; appointment_bookings.cancellation_policy_snapshot;
       iam.users.must_change_password), en los módulos 01/06/08/16/41. Reglas
-      REDESA que las sostienen: CAN-AUTH-001, C-06, C-07, A-03, C-11, C-17, C-18,
+      ALOVIDA que las sostienen: CAN-AUTH-001, C-06, C-07, A-03, C-11, C-17, C-18,
       D-05, CAN-RX, CAN-APT, CAN-IDENT. Las FKs que las migraciones declaraban
       como comentario son ahora constraints reales; eso destapó que
       care_relationships.practitioner_profile_id apuntaba a
@@ -126,7 +126,7 @@ model:
       ux_authentication_credentials_live_password_subject, el primero del modelo
       que lleva concept_id como UUID literales — excepción consciente a la regla
       de no hardcodear conceptos, porque el predicado de un índice parcial debe
-      ser inmutable y Postgres no admite subconsultas ahí. Reglas REDESA que las
+      ser inmutable y Postgres no admite subconsultas ahí. Reglas ALOVIDA que las
       sostienen: CAN-IDENT, CAN §6 (MISSING_IDEMPOTENCY). De paso se corrigió el
       generador del catálogo del ORM, que ignoraba la etiqueta UX y descartaba el
       predicado WHERE: por eso ux_account_activations_token_hash (v4.0.8) se había

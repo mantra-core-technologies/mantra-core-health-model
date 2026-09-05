@@ -2,7 +2,7 @@
 
 > Fecha: 2026-07-27 · Versión del modelo: SALUD v4.0.7
 > Propósito: fuente única para diseñar el árbol de features y rutas de `mantra-core-health`
-> (ex `mantra-core-redesa`, renombrado 2026-07-27; nombre de producto provisional)
+> (ex `mantra-core-alovida`, renombrado 2026-07-27; nombre de producto provisional)
 > sin re-explorar el repositorio.
 
 ---

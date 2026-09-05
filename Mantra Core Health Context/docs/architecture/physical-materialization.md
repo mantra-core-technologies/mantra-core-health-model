@@ -169,7 +169,7 @@ Dos entornos aplicados:
 >   permitía; esa clave se reemplazó el 2026-08-23 por la compuesta `(tenant_id, code)`— con sede, 16 ofertas de
 >   estudio, tarifario en BOB, equipamiento y una acreditación ISO 15189. Reemplaza las 160 filas
 >   sintéticas del bucle genérico, que apuntaban a conceptos del catálogo transversal que los
->   servicios del módulo nunca comparan. **`tools/redesa/seed-diagnostic-units.mjs` se retira**.
+>   servicios del módulo nunca comparan. **`tools/alovida/seed-diagnostic-units.mjs` se retira**.
 >
 > - **31 roles del paquete alineados al ACTIVE del backend** (`align_role_states`): `ensureRoleByCode` y `effectiveRoleCodes` filtran por el ACTIVE del backend, y los roles de `authz.roles` venían con el de SALUD_CORE — `PRACTITIONER` existía, activo y asignable, pero invisible para la app: el alta asistida del médico moría con 422.
 > - **Canal `IN_APP` espejado del backend** (2ª tanda del mismo día): el mismo bug que el
@@ -205,7 +205,7 @@ Dos entornos aplicados:
 
 **Quinto caso del mismo patrón, y el más chico**: una columna, no un módulo. También el de
 consecuencia más inmediata. El PR #171 de la API —rotulado «Patch v4.0.8: estado clínico y
-cronicidad», rótulo que choca con el **v4.0.8 real**, la promoción REDESA del 30/07— agregó
+cronicidad», rótulo que choca con el **v4.0.8 real**, la promoción ALOVIDA del 30/07— agregó
 `clinicalCourseConceptId` a `clinical/entities/conditions.entity.ts` y dos value sets al
 `DYNAMIC_ENUM_CATALOG` (`condition-clinical-status`, `condition-clinical-course`), pero la
 columna no estaba declarada en ninguna de las otras tres capas. Evidencia:
@@ -1082,7 +1082,7 @@ existía en ninguna base reconstruida: los dos respondían **500** y la pestaña
 perfil no tenía dónde persistir.
 
 Peor que en los casos anteriores: la deuda había viajado como un `CREATE TABLE` suelto en
-`mantra-core-health-api/tools/redesa/2026-08-15_c05_practitioner_affiliations.sql`. Eso hacía que
+`mantra-core-health-api/tools/alovida/2026-08-15_c05_practitioner_affiliations.sql`. Eso hacía que
 `check_ddl_sources.py` abortara el **paso 0/4 de `rebuild_stack.py`**, así que desde el 15/08
 **nadie del equipo podía reconstruir su stack** — justo el paso que el arranque semanal exige.
 
@@ -1428,7 +1428,7 @@ Se promovieron al modelo **2 tablas**, **1 columna** y **2 índices únicos parc
 | `ux_authentication_credentials_live_password_subject` | 01 | `2026-07-31_credentials_external_subject_unique.sql` |
 | `uq_medication_requests_issue_idempotency_key` | 08 | `2026-07-28_prescription_issue_idempotency.sql` |
 
-Reglas REDESA que las sostienen: CAN-IDENT, CAN §6 (MISSING_IDEMPOTENCY).
+Reglas ALOVIDA que las sostienen: CAN-IDENT, CAN §6 (MISSING_IDEMPOTENCY).
 
 `ux_authentication_credentials_live_password_subject` es **el primer índice del modelo con
 `concept_id` como UUID literales**. Es una excepción consciente a la regla de no hardcodear
@@ -1496,7 +1496,7 @@ sustituye está en [`ddl-sources.md`](ddl-sources.md) y en
 > `ORM_SCHEMA_SYNC=off` es inocuo, pero es deuda con tarjeta propia: hay que decidir qué
 > nomenclatura manda y alinear los dos generadores.
 
-### v4.0.8 — Promoción de las reglas REDESA al modelo canónico (2026-07-30)
+### v4.0.8 — Promoción de las reglas ALOVIDA al modelo canónico (2026-07-30)
 
 El merge de `dev` en `mantra-core-health-api` había introducido DDL propio en
 `mantra-core-health-api/database/SQL/` (6 migraciones + 1 política RLS + 1 seed), fuera de los
@@ -1509,7 +1509,7 @@ prohibida por el protocolo de 4 capas.
 
 Se promovieron al modelo **5 tablas** y **11 columnas**:
 
-| Tabla nueva | Módulo | Regla REDESA |
+| Tabla nueva | Módulo | Regla ALOVIDA |
 |---|---|---|
 | `authz.care_relationships` | 06 | CAN-AUTH-001, C-06, C-07, A-03 |
 | `authz.patient_legal_representations` | 06 | CAN-AUTH-001, C-06, C-07, A-03 |
@@ -1533,7 +1533,7 @@ viven ahora en `SQL/patches/` (`2026-07-30_tenant_rls.sql`,
 `2026-07-30_vademecum_dev_seed.sql`), fuera de `apply_all.sql`, porque no se derivan de los
 `.puml` ni los consume `load_seeds.py` (que solo lee `*.seeds.json`).
 
-### Seeds v4.0.8 — las 5 tablas REDESA pobladas, D-05 deja de ser fail-open (2026-08-05)
+### Seeds v4.0.8 — las 5 tablas ALOVIDA pobladas, D-05 deja de ser fail-open (2026-08-05)
 
 `gen_seeds.py` pasó a revisión **`2.3.0-v4.0.9`** (`SOURCE_MODEL_VERSION = "4.0.8"`;
 `MODEL_VERSION = "4.0.7"` queda intacto: entra en la derivación uuid5 de todas las filas ya

@@ -93,7 +93,7 @@ entity coordination_of_benefits <<VERSIONED, REFERENCE_ONLY>> {
   EXCLUDE : overlapping active COB periods
 }
 
-' + v4.0.10 (REDESA CAN-AUDIT-001 / C-19) — WORM real sobre la auditoria.
+' + v4.0.10 (ALOVIDA CAN-AUDIT-001 / C-19) — WORM real sobre la auditoria.
 ' "Los registros de auditoria no podran modificarse ni eliminarse". La cadena hash
 ' de audit_log da tamper-EVIDENCE (se detecta al verificar); estos guards dan
 ' tamper-RESISTANCE: la base rechaza la mutacion sea cual sea el rol, incluido el
