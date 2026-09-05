@@ -240,7 +240,11 @@ entity practitioner_affiliations {
   ' por parecido de nombre —se probó: «Hospital Obrero N.º 1» da 9 candidatos y
   ' dos de las tres filas vivas son de La Paz—; se llena hacia adelante.
     health_facility_concept_id : uuid <<FK>>
-  * role_title : varchar
+  ' v4.2.6 — deja de ser obligatorio (ALV-007): un vinculo de "atiende en su
+  ' propio consultorio" no tiene cargo dentro de una jerarquia, y exigirlo
+  ' bloqueaba el guardado. Si existe, se usa en perfil/trayectoria; vacio no
+  ' dibuja hueco.
+    role_title : varchar
     department_text : varchar
     affiliation_type_concept_id : uuid <<FK>>
   * start_date : date
