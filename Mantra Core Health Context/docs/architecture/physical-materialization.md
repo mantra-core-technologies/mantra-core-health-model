@@ -445,6 +445,25 @@ contenido y código, no esquema.
 front 48/48 del formulario y 3 850/3 853 de la suite completa (los 3 rojos son preexistentes de
 `dev`, reproducidos con los cambios guardados). Sin base viva: no se ejercitó contra Postgres.
 
+### v4.2.6 — `role_title` deja de ser obligatorio en `practitioner_affiliations` (2026-09-05)
+
+ALV-007 del backlog de correcciones AloVida: un vínculo de "atiende en su propio consultorio" no
+tiene cargo dentro de una jerarquía, y exigirlo bloqueaba el guardado de la afiliación. `.puml` de
+05 profiles → `gen_ddl.py 05` (diff de una línea en `SQL/05_profiles/02_tables.sql`) → patch
+`SQL/patches/2026-09-05_v426_practitioner_affiliations_role_title_nullable.sql`
+(`ALTER COLUMN role_title DROP NOT NULL`, idempotente, sin backfill).
+
+**Efecto lateral documentado, no corregido acá:** los dos índices únicos parciales de la tabla
+incluyen `role_title` en la tupla; con la columna nullable, dos filas sin cargo en la misma
+institución el mismo día ya no chocan contra el `UX` — sólo el `409` del servicio las detiene. Es
+una deuda conocida de esta versión, no una omisión: ALV-007 no pedía tocar los índices.
+
+**Verificado**: `check_ddl_sources.py` PASS (única divergencia preexistente: la copia vendida de
+`database/SQL` en el repo de la API, desfasada desde el merge de v4.2.5 — `yarn db:vendor` no corre
+en Windows). Contra NeonDB: `information_schema.columns.is_nullable` de `role_title` pasó de `NO`
+a `YES`. Sin ejercitar aún el `POST /profiles/practitioners/me/affiliations` sin `roleTitle` — eso
+lo cierra el carril de API/front de ALV-007.
+
 ### v4.2.2 — El respiro de la franja, el código por sede y el permiso por turno (2026-08-27)
 
 Tres cambios chicos con una historia común: **ejecutan decisiones que otro tomó**. Justin
