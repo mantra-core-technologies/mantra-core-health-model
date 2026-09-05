@@ -36,6 +36,10 @@ API_ENV_FILE = paths.API_ENV_FILE
 
 BATCH_SIZE = 5000          # seedsProd/load-plan.json batch_size
 MAX_TX_ATTEMPTS = 3        # seedsProd/load-plan.json retry_policy.max_attempts
+# Cortes de transporte (OperationalError sin sqlstate): un Postgres gestionado por internet
+# cierra conexiones largas sin avisar. Como un módulo = una transacción y --refresh es
+# idempotente, se reconecta y se repite el módulo entero.
+CONNECTION_LOST_ATTEMPTS = 3
 RETRYABLE_SQLSTATES = {"40001", "40P01"}
 VECTOR_DIMENSIONS = 1536   # vector_rag.vector_embeddings.embedding vector(1536)
 
@@ -93,11 +97,31 @@ def connect_pg(cfg):
     conn = psycopg.connect(
         host=cfg["POSTGRES_HOST"], port=cfg["POSTGRES_PORT"], user=cfg["POSTGRES_USER"],
         password=cfg["POSTGRES_PASSWORD"], dbname=cfg["POSTGRES_DB"],
+        # Un Postgres gestionado accedido por internet (no la red del compose) puede cortar
+        # una conexión de larga duración en silencio -NAT, balanceador, el propio proveedor-;
+        # sin keepalives el cliente no lo nota hasta el próximo statement, que revienta con
+        # "the connection is closed" en el peor momento: a mitad de una carga de 60+ módulos.
+        keepalives=1, keepalives_idle=30, keepalives_interval=10, keepalives_count=3,
+        # `POSTGRES_HOST` puede apuntar al pooler de un Postgres gestionado (PgBouncer en modo
+        # transacción): rota de backend real entre transacciones, y psycopg re-prepara una
+        # sentencia repetida a partir de la 5ª ejecución (autoprepare) contra el backend que
+        # tenía en ESE momento. La siguiente vez que el pooler asigna otro backend, ese
+        # `PREPARE` no existe ahí y la sentencia falla con "prepared statement ... does not
+        # exist". Server side binding puro: consulta simple, sin PREPARE.
+        prepare_threshold=None,
     )
     # Las 6k FKs cross-módulo impiden un orden topológico entre módulos: se carga con
     # enforcement deshabilitado y se verifican huérfanos al final (load-plan: verify_foreign_keys).
-    conn.execute("SET session_replication_role = replica")
-    conn.commit()
+    # Un Postgres gestionado (Neon, RDS) niega este SET al no ser superusuario: ahí el camino
+    # es aplicar el DDL SIN los archivos de FK (03_fk_intra / 90_fk_deferred), cargar, y
+    # crear las FKs después — que rechazan cualquier huérfano al validarse.
+    try:
+        conn.execute("SET session_replication_role = replica")
+        conn.commit()
+    except psycopg.errors.InsufficientPrivilege:
+        conn.rollback()
+        print("    AVISO: sin permiso para SET session_replication_role — se carga con las FKs que "
+              "existan; aplicá 03_fk_intra/90_fk_deferred DESPUÉS de esta carga")
     return conn
 
 
@@ -307,6 +331,8 @@ def load_module_phase(conn, path, phase, report, refresh=False):
                     inserted, existing, skipped = insert_records(
                         conn, *resolved, records, report, refresh)
             except psycopg.errors.Error as exc:
+                if exc.sqlstate is None:   # corte de transporte: el módulo se repite desde afuera
+                    raise
                 report.warn(f"{resolved[0]}.{entity}: {exc.sqlstate} {exc}".splitlines()[0])
                 continue
             report.add("pg", f"{resolved[0]}.{entity}", inserted, existing,
@@ -315,15 +341,29 @@ def load_module_phase(conn, path, phase, report, refresh=False):
     run_module_transaction(conn, load_entities)
 
 
-def load_generales_pg(conn, phase, report, only=None, refresh=False):
+def load_generales_pg(conn, phase, report, only=None, refresh=False, cfg=None):
+    """Devuelve la conexión vigente: puede ser otra si hubo que reconectar (cfg requerido)."""
     files = module_files(only)
     skip_pg = {MONGO_MODULE, REDIS_MODULE, OPENSEARCH_MODULE}
     ordered = [f for f in files if f.name.startswith("03_")] + \
               [f for f in files if not f.name.startswith("03_")]
     for path in ordered:
         number, _ = module_number_and_schema(path)
-        if number not in skip_pg:
-            load_module_phase(conn, path, phase, report, refresh)
+        if number in skip_pg:
+            continue
+        for attempt in range(1, CONNECTION_LOST_ATTEMPTS + 1):
+            try:
+                load_module_phase(conn, path, phase, report, refresh)
+                break
+            except psycopg.OperationalError as exc:
+                lost = exc.sqlstate is None
+                if not lost or cfg is None or attempt == CONNECTION_LOST_ATTEMPTS:
+                    raise
+                print(f"    conexión perdida en {path.stem}/{phase} "
+                      f"({str(exc).strip().splitlines()[0]}) — reconectando, intento {attempt}")
+                conn.close()
+                conn = connect_pg(cfg)
+    return conn
 
 
 # ----------------------------------------------------------------- seedsProd (PG, módulo 03)
@@ -518,6 +558,10 @@ def parse_args():
     parser.add_argument("--skip-prod", action="store_true", help="omite el corpus MeSH")
     parser.add_argument("--skip-mock", action="store_true", help="solo boot")
     parser.add_argument("--only", metavar="NN", help="limita seedsGenerales a un módulo")
+    parser.add_argument("--skip-opensearch", action="store_true",
+                        help="omite el 57 (OpenSearch): para cargar solo las bases en la nube")
+    parser.add_argument("--skip-redis", action="store_true",
+                        help="omite el 56 (Redis): para cargar solo las bases en la nube")
     parser.add_argument("--refresh", action="store_true",
                         help="el paquete manda: actualiza por PK las filas ya cargadas "
                              "(sirve para propagar correcciones del generador de seeds)")
@@ -539,14 +583,16 @@ def main():
     conn = connect_pg(cfg)
     try:
         ensure_enum_values(conn, report, args.only)
-        load_generales_pg(conn, "boot", report, args.only, args.refresh)
+        conn = load_generales_pg(conn, "boot", report, args.only, args.refresh, cfg)
         if not args.skip_prod:
             load_seeds_prod(conn, report)
-        load_opensearch(cfg, report, include_mock=not args.skip_mock, only=args.only)
+        if not args.skip_opensearch:
+            load_opensearch(cfg, report, include_mock=not args.skip_mock, only=args.only)
         if not args.skip_mock:
-            load_generales_pg(conn, "mock", report, args.only, args.refresh)
+            conn = load_generales_pg(conn, "mock", report, args.only, args.refresh, cfg)
             load_mongo(cfg, report, args.only)
-            load_redis(cfg, report, args.only)
+            if not args.skip_redis:
+                load_redis(cfg, report, args.only)
         verify_foreign_keys(conn, report)
         analyze_tables(conn)
     finally:

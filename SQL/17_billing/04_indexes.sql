@@ -88,6 +88,8 @@ CREATE INDEX IF NOT EXISTS "ix_dunning_items_status_overdue" ON "billing"."dunni
 
 CREATE INDEX IF NOT EXISTS "ix_service_catalog_practice_id" ON "billing"."service_catalog" ("practice_id");
 
+CREATE INDEX IF NOT EXISTS "ix_service_catalog_image_file_id" ON "billing"."service_catalog" ("image_file_id");
+
 CREATE INDEX IF NOT EXISTS "ix_service_catalog_service_concept_id" ON "billing"."service_catalog" ("service_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_service_catalog_currency_concept_id" ON "billing"."service_catalog" ("currency_concept_id");
