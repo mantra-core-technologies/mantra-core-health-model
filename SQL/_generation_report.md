@@ -21,7 +21,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 14 | practice | 11 | 80 | 0 | 84 | 0 |
 | 15 | chart | 11 | 70 | 0 | 80 | 1 |
 | 16 | accounting | 42 | 304 | 1 | 356 | 13 |
-| 17 | billing | 20 | 140 | 0 | 156 | 17 |
+| 17 | billing | 20 | 141 | 0 | 157 | 17 |
 | 18 | clinical_ext | 13 | 91 | 0 | 101 | 1 |
 | 19 | community | 38 | 233 | 0 | 244 | 1 |
 | 20 | diagnostics | 36 | 251 | 0 | 301 | 0 |

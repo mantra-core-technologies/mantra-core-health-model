@@ -210,7 +210,7 @@ CREATE TABLE IF NOT EXISTS "profiles"."practitioner_affiliations" (
     "organization_name" varchar NOT NULL,
     "practice_site_id" uuid,
     "health_facility_concept_id" uuid,
-    "role_title" varchar NOT NULL,
+    "role_title" varchar,
     "department_text" varchar,
     "affiliation_type_concept_id" uuid,
     "start_date" date NOT NULL,
