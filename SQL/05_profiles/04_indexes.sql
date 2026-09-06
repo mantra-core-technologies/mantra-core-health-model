@@ -18,6 +18,8 @@ CREATE INDEX IF NOT EXISTS "ix_persons_preferred_language_concept_id" ON "profil
 
 CREATE INDEX IF NOT EXISTS "ix_persons_occupation_concept_id" ON "profiles"."persons" ("occupation_concept_id");
 
+CREATE INDEX IF NOT EXISTS "ix_persons_work_employer_concept_id" ON "profiles"."persons" ("work_employer_concept_id");
+
 CREATE INDEX IF NOT EXISTS "ix_persons_merge_survivor_person_id" ON "profiles"."persons" ("merge_survivor_person_id");
 
 CREATE INDEX IF NOT EXISTS "ix_persons_photo_file_id" ON "profiles"."persons" ("photo_file_id");

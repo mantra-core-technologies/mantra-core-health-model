@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS "profiles"."persons" (
     "preferred_language_concept_id" uuid,
     "occupation_concept_id" uuid,
     "occupation_free_text" varchar,
+    "work_employer_concept_id" uuid,
+    "work_employer_free_text" varchar,
     "merge_survivor_person_id" uuid,
     "anonymized_at" timestamptz,
     "created_at" timestamptz NOT NULL,
