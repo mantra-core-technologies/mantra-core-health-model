@@ -43,6 +43,18 @@ entity persons <<MASTER_IDENTITY>> {
   ' problema del módulo 64.
     occupation_concept_id : uuid <<FK>>
     occupation_free_text : varchar
+  ' + v4.2.7 — empresa donde trabaja (miembro de VS_BO_EMPLOYER), mismo patrón que
+  ' la ocupación de arriba: DOS columnas a propósito, el concepto gana cuando
+  ' vienen los dos. Reemplaza a la ubicación del trabajo en el alta: preguntar
+  ' municipio, calle y coordenadas del trabajo eran tres campos para un dato que
+  ' casi nadie completaba y que no agrupaba a nadie. El código de la API
+  ' (persons.entity.ts, commit a90f3207 "Seed VS_BO_EMPLOYER and accept the
+  ' employer on patient sign-up") ya las declaraba sin que este modelo las
+  ' tuviera — deriva ORM-por-delante-del-modelo detectada el 2026-09-06 al
+  ' romper el alta de paciente Y de profesional (persons.repository.ts es el
+  ' único punto de inserción de la tabla).
+    work_employer_concept_id : uuid <<FK>>
+    work_employer_free_text : varchar
     merge_survivor_person_id : uuid <<FK>>
     anonymized_at : timestamptz
   * created_at : timestamptz
@@ -425,6 +437,7 @@ entity "INDEXES · persons" as idxset_persons <<INDEX_SET>> {
   IX ix_persons_nationality_concept_id : (nationality_concept_id) BTREE
   IX ix_persons_preferred_language_concept_id : (preferred_language_concept_id) BTREE
   IX ix_persons_occupation_concept_id : (occupation_concept_id) BTREE
+  IX ix_persons_work_employer_concept_id : (work_employer_concept_id) BTREE
   IX ix_persons_merge_survivor_person_id : (merge_survivor_person_id) BTREE
   IX ix_persons_photo_file_id : (photo_file_id) BTREE
   IX ix_persons_created_by_user_id : (created_by_user_id) BTREE
