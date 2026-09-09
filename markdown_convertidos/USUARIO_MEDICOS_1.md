@@ -4,17 +4,17 @@
 
 | NUMERO | NOMBRE | NOMBRE 2 | APELLIDO PATERNO | APELLIDO MATERNO | FECHA NACIMIENTO | CEDULA IDENTIDAD | EMITIDO | NUMERO CELULAR | OCUPACION | ESPECIALIDAD | MATRICULA MINISTERIO DE SALUD Y DEPORTES | FECHA INSCRIPCION MATRICULA | REGISTRO COLEGIO ODONTOLOGOS | SEDES GOBERNACION SANTA CRUZ | FECHA INSCRIPCION SEDES | CORREO ELECTRONICO | DIRECCION |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | XIOMARA |  | CUELLAR | JUSTINIANO | 1987-07-15 | 5414404 | SC | 76610419 | CIRUJANO ODONTOLOGO | ESTETICA | C-1894 | 2012-10-03 | 2531 | T.I. 538/14 | 2014-01-27 | XIOMARACUELLAR.XCJ@GMAIL.COM | B. CURUPAU UV. 113 MZ. 16 SCZ |
-| 2 | WALTER | MAURICIO | ROSSELL | DESCARPONTRIEZ | 1972-08-19 | 1983826 | SC | 76655523 | CIRUJANO ODONTOLOGO |  | R-283 | 2000-05-19 |  |  |  | MAUROROSS77@GMAIL.COM | AV. ALEMANIA ENTRE 4TO Y 5TO ANILLO CALLE AUTONOMIA #26 |
-| 3 | CECILIA |  | RIVERO | SAAVEDRA | 1987-03-27 |  | SC | 75388887 | CIRUJANO ODONTOLOGO |  | R-1187 | 2012-10-03 |  | T.I. 392/13 | 2013-09-26 |  |  |
-| 4 | INGRID |  | GARCIA | MURILLO | 1988-03-19 | 7805119 | SC | 70984239 | CIRUJANO ODONTOLOGO | ENDODONCIA | G-1021 | 2012-10-23 | 2475 |  |  |  |  |
-| 5 | JAQUELINE |  | ALGARAÑAZ | RIVERO |  | 6252345 | SC |  | CIRUJANO ODONTOLOGO |  | A-6252345 | 2021-03-25 |  |  |  |  |  |
-| 6 | MIGUEL | ANGEL | GUZMAN |  | 2026-09-27 |  |  | 70029588 | CIRUJANO ODONTOLOGO |  | G-301 |  |  |  |  |  |  |
-| 7 | OLIVER |  | ROMAN | URGEL | 1981-07-11 | 5367236 | SC | 70822977 | CIRUJANO ODONTOLOGO | ORTODONCIA Y ORTOPEDIA | R-1070 |  |  |  |  | YOLOROMAN781@GMAIL.COM | CALLE PUERTO PACHECO #362 |
-| 8 | GERARDO | RAUL | PEREYRA | MOLINA | 1991-07-02 | 4601000 | SC | 71084856 | CIRUJANO ODONTOLOGO |  | P-4601000 |  | 4050 |  |  | PEREYRAMOLINAGERARDO@GMAIL.COM | SANTIAGO VACA GUZMAN ESQ. GENERAL FRANCO |
-| 9 | VIOLETA |  | SALEK | LEIGUE | 1989-04-06 |  | SC | 65021320 | CIRUJANO ODONTOLOGO |  |  |  |  |  |  |  |  |
-| 10 | SUSANA |  | VACAPEREIRA |  |  |  | SC | 76324455 | CIRUJANO ODONTOLOGO |  |  |  |  |  |  |  |  |
-| 11 | ROMEL |  | RIVERO | SAAVEDRA | 2026-05-19 |  | SC | 77048070 | CIRUJANO ODONTOLOGO |  |  |  |  |  |  |  |  |
+| 1 | Xiomara |  | Cuellar | Justiniano | 1987-07-15 | 5414404 | SC | 76610419 | CIRUJANO ODONTOLOGO | ESTETICA | C-1894 | 2012-10-03 | 2531 | T.I. 538/14 | 2014-01-27 | xiomaracuellar.xcj@gmail.com | B. CURUPAU UV. 113 MZ. 16 SCZ |
+| 2 | Walter | Mauricio | Rossell | Descarpontriez | 1972-08-19 | 1983826 | SC | 76655523 | CIRUJANO ODONTOLOGO |  | R-283 | 2000-05-19 |  |  |  | mauroross77@gmail.com | AV. ALEMANIA ENTRE 4TO Y 5TO ANILLO CALLE AUTONOMIA #26 |
+| 3 | Cecilia |  | Rivero | Saavedra | 1987-03-27 |  | SC | 75388887 | CIRUJANO ODONTOLOGO |  | R-1187 | 2012-10-03 |  | T.I. 392/13 | 2013-09-26 |  |  |
+| 4 | Ingrid |  | Garcia | Murillo | 1988-03-19 | 7805119 | SC | 70984239 | CIRUJANO ODONTOLOGO | ENDODONCIA | G-1021 | 2012-10-23 | 2475 |  |  |  |  |
+| 5 | Jaqueline |  | Algarañaz | Rivero |  | 6252345 | SC |  | CIRUJANO ODONTOLOGO |  | A-6252345 | 2021-03-25 |  |  |  |  |  |
+| 6 | Miguel | Angel | Guzman |  | 2026-09-27 |  |  | 70029588 | CIRUJANO ODONTOLOGO |  | G-301 |  |  |  |  |  |  |
+| 7 | Oliver |  | Roman | Urgel | 1981-07-11 | 5367236 | SC | 70822977 | CIRUJANO ODONTOLOGO | ORTODONCIA Y ORTOPEDIA | R-1070 |  |  |  |  | yoloroman781@gmail.com | CALLE PUERTO PACHECO #362 |
+| 8 | Gerardo | Raul | Pereyra | Molina | 1991-07-02 | 4601000 | SC | 71084856 | CIRUJANO ODONTOLOGO |  | P-4601000 |  | 4050 |  |  | pereyramolinagerardo@gmail.com | SANTIAGO VACA GUZMAN ESQ. GENERAL FRANCO |
+| 9 | Violeta |  | Salek | Leigue | 1989-04-06 |  | SC | 65021320 | CIRUJANO ODONTOLOGO |  |  |  |  |  |  |  |  |
+| 10 | Susana |  | Vacapereira |  |  |  | SC | 76324455 | CIRUJANO ODONTOLOGO |  |  |  |  |  |  |  |  |
+| 11 | Romel |  | Rivero | Saavedra | 2026-05-19 |  | SC | 77048070 | CIRUJANO ODONTOLOGO |  |  |  |  |  |  |  |  |
 | 12 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 13 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 14 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
@@ -22,8 +22,8 @@
 | 16 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 17 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 18 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| 19 | ROBERTH | ENZO | CONFESSORI | SANDOVAL | 1985-01-02 | 5597722 | BN | 75373373 | MEDICO CIRUJANO | ORTOPEDIA Y TRAUMATOLOGIA | C-2825 | 40476 |  | M15-3377 | 42081 |  |  |
-| 20 | JOSE | LUIS | DAGA | JORDAN |  |  | SC | 70829559 | MEDICO CIRUJANO |  |  |  |  |  |  |  |  |
+| 19 | Roberth | Enzo | Confessori | Sandoval | 1985-01-02 | 5597722 | BN | 75373373 | MEDICO CIRUJANO | ORTOPEDIA Y TRAUMATOLOGIA | C-2825 | 40476 |  | M15-3377 | 42081 |  |  |
+| 20 | Jose | Luis | Daga | Jordan |  |  | SC | 70829559 | MEDICO CIRUJANO |  |  |  |  |  |  |  |  |
 | 21 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 22 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | 23 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |

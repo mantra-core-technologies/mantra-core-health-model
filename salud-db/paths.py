@@ -41,6 +41,9 @@ SEEDS_DIR = MODEL_ROOT / "seedsGenerales"
 SEEDS_MODULES_DIR = SEEDS_DIR / "modules"
 SEEDS_PROD_DIR = MODEL_ROOT / "seedsProd"
 DATA_DIR = MODEL_ROOT / "salud-db" / "data"
+# Los padrones del stakeholder, ya pasados de planilla a tabla markdown. Son
+# fuente de dos consumidores de la API: `load_people.py` y `extract_datasets.py`.
+PADRONES_DIR = MODEL_ROOT / "markdown_convertidos"
 
 # --- Fuera: repositorios hermanos -------------------------------------------
 VAULT_REPO = WORKSPACE / "Mantra Core Health Vault"
