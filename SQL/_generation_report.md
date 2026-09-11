@@ -21,7 +21,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 14 | practice | 11 | 80 | 0 | 84 | 0 |
 | 15 | chart | 11 | 70 | 0 | 80 | 1 |
 | 16 | accounting | 42 | 304 | 1 | 356 | 13 |
-| 17 | billing | 20 | 141 | 0 | 157 | 17 |
+| 17 | billing | 22 | 150 | 0 | 167 | 17 |
 | 18 | clinical_ext | 13 | 91 | 0 | 101 | 1 |
 | 19 | community | 38 | 233 | 0 | 244 | 1 |
 | 20 | diagnostics | 36 | 251 | 0 | 301 | 0 |
@@ -29,7 +29,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 22 | organization_extensions | 5 | 49 | 0 | 55 | 0 |
 | 23 | diagnostic_units | 10 | 69 | 0 | 77 | 0 |
 | 24 | pharmacy | 9 | 64 | 0 | 72 | 0 |
-| 25 | pharmacy_inventory | 20 | 141 | 0 | 154 | 6 |
+| 25 | pharmacy_inventory | 20 | 142 | 0 | 154 | 6 |
 | 26 | insurance | 29 | 187 | 0 | 206 | 0 |
 | 27 | identity_assurance | 11 | 69 | 0 | 76 | 0 |
 | 28 | telemetry | 14 | 73 | 0 | 83 | 0 |
@@ -70,7 +70,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 63 | lakehouse | 18 | 0 | 0 | 42 | 4 |
 | 64 | audio_assets | 4 | 1 | 0 | 10 | 0 |
 | 65 | surveys | 7 | 36 | 35 | 17 | 0 |
-| **Σ** | **64** | **1169** | | **82** | | **292** |
+| **Σ** | **64** | **1171** | | **82** | | **292** |
 
 ## Detalle de entidades saltadas y avisos
 
