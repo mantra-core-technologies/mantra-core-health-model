@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "Multi-channel marketing on top of the CRM (module 49), the messaging fabric (module 35) and the loyalty/promotions engine (module 51). Defines audience segments, marketing campaigns and their members, multi-step journeys/flows with triggers and waits, reusable content templates, trackable UTM links, and multi-touch attribution. Ties campaigns to paid advertising (module 43 ads) and to promotions so spend, reach and conversions are measurable end to end. Consent-gated; no clinical PHI is used for targeting.",
-    "seed_revision": "2.5.0-v4.1.4"
+    "seed_revision": "2.5.1-v4.1.4"
   },
   "environment_policy": {
     "boot": {

@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "Contains only reconstructable or explicitly ephemeral state: sessions, challenges, rate limits, locks, caches, presence, job progress and consumer deduplication. Redis is never the sole source for clinical records, balances, stock, contracts, consent evidence or audit history.",
-    "seed_revision": "2.5.0-v4.1.4"
+    "seed_revision": "2.5.1-v4.1.4"
   },
   "environment_policy": {
     "boot": {

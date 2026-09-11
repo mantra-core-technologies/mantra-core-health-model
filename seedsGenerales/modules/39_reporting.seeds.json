@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "A configuration-driven reporting engine so the application supports dynamic reports without code changes. Report definitions declare a governed dataset, parameters, columns and output formats; versions are tracked; schedules and subscriptions drive automated execution and distribution; executions capture parameters, row counts and the produced file; dashboards compose reports into visual surfaces. Reads only from governed read models (module 30) — never grants authority.",
-    "seed_revision": "2.5.0-v4.1.4"
+    "seed_revision": "2.5.1-v4.1.4"
   },
   "environment_policy": {
     "boot": {
