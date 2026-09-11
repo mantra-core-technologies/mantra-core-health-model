@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "Prevents overselling and untraceable adjustments under concurrent manual, API, dispensing and receiving operations. The immutable ledger is the source of truth; stock positions are transactional projections optimized for reads.",
-    "seed_revision": "2.5.1-v4.1.4"
+    "seed_revision": "2.5.2-v4.1.4"
   },
   "environment_policy": {
     "boot": {

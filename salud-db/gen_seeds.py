@@ -70,7 +70,7 @@ VAULT = paths.VAULT
 MODEL_VERSION = "4.0.7"
 SOURCE_MODEL_VERSION = "4.0.9"
 RELEASE_LABEL = "4.0.9"
-SEED_REVISION = "2.5.1-v4.1.4"
+SEED_REVISION = "2.5.2-v4.1.4"
 # Namespace uuid5 por patch, misma regla que MODEL_VERSION: identifica las filas de las
 # 5 tablas ALOVIDA ya sembradas. v4.0.9 no añade uno propio porque no trae tablas que
 # sembrar — `iam.email_verifications` y `iam.password_resets` guardan tokens de runtime
@@ -263,6 +263,14 @@ VS_DISPLAY = {
     },
     "vs_issuing_authority": {
         "sedes": "SEDES",
+    },
+    # Subtarea 1.4 (2026-09-11): las dos gerencias de contacto que el registro de
+    # procesos pide junto al representante legal (ASEGURADORA 1.9-1.17). El conjunto
+    # sólo nombraba la general; `titleize()` daría "Gerente Marketing", y el rótulo
+    # del dominio lleva la preposición.
+    "vs_legal_representative_role": {
+        "gerente_comercial": "Gerente Comercial",
+        "gerente_marketing": "Gerente de Marketing",
     },
 }
 
