@@ -48,6 +48,9 @@
 --                                     created_by_practitioner_profile_id,
 --                                     currency_concept_id, status_concept_id,
 --                                     created_by_user_id, updated_by_user_id)
+--   FK que ENTRA a billing       +1  (pharmacy_inventory.inventory_reservations
+--                                      .quotation_id, que estaba sin destino
+--                                      hasta que existió billing.quotations)
 --   índices                      +10 (9 en quotations + 1 en quotation_installments,
 --                                      sin contar las 2 PK que ya cuenta CREATE TABLE)
 -- ============================================================================
@@ -162,6 +165,21 @@ DO $$ BEGIN
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- La décima FK NO es de billing: es la que billing DESBLOQUEA.
+-- `pharmacy_inventory.inventory_reservations.quotation_id` estaba sin destino
+-- desde el 2026-07-21 —apuntaba a `pharmacy_inventory.purchase_quotations`, que
+-- no existe en el modelo— y `gen_ddl.py` no la forzaba. Con `billing.quotations`
+-- creada, el destino existe y es el correcto: una reserva de inventario se hace
+-- contra una cotización. Queda declarada en la nota del vault, así que el
+-- generador ya la emite en `SQL/25_pharmacy_inventory/90_fk_deferred.sql` para
+-- una base nueva; acá va para que una base VIVA no quede sin ella, que es como
+-- las dos rutas dejan de coincidir.
+DO $$ BEGIN
+    ALTER TABLE "pharmacy_inventory"."inventory_reservations"
+        ADD CONSTRAINT "fk_inventory_reservations_quotation_id" FOREIGN KEY ("quotation_id")
+        REFERENCES "billing"."quotations" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 -- ------------------------------------------------------------ D. verificación
 -- Corré esto DENTRO de la transacción, antes del COMMIT. Las cuatro consultas
 -- tienen que devolver lo que dice su comentario; si no, hacé ROLLBACK.
@@ -178,7 +196,7 @@ BEGIN
     WHERE table_schema = 'billing'
       AND table_name IN ('quotations', 'quotation_installments');
 
-    -- 9: las nueve FK nuevas existen y están validadas (no `NOT VALID`).
+    -- 10: las diez FK nuevas existen y están validadas (no `NOT VALID`).
     SELECT count(*) INTO n_fk
     FROM pg_constraint
     WHERE conname IN (
@@ -186,7 +204,8 @@ BEGIN
         'fk_quotations_practice_id', 'fk_quotations_patient_profile_id',
         'fk_quotations_created_by_practitioner_profile_id',
         'fk_quotations_currency_concept_id', 'fk_quotations_status_concept_id',
-        'fk_quotations_created_by_user_id', 'fk_quotations_updated_by_user_id'
+        'fk_quotations_created_by_user_id', 'fk_quotations_updated_by_user_id',
+        'fk_inventory_reservations_quotation_id'
     ) AND convalidated;
 
     -- 10: los diez índices nuevos existen.
@@ -200,13 +219,13 @@ BEGIN
     FROM pg_constraint
     WHERE conname = 'ck_quotations_interest_calculation_method';
 
-    IF n_tablas <> 2 OR n_fk <> 9 OR n_indices <> 10 OR n_check <> 1 THEN
+    IF n_tablas <> 2 OR n_fk <> 10 OR n_indices <> 10 OR n_check <> 1 THEN
         RAISE EXCEPTION
-            'v4.2.8 incompleto: tablas=% (esperado 2), fk=% (esperado 9), indices=% (esperado 10), check=% (esperado 1)',
+            'v4.2.8 incompleto: tablas=% (esperado 2), fk=% (esperado 10), indices=% (esperado 10), check=% (esperado 1)',
             n_tablas, n_fk, n_indices, n_check;
     END IF;
 
-    RAISE NOTICE 'v4.2.8 aplicado: 2 tablas, 9 FK validadas, 10 índices, 1 CHECK.';
+    RAISE NOTICE 'v4.2.8 aplicado: 2 tablas, 10 FK validadas, 10 índices, 1 CHECK.';
 END $$;
 
 COMMIT;

@@ -591,6 +591,24 @@ hay fila viva de cotización que sembrar) y +1 columna `*_concept_id` sin bindin
 que la copia vendida vuelva a coincidir con el modelo) y la corrida E2E de T24 contra un stack
 con las tablas — los coordina Ender, no son parte de esta pasada de modelo.
 
+**Una décima FK, posterior a esa verificación (2026-09-11).** Crear `billing.quotations`
+desbloqueó una FK huérfana de otro módulo: `pharmacy_inventory.inventory_reservations
+.quotation_id` apuntaba desde el 2026-07-21 a `pharmacy_inventory.purchase_quotations`, que no
+existe en el modelo, y `gen_ddl.py` no la forzaba (temperatura-0). Con el destino real
+disponible, la nota del vault lo declara y el generador la emite en
+`SQL/25_pharmacy_inventory/90_fk_deferred.sql`; el módulo 25 pasa a **0 FK inferidas por
+convención**. La base viva NO la tiene —los conteos de arriba son de antes—, así que el patch
+v4.2.8 la incorpora y su bloque de verificación ahora cuenta **diez** FK, no nueve. Aplicarlo de
+nuevo es seguro: es idempotente.
+
+**Fidelidad `.puml` → `SQL/` comprobada regenerando (2026-09-11):** `gen_ddl.py all` sobre los
+64 módulos dejó el árbol idéntico salvo los dos archivos esperados (la FK de farmacia y el
+reporte). `SQL/17_billing/` no cambió ni un byte. Deltas del reporte: billing 20→22 tablas,
+141→150 FK, 157→167 índices; total 1 169 → **1 171** tablas, FK inferidas **82, sin moverse**.
+Nota operativa: `gen_ddl.py NN` de a un módulo **reescribe el reporte con ese módulo solo** (así
+llegó truncado al árbol esta vez, de 446 líneas a 29); después de tocar un módulo hay que
+regenerar con `all`.
+
 ### v4.2.6 — `role_title` deja de ser obligatorio en `practitioner_affiliations` (2026-09-05)
 
 ALV-007 del backlog de correcciones AloVida: un vínculo de "atiende en su propio consultorio" no
