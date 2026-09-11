@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "Connects laboratory and imaging workflows to the patient chart while the heavy binary content remains in PACS/VNA or governed object storage. Supports one report with many result observations, specimens, images and attachments instead of a single file link.",
-    "seed_revision": "2.5.0-v4.1.4"
+    "seed_revision": "2.5.1-v4.1.4"
   },
   "environment_policy": {
     "boot": {

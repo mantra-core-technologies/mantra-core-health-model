@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "Generic, provider-adaptable federated login and user provisioning. Registers identity providers (OIDC, SAML 2.0, OAuth2, social, enterprise) with their protocol configuration and signing keys, binds them per tenant with auto-provisioning rules, maps external claims to platform attributes, links external subjects to platform users, and records every login attempt for security. Extends iam (authentication_credentials.identity_provider) into a first-class, configurable federation layer; distinct from module 27 identity_assurance (proofing/IAL/AAL).",
-    "seed_revision": "2.5.0-v4.1.4"
+    "seed_revision": "2.5.1-v4.1.4"
   },
   "environment_policy": {
     "boot": {

@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "Stores governed embeddings and retrieval evidence for protocols, policies, education, support and carefully approved clinical contexts. Embeddings are derived data. Source documents, consent, access policies and deletion propagation remain authoritative elsewhere.",
-    "seed_revision": "2.5.0-v4.1.4"
+    "seed_revision": "2.5.1-v4.1.4"
   },
   "environment_policy": {
     "boot": {

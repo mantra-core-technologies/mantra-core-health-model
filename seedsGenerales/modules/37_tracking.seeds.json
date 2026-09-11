@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "Business-level tracking of anything that moves or progresses: pharmacy deliveries, lab specimen transport, ambulance dispatch, referral fulfilment, claim processing. Provides a generic trackable subject with a tracking number, a status timeline of milestones, carrier/handoff records, ETA estimates and proof-of-delivery. Consumes raw GPS from module 13 (geo) but adds the business meaning geo does not carry.",
-    "seed_revision": "2.5.0-v4.1.4"
+    "seed_revision": "2.5.1-v4.1.4"
   },
   "environment_policy": {
     "boot": {

@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "Separates raw, standardized, curated and research-ready data while preserving lineage, quality contracts, de-identification and controlled release. Operational databases are not queried as an ad hoc warehouse; transformations are explicit, versioned and reproducible.",
-    "seed_revision": "2.5.0-v4.1.4"
+    "seed_revision": "2.5.1-v4.1.4"
   },
   "environment_policy": {
     "boot": {

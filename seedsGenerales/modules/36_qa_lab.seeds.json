@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "A governed quality-assurance laboratory for the platform's integrations and critical workflows. Stores reusable test suites and cases, executable runs against named environments, per-case results, and — crucially — the exact request payloads SENT and response payloads RECEIVED for every step, so any integration failure can be reproduced, audited and diffed against the contract in module 12/31.",
-    "seed_revision": "2.5.0-v4.1.4"
+    "seed_revision": "2.5.1-v4.1.4"
   },
   "environment_policy": {
     "boot": {
