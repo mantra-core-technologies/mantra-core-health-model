@@ -458,6 +458,53 @@ entity dunning_items {
   * created_at : timestamptz
 }
 
+' + v4.2.8 (T24, FT-24) — la cotización que un profesional le ofrece a un
+' paciente antes de la atención: servicio del catálogo, precio ofrecido y un
+' plan de pagos simulado (tasa, plazo, método). Declara lo que ya está
+' mergeado en `dev` de la API (commit 6d6b95df, PR #345) — esta pasada
+' transcribe, no diseña.
+entity quotations {
+  * id : uuid <<PK>>
+  --
+  * practice_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+  * created_by_practitioner_profile_id : uuid <<FK>>
+  * attention_date : date
+  ' Sin <<FK>> a propósito: no tiene destino canónico en lo mergeado (evita un
+  ' anillo scheduling↔billing). Ver la nota FK homónima en gen_ddl.py — queda
+  ' sin forzar, temperatura-0.
+  appointment_id : uuid
+  * service_catalog_id : uuid <<FK>>
+  * service_name_snapshot : varchar
+  * offered_price : numeric
+  currency_concept_id : uuid <<FK>>
+  * payment_plan_installment_count : integer
+  * interest_rate_percent : numeric
+  * interest_calculation_method : varchar
+  * valid_until : date
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' + v4.2.8 (T24) — cada cuota del plan de pagos, congelada al cotizar.
+entity quotation_installments {
+  * id : uuid <<PK>>
+  --
+  * quotation_id : uuid <<FK>>
+  * installment_number : integer
+  * due_date : date
+  * principal_amount : numeric
+  * interest_amount : numeric
+  * total_amount : numeric
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  * row_version : integer
+}
+
 
 erp_business_partners |o--o{ vendors
 accounting_subledger_accounts |o--o{ vendors
@@ -492,6 +539,8 @@ accounting_clearing_items |o--o{ payable_payment_allocations
 dunning_runs ||--o{ dunning_items
 invoices ||--o{ dunning_items
 erp_business_partners |o--o{ dunning_items
+service_catalog ||--o{ quotations
+quotations ||--o{ quotation_installments
 
 note as BILLING_CLEARING_MODEL
   Payments are no longer constrained to one invoice/bill. Allocation tables support
@@ -572,6 +621,28 @@ entity "INDEXES · dunning_items" as idxset_dunning_items <<INDEX_SET>> {
 }
 
 dunning_items .. idxset_dunning_items : indexed by
+
+entity "INDEXES · quotations" as idxset_quotations <<INDEX_SET>> {
+  PK pk_quotations : (id) UNIQUE BTREE
+  IX ix_quotations_practice_id : (practice_id) BTREE
+  IX ix_quotations_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_quotations_created_by_practitioner_profile_id : (created_by_practitioner_profile_id) BTREE
+  IX ix_quotations_appointment_id : (appointment_id) BTREE
+  IX ix_quotations_service_catalog_id : (service_catalog_id) BTREE
+  IX ix_quotations_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_quotations_status_concept_id : (status_concept_id) BTREE
+  IX ix_quotations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_quotations_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+quotations .. idxset_quotations : indexed by
+
+entity "INDEXES · quotation_installments" as idxset_quotation_installments <<INDEX_SET>> {
+  PK pk_quotation_installments : (id) UNIQUE BTREE
+  IX ix_quotation_installments_quotation_id : (quotation_id) BTREE
+}
+
+quotation_installments .. idxset_quotation_installments : indexed by
 
 entity "INDEXES · service_catalog" as idxset_service_catalog <<INDEX_SET>> {
   PK pk_service_catalog : (id) UNIQUE BTREE
