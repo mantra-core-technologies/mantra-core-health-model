@@ -445,6 +445,22 @@ contenido y código, no esquema.
 front 48/48 del formulario y 3 850/3 853 de la suite completa (los 3 rojos son preexistentes de
 `dev`, reproducidos con los cambios guardados). Sin base viva: no se ejercitó contra Postgres.
 
+### Certificado del SEDES en los documentos de afiliación (2026-09-10) — SIN cambio de esquema · seeds 2.5.1
+
+Subtarea 1.2: `directory.tenant_affiliation_documents` ya estaba completa desde v4.0.3 en las 4
+capas; faltaba sólo contenido de catálogo. `vs_affiliation_document_type` gana
+`certificado_sedes` (ordinal 8) y `vs_issuing_authority` gana `sedes` (ordinal 7), ambos al
+final de sus listas en la nota de la bóveda. Regenerado con `python salud-db/gen_seeds.py`
+(diff acotado a `03_terminology.seeds.json` y `45_system_context.seeds.json`) y cargado a Neon
+con `load_seeds.py --refresh --only 03` / `--only 45`: 0 huérfanos, los dos conceptos vivos y
+en el ordinal esperado de la versión por defecto de cada value set.
+
+**Ojo (destapado acá):** regenerar el paquete en limpio, sin este cambio, ya difiere 634 líneas
+en `08_clinical.seeds.json` (`clinical.prescription_signature_policies`, +42 filas) contra lo
+commiteado en `dev` — reproducido dos veces de forma determinista, deriva preexistente ajena a
+esta subtarea. Se dejó ese archivo intacto para no mezclarlo. Ver el detalle completo y la
+evidencia SQL en `SALUD/Arquitectura/materializacion-fisica-bd.md` de la bóveda.
+
 ### v4.2.6 — `role_title` deja de ser obligatorio en `practitioner_affiliations` (2026-09-05)
 
 ALV-007 del backlog de correcciones AloVida: un vínculo de "atiende en su propio consultorio" no
