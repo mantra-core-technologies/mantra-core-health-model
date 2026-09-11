@@ -549,6 +549,47 @@ en `08_clinical.seeds.json` (`clinical.prescription_signature_policies`, +42 fil
 commiteado en `dev` — reproducido dos veces de forma determinista, deriva preexistente ajena a
 esta subtarea. Se dejó ese archivo intacto para no mezclarlo. Ver el detalle completo y la
 evidencia SQL en `SALUD/Arquitectura/materializacion-fisica-bd.md` de la bóveda.
+### v4.2.8 — Cotizaciones: `billing.quotations` y `quotation_installments` (2026-09-08)
+
+T24 «Creación de cotizaciones» (FT-24) ya tenía implementación mergeada en `dev` de la API
+(commit `6d6b95df`, PR #345, 2026-09-05) y del front (PR #352) — un profesional cotiza un
+servicio del catálogo con un plan de pagos simulado (tasa, plazo, método FLAT/FRENCH), fija la
+validez de la oferta y exporta a PDF — pero las dos tablas nunca se declararon en el modelo
+canónico: sólo existían en las entidades ORM y en la copia vendida
+`mantra-core-health-api/database/SQL/17_billing/`. Un stack reconstruido desde el modelo no las
+tenía y `yarn db:vendor` las habría borrado de esa copia. No hay decisión de producto de por
+medio: las columnas, tipos y obligatoriedad son exactamente los del DDL ya mergeado (transcrito
+para cotejar, no como fuente).
+
+`.puml` de 17 billing → `gen_ddl.py 17` (diff acotado a `SQL/17_billing/`: `02_tables.sql`,
+`03_fk_intra.sql`, `04_indexes.sql`, `90_fk_deferred.sql`) → patch
+`SQL/patches/2026-09-08_v428_billing_quotations.sql`. Nueve notas FK nuevas en la bóveda
+(`practice_id`, `patient_profile_id`, `created_by_practitioner_profile_id`,
+`service_catalog_id`, `currency_concept_id`, `status_concept_id`, `created_by_user_id`,
+`updated_by_user_id`, y `quotation_id` de `quotation_installments`); todas resolvieron por
+nota, cero cayeron a la convención por nombre.
+
+**Diferencia real entre lo generado y lo mergeado, registrada y no resuelta por el generador:**
+`gen_ddl.py` no tiene mecanismo para emitir `CHECK` — ninguna de las 65 tablas que sí genera
+lleva uno. La API mergeada declara `interest_calculation_method varchar NOT NULL CHECK IN
+('FLAT','FRENCH')`. El patch agrega ese `CHECK` a mano porque el generador no puede expresarlo;
+si el pipeline gana soporte de `CHECK` más adelante, el patch queda redundante con lo generado,
+no contradictorio. Segunda diferencia, sin acción: `appointment_id` no lleva FK, igual que en
+lo mergeado (comentario propio del autor original: «sin destino canónico, evita anillo» entre
+`scheduling` y `billing`).
+
+**Verificado contra la base viva local** (`mantra-redesa-postgres-1`, no NeonDB): antes → 20
+tablas / 140 FKs / 176 índices en `billing`; después → **22 tablas (+2) · 149 FKs (+9: 2 intra +
+7 diferidas) · 188 índices (+12: 10 `IX` + 2 `PK` implícitos)**. El `CHECK` se probó insertando
+un valor fuera de `('FLAT','FRENCH')`: rechazado en runtime, no sólo declarado.
+`check_ddl_sources.py`: 66 hallazgos, **idénticos antes y después** (ninguno nuevo por este
+cambio; son preexistentes y ajenos a T24). `gen_seeds.py --dry`: sin abortar; el único delta es
+el esperado — `quotations`/`quotation_installments` entran a «tablas vacías sin declarar» (no
+hay fila viva de cotización que sembrar) y +1 columna `*_concept_id` sin binding declarado.
+
+**Pendiente, fuera de este cambio:** `yarn db:vendor` + `yarn db:vendor:check` en la API (para
+que la copia vendida vuelva a coincidir con el modelo) y la corrida E2E de T24 contra un stack
+con las tablas — los coordina Ender, no son parte de esta pasada de modelo.
 
 ### v4.2.6 — `role_title` deja de ser obligatorio en `practitioner_affiliations` (2026-09-05)
 

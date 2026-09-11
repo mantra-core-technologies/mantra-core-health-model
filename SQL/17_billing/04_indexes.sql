@@ -86,6 +86,26 @@ CREATE INDEX IF NOT EXISTS "ix_dunning_items_status_concept_id" ON "billing"."du
 
 CREATE INDEX IF NOT EXISTS "ix_dunning_items_status_overdue" ON "billing"."dunning_items" ("status_concept_id", "days_overdue" DESC);
 
+CREATE INDEX IF NOT EXISTS "ix_quotations_practice_id" ON "billing"."quotations" ("practice_id");
+
+CREATE INDEX IF NOT EXISTS "ix_quotations_patient_profile_id" ON "billing"."quotations" ("patient_profile_id");
+
+CREATE INDEX IF NOT EXISTS "ix_quotations_created_by_practitioner_profile_id" ON "billing"."quotations" ("created_by_practitioner_profile_id");
+
+CREATE INDEX IF NOT EXISTS "ix_quotations_appointment_id" ON "billing"."quotations" ("appointment_id");
+
+CREATE INDEX IF NOT EXISTS "ix_quotations_service_catalog_id" ON "billing"."quotations" ("service_catalog_id");
+
+CREATE INDEX IF NOT EXISTS "ix_quotations_currency_concept_id" ON "billing"."quotations" ("currency_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_quotations_status_concept_id" ON "billing"."quotations" ("status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_quotations_created_by_user_id" ON "billing"."quotations" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_quotations_updated_by_user_id" ON "billing"."quotations" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_quotation_installments_quotation_id" ON "billing"."quotation_installments" ("quotation_id");
+
 CREATE INDEX IF NOT EXISTS "ix_service_catalog_practice_id" ON "billing"."service_catalog" ("practice_id");
 
 CREATE INDEX IF NOT EXISTS "ix_service_catalog_image_file_id" ON "billing"."service_catalog" ("image_file_id");
