@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "Tenant-level enterprise resource management that complements the per-practice accounting subledgers (module 16/16B). Adds the organizational backbone: a general contract registry (employment, service, vendor, lease, partnership) with parties, lines, milestones and documents; and human-resources structure — departments, positions, employment records, assignments, time-off and performance — hung off the existing payroll employee master in accounting. Assets, payroll runs and vendors already modelled in accounting/billing are referenced, not duplicated.",
-    "seed_revision": "2.5.1-v4.1.4"
+    "seed_revision": "2.5.2-v4.1.4"
   },
   "environment_policy": {
     "boot": {

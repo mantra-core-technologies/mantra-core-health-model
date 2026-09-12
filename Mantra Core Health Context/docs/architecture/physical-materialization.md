@@ -445,6 +445,25 @@ contenido y código, no esquema.
 front 48/48 del formulario y 3 850/3 853 de la suite completa (los 3 rojos son preexistentes de
 `dev`, reproducidos con los cambios guardados). Sin base viva: no se ejercitó contra Postgres.
 
+### Roles de gerencia en el representante legal (2026-09-11) — SIN cambio de esquema · seeds 2.5.2
+
+Subtarea 1.4: `directory.tenant_legal_representatives` está materializada desde v4.0.4 en las 4
+capas y sin un solo escritor; el registro de procesos pide, junto al representante legal con su
+poder notariado, tres gerencias de contacto (ASEGURADORA 1.9-1.17) y el value set sólo nombraba
+la general. `vs_legal_representative_role` gana `gerente_comercial` (ordinal 6) y
+`gerente_marketing` (ordinal 7), los dos al final de la lista en la nota de la bóveda porque el
+orden ES el ordinal sembrado. `poder_representante_legal` y `notaria` ya existían: el poder en
+PDF no necesitó valor nuevo. Regenerado con `python salud-db/gen_seeds.py` (diff acotado a
+`03_terminology.seeds.json` y `45_system_context.seeds.json`, más el bump de `seed_revision` en
+los 64 módulos) y cargado a Neon con `load_seeds.py --skip-prod --refresh --skip-opensearch
+--skip-redis --only 03` / `--only 45`: el value set queda con 7 miembros y el enum dinámico con
+sus 7 opciones, en el ordinal esperado y con los rótulos de `VS_DISPLAY`.
+
+**Ojo:** la deriva de 634 líneas en `08_clinical.seeds.json`
+(`clinical.prescription_signature_policies`, +42 filas) que 1.2 documentó **sigue apareciendo**
+al regenerar en limpio — se revirtió otra vez sin tocarla, para no mezclarla. Ver el detalle
+completo y la evidencia SQL en `SALUD/Arquitectura/materializacion-fisica-bd.md` de la bóveda.
+
 ### Certificado del SEDES en los documentos de afiliación (2026-09-10) — SIN cambio de esquema · seeds 2.5.1
 
 Subtarea 1.2: `directory.tenant_affiliation_documents` ya estaba completa desde v4.0.3 en las 4

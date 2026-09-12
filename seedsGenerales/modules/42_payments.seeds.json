@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "A provider-agnostic payment layer supporting multiple gateways (card, wallet, bank transfer, local rails). Tokenized payment methods (never raw PAN), payment intents tied to invoices/bookings/ad spend, gateway transactions with authorize/capture, refunds, disputes/chargebacks, scheduled payouts to practitioners (CU-18), gateway settlements and signed webhook events. Posts to the general ledger (module 16) and reconciles against billing (module 17) — money never lives only in the gateway.",
-    "seed_revision": "2.5.1-v4.1.4"
+    "seed_revision": "2.5.2-v4.1.4"
   },
   "environment_policy": {
     "boot": {

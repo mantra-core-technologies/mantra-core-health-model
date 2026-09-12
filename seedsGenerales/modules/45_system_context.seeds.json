@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "Provides versioned system context for agents, modules and workflows, and database-driven enumerations resolved from governed terminology value sets. Consumers receive reproducible context instead of ad-hoc JSON or hard-coded lists.",
-    "seed_revision": "2.5.1-v4.1.4"
+    "seed_revision": "2.5.2-v4.1.4"
   },
   "environment_policy": {
     "boot": {
@@ -49,7 +49,7 @@
       "dynamic_enum_options",
       "dynamic_enum_bindings"
     ],
-    "record_count": 747,
+    "record_count": 749,
     "records": {
       "system_contexts": [
         {
@@ -11484,6 +11484,38 @@
           },
           "recorded_at": "2026-09-15T05:48:00Z",
           "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "2a239521-ebed-529f-b725-baed54e0f2c5",
+          "dynamic_enum_version_id": "542df983-6202-55ea-8bb2-b8adbea667d8",
+          "concept_id": "ac6af361-75c2-5362-b485-45adcbc78222",
+          "code": "GERENTE_COMERCIAL",
+          "display": "Gerente Comercial",
+          "ordinal": 6,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_legal_representative_role",
+            "patch": "v4.0.4"
+          },
+          "recorded_at": "2026-08-30T09:49:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "3e47ce83-38ce-5e46-bcab-2b100526e004",
+          "dynamic_enum_version_id": "542df983-6202-55ea-8bb2-b8adbea667d8",
+          "concept_id": "55ac22c0-4c26-511f-ba99-98041d0631c2",
+          "code": "GERENTE_MARKETING",
+          "display": "Gerente de Marketing",
+          "ordinal": 7,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_legal_representative_role",
+            "patch": "v4.0.4"
+          },
+          "recorded_at": "2026-10-07T06:48:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
         }
       ],
       "dynamic_enum_bindings": [
@@ -12453,7 +12485,7 @@
       }
     ],
     "summary": {
-      "record_count": 747,
+      "record_count": 749,
       "entity_count": 6,
       "populated_entity_count": 6,
       "scenario_count": null,

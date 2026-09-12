@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "Manages login accounts, credentials, MFA, devices and sessions. A user record is an authenticating account, not a person, patient or practitioner. Human identity and role profiles are modeled separately in Module 05 and linked optionally so patients and external professionals can exist without portal credentials.",
-    "seed_revision": "2.5.1-v4.1.4"
+    "seed_revision": "2.5.2-v4.1.4"
   },
   "environment_policy": {
     "boot": {

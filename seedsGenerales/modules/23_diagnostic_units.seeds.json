@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "Gives a diagnostic unit a first-class identity, its own governance boundary, professionals, specialties, study catalog, public profile and versioned prices. Clinical results remain in diagnostics; this module describes the provider and the services it offers to patients, doctors and insurers.",
-    "seed_revision": "2.5.1-v4.1.4"
+    "seed_revision": "2.5.2-v4.1.4"
   },
   "environment_policy": {
     "boot": {
