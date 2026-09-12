@@ -506,6 +506,28 @@ entity conversation_participants {
     joined_at : timestamptz
     last_read_message_id : uuid <<FK>>
     muted_until : timestamptz
+    last_auto_reply_at : timestamptz
+  * is_favorite : boolean
+  * is_pinned : boolean
+    archived_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity chat_auto_replies {
+  * id : uuid <<PK>>
+  --
+  * public_profile_id : uuid <<FK>>
+  * is_active : boolean
+  * inactivity_minutes : integer
+  * body_text : text
+  * cooldown_hours : integer
+  * only_outside_business_hours : boolean
+    business_hours_from : time
+    business_hours_to : time
   * status_concept_id : uuid <<FK>>
   * created_at : timestamptz
   * updated_at : timestamptz
@@ -659,6 +681,7 @@ entity moderation_appeals {
   * row_version : integer
 }
 
+public_profiles ||--o| chat_auto_replies
 conversations ||--o{ conversation_participants
 conversations ||--o{ direct_messages
 direct_messages ||--o{ message_receipts
@@ -677,6 +700,40 @@ note as DEP_diagram_19c_community_messaging_moderation
   messaging.notification_requests (social_notifications.notification_request_id fan-out),
   identity_assurance (verified_badges evidence), common.files (attachments),
   directory.tenants, terminology.catalog_concepts.
+end note
+
+note as DRIFT_conversation_participants_F44
+  DRIFT CLOSED (2026-09-11)
+  is_favorite, is_pinned and archived_at (F4.4 · per-participant inbox state)
+  existed ONLY in the MikroORM entity: neither this diagram nor SQL/19_community
+  declared them, so a stack rebuilt from the model did not have them and every
+  ORM write against those columns would fail. Declared here so the model is the
+  source again. Types and nullability are exactly the ones the entity already
+  used; no product decision was taken.
+end note
+
+note as RULES_chat_auto_replies
+  CHAT AUTO-REPLY (F4.7)
+  chat_auto_replies holds ONE row per public profile (ux_chat_auto_replies_public_profile_id):
+  it is a preference of the person, not of a conversation. The column is named
+  public_profile_id so the FK convention resolves it on its own: the generator
+  pluralises the prefix and finds community.public_profiles.
+
+  Server-side rule, evaluated on every INCOMING message:
+    reply IF is_active
+       AND the recipient has been idle for >= inactivity_minutes
+       AND that conversation was not auto-replied within the last cooldown_hours
+       AND (NOT only_outside_business_hours OR now is outside [from, to]).
+
+  conversation_participants.last_auto_reply_at is the cooldown mark: it lives on the
+  participant row of WHO REPLIES, which is exactly one row per (conversation, profile).
+  A separate log table would say the same thing with a join.
+
+  business_hours_from > business_hours_to is legal and means the range crosses
+  midnight — the night shift. Both are NULL when only_outside_business_hours is false.
+
+  The auto-reply is a NORMAL direct_message sent by the profile: it is not a
+  different kind of message, and the other side must be able to reply to it.
 end note
 
 note as PHI_BOUNDARY_diagram_19c_community_messaging_moderation
@@ -1024,6 +1081,15 @@ entity "INDEXES · conversations" as idxset_conversations <<INDEX_SET>> {
 }
 
 conversations .. idxset_conversations : indexed by
+
+entity "INDEXES · chat_auto_replies" as idxset_chat_auto_replies <<INDEX_SET>> {
+  PK pk_chat_auto_replies : (id) UNIQUE BTREE
+  UX ux_chat_auto_replies_public_profile_id : (public_profile_id) UNIQUE BTREE
+  IX ix_chat_auto_replies_status_concept_id : (status_concept_id) BTREE
+  IX ix_chat_auto_replies_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_chat_auto_replies_updated_by_user_id : (updated_by_user_id) BTREE
+}
+chat_auto_replies .. idxset_chat_auto_replies : indexed by
 
 entity "INDEXES · conversation_participants" as idxset_conversation_participants <<INDEX_SET>> {
   PK pk_conversation_participants : (id) UNIQUE BTREE
