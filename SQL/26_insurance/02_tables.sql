@@ -368,6 +368,8 @@ CREATE TABLE IF NOT EXISTS "insurance"."claim_line_adjudications" (
     "patient_amount" numeric,
     "denied_amount" numeric,
     "reason_concept_id" uuid,
+    "policy_clause_reference" varchar,
+    "denial_rationale" text,
     "created_at" timestamptz NOT NULL,
     CONSTRAINT "pk_claim_line_adjudications" PRIMARY KEY ("id")
 );
