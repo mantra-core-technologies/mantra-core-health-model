@@ -417,6 +417,8 @@ entity claim_line_adjudications <<IMMUTABLE>> {
     patient_amount : numeric
     denied_amount : numeric
     reason_concept_id : uuid <<FK>>
+    policy_clause_reference : varchar
+    denial_rationale : text
   * created_at : timestamptz
 }
 

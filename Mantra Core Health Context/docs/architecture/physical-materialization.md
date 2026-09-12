@@ -445,6 +445,33 @@ contenido y código, no esquema.
 front 48/48 del formulario y 3 850/3 853 de la suite completa (los 3 rojos son preexistentes de
 `dev`, reproducidos con los cambios guardados). Sin base viva: no se ejercitó contra Postgres.
 
+### v4.2.9 — La adjudicación de línea cita la cláusula y explica el rechazo (2026-09-12)
+
+Subtarea 2.2. El registro de procesos del stakeholder (MÓDULO ASEGURADORA · 2 · 3) exige que la
+app responda con APROBADO/NO APROBADO «indicando por qué no está APROBADO según la clausula del
+contrato y porque tiene excepción de alguna enfermedad según su contrato o póliza» — brecha §19
+«Cláusulas y exclusiones de póliza» de la bóveda, tarjeta T-22. `insurance.claim_line_adjudications`
+sólo tenía el motivo TIPIFICADO (`reason_concept_id`, un catálogo interno de MANTRA que P-16-4 deja
+sin miembros) y el texto de la versión entera (`claim_adjudication_versions.disposition_text`): sin
+texto por ítem. La ficha `TAREA-16` (P-16-3) ya había anticipado exactamente esta columna.
+
+**Dos columnas nullable, ninguna FK ni índice nuevo**: `policy_clause_reference` (varchar, la cita
+de la cláusula) y `denial_rationale` (text, la justificación). **No** se agrega un tercer código
+tipificado de exclusión: eso ya es `reason_concept_id`, y un value set nuevo en texto libre sería un
+segundo catálogo para el mismo dato — contra la regla del proyecto de que todo catálogo cerrado es
+un value set, nunca un enum de texto. Sin backfill: `claim_line_adjudications` es `<<IMMUTABLE>>` y
+ninguna fila anterior puede ganar una cláusula que nadie citó en su momento.
+
+Pipeline: `.puml` de `M26 insurance` → `gen_ddl.py all` (diff acotado a
+`SQL/26_insurance/02_tables.sql`) → `SQL/patches/2026-09-12_v429_claim_line_adjudications_policy_clause.sql`
+(idempotente, sin backfill) → `gen_entities.py 26`. `gen_seeds.py --dry` no reporta cambios: son
+columnas nullable sin obligación de valor. Deltas esperados sobre la base viva: columnas de
+`insurance.claim_line_adjudications` 9 → **11**, FKs e índices ±0, tablas ±0.
+
+**Ojo con la numeración:** v4.2.8 ya está tomada por las cotizaciones (`billing.quotations`); esta
+promoción es v4.2.9. Detalle completo en `SALUD/Arquitectura/materializacion-fisica-bd.md` de la
+bóveda y en `docs/tareas/subtarea-2.2-clausula-exclusion-reclamos/` del workspace.
+
 ### Roles de gerencia en el representante legal (2026-09-11) — SIN cambio de esquema · seeds 2.5.2
 
 Subtarea 1.4: `directory.tenant_legal_representatives` está materializada desde v4.0.4 en las 4
