@@ -295,6 +295,7 @@ entity assets {
     accumulated_depreciation : numeric
     book_value : numeric
   * status_concept_id : uuid <<FK>>
+  * automated : boolean <<DEFAULT_TRUE>>
   * created_at : timestamptz
   * updated_at : timestamptz
     created_by_user_id : uuid <<FK>>
@@ -332,6 +333,7 @@ entity liabilities {
     due_date : date
     creditor_name : varchar
   * status_concept_id : uuid <<FK>>
+  * automated : boolean <<DEFAULT_TRUE>>
   * created_at : timestamptz
   * updated_at : timestamptz
     created_by_user_id : uuid <<FK>>

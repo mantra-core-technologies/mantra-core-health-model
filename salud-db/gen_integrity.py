@@ -228,7 +228,7 @@ def write_constraints(ents):
             out.append("CREATE EXTENSION IF NOT EXISTS btree_gist;  -- requerido por EXCLUDE\n")
         for e in group:
             out.extend(entity_block(e))
-        (folder / "05_constraints.sql").write_text("\n".join(out) + "\n", encoding="utf-8")
+        (folder / "05_constraints.sql").write_text("\n".join(out).rstrip() + "\n", encoding="utf-8")
         print(f"[{folder.name}] 05_constraints.sql · {len(group)} entidades"
               + (" · btree_gist" if has_exclude else ""))
 
