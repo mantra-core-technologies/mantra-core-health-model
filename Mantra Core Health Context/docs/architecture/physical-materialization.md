@@ -445,6 +445,49 @@ contenido y código, no esquema.
 front 48/48 del formulario y 3 850/3 853 de la suite completa (los 3 rojos son preexistentes de
 `dev`, reproducidos con los cambios guardados). Sin base viva: no se ejercitó contra Postgres.
 
+### v4.2.10 — La aseguradora publica sus canales de contacto: WhatsApp, call center y correo (2026-09-13)
+
+Subtarea 2.3. El registro de procesos del stakeholder (MÓDULO ASEGURADORA · 6.2 · ítem 5) pide "una
+opción para poder llamar mediante Whatsapp directo a la compañía de seguro (la misma compañía nos
+dará el numero de llamada o call center) y el usuario llamara desde su mismo numero de whatsapp" —
+brecha §20 "Canal directo con el call center", tarjeta T-23.
+
+**Tres columnas nullable en `insurance.insurance_carriers`, sin FK ni índice nuevo**:
+`whatsapp_number` (E.164, la API lo normaliza al escribir), `call_center_phone` (tal cual la
+compañía lo publica — las líneas gratuitas bolivianas son "800-10-xxxx" y no son E.164) y
+`support_email`. T-23 proponía modelar esto con `common.contact_points` (polimórfico); se decidió
+con el negocio el 2026-09-13 seguir columnas propias, más simple para un dato con un único dueño
+posible por fila y sin necesidad de historial de vigencia.
+
+**Sí hay backfill, a diferencia de v4.2.9**: `insurance_carriers` NO es `<<IMMUTABLE>>`, y las 9
+aseguradoras bolivianas reales ya existen en toda base viva por DOS sembradores ADD-only con DOS
+juegos de `carrier_code` (el boot de la API, prefijo `BO_ASEG_*`, y el paquete de seeds del modelo,
+código corto tipo `ALIANZA_VIDA`): sin backfill, esas 9 compañías quedarían sin canales para
+siempre. Los valores backfilleados son los publicados en el dominio oficial de cada compañía a la
+fecha del patch (regla 70: fuente + fecha citadas por fila; sin publicación confirmada, `NULL`,
+nunca inventado). **7 de las 9 compañías tienen al menos un canal confirmado**; Alianza Vida y
+Nacional Seguros quedan sin backfill (el primero resolvió a la aseguradora de generales del mismo
+grupo, no a la de vida/salud; el segundo devolvió 403 al fetch) — cerrarlo es tarea de quien
+administre esas dos organizaciones vía el `PUT` nuevo, no de este patch.
+
+Pipeline: `.puml` M26 → `gen_ddl.py all` (diff acotado a `SQL/26_insurance/02_tables.sql`) →
+`SQL/patches/2026-09-13_v4210_insurance_carriers_contact_channels.sql` (con la sección de backfill
+citando fuente) → `gen_entities.py 26` + `prettier --write` (el generador reformatea las 29
+entidades del módulo por el mismo motivo que en v4.2.9; prettier colapsa el diff a
+`insurance_carriers.entity.ts`). Seeds: `ASEGURADORAS_BOLIVIA` y `canonical_insurance_carriers`
+ganan las tres claves con su `source_url`/`obtenido`, `seed_revision` → **2.5.3-v4.1.4**. Deltas
+esperados sobre la base viva: columnas de `insurance.insurance_carriers` 16 → **19**, FKs e índices
+±0, tablas ±0.
+
+**Dos hallazgos, ninguno corregido acá**: (1) las 9 aseguradoras reales existen DOS VECES en toda
+base viva (los `carrier_code` `BO_ASEG_*` del boot de la API y los códigos cortos del paquete del
+modelo) — el backfill cubre ambos juegos de códigos, la deduplicación es de otro carril; (2) `sigla`
+y `address` (v4.1.8) nunca entraron a `canonical_insurance_carriers` pese a que la documentación
+del momento decía que sí — se registra, no se corrige.
+
+**Ojo con la numeración:** v4.2.8 son las cotizaciones, v4.2.9 la cláusula del rechazo — esta
+promoción es v4.2.10.
+
 ### v4.2.9 — La adjudicación de línea cita la cláusula y explica el rechazo (2026-09-12)
 
 Subtarea 2.2. El registro de procesos del stakeholder (MÓDULO ASEGURADORA · 2 · 3) exige que la
