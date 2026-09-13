@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "A learning platform for doctors and staff (the \"doctor courses\" the clients asked for): structured courses with modules and lessons, instructors, cohorts and enrollments, progress tracking, assessments/quizzes with attempts and grading, completion certificates, and accredited Continuing-Medical-Education (CME) credits tied to a practitioner's specialties and jurisdiction licensing (module 05). Content is governed and versioned; certificates are verifiable. Integrates with scheduling for live sessions and payments for paid courses.",
-    "seed_revision": "2.5.2-v4.1.4"
+    "seed_revision": "2.5.3-v4.1.4"
   },
   "environment_policy": {
     "boot": {

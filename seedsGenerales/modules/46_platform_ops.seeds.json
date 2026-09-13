@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "The operational backbone a data-center-grade deployment requires. Governs the platform's tools/technologies and the build/release artifacts they produce, the logical service components that run in each environment, their deployments, and continuous health checks with append-only run history and derived incidents. Complements qa_lab (pre-release testing), telemetry (product analytics) and system_ops (data governance) with runtime operations & SRE evidence. No PHI.",
-    "seed_revision": "2.5.2-v4.1.4"
+    "seed_revision": "2.5.3-v4.1.4"
   },
   "environment_policy": {
     "boot": {

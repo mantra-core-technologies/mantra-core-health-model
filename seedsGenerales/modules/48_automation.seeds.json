@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "A governed layer that lets multiple AI agents (and deterministic bots) automate the capture, enrichment, validation and routing of information records across the platform — the \"dynamic multi-agent automation layer\" the clients asked for. Registers agents with versioned definitions, the tools they may call, and the guardrails/policies that bound them; orchestrates work through triggers -> workflows -> tasks -> agent runs -> steps, with per-record automations, human-in-the-loop approvals, agent memory/knowledge and a full append-only execution trail. Every automated write is attributable and auditable.",
-    "seed_revision": "2.5.2-v4.1.4"
+    "seed_revision": "2.5.3-v4.1.4"
   },
   "environment_policy": {
     "boot": {

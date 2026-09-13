@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "Separates legal authority for processing from patient consent, HIPAA-style authorizations, treatment informed consent, privacy restrictions and objections. Consent is never treated as the universal basis for treatment, payment, operations or every use of health data. Every decision is jurisdiction-, purpose- and version-aware and retains reproducible evidence.",
-    "seed_revision": "2.5.2-v4.1.4"
+    "seed_revision": "2.5.3-v4.1.4"
   },
   "environment_policy": {
     "boot": {

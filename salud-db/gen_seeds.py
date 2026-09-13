@@ -70,7 +70,7 @@ VAULT = paths.VAULT
 MODEL_VERSION = "4.0.7"
 SOURCE_MODEL_VERSION = "4.0.9"
 RELEASE_LABEL = "4.0.9"
-SEED_REVISION = "2.5.2-v4.1.4"
+SEED_REVISION = "2.5.3-v4.1.4"
 # Namespace uuid5 por patch, misma regla que MODEL_VERSION: identifica las filas de las
 # 5 tablas ALOVIDA ya sembradas. v4.0.9 no añade uno propio porque no trae tablas que
 # sembrar — `iam.email_verifications` y `iam.password_resets` guardan tokens de runtime
@@ -1939,56 +1939,85 @@ CLINICAS_BOLIVIA = [
 # departamento del domicilio. El NIT NO va en `regulator_identifier` —ese campo es
 # el registro del regulador sectorial (APS), que no se conoce y no se inventa—:
 # va como identificador oficial del tenant en `common.identifiers` (TAX_ID).
+#
+# v4.2.10 (subtarea 2.3): `whatsapp`/`call_center`/`support_email` son los
+# canales de contacto directo que la propia compañía publica en su dominio
+# oficial, con `source_url` y `obtenido` (regla 70: sin publicación
+# confirmada, `None` — nunca un número inventado). Alianza Vida y Nacional
+# Seguros quedan en `None` porque no se pudo confirmar un canal propio en su
+# dominio oficial (el primero resolvió a la aseguradora de generales del
+# mismo grupo; el segundo devolvió 403 al intentar leerlo).
 ASEGURADORAS_BOLIVIA = [
     dict(code="ALIANZA_VIDA", nit="1015327022", depto="sc",
          legal_name="Alianza Vida Seguros y Reaseguros S.A.",
          trade_name="Alianza Vida S.A.",
          lines="Mario Gutiérrez Nº 3325, esq. Av. Roca y Coronado, "
                "Edificio Alianza, Zona Villa Mercedes",
-         city="Santa Cruz de la Sierra"),
+         city="Santa Cruz de la Sierra",
+         whatsapp=None, call_center=None, support_email=None,
+         source_url=None, obtenido=None),
     dict(code="BISA_SEGUROS", nit="1020655027", depto="lp",
          legal_name="BISA Seguros y Reaseguros S.A.",
          trade_name="BISA Seguros y Reaseguros S.A.",
          lines="Av. Arce N° 2631, Edificio Multicine, Piso N° 14, zona de San Jorge",
-         city="La Paz"),
+         city="La Paz",
+         whatsapp="+59171545112", call_center="800-10-6060", support_email=None,
+         source_url="https://ayuda.bisaseguros.com", obtenido="2026-09-13"),
     dict(code="FORTALEZA_SEGUROS", nit="1028175023", depto="sc",
          legal_name="Compañía de Seguros y Reaseguros Fortaleza S.A.",
          trade_name="Fortaleza Seguros y Reaseguros S.A.",
          lines="Av. Virgen de Cotoca N° 2080, Zona Lazareto",
-         city="Santa Cruz de la Sierra"),
+         city="Santa Cruz de la Sierra",
+         whatsapp="+59169200004", call_center="800-12-9992", support_email=None,
+         source_url="https://aseguradorafortaleza.com.bo/contactenos",
+         obtenido="2026-09-13"),
     dict(code="CREDISEGURO", nit="191310020", depto="lp",
          legal_name="Crediseguro S.A. Seguros Personales",
          trade_name="Crediseguro S.A. Seguros Personales",
          lines="Av. Hernando Siles esq. calle 10 de Obrajes, "
                "Torre Empresarial ESIMSA, Piso 9",
-         city="La Paz"),
+         city="La Paz",
+         whatsapp="+59178889096", call_center=None, support_email=None,
+         source_url="https://www.crediseguro.com.bo", obtenido="2026-09-13"),
     dict(code="LA_BOLIVIANA_CIACRUZ", nit="1006989027", depto="lp",
          legal_name="La Boliviana Ciacruz Seguros Personales S.A.",
          trade_name="La Boliviana Ciacruz Seguros Personales S.A.",
          lines="Calle Colón N° 288, Piso 2°",
-         city="La Paz"),
+         city="La Paz",
+         whatsapp="+59171548278", call_center="800-10-2727", support_email=None,
+         source_url="https://www.lbc.bo/contactanos", obtenido="2026-09-13"),
     dict(code="LA_VITALICIA", nit="1020687029", depto="lp",
          legal_name="La Vitalicia Seguros y Reaseguros de Vida S.A.",
          trade_name="La Vitalicia Seguros y Reaseguros de Vida S.A.",
          lines="Av. 6 de Agosto Nº 2860, Zona San Jorge",
-         city="La Paz"),
+         city="La Paz",
+         whatsapp="+59177775677", call_center="800-10-4142", support_email=None,
+         source_url="https://lavitalicia.bo/contacto/", obtenido="2026-09-13"),
     dict(code="NACIONAL_SEGUROS", nit="1028483024", depto="sc",
          legal_name="Nacional Seguros Vida y Salud S.A.",
          trade_name="Nacional Seguros Vida y Salud S.A.",
          lines="Avenida Cristóbal de Mendoza esquina Avenida Alemana N° 333 "
                "(Segundo Anillo)",
-         city="Santa Cruz de la Sierra"),
+         city="Santa Cruz de la Sierra",
+         whatsapp=None, call_center=None, support_email=None,
+         source_url=None, obtenido=None),
     dict(code="UNIVIDA", nit="301204024", depto="lp",
          legal_name="Empresa de Seguros y Reaseguros Personales UNIVIDA S.A.",
          trade_name="UNIVIDA S.A.",
          lines="Av. Camacho N° 1485, Edificio La Urbana, Piso 3",
-         city="La Paz"),
+         city="La Paz",
+         whatsapp=None, call_center="800-10-9119", support_email=None,
+         source_url="https://www.univida.bo", obtenido="2026-09-13"),
     dict(code="SANTA_CRUZ_VIDA", nit="370008027", depto="sc",
          legal_name="Santa Cruz Vida y Salud Seguros y Reaseguros Personales S.A.",
          trade_name="Santa Cruz Vida y Salud S.A.",
          lines="Avenida San Martín, Edificio Manzana 40, Torre 2, Piso 13, "
                "Zona Equipetrol",
-         city="Santa Cruz de la Sierra"),
+         city="Santa Cruz de la Sierra",
+         whatsapp="+59172124747", call_center="800-12-4747",
+         support_email="consultasSCVS@santacruzfg.com",
+         source_url="https://www.santacruzvidaysalud.com.bo/contacto/",
+         obtenido="2026-09-13"),
 ]
 
 # Las tablas del módulo 26 cuyas filas mock referencian a la aseguradora.
@@ -2049,6 +2078,12 @@ def canonical_insurance_carriers(docs, value_sets) -> dict:
             ("id", new_id("insurance.insurance_carriers", aseg["code"])),
             ("tenant_id", tenant_id),
             ("carrier_code", aseg["code"]), ("legal_name", aseg["legal_name"]),
+            # v4.2.10 (subtarea 2.3): canales de contacto directo con fuente
+            # pública citada arriba en ASEGURADORAS_BOLIVIA; `None` cuando no
+            # se pudo confirmar en el dominio oficial de la compañía.
+            ("whatsapp_number", aseg["whatsapp"]),
+            ("call_center_phone", aseg["call_center"]),
+            ("support_email", aseg["support_email"]),
             ("regulator_identifier", None),
             ("jurisdiction_concept_id", JURISDICTION_CONCEPT_ID),
             ("public_profile_id", None),
