@@ -457,6 +457,13 @@ DO $$ BEGIN
         REFERENCES "terminology"."catalog_concepts" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- destino: common.files (requiere schema common)
+DO $$ BEGIN
+    ALTER TABLE "profiles"."jurisdiction_authorizations"
+        ADD CONSTRAINT "fk_jurisdiction_authorizations_file_id" FOREIGN KEY ("file_id")
+        REFERENCES "common"."files" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "profiles"."jurisdiction_authorizations"

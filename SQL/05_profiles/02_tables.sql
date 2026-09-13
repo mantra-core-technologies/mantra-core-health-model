@@ -198,6 +198,7 @@ CREATE TABLE IF NOT EXISTS "profiles"."jurisdiction_authorizations" (
     "state_concept_id" uuid NOT NULL,
     "valid_from" date,
     "valid_to" date,
+    "file_id" uuid,
     "created_at" timestamptz NOT NULL,
     "updated_at" timestamptz NOT NULL,
     "created_by_user_id" uuid,

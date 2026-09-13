@@ -180,6 +180,8 @@ CREATE INDEX IF NOT EXISTS "ix_jurisdiction_authorizations_practice_scope_concep
 
 CREATE INDEX IF NOT EXISTS "ix_jurisdiction_authorizations_state_concept_id" ON "profiles"."jurisdiction_authorizations" ("state_concept_id");
 
+CREATE INDEX IF NOT EXISTS "ix_jurisdiction_authorizations_file_id" ON "profiles"."jurisdiction_authorizations" ("file_id");
+
 CREATE INDEX IF NOT EXISTS "ix_jurisdiction_authorizations_created_by_user_id" ON "profiles"."jurisdiction_authorizations" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_jurisdiction_authorizations_updated_by_user_id" ON "profiles"."jurisdiction_authorizations" ("updated_by_user_id");
