@@ -131,6 +131,14 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 -- Fase 4 · FK cross-schema (equivalente a 90_fk_deferred; aplicadas ya porque
 -- todos los schemas destino existen en cualquier base sobre la que este patch
 -- pueda correr).
+--
+-- Los perfiles se referencian por `profile_id`, NO por `id`: en
+-- `profiles.health_practitioner_profiles` y `profiles.patient_profiles` la
+-- clave primaria ES `profile_id` (heredan la identidad del perfil base). Con
+-- `("id")` esto moría en «column "id" referenced in foreign key constraint does
+-- not exist», y como nunca llegó a aplicarse —el bucle de migraciones apuntaba
+-- a un directorio inexistente y daba cero vueltas— el error no salió hasta la
+-- primera base construida de cero.
 -- ---------------------------------------------------------------------------
 DO $$ BEGIN
     ALTER TABLE "medical_groups"."groups"
