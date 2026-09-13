@@ -683,6 +683,27 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
+    ALTER TABLE "community"."chat_auto_replies"
+        ADD CONSTRAINT "fk_chat_auto_replies_status_concept_id" FOREIGN KEY ("status_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "community"."chat_auto_replies"
+        ADD CONSTRAINT "fk_chat_auto_replies_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "community"."chat_auto_replies"
+        ADD CONSTRAINT "fk_chat_auto_replies_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
     ALTER TABLE "community"."direct_messages"
         ADD CONSTRAINT "fk_direct_messages_content_type_concept_id" FOREIGN KEY ("content_type_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");

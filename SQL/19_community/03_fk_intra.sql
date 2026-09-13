@@ -207,6 +207,12 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
+    ALTER TABLE "community"."chat_auto_replies"
+        ADD CONSTRAINT "fk_chat_auto_replies_public_profile_id" FOREIGN KEY ("public_profile_id")
+        REFERENCES "community"."public_profiles" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+DO $$ BEGIN
     ALTER TABLE "community"."direct_messages"
         ADD CONSTRAINT "fk_direct_messages_conversation_id" FOREIGN KEY ("conversation_id")
         REFERENCES "community"."conversations" ("id");

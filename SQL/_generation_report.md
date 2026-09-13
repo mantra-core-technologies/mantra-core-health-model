@@ -23,7 +23,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 16 | accounting | 42 | 304 | 1 | 356 | 13 |
 | 17 | billing | 22 | 150 | 0 | 167 | 17 |
 | 18 | clinical_ext | 13 | 91 | 0 | 101 | 1 |
-| 19 | community | 39 | 238 | 0 | 250 | 1 |
+| 19 | community | 40 | 242 | 4 | 254 | 1 |
 | 20 | diagnostics | 36 | 251 | 0 | 301 | 0 |
 | 21 | deployment _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
 | 22 | organization_extensions | 5 | 49 | 0 | 55 | 0 |
@@ -71,7 +71,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 64 | audio_assets | 4 | 1 | 0 | 10 | 0 |
 | 65 | surveys | 7 | 36 | 35 | 17 | 0 |
 | 66 | medical_groups | 2 | 14 | 0 | 10 | 0 |
-| **Σ** | **67** | **1174** | | **82** | | **297** |
+| **Σ** | **67** | **1175** | | **86** | | **297** |
 
 ## Detalle de entidades saltadas y avisos
 

@@ -288,6 +288,14 @@ CREATE INDEX IF NOT EXISTS "ix_conversations_tenant_id_status_concept_id" ON "co
 
 CREATE INDEX IF NOT EXISTS "ix_conversation_participants_profile_pinned" ON "community"."conversation_participants" ("participant_profile_id", "is_pinned") WHERE is_pinned;
 
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_chat_auto_replies_public_profile_id" ON "community"."chat_auto_replies" ("public_profile_id");
+
+CREATE INDEX IF NOT EXISTS "ix_chat_auto_replies_status_concept_id" ON "community"."chat_auto_replies" ("status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_chat_auto_replies_created_by_user_id" ON "community"."chat_auto_replies" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_chat_auto_replies_updated_by_user_id" ON "community"."chat_auto_replies" ("updated_by_user_id");
+
 CREATE INDEX IF NOT EXISTS "ix_conversation_participants_conversation_id" ON "community"."conversation_participants" ("conversation_id");
 
 CREATE INDEX IF NOT EXISTS "ix_conversation_participants_participant_profile_id" ON "community"."conversation_participants" ("participant_profile_id");

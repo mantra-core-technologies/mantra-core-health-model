@@ -370,6 +370,7 @@ CREATE TABLE IF NOT EXISTS "community"."conversation_participants" (
     "joined_at" timestamptz,
     "last_read_message_id" uuid,
     "muted_until" timestamptz,
+    "last_auto_reply_at" timestamptz,
     "is_favorite" boolean NOT NULL DEFAULT false,
     "is_pinned" boolean NOT NULL DEFAULT false,
     "archived_at" timestamptz,
@@ -380,6 +381,25 @@ CREATE TABLE IF NOT EXISTS "community"."conversation_participants" (
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
     CONSTRAINT "pk_conversation_participants" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "community"."chat_auto_replies" (
+    "id" uuid NOT NULL,
+    "public_profile_id" uuid NOT NULL,
+    "is_active" boolean NOT NULL,
+    "inactivity_minutes" integer NOT NULL,
+    "body_text" text NOT NULL,
+    "cooldown_hours" integer NOT NULL,
+    "only_outside_business_hours" boolean NOT NULL,
+    "business_hours_from" time,
+    "business_hours_to" time,
+    "status_concept_id" uuid NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_chat_auto_replies" PRIMARY KEY ("id")
 );
 
 CREATE TABLE IF NOT EXISTS "community"."direct_messages" (
