@@ -72,9 +72,14 @@ BEGIN
     EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA %I TO mantra_app', s);
     EXECUTE format('GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA %I TO mantra_app', s);
     EXECUTE format('GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA %I TO mantra_app', s);
-    -- Objetos futuros creados por `mantra`.
-    EXECUTE format('ALTER DEFAULT PRIVILEGES FOR ROLE mantra IN SCHEMA %I GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO mantra_app', s);
-    EXECUTE format('ALTER DEFAULT PRIVILEGES FOR ROLE mantra IN SCHEMA %I GRANT USAGE, SELECT ON SEQUENCES TO mantra_app', s);
+    -- Objetos futuros creados por el rol dueño. NO se nombra `mantra` a mano: ese
+    -- rol es el del stack viejo y en ALOVIDA el dueño es `${POSTGRES_USER}`
+    -- (`alovida`), así que el literal reventaba el arranque de una base nueva con
+    -- «ERROR: role "mantra" does not exist» — y con ON_ERROR_STOP=1 eso tumbaba
+    -- `postgres-init` entero (salida 3) y detrás la API. `current_user` es
+    -- exactamente el rol que crea los objetos: quien corre esta migración.
+    EXECUTE format('ALTER DEFAULT PRIVILEGES FOR ROLE %I IN SCHEMA %I GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO mantra_app', current_user, s);
+    EXECUTE format('ALTER DEFAULT PRIVILEGES FOR ROLE %I IN SCHEMA %I GRANT USAGE, SELECT ON SEQUENCES TO mantra_app', current_user, s);
   END LOOP;
 END $$;
 
