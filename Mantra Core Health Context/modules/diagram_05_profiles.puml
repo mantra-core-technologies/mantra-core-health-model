@@ -230,6 +230,13 @@ entity jurisdiction_authorizations {
   * state_concept_id : uuid <<FK>>
     valid_from : date
     valid_to : date
+  ' + v4.2.12 — el respaldo de la matrícula: el PDF o la foto del carnet que
+  ' emitió el colegio. Misma columna y mismo destino que `file_id` en
+  ' professional_credentials, porque es el mismo gesto —declarar una credencial
+  ' y adjuntar lo que la prueba— y no hay razón para que el título lo acepte y
+  ' la matrícula no. Nullable: el padrón se declara, no se prueba, y exigir el
+  ' archivo dejaría fuera a quien todavía no lo tiene escaneado.
+    file_id : uuid <<FK>>
   * created_at : timestamptz
   * updated_at : timestamptz
     created_by_user_id : uuid <<FK>>
@@ -578,6 +585,7 @@ entity "INDEXES · jurisdiction_authorizations" as idxset_jurisdiction_authoriza
   IX ix_jurisdiction_authorizations_jurisdiction_concept_id : (jurisdiction_concept_id) BTREE
   IX ix_jurisdiction_authorizations_practice_scope_concept_id : (practice_scope_concept_id) BTREE
   IX ix_jurisdiction_authorizations_state_concept_id : (state_concept_id) BTREE
+  IX ix_jurisdiction_authorizations_file_id : (file_id) BTREE
   IX ix_jurisdiction_authorizations_created_by_user_id : (created_by_user_id) BTREE
   IX ix_jurisdiction_authorizations_updated_by_user_id : (updated_by_user_id) BTREE
   GIST gist_jurisdiction_authorizations_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
