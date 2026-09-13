@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "A governed engine for every coded value the platform uses (diagnoses, statuses, units, roles...) based on international standards (SNOMED, LOINC, ICD, ATC, UCUM) plus local catalogs. It makes the system multilingual, interoperable and future-proof: new values are added without software changes.",
-    "seed_revision": "2.5.0-v4.1.4"
+    "seed_revision": "2.5.3-v4.1.4"
   },
   "environment_policy": {
     "boot": {
@@ -53,7 +53,7 @@
       "value_set_members",
       "tenant_catalog_policies"
     ],
-    "record_count": 3615,
+    "record_count": 3627,
     "records": {
       "terminology_sources": [
         {
@@ -26600,6 +26600,122 @@
           "created_at": "2026-08-17T21:45:00Z",
           "updated_at": "2026-08-17T21:45:00Z",
           "row_version": 1
+        },
+        {
+          "id": "3c4ef887-b403-5307-a298-c6d8a164191c",
+          "code_system_version_id": "de491ce6-282c-5e42-babb-b9ed78e2b2f3",
+          "code": "CERTIFICADO_SEDES",
+          "display": "Certificado del SEDES",
+          "definition": "Valor certificado_sedes del value set vs_affiliation_document_type (patch v4.0.3).",
+          "abstract": false,
+          "selectable": true,
+          "valid_from": "2026-09-26T00:55:00Z",
+          "valid_to": null,
+          "replaced_by_concept_id": null,
+          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-09-26T00:55:00Z",
+          "updated_at": "2026-09-26T01:15:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "013cec5f-d33a-558f-a82f-3d70544687ee",
+          "code_system_version_id": "70af0111-af67-580f-9e90-2d4d6b811559",
+          "code": "SEDES",
+          "display": "SEDES",
+          "definition": "Valor sedes del value set vs_issuing_authority (patch v4.0.3).",
+          "abstract": false,
+          "selectable": true,
+          "valid_from": "2026-09-15T05:48:00Z",
+          "valid_to": null,
+          "replaced_by_concept_id": null,
+          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-09-15T05:48:00Z",
+          "updated_at": "2026-09-15T06:08:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "ac6af361-75c2-5362-b485-45adcbc78222",
+          "code_system_version_id": "491d459a-896e-5245-96ab-bf088c75a7e1",
+          "code": "GERENTE_COMERCIAL",
+          "display": "Gerente Comercial",
+          "definition": "Valor gerente_comercial del value set vs_legal_representative_role (patch v4.0.4).",
+          "abstract": false,
+          "selectable": true,
+          "valid_from": "2026-08-30T09:49:00Z",
+          "valid_to": null,
+          "replaced_by_concept_id": null,
+          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-08-30T09:49:00Z",
+          "updated_at": "2026-08-30T10:09:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "55ac22c0-4c26-511f-ba99-98041d0631c2",
+          "code_system_version_id": "491d459a-896e-5245-96ab-bf088c75a7e1",
+          "code": "GERENTE_MARKETING",
+          "display": "Gerente de Marketing",
+          "definition": "Valor gerente_marketing del value set vs_legal_representative_role (patch v4.0.4).",
+          "abstract": false,
+          "selectable": true,
+          "valid_from": "2026-10-07T06:48:00Z",
+          "valid_to": null,
+          "replaced_by_concept_id": null,
+          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-10-07T06:48:00Z",
+          "updated_at": "2026-10-07T07:08:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "ae1abcfb-cf32-5470-9f8f-cf9beef07572",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "insurance:BILLING_PROVIDER_TYPE_PHARMACY",
+          "display": "Facturador: farmacia",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "309c427f-e5c3-588e-aa5b-c10fe737fc04",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "insurance:BILLING_PROVIDER_TYPE_DIAGNOSTIC_UNIT",
+          "display": "Facturador: unidad diagnóstica",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "7a1a3dcc-18ae-56c0-84ac-facb24123c26",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "insurance:ELIG_PROVIDER_TYPE_PHARMACY",
+          "display": "Solicitante: farmacia",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "8640e36b-83c8-55b9-8272-11113f64b4d3",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "insurance:ELIG_PROVIDER_TYPE_DIAGNOSTIC_UNIT",
+          "display": "Solicitante: unidad diagnóstica",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
         }
       ],
       "concept_designations": [
@@ -44347,6 +44463,58 @@
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1
+        },
+        {
+          "id": "1831ebbe-494d-5ad4-a778-f3ed8afc5541",
+          "concept_id": "3c4ef887-b403-5307-a298-c6d8a164191c",
+          "language_concept_id": "4535601f-316b-52a0-a068-bcc832910077",
+          "designation_type_concept_id": "1115f950-d892-5413-8019-e6234e2dbac5",
+          "value": "Certificado del SEDES",
+          "preferred": true,
+          "created_at": "2026-09-26T00:55:00Z",
+          "updated_at": "2026-09-26T01:15:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "5b60a15c-b0ed-59b6-8ecf-755f8bdadd65",
+          "concept_id": "013cec5f-d33a-558f-a82f-3d70544687ee",
+          "language_concept_id": "4535601f-316b-52a0-a068-bcc832910077",
+          "designation_type_concept_id": "1115f950-d892-5413-8019-e6234e2dbac5",
+          "value": "SEDES",
+          "preferred": true,
+          "created_at": "2026-09-15T05:48:00Z",
+          "updated_at": "2026-09-15T06:08:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "94fc1107-b229-54ea-a10c-66793644b377",
+          "concept_id": "ac6af361-75c2-5362-b485-45adcbc78222",
+          "language_concept_id": "4535601f-316b-52a0-a068-bcc832910077",
+          "designation_type_concept_id": "1115f950-d892-5413-8019-e6234e2dbac5",
+          "value": "Gerente Comercial",
+          "preferred": true,
+          "created_at": "2026-08-30T09:49:00Z",
+          "updated_at": "2026-08-30T10:09:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "58ae30d6-5092-5c6d-8372-90219516d89c",
+          "concept_id": "55ac22c0-4c26-511f-ba99-98041d0631c2",
+          "language_concept_id": "4535601f-316b-52a0-a068-bcc832910077",
+          "designation_type_concept_id": "1115f950-d892-5413-8019-e6234e2dbac5",
+          "value": "Gerente de Marketing",
+          "preferred": true,
+          "created_at": "2026-10-07T06:48:00Z",
+          "updated_at": "2026-10-07T07:08:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
         }
       ],
       "concept_properties": [
@@ -53570,6 +53738,54 @@
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1
+        },
+        {
+          "id": "3052d55b-8b6e-519f-a4b8-55fa1a1866da",
+          "value_set_version_id": "a69ec312-c5d2-54e1-8617-57b9509d058c",
+          "concept_id": "3c4ef887-b403-5307-a298-c6d8a164191c",
+          "included": true,
+          "ordinal": 8,
+          "created_at": "2026-09-26T00:55:00Z",
+          "updated_at": "2026-09-26T01:15:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "5d78dfbd-6ed9-5963-913d-42b4108dd5d9",
+          "value_set_version_id": "1014fec0-d209-5c62-b59c-30e1c8233693",
+          "concept_id": "013cec5f-d33a-558f-a82f-3d70544687ee",
+          "included": true,
+          "ordinal": 7,
+          "created_at": "2026-09-15T05:48:00Z",
+          "updated_at": "2026-09-15T06:08:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "ca5c51e5-09f3-525a-816b-1d8e1d1b157b",
+          "value_set_version_id": "d715a723-f540-5b06-9396-09bf8433d93f",
+          "concept_id": "ac6af361-75c2-5362-b485-45adcbc78222",
+          "included": true,
+          "ordinal": 6,
+          "created_at": "2026-08-30T09:49:00Z",
+          "updated_at": "2026-08-30T10:09:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "166d8dff-92d4-5648-92ca-efe40ddba3de",
+          "value_set_version_id": "d715a723-f540-5b06-9396-09bf8433d93f",
+          "concept_id": "55ac22c0-4c26-511f-ba99-98041d0631c2",
+          "included": true,
+          "ordinal": 7,
+          "created_at": "2026-10-07T06:48:00Z",
+          "updated_at": "2026-10-07T07:08:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
         }
       ],
       "value_set_rules": [],
@@ -54010,7 +54226,7 @@
       }
     ],
     "summary": {
-      "record_count": 3615,
+      "record_count": 3627,
       "entity_count": 10,
       "populated_entity_count": 10,
       "scenario_count": null,

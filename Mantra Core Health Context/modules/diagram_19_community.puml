@@ -490,6 +490,7 @@ entity conversations {
     group_id : uuid <<FK>>
     last_message_at : timestamptz
     message_count : integer
+    pinned_message_id : uuid <<FK>>
   * status_concept_id : uuid <<FK>>
   * created_at : timestamptz
   * updated_at : timestamptz
@@ -507,8 +508,8 @@ entity conversation_participants {
     last_read_message_id : uuid <<FK>>
     muted_until : timestamptz
     last_auto_reply_at : timestamptz
-  * is_favorite : boolean
-  * is_pinned : boolean
+  * is_favorite : boolean <<DEFAULT_FALSE>>
+  * is_pinned : boolean <<DEFAULT_FALSE>>
     archived_at : timestamptz
   * status_concept_id : uuid <<FK>>
   * created_at : timestamptz
@@ -1071,6 +1072,7 @@ poll_votes .. idxset_poll_votes : indexed by
 
 entity "INDEXES · conversations" as idxset_conversations <<INDEX_SET>> {
   PK pk_conversations : (id) UNIQUE BTREE
+  IX ix_conversations_pinned_message_id : (pinned_message_id) BTREE
   IX ix_conversations_tenant_id : (tenant_id) BTREE
   IX ix_conversations_conversation_type_concept_id : (conversation_type_concept_id) BTREE
   IX ix_conversations_group_id : (group_id) BTREE
@@ -1093,6 +1095,7 @@ chat_auto_replies .. idxset_chat_auto_replies : indexed by
 
 entity "INDEXES · conversation_participants" as idxset_conversation_participants <<INDEX_SET>> {
   PK pk_conversation_participants : (id) UNIQUE BTREE
+  IX ix_conversation_participants_profile_pinned : (participant_profile_id, is_pinned) BTREE WHERE is_pinned
   IX ix_conversation_participants_conversation_id : (conversation_id) BTREE
   IX ix_conversation_participants_participant_profile_id : (participant_profile_id) BTREE
   IX ix_conversation_participants_role_concept_id : (role_concept_id) BTREE
@@ -1411,5 +1414,26 @@ public_profiles ||--o{ prestige_awards
 
 public_profiles ||--o{ prestige_scores
 
-@enduml
+entity comment_media {
+  * id : uuid <<PK>>
+  * comment_id : uuid <<FK>>
+  * file_id : uuid <<FK>>
+  * media_role_concept_id : uuid <<FK>>
+    alt_text : varchar
+    ordinal : integer
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
 
+entity "INDEXES · comment_media" as idxset_comment_media <<INDEX_SET>> {
+  PK pk_comment_media : (id) UNIQUE BTREE
+  IX ix_comment_media_comment_id : (comment_id) BTREE
+  IX ix_comment_media_file_id : (file_id) BTREE
+  IX ix_comment_media_media_role_concept_id : (media_role_concept_id) BTREE
+  IX ix_comment_media_created_by_user_id : (created_by_user_id) BTREE
+}
+comment_media .. idxset_comment_media : indexed by
+
+comments ||--o{ comment_media
+
+@enduml

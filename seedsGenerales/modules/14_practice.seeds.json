@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "General physical and care-delivery infrastructure for a private office, clinic, medical center, hospital, nursing station, laboratory, imaging site, pharmacy counter, mobile unit or virtual service. Hospitals, diagnostic units and pharmacies receive explicit domain identities in specialized schemas. A site may host them without merging their tenants, credentials or data governance. The model implements Organization + Location + HealthcareService + PractitionerRole semantics without forcing every professional to own a room.",
-    "seed_revision": "2.5.0-v4.1.4"
+    "seed_revision": "2.5.3-v4.1.4"
   },
   "environment_policy": {
     "boot": {

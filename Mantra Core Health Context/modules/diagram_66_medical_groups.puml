@@ -1,0 +1,71 @@
+@startuml SALUD_Module_66_medical_groups
+title Module 66 — Medical Groups and Team Roster\n(schema: medical_groups)
+skinparam shadowing false
+hide circle
+
+' Promoted from published API FT-21 (8f808c77). Module21 belongs to deployment.
+entity groups {
+  * id : uuid <<PK>>
+  * tenant_id : uuid <<FK>>
+  * practice_id : uuid <<FK>>
+  * service_catalog_id : uuid <<FK>>
+  * requesting_practitioner_id : uuid <<FK>>
+    patient_profile_id : uuid <<FK>>
+    condition_id : uuid <<FK>>
+  * scheduled_at : timestamptz
+  * location_text : varchar
+    notes_text : text
+  * terms_text : text
+  * status : varchar
+    exercise_notes_text : text
+    exercise_notes_updated_at : timestamptz
+    proposed_reschedule_at : timestamptz
+    proposed_by_practitioner_id : uuid <<FK>>
+    closed_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity "INDEXES · groups" as idxset_groups <<INDEX_SET>> {
+  PK pk_groups : (id) UNIQUE BTREE
+  IX ix_medical_groups_groups_tenant_id : (tenant_id) BTREE
+  IX ix_medical_groups_groups_requesting_practitioner_id : (requesting_practitioner_id) BTREE
+  IX ix_medical_groups_groups_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_medical_groups_groups_service_catalog_id : (service_catalog_id) BTREE
+  IX ix_medical_groups_groups_status : (status) BTREE
+  IX ix_medical_groups_groups_scheduled_at : (scheduled_at) BTREE
+}
+groups .. idxset_groups : indexed by
+
+entity group_members {
+  * id : uuid <<PK>>
+  * group_id : uuid <<FK, ON_DELETE_CASCADE>>
+  * practitioner_profile_id : uuid <<FK>>
+  * role_title : varchar
+  * agreed_payment_amount : numeric
+    agreed_payment_currency_concept_id : uuid <<FK>>
+    additional_terms_text : text
+  * is_creator : boolean
+  * invitation_status : varchar
+    responded_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity "INDEXES · group_members" as idxset_group_members <<INDEX_SET>> {
+  PK pk_group_members : (id) UNIQUE BTREE
+  IX ix_medical_groups_group_members_group_id : (group_id) BTREE
+  IX ix_medical_groups_group_members_practitioner_profile_id : (practitioner_profile_id) BTREE
+  IX ix_medical_groups_group_members_invitation_status : (invitation_status) BTREE
+  UX ux_medical_groups_group_members_group_practitioner : (group_id, practitioner_profile_id) UNIQUE BTREE
+}
+group_members .. idxset_group_members : indexed by
+
+groups ||--o{ group_members
+@enduml

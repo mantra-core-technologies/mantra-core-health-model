@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "Complements diagram_10_audit with history and append-only evidence for patient identity, workforce assignments, facilities, diagnostic assets, public profiles and moderation. Immutable clinical-note/file versions do not need snapshot history; their creation and access remain audited.",
-    "seed_revision": "2.5.0-v4.1.4"
+    "seed_revision": "2.5.3-v4.1.4"
   },
   "environment_policy": {
     "boot": {

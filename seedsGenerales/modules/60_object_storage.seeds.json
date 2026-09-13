@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "Stores large immutable or versioned binaries: DICOM, reports, PDFs, videos, signed evidence, exports, backups and raw payloads. The database stores metadata, hashes, retention, encryption, legal hold and object locations; binary content remains in object storage/PACS.",
-    "seed_revision": "2.5.0-v4.1.4"
+    "seed_revision": "2.5.3-v4.1.4"
   },
   "environment_policy": {
     "boot": {

@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "Provides a governed international-grade health data center: source onboarding, ingestion, canonical versioned resources, patient identity resolution, FHIR validation, quality, provenance, lineage, terminology mapping, controlled exports, de-identification and OMOP transformation.",
-    "seed_revision": "2.5.0-v4.1.4"
+    "seed_revision": "2.5.3-v4.1.4"
   },
   "environment_policy": {
     "boot": {

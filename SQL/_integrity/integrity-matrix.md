@@ -32,11 +32,17 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 | `audit_log` | `IMMUTABLE, REFERENCE_ONLY` | **UPDATE_DELETE** forbidden |
 | `data_access_log` | `APPEND_ONLY, REFERENCE_ONLY` | **UPDATE** forbidden; **DELETE** retention purge only (UC-10-09) |
 
+### Módulo 17 · `billing`
+
+| Tabla | Estereotipo | Reglas declaradas |
+|-------|-------------|-------------------|
+| `billing.quotations` | `REFERENCE_ONLY` | **CHECK_SQL** chk_quotations_interest_method \| "interest_calculation_method" IN ('FLAT', 'FRENCH') |
+
 ### Módulo 08 · `clinical`
 
 | Tabla | Estereotipo | Reglas declaradas |
 |-------|-------------|-------------------|
-| `appointments` | `REFERENCE_ONLY` | **EXCLUDE** practitioner/location time overlap; **EXCLUDE_SQL** ex_appointments_practitioner_time | "practitioner_profile_id" WITH =, tstzrange("start_at", "end_at", '[)') WITH && | "practitioner_profile_id" IS NOT NULL AND "end_at" IS NOT NULL AND "status_concept_id" IN ('51530fd7-05b1-5c29-80c4-da740ede4d27', '37dded87-7a7a-5a24-86f6-0ef48cccb482'); **LOCK** reservation confirmation transaction |
+| `appointments` | `REFERENCE_ONLY` | **EXCLUDE** practitioner/location time overlap; **EXCLUDE_SQL** ex_appointments_practitioner_time \| "practitioner_profile_id" WITH =, tstzrange("start_at", "end_at", '[)') WITH && \| "practitioner_profile_id" IS NOT NULL AND "end_at" IS NOT NULL AND "status_concept_id" IN ('51530fd7-05b1-5c29-80c4-da740ede4d27', '37dded87-7a7a-5a24-86f6-0ef48cccb482'); **LOCK** reservation confirmation transaction |
 
 ### Módulo 29 · `delegated_access`
 
@@ -62,9 +68,18 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 |-------|-------------|-------------------|
 | `patient_coverages` | `REFERENCE_ONLY` | **UK** insurer + member identifier + effective period; **EXCLUDE** conflicting primary coverage periods |
 | `claim_adjudication_versions` | `IMMUTABLE, REFERENCE_ONLY` | **UK** claim + adjudication version; **UPDATE_DELETE** forbidden |
+| `insurance_claims` | `REFERENCE_ONLY` | **CHECK_SQL** ck_insurance_claims_single_order_origin \| ("inventory_reservation_id" IS NULL OR "service_request_id" IS NULL) |
+| `prior_authorization_requests` | `REFERENCE_ONLY` | **CHECK_SQL** ck_prior_authorizations_single_order_origin \| ("inventory_reservation_id" IS NULL OR "service_request_id" IS NULL) |
 | `claim_appeal_decisions` | `IMMUTABLE, REFERENCE_ONLY` | **UK** dispute + decision version; **UPDATE_DELETE** forbidden |
 | `claim_reversals` | `IMMUTABLE, REFERENCE_ONLY` | **UK** claim + idempotency_key; **UPDATE_DELETE** forbidden |
 | `coordination_of_benefits` | `VERSIONED, REFERENCE_ONLY` | **UK** patient + determination version; **EXCLUDE** overlapping active COB periods |
+
+### Módulo 66 · `medical_groups`
+
+| Tabla | Estereotipo | Reglas declaradas |
+|-------|-------------|-------------------|
+| `medical_groups.groups` | `REFERENCE_ONLY` | **CHECK_SQL** ck_medical_groups_groups_status \| "status" IN ('PENDING_TEAM', 'SCHEDULED', 'RESCHEDULE_PENDING', 'CLOSED') |
+| `medical_groups.group_members` | `REFERENCE_ONLY` | **CHECK_SQL** ck_medical_groups_group_members_invitation_status \| "invitation_status" IN ('PENDING', 'ACCEPTED', 'REJECTED') |
 
 ### Módulo 25 · `pharmacy_inventory`
 

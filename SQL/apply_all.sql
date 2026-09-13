@@ -192,6 +192,8 @@
 \ir 17_billing/03_fk_intra.sql
 \echo >>> 17_billing/04_indexes.sql
 \ir 17_billing/04_indexes.sql
+\echo >>> 17_billing/05_constraints.sql
+\ir 17_billing/05_constraints.sql
 
 -- ═══ módulo 18_clinical_ext ═══
 \echo >>> 18_clinical_ext/01_schema.sql
@@ -604,6 +606,18 @@
 \ir 65_surveys/03_fk_intra.sql
 \echo >>> 65_surveys/04_indexes.sql
 \ir 65_surveys/04_indexes.sql
+
+-- ═══ módulo 66_medical_groups ═══
+\echo >>> 66_medical_groups/01_schema.sql
+\ir 66_medical_groups/01_schema.sql
+\echo >>> 66_medical_groups/02_tables.sql
+\ir 66_medical_groups/02_tables.sql
+\echo >>> 66_medical_groups/03_fk_intra.sql
+\ir 66_medical_groups/03_fk_intra.sql
+\echo >>> 66_medical_groups/04_indexes.sql
+\ir 66_medical_groups/04_indexes.sql
+\echo >>> 66_medical_groups/05_constraints.sql
+\ir 66_medical_groups/05_constraints.sql
 
 -- 90_fk_deferred.sql OMITIDOS a propósito.
 \echo === apply_all completado (sin 90_fk_deferred) ===

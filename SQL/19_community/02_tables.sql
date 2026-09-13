@@ -352,6 +352,7 @@ CREATE TABLE IF NOT EXISTS "community"."conversations" (
     "group_id" uuid,
     "last_message_at" timestamptz,
     "message_count" integer,
+    "pinned_message_id" uuid,
     "status_concept_id" uuid NOT NULL,
     "created_at" timestamptz NOT NULL,
     "updated_at" timestamptz NOT NULL,
@@ -370,8 +371,8 @@ CREATE TABLE IF NOT EXISTS "community"."conversation_participants" (
     "last_read_message_id" uuid,
     "muted_until" timestamptz,
     "last_auto_reply_at" timestamptz,
-    "is_favorite" boolean NOT NULL,
-    "is_pinned" boolean NOT NULL,
+    "is_favorite" boolean NOT NULL DEFAULT false,
+    "is_pinned" boolean NOT NULL DEFAULT false,
     "archived_at" timestamptz,
     "status_concept_id" uuid NOT NULL,
     "created_at" timestamptz NOT NULL,
@@ -664,4 +665,16 @@ CREATE TABLE IF NOT EXISTS "community"."feedback_ticket_events" (
     "changed_by_user_id" uuid,
     "recorded_at" timestamptz NOT NULL,
     CONSTRAINT "pk_feedback_ticket_events" PRIMARY KEY ("history_id")
+);
+
+CREATE TABLE IF NOT EXISTS "community"."comment_media" (
+    "id" uuid NOT NULL,
+    "comment_id" uuid NOT NULL,
+    "file_id" uuid NOT NULL,
+    "media_role_concept_id" uuid NOT NULL,
+    "alt_text" varchar,
+    "ordinal" integer,
+    "created_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    CONSTRAINT "pk_comment_media" PRIMARY KEY ("id")
 );

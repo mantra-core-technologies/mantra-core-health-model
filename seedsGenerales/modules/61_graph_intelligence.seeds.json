@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "Supports multi-hop relationship analysis for referrals, organizational networks, counterparties, fraud, delegated access and lineage. The graph is optional and derived. PostgreSQL remains canonical for identities, contracts, claims, payments and clinical records.",
-    "seed_revision": "2.5.0-v4.1.4"
+    "seed_revision": "2.5.3-v4.1.4"
   },
   "environment_policy": {
     "boot": {

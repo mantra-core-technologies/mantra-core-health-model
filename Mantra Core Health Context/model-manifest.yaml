@@ -743,3 +743,12 @@ modules:
   view_elements: 0
   index_sets: 18
   status: active
+
+- number: 66
+  code: medical_groups
+  title: Medical Groups and Team Roster
+  file: modules/diagram_66_medical_groups.puml
+  table_like_elements: 2
+  view_elements: 0
+  index_sets: 2
+  status: active

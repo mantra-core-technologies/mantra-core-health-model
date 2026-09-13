@@ -214,6 +214,8 @@ CREATE INDEX IF NOT EXISTS "ix_prior_authorization_requests_service_request_id" 
 
 CREATE INDEX IF NOT EXISTS "ix_prior_authorization_requests_medication_request_id" ON "insurance"."prior_authorization_requests" ("medication_request_id");
 
+CREATE INDEX IF NOT EXISTS "ix_prior_authorization_requests_inventory_reservation_id" ON "insurance"."prior_authorization_requests" ("inventory_reservation_id");
+
 CREATE INDEX IF NOT EXISTS "ix_prior_authorization_requests_requesting_provider_ty_ace534e5" ON "insurance"."prior_authorization_requests" ("requesting_provider_type_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_prior_authorization_requests_status_concept_id" ON "insurance"."prior_authorization_requests" ("status_concept_id");
@@ -260,6 +262,10 @@ CREATE INDEX IF NOT EXISTS "ix_insurance_claims_encounter_id" ON "insurance"."in
 
 CREATE INDEX IF NOT EXISTS "ix_insurance_claims_prior_authorization_request_id" ON "insurance"."insurance_claims" ("prior_authorization_request_id");
 
+CREATE INDEX IF NOT EXISTS "ix_insurance_claims_inventory_reservation_id" ON "insurance"."insurance_claims" ("inventory_reservation_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insurance_claims_service_request_id" ON "insurance"."insurance_claims" ("service_request_id");
+
 CREATE INDEX IF NOT EXISTS "ix_insurance_claims_status_concept_id" ON "insurance"."insurance_claims" ("status_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_insurance_claims_currency_concept_id" ON "insurance"."insurance_claims" ("currency_concept_id");
@@ -277,6 +283,8 @@ CREATE INDEX IF NOT EXISTS "ix_insurance_claim_lines_service_concept_id" ON "ins
 CREATE INDEX IF NOT EXISTS "ix_insurance_claim_lines_diagnostic_study_offering_id" ON "insurance"."insurance_claim_lines" ("diagnostic_study_offering_id");
 
 CREATE INDEX IF NOT EXISTS "ix_insurance_claim_lines_medication_dispensation_line_id" ON "insurance"."insurance_claim_lines" ("medication_dispensation_line_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insurance_claim_lines_inventory_reservation_line_id" ON "insurance"."insurance_claim_lines" ("inventory_reservation_line_id");
 
 CREATE INDEX IF NOT EXISTS "ix_claim_adjudication_versions_insurance_claim_id" ON "insurance"."claim_adjudication_versions" ("insurance_claim_id");
 

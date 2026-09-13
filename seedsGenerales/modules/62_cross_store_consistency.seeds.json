@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "Guarantees that derived NoSQL/search/cache/vector/object projections can be rebuilt, reconciled, repaired and deleted without dual-write inconsistency. All domain writes commit only to PostgreSQL plus outbox; persistent workers update secondary stores idempotently.",
-    "seed_revision": "2.5.0-v4.1.4"
+    "seed_revision": "2.5.3-v4.1.4"
   },
   "environment_policy": {
     "boot": {

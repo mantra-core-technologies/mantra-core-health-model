@@ -445,6 +445,110 @@ contenido y código, no esquema.
 front 48/48 del formulario y 3 850/3 853 de la suite completa (los 3 rojos son preexistentes de
 `dev`, reproducidos con los cambios guardados). Sin base viva: no se ejercitó contra Postgres.
 
+### v4.2.10 — La aseguradora publica sus canales de contacto: WhatsApp, call center y correo (2026-09-13)
+
+Subtarea 2.3. El registro de procesos del stakeholder (MÓDULO ASEGURADORA · 6.2 · ítem 5) pide "una
+opción para poder llamar mediante Whatsapp directo a la compañía de seguro (la misma compañía nos
+dará el numero de llamada o call center) y el usuario llamara desde su mismo numero de whatsapp" —
+brecha §20 "Canal directo con el call center", tarjeta T-23.
+
+**Tres columnas nullable en `insurance.insurance_carriers`, sin FK ni índice nuevo**:
+`whatsapp_number` (E.164, la API lo normaliza al escribir), `call_center_phone` (tal cual la
+compañía lo publica — las líneas gratuitas bolivianas son "800-10-xxxx" y no son E.164) y
+`support_email`. T-23 proponía modelar esto con `common.contact_points` (polimórfico); se decidió
+con el negocio el 2026-09-13 seguir columnas propias, más simple para un dato con un único dueño
+posible por fila y sin necesidad de historial de vigencia.
+
+**Sí hay backfill, a diferencia de v4.2.9**: `insurance_carriers` NO es `<<IMMUTABLE>>`, y las 9
+aseguradoras bolivianas reales ya existen en toda base viva por DOS sembradores ADD-only con DOS
+juegos de `carrier_code` (el boot de la API, prefijo `BO_ASEG_*`, y el paquete de seeds del modelo,
+código corto tipo `ALIANZA_VIDA`): sin backfill, esas 9 compañías quedarían sin canales para
+siempre. Los valores backfilleados son los publicados en el dominio oficial de cada compañía a la
+fecha del patch (regla 70: fuente + fecha citadas por fila; sin publicación confirmada, `NULL`,
+nunca inventado). **7 de las 9 compañías tienen al menos un canal confirmado**; Alianza Vida y
+Nacional Seguros quedan sin backfill (el primero resolvió a la aseguradora de generales del mismo
+grupo, no a la de vida/salud; el segundo devolvió 403 al fetch) — cerrarlo es tarea de quien
+administre esas dos organizaciones vía el `PUT` nuevo, no de este patch.
+
+Pipeline: `.puml` M26 → `gen_ddl.py all` (diff acotado a `SQL/26_insurance/02_tables.sql`) →
+`SQL/patches/2026-09-13_v4210_insurance_carriers_contact_channels.sql` (con la sección de backfill
+citando fuente) → `gen_entities.py 26` + `prettier --write` (el generador reformatea las 29
+entidades del módulo por el mismo motivo que en v4.2.9; prettier colapsa el diff a
+`insurance_carriers.entity.ts`). Seeds: `ASEGURADORAS_BOLIVIA` y `canonical_insurance_carriers`
+ganan las tres claves con su `source_url`/`obtenido`, `seed_revision` → **2.5.3-v4.1.4**. Deltas
+esperados sobre la base viva: columnas de `insurance.insurance_carriers` 16 → **19**, FKs e índices
+±0, tablas ±0.
+
+**Dos hallazgos, ninguno corregido acá**: (1) las 9 aseguradoras reales existen DOS VECES en toda
+base viva (los `carrier_code` `BO_ASEG_*` del boot de la API y los códigos cortos del paquete del
+modelo) — el backfill cubre ambos juegos de códigos, la deduplicación es de otro carril; (2) `sigla`
+y `address` (v4.1.8) nunca entraron a `canonical_insurance_carriers` pese a que la documentación
+del momento decía que sí — se registra, no se corrige.
+
+**Ojo con la numeración:** v4.2.8 son las cotizaciones, v4.2.9 la cláusula del rechazo — esta
+promoción es v4.2.10.
+
+### v4.2.9 — La adjudicación de línea cita la cláusula y explica el rechazo (2026-09-12)
+
+Subtarea 2.2. El registro de procesos del stakeholder (MÓDULO ASEGURADORA · 2 · 3) exige que la
+app responda con APROBADO/NO APROBADO «indicando por qué no está APROBADO según la clausula del
+contrato y porque tiene excepción de alguna enfermedad según su contrato o póliza» — brecha §19
+«Cláusulas y exclusiones de póliza» de la bóveda, tarjeta T-22. `insurance.claim_line_adjudications`
+sólo tenía el motivo TIPIFICADO (`reason_concept_id`, un catálogo interno de MANTRA que P-16-4 deja
+sin miembros) y el texto de la versión entera (`claim_adjudication_versions.disposition_text`): sin
+texto por ítem. La ficha `TAREA-16` (P-16-3) ya había anticipado exactamente esta columna.
+
+**Dos columnas nullable, ninguna FK ni índice nuevo**: `policy_clause_reference` (varchar, la cita
+de la cláusula) y `denial_rationale` (text, la justificación). **No** se agrega un tercer código
+tipificado de exclusión: eso ya es `reason_concept_id`, y un value set nuevo en texto libre sería un
+segundo catálogo para el mismo dato — contra la regla del proyecto de que todo catálogo cerrado es
+un value set, nunca un enum de texto. Sin backfill: `claim_line_adjudications` es `<<IMMUTABLE>>` y
+ninguna fila anterior puede ganar una cláusula que nadie citó en su momento.
+
+Pipeline: `.puml` de `M26 insurance` → `gen_ddl.py all` (diff acotado a
+`SQL/26_insurance/02_tables.sql`) → `SQL/patches/2026-09-12_v429_claim_line_adjudications_policy_clause.sql`
+(idempotente, sin backfill) → `gen_entities.py 26`. `gen_seeds.py --dry` no reporta cambios: son
+columnas nullable sin obligación de valor. Deltas esperados sobre la base viva: columnas de
+`insurance.claim_line_adjudications` 9 → **11**, FKs e índices ±0, tablas ±0.
+
+**Ojo con la numeración:** v4.2.8 ya está tomada por las cotizaciones (`billing.quotations`); esta
+promoción es v4.2.9. Detalle completo en `SALUD/Arquitectura/materializacion-fisica-bd.md` de la
+bóveda y en `docs/tareas/subtarea-2.2-clausula-exclusion-reclamos/` del workspace.
+
+### Roles de gerencia en el representante legal (2026-09-11) — SIN cambio de esquema · seeds 2.5.2
+
+Subtarea 1.4: `directory.tenant_legal_representatives` está materializada desde v4.0.4 en las 4
+capas y sin un solo escritor; el registro de procesos pide, junto al representante legal con su
+poder notariado, tres gerencias de contacto (ASEGURADORA 1.9-1.17) y el value set sólo nombraba
+la general. `vs_legal_representative_role` gana `gerente_comercial` (ordinal 6) y
+`gerente_marketing` (ordinal 7), los dos al final de la lista en la nota de la bóveda porque el
+orden ES el ordinal sembrado. `poder_representante_legal` y `notaria` ya existían: el poder en
+PDF no necesitó valor nuevo. Regenerado con `python salud-db/gen_seeds.py` (diff acotado a
+`03_terminology.seeds.json` y `45_system_context.seeds.json`, más el bump de `seed_revision` en
+los 64 módulos) y cargado a Neon con `load_seeds.py --skip-prod --refresh --skip-opensearch
+--skip-redis --only 03` / `--only 45`: el value set queda con 7 miembros y el enum dinámico con
+sus 7 opciones, en el ordinal esperado y con los rótulos de `VS_DISPLAY`.
+
+**Ojo:** la deriva de 634 líneas en `08_clinical.seeds.json`
+(`clinical.prescription_signature_policies`, +42 filas) que 1.2 documentó **sigue apareciendo**
+al regenerar en limpio — se revirtió otra vez sin tocarla, para no mezclarla. Ver el detalle
+completo y la evidencia SQL en `SALUD/Arquitectura/materializacion-fisica-bd.md` de la bóveda.
+
+### Certificado del SEDES en los documentos de afiliación (2026-09-10) — SIN cambio de esquema · seeds 2.5.1
+
+Subtarea 1.2: `directory.tenant_affiliation_documents` ya estaba completa desde v4.0.3 en las 4
+capas; faltaba sólo contenido de catálogo. `vs_affiliation_document_type` gana
+`certificado_sedes` (ordinal 8) y `vs_issuing_authority` gana `sedes` (ordinal 7), ambos al
+final de sus listas en la nota de la bóveda. Regenerado con `python salud-db/gen_seeds.py`
+(diff acotado a `03_terminology.seeds.json` y `45_system_context.seeds.json`) y cargado a Neon
+con `load_seeds.py --refresh --only 03` / `--only 45`: 0 huérfanos, los dos conceptos vivos y
+en el ordinal esperado de la versión por defecto de cada value set.
+
+**Ojo (destapado acá):** regenerar el paquete en limpio, sin este cambio, ya difiere 634 líneas
+en `08_clinical.seeds.json` (`clinical.prescription_signature_policies`, +42 filas) contra lo
+commiteado en `dev` — reproducido dos veces de forma determinista, deriva preexistente ajena a
+esta subtarea. Se dejó ese archivo intacto para no mezclarlo. Ver el detalle completo y la
+evidencia SQL en `SALUD/Arquitectura/materializacion-fisica-bd.md` de la bóveda.
 ### v4.2.8 — Cotizaciones: `billing.quotations` y `quotation_installments` (2026-09-08)
 
 T24 «Creación de cotizaciones» (FT-24) ya tenía implementación mergeada en `dev` de la API
@@ -1786,3 +1890,44 @@ tsc/build/lint + discovery offline). Scaffolding Nest (module/controller/service
 - Casos de uso del backend (services/controllers son stubs); paquete de migraciones MikroORM.
   Los casos de uso deben honrar la **regla 11** (v4.0.7): registro atómico padre+hija CTI en una
   sola transacción (ver `data-modeling-standards.md` regla 11 y `orm-mapping-guide.md`).
+
+## v4.2.11 — Reclamos vinculados a pedidos
+
+Cuatro FK UUID nullable conservan los registros anteriores sin backfill:
+
+- `insurance_claims.inventory_reservation_id` → pedido de farmacia.
+- `insurance_claims.service_request_id` → orden diagnóstica.
+- `insurance_claim_lines.inventory_reservation_line_id` → ítem exacto reservado.
+- `prior_authorization_requests.inventory_reservation_id` → pedido de farmacia autorizado.
+
+Los CHECK `ck_insurance_claims_single_order_origin` y `ck_prior_authorizations_single_order_origin`
+impiden combinar farmacia y diagnóstico en la misma cabecera. La autorización farmacéutica puede
+conservar además `medication_request_id`, cuya pertenencia a la receta del pedido verifica la API.
+La autorización previa sigue siendo opcional para presentar un reclamo vinculado.
+
+El tipo del prestador se conserva con los conceptos `BILLING_PROVIDER_TYPE_PHARMACY`,
+`BILLING_PROVIDER_TYPE_DIAGNOSTIC_UNIT`, `ELIG_PROVIDER_TYPE_PHARMACY` y
+`ELIG_PROVIDER_TYPE_DIAGNOSTIC_UNIT`, espejados desde las mismas claves `insurance:*` del backend.
+`gen_seeds.py --only backend` permite actualizar ese puente sin regenerar los datos mock.
+
+**Evidencia de modelo:** cinco pruebas del generador aprobadas; una segunda generación completa
+(67 módulos) en carpeta temporal produjo cero diferencias de SQL frente a la salida canónica.
+Las entidades se regeneraron y los cuatro índices/FK se propagaron al catálogo ORM.
+
+**Evidencia PostgreSQL aislado:** reconstrucción y FK diferidas ejecutadas por el recorrido de la
+subtarea; patch aplicado dos veces con exit 0. Verificados cuatro campos nullable, cuatro FK con
+destino correcto, cuatro índices y dos CHECK validados. Ambos orígenes simultáneos producen
+`23514` con el nombre exacto de la restricción. Origen único e histórico vacío pasan el CHECK y
+alcanzan la validación FK. Pruebas estructurales ejecutadas dentro de BEGIN/ROLLBACK, sin datos
+persistidos ni conexión a la base remota. La validación funcional de pertenencia, concurrencia y
+publicación corresponde al recorrido API registrado en el walkthrough de la subtarea.
+
+**Dependencias reconciliadas:** se recuperaron las cotizaciones canónicas (`f549ee9`, `72927e9`)
+y se promovieron los contratos ya publicados por API de medios de comentarios, preferencias de
+chat y automatización de activos/pasivos. `medical_groups` usa el módulo66: 21 es deployment,
+64 es audio_assets y 65 es surveys. Se conservan los cuatro patches existentes y sus tipos;
+las FK CTI del patch médico se corrigen a `profile_id`, la PK canónica. Los defaults booleanos
+y la cascada de miembros se declaran explícitamente en PUML; no se infieren por nombre.
+
+Despliegue: patch de modelo → API → frontend. Retirar una versión de aplicación conserva las
+columnas aditivas, las versiones adjudicadas y sus reversiones financieras.
