@@ -875,3 +875,52 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_dunning_items_status_concept_id" FOREIGN KEY ("status_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: practice.practices (requiere schema practice)
+DO $$ BEGIN
+    ALTER TABLE "billing"."quotations"
+        ADD CONSTRAINT "fk_quotations_practice_id" FOREIGN KEY ("practice_id")
+        REFERENCES "practice"."practices" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: profiles.patient_profiles (requiere schema profiles)
+DO $$ BEGIN
+    ALTER TABLE "billing"."quotations"
+        ADD CONSTRAINT "fk_quotations_patient_profile_id" FOREIGN KEY ("patient_profile_id")
+        REFERENCES "profiles"."patient_profiles" ("profile_id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: profiles.health_practitioner_profiles (requiere schema profiles)
+DO $$ BEGIN
+    ALTER TABLE "billing"."quotations"
+        ADD CONSTRAINT "fk_quotations_created_by_practitioner_profile_id" FOREIGN KEY ("created_by_practitioner_profile_id")
+        REFERENCES "profiles"."health_practitioner_profiles" ("profile_id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "billing"."quotations"
+        ADD CONSTRAINT "fk_quotations_currency_concept_id" FOREIGN KEY ("currency_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "billing"."quotations"
+        ADD CONSTRAINT "fk_quotations_status_concept_id" FOREIGN KEY ("status_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "billing"."quotations"
+        ADD CONSTRAINT "fk_quotations_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "billing"."quotations"
+        ADD CONSTRAINT "fk_quotations_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;

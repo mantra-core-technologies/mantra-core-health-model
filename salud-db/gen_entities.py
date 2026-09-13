@@ -108,6 +108,8 @@ def emit_property(schema, table, c, registry) -> list[str]:
         opts = {"fieldName": f"'{c.name}'", **opts}
     if not c.not_null:
         opts = {**opts, "nullable": "true"}
+    if c.default is not None:
+        opts = {**opts, "default": c.default}
     bang = "!" if c.not_null else "?"
 
     if c.is_pk and is_uuid(c.dtype):

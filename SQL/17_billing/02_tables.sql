@@ -370,3 +370,41 @@ CREATE TABLE IF NOT EXISTS "billing"."dunning_items" (
     "created_at" timestamptz NOT NULL,
     CONSTRAINT "pk_dunning_items" PRIMARY KEY ("id")
 );
+
+CREATE TABLE IF NOT EXISTS "billing"."quotations" (
+    "id" uuid NOT NULL,
+    "practice_id" uuid NOT NULL,
+    "patient_profile_id" uuid NOT NULL,
+    "created_by_practitioner_profile_id" uuid NOT NULL,
+    "attention_date" date NOT NULL,
+    "appointment_id" uuid,
+    "service_catalog_id" uuid NOT NULL,
+    "service_name_snapshot" varchar NOT NULL,
+    "offered_price" numeric NOT NULL,
+    "currency_concept_id" uuid,
+    "payment_plan_installment_count" integer NOT NULL,
+    "interest_rate_percent" numeric NOT NULL,
+    "interest_calculation_method" varchar NOT NULL,
+    "valid_until" date NOT NULL,
+    "status_concept_id" uuid NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_quotations" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "billing"."quotation_installments" (
+    "id" uuid NOT NULL,
+    "quotation_id" uuid NOT NULL,
+    "installment_number" integer NOT NULL,
+    "due_date" date NOT NULL,
+    "principal_amount" numeric NOT NULL,
+    "interest_amount" numeric NOT NULL,
+    "total_amount" numeric NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_quotation_installments" PRIMARY KEY ("id")
+);

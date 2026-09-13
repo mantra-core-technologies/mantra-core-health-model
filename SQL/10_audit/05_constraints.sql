@@ -21,4 +21,3 @@ REVOKE UPDATE ON "audit"."data_access_log" FROM PUBLIC;
 DROP TRIGGER IF EXISTS trg_forbid_update ON "audit"."data_access_log";
 CREATE TRIGGER trg_forbid_update BEFORE UPDATE ON "audit"."data_access_log"
     FOR EACH ROW EXECUTE FUNCTION "integrity"."forbid_mutation"();
-

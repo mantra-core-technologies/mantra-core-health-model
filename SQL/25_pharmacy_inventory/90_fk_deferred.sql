@@ -2,10 +2,6 @@
 -- Generado de diagram_25_pharmacy_inventory.puml — NO editar a mano.
 
 
--- FK sin destino canónico (no forzadas, temperatura-0):
---   inventory_reservations.quotation_id
-
-
 -- destino: pharmacy.pharmacy_sites (requiere schema pharmacy)
 DO $$ BEGIN
     ALTER TABLE "pharmacy_inventory"."inventory_locations"
@@ -207,6 +203,13 @@ DO $$ BEGIN
     ALTER TABLE "pharmacy_inventory"."inventory_reservations"
         ADD CONSTRAINT "fk_inventory_reservations_medication_request_id" FOREIGN KEY ("medication_request_id")
         REFERENCES "clinical"."medication_requests" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: billing.quotations (requiere schema billing)
+DO $$ BEGIN
+    ALTER TABLE "pharmacy_inventory"."inventory_reservations"
+        ADD CONSTRAINT "fk_inventory_reservations_quotation_id" FOREIGN KEY ("quotation_id")
+        REFERENCES "billing"."quotations" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)

@@ -320,6 +320,7 @@ entity prior_authorization_requests {
   * patient_coverage_id : uuid <<FK>>
     service_request_id : uuid <<FK>>
     medication_request_id : uuid <<FK>>
+    inventory_reservation_id : uuid <<FK>>
   * requesting_provider_type_concept_id : uuid <<FK>>
   * requesting_provider_entity_id : uuid
   * status_concept_id : uuid <<FK>>
@@ -373,6 +374,8 @@ entity insurance_claims {
   * billing_provider_entity_id : uuid
     encounter_id : uuid <<FK>>
     prior_authorization_request_id : uuid <<FK>>
+    inventory_reservation_id : uuid <<FK>>
+    service_request_id : uuid <<FK>>
   * claim_identifier : varchar
   * status_concept_id : uuid <<FK>>
     submitted_at : timestamptz
@@ -394,6 +397,7 @@ entity insurance_claim_lines {
     service_concept_id : uuid <<FK>>
     diagnostic_study_offering_id : uuid <<FK>>
     medication_dispensation_line_id : uuid <<FK>>
+    inventory_reservation_line_id : uuid <<FK>>
     quantity : numeric
     billed_amount : numeric
     patient_responsibility_amount : numeric
@@ -450,9 +454,13 @@ patient_coverages ||--o{ insurance_claims
 insurance_carriers ||--o{ insurance_claims
 coverage_eligibility_requests ||--o{ coverage_eligibility_responses
 prior_authorization_requests ||--o{ prior_authorization_items
+inventory_reservations |o--o{ prior_authorization_requests
 prior_authorization_requests ||--o{ prior_authorization_determinations
 prior_authorization_items |o--o{ prior_authorization_determinations
 insurance_claims ||--o{ insurance_claim_lines
+inventory_reservations |o--o{ insurance_claims
+service_requests |o--o{ insurance_claims
+inventory_reservation_lines |o--o{ insurance_claim_lines
 insurance_claims ||--o{ claim_adjudication_versions
 claim_adjudication_versions ||--o{ claim_line_adjudications
 insurance_claim_lines ||--o{ claim_line_adjudications
@@ -815,6 +823,7 @@ entity "INDEXES · prior_authorization_requests" as idxset_prior_authorization_r
   IX ix_prior_authorization_requests_patient_coverage_id : (patient_coverage_id) BTREE
   IX ix_prior_authorization_requests_service_request_id : (service_request_id) BTREE
   IX ix_prior_authorization_requests_medication_request_id : (medication_request_id) BTREE
+  IX ix_prior_authorization_requests_inventory_reservation_id : (inventory_reservation_id) BTREE
   IX ix_prior_authorization_requests_requesting_provider_ty_ace534e5 : (requesting_provider_type_concept_id) BTREE
   IX ix_prior_authorization_requests_status_concept_id : (status_concept_id) BTREE
   IX ix_prior_authorization_requests_priority_concept_id : (priority_concept_id) BTREE
@@ -856,6 +865,8 @@ entity "INDEXES · insurance_claims" as idxset_insurance_claims <<INDEX_SET>> {
   IX ix_insurance_claims_billing_provider_type_concept_id : (billing_provider_type_concept_id) BTREE
   IX ix_insurance_claims_encounter_id : (encounter_id) BTREE
   IX ix_insurance_claims_prior_authorization_request_id : (prior_authorization_request_id) BTREE
+  IX ix_insurance_claims_inventory_reservation_id : (inventory_reservation_id) BTREE
+  IX ix_insurance_claims_service_request_id : (service_request_id) BTREE
   IX ix_insurance_claims_status_concept_id : (status_concept_id) BTREE
   IX ix_insurance_claims_currency_concept_id : (currency_concept_id) BTREE
   IX ix_insurance_claims_created_by_user_id : (created_by_user_id) BTREE
@@ -871,6 +882,7 @@ entity "INDEXES · insurance_claim_lines" as idxset_insurance_claim_lines <<INDE
   IX ix_insurance_claim_lines_service_concept_id : (service_concept_id) BTREE
   IX ix_insurance_claim_lines_diagnostic_study_offering_id : (diagnostic_study_offering_id) BTREE
   IX ix_insurance_claim_lines_medication_dispensation_line_id : (medication_dispensation_line_id) BTREE
+  IX ix_insurance_claim_lines_inventory_reservation_line_id : (inventory_reservation_line_id) BTREE
 }
 
 insurance_claim_lines .. idxset_insurance_claim_lines : indexed by

@@ -21,23 +21,23 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 14 | practice | 11 | 80 | 0 | 84 | 0 |
 | 15 | chart | 11 | 70 | 0 | 80 | 1 |
 | 16 | accounting | 42 | 304 | 1 | 356 | 13 |
-| 17 | billing | 20 | 141 | 0 | 157 | 17 |
+| 17 | billing | 22 | 150 | 0 | 167 | 17 |
 | 18 | clinical_ext | 13 | 91 | 0 | 101 | 1 |
-| 19 | community | 38 | 233 | 0 | 244 | 1 |
+| 19 | community | 39 | 238 | 0 | 250 | 1 |
 | 20 | diagnostics | 36 | 251 | 0 | 301 | 0 |
 | 21 | deployment _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
 | 22 | organization_extensions | 5 | 49 | 0 | 55 | 0 |
 | 23 | diagnostic_units | 10 | 69 | 0 | 77 | 0 |
 | 24 | pharmacy | 9 | 64 | 0 | 72 | 0 |
-| 25 | pharmacy_inventory | 20 | 141 | 0 | 154 | 6 |
-| 26 | insurance | 29 | 187 | 0 | 206 | 0 |
+| 25 | pharmacy_inventory | 20 | 142 | 0 | 154 | 6 |
+| 26 | insurance | 29 | 191 | 0 | 210 | 0 |
 | 27 | identity_assurance | 11 | 69 | 0 | 76 | 0 |
 | 28 | telemetry | 14 | 73 | 0 | 83 | 0 |
 | 29 | delegated_access | 7 | 51 | 0 | 57 | 0 |
 | 30 | read_models | 13 | 74 | 0 | 89 | 76 |
 | 31 | integration_contracts | 9 | 47 | 0 | 55 | 0 |
 | 32 | workflow | 8 | 49 | 0 | 55 | 9 |
-| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 15 |
+| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 20 |
 | 34 | portal_catalog _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
 | 35 | messaging | 22 | 142 | 0 | 150 | 0 |
 | 36 | qa_lab | 13 | 79 | 0 | 92 | 0 |
@@ -70,7 +70,8 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 63 | lakehouse | 18 | 0 | 0 | 42 | 4 |
 | 64 | audio_assets | 4 | 1 | 0 | 10 | 0 |
 | 65 | surveys | 7 | 36 | 35 | 17 | 0 |
-| **Σ** | **64** | **1169** | | **82** | | **292** |
+| 66 | medical_groups | 2 | 14 | 0 | 10 | 0 |
+| **Σ** | **67** | **1174** | | **82** | | **297** |
 
 ## Detalle de entidades saltadas y avisos
 
@@ -240,6 +241,8 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - `diagnostic_study_prices` — stub de cruce (tabla real en su módulo dueño)
 - `patient_coverages` — stub de cruce (tabla real en su módulo dueño)
 - `claim_adjudication_versions` — stub de cruce (tabla real en su módulo dueño)
+- `insurance_claims` — stub de cruce (tabla real en su módulo dueño)
+- `prior_authorization_requests` — stub de cruce (tabla real en su módulo dueño)
 - `identity_verification_attempts` — stub de cruce (tabla real en su módulo dueño)
 - `user_activity_events` — stub de cruce (tabla real en su módulo dueño)
 - `practitioner_delegate_assignments` — stub de cruce (tabla real en su módulo dueño)
@@ -249,6 +252,9 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - `coordination_of_benefits` — stub de cruce (tabla real en su módulo dueño)
 - `audit_log` — stub de cruce (tabla real en su módulo dueño)
 - `data_access_log` — stub de cruce (tabla real en su módulo dueño)
+- `billing_quotations` — stub de cruce (tabla real en su módulo dueño)
+- `medical_groups_groups` — stub de cruce (tabla real en su módulo dueño)
+- `medical_groups_group_members` — stub de cruce (tabla real en su módulo dueño)
 
 ### 35 · messaging
 - ⚠ índice 'uq_adapter_inbound_events_provider_id' omitido: columna(s) inexistente(s) ['received_time_bucket'] en adapter_inbound_events (¿tipo no-SQL descartado? requiere PostGIS)

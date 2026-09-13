@@ -26672,6 +26672,50 @@
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1
+        },
+        {
+          "id": "ae1abcfb-cf32-5470-9f8f-cf9beef07572",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "insurance:BILLING_PROVIDER_TYPE_PHARMACY",
+          "display": "Facturador: farmacia",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "309c427f-e5c3-588e-aa5b-c10fe737fc04",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "insurance:BILLING_PROVIDER_TYPE_DIAGNOSTIC_UNIT",
+          "display": "Facturador: unidad diagnóstica",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "7a1a3dcc-18ae-56c0-84ac-facb24123c26",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "insurance:ELIG_PROVIDER_TYPE_PHARMACY",
+          "display": "Solicitante: farmacia",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "8640e36b-83c8-55b9-8272-11113f64b4d3",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "insurance:ELIG_PROVIDER_TYPE_DIAGNOSTIC_UNIT",
+          "display": "Solicitante: unidad diagnóstica",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
         }
       ],
       "concept_designations": [

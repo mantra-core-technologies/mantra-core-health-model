@@ -270,6 +270,8 @@ CREATE INDEX IF NOT EXISTS "ix_poll_votes_created_by_user_id" ON "community"."po
 
 CREATE INDEX IF NOT EXISTS "ix_poll_votes_updated_by_user_id" ON "community"."poll_votes" ("updated_by_user_id");
 
+CREATE INDEX IF NOT EXISTS "ix_conversations_pinned_message_id" ON "community"."conversations" ("pinned_message_id");
+
 CREATE INDEX IF NOT EXISTS "ix_conversations_tenant_id" ON "community"."conversations" ("tenant_id");
 
 CREATE INDEX IF NOT EXISTS "ix_conversations_conversation_type_concept_id" ON "community"."conversations" ("conversation_type_concept_id");
@@ -283,6 +285,8 @@ CREATE INDEX IF NOT EXISTS "ix_conversations_created_by_user_id" ON "community".
 CREATE INDEX IF NOT EXISTS "ix_conversations_updated_by_user_id" ON "community"."conversations" ("updated_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_conversations_tenant_id_status_concept_id" ON "community"."conversations" ("tenant_id", "status_concept_id", "updated_at" DESC);
+
+CREATE INDEX IF NOT EXISTS "ix_conversation_participants_profile_pinned" ON "community"."conversation_participants" ("participant_profile_id", "is_pinned") WHERE is_pinned;
 
 CREATE INDEX IF NOT EXISTS "ix_conversation_participants_conversation_id" ON "community"."conversation_participants" ("conversation_id");
 
@@ -489,3 +493,11 @@ CREATE UNIQUE INDEX IF NOT EXISTS "uk_feedback_ticket_events_revision" ON "commu
 CREATE INDEX IF NOT EXISTS "ix_feedback_ticket_events_to_status_concept_id" ON "community"."feedback_ticket_events" ("to_status_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_feedback_ticket_events_recorded_at" ON "community"."feedback_ticket_events" ("recorded_at");
+
+CREATE INDEX IF NOT EXISTS "ix_comment_media_comment_id" ON "community"."comment_media" ("comment_id");
+
+CREATE INDEX IF NOT EXISTS "ix_comment_media_file_id" ON "community"."comment_media" ("file_id");
+
+CREATE INDEX IF NOT EXISTS "ix_comment_media_media_role_concept_id" ON "community"."comment_media" ("media_role_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_comment_media_created_by_user_id" ON "community"."comment_media" ("created_by_user_id");

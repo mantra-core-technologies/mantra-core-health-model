@@ -562,6 +562,13 @@ DO $$ BEGIN
         REFERENCES "clinical"."medication_requests" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- destino: pharmacy_inventory.inventory_reservations (requiere schema pharmacy_inventory)
+DO $$ BEGIN
+    ALTER TABLE "insurance"."prior_authorization_requests"
+        ADD CONSTRAINT "fk_prior_authorization_requests_inventory_reservation_id" FOREIGN KEY ("inventory_reservation_id")
+        REFERENCES "pharmacy_inventory"."inventory_reservations" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "insurance"."prior_authorization_requests"
@@ -667,6 +674,20 @@ DO $$ BEGIN
         REFERENCES "clinical"."encounters" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- destino: pharmacy_inventory.inventory_reservations (requiere schema pharmacy_inventory)
+DO $$ BEGIN
+    ALTER TABLE "insurance"."insurance_claims"
+        ADD CONSTRAINT "fk_insurance_claims_inventory_reservation_id" FOREIGN KEY ("inventory_reservation_id")
+        REFERENCES "pharmacy_inventory"."inventory_reservations" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: clinical.service_requests (requiere schema clinical)
+DO $$ BEGIN
+    ALTER TABLE "insurance"."insurance_claims"
+        ADD CONSTRAINT "fk_insurance_claims_service_request_id" FOREIGN KEY ("service_request_id")
+        REFERENCES "clinical"."service_requests" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "insurance"."insurance_claims"
@@ -714,6 +735,13 @@ DO $$ BEGIN
     ALTER TABLE "insurance"."insurance_claim_lines"
         ADD CONSTRAINT "fk_insurance_claim_lines_medication_dispensation_line_id" FOREIGN KEY ("medication_dispensation_line_id")
         REFERENCES "pharmacy_inventory"."medication_dispensation_lines" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: pharmacy_inventory.inventory_reservation_lines (requiere schema pharmacy_inventory)
+DO $$ BEGIN
+    ALTER TABLE "insurance"."insurance_claim_lines"
+        ADD CONSTRAINT "fk_insurance_claim_lines_inventory_reservation_line_id" FOREIGN KEY ("inventory_reservation_line_id")
+        REFERENCES "pharmacy_inventory"."inventory_reservation_lines" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)

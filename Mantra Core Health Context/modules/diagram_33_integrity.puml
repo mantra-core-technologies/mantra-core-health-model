@@ -39,6 +39,12 @@ entity claim_adjudication_versions <<IMMUTABLE, REFERENCE_ONLY>> {
   UK : claim + adjudication version
   UPDATE_DELETE : forbidden
 }
+entity insurance_claims <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_insurance_claims_single_order_origin | ("inventory_reservation_id" IS NULL OR "service_request_id" IS NULL)
+}
+entity prior_authorization_requests <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_prior_authorizations_single_order_origin | ("inventory_reservation_id" IS NULL OR "service_request_id" IS NULL)
+}
 entity identity_verification_attempts <<REFERENCE_ONLY>> {
   UK : case + endpoint + attempt number
   UK : endpoint + idempotency key
@@ -147,5 +153,13 @@ note as INDEX_SCOPE
   owned relational tables. Physical indexes are declared in the owning data modules.
 end note
 
+entity "billing.quotations" as billing_quotations <<REFERENCE_ONLY>> {
+  CHECK_SQL : chk_quotations_interest_method | "interest_calculation_method" IN ('FLAT', 'FRENCH')
+}
+entity "medical_groups.groups" as medical_groups_groups <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_medical_groups_groups_status | "status" IN ('PENDING_TEAM', 'SCHEDULED', 'RESCHEDULE_PENDING', 'CLOSED')
+}
+entity "medical_groups.group_members" as medical_groups_group_members <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_medical_groups_group_members_invitation_status | "invitation_status" IN ('PENDING', 'ACCEPTED', 'REJECTED')
+}
 @enduml
-
