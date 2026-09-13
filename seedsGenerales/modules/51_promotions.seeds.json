@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "The rewards and discount engine end users asked for: loyalty programs with tiers and a points ledger, promotions with flexible discount rules, single/multi-use coupons and promo codes with redemption tracking, app-usage rewards (earn points/credits for booking, completing courses, referrals, streaks), and a referral program. Discounts apply at checkout (module 42 payments / 17 billing) and credits settle into wallets (module 42B). Fully auditable; abuse-resistant by construction.",
-    "seed_revision": "2.5.2-v4.1.4"
+    "seed_revision": "2.5.3-v4.1.4"
   },
   "environment_policy": {
     "boot": {

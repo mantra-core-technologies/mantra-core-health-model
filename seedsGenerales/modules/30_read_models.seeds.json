@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "Provides frontend-ready, permission-aware read contracts. Every page binds to a route, a versioned read model, field metadata, filters, sorting, actions, KPIs and explicit loading/empty/error/forbidden/stale states. Views return display-ready labels and stable codes without exposing ORM models, secrets or unnecessary PHI.",
-    "seed_revision": "2.5.2-v4.1.4"
+    "seed_revision": "2.5.3-v4.1.4"
   },
   "environment_policy": {
     "boot": {
