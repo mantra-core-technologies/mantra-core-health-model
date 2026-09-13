@@ -9,8 +9,8 @@ materializa en:
 
 Temperatura-0: el módulo 33 declara las reglas de forma SEMI-concreta (columnas lógicas y
 CHECK/EXCLUDE en prosa). Se genera concreto SOLO lo mecánico (guardas de inmutabilidad para
-UPDATE_DELETE: forbidden); UK/CHECK/EXCLUDE quedan como scaffold TODO con la regla textual
-del modelo — NO se inventan expresiones ni columnas.
+UPDATE_DELETE: forbidden). CHECK_SQL y EXCLUDE_SQL materializan expresiones concretas
+declaradas por el modelo; UK/CHECK/EXCLUDE en prosa quedan como scaffold TODO.
 """
 from __future__ import annotations
 import re
@@ -34,9 +34,9 @@ def parse_module33():
     i, n = 0, len(lines)
     while i < n:
         line = lines[i]
-        em = re.match(r"^entity\s+([a-z_][a-z0-9_]*)\s*<<([^>]+)>>", line)
+        em = re.match(r'^entity\s+(?:"([a-z_][a-z0-9_]*\.[a-z_][a-z0-9_]*)"\s+as\s+[a-z_][a-z0-9_]*|([a-z_][a-z0-9_]*))\s*<<([^>]+)>>', line)
         if em:
-            name, stereo, rules = em.group(1), em.group(2), []
+            name, stereo, rules = em.group(1) or em.group(2), em.group(3), []
             i += 1
             while i < n and lines[i].strip() != "}":
                 rm = re.match(r"^\s*([A-Z_]+)\s*:\s*(.+?)\s*$", lines[i])
@@ -62,8 +62,16 @@ def parse_module33():
 
 def resolve_owners(ents, registry):
     for e in ents:
-        hits = registry.get(e["name"])
-        e["owner"] = hits[0] if hits and len(hits) == 1 else None
+        name = e["name"]
+        if "." in name:
+            schema, table = name.split(".", 1)
+            owner = (schema, table)
+            if owner not in registry.get(table, []):
+                raise ValueError(f"Dueño de integridad no declarado: {name}")
+            e["owner"] = owner
+        else:
+            hits = registry.get(name)
+            e["owner"] = hits[0] if hits and len(hits) == 1 else None
     return ents
 
 
@@ -124,6 +132,8 @@ def rule_line(sch, tbl, k, v):
     if k == "CHECK":
         return (f"-- TODO CHECK ({v}): "
                 f'ALTER TABLE "{sch}"."{tbl}" ADD CONSTRAINT "ck_{tbl}_..." CHECK (...);')
+    if k == "CHECK_SQL":
+        return concrete_check(sch, tbl, v)
     if k == "EXCLUDE":
         return (f"-- TODO EXCLUDE ({v}): "
                 f'ALTER TABLE "{sch}"."{tbl}" ADD CONSTRAINT "ex_{tbl}_..." '
@@ -131,6 +141,24 @@ def rule_line(sch, tbl, k, v):
     if k == "EXCLUDE_SQL":
         return exclude_concreto(sch, tbl, v)
     return f"--   {k}: {v}"
+
+
+def concrete_check(schema, table, declaration):
+    """Materializa un CHECK cuya expresión exacta ya declara el modelo."""
+    parts = [part.strip() for part in declaration.split("|", 1)]
+    if len(parts) != 2 or not parts[1]:
+        raise ValueError(f"CHECK_SQL inválido en {schema}.{table}: nombre | expresión requerido")
+    name, expression = parts
+    if not re.fullmatch(r"[a-z_][a-z0-9_]*", name) or len(name.encode("utf-8")) > 63:
+        raise ValueError(f"CHECK_SQL inválido en {schema}.{table}: nombre de constraint {name!r}")
+    target = f'"{schema}"."{table}"'
+    return (f"-- CHECK concreto declarado por el modelo (CHECK_SQL).\n"
+            f'ALTER TABLE {target} DROP CONSTRAINT IF EXISTS "{name}";\n'
+            f'ALTER TABLE {target} ADD CONSTRAINT "{name}" CHECK ({expression});\n')
+
+
+def escape_table_cell(value):
+    return value.replace("|", r"\|")
 
 
 def exclude_concreto(schema, table, decl):
@@ -230,7 +258,7 @@ def write_matrix_doc(ents, rels, notes):
         L.append("| Tabla | Estereotipo | Reglas declaradas |")
         L.append("|-------|-------------|-------------------|")
         for e in group:
-            rules = "; ".join(f"**{k}** {v}" for k, v in e["rules"])
+            rules = "; ".join(f"**{k}** {escape_table_cell(v)}" for k, v in e["rules"])
             L.append(f"| `{e['name']}` | `{e['stereo']}` | {rules} |")
         L.append("")
 

@@ -97,16 +97,17 @@ METHOD_MAP = {"BTREE": "btree", "BRIN": "brin", "GIN": "gin", "GIST": "gist", "H
 
 
 class Column:
-    def __init__(self, name, dtype, not_null, is_pk, is_fk, is_uk):
+    def __init__(self, name, dtype, not_null, is_pk, is_fk, is_uk, default=None, on_delete=None):
         self.name, self.dtype, self.not_null = name, dtype, not_null
         self.is_pk, self.is_fk, self.is_uk = is_pk, is_fk, is_uk
+        self.default, self.on_delete = default, on_delete
 
 
-# Única columna con DEFAULT en todo el DDL generado.
+# Default estructural de versión. Los defaults booleanos de negocio sólo se
+# emiten cuando el .puml declara DEFAULT_TRUE/DEFAULT_FALSE explícitamente.
 #
-# La política del modelo es no emitir defaults: los valores de negocio los pone la
-# aplicación o el catálogo de terminología, nunca la base. `row_version` es la
-# excepción porque no es un valor de negocio sino el contador de bloqueo optimista,
+# No se infieren defaults de negocio: sólo se conservan los que el modelo declara.
+# `row_version` sigue siendo el default estructural porque es el contador de bloqueo optimista,
 # y MikroORM NO lo inicializa al crear la entidad: espera que lo aporte la base y,
 # si no hay default, manda NULL y el INSERT muere con 23502 contra la columna
 # NOT NULL. Sin esto, 690 de las 727 tablas con `row_version` rechazan toda
@@ -121,7 +122,19 @@ ROW_VERSION_COLUMN = "row_version"
 
 def column_default(col: "Column") -> str:
     """Cláusula DEFAULT de una columna, o cadena vacía si no le corresponde."""
+    if col.default is not None:
+        return f" DEFAULT {col.default}"
     return " DEFAULT 1" if col.name == ROW_VERSION_COLUMN else ""
+
+
+def boolean_default(dtype: str, markers: set[str]) -> str | None:
+    """Conserva defaults booleanos declarados por el modelo, sin inferir valores."""
+    selected = markers & {"DEFAULT_TRUE", "DEFAULT_FALSE"}
+    if not selected:
+        return None
+    if len(selected) != 1 or dtype != "boolean":
+        raise ValueError("DEFAULT_TRUE/DEFAULT_FALSE requiere una columna boolean y un solo valor")
+    return "true" if "DEFAULT_TRUE" in selected else "false"
 
 
 # --- identificadores > 63 bytes --------------------------------------------------
@@ -466,9 +479,13 @@ def parse_module(puml_path: Path):
                             continue
                         dtype = base_mapped + suffix
                         st = stereotypes(cm.group(4))
+                        default = boolean_default(dtype, st)
+                        if "ON_DELETE_CASCADE" in st and "FK" not in st:
+                            raise ValueError(f"ON_DELETE_CASCADE requiere FK: {schema}.{name}.{cm.group(2)}")
                         col = Column(
                             cm.group(2), dtype, cm.group(1) == "*",
-                            "PK" in st, "FK" in st, "UK" in st)
+                            "PK" in st, "FK" in st, "UK" in st, default,
+                            "CASCADE" if "ON_DELETE_CASCADE" in st else None)
                         prev = next((c for c in ent.columns if c.name == col.name), None)
                         if prev is None:
                             ent.columns.append(col)
@@ -644,7 +661,8 @@ def emit(module_code: str, report: list, registry: dict, pk_map: dict):
             stmt = (f'DO $$ BEGIN\n'
                     f'    ALTER TABLE {q(schema, e.name)}\n'
                     f'        ADD CONSTRAINT "{pg_ident(f"fk_{e.name}_{c.name}")}" FOREIGN KEY ("{c.name}")\n'
-                    f'        REFERENCES {q(tsch, ttbl)} ("{pk_map.get((tsch, ttbl), "id")}");\n'
+                    f'        REFERENCES {q(tsch, ttbl)} ("{pk_map.get((tsch, ttbl), "id")}")'
+                    f'{" ON DELETE " + c.on_delete if c.on_delete else ""};\n'
                     f'EXCEPTION WHEN duplicate_object THEN NULL; END $$;{tag}\n')
             if tsch == schema:
                 intra.append(stmt); n_intra += 1
@@ -733,7 +751,7 @@ def write_report(report):
         tot_t += nt; tot_s += len(skipped); tot_i += ninf
         tag = "" if nt else " _(especializado/no-SQL)_"
         lines.append(f"| {code} | {schema}{tag} | {nt} | {nfk} | {ninf} | {nidx} | {len(skipped)} |")
-    lines.append(f"| **Σ** | **64** | **{tot_t}** | | **{tot_i}** | | **{tot_s}** |\n")
+    lines.append(f"| **Σ** | **{len(report)}** | **{tot_t}** | | **{tot_i}** | | **{tot_s}** |\n")
 
     # detalle de saltadas y avisos
     lines.append("## Detalle de entidades saltadas y avisos\n")
