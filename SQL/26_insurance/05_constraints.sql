@@ -20,6 +20,18 @@ CREATE TRIGGER trg_forbid_mutation BEFORE UPDATE OR DELETE ON "insurance"."claim
     FOR EACH ROW EXECUTE FUNCTION "integrity"."forbid_mutation"();
 
 
+-- ═══ insurance_claims ═══
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "insurance"."insurance_claims" DROP CONSTRAINT IF EXISTS "ck_insurance_claims_single_order_origin";
+ALTER TABLE "insurance"."insurance_claims" ADD CONSTRAINT "ck_insurance_claims_single_order_origin" CHECK (("inventory_reservation_id" IS NULL OR "service_request_id" IS NULL));
+
+
+-- ═══ prior_authorization_requests ═══
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "insurance"."prior_authorization_requests" DROP CONSTRAINT IF EXISTS "ck_prior_authorizations_single_order_origin";
+ALTER TABLE "insurance"."prior_authorization_requests" ADD CONSTRAINT "ck_prior_authorizations_single_order_origin" CHECK (("inventory_reservation_id" IS NULL OR "service_request_id" IS NULL));
+
+
 -- ═══ claim_appeal_decisions ═══
 -- TODO UK (dispute + decision version): ALTER TABLE "insurance"."claim_appeal_decisions" ADD CONSTRAINT "uq_claim_appeal_decisions_..." UNIQUE (...);
 --   UPDATE_DELETE: forbidden

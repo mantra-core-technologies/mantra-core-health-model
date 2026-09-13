@@ -39,7 +39,7 @@ Qué hace (cada fase es independiente e idempotente):
                     entity_seed_policies, seed-manifest.json y checksums.json.
 
 Uso:  python salud-db/gen_seeds.py [--dry] [--only <fase>]
-      fases: valuesets | tables | notnull | bindings | unique | meta   (por defecto: todas)
+      fases: valuesets | backend | tables | notnull | bindings | unique | meta   (por defecto: todas)
 """
 from __future__ import annotations
 
@@ -524,7 +524,7 @@ COMMUNITY_PROFILE_TARGET_CONCEPTS = [
 BACKEND_CONCEPTS += COMMUNITY_PROFILE_TARGET_CONCEPTS
 BACKEND_CONCEPTS += DIAGNOSTIC_UNITS_BACKEND_CONCEPTS
 
-# --- v4.1.4 · los 2 conceptos del módulo 26 que usa el builder de aseguradoras ---
+# --- v4.1.4 · conceptos del módulo 26 usados por aseguradoras y pedidos vinculados ---
 # Misma regla que los del módulo 23: el `code` almacenado es la CLAVE de derivación
 # (`insurance:VERIFY_VERIFIED`, el NOMBRE de la propiedad en insurance.concepts.ts,
 # no su código humano `VERIFICATION_VERIFIED`), porque el id sale de esa clave y los
@@ -533,6 +533,10 @@ INSURANCE_BACKEND_CONCEPTS = [
     (key, key, display) for key, display in [
         ("insurance:CARRIER_ACTIVE", "Aseguradora activa"),
         ("insurance:VERIFY_VERIFIED", "Verificado"),
+        ("insurance:BILLING_PROVIDER_TYPE_PHARMACY", "Facturador: farmacia"),
+        ("insurance:BILLING_PROVIDER_TYPE_DIAGNOSTIC_UNIT", "Facturador: unidad diagnóstica"),
+        ("insurance:ELIG_PROVIDER_TYPE_PHARMACY", "Solicitante: farmacia"),
+        ("insurance:ELIG_PROVIDER_TYPE_DIAGNOSTIC_UNIT", "Solicitante: unidad diagnóstica"),
     ]
 ]
 BACKEND_CONCEPTS += INSURANCE_BACKEND_CONCEPTS
@@ -3444,7 +3448,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="Actualiza seedsGenerales/ al modelo SALUD v4.0.8")
     ap.add_argument("--dry", action="store_true", help="no escribe; solo informa")
     ap.add_argument("--only",
-                    choices=["valuesets", "tables", "notnull", "bindings", "unique", "meta"],
+                    choices=["valuesets", "backend", "tables", "notnull", "bindings", "unique", "meta"],
                     help="ejecuta una sola fase")
     args = ap.parse_args()
 
@@ -3460,10 +3464,11 @@ def main() -> None:
         print("[1] value sets  · {} value sets · {} conceptos · {} miembros · "
               "{} enums dinámicos · {} bindings".format(
                   s["value_sets"], s["conceptos"], s["miembros"], s["enums"], s["bindings"]))
-    if run("tables"):
+    if args.only in (None, "tables", "backend"):
         s = phase_backend_bridge(docs)
         print("[1b] puente backend · {} filas espejadas ({} conceptos)".format(
             sum(s.values()), s["catalog_concepts"]))
+    if run("tables"):
         r = retire_legacy_channels(docs, fks)
         print("[1b] canales/proveedores legacy · {} fila(s) retiradas · {} referencias "
               "repuntadas al id del backend".format(r["retiradas"], r["repuntadas"]))

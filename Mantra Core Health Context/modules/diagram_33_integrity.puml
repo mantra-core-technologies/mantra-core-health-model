@@ -39,6 +39,12 @@ entity claim_adjudication_versions <<IMMUTABLE, REFERENCE_ONLY>> {
   UK : claim + adjudication version
   UPDATE_DELETE : forbidden
 }
+entity insurance_claims <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_insurance_claims_single_order_origin | ("inventory_reservation_id" IS NULL OR "service_request_id" IS NULL)
+}
+entity prior_authorization_requests <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_prior_authorizations_single_order_origin | ("inventory_reservation_id" IS NULL OR "service_request_id" IS NULL)
+}
 entity identity_verification_attempts <<REFERENCE_ONLY>> {
   UK : case + endpoint + attempt number
   UK : endpoint + idempotency key

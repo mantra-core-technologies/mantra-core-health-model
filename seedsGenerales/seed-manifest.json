@@ -3,7 +3,7 @@
   "seed_revision": "2.5.3-v4.1.4",
   "module_count": 64,
   "boot_record_count": 7451,
-  "mock_record_count": 19159,
+  "mock_record_count": 19117,
   "validation_status": "PASS",
   "mock_production_policy": "hard-fail",
   "modules": [
@@ -40,8 +40,8 @@
       "file": "modules/03_terminology.seeds.json",
       "boot_records": 3627,
       "mock_records": 180,
-      "line_count": 57013,
-      "sha256": "499c7c191d5e95d8cb29436dfdb07f5ef9e3bffa6142327c9670c43148b33bbc"
+      "line_count": 57057,
+      "sha256": "4f9f79984ee2df14864e99312ba9c51ac0be4c4710fcbad7a55c2417730a8589"
     },
     {
       "number": 4,
@@ -84,9 +84,9 @@
       "code": "clinical",
       "file": "modules/08_clinical.seeds.json",
       "boot_records": 11,
-      "mock_records": 403,
-      "line_count": 8294,
-      "sha256": "6dbb29c043157b1f7a80d2800b356ac2c6ad7b7fe49b52f91e2acfb28c2e9c65"
+      "mock_records": 361,
+      "line_count": 7664,
+      "sha256": "39338a7b61e0540d1accdc0dcc7a4db1623c764019c4916a50393cea5c69dc83"
     },
     {
       "number": 9,

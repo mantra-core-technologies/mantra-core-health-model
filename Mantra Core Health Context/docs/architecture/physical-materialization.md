@@ -1890,3 +1890,44 @@ tsc/build/lint + discovery offline). Scaffolding Nest (module/controller/service
 - Casos de uso del backend (services/controllers son stubs); paquete de migraciones MikroORM.
   Los casos de uso deben honrar la **regla 11** (v4.0.7): registro atómico padre+hija CTI en una
   sola transacción (ver `data-modeling-standards.md` regla 11 y `orm-mapping-guide.md`).
+
+## v4.2.11 — Reclamos vinculados a pedidos
+
+Cuatro FK UUID nullable conservan los registros anteriores sin backfill:
+
+- `insurance_claims.inventory_reservation_id` → pedido de farmacia.
+- `insurance_claims.service_request_id` → orden diagnóstica.
+- `insurance_claim_lines.inventory_reservation_line_id` → ítem exacto reservado.
+- `prior_authorization_requests.inventory_reservation_id` → pedido de farmacia autorizado.
+
+Los CHECK `ck_insurance_claims_single_order_origin` y `ck_prior_authorizations_single_order_origin`
+impiden combinar farmacia y diagnóstico en la misma cabecera. La autorización farmacéutica puede
+conservar además `medication_request_id`, cuya pertenencia a la receta del pedido verifica la API.
+La autorización previa sigue siendo opcional para presentar un reclamo vinculado.
+
+El tipo del prestador se conserva con los conceptos `BILLING_PROVIDER_TYPE_PHARMACY`,
+`BILLING_PROVIDER_TYPE_DIAGNOSTIC_UNIT`, `ELIG_PROVIDER_TYPE_PHARMACY` y
+`ELIG_PROVIDER_TYPE_DIAGNOSTIC_UNIT`, espejados desde las mismas claves `insurance:*` del backend.
+`gen_seeds.py --only backend` permite actualizar ese puente sin regenerar los datos mock.
+
+**Evidencia de modelo:** cinco pruebas del generador aprobadas; una segunda generación completa
+(67 módulos) en carpeta temporal produjo cero diferencias de SQL frente a la salida canónica.
+Las entidades se regeneraron y los cuatro índices/FK se propagaron al catálogo ORM.
+
+**Evidencia PostgreSQL aislado:** reconstrucción y FK diferidas ejecutadas por el recorrido de la
+subtarea; patch aplicado dos veces con exit 0. Verificados cuatro campos nullable, cuatro FK con
+destino correcto, cuatro índices y dos CHECK validados. Ambos orígenes simultáneos producen
+`23514` con el nombre exacto de la restricción. Origen único e histórico vacío pasan el CHECK y
+alcanzan la validación FK. Pruebas estructurales ejecutadas dentro de BEGIN/ROLLBACK, sin datos
+persistidos ni conexión a la base remota. La validación funcional de pertenencia, concurrencia y
+publicación corresponde al recorrido API registrado en el walkthrough de la subtarea.
+
+**Dependencias reconciliadas:** se recuperaron las cotizaciones canónicas (`f549ee9`, `72927e9`)
+y se promovieron los contratos ya publicados por API de medios de comentarios, preferencias de
+chat y automatización de activos/pasivos. `medical_groups` usa el módulo66: 21 es deployment,
+64 es audio_assets y 65 es surveys. Se conservan los cuatro patches existentes y sus tipos;
+las FK CTI del patch médico se corrigen a `profile_id`, la PK canónica. Los defaults booleanos
+y la cascada de miembros se declaran explícitamente en PUML; no se infieren por nombre.
+
+Despliegue: patch de modelo → API → frontend. Retirar una versión de aplicación conserva las
+columnas aditivas, las versiones adjudicadas y sus reversiones financieras.
