@@ -47,15 +47,18 @@
 -- quedado con los mismos cimientos que un administrador de la institución.
 --
 -- ============================================================================
--- ORDEN DE APLICACIÓN — IMPORTA
+-- ORDEN DE APLICACIÓN — IMPORTA CUANDO HAY FILAS LEGACY
 -- ============================================================================
 --
---   1.º  Desplegar la API (siembra `directory:ROLE_PRACTITIONER` al arrancar).
---   2.º  Este patch.
+--   * En una base vacía no hay afiliaciones que reparar: el patch termina como
+--     no-op aunque la API todavía no haya sembrado terminología.
+--   * En una base con afiliaciones candidatas, primero desplegar la API (siembra
+--     los seis conceptos usados por el backfill) y después ejecutar este patch.
 --
--- Invertirlo falla con un mensaje explícito: el rol es FK a
--- `terminology.catalog_concepts` y la guarda de abajo lo comprueba antes de
--- escribir, para no morir con una violación de constraint que no nombra la causa.
+-- Si hay trabajo e invertís ese orden, falla con un mensaje explícito: rol,
+-- estado, scope y estados de filtro son conceptos de
+-- `terminology.catalog_concepts`; la guarda los comprueba antes de escribir para
+-- no morir con una violación de constraint que no nombra la causa.
 --
 -- ============================================================================
 -- VERIFICACIÓN
@@ -72,16 +75,57 @@
 BEGIN;
 
 -- ---------------------------------------------------------------------------
--- Guarda de orden: el concepto lo siembra la API, no este patch.
+-- Guarda vacío-safe y de orden: los conceptos los siembra la API, no este patch.
+-- Primero se replica exactamente la selección del INSERT. Una base vacía o sin
+-- pares usuario/tenant pendientes no necesita terminología para ejecutar una
+-- migración que no tiene nada que hacer.
 -- ---------------------------------------------------------------------------
 DO $$
+DECLARE
+  faltantes text;
 BEGIN
   IF NOT EXISTS (
-    SELECT 1 FROM terminology.catalog_concepts
-     WHERE id = '9384ffcc-901f-5fb3-a9d6-2c1593d7f019'
+    SELECT 1
+      FROM profiles.practitioner_affiliations pa
+      JOIN practice.practice_sites ps
+           ON ps.id = pa.practice_site_id
+      JOIN profiles.person_account_links pal
+           ON pal.person_id = pa.practitioner_profile_id
+          AND pal.status_concept_id = '6db29320-acc3-50f6-ac19-cb906aa96209'
+     WHERE pa.status_concept_id IN (
+             'f581c24c-71bd-51b7-928b-7ea67da84baa',
+             'a1084a63-5e11-53a4-9cbc-7cdc9ba8ba23')
+       AND ps.managing_tenant_id IS NOT NULL
+       AND NOT EXISTS (
+         SELECT 1
+           FROM directory.tenant_memberships m
+          WHERE m.user_id = pal.user_id
+            AND m.tenant_id = ps.managing_tenant_id
+            AND m.status_concept_id = '13ca1b46-61d5-5c25-9d49-8247bcd7769c'
+       )
   ) THEN
+    RAISE NOTICE 'patch v4.2.0: 0 membresías asistenciales legacy pendientes; backfill omitido';
+    RETURN;
+  END IF;
+
+  SELECT string_agg(e.code, ', ' ORDER BY e.code) INTO faltantes
+    FROM (VALUES
+      ('9384ffcc-901f-5fb3-a9d6-2c1593d7f019'::uuid, 'directory:ROLE_PRACTITIONER'),
+      ('13ca1b46-61d5-5c25-9d49-8247bcd7769c'::uuid, 'directory:MEMBERSHIP_ACTIVE'),
+      ('297d044a-a1e9-51db-8f96-68f4de6b3d62'::uuid, 'directory:SCOPE_ALL_TENANT'),
+      ('6db29320-acc3-50f6-ac19-cb906aa96209'::uuid, 'profiles:ACCOUNT_LINK_ACTIVE'),
+      ('f581c24c-71bd-51b7-928b-7ea67da84baa'::uuid, 'profiles:AFFILIATION_ACTIVE'),
+      ('a1084a63-5e11-53a4-9cbc-7cdc9ba8ba23'::uuid, 'profiles:AFFILIATION_APPROVED')
+    ) AS e(id, code)
+   WHERE NOT EXISTS (
+     SELECT 1 FROM terminology.catalog_concepts cc
+      WHERE cc.id = e.id AND cc.code = e.code
+   );
+
+  IF faltantes IS NOT NULL THEN
     RAISE EXCEPTION
-      'Falta el concepto directory:ROLE_PRACTITIONER (9384ffcc-901f-5fb3-a9d6-2c1593d7f019). Desplegá la API antes de este patch: la siembra TerminologySeedService al arrancar.';
+      'patch v4.2.0: hay membresías asistenciales legacy pendientes y faltan los conceptos [%]. Desplegá la API antes de este patch: los siembra TerminologySeedService al arrancar.',
+      faltantes;
   END IF;
 END $$;
 
