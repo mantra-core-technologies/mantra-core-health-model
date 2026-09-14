@@ -445,6 +445,58 @@ contenido y código, no esquema.
 front 48/48 del formulario y 3 850/3 853 de la suite completa (los 3 rojos son preexistentes de
 `dev`, reproducidos con los cambios guardados). Sin base viva: no se ejercitó contra Postgres.
 
+### v4.2.14 — El plan declara su prima de lista mensual, y nace el tablero de siniestralidad (2026-09-14)
+
+Subtarea 3.1. El registro de procesos del stakeholder (MÓDULO ASEGURADORA · 6.3 "Módulo de reportes y
+data de toda la app") pide "información de siniestralidad de todos nuestros usuarios", "gastos por
+persona de forma mensual, anual", "frecuencias de visita a cada médico", "qué medicamentos consume
+seguido, cuánto dinero gasta en medicamento" y "cuántos pacientes son vacunados" — brecha §22
+"Reportes y data agregada", tarjeta T-25, que ya lo diagnosticaba: "falta el denominador:
+`patient_coverages` no guarda el monto de la prima".
+
+**Una columna nullable en `insurance.insurance_plans`, sin FK ni índice nuevo**:
+`monthly_premium_amount` (numeric), la prima de lista MENSUAL del plan en la moneda del plan
+(`currency_concept_id`). Es el denominador **estimado** del loss ratio: primas devengadas = Σ
+coberturas vigentes × prima × meses prorrateados por día calendario. T-25 proponía la prima en
+`patient_coverages` (por póliza); se decidió con el negocio el 2026-09-14 ponerla en el **plan**: la
+consola de planes ya existe para cargarla, el tablero filtra por plan y la prima por póliza puede
+sumarse después como refinamiento sin deshacer esto.
+
+**Sin backfill.** Nadie conoce las primas de lista de las aseguradoras e inventarlas violaría la
+regla 70. Las carga cada aseguradora por `POST /insurance-products/:id/plans` (campo nuevo
+`monthlyPremiumAmount`) o por `PUT /insurance-plans/:id/premium`; mientras un plan no tenga prima,
+el tablero informa "sin prima registrada" y el loss ratio es `null`, nunca cero. El paquete de
+seeds **no cambia**: `gen_seeds.py` omite las columnas nullable sin valor propio ni FK, así que los
+16 planes mock quedan en `NULL` y `SEED_REVISION` sigue en `2.5.3-v4.1.4`.
+
+**Lo que consume la columna**: `GET /insurance/analytics/loss-ratio` (API, módulo 26), que agrega
+`insurance_claims` + `claim_adjudication_versions` (versión vigente = `MAX(adjudication_version)`,
+la misma regla del escritor) por aseguradora del tenant activo y período, en la moneda dominante,
+con toda la aritmética en `numeric` de Postgres; y `/administration/insurance-analytics` (front).
+Las series de especialidad y CIE-10 se miden sobre la **población afiliada** (`clinical.encounters`
+y `clinical.conditions` de los titulares y dependientes con cobertura vigente), no sobre el reclamo:
+`insurance_claims.encounter_id` no lo escribe ningún camino de alta de la API.
+
+Pipeline: `.puml` M26 → `gen_ddl.py all` (diff acotado a `SQL/26_insurance/02_tables.sql`) →
+`SQL/patches/2026-09-14_v4214_insurance_plans_monthly_premium.sql` (sección A + verificación D, sin
+backfill) → `gen_entities.py 26` + `prettier --write` (colapsa el diff a `insurance_plans.entity.ts`).
+Deltas esperados sobre la base viva: columnas de `insurance.insurance_plans` 15 → **16**, FKs e
+índices ±0, tablas ±0.
+
+**Hallazgo lateral, no corregido acá**: `insurance_claims` no tiene ningún índice sobre
+`submitted_at` ni compuesto `(insurance_carrier_id, submitted_at)`, que es exactamente el predicado
+del tablero; hoy resuelve por `ix_insurance_claims_insurance_carrier_id` y filtra en el heap. Con
+el volumen actual alcanza; queda registrado en T-25 para cuando haga falta (agregarlo exige
+`.puml` + `orm:catalog`). Y al correr `gen_ddl.py all` el generador reescribió con OTRO contenido
+`SQL/19_community/04_indexes.sql` (orden de índices), `SQL/65_surveys/03_fk_intra.sql` y
+`SQL/65_surveys/90_fk_deferred.sql` (35 FK que el reporte contaba como diferidas pasan a intra), es
+decir, el `SQL/` versionado de esos dos módulos no coincide con lo que hoy emite el generador desde
+los `.puml`. Se revirtió para no mezclarlo en esta promoción; es deriva ajena, pendiente de su carril.
+
+**Ojo con la numeración:** v4.2.11 son los reclamos vinculados a pedidos, v4.2.12 el archivo de
+la autorización jurisdiccional y v4.2.13 la versión de precio por producto — esta promoción es
+v4.2.14.
+
 ### v4.2.10 — La aseguradora publica sus canales de contacto: WhatsApp, call center y correo (2026-09-13)
 
 Subtarea 2.3. El registro de procesos del stakeholder (MÓDULO ASEGURADORA · 6.2 · ítem 5) pide "una
