@@ -124,6 +124,14 @@ entity insurance_plans {
   * name : varchar
     plan_type_concept_id : uuid <<FK>>
     currency_concept_id : uuid <<FK>>
+  ' + v4.2.14 — prima de lista mensual del plan, en la moneda del plan
+  ' (`currency_concept_id`). Es el denominador ESTIMADO del loss ratio del
+  ' tablero de siniestralidad (registro de procesos, Aseguradora 6.3; T-25):
+  ' primas devengadas = coberturas vigentes × prima × meses prorrateados. No
+  ' es la prima de cada póliza. Nullable: la carga la aseguradora por la
+  ' consola de planes (`POST .../plans`, `PUT /insurance-plans/:id/premium`);
+  ' nadie la inventa en seeds.
+    monthly_premium_amount : numeric
     effective_from : date
     effective_to : date
     policy_document_file_id : uuid <<FK>>

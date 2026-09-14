@@ -100,6 +100,7 @@ CREATE TABLE IF NOT EXISTS "insurance"."insurance_plans" (
     "name" varchar NOT NULL,
     "plan_type_concept_id" uuid,
     "currency_concept_id" uuid,
+    "monthly_premium_amount" numeric,
     "effective_from" date,
     "effective_to" date,
     "policy_document_file_id" uuid,
