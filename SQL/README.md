@@ -109,10 +109,12 @@ entidades saltadas por módulo) en [`_generation_report.md`](_generation_report.
      `mantra_app` (sin BYPASSRLS) y activa las políticas en las ~284 tablas con `tenant_id`.
      Es **irreversible**; aplicalo a conciencia. La app lo complementa fijando
      `app.current_tenant_id` por request cuando `RLS_ENFORCE=true`.
-   - `2026-07-30_vademecum_dev_seed.sql` — 17 medicamentos escritos a mano para desarrollo.
-     **No es un vademécum clínico ni datos verificados**; leé su encabezado. El catálogo de
-     terminología real (~460k conceptos) lo cargan los importadores de
-     `mantra-core-health-api/tools/terminology-import/` desde APIs oficiales.
+   - El seed histórico `2026-07-30_vademecum_dev_seed.sql` fue retirado del conjunto activo:
+     **historical seed superseded by canonical TerminologySeedService → VademecumSeedService
+     path**. Su contenido permanece trazable en el historial de Git; no se archiva como otro
+     patch ejecutable. Los 17 medicamentos de desarrollo no son un vademécum clínico ni datos
+     verificados. El catálogo de terminología real (~460k conceptos) lo cargan los importadores
+     de `mantra-core-health-api/tools/terminology-import/` desde APIs oficiales.
 
 Los seeds canónicos **no viven acá**: están en `seedsProd/` y `seedsGenerales/` como
 `*.seeds.json`, y los carga `python salud-db/load_seeds.py`.

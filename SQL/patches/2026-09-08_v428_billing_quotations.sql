@@ -214,10 +214,35 @@ BEGIN
     WHERE schemaname = 'billing'
       AND indexname LIKE 'ix_quotation%';
 
-    -- 1: el CHECK del método de interés existe.
+    -- 1: existe un CHECK validado y semánticamente equivalente sobre la
+    -- columna exacta. No confiar en el nombre: el DDL base lo materializa
+    -- como `chk_quotations_interest_method`, mientras este patch histórico
+    -- usó `ck_quotations_interest_calculation_method` al crear la tabla.
     SELECT count(*) INTO n_check
-    FROM pg_constraint
-    WHERE conname = 'ck_quotations_interest_calculation_method';
+    FROM pg_constraint c
+    JOIN pg_attribute a
+      ON a.attrelid = c.conrelid
+     AND a.attnum = c.conkey[1]
+     AND NOT a.attisdropped
+    WHERE c.conrelid = 'billing.quotations'::regclass
+      AND c.contype = 'c'
+      AND c.convalidated
+      AND cardinality(c.conkey) = 1
+      AND a.attname = 'interest_calculation_method'
+      AND regexp_replace(
+            regexp_replace(
+                pg_get_expr(c.conbin, c.conrelid, true),
+                '::(text|character varying)(\[\])?',
+                '',
+                'g'
+            ),
+            '[[:space:]()]',
+            '',
+            'g'
+          ) IN (
+            'interest_calculation_method=ANYARRAY[''FLAT'',''FRENCH'']',
+            'interest_calculation_method=ANYARRAY[''FRENCH'',''FLAT'']'
+          );
 
     IF n_tablas <> 2 OR n_fk <> 10 OR n_indices <> 10 OR n_check <> 1 THEN
         RAISE EXCEPTION

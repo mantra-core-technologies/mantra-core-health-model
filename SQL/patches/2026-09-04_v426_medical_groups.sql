@@ -279,8 +279,43 @@ BEGIN
             EXISTS (SELECT 1 FROM pg_constraint
                      WHERE conname = 'fk_medical_groups_group_members_group_id')),
         ('unique (group_id, practitioner_profile_id)',
-            EXISTS (SELECT 1 FROM pg_constraint
-                     WHERE conname = 'ux_medical_groups_group_members_group_practitioner'))
+            EXISTS (
+                SELECT 1
+                FROM pg_constraint c
+                WHERE c.conrelid = 'medical_groups.group_members'::regclass
+                  AND c.contype = 'u'
+                  AND c.convalidated
+                  AND cardinality(c.conkey) = 2
+                  AND ARRAY(
+                      SELECT a.attname::text
+                      FROM unnest(c.conkey) WITH ORDINALITY AS k(attnum, ord)
+                      JOIN pg_attribute a
+                        ON a.attrelid = c.conrelid
+                       AND a.attnum = k.attnum
+                      ORDER BY k.ord
+                  ) = ARRAY['group_id', 'practitioner_profile_id']
+            ) OR EXISTS (
+                SELECT 1
+                FROM pg_index i
+                WHERE i.indrelid = 'medical_groups.group_members'::regclass
+                  AND i.indisunique
+                  AND i.indisvalid
+                  AND i.indisready
+                  AND i.indislive
+                  AND i.indpred IS NULL
+                  AND i.indexprs IS NULL
+                  AND i.indnkeyatts = 2
+                  AND i.indnatts = 2
+                  AND ARRAY(
+                      SELECT a.attname::text
+                      FROM unnest(i.indkey) WITH ORDINALITY AS k(attnum, ord)
+                      JOIN pg_attribute a
+                        ON a.attrelid = i.indrelid
+                       AND a.attnum = k.attnum
+                      WHERE k.ord <= i.indnkeyatts
+                      ORDER BY k.ord
+                  ) = ARRAY['group_id', 'practitioner_profile_id']
+            ))
     ) AS e(objeto, existe)
     WHERE NOT e.existe;
 
