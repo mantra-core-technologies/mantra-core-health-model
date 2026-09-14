@@ -304,7 +304,7 @@ entity "INDEXES · pharmacy_product_prices" as idxset_pharmacy_product_prices <<
   IX ix_pharmacy_product_prices_pharmacy_product_id : (pharmacy_product_id) BTREE
   IX ix_pharmacy_product_prices_status_concept_id : (status_concept_id) BTREE
   IX ix_pharmacy_product_prices_recorded_by_user_id : (recorded_by_user_id) BTREE
-  UK uq_pharmacy_product_prices_pharmacy_price_list_id_vers_7ebb36be : (pharmacy_price_list_id, version_number) UNIQUE BTREE
+  UK uq_pharmacy_product_prices_pharmacy_price_list_id_vers_7ebb36be : (pharmacy_price_list_id, pharmacy_product_id, version_number) UNIQUE BTREE
 }
 
 pharmacy_product_prices .. idxset_pharmacy_product_prices : indexed by

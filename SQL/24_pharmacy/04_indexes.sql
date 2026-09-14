@@ -118,7 +118,7 @@ CREATE INDEX IF NOT EXISTS "ix_pharmacy_product_prices_status_concept_id" ON "ph
 
 CREATE INDEX IF NOT EXISTS "ix_pharmacy_product_prices_recorded_by_user_id" ON "pharmacy"."pharmacy_product_prices" ("recorded_by_user_id");
 
-CREATE UNIQUE INDEX IF NOT EXISTS "uq_pharmacy_product_prices_pharmacy_price_list_id_vers_7ebb36be" ON "pharmacy"."pharmacy_product_prices" ("pharmacy_price_list_id", "version_number");
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_pharmacy_product_prices_pharmacy_price_list_id_vers_7ebb36be" ON "pharmacy"."pharmacy_product_prices" ("pharmacy_price_list_id", "pharmacy_product_id", "version_number");
 
 CREATE INDEX IF NOT EXISTS "ix_pharmacy_integration_connections_pharmacy_id" ON "pharmacy"."pharmacy_integration_connections" ("pharmacy_id");
 
