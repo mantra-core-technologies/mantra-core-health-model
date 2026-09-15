@@ -82,6 +82,7 @@ entity practice_sites {
     time_zone : varchar
     address_id : uuid <<FK>>
     managing_tenant_id : uuid <<FK>>
+    bank_qr_file_id : uuid <<FK>>
   * status_concept_id : uuid <<FK>>
   * created_at : timestamptz
   * updated_at : timestamptz
@@ -287,6 +288,7 @@ entity "INDEXES · practice_sites" as idxset_practice_sites <<INDEX_SET>> {
   IX ix_practice_sites_status_concept_id : (status_concept_id) BTREE
   IX ix_practice_sites_created_by_user_id : (created_by_user_id) BTREE
   IX ix_practice_sites_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_practice_sites_bank_qr_file_id : (bank_qr_file_id) BTREE
 }
 
 practice_sites .. idxset_practice_sites : indexed by

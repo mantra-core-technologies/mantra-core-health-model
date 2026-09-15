@@ -58,6 +58,8 @@ CREATE INDEX IF NOT EXISTS "ix_practice_sites_created_by_user_id" ON "practice".
 
 CREATE INDEX IF NOT EXISTS "ix_practice_sites_updated_by_user_id" ON "practice"."practice_sites" ("updated_by_user_id");
 
+CREATE INDEX IF NOT EXISTS "ix_practice_sites_bank_qr_file_id" ON "practice"."practice_sites" ("bank_qr_file_id");
+
 CREATE INDEX IF NOT EXISTS "ix_clinical_units_practice_site_id" ON "practice"."clinical_units" ("practice_site_id");
 
 CREATE INDEX IF NOT EXISTS "ix_clinical_units_parent_unit_id" ON "practice"."clinical_units" ("parent_unit_id");

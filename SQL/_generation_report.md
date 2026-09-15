@@ -18,7 +18,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 11 | system_ops | 29 | 169 | 0 | 178 | 0 |
 | 12 | integrations | 10 | 49 | 0 | 55 | 0 |
 | 13 | geo | 6 | 31 | 0 | 35 | 0 |
-| 14 | practice | 11 | 80 | 0 | 84 | 0 |
+| 14 | practice | 11 | 81 | 0 | 85 | 0 |
 | 15 | chart | 11 | 70 | 0 | 80 | 1 |
 | 16 | accounting | 42 | 304 | 1 | 356 | 13 |
 | 17 | billing | 22 | 150 | 0 | 167 | 17 |
@@ -69,9 +69,9 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 62 | cross_store_consistency | 20 | 0 | 0 | 43 | 4 |
 | 63 | lakehouse | 18 | 0 | 0 | 42 | 4 |
 | 64 | audio_assets | 4 | 1 | 0 | 10 | 0 |
-| 65 | surveys | 7 | 36 | 35 | 17 | 0 |
+| 65 | surveys | 7 | 36 | 0 | 17 | 0 |
 | 66 | medical_groups | 2 | 14 | 0 | 10 | 0 |
-| **Σ** | **67** | **1175** | | **87** | | **297** |
+| **Σ** | **67** | **1175** | | **52** | | **297** |
 
 ## Detalle de entidades saltadas y avisos
 
