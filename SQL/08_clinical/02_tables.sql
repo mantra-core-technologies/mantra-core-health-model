@@ -72,6 +72,8 @@ CREATE TABLE IF NOT EXISTS "clinical"."encounters" (
     "start_at" timestamptz,
     "end_at" timestamptz,
     "appointment_id" uuid,
+    "content_hash" varchar,
+    "sealed_at" timestamptz,
     "created_at" timestamptz NOT NULL,
     "updated_at" timestamptz NOT NULL,
     "created_by_user_id" uuid,
