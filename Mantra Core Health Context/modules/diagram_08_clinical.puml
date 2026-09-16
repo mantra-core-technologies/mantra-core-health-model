@@ -85,6 +85,8 @@ entity encounters {
     start_at : timestamptz
     end_at : timestamptz
     appointment_id : uuid <<FK>>
+    content_hash : varchar
+    sealed_at : timestamptz
   * created_at : timestamptz
   * updated_at : timestamptz
     created_by_user_id : uuid <<FK>>
