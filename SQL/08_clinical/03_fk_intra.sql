@@ -51,6 +51,12 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
+    ALTER TABLE "clinical"."service_requests"
+        ADD CONSTRAINT "fk_service_requests_previous_diagnostic_report_id" FOREIGN KEY ("previous_diagnostic_report_id")
+        REFERENCES "clinical"."diagnostic_reports" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
     ALTER TABLE "clinical"."diagnostic_reports"
         ADD CONSTRAINT "fk_diagnostic_reports_service_request_id" FOREIGN KEY ("service_request_id")
         REFERENCES "clinical"."service_requests" ("id");

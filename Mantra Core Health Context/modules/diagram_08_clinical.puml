@@ -245,6 +245,13 @@ entity service_requests {
   * status_concept_id : uuid <<FK>>
     requester_profile_id : uuid <<FK>>
     performer_tenant_id : uuid <<FK>>
+    ' + v4.2.17 (subtarea 3.2): antiduplicacion de estudios. El informe liberado o
+    ' final del MISMO estudio (code_concept_id) que el motor encontro dentro de la
+    ' ventana al pedir. Con duplicate_override_reason NULL la orden nace
+    ' SR_SATISFIED_BY_PRIOR (satisfecha por ese informe, no facturable); con texto,
+    ' el medico insistio y la aseguradora lo lee.
+    previous_diagnostic_report_id : uuid <<FK>>
+    duplicate_override_reason : text
   * created_at : timestamptz
   * updated_at : timestamptz
     created_by_user_id : uuid <<FK>>
@@ -279,6 +286,7 @@ encounters ||--o{ conditions
 allergy_intolerances ||--o{ allergy_reactions
 encounters ||--o{ service_requests
 service_requests ||--o{ diagnostic_reports
+diagnostic_reports |o--o{ service_requests : previous_diagnostic_report
 
 note as DEP_diagram_08_clinical
   External references include patient/practitioner profiles, terminology,
@@ -782,6 +790,7 @@ entity "INDEXES · service_requests" as idxset_service_requests <<INDEX_SET>> {
   IX ix_service_requests_status_concept_id : (status_concept_id) BTREE
   IX ix_service_requests_requester_profile_id : (requester_profile_id) BTREE
   IX ix_service_requests_performer_tenant_id : (performer_tenant_id) BTREE
+  IX ix_service_requests_previous_diagnostic_report_id : (previous_diagnostic_report_id) BTREE
   IX ix_service_requests_created_by_user_id : (created_by_user_id) BTREE
   IX ix_service_requests_updated_by_user_id : (updated_by_user_id) BTREE
   IX ix_service_requests_custodian_tenant_id_status_concept_id : (custodian_tenant_id, status_concept_id, updated_at DESC) BTREE
