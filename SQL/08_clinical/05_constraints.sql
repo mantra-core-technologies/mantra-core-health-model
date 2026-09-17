@@ -6,6 +6,12 @@
 CREATE EXTENSION IF NOT EXISTS btree_gist;  -- requerido por EXCLUDE
 
 
+-- ═══ service_requests ═══
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "clinical"."service_requests" DROP CONSTRAINT IF EXISTS "ck_service_requests_override_reason_requires_previous_report";
+ALTER TABLE "clinical"."service_requests" ADD CONSTRAINT "ck_service_requests_override_reason_requires_previous_report" CHECK (("duplicate_override_reason" IS NULL OR "previous_diagnostic_report_id" IS NOT NULL));
+
+
 -- ═══ appointments ═══
 -- TODO EXCLUDE (practitioner/location time overlap): ALTER TABLE "clinical"."appointments" ADD CONSTRAINT "ex_appointments_..." EXCLUDE USING gist (... WITH =, tstzrange(...) WITH &&) [WHERE ...];
 -- EXCLUDE concreto declarado por el modelo (EXCLUDE_SQL).

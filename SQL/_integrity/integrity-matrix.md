@@ -42,6 +42,7 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 
 | Tabla | Estereotipo | Reglas declaradas |
 |-------|-------------|-------------------|
+| `service_requests` | `REFERENCE_ONLY` | **CHECK_SQL** ck_service_requests_override_reason_requires_previous_report \| ("duplicate_override_reason" IS NULL OR "previous_diagnostic_report_id" IS NOT NULL) |
 | `appointments` | `REFERENCE_ONLY` | **EXCLUDE** practitioner/location time overlap; **EXCLUDE_SQL** ex_appointments_practitioner_time \| "practitioner_profile_id" WITH =, tstzrange("start_at", "end_at", '[)') WITH && \| "practitioner_profile_id" IS NOT NULL AND "end_at" IS NOT NULL AND "status_concept_id" IN ('51530fd7-05b1-5c29-80c4-da740ede4d27', '37dded87-7a7a-5a24-86f6-0ef48cccb482'); **LOCK** reservation confirmation transaction |
 
 ### Módulo 29 · `delegated_access`
