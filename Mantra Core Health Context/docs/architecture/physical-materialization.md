@@ -445,6 +445,50 @@ contenido y código, no esquema.
 front 48/48 del formulario y 3 850/3 853 de la suite completa (los 3 rojos son preexistentes de
 `dev`, reproducidos con los cambios guardados). Sin base viva: no se ejercitó contra Postgres.
 
+### v4.2.17 — La orden sabe si repite un estudio, y por qué (2026-09-17)
+
+**Fuente**: subtarea 3.2 (motor de alerta y prevención de duplicidad de estudios de laboratorio e
+imagenología). El registro de procesos del stakeholder (MÓDULO ASEGURADORA · 6.3, ítem 4) pide que
+la aseguradora no pague dos veces "los tradicionales ESTUDIOS DE LABORATORIOS que pide cada médico
+en corto tiempo". Brecha §23 "Antiduplicación de estudios" y tarjeta T-26 "Vigencia del resultado y
+antiduplicación" ya lo diagnosticaban: faltaba el enlace del pedido nuevo al reporte previo que lo
+satisface.
+
+**Dos columnas nullable en `clinical.service_requests`, con un CHECK físico**:
+`previous_diagnostic_report_id` (FK → `clinical.diagnostic_reports`, indexada) y
+`duplicate_override_reason` (text). El CHECK
+`ck_service_requests_override_reason_requires_previous_report` impide el estado imposible
+"justificación sin informe previo enlazado" — declarado en `diagram_33_integrity.puml` como
+`CHECK_SQL` de una entidad `<<REFERENCE_ONLY>>` (mismo patrón que
+`ck_insurance_claims_single_order_origin` de v4.2.11), no en el `.puml` del módulo 08.
+
+**Sin backfill.** Ninguna orden viva tiene hoy un duplicado que reconstruir retroactivamente: la
+regla empieza a aplicarse desde que se despliega la API nueva.
+
+**Lo que consume la columna**: la API expone `POST /clinical/service-requests/duplicate-check`
+(mismo `@Roles('CLINICIAN','PRACTITIONER')` que el alta de la orden) y el alta
+(`POST /clinical/service-requests`) exige una decisión ante un duplicado detectado — reutilizar
+(la orden nace en el estado dinámico `SR_SATISFIED_BY_PRIOR`, sin FK ni nota `vs_*`: dueño
+`clinical.concepts.ts`) o repetir con justificación (`ACTIVE` + enlace + texto). El detalle de un
+reclamo vinculado a la orden (`GET /insurance-claims/:id`) expone fecha, prestador, estudio y
+justificación — nunca el informe.
+
+**Pipeline**: `.puml` M08 (columnas + índice + relación) y M33 (`CHECK_SQL`) →
+`python salud-db/gen_ddl.py all` (diff acotado a `SQL/08_clinical/{02_tables,03_fk_intra,04_indexes}.sql`
+y al reporte; la FK resolvió intra-schema porque la nota
+`SALUD/FK/FK clinical.service_requests.previous_diagnostic_report_id.md` se escribió **antes** de
+regenerar) → `python salud-db/gen_integrity.py` (`SQL/08_clinical/05_constraints.sql`) → patch
+`SQL/patches/2026-09-17_v4217_service_requests_duplicate_study.sql` → `gen_entities.py 08`.
+Deltas esperados sobre la base viva: columnas de `service_requests` 16 → 18, FK +1, índice +1,
+CHECK +1.
+
+**Hallazgo lateral, no corregido acá**: las secciones de v4.2.15 (`practice_sites.bank_qr_file_id`)
+y v4.2.16 (`encounters.content_hash`/`sealed_at`) siguen sin escribirse en este documento — deuda
+ajena, preexistente a esta promoción, declarada para quien la cierre.
+
+**Ojo con la numeración**: v4.2.15 es el QR bancario de la sede y v4.2.16 el sello de cierre del
+encuentro — esta promoción es v4.2.17.
+
 ### v4.2.14 — El plan declara su prima de lista mensual, y nace el tablero de siniestralidad (2026-09-14)
 
 Subtarea 3.1. El registro de procesos del stakeholder (MÓDULO ASEGURADORA · 6.3 "Módulo de reportes y

@@ -45,6 +45,9 @@ entity insurance_claims <<REFERENCE_ONLY>> {
 entity prior_authorization_requests <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_prior_authorizations_single_order_origin | ("inventory_reservation_id" IS NULL OR "service_request_id" IS NULL)
 }
+entity service_requests <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_service_requests_override_reason_requires_previous_report | ("duplicate_override_reason" IS NULL OR "previous_diagnostic_report_id" IS NOT NULL)
+}
 entity identity_verification_attempts <<REFERENCE_ONLY>> {
   UK : case + endpoint + attempt number
   UK : endpoint + idempotency key

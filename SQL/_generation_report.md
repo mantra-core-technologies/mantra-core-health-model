@@ -12,7 +12,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 05 | profiles | 19 | 127 | 2 | 136 | 0 |
 | 06 | authz | 15 | 100 | 15 | 90 | 0 |
 | 07 | consent | 10 | 81 | 0 | 101 | 0 |
-| 08 | clinical | 22 | 214 | 6 | 236 | 0 |
+| 08 | clinical | 22 | 215 | 6 | 237 | 0 |
 | 09 | forms | 16 | 103 | 0 | 113 | 1 |
 | 10 | audit | 123 | 513 | 0 | 653 | 0 |
 | 11 | system_ops | 29 | 169 | 0 | 178 | 0 |
@@ -37,7 +37,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 30 | read_models | 13 | 74 | 0 | 89 | 76 |
 | 31 | integration_contracts | 9 | 47 | 0 | 55 | 0 |
 | 32 | workflow | 8 | 49 | 0 | 55 | 9 |
-| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 20 |
+| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 21 |
 | 34 | portal_catalog _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
 | 35 | messaging | 22 | 142 | 0 | 150 | 0 |
 | 36 | qa_lab | 13 | 79 | 0 | 92 | 0 |
@@ -71,7 +71,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 64 | audio_assets | 4 | 1 | 0 | 10 | 0 |
 | 65 | surveys | 7 | 36 | 0 | 17 | 0 |
 | 66 | medical_groups | 2 | 14 | 0 | 10 | 0 |
-| **Σ** | **67** | **1175** | | **52** | | **297** |
+| **Σ** | **67** | **1175** | | **52** | | **298** |
 
 ## Detalle de entidades saltadas y avisos
 
@@ -243,6 +243,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - `claim_adjudication_versions` — stub de cruce (tabla real en su módulo dueño)
 - `insurance_claims` — stub de cruce (tabla real en su módulo dueño)
 - `prior_authorization_requests` — stub de cruce (tabla real en su módulo dueño)
+- `service_requests` — stub de cruce (tabla real en su módulo dueño)
 - `identity_verification_attempts` — stub de cruce (tabla real en su módulo dueño)
 - `user_activity_events` — stub de cruce (tabla real en su módulo dueño)
 - `practitioner_delegate_assignments` — stub de cruce (tabla real en su módulo dueño)

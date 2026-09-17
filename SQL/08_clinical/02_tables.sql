@@ -227,6 +227,8 @@ CREATE TABLE IF NOT EXISTS "clinical"."service_requests" (
     "status_concept_id" uuid NOT NULL,
     "requester_profile_id" uuid,
     "performer_tenant_id" uuid,
+    "previous_diagnostic_report_id" uuid,
+    "duplicate_override_reason" text,
     "created_at" timestamptz NOT NULL,
     "updated_at" timestamptz NOT NULL,
     "created_by_user_id" uuid,
