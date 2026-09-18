@@ -445,6 +445,37 @@ contenido y código, no esquema.
 front 48/48 del formulario y 3 850/3 853 de la suite completa (los 3 rojos son preexistentes de
 `dev`, reproducidos con los cambios guardados). Sin base viva: no se ejercitó contra Postgres.
 
+### v4.2.18 — Cotizaciones sin interés: plan de pagos flexible (2026-09-18)
+
+**Fuente**: pedido del propietario — «quitar totalmente lo de tasa de interés y simulación de
+crédito; tienen que ir planes de pago ultra flexibles, al abrir la consulta si corresponde por
+plan o tratamiento». Un consultorio no financia: reparte el precio de un tratamiento en cuotas a
+medida de la persona. P35 de `mantra-core-health/PENDIENTES-BACKEND.md`.
+
+`.puml` 17 billing + 33 integrity → `gen_ddl.py 17` + `gen_integrity.py` (diff acotado a
+`SQL/17_billing/02_tables.sql`, `05_constraints.sql` y `_integrity/integrity-matrix.md`) → patch
+`SQL/patches/2026-09-18_v4218_quotations_flexible_payment_plan.sql`.
+
+- `billing.quotations`: **fuera** `interest_rate_percent`, `interest_calculation_method` y
+  `chk_quotations_interest_method`; **entran** `down_payment_amount numeric NOT NULL` y
+  `payment_frequency varchar NOT NULL`, con `chk_quotations_payment_frequency`
+  (`WEEKLY`·`BIWEEKLY`·`MONTHLY`) y `chk_quotations_down_payment_range` (0 ≤ anticipo ≤ precio).
+- `billing.quotation_installments`: **fuera** `principal_amount`, `interest_amount`,
+  `total_amount`; **entra** `amount numeric NOT NULL` con `chk_quotation_installments_amount_positive`.
+- Que anticipo + Σ cuotas = precio **no** es un CHECK (cruza filas): lo valida la API con 422.
+- Tablas, FKs e índices: ±0.
+
+**El patch es destructivo** (borra las columnas de interés con sus datos). Backfill de filas
+viejas: anticipo 0, frecuencia `MONTHLY` (el simulador vencía mes a mes) y `amount = total_amount`
+(lo que se le ofreció pagar por cuota; en una cotización vieja con interés la suma queda por
+encima del precio y no se reescribe).
+
+**Verificado en un PostgreSQL 16 descartable** (cluster propio en el puerto 55432, no el stack):
+el esquema anterior con una cotización con interés migra con el patch, su bloque de verificación
+pasa y una **segunda pasada no cambia nada**; el DDL generado aplica limpio en base vacía, acepta
+una fila válida y los tres CHECK rechazan frecuencia `DAILY`, anticipo −1, anticipo > precio y
+cuota en 0. **No** se aplicó a la base viva del stack `mantra-redesa` ni a ningún VPS.
+
 ### v4.2.17 — La orden sabe si repite un estudio, y por qué (2026-09-17)
 
 **Fuente**: subtarea 3.2 (motor de alerta y prevención de duplicidad de estudios de laboratorio e

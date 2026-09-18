@@ -479,8 +479,12 @@ entity quotations {
   * offered_price : numeric
   currency_concept_id : uuid <<FK>>
   * payment_plan_installment_count : integer
-  * interest_rate_percent : numeric
-  * interest_calculation_method : varchar
+  ' v4.2.18 — plan de pagos flexible, SIN interés: la tasa y el método de
+  ' amortización (FLAT/FRENCH) salen del modelo; entra lo que se paga el día de
+  ' la atención y la frecuencia con que se armó el cronograma (sólo punto de
+  ' partida: cada cuota guarda su propia fecha y monto).
+  * down_payment_amount : numeric
+  * payment_frequency : varchar
   * valid_until : date
   * status_concept_id : uuid <<FK>>
   * created_at : timestamptz
@@ -491,15 +495,15 @@ entity quotations {
 }
 
 ' + v4.2.8 (T24) — cada cuota del plan de pagos, congelada al cotizar.
+' v4.2.18 — sin interés: una fecha y un monto por cuota (ya no capital +
+' interés + total). Los montos no tienen por qué ser iguales.
 entity quotation_installments {
   * id : uuid <<PK>>
   --
   * quotation_id : uuid <<FK>>
   * installment_number : integer
   * due_date : date
-  * principal_amount : numeric
-  * interest_amount : numeric
-  * total_amount : numeric
+  * amount : numeric
   * created_at : timestamptz
   * updated_at : timestamptz
   * row_version : integer
