@@ -157,7 +157,11 @@ note as INDEX_SCOPE
 end note
 
 entity "billing.quotations" as billing_quotations <<REFERENCE_ONLY>> {
-  CHECK_SQL : chk_quotations_interest_method | "interest_calculation_method" IN ('FLAT', 'FRENCH')
+  CHECK_SQL : chk_quotations_payment_frequency | "payment_frequency" IN ('WEEKLY', 'BIWEEKLY', 'MONTHLY')
+  CHECK_SQL : chk_quotations_down_payment_range | ("down_payment_amount" >= 0 AND "down_payment_amount" <= "offered_price")
+}
+entity "billing.quotation_installments" as billing_quotation_installments <<REFERENCE_ONLY>> {
+  CHECK_SQL : chk_quotation_installments_amount_positive | "amount" > 0
 }
 entity "medical_groups.groups" as medical_groups_groups <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_medical_groups_groups_status | "status" IN ('PENDING_TEAM', 'SCHEDULED', 'RESCHEDULE_PENDING', 'CLOSED')
