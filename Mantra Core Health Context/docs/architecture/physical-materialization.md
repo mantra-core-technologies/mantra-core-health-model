@@ -445,6 +445,37 @@ contenido y código, no esquema.
 front 48/48 del formulario y 3 850/3 853 de la suite completa (los 3 rojos son preexistentes de
 `dev`, reproducidos con los cambios guardados). Sin base viva: no se ejercitó contra Postgres.
 
+### v4.2.19 — El manifiesto de exportación se busca por su hash (2026-09-18)
+
+**Fuente**: subtarea 3.3 (portabilidad de póliza e historial de siniestralidad a 1 clic). El
+registro de procesos del stakeholder (MÓDULO ASEGURADORA · 6.3, ítem 5) pide que, ante un cambio
+de compañía, la app entregue toda la siniestralidad del titular "a un clic". Brecha §24
+"Portabilidad entre aseguradoras" y tarjeta T-27 diagnosticaban que el mecanismo de exportación
+(`health_data.health_export_jobs` + `health_export_manifests`, con hash de contenido) **ya existe
+y está bien hecho** — faltaba la solicitud del titular y exportar `insurance.*`, que resuelve la
+API sin tocar el esquema.
+
+`.puml` 52 health_data_platform → `gen_ddl.py all` (diff acotado a `SQL/52_health_data/04_indexes.sql`
+y el reporte) → patch `SQL/patches/2026-09-18_v4219_health_export_manifests_content_hash_index.sql`.
+
+- **Un solo índice BTREE** sobre `health_data.health_export_manifests (content_hash)`. Sin columnas
+  nuevas, sin FKs, sin backfill: la tabla ya declaraba todo lo que la portabilidad necesita
+  (`health_export_jobs.patient_profile_id` liga el certificado al titular,
+  `export_type_concept_id` distingue el tipo de exportación); sólo faltaba que buscar un manifiesto
+  por su hash no fuera un escaneo completo.
+- **Quién lo consume**: `GET /public/portability/verify/:manifestHash` (endpoint público, sin JWT),
+  que recibe el hash SHA-256 impreso en el certificado PDF/QR y localiza el manifiesto. El tipo de
+  exportación (`EXPORT_TYPE_INSURANCE_PORTABILITY`) y el propósito de uso
+  (`PURPOSE_PATIENT_REQUEST`) son conceptos dinámicos, dueño la API, sembrados al arrancar — sin
+  nota `vs_` (regla v4.1.9), porque no entran a ningún conjunto de valores publicado.
+- **Deltas**: tablas ±0 · FKs ±0 · índices +1. Verificado a nivel generador:
+  `check_ddl_sources.py` PASS · `gen_seeds.py --dry` 0 cambios (columna sin obligación de seed).
+- **Hallazgo lateral (no de este patch)**: `gen_ddl.py all` regenerado sobre `origin/dev` reescribe
+  además `SQL/19_community/04_indexes.sql` y `SQL/65_surveys/{03_fk_intra,90_fk_deferred}.sql`
+  (deriva preexistente y ajena, ya documentada — B-10 de `surveys` y el reordenamiento de
+  `community`); se revirtió antes de commitear. Y **la sección de v4.2.18 (cotizaciones) todavía no
+  tiene su espejo en este documento** pese a estar en `origin/dev` — deuda ajena, no se escribe acá.
+
 ### v4.2.18 — Cotizaciones sin interés: plan de pagos flexible (2026-09-18)
 
 **Fuente**: pedido del propietario — «quitar totalmente lo de tasa de interés y simulación de
