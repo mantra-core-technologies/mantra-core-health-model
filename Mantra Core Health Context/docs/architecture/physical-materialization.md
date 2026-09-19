@@ -445,6 +445,130 @@ contenido y código, no esquema.
 front 48/48 del formulario y 3 850/3 853 de la suite completa (los 3 rojos son preexistentes de
 `dev`, reproducidos con los cambios guardados). Sin base viva: no se ejercitó contra Postgres.
 
+### v4.2.22 — Las aseguradoras ya tienen a quién escribirle: representante legal y gerencias (2026-09-19)
+
+**Sin cambio de esquema.** Completa los datos que al listado del negocio le faltaban y el
+modelo sí exige: por cada una de las 17 compañías, **su representante legal y sus tres
+gerencias** (general, comercial y marketing). Son **17 × 4 = 68** contactos.
+
+**Dónde viven.** Los cuatro son filas de `directory.tenant_legal_representatives`, distinguidas
+por `representative_role_concept_id` contra `vs_legal_representative_role`
+(`REPRESENTANTE_LEGAL`, `GERENTE_GENERAL`, `GERENTE_COMERCIAL`, `GERENTE_MARKETING` — los cuatro
+códigos ya estaban sembrados). El builder `canonical_carrier_contacts()` materializa exactamente
+lo mismo que escribe el alta pública (`createContactPerson` +
+`attachRegistrationRepresentatives`), para que una aseguradora sembrada y una registrada a mano
+se lean igual:
+
+| tabla | filas | qué |
+| --- | --- | --- |
+| `profiles.persons` | 68 | una persona por contacto, **sólo `display_name`** — como el alta, que no parte el «nombre completo» en cuatro campos |
+| `common.contact_points` | 136 | su correo y su celular, los dos con uso `WORK` |
+| `common.identifiers` | 17 | la cédula, **sólo del representante legal**: es el único con `ci_identifier_id` |
+| `directory.tenant_legal_representatives` | 68 | el vínculo, con su rol |
+
+**De dónde salen los nombres.** De faker, con semilla fija, en
+`tools/alovida/generate-carrier-contacts.mjs` (repo de la API) → dataset versionado en
+`salud-db/data/carrier-contacts.dataset.json`. Faker **no** corre dentro de `gen_seeds.py`: el
+generador tiene que ser determinista y los nombres cambiarían en cada corrida, llenando el PR de
+ruido. Corriéndolo dos veces el archivo sale **byte a byte idéntico**. Son datos de prueba y se
+nota: los correos van a `ejemplo-alovida.test`, un dominio que no existe. La identidad de la
+**compañía** —razón social, NIT, domicilio— nunca sale de ahí.
+
+**Defecto del modelo destapado (y esquivado como ya lo esquiva la API).**
+`uk_tenant_legal_representatives_primary` es `UNIQUE (tenant_id, is_primary)` y **no es parcial**:
+tres gerencias con `is_primary = false` bajo el mismo tenant violan la clave igual que tres
+`true`. Con `false`, la fase de desambiguación del generador **reubicaba 34 de los 68 vínculos en
+otros tenants** — se detectó contando roles por aseguradora, no leyendo el código. Las gerencias
+van en `NULL`, que en Postgres es distinto de sí mismo y convive; es lo que la API ya hacía, con
+el motivo escrito en `tenant-legal-representatives.service.ts`. **El índice debería ser parcial
+(`WHERE is_primary`)** — es un cambio de modelo, no de este carril, y queda anotado.
+
+**Seis conceptos más al puente del backend**, por la misma razón que en v4.2.21 (lo que el
+paquete no conoce lo reemplaza por basura): `common:owner-type:person`, `common:id-type:national`,
+`common:contact-system:email` / `:mobile` / `:phone`, `common:contact-use:work` y
+`profiles:PERSON_ACTIVE`.
+
+**Verificado contra la base viva (Neon `alovida`, 2026-09-19).** 17 contactos por cada uno de los
+4 roles · **17/17 aseguradoras** con sus cuatro · 68 personas `PERSON_ACTIVE` · 136 contactos
+(68 `EMAIL` + 68 `MOBILE`, uso `WORK`) · 17 cédulas `NATIONAL_ID`, todas apuntadas desde su
+vínculo · **0 violaciones** de la clave única · 0 huérfanos en la carga de los módulos 03, 05,
+02 y 04.
+
+**Lo que NO se siembra:** `power_of_attorney_document_id` queda en `NULL`. El poder notariado es
+un PDF que alguien sube; fabricar un archivo para que la columna no esté vacía sería inventar
+documentación.
+
+### v4.2.21 — Una sola aseguradora por compañía: el paquete adopta los códigos de la API (2026-09-19)
+
+**Sin cambio de esquema.** Corrige una duplicación que llevaba desde v4.1.4 y que ninguna
+consulta del front mostraba, porque el catálogo público filtra por lista explícita de ids.
+
+**El defecto.** Las 17 compañías del listado del negocio («LISTA DE ASEGURADORAS»: 19 filas,
+17 NITs — BISA y Fortaleza están en las dos mitades) se sembraban por DOS caminos que no se
+conocían: `bolivia-insurance-seed.service.ts` las crea al arrancar con código `BO_ASEG_*` e id
+derivado de ese código, con sigla, dirección y NIT; `gen_seeds.py` creaba NUEVE de ellas con
+código propio (`ALIANZA_VIDA`) y, por lo tanto, id propio, sin sigla, sin dirección y sin NIT.
+Medido contra la base viva: **35 filas en `insurance.insurance_carriers`** — 17 canónicas,
+8 cajas públicas, **9 duplicados** y una aseguradora de demostración.
+
+**Qué entra.** `ASEGURADORAS_BOLIVIA` pasa de 9 a **17** entradas con el código de la API, y
+el builder deriva sus ids con `backend_id()`, que es el espejo exacto de `deterministicId()`:
+carrier `seed:insurance-carrier:bo:<code>`, tenant `seed:tenant:bo-carrier:<code>`. Con eso los
+dos sembradores escriben la misma fila y el segundo actualiza en vez de duplicar. Se suman
+`sigla` y `address` (columnas que existían y el paquete dejaba en NULL) y el NIT en
+`regulator_identifier`.
+
+**Dos valores se alinean a la semántica de la API, no a la de v4.1.4**, porque el paquete gana
+al recargar con `--refresh` y los dos son visibles: la verificación pasa de «verificada» a
+**pendiente** —nadie presentó documentación: los datos salen de un listado público, y el sello
+«Verificado» del front lee esa columna— y el NIT deja de ser `NULL` en `regulator_identifier`,
+que es de donde lo lee el perfil de la organización y donde lo deja el alta pública.
+
+**Defecto del generador destapado y corregido.** `phase_valueset_binding` reemplaza todo
+`*_concept_id` que no exista en la terminología del paquete por un concepto cualquiera del
+catálogo genérico. `insurance:VERIFY_PENDING`, `directory:TENANT_UNVERIFIED` y
+`directory:legal-entity:sa` no estaban en `BACKEND_CONCEPTS`, así que las 17 aseguradoras
+quedaron con **municipios como estado de verificación** (Cochabamba, Quime, Toro Toro). Los
+tres conceptos se agregaron al puente del backend. Y se destapó un segundo: `upsert_rows` sólo
+inserta por PK nueva, así que un cambio en un builder canónico **no llega nunca** a una fila que
+ya está en el paquete — ahora acepta `update=True`, que el bloque de aseguradoras usa.
+
+**Verificado contra la base viva (Neon `alovida`, 2026-09-19).**
+
+| medición | antes | después |
+| --- | --- | --- |
+| `insurance.insurance_carriers` | 35 | **26** (17 del listado + 8 cajas + 1 demo) |
+| aseguradoras con código no canónico | 10 | **1** (sólo la demo) |
+| tenants `ASEG_*` | 9 | **0** |
+| estado de verificación de las 17 | 17 valores distintos (basura) | **1** · `insurance:VERIFY_PENDING` |
+| NIT / domicilio / jurisdicción de las 17 | 0 / 0 / 0 | **17 / 17 / 17** |
+| productos · siniestros · líneas · acuerdos · redes · auditoría | 42 · 24 · 32 · 16 · 16 · 16 | **iguales** (se repuntaron, no se borraron) |
+
+Ids verificados uno a uno: los 17 que genera el paquete caen exactamente sobre las filas que la
+API ya tenía — **17/17 carrier + 17/17 tenant, 0 discrepancias**.
+
+**Patch:** `SQL/patches/2026-09-19_v4221_aseguradoras_codigo_unico.sql` (repunta 6 tablas de
+negocio a la gemela canónica, borra las 9 viejas con su tenant, identificador, domicilio y
+política de firma, y verifica en su sección D). Ensayado en transacción revertida antes de
+aplicarse. Después del patch: `python salud-db/load_seeds.py --only 03 --only 04 --only 26
+--only 02 --skip-prod --refresh`.
+
+**Lo que NO entra, y por qué.** La aseguradora de demostración `DEMO-opkld` **se queda**: no es
+un duplicado de ninguna compañía del listado y retirarla costaría borrar 16 líneas de siniestro,
+6 versiones de adjudicación, 2 disputas, 1 plan y **14 filas de
+`audit.insurance_claims_history`**. Borrar historial de auditoría para sacar una fila cosmética
+es decisión del dueño del dato. Su tenant es `DEFAULT`, el de la plataforma, y no se toca.
+
+**Efecto colateral medido, preexistente:** `clinical.prescription_signature_policies` pasa de 25
+a 58 filas mock. No es de este carril — D-05 exige una política comodín por tenant o la firma de
+recetas no se exige nunca, y el paquete tenía 25 para 58 tenants. Cualquier regeneración las
+completa.
+
+**Hueco de producto registrado, no resuelto.** El alta pública **no reclama** el tenant sembrado:
+`POST /iam/auth/register-organization` responde 409 si el código existe, y `carrier_code` es
+único. Mientras no exista ese reclamo, toda aseguradora del padrón que se registre de verdad
+crea una segunda organización para el mismo NIT.
+
 ### v4.2.19 — El manifiesto de exportación se busca por su hash (2026-09-18)
 
 **Fuente**: subtarea 3.3 (portabilidad de póliza e historial de siniestralidad a 1 clic). El
