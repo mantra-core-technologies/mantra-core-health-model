@@ -2,8 +2,8 @@
   "package": "SALUD_v4.0_module_seeds_enhanced",
   "seed_revision": "2.5.3-v4.1.4",
   "module_count": 64,
-  "boot_record_count": 7451,
-  "mock_record_count": 19117,
+  "boot_record_count": 7465,
+  "mock_record_count": 19488,
   "validation_status": "PASS",
   "mock_production_policy": "hard-fail",
   "modules": [
@@ -30,36 +30,36 @@
       "code": "common",
       "file": "modules/02_common.seeds.json",
       "boot_records": 0,
-      "mock_records": 200,
-      "line_count": 4016,
-      "sha256": "5709a5dd665577af25aa54738ab0bd5f6e617c0eda9b0235ef739bb408ba7932"
+      "mock_records": 369,
+      "line_count": 6971,
+      "sha256": "4b20331410a407d577453e362de10cdf4fbfd50c599ed4c33fbf386001f1d1e2"
     },
     {
       "number": 3,
       "code": "terminology",
       "file": "modules/03_terminology.seeds.json",
-      "boot_records": 3627,
+      "boot_records": 3641,
       "mock_records": 180,
-      "line_count": 57057,
-      "sha256": "4f9f79984ee2df14864e99312ba9c51ac0be4c4710fcbad7a55c2417730a8589"
+      "line_count": 57167,
+      "sha256": "cd7fad54cac5dc558bcd73e46420a19dfdd1aa978798abbe8b4f5ad2f2a4155d"
     },
     {
       "number": 4,
       "code": "directory",
       "file": "modules/04_directory.seeds.json",
       "boot_records": 29,
-      "mock_records": 131,
-      "line_count": 3173,
-      "sha256": "eba140caf0265ad271ff5eff04c344f7cb5282bc2028fa7d17deddf8097ccd47"
+      "mock_records": 207,
+      "line_count": 4565,
+      "sha256": "67e7aa0162c1a168c81fe0c01951416776e60b7cffa492ebd450bd1234776bb1"
     },
     {
       "number": 5,
       "code": "profiles",
       "file": "modules/05_profiles.seeds.json",
       "boot_records": 0,
-      "mock_records": 288,
-      "line_count": 4594,
-      "sha256": "32c626481d93329f1a9ad2133083431f7b5916583e0549662b5318e2c66d70f8"
+      "mock_records": 356,
+      "line_count": 6566,
+      "sha256": "65733f0a6233fca52d4aeeee11398e0bef7d66ca14c6a7554d06bd0a2198336f"
     },
     {
       "number": 6,
@@ -84,9 +84,9 @@
       "code": "clinical",
       "file": "modules/08_clinical.seeds.json",
       "boot_records": 11,
-      "mock_records": 361,
-      "line_count": 7664,
-      "sha256": "39338a7b61e0540d1accdc0dcc7a4db1623c764019c4916a50393cea5c69dc83"
+      "mock_records": 411,
+      "line_count": 8414,
+      "sha256": "db2ac6695f426c9ef97fd8ee6000e6cb2c71ee90d9125b9f5f01ffb94e11aa2d"
     },
     {
       "number": 9,
@@ -104,7 +104,7 @@
       "boot_records": 0,
       "mock_records": 1968,
       "line_count": 43175,
-      "sha256": "75a97bc83cc7c66e1472f034390003015f08157cfebbfb881b63aab19ec5a884"
+      "sha256": "829707997c69c08200819842c7fe5fa9f7da09ef9458e2555558ce9e865dcb31"
     },
     {
       "number": 11,
@@ -246,9 +246,9 @@
       "code": "insurance",
       "file": "modules/26_insurance.seeds.json",
       "boot_records": 0,
-      "mock_records": 453,
-      "line_count": 8276,
-      "sha256": "10c62daae01be9e263c01f2335a4f88784b73c0cf3979a1f94e683b21b9b9f3e"
+      "mock_records": 461,
+      "line_count": 8462,
+      "sha256": "a93cded276bdcd325f0d9fef11862bfe53ee6d35b74d4ee19b8c0a87b23310ab"
     },
     {
       "number": 27,

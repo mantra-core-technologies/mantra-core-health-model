@@ -397,6 +397,24 @@ BACKEND_CONCEPTS = [
     ("state:pending", "PENDING", "Pending"),
     ("directory:tenant-type:provider", "PROVIDER", "Healthcare provider"),
     ("directory:legal-entity:company", "COMPANY", "Company"),
+    # v4.2.21 · la forma societaria real de las aseguradoras (quince de las
+    # diecisiete son S.A.) y el estado «sin verificar» con el que nace toda
+    # organización que sale de un listado público. Los dos se derivan igual que
+    # en el backend (`CONCEPTS.LEGAL_ENTITY_SA`, `DIR.TENANT_UNVERIFIED`); sin
+    # espejarlos acá, la fase 2b los reemplazaba por basura.
+    ("directory:legal-entity:sa", "SA", "Corporation (S.A.)"),
+    # v4.2.22 · lo que necesita una persona de contacto: su tipo de documento,
+    # los tres sistemas de contacto y el uso «trabajo». Van acá y no como
+    # conceptos del paquete porque el backend ya los acuña con estas claves y
+    # los servicios comparan por id (`CONCEPTS.CONTACT_EMAIL`, …).
+    ("common:owner-type:person", "OWNER_PERSON", "Person"),
+    ("common:id-type:national", "NATIONAL_ID", "National ID"),
+    ("common:contact-system:email", "EMAIL", "Email"),
+    ("common:contact-system:mobile", "MOBILE", "Mobile phone"),
+    ("common:contact-system:phone", "PHONE", "Phone"),
+    ("common:contact-use:work", "WORK", "Work"),
+    ("profiles:PERSON_ACTIVE", "PERSON_ACTIVE", "Person active"),
+    ("directory:TENANT_UNVERIFIED", "DIR_TENANT_UNVERIFIED", "Tenant unverified"),
     ("directory:tenant-status:active", "TENANT_ACTIVE", "Tenant active"),
     ("directory:tenant-verification:verified", "TENANT_VERIFIED", "Tenant verified"),
     ("authz:CARE_REL_TREATING", "authz:CARE_REL_TREATING",
@@ -533,6 +551,11 @@ INSURANCE_BACKEND_CONCEPTS = [
     (key, key, display) for key, display in [
         ("insurance:CARRIER_ACTIVE", "Aseguradora activa"),
         ("insurance:VERIFY_VERIFIED", "Verificado"),
+        # v4.2.21: sin él, las 17 aseguradoras del listado —que nacen PENDIENTES,
+        # porque nadie presentó documentación— quedaban con un `*_concept_id` que
+        # el paquete no conocía, y la fase 2b lo «reparaba» hacia un concepto al
+        # azar: se vieron municipios (Cochabamba, Quime) como estado de verificación.
+        ("insurance:VERIFY_PENDING", "Verificación pendiente"),
         ("insurance:BILLING_PROVIDER_TYPE_PHARMACY", "Facturador: farmacia"),
         ("insurance:BILLING_PROVIDER_TYPE_DIAGNOSTIC_UNIT", "Facturador: unidad diagnóstica"),
         ("insurance:ELIG_PROVIDER_TYPE_PHARMACY", "Solicitante: farmacia"),
@@ -756,12 +779,27 @@ def save_module(code: str, doc: dict) -> None:
         json.dumps(doc, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
 
 
-def upsert_rows(doc: dict, section: str, entity: str, rows: list, pk: str = "id") -> int:
-    """Inserta filas nuevas por PK (idempotente) y las registra en load_order."""
+def upsert_rows(doc: dict, section: str, entity: str, rows: list, pk: str = "id",
+                update: bool = False) -> int:
+    """Inserta filas nuevas por PK (idempotente) y las registra en load_order.
+
+    Con `update=True` además REESCRIBE las que ya estaban. Hace falta cuando el
+    dueño de la fila es un builder canónico y no el bucle genérico: sin eso, un
+    cambio en el builder no llega nunca al paquete —la fila ya existe, se salta—
+    y el generador queda mintiendo en silencio. Pasó en v4.2.21: el estado de
+    verificación de los tenants de aseguradora siguió mostrando el valor viejo
+    tras corregirlo en el builder, y sólo se notó comparando contra la base.
+    """
     records = doc[section].setdefault("records", {})
     existing = records.setdefault(entity, [])
     seen = {r.get(pk) for r in existing}
     added = [r for r in rows if r.get(pk) not in seen]
+    if update:
+        por_pk = {r.get(pk): r for r in rows}
+        for indice, fila in enumerate(existing):
+            reemplazo = por_pk.get(fila.get(pk))
+            if reemplazo is not None:
+                existing[indice] = reemplazo
     existing.extend(added)
     order = doc[section].setdefault("load_order", [])
     if entity not in order:
@@ -781,6 +819,49 @@ def replace_rows(doc: dict, section: str, entity: str, rows: list) -> int:
     if entity not in order:
         order.append(entity)
     return len(rows)
+
+
+def drop_rows(doc: dict, section: str, entity: str, pred) -> int:
+    """Quita las filas que cumplen `pred`. Devuelve cuántas se fueron.
+
+    Complementa a `upsert_rows`, que sólo agrega: cuando una fila deja de tener
+    dueño —porque cambió la clave con la que se derivaba su id— no hay forma de
+    que el paquete se corrija solo. Es idempotente: sobre un paquete ya podado
+    devuelve 0.
+    """
+    records = doc[section].setdefault("records", {})
+    filas = records.get(entity)
+    if not filas:
+        return 0
+    quedan = [f for f in filas if not pred(f)]
+    records[entity] = quedan
+    return len(filas) - len(quedan)
+
+
+def retire_v414_carrier_rows(docs: dict) -> int:
+    """Retira del paquete las aseguradoras de v4.1.4 (códigos `ASEG_*`).
+
+    v4.2.21 movió el tenant de cada aseguradora al código y al id de la API, así
+    que las filas viejas quedaron huérfanas: mismo NIT, misma compañía, otro
+    uuid. Se van con ellas su identificador, su domicilio y su política de firma
+    —las únicas cuatro tablas del paquete que las referencian—, comprobado
+    recorriendo los 64 módulos.
+
+    Corre ANTES de `build_id_index()` a propósito: si corriera después, el
+    generador podría haber colgado una fila nueva de un tenant que está por
+    desaparecer.
+    """
+    viejos = {t["id"] for t in docs["04"]["mock"]["records"].get("tenants", [])
+              if str(t.get("code", "")).startswith("ASEG_")}
+    if not viejos:
+        return 0
+    n = drop_rows(docs["04"], "mock", "tenants", lambda f: f["id"] in viejos)
+    for modulo, entidad, col in (("02", "identifiers", "owner_id"),
+                                 ("02", "addresses", "owner_id"),
+                                 ("08", "prescription_signature_policies", "tenant_id")):
+        n += drop_rows(docs[modulo], "mock", entidad,
+                       lambda f, c=col: f.get(c) in viejos)
+    return n
 
 
 def ensure_policy(doc: dict, entity: str, ddl_cols: dict, pk: str,
@@ -1937,97 +2018,390 @@ CLINICAS_BOLIVIA = [
          lines='Carretera al Norte, Km. 5'),
 ]
 
-# --- v4.1.4 · las 9 aseguradoras reales de Bolivia --------------------------
-# Datos provistos por el negocio el 2026-08-20 (nombre legal, sigla comercial, NIT
-# y domicilio). `depto` es el código de vs_administrative_area (v4.1.4) del
-# departamento del domicilio. El NIT NO va en `regulator_identifier` —ese campo es
-# el registro del regulador sectorial (APS), que no se conoce y no se inventa—:
-# va como identificador oficial del tenant en `common.identifiers` (TAX_ID).
+# --- v4.2.21 · las 17 aseguradoras reales de Bolivia ------------------------
+# Las diecinueve filas del listado del negocio («LISTA DE ASEGURADORAS», tabla de
+# personas y salud + tabla de generales y fianzas) son diecisiete compañías: BISA
+# y Fortaleza figuran en las dos mitades con el MISMO NIT, y una empresa con un
+# solo NIT es una sola aseguradora. Lo que cambia entre una mitad y otra es el
+# ramo, y eso queda en `ramo` / `ofrece_salud`.
+#
+# **El código es el de la API, y no es decorativo.** `bolivia-insurance-seed.service.ts`
+# siembra estas mismas compañías al arrancar, derivando cada id de su código
+# (`seed:insurance-carrier:bo:<code>`). Hasta v4.2.20 este paquete usaba códigos
+# propios (`ALIANZA_VIDA`) y por lo tanto ids propios: la base terminaba con las
+# nueve de salud DOS veces —una fila con sigla, dirección y NIT, otra con esos
+# tres campos en NULL— y ninguna consulta que no filtrara por id podía saber
+# cuál era cuál. Al compartir código, `backend_id()` (espejo exacto de
+# `deterministicId()`) devuelve el MISMO uuid en los dos sembradores: el que
+# corra segundo actualiza la fila en vez de duplicarla.
+#
+# `depto` es el código de vs_administrative_area (v4.1.4) del departamento del
+# domicilio. `direccion` es la dirección completa tal como la publica el listado
+# —va en `insurance_carriers.address`—; `lines` + `city` son esa misma dirección
+# partida para `common.addresses`. El NIT va en los DOS lados a propósito: en
+# `regulator_identifier`, que es de donde lo lee el perfil de la organización
+# (`directory-read.service.ts`) y donde lo deja el alta pública
+# (`payer.regulatorIdentifier`), y como identificador oficial del tenant en
+# `common.identifiers` (TAX_ID), que es su lugar semántico.
 #
 # v4.2.10 (subtarea 2.3): `whatsapp`/`call_center`/`support_email` son los
 # canales de contacto directo que la propia compañía publica en su dominio
 # oficial, con `source_url` y `obtenido` (regla 70: sin publicación
-# confirmada, `None` — nunca un número inventado). Alianza Vida y Nacional
-# Seguros quedan en `None` porque no se pudo confirmar un canal propio en su
-# dominio oficial (el primero resolvió a la aseguradora de generales del
-# mismo grupo; el segundo devolvió 403 al intentar leerlo).
+# confirmada, `None` — nunca un número inventado). Las ocho de generales y
+# fianzas entran sin canales: no se buscaron ni se inventan.
+# «Termina en S.A.» — mismo criterio que `bolivia-insurance-seed.service.ts`
+# para elegir la forma societaria del tenant sin adivinarla.
+RAZON_SOCIAL_SA = re.compile(r"\bS\.?A\.?$", re.IGNORECASE)
+
 ASEGURADORAS_BOLIVIA = [
-    dict(code="ALIANZA_VIDA", nit="1015327022", depto="sc",
+    dict(code="BO_ASEG_ALIANZA_VIDA_S_A",
+         nit="1015327022", depto="sc", ramo="PERSONAS", ofrece_salud=True,
          legal_name="Alianza Vida Seguros y Reaseguros S.A.",
-         trade_name="Alianza Vida S.A.",
-         lines="Mario Gutiérrez Nº 3325, esq. Av. Roca y Coronado, "
-               "Edificio Alianza, Zona Villa Mercedes",
+         sigla="Alianza Vida S.A.",
+         direccion="Mario Gutiérrez Nº 3325, esq. Av. Roca y Coronado, Edificio "
+                   "Alianza, Zona Villa Mercedes, Santa Cruz de la Sierra, Bolivia.",
+         lines="Mario Gutiérrez Nº 3325, esq. Av. Roca y Coronado, Edificio Alianza, "
+               "Zona Villa Mercedes",
          city="Santa Cruz de la Sierra",
-         whatsapp=None, call_center=None, support_email=None,
-         source_url=None, obtenido=None),
-    dict(code="BISA_SEGUROS", nit="1020655027", depto="lp",
+         whatsapp=None, call_center=None,
+         support_email=None,
+         source_url=None,
+         obtenido=None),
+    dict(code="BO_ASEG_BISA_SEGUROS_Y_REASEGUROS_S_A",
+         nit="1020655027", depto="lp", ramo="PERSONAS", ofrece_salud=True,
          legal_name="BISA Seguros y Reaseguros S.A.",
-         trade_name="BISA Seguros y Reaseguros S.A.",
+         sigla="BISA Seguros y Reaseguros S.A.",
+         direccion="Av. Arce N° 2631, Edificio Multicine, Piso N° 14, zona de San "
+                   "Jorge, La Paz, Bolivia",
          lines="Av. Arce N° 2631, Edificio Multicine, Piso N° 14, zona de San Jorge",
          city="La Paz",
-         whatsapp="+59171545112", call_center="800-10-6060", support_email=None,
-         source_url="https://ayuda.bisaseguros.com", obtenido="2026-09-13"),
-    dict(code="FORTALEZA_SEGUROS", nit="1028175023", depto="sc",
+         whatsapp="+59171545112", call_center="800-10-6060",
+         support_email=None,
+         source_url="https://ayuda.bisaseguros.com",
+         obtenido="2026-09-13"),
+    dict(code="BO_ASEG_FORTALEZA_SEGUROS_Y_REASEGUROS_S_A",
+         nit="1028175023", depto="sc", ramo="PERSONAS", ofrece_salud=True,
          legal_name="Compañía de Seguros y Reaseguros Fortaleza S.A.",
-         trade_name="Fortaleza Seguros y Reaseguros S.A.",
+         sigla="Fortaleza Seguros y Reaseguros S.A.",
+         direccion="Av. Virgen de Cotoca N° 2080, Zona Lazareto, Santa Cruz de la "
+                   "Sierra, Bolivia",
          lines="Av. Virgen de Cotoca N° 2080, Zona Lazareto",
          city="Santa Cruz de la Sierra",
-         whatsapp="+59169200004", call_center="800-12-9992", support_email=None,
+         whatsapp="+59169200004", call_center="800-12-9992",
+         support_email=None,
          source_url="https://aseguradorafortaleza.com.bo/contactenos",
          obtenido="2026-09-13"),
-    dict(code="CREDISEGURO", nit="191310020", depto="lp",
+    dict(code="BO_ASEG_CREDISEGURO_S_A_SEGUROS_PERSONALES",
+         nit="191310020", depto="lp", ramo="PERSONAS", ofrece_salud=True,
          legal_name="Crediseguro S.A. Seguros Personales",
-         trade_name="Crediseguro S.A. Seguros Personales",
-         lines="Av. Hernando Siles esq. calle 10 de Obrajes, "
-               "Torre Empresarial ESIMSA, Piso 9",
+         sigla="Crediseguro S.A. Seguros Personales",
+         direccion="Av. Hernando Siles esq. calle 10 de Obrajes, Torre Empresarial "
+                   "ESIMSA, Piso 9, La Paz, Bolivia.",
+         lines="Av. Hernando Siles esq. calle 10 de Obrajes, Torre Empresarial ESIMSA, "
+               "Piso 9",
          city="La Paz",
-         whatsapp="+59178889096", call_center=None, support_email=None,
-         source_url="https://www.crediseguro.com.bo", obtenido="2026-09-13"),
-    dict(code="LA_BOLIVIANA_CIACRUZ", nit="1006989027", depto="lp",
-         legal_name="La Boliviana Ciacruz Seguros Personales S.A.",
-         trade_name="La Boliviana Ciacruz Seguros Personales S.A.",
+         whatsapp="+59178889096", call_center=None,
+         support_email=None,
+         source_url="https://www.crediseguro.com.bo",
+         obtenido="2026-09-13"),
+    dict(code="BO_ASEG_LA_BOLIVIANA_CIACRUZ_SEGUROS_PERSONALES_S_A",
+         nit="1006989027", depto="lp", ramo="PERSONAS", ofrece_salud=True,
+         legal_name="LA BOLIVIANA CIACRUZ SEGUROS PERSONALES S.A.",
+         sigla="LA BOLIVIANA CIACRUZ SEGUROS PERSONALES S.A.",
+         direccion="Calle Colón N° 288, Piso 2°, en la ciudad de La Paz, Bolivia.",
          lines="Calle Colón N° 288, Piso 2°",
          city="La Paz",
-         whatsapp="+59171548278", call_center="800-10-2727", support_email=None,
-         source_url="https://www.lbc.bo/contactanos", obtenido="2026-09-13"),
-    dict(code="LA_VITALICIA", nit="1020687029", depto="lp",
-         legal_name="La Vitalicia Seguros y Reaseguros de Vida S.A.",
-         trade_name="La Vitalicia Seguros y Reaseguros de Vida S.A.",
+         whatsapp="+59171548278", call_center="800-10-2727",
+         support_email=None,
+         source_url="https://www.lbc.bo/contactanos",
+         obtenido="2026-09-13"),
+    dict(code="BO_ASEG_LA_VITALICIA_SEGUROS_Y_REASEGUROS_DE_VIDA_S_",
+         nit="1020687029", depto="lp", ramo="PERSONAS", ofrece_salud=True,
+         legal_name="LA VITALICIA SEGUROS Y REASEGUROS DE VIDA S.A.",
+         sigla="LA VITALICIA SEGUROS Y REASEGUROS DE VIDA S.A.",
+         direccion="Av. 6 de Agosto Nº 2860, Zona San Jorge, La Paz, Bolivia",
          lines="Av. 6 de Agosto Nº 2860, Zona San Jorge",
          city="La Paz",
-         whatsapp="+59177775677", call_center="800-10-4142", support_email=None,
-         source_url="https://lavitalicia.bo/contacto/", obtenido="2026-09-13"),
-    dict(code="NACIONAL_SEGUROS", nit="1028483024", depto="sc",
+         whatsapp="+59177775677", call_center="800-10-4142",
+         support_email=None,
+         source_url="https://lavitalicia.bo/contacto/",
+         obtenido="2026-09-13"),
+    dict(code="BO_ASEG_NACIONAL_SEGUROS_VIDA_Y_SALUD_S_A",
+         nit="1028483024", depto="sc", ramo="PERSONAS", ofrece_salud=True,
          legal_name="Nacional Seguros Vida y Salud S.A.",
-         trade_name="Nacional Seguros Vida y Salud S.A.",
-         lines="Avenida Cristóbal de Mendoza esquina Avenida Alemana N° 333 "
-               "(Segundo Anillo)",
+         sigla="Nacional Seguros Vida y Salud S.A.",
+         direccion="Avenida Cristóbal de Mendoza esquina Avenida Alemana N° 333 "
+                   "(Segundo Anillo), Santa Cruz, Bolivia",
+         lines="Avenida Cristóbal de Mendoza esquina Avenida Alemana N° 333 (Segundo "
+               "Anillo)",
          city="Santa Cruz de la Sierra",
-         whatsapp=None, call_center=None, support_email=None,
-         source_url=None, obtenido=None),
-    dict(code="UNIVIDA", nit="301204024", depto="lp",
+         whatsapp=None, call_center=None,
+         support_email=None,
+         source_url=None,
+         obtenido=None),
+    dict(code="BO_ASEG_UNIVIDA_S_A",
+         nit="301204024", depto="lp", ramo="PERSONAS", ofrece_salud=True,
          legal_name="Empresa de Seguros y Reaseguros Personales UNIVIDA S.A.",
-         trade_name="UNIVIDA S.A.",
+         sigla="UNIVIDA S.A.",
+         direccion="Av. Camacho N° 1485, Edificio La Urbana, Piso 3, La Paz, Bolivia",
          lines="Av. Camacho N° 1485, Edificio La Urbana, Piso 3",
          city="La Paz",
-         whatsapp=None, call_center="800-10-9119", support_email=None,
-         source_url="https://www.univida.bo", obtenido="2026-09-13"),
-    dict(code="SANTA_CRUZ_VIDA", nit="370008027", depto="sc",
+         whatsapp=None, call_center="800-10-9119",
+         support_email=None,
+         source_url="https://www.univida.bo",
+         obtenido="2026-09-13"),
+    dict(code="BO_ASEG_SANTA_CRUZ_VIDA_Y_SALUD_S_A",
+         nit="370008027", depto="sc", ramo="PERSONAS", ofrece_salud=True,
          legal_name="Santa Cruz Vida y Salud Seguros y Reaseguros Personales S.A.",
-         trade_name="Santa Cruz Vida y Salud S.A.",
-         lines="Avenida San Martín, Edificio Manzana 40, Torre 2, Piso 13, "
-               "Zona Equipetrol",
+         sigla="Santa Cruz Vida y Salud S.A.",
+         direccion="Avenida San Martín, Edificio Manzana 40, Torre 2, Piso 13, Zona "
+                   "Equipetrol, Santa Cruz de la Sierra, Bolivia.",
+         lines="Avenida San Martín, Edificio Manzana 40, Torre 2, Piso 13, Zona "
+               "Equipetrol",
          city="Santa Cruz de la Sierra",
          whatsapp="+59172124747", call_center="800-12-4747",
          support_email="consultasSCVS@santacruzfg.com",
          source_url="https://www.santacruzvidaysalud.com.bo/contacto/",
          obtenido="2026-09-13"),
+    dict(code="BO_ASEG_ALIANZA_SEGUROS_S_A",
+         nit="1020351029", depto="sc", ramo="GENERALES", ofrece_salud=False,
+         legal_name="Alianza Compañía de Seguros y Reaseguros S.A.",
+         sigla="Alianza Seguros S.A.",
+         direccion="Av. Roca y Coronado Nº 1380, Santa Cruz de la Sierra, Bolivia",
+         lines="Av. Roca y Coronado Nº 1380",
+         city="Santa Cruz de la Sierra",
+         whatsapp=None, call_center=None,
+         support_email=None,
+         source_url=None,
+         obtenido=None),
+    dict(code="BO_ASEG_CREDISEGURO_S_A_SEGUROS_GENERALES",
+         nit="343764028", depto="lp", ramo="GENERALES", ofrece_salud=False,
+         legal_name="Crediseguro S.A. Seguros Generales",
+         sigla="Crediseguro S.A. Seguros Generales",
+         direccion="Avenida Hernando Siles esquina Calle 10 de Obrajes, Torre "
+                   "Empresarial ESIMSA, Piso 9, La Paz, Bolivia",
+         lines="Avenida Hernando Siles esquina Calle 10 de Obrajes, Torre Empresarial "
+               "ESIMSA, Piso 9",
+         city="La Paz",
+         whatsapp=None, call_center=None,
+         support_email=None,
+         source_url=None,
+         obtenido=None),
+    dict(code="BO_ASEG_LA_BOLIVIANA_CIACRUZ_DE_SEGUROS_Y_REASEGUROS",
+         nit="1007017028", depto="lp", ramo="GENERALES", ofrece_salud=False,
+         legal_name="La Boliviana Ciacruz de Seguros y Reaseguros S.A.",
+         sigla="La Boliviana Ciacruz de Seguros y Reaseguros S.A.",
+         direccion="Calle Colón N° 288, Edificio La Boliviana Ciacruz (Zona Central), "
+                   "La Paz, Bolivia",
+         lines="Calle Colón N° 288, Edificio La Boliviana Ciacruz (Zona Central)",
+         city="La Paz",
+         whatsapp=None, call_center=None,
+         support_email=None,
+         source_url=None,
+         obtenido=None),
+    dict(code="BO_ASEG_MERCANTIL_SANTA_CRUZ_SEGUROS_Y_REASEGUROS_GE",
+         nit="399309026", depto="lp", ramo="GENERALES", ofrece_salud=False,
+         legal_name="Mercantil Santa Cruz Seguros y Reaseguros Generales S.A.",
+         sigla="Mercantil Santa Cruz Seguros y Reaseguros Generales S.A.",
+         direccion="Av. Camacho N° 1448, Edif. Banco Mercantil Santa Cruz, Piso 11, La "
+                   "Paz, Bolivia",
+         lines="Av. Camacho N° 1448, Edif. Banco Mercantil Santa Cruz, Piso 11",
+         city="La Paz",
+         whatsapp=None, call_center=None,
+         support_email=None,
+         source_url=None,
+         obtenido=None),
+    dict(code="BO_ASEG_NACIONAL_SEGUROS_PATRIMONIALES_Y_FIANZAS_S_A",
+         nit="145776027", depto="sc", ramo="GENERALES", ofrece_salud=False,
+         legal_name="Nacional Seguros Patrimoniales y Fianzas S.A.",
+         sigla="Nacional Seguros Patrimoniales y Fianzas S.A.",
+         direccion="Avenida Cristóbal de Mendoza esquina Avenida Alemana Nº 333 "
+                   "(Segundo Anillo), Santa Cruz, Bolivia",
+         lines="Avenida Cristóbal de Mendoza esquina Avenida Alemana Nº 333 (Segundo "
+               "Anillo)",
+         city="Santa Cruz",
+         whatsapp=None, call_center=None,
+         support_email=None,
+         source_url=None,
+         obtenido=None),
+    dict(code="BO_ASEG_SEGUROS_Y_REASEGUROS_CREDINFORM_INTERNATIONA",
+         nit="1006765027", depto="lp", ramo="GENERALES", ofrece_salud=False,
+         legal_name="Seguros y Reaseguros Credinform International S.A.",
+         sigla="Seguros y Reaseguros Credinform International S.A.",
+         direccion="Calle Julio Patiño N° 550, esquina calle 12, Calacoto, La Paz, "
+                   "Bolivia",
+         lines="Calle Julio Patiño N° 550, esquina calle 12, Calacoto",
+         city="La Paz",
+         whatsapp=None, call_center=None,
+         support_email=None,
+         source_url=None,
+         obtenido=None),
+    dict(code="BO_ASEG_SEGUROS_ILLIMANI_S_A",
+         nit="1007165029", depto="lp", ramo="GENERALES", ofrece_salud=False,
+         legal_name="Seguros Illimani S.A.",
+         sigla="Seguros Illimani S.A.",
+         direccion="Calle Loayza N° 233, Edificio Mariscal de Ayacucho, Piso 10, "
+                   "Oficinas 1004-1013, La Paz, Bolivia",
+         lines="Calle Loayza N° 233, Edificio Mariscal de Ayacucho, Piso 10, Oficinas "
+               "1004-1013",
+         city="La Paz",
+         whatsapp=None, call_center=None,
+         support_email=None,
+         source_url=None,
+         obtenido=None),
+    dict(code="BO_ASEG_UNIBIENES_S_A",
+         nit="338090023", depto="lp", ramo="GENERALES", ofrece_salud=False,
+         legal_name="UNIBIENES Seguros y Reaseguros Patrimoniales S.A.",
+         sigla="Unibienes S.A.",
+         direccion="Calle 10 de Calacoto, Edificio Emporium N° 7812, Piso 5, Zona Sur, "
+                   "La Paz, Bolivia",
+         lines="Calle 10 de Calacoto, Edificio Emporium N° 7812, Piso 5, Zona Sur",
+         city="La Paz",
+         whatsapp=None, call_center=None,
+         support_email=None,
+         source_url=None,
+         obtenido=None),
 ]
 
 # Las tablas del módulo 26 cuyas filas mock referencian a la aseguradora.
 CARRIER_DEPENDENT_TABLES = ("insurance_products", "broker_carrier_agreements",
                             "provider_networks", "insurance_claims",
                             "insurance_reconciliation_batches")
+
+
+# Las personas de contacto de las aseguradoras: representante legal + 3 gerencias.
+# Los nombres, correos, celulares y cédulas son DATOS DE PRUEBA generados con faker
+# (semilla fija) por `tools/alovida/generate-carrier-contacts.mjs` del repo de la API
+# y versionados en este archivo: el generador tiene que ser determinista, así que
+# faker corre una vez y su salida se revisa en el PR como cualquier otro dato.
+CARRIER_CONTACTS_FILE = ROOT / "salud-db" / "data" / "carrier-contacts.dataset.json"
+
+
+def load_carrier_contacts() -> list:
+    """Los 68 contactos (17 aseguradoras × 4 roles), o vacío si no está el archivo."""
+    if not CARRIER_CONTACTS_FILE.exists():
+        return []
+    return json.loads(CARRIER_CONTACTS_FILE.read_text(encoding="utf-8"))["datos"]
+
+
+def canonical_carrier_contacts(docs, value_sets) -> dict:
+    """Representante legal y gerencias de cada aseguradora (v4.2.22).
+
+    El listado del negocio trae la COMPAÑÍA —razón social, NIT, domicilio— y nada
+    de las personas, que es justo lo que el registro de procesos pide para dar de
+    alta una organización: quién la representa legalmente y quiénes son sus
+    gerencias general, comercial y de marketing. Sin esas filas, las 17
+    aseguradoras quedan a medio cargar: el panel de la organización las muestra
+    vacías y no hay a quién escribirle.
+
+    Se materializa exactamente lo mismo que escribe el alta pública
+    (`createContactPerson` + `attachRegistrationRepresentatives`), para que una
+    aseguradora sembrada y una registrada a mano se lean igual:
+
+    * `profiles.persons` — una persona por contacto. **Sólo `display_name`**, como
+      el alta: el formulario pide «nombre completo» en un campo y partirlo sería
+      adivinar dónde corta. Las partes están en el dataset por si algún día el
+      formulario las pide.
+    * `common.contact_points` — su correo y su celular, ambos con uso `WORK`.
+    * `common.identifiers` — la cédula, **sólo del representante legal**: es el
+      único al que el modelo le reserva `ci_identifier_id`.
+    * `directory.tenant_legal_representatives` — el vínculo con la aseguradora,
+      con su rol del value set `vs_legal_representative_role`. El representante
+      legal es `is_primary`; las gerencias no.
+
+    Lo que NO se siembra: `power_of_attorney_document_id` queda en NULL. El poder
+    notariado es un PDF real que alguien sube, y fabricar un archivo para que la
+    columna no esté vacía sería inventar documentación (regla 00.7).
+    """
+    packs = {"persons": [], "contact_points": [], "identifiers": [],
+             "tenant_legal_representatives": []}
+    contactos = load_carrier_contacts()
+    if not contactos:
+        return packs
+    vs_rol = value_sets.get("vs_legal_representative_role")
+    if not vs_rol:
+        return packs
+
+    def new_id(table: str, *parts) -> str:
+        return stable_uuid("SALUD", PATCH_V414, "mock", table, "id", *parts)
+
+    for contacto in contactos:
+        clave = (contacto["carrierCode"], contacto["rol"])
+        tenant_id = backend_id("seed:tenant:bo-carrier:" + contacto["carrierCode"])
+        base = det_time(MOCK_BASE, "tenant_legal_representatives", *clave)
+        stamp = iso(base)
+        auditoria = [("created_at", stamp), ("updated_at", stamp),
+                     ("created_by_user_id", SEED_USER_ID),
+                     ("updated_by_user_id", SEED_USER_ID), ("row_version", 1)]
+        person_id = new_id("profiles.persons", *clave)
+
+        packs["persons"].append(OrderedDict([
+            ("id", person_id),
+            ("person_status_concept_id", backend_id("profiles:PERSON_ACTIVE")),
+            ("name", None), ("middle_name", None), ("last_name", None),
+            ("mother_last_name", None),
+            ("display_name", contacto["nombreCompleto"]),
+            ("photo_file_id", None), ("birth_date", None),
+            ("administrative_gender_concept_id", None),
+            ("sex_at_birth_concept_id", None), ("gender_identity_concept_id", None),
+            ("vital_status_concept_id", None), ("deceased_at", None),
+            ("nationality_concept_id", None), ("preferred_language_concept_id", None),
+            ("occupation_concept_id", None), ("occupation_free_text", None),
+            ("work_employer_concept_id", None), ("work_employer_free_text", None),
+            ("merge_survivor_person_id", None), ("anonymized_at", None),
+            *auditoria]))
+
+        for sistema, valor, orden in (("email", contacto["email"], 1),
+                                      ("mobile", contacto["celular"], 2)):
+            packs["contact_points"].append(OrderedDict([
+                ("id", new_id("common.contact_points", *clave, sistema)),
+                ("owner_type_concept_id", backend_id("common:owner-type:person")),
+                ("owner_id", person_id),
+                ("system_concept_id", backend_id("common:contact-system:" + sistema)),
+                ("value", valor),
+                ("use_concept_id", backend_id("common:contact-use:work")),
+                ("rank", orden), ("verified", False),
+                ("valid_from", base.date().isoformat()), ("valid_to", None),
+                *auditoria]))
+
+        ci_identifier_id = None
+        if contacto["cedula"]:
+            ci_identifier_id = new_id("common.identifiers", *clave)
+            packs["identifiers"].append(OrderedDict([
+                ("id", ci_identifier_id),
+                ("owner_type_concept_id", backend_id("common:owner-type:person")),
+                ("owner_id", person_id),
+                ("use_concept_id", backend_id("common:use:official")),
+                ("type_concept_id", backend_id("common:id-type:national")),
+                ("system", None), ("value", contacto["cedula"]),
+                ("issuer_country_concept_id", JURISDICTION_CONCEPT_ID),
+                ("assigner_tenant_id", None),
+                ("valid_from", base.date().isoformat()), ("valid_to", None),
+                ("state_concept_id", backend_id("state:active")),
+                *auditoria]))
+
+        packs["tenant_legal_representatives"].append(OrderedDict([
+            ("id", new_id("directory.tenant_legal_representatives", *clave)),
+            ("tenant_id", tenant_id), ("person_id", person_id),
+            ("representative_role_concept_id",
+             concept_id("vs_legal_representative_role", contacto["rol"], vs_rol)),
+            ("ci_identifier_id", ci_identifier_id),
+            # El poder notariado es un PDF real: no se fabrica uno para llenar
+            # la columna.
+            ("power_of_attorney_document_id", None),
+            ("appointed_at", base.date().isoformat()),
+            ("valid_from", base.date().isoformat()), ("valid_to", None),
+            # `True` sólo para el representante legal; las gerencias van en NULL,
+            # NO en `False`. `uk_tenant_legal_representatives_primary` es
+            # `UNIQUE (tenant_id, is_primary)` y no es parcial: tres `False` bajo
+            # el mismo tenant la violan igual que tres `True`. La API deja el
+            # campo sin poner por esta misma razón; en Postgres cada NULL es
+            # distinto y conviven. (El índice debería ser parcial —`WHERE
+            # is_primary`— pero eso es un cambio de modelo, no de este carril.)
+            ("is_primary", True if contacto["rol"] == "REPRESENTANTE_LEGAL" else None),
+            ("status_concept_id", backend_id("state:active")),
+            *auditoria]))
+    return packs
 
 
 def canonical_insurance_carriers(docs, value_sets) -> dict:
@@ -2042,6 +2416,27 @@ def canonical_insurance_carriers(docs, value_sets) -> dict:
     Cada aseguradora es: su tenant PAYER (módulo 04) + la fila de carrier (26) +
     el NIT como identificador oficial del tenant (02, `TAX_ID`) + su domicilio
     (02, con el departamento resuelto contra vs_administrative_area de v4.1.4).
+
+    v4.2.21 — **los ids son los de la API, no los del paquete.** La aseguradora y
+    su tenant los siembra también `bolivia-insurance-seed.service.ts` al arrancar,
+    derivando el id del código con `deterministicId()`; `backend_id()` es su
+    espejo exacto, así que ambos sembradores escriben la MISMA fila y el segundo
+    en correr actualiza en vez de duplicar. Los ids propios (`stable_uuid` con
+    `PATCH_V414`) se conservan para identificadores y direcciones, que son
+    filas de este paquete y de nadie más.
+
+    Dos campos siguen la semántica de la API, no la de v4.1.4, porque son
+    visibles y el paquete gana al recargar con `--refresh`:
+
+    * **verificación pendiente** (no «verificada»): nadie presentó documentación
+      —los datos salen de un listado público—, y el sello «Verificado» que pinta
+      el front lee justo esta columna (`declared-coverages-reader.ts`).
+    * **el NIT en `regulator_identifier`**: es de donde lo lee el perfil de la
+      organización y donde lo deja el alta pública (`payer.regulatorIdentifier`).
+      Dejarlo en `None` —como hacía v4.1.4, con el argumento de que el registro
+      del regulador sectorial (APS) es otra cosa— borraba de la vista el único
+      identificador que la compañía tiene cargado. Sigue además en
+      `common.identifiers` como `TAX_ID`, que es su lugar semántico.
     """
     packs = {"tenants": [], "insurance_carriers": [], "identifiers": [], "addresses": []}
     # Moldes del paquete: conceptos genéricos ya acuñados (residencia de datos,
@@ -2057,19 +2452,28 @@ def canonical_insurance_carriers(docs, value_sets) -> dict:
     for aseg in ASEGURADORAS_BOLIVIA:
         base = det_time(MOCK_BASE, "insurance_carriers", aseg["code"])
         stamp = iso(base)
-        tenant_id = new_id("directory.tenants", aseg["code"])
+        tenant_id = backend_id("seed:tenant:bo-carrier:" + aseg["code"])
         auditoria = [("created_at", stamp), ("updated_at", stamp),
                      ("created_by_user_id", SEED_USER_ID),
                      ("updated_by_user_id", SEED_USER_ID), ("row_version", 1)]
 
         packs["tenants"].append(OrderedDict([
-            ("id", tenant_id), ("code", "ASEG_" + aseg["code"]),
+            # El código del tenant ES el de la aseguradora, como lo escribe la
+            # API: el prefijo `ASEG_` de v4.1.4 daba un segundo código para la
+            # misma organización y el alta pública no podía reclamarla.
+            ("id", tenant_id), ("code", aseg["code"]),
             ("tenant_type_concept_id", backend_id("directory:tenant-type:payer")),
-            ("legal_name", aseg["legal_name"]), ("trade_name", aseg["trade_name"]),
-            ("legal_entity_type_concept_id", backend_id("directory:legal-entity:company")),
+            ("legal_name", aseg["legal_name"]), ("trade_name", aseg["sigla"]),
+            # La forma societaria se lee de la razón social, no se adivina.
+            ("legal_entity_type_concept_id",
+             backend_id("directory:legal-entity:sa")
+             if RAZON_SOCIAL_SA.search(aseg["legal_name"])
+             else backend_id("directory:legal-entity:company")),
             ("status_concept_id", backend_id("directory:tenant-status:active")),
+            # Sin verificar: la organización existe porque está en un listado
+            # público, no porque alguien la haya dado de alta.
             ("verification_status_concept_id",
-             backend_id("directory:tenant-verification:verified")),
+             backend_id("directory:TENANT_UNVERIFIED")),
             ("country_concept_id", JURISDICTION_CONCEPT_ID),
             ("jurisdiction_concept_id", JURISDICTION_CONCEPT_ID),
             ("data_residency_region_concept_id",
@@ -2079,19 +2483,22 @@ def canonical_insurance_carriers(docs, value_sets) -> dict:
             *auditoria]))
 
         packs["insurance_carriers"].append(OrderedDict([
-            ("id", new_id("insurance.insurance_carriers", aseg["code"])),
+            ("id", backend_id("seed:insurance-carrier:bo:" + aseg["code"])),
             ("tenant_id", tenant_id),
             ("carrier_code", aseg["code"]), ("legal_name", aseg["legal_name"]),
+            # Nombre comercial y domicilio, que el listado trae y la fila de
+            # aseguradora tiene columna propia para guardar.
+            ("sigla", aseg["sigla"]), ("address", aseg["direccion"]),
             # v4.2.10 (subtarea 2.3): canales de contacto directo con fuente
             # pública citada arriba en ASEGURADORAS_BOLIVIA; `None` cuando no
             # se pudo confirmar en el dominio oficial de la compañía.
             ("whatsapp_number", aseg["whatsapp"]),
             ("call_center_phone", aseg["call_center"]),
             ("support_email", aseg["support_email"]),
-            ("regulator_identifier", None),
+            ("regulator_identifier", aseg["nit"]),
             ("jurisdiction_concept_id", JURISDICTION_CONCEPT_ID),
             ("public_profile_id", None),
-            ("verification_status_concept_id", backend_id("insurance:VERIFY_VERIFIED")),
+            ("verification_status_concept_id", backend_id("insurance:VERIFY_PENDING")),
             ("status_concept_id", backend_id("insurance:CARRIER_ACTIVE")),
             *auditoria]))
 
@@ -2592,12 +2999,15 @@ def phase_curate_identities(docs, value_sets) -> dict:
 
 def phase_tables(docs, ddl, fks, value_sets, uniques) -> dict:
     """boot/mock de las 24 tablas nuevas, en orden de dependencia."""
+    retiradas = retire_v414_carrier_rows(docs)
     id_index = build_id_index(docs)
     generic_concepts = [r["id"] for r in docs["03"]["boot"]["records"]["catalog_concepts"]]
     concepts_by_vs = {n: [concept_id(n, c, m) for c in m["codes"]]
                       for n, m in value_sets.items()}
     vf = ValueFactory(ddl, fks, id_index, concepts_by_vs, generic_concepts)
     stats = OrderedDict()
+    if retiradas:
+        stats["directory.* (aseguradoras v4.1.4 retiradas)"] = retiradas
 
     # el catálogo de planes va primero: sus hijas dependen de los 3 planes canónicos
     plan_pack = canonical_plans(vf, docs["42"], value_sets)
@@ -2673,7 +3083,8 @@ def phase_tables(docs, ddl, fks, value_sets, uniques) -> dict:
     for module, entity, tkey in (("04", "tenants", "directory.tenants"),
                                  ("02", "identifiers", "common.identifiers"),
                                  ("02", "addresses", "common.addresses")):
-        n = upsert_rows(docs[module], "mock", entity, aseg_pack[entity])
+        # `update=True`: el dueño de estas filas es el builder, no el paquete.
+        n = upsert_rows(docs[module], "mock", entity, aseg_pack[entity], update=True)
         if n:
             stats[tkey + " (aseguradoras)"] = n
         id_index.setdefault(tkey, []).extend(r["id"] for r in aseg_pack[entity])
@@ -2681,6 +3092,25 @@ def phase_tables(docs, ddl, fks, value_sets, uniques) -> dict:
         docs, [r["id"] for r in aseg_pack["insurance_carriers"]])
     if n:
         stats["insurance.* (insurance_carrier_id repuntadas)"] = n
+
+    # --- v4.2.22 · las personas de contacto de cada aseguradora --------------
+    # Va DESPUÉS del bloque de aseguradoras porque cuelga de sus tenants.
+    contactos_pack = canonical_carrier_contacts(docs, value_sets)
+    for module, entity, tkey in (
+            ("05", "persons", "profiles.persons"),
+            ("02", "contact_points", "common.contact_points"),
+            ("02", "identifiers", "common.identifiers"),
+            ("04", "tenant_legal_representatives",
+             "directory.tenant_legal_representatives")):
+        filas = contactos_pack[entity]
+        if not filas:
+            continue
+        n = upsert_rows(docs[module], "mock", entity, filas, update=True)
+        if n:
+            stats[tkey + " (contactos de aseguradoras)"] = n
+        id_index.setdefault(tkey, []).extend(r["id"] for r in filas)
+        ensure_policy(docs[module], entity, ddl[tkey], "id",
+                      uniques.get(tkey, []), "RELATIONAL_TABLE", False, True)
 
     # --- v4.1.6 · farmacias reales, con su ficha pública ---------------------
     farm_pack = build_real_pharmacies(docs, value_sets)

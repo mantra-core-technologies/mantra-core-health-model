@@ -53,7 +53,7 @@
       "value_set_members",
       "tenant_catalog_policies"
     ],
-    "record_count": 3627,
+    "record_count": 3641,
     "records": {
       "terminology_sources": [
         {
@@ -26711,6 +26711,116 @@
           "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
           "code": "insurance:ELIG_PROVIDER_TYPE_DIAGNOSTIC_UNIT",
           "display": "Solicitante: unidad diagnóstica",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "387ecc07-407c-56fa-bed9-be87c0d0be35",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "SA",
+          "display": "Corporation (S.A.)",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "6eff2ed3-c060-5a8f-b2d0-043e2a6e8b46",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "OWNER_PERSON",
+          "display": "Person",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "595e7a3d-ba37-5014-9a72-635363b94864",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "NATIONAL_ID",
+          "display": "National ID",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "4aa11a55-5529-5d18-b54a-697d8362d05a",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "EMAIL",
+          "display": "Email",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "b054e273-c1a0-5bda-8367-cd1d59e42cb5",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "MOBILE",
+          "display": "Mobile phone",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "e58edb0e-f59f-5aa6-b34b-d4a9b07b0af2",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "PHONE",
+          "display": "Phone",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "ecad3dbb-6924-5129-b51c-dc327d6038dc",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "WORK",
+          "display": "Work",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "d4939b72-ea54-524d-9021-bdca59efa37a",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "PERSON_ACTIVE",
+          "display": "Person active",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "a6eb3028-c24e-5144-8565-3c70d03bfead",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "DIR_TENANT_UNVERIFIED",
+          "display": "Tenant unverified",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "a60d99df-9030-59f3-a04a-3233917b616f",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "insurance:VERIFY_PENDING",
+          "display": "Verificación pendiente",
           "abstract": false,
           "selectable": true,
           "created_at": "2026-08-17T21:45:00Z",
@@ -54226,7 +54336,7 @@
       }
     ],
     "summary": {
-      "record_count": 3627,
+      "record_count": 3641,
       "entity_count": 10,
       "populated_entity_count": 10,
       "scenario_count": null,
