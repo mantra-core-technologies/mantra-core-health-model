@@ -1070,6 +1070,8 @@ entity "INDEXES · health_export_manifests" as idxset_health_export_manifests <<
   IX ix_health_export_manifests_file_id : (file_id) BTREE
   IX ix_health_export_manifests_encryption_profile_id : (encryption_profile_id) BTREE
   IX ix_health_export_manifests_retention_policy_id : (retention_policy_id) BTREE
+  ' + v4.2.19 (subtarea 3.3): el verify público de portabilidad busca el manifiesto por su hash.
+  IX ix_health_export_manifests_content_hash : (content_hash) BTREE
   BRIN brin_health_export_manifests_created_at : (created_at) BRIN pages_per_range=128
   UK uk_health_export_manifests_job_version : (health_export_job_id, manifest_version) UNIQUE BTREE
 }

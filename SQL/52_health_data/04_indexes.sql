@@ -466,6 +466,8 @@ CREATE INDEX IF NOT EXISTS "ix_health_export_manifests_encryption_profile_id" ON
 
 CREATE INDEX IF NOT EXISTS "ix_health_export_manifests_retention_policy_id" ON "health_data"."health_export_manifests" ("retention_policy_id");
 
+CREATE INDEX IF NOT EXISTS "ix_health_export_manifests_content_hash" ON "health_data"."health_export_manifests" ("content_hash");
+
 CREATE INDEX IF NOT EXISTS "brin_health_export_manifests_created_at" ON "health_data"."health_export_manifests" USING brin ("created_at") WITH (pages_per_range=128);
 
 CREATE UNIQUE INDEX IF NOT EXISTS "uk_health_export_manifests_job_version" ON "health_data"."health_export_manifests" ("health_export_job_id", "manifest_version");
