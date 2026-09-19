@@ -56,7 +56,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 49 | crm | 32 | 227 | 0 | 278 | 5 |
 | 50 | marketing | 14 | 121 | 0 | 130 | 0 |
 | 51 | promotions | 11 | 71 | 0 | 87 | 0 |
-| 52 | health_data | 34 | 178 | 0 | 254 | 9 |
+| 52 | health_data | 34 | 178 | 0 | 255 | 9 |
 | 53 | procedures_perioperative | 35 | 220 | 0 | 262 | 8 |
 | 54 | polyglot_storage | 20 | 29 | 0 | 35 | 4 |
 | 55 | document_store _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 18 |
@@ -71,7 +71,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 64 | audio_assets | 4 | 1 | 0 | 10 | 0 |
 | 65 | surveys | 7 | 36 | 0 | 17 | 0 |
 | 66 | medical_groups | 2 | 14 | 0 | 10 | 0 |
-| **Σ** | **67** | **1175** | | **52** | | **298** |
+| **Σ** | **67** | **1175** | | **52** | | **299** |
 
 ## Detalle de entidades saltadas y avisos
 
