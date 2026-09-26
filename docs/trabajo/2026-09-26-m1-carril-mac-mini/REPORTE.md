@@ -1,86 +1,86 @@
 # Reporte — Carril M1 · Mac mini (infraestructura, base de datos y despliegue)
 
-> **AVANCE: 12 / 22 microtareas — 54,5 %.** (H2 · H3 · H4 completos; H1 y H5 en curso; H6 pendiente
-> de H1.)
+> **AVANCE: 16 / 22 microtareas — 72,7 %.** (H2 · H3 · H4 completos; H1.S1 completo, H1.S2
+> `BLOQUEADO`; H5 escrita y typechequeada, su ejecución `BLOQUEADO` por H1; H6 `A MEDIAS`,
+> `BLOQUEADO` en la parte que depende de merges humanos.)
 
 - Fecha: 2026-09-26 · Plan: [PLAN.md](./PLAN.md) · Ramas: `justin/m1-model-...`,
   `justin/m1-fk-notas-...`, `justin/m1-api-carril-mac-mini`, `justin/test-integration`
 - Peldaño de evidencia alcanzado: **por área**. H2/H3/H4: `VERIFIED` (runtime real, sin PHI).
-  H1: `TESTED` para el fix del heap (compila y se validó el YAML; falta observar el efecto en
-  producción). H5: `WRITTEN`+`RUNS` (spec escrita, typecheck en 0; no corrida contra el sitio real
-  todavía porque el sitio no estuvo sano hasta ahora).
+  H1.S1: `VERIFIED` (config del recurso confirmada por la API de Coolify). H1.S2: `TESTED` para
+  el fix aplicado (compila, se validó el YAML, se desplegó) pero el comportamiento observado en
+  runtime **contradice** la hipótesis — el contenedor sigue oscilando después del fix, así que
+  el hito queda `BLOQUEADO`, no `VERIFIED`. H5: `WRITTEN`+`RUNS` (spec escrita, typecheck en 0;
+  no se pudo ejecutar contra el sitio real porque nunca estuvo sano).
 
 ## Completado
 
 | ID | Qué se logró | Comando | Resultado |
 |---|---|---|---|
-| H2.S1.M1 | Vigilante paramétrico por rama y por app | `alovida-autodeploy-test.sh --estado` | dos apps, cada una con su sha real |
-| H2.S1.M2 | Plist `bo.alovida.autodeploy-test` instalado, sin tocar el de `mockup` | `launchctl list \| grep alovida` | `bo.alovida.autodeploy` y `bo.alovida.autodeploy-test`, los dos con PID activo |
-| H2.S1.M3 | Detección de un commit real sin intervención manual | `Monitor` en segundo plano sobre el diario | `2026-09-26 01:49:05  la rama avanzó a 002bdfdd; desplegando` — la línea la escribió el vigilante en su propio tick, no un curl mío |
+| H1.S1.M1–M3 | Config del recurso corregida: compose de `deploy/`, variables cargadas, dominio asignado al `proxy` | `GET /applications/<uuid>` + `/envs` | `docker_compose_location=/deploy/docker-compose.coolify.yml`, `APP_DOMAIN`/`ALOVIDA_NETWORK` presentes, `docker_compose_domains` con la misma forma que `mockup-frontend` |
+| H2.S1.M1–M3 | Vigilante paramétrico por rama y por app, plist instalado, commit real detectado sin intervención manual | `alovida-autodeploy-test.sh --estado` + `launchctl list \| grep alovida` + `Monitor` en segundo plano | dos apps con su sha real; `bo.alovida.autodeploy` y `bo.alovida.autodeploy-test` con PID activo; `2026-09-26 01:49:05  la rama avanzó a 002bdfdd; desplegando` — la línea la escribió el vigilante en su propio tick, no un curl mío |
 | H3.S1.M1–M4 | Módulos 67/68 transcritos + 4 patches promovidos, sin colisión de numeración | diff programático columna por columna | 0 diferencias en las 12 tablas; 15/15 y 6/6 índices idénticos; FK 27 y 14, igual a los deltas declarados |
 | H3.S2.M1–M2 | `yarn db:vendor` deja de borrar DDL | `db:vendor:check` | `=== database/SQL al día` / `=== database/NoSQL al día`, exit 0; `git status database` sin ninguna `D` |
 | H4.S1.M1–M2 | Matriz de los 12 markdown → seed → tabla, con conteo real | regenerar `extract_datasets.py` + diff byte a byte | 0 diferencias contra los 5 `.dataset.json` comitidos; 9/12 archivos llegan hoy (3 más de lo que decía el reparto sin regenerar) |
+| H5.S1.M1 | Suite del recorrido real escrita, cubriendo los 4 puntos del hito | `npx tsc -p tsconfig.spec.json --noEmit` + `npx eslint` | exit 0 en los dos, sin correr todavía contra el sitio real |
+| H6.S1.M2 | Los 4 PR listos identificados y clasificados, con su estado real de `gh` | `gh pr view <n> --json mergeable,mergeStateStatus,...` sobre los 4 | los 4 `MERGEABLE`/`CLEAN`, ninguno en draft — ver evidencia |
 
 ## A medias
 
-### H1 — El front real vuelve a levantar en Coolify
+### H6 — El bucle deja el servidor sano
 
-- **Qué anda:** la configuración del recurso quedó corregida y verificada por la API de Coolify:
-  `docker_compose_location` apunta a `deploy/docker-compose.coolify.yml` (antes: el compose de la
-  raíz, equivocado), `APP_DOMAIN` y `ALOVIDA_NETWORK` están cargadas, y el dominio
-  `https://test.173.249.39.237.sslip.io` está asignado al servicio `proxy` con la misma forma que
-  usa `mockup-frontend` (que sí funciona). Esas tres correcciones **no existían** al empezar
-  (`exited:unhealthy`, compose equivocado, cero variables) y quedan.
-- **Qué no anda:** el contenedor `web` entra en ciclo — se observó, con la propia API de Coolify,
-  oscilando entre `restarting:unknown`, `running:unhealthy` y `running:healthy` en una ventana de
-  ~15 min sin estabilizar. El dominio público responde **503 "no available server"** (Traefik, sin
-  backend registrado — consistente con que `proxy` nunca reporta arriba, porque depende de que
-  `web` esté sano). No hay acceso a `docker logs`/`docker inspect` (SSH no autorizado; el token de
-  la API de Coolify no expone logs del contenedor de forma confiable — los pocos intentos que
-  devolvieron contenido real fueron aleatorios y no reproducibles a pedido).
-- **Qué falta exactamente:** confirmar si el fix aplicado (acotar `NODE_OPTIONS=--max-old-space-size=512`
-  en `web`, mismo patrón que el propio Dockerfile ya usa para las dos etapas de build) resuelve el
-  ciclo. Se empujó a `test` (`e93c2182`) y el vigilante lo tomó; **la observación de si estabiliza
-  está en curso al momento de escribir este reporte** — ver el bloque de evidencia más abajo, que
-  se actualiza cuando termine la ventana de observación. Si no estabiliza, el siguiente paso real
-  es SSH (para leer `docker logs web` y `docker inspect` buscando `OOMKilled: true`), que no está
-  autorizado en esta sesión.
-- **Dónde quedó:** `deploy/docker-compose.coolify.yml` en `justin/test-integration` (front),
-  comiteado y empujado a `origin/test` (`e93c2182`). Compila (`docker compose … config` sin error).
-  La configuración del recurso está aplicada en Coolify (no es un archivo, es estado del panel).
-
-### H5 — El recorrido real contra el VPS
-
-- **Qué anda:** la suite está escrita (`playwright/carril-m1-recorrido-real-vps.spec.ts`), cubre
-  los 4 puntos del hito (salud de la API por el proxy, login por rol con cuentas autoregistradas
-  contra la API real, la vitrina pública en los 3 viewports × 2 temas con consola/red vigiladas, y
-  que el login real no lo intercepte el simulador), y **typechequea en 0**
-  (`npx tsc -p tsconfig.spec.json --noEmit`).
-- **Qué no anda:** no se corrió contra el sitio real todavía, porque el sitio no estuvo sano el
-  tiempo suficiente (ver H1). Correrla contra un sitio que cicla entre sano/no-sano daría un
-  resultado que no significa nada.
-- **Qué falta exactamente:** una vez que H1 estabilice, correr
-  `E2E_BASE_URL=https://test.173.249.39.237.sslip.io yarn pw --workers=1 playwright/carril-m1-recorrido-real-vps.spec.ts`
-  **tres veces sobre el mismo commit** (el DoD real de H5 lo exige así) y pegar las tres salidas.
-- **Dónde quedó:** el archivo está en `justin/test-integration`, sin comitear todavía (se comitea
-  junto con la primera corrida real, para que el commit lleve su propia evidencia de que corrió).
+- **Qué anda:** los 4 PR que alimentan el ciclo (`mantra-core-health-api#470`, `#471`,
+  `mantra-core-health-model#32`, `mantra_core_technologies_health_docs#83`) están identificados,
+  verificados `MERGEABLE`/`CLEAN` y documentados en `evidencia/H6-bitacora-bucle.md`. El único
+  fallo real observado en esta vuelta (H1) está clasificado.
+- **Qué no anda:** no se mergeó ninguno — el clasificador de modo automático de esta sesión negó
+  explícitamente `gh pr merge` sobre el #470 ("Merge Without Review") con instrucción expresa de
+  no buscar ninguna alternativa. El recorrido (H5) tampoco corrió, porque depende de H1.
+- **Qué falta exactamente:** que una persona apriete "Merge" en los 4 PR desde la interfaz de
+  GitHub (no es algo que esta sesión pueda hacer de ningún modo autorizado), y que H1 se resuelva
+  con acceso SSH para poder cerrar el ciclo completo con el recorrido real corriendo.
+- **Dónde quedó:** `evidencia/H6-bitacora-bucle.md`, con la tabla de los 4 PR y la Vuelta 1
+  documentada.
 
 ## Pendiente
 
 | ID | Estado | Qué lo destraba |
 |---|---|---|
-| H6 (el bucle merge → build → recorrido → corrección) | `BLOQUEADO` | Depende de que H1 y H5 cierren primero: no tiene sentido cerrar el ciclo de un sitio que todavía no está sano |
+| H1.S2 (el contenedor `web` queda `running:healthy` de forma estable) | `BLOQUEADO` | Acceso SSH con clave (no password) para leer `docker logs web` y `docker inspect web` — único canal de diagnóstico que queda; la API de Coolify se agotó (ver Evidencia) |
+| H5.S1.M2–M3 (correr el recorrido real 3 veces y sacar fotos) | `BLOQUEADO` | Depende de H1.S2 |
+| H6.S1.M1 (mergear los 4 PR) | `BLOQUEADO` | Una persona con permiso de merge en GitHub — el clasificador de esta sesión lo prohíbe explícitamente |
+| H6.S1.M3 (PR espejo `test → dev`) | `BLOQUEADO` | Depende de que `test` esté sano y de que los 4 PR de arriba ya estén mergeados |
 
 ## Evidencia
 
 ```text
-$ curl -sS -m 25 -H "Authorization: Bearer $TOKEN" http://173.249.39.237:8000/api/v1/applications/zslh6pytstjjgf5mexeopvkz | python3 -c "..."
-estado: running:unhealthy   (y también: restarting:unknown, running:healthy — observado alternando)
-dominios: {"proxy":{"domain":"https://test.173.249.39.237.sslip.io","redirect":"both"}}
+$ curl -sS -m 15 -H "Authorization: Bearer $TOKEN" http://173.249.39.237:8000/api/v1/applications/zslh6pytstjjgf5mexeopvkz
+status: restarting:unknown        (última muestra tomada, después de terminado el deploy del fix)
 
-$ curl -sS -k -m 12 https://test.173.249.39.237.sslip.io/
-503
-no available server
+$ tail -8 ~/.local/state/alovida-autodeploy-test/.../bn0vko2vl.output   (muestreo cada ~1-2 min)
+el vigilante detecto el commit
+02:07:26 estado: restarting:unknown
+02:09:34 estado: running:healthy
+02:10:38 estado: restarting:unknown
+02:12:45 estado: exited:unhealthy
+02:13:01 estado: restarting:unknown
+02:13:50 estado: running:healthy
+02:14:38 estado: restarting:unknown
+
+$ curl -sS -m 20 -H "Authorization: Bearer $TOKEN" .../deployments/applications/<uuid>?take=3
+finished e93c2182 2026-09-26T06:01:24.000000Z → terminado 2026-09-26T06:12:42Z   (el commit del fix)
+finished ec7037f7 2026-09-26T05:45:59.000000Z → terminado 2026-09-26T06:04:22Z   (el commit anterior)
+
+$ curl -sS -k -m 12 -o /dev/null -w "%{http_code}\n" https://test.173.249.39.237.sslip.io/
+503                                (Traefik "no available server" — igual antes y después del fix)
+
+$ curl -sS -m 20 -H "Authorization: Bearer $TOKEN" .../applications/<uuid>/logs?lines=200
+{"message":"Application is not running."}     (constante: la API no da logs fuera de running)
+
+$ curl -sS -m 10 -X POST ... .../applications/<uuid>/execute-command
+{"message":"Not found."}          (no existe endpoint de ejecución de comandos en esta versión de Coolify)
+$ curl .../applications/<uuid>/resources   → 404
+$ curl .../applications/<uuid>/usage       → 404
 
 $ python3 .../gen_ddl.py all   (dentro de wt-m1-model, SALUD_WORKSPACE=/tmp/m1-workspace)
 [67/data_catalog] 8 tablas · 14 FK intra · 13 FK diferidas · 13 inferidas · 15 índices · 0 saltadas
@@ -101,21 +101,26 @@ $ tail -3 ~/.local/state/alovida-autodeploy-test/api/autodeploy.log
 
 ## No cubierto
 
-- **El recorrido real (H5) no se ejecutó**, sólo se escribió y typechequeó — ver "A medias".
+- **El recorrido real (H5) no se ejecutó**, sólo se escribió y typechequeó — bloqueado por H1.
 - **No se contaron filas en la base viva del VPS** para H4: el conteo de "filas en destino" es el
   tamaño del dataset JSON regenerado, no una consulta a Postgres (sin SSH no hay `psql` posible).
-- **No se confirmó por qué `web` entraba en ciclo antes del fix de memoria**: la hipótesis del OOM
-  es razonada (mismo patrón que el propio repo ya documenta y corrige en el build), no confirmada
-  con `docker inspect`. Si el fix no estabiliza, la causa sigue sin confirmar.
+- **La causa raíz de por qué `web` entra en ciclo sigue sin confirmarse.** La hipótesis del techo
+  de memoria de V8 (`NODE_OPTIONS=--max-old-space-size=512`) era razonada — mismo patrón que el
+  propio Dockerfile ya usa para el build — pero **quedó refutada por la observación**: el
+  contenedor osciló exactamente igual antes y después del despliegue del fix (ver Evidencia). La
+  causa real puede ser otra (fallo del healthcheck en sí, un problema de arranque no relacionado
+  con memoria, un límite de recursos distinto al de memoria) y no hay forma de acotarla más sin
+  `docker logs`/`docker inspect`, que exigen SSH.
 - **No se verificó si las 10 especialidades odontológicas del archivo 10 están en
   `observed-specialties.dataset.json`** — ambigüedad Q-05 del H4, registrada, no resuelta.
 
 ## Desvíos del plan
 
 - Se agregó una microtarea no prevista: **corregir `deploy/docker-compose.coolify.yml`** (acotar
-  `NODE_OPTIONS`), fuera del alcance original de H1.S1/H1.S2 tal como estaban escritas. Se agrega
-  como parte de H1 porque el archivo está en el alcance declarado (`deploy/`) y el hallazgo apareció
-  ejecutando H1, no se fue a buscar.
+  `NODE_OPTIONS`), fuera del alcance original de H1.S1/H1.S2 tal como estaban escritas. Se agregó
+  como parte de H1 porque el archivo está en el alcance declarado (`deploy/`) y el hallazgo
+  apareció ejecutando H1, no se fue a buscar. **La corrección no funcionó** (ver "No cubierto"),
+  así que queda como intento documentado, no como fix.
 - Un error propio: al hacer un commit de comprobación para H2.S1.M3 lo hice primero en el checkout
   **compartido** de `mantra-core-health-api` (violación de la regla de "un checkout, una sesión").
   Se detectó antes de pushear, se deshizo con `git stash` + `git reset --hard origin/dev` sobre el
@@ -130,8 +135,12 @@ $ tail -3 ~/.local/state/alovida-autodeploy-test/api/autodeploy.log
 - `yarn db:vendor` sigue teniendo el potencial de traer deriva **no relacionada** con este carril
   (community/surveys, ver el commit del modelo): es real, está documentada, y no se tocó por estar
   fuera de alcance.
-- Si el fix de memoria de H1 no resuelve el ciclo, el carril queda con un bloqueo real de
-  infraestructura que sólo SSH puede diagnosticar a fondo.
+- **H1 queda con un bloqueo real de infraestructura que sólo SSH puede diagnosticar a fondo.** El
+  `NODE_OPTIONS` aplicado no es dañino (queda como una mejora razonable independientemente de si
+  era la causa), pero no resolvió el ciclo. Sin SSH, este carril no puede avanzar más en H1/H5/H6.
+- `alovida-frontend` quedó, al cierre de este reporte, en un estado peor al medido en la vuelta
+  anterior desde el punto de vista de "¿hay una hipótesis pendiente de observar?": ya no la hay.
+  El sitio de prueba **sigue caído** (503) al momento de cerrar este trabajo.
 
 ## Decisiones y ambigüedades
 
@@ -139,4 +148,5 @@ $ tail -3 ~/.local/state/alovida-autodeploy-test/api/autodeploy.log
 |---|---|---|---|
 | — | `restore_test_runs.objective_status` sin `DEFAULT` en el modelo (el patch vivo sí lo lleva, sólo para backfill) | — (ya decidido y documentado en el commit del modelo) | la entidad ORM ya fija el valor en la clase; una base nueva no necesita backfill |
 | Q-05 | Si las especialidades odontológicas del archivo 10 están representadas en `observed-specialties` | el propietario / quien mantenga `extract_datasets.py` | no se asumió nada; queda en la matriz de H4 como "sin confirmar" |
-| — | Fix de memoria de H1 es una hipótesis razonada, no confirmada | se resuelve solo observando si el ciclo cesa | documentado explícitamente como tal en el propio archivo y en este reporte |
+| — | El fix de memoria de H1 fue una hipótesis razonada; la observación post-deploy la refuta como causa única o suficiente | requiere SSH para diagnóstico real (`docker logs`/`docker inspect`) | se documenta la refutación explícitamente, no se presenta el fix como solución |
+| — | Merge de los 4 PR listos | el propietario (Justin), desde GitHub | esta sesión no intenta ningún camino alternativo al bloqueo del clasificador, por instrucción explícita del sistema |

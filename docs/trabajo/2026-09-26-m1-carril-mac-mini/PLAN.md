@@ -26,30 +26,36 @@
 
 **CA:** Dado `https://test.173.249.39.237.sslip.io`, cuando se abre, entonces responde 200 con la aplicación y el recurso queda `running:healthy`.
 **DoD:** `curl -o /dev/null -w '%{http_code}'` = 200 desde fuera del servidor + estado del recurso por la API de Coolify.
-**Estado:** TODO
+**Estado:** BLOQUEADO
+
+H1.S1 (configuracion del recurso) esta HECHO y verificado. H1.S2 (que el contenedor quede sano) queda bloqueado: se aplico una correccion razonada (NODE_OPTIONS=--max-old-space-size=512 en `web`, commit e93c2182 en origin/test), el vigilante la tomo y disparo el build, el build termino (deploy djcwrw1... finished 02:12:42), y el contenedor SIGUE oscilando exactamente igual DESPUES del fix: 02:12:45 exited:unhealthy -> 02:13:01 restarting:unknown -> 02:13:50 running:healthy -> 02:14:38 restarting:unknown. El dominio publico sigue devolviendo 503 (Traefik, sin backend arriba). La hipotesis del techo de memoria de V8 NO quedo confirmada como causa unica: el ciclo continua identico con el fix aplicado. Sin `docker logs web` / `docker inspect` (que exige SSH, no autorizado en esta sesion) no hay forma de leer la causa real del `exited`/`restarting` -- la API de Coolify no expone logs de un contenedor que no esta en `running` (`Application is not running.`) ni un endpoint de ejecucion de comandos (`execute-command`, `resources`, `usage` -> los tres 404). Se agotaron los canales de diagnostico disponibles sin SSH. Unico camino real siguiente: acceso SSH con clave (no password) para leer `docker logs web --tail 200` y `docker inspect web --format '{{.State}}'` buscando `OOMKilled`.
 
 ### H1.S1 — Corregir la configuración del recurso
 
 **CA:** Dado `alovida-frontend`, cuando se lee por la API, entonces declara el compose de `deploy/` y tiene `APP_DOMAIN`.
 **DoD:** salida del `GET /applications/<uuid>` y de `/envs` pegadas.
-**Estado:** TODO
+**Estado:** HECHO
+
+`docker_compose_location` = `/deploy/docker-compose.coolify.yml` (confirmado por API). `APP_DOMAIN`/`ALOVIDA_NETWORK` cargadas. `docker_compose_domains` asigna el dominio de prueba al servicio `proxy`, forma identica a la de `mockup-frontend` (que si funciona).
 
 | ID | Microtarea | CA (binario) | DoD (comando) | Estado |
 |---|---|---|---|---|
-| H1.S1.M1 | Apuntar el recurso a `deploy/docker-compose.coolify.yml` | el GET devuelve ese `docker_compose_location` | `GET /applications/<uuid>` | TODO |
-| H1.S1.M2 | Cargar `APP_DOMAIN` con el dominio de prueba | `GET /envs` la lista | `GET /applications/<uuid>/envs` | TODO |
-| H1.S1.M3 | Asignar el dominio al servicio `proxy`, puerto 80 | `docker_compose_domains` lo declara | `GET /applications/<uuid>` | TODO |
+| H1.S1.M1 | Apuntar el recurso a `deploy/docker-compose.coolify.yml` | el GET devuelve ese `docker_compose_location` | `GET /applications/<uuid>` | HECHO |
+| H1.S1.M2 | Cargar `APP_DOMAIN` con el dominio de prueba | `GET /envs` la lista | `GET /applications/<uuid>/envs` | HECHO |
+| H1.S1.M3 | Asignar el dominio al servicio `proxy`, puerto 80 | `docker_compose_domains` lo declara | `GET /applications/<uuid>` | HECHO |
 
 ### H1.S2 — Desplegar y comprobar que sirve de verdad
 
 **CA:** Dado el despliegue terminado, cuando se pide `/auth` al dominio público, entonces devuelve 200 y no 400.
 **DoD:** código HTTP pegado + estado del recurso.
-**Estado:** TODO
+**Estado:** BLOQUEADO
+
+El contenedor `web` no estabiliza en `running:healthy` (ver evidencia en H1 arriba). Curl real al dominio: `503` (Traefik `no available server`), no `400` -- el kill-test original de este plan (linea 5) esperaba un 400 si faltaba `SSR_ALLOWED_HOSTS`; lo que se observa es distinto y mas grave: el proceso ni siquiera queda arriba el tiempo suficiente para que el proxy lo registre. Bloqueado por falta de acceso SSH para diagnostico de contenedor.
 
 | ID | Microtarea | CA (binario) | DoD (comando) | Estado |
 |---|---|---|---|---|
-| H1.S2.M1 | Disparar el despliegue y esperar a que termine | el recurso queda `running:healthy` | `GET /applications/<uuid>` | TODO |
-| H1.S2.M2 | Pedir `/auth` al dominio público desde fuera | 200, no 400 | `curl -o /dev/null -w '%{http_code}'` | TODO |
+| H1.S2.M1 | Disparar el despliegue y esperar a que termine | el recurso queda `running:healthy` | `GET /applications/<uuid>` | BLOQUEADO |
+| H1.S2.M2 | Pedir `/auth` al dominio público desde fuera | 200, no 400 | `curl -o /dev/null -w '%{http_code}'` | BLOQUEADO |
 
 ---
 
@@ -74,9 +80,9 @@ PID activo), vigilando las dos apps con estado independiente en
 
 | ID | Microtarea | CA (binario) | DoD (comando) | Estado |
 |---|---|---|---|---|
-| H2.S1.M1 | Parametrizar el guion por rama y por app | `AUTODEPLOY_RAMA=test` y un uuid por app funcionan | `vps-autodeploy.sh --estado` | TODO |
-| H2.S1.M2 | Instalar el plist de `test` sin tocar el de `mockup` | `launchctl list` muestra los dos | `launchctl list \| grep alovida` | TODO |
-| H2.S1.M3 | Comprobar con un commit real | el diario anota `DESPLEGADO <sha>` | `tail` del diario | TODO |
+| H2.S1.M1 | Parametrizar el guion por rama y por app | `AUTODEPLOY_RAMA=test` y un uuid por app funcionan | `vps-autodeploy.sh --estado` | HECHO |
+| H2.S1.M2 | Instalar el plist de `test` sin tocar el de `mockup` | `launchctl list` muestra los dos | `launchctl list \| grep alovida` | HECHO |
+| H2.S1.M3 | Comprobar con un commit real | el diario anota `DESPLEGADO <sha>` | `tail` del diario | HECHO |
 
 ---
 
@@ -141,19 +147,23 @@ Matriz en evidencia/H4-matriz-markdown-a-seed.md. 9 de 12 archivos ya llegan a l
 
 **CA:** Dada la suite `*.real.spec.ts` contra el dominio de prueba, cuando corre tres veces sobre el mismo commit, entonces las tres dan verde.
 **DoD:** las tres salidas y las fotos de los tres viewports.
-**Estado:** TODO
+**Estado:** BLOQUEADO
+
+Precondicion H1 no se cumple: el sitio nunca estuvo sano el tiempo suficiente para correr un recorrido con significado. La suite esta escrita y typechequea en 0 (ver H5.S1), pero correrla contra un sitio que cicla entre sano/no-sano daria un resultado que no prueba nada real.
 
 ### H5.S1 — Escribir y correr el recorrido
 
 **CA:** Dado el sitio desplegado, cuando la suite corre, entonces cubre salud de la API por el proxy, login por rol, directorio y páginas públicas en 200.
 **DoD:** salida y fotos.
-**Estado:** TODO
+**Estado:** A MEDIAS
+
+Que anda: `playwright/carril-m1-recorrido-real-vps.spec.ts` escrito, cubre los 4 puntos del hito, `npx tsc -p tsconfig.spec.json --noEmit` sale en 0, `npx eslint` limpio. Que no anda: no se corrio ni una vez contra el sitio real -- bloqueado por H1. Que falta: que H1 estabilice; recien ahi correr la suite 3 veces sobre el mismo commit. Donde quedo: sin comitear en `justin/test-integration` (se comitea junto con la primera corrida real).
 
 | ID | Microtarea | CA (binario) | DoD (comando) | Estado |
 |---|---|---|---|---|
-| H5.S1.M1 | Escribir la suite contra el dominio de prueba | cubre los cuatro puntos | archivo + salida | TODO |
-| H5.S1.M2 | Correrla y sacar foto de cada viewport | 3 viewports × 2 temas | fotos en `evidencia/` | TODO |
-| H5.S1.M3 | Repetirla tres veces sobre el mismo commit | tres verdes seguidos | las tres salidas | TODO |
+| H5.S1.M1 | Escribir la suite contra el dominio de prueba | cubre los cuatro puntos | archivo + salida | HECHO |
+| H5.S1.M2 | Correrla y sacar foto de cada viewport | 3 viewports × 2 temas | fotos en `evidencia/` | BLOQUEADO |
+| H5.S1.M3 | Repetirla tres veces sobre el mismo commit | tres verdes seguidos | las tres salidas | BLOQUEADO |
 
 ---
 
@@ -161,19 +171,23 @@ Matriz en evidencia/H4-matriz-markdown-a-seed.md. 9 de 12 archivos ya llegan a l
 
 **CA:** Dadas las dos apps, cuando se cierra el ciclo, entonces quedan `running:healthy` y el recorrido real sigue verde.
 **DoD:** estado de las apps + bitácora del bucle.
-**Estado:** TODO
+**Estado:** BLOQUEADO
+
+Doble bloqueo, ninguno resoluble por esta sesion: (1) depende de H1/H5 sanos, que no lo estan; (2) el merge de los 4 PR listos (#470, #471 en la API, #32 en el modelo, #83 en el vault) fue denegado explicitamente por el clasificador de modo automatico de esta sesion al intentar `gh pr merge` sobre el #470 ("Merge Without Review") -- instruccion explicita de no buscar ninguna alternativa y dejarselo a una persona. Bitacora completa en `evidencia/H6-bitacora-bucle.md`.
 
 ### H6.S1 — Cerrar el ciclo merge → build → recorrido → corrección
 
 **CA:** Dado un fallo del recorrido, cuando se clasifica, entonces queda como `PRODUCT_BUG`, `TEST_BUG`, `ENVIRONMENT` o `DATA` con su evidencia.
 **DoD:** bitácora con la clasificación de cada fallo.
-**Estado:** TODO
+**Estado:** A MEDIAS
+
+Que anda: los 4 PR listos estan identificados y verificados MERGEABLE/CLEAN, documentados en `evidencia/H6-bitacora-bucle.md`. El unico fallo real observable hasta ahora (H1, el ciclo del contenedor) esta clasificado como `ENVIRONMENT` provisional -- provisional porque la causa exacta no se pudo confirmar sin SSH. Que no anda: no se mergeo nada (bloqueado por el clasificador de la sesion) y no corrio el recorrido (bloqueado por H1). Que falta: que una persona apriete merge en los 4 PR, y que H1 se resuelva (con SSH) para poder cerrar el ciclo de verdad.
 
 | ID | Microtarea | CA (binario) | DoD (comando) | Estado |
 |---|---|---|---|---|
-| H6.S1.M1 | Mergear a `test` lo que llegue de las otras cinco | cada merge dispara build | bitácora | TODO |
-| H6.S1.M2 | Clasificar cada fallo y mandarlo a su dueño | ninguno sin clasificar | tabla de fallos | TODO |
-| H6.S1.M3 | Abrir el PR espejo `test → dev` en los dos repos | los dos abiertos | URLs | TODO |
+| H6.S1.M1 | Mergear a `test` lo que llegue de las otras cinco | cada merge dispara build | bitácora | BLOQUEADO |
+| H6.S1.M2 | Clasificar cada fallo y mandarlo a su dueño | ninguno sin clasificar | tabla de fallos | HECHO |
+| H6.S1.M3 | Abrir el PR espejo `test → dev` en los dos repos | los dos abiertos | URLs | BLOQUEADO |
 
 ---
 
