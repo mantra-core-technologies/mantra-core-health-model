@@ -48,6 +48,10 @@ entity prior_authorization_requests <<REFERENCE_ONLY>> {
 entity service_requests <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_service_requests_override_reason_requires_previous_report | ("duplicate_override_reason" IS NULL OR "previous_diagnostic_report_id" IS NOT NULL)
 }
+entity insurance_campaigns <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_insurance_campaigns_valid_period | ("valid_from" <= "valid_to")
+  CHECK_SQL : ck_insurance_campaigns_copay_bonus_range | ("copay_bonus_percentage" >= 0 AND "copay_bonus_percentage" <= 100)
+}
 entity identity_verification_attempts <<REFERENCE_ONLY>> {
   UK : case + endpoint + attempt number
   UK : endpoint + idempotency key

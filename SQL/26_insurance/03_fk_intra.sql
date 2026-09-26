@@ -45,6 +45,24 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
+    ALTER TABLE "insurance"."insurance_campaigns"
+        ADD CONSTRAINT "fk_insurance_campaigns_insurance_carrier_id" FOREIGN KEY ("insurance_carrier_id")
+        REFERENCES "insurance"."insurance_carriers" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+DO $$ BEGIN
+    ALTER TABLE "insurance"."insurance_campaign_partners"
+        ADD CONSTRAINT "fk_insurance_campaign_partners_insurance_campaign_id" FOREIGN KEY ("insurance_campaign_id")
+        REFERENCES "insurance"."insurance_campaigns" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+DO $$ BEGIN
+    ALTER TABLE "insurance"."insurance_campaign_partners"
+        ADD CONSTRAINT "fk_insurance_campaign_partners_network_provider_membership_id" FOREIGN KEY ("network_provider_membership_id")
+        REFERENCES "insurance"."network_provider_memberships" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+DO $$ BEGIN
     ALTER TABLE "insurance"."patient_coverages"
         ADD CONSTRAINT "fk_patient_coverages_insurance_plan_id" FOREIGN KEY ("insurance_plan_id")
         REFERENCES "insurance"."insurance_plans" ("id");

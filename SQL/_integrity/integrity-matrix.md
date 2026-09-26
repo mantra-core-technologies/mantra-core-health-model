@@ -72,6 +72,7 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 | `claim_adjudication_versions` | `IMMUTABLE, REFERENCE_ONLY` | **UK** claim + adjudication version; **UPDATE_DELETE** forbidden |
 | `insurance_claims` | `REFERENCE_ONLY` | **CHECK_SQL** ck_insurance_claims_single_order_origin \| ("inventory_reservation_id" IS NULL OR "service_request_id" IS NULL) |
 | `prior_authorization_requests` | `REFERENCE_ONLY` | **CHECK_SQL** ck_prior_authorizations_single_order_origin \| ("inventory_reservation_id" IS NULL OR "service_request_id" IS NULL) |
+| `insurance_campaigns` | `REFERENCE_ONLY` | **CHECK_SQL** ck_insurance_campaigns_valid_period \| ("valid_from" <= "valid_to"); **CHECK_SQL** ck_insurance_campaigns_copay_bonus_range \| ("copay_bonus_percentage" >= 0 AND "copay_bonus_percentage" <= 100) |
 | `claim_appeal_decisions` | `IMMUTABLE, REFERENCE_ONLY` | **UK** dispute + decision version; **UPDATE_DELETE** forbidden |
 | `claim_reversals` | `IMMUTABLE, REFERENCE_ONLY` | **UK** claim + idempotency_key; **UPDATE_DELETE** forbidden |
 | `coordination_of_benefits` | `VERSIONED, REFERENCE_ONLY` | **UK** patient + determination version; **EXCLUDE** overlapping active COB periods |
