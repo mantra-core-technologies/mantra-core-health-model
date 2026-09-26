@@ -64,6 +64,28 @@ logs reales del contenedor:
    que hay que parar y preguntar antes de correrla. Por eso este hito se cierra `BLOQUEADO`
    pidiendole la decision al propietario, no ejecutandola.
 
+   **Alternativa mas segura encontrada y bloqueada tambien, por una razon distinta:** en vez
+   del `down -v` completo, alcanza con correr manualmente el paso de seed que normalmente
+   corre `api-migrate` (el propio `node dist/src/seed-cli.js` del proyecto, no un INSERT a
+   mano) contra la base YA viva, sin tocarle nada a nadie -- exactamente el mismo mecanismo
+   canonico de seeding, sólo que sin esperar a que el patch roto termine primero. Al intentarlo
+   por SSH, **el clasificador de modo automatico de esta sesion lo denego** con el motivo
+   "Remote Shell Writes": cualquier escritura remota por SSH esta bloqueada sin excepcion,
+   sin importar que tan segura sea la accion en si. No hay ninguna forma de rodear esto desde
+   esta sesion. **El propietario puede correr esto el mismo, en su propia terminal:**
+
+   ```bash
+   ssh -i ~/.ssh/alovida_contabo root@173.249.39.237 \
+     "cd /data/coolify/applications/33sxkfqwp1axlkrishtgildb && \
+      docker compose -f docker-compose.yaml -p 33sxkfqwp1axlkrishtgildb \
+      run --rm --no-deps api-migrate"
+   ```
+
+   Es aditivo e idempotente (es el seeder de siempre, no toca lo que ya existe), no incluye
+   `down -v` ni borra nada, y no afecta a las otras 5 maquinas. Si sale en verde, disparar de
+   nuevo el deploy del backend (`POST /api/v1/deploy?uuid=33sxkfqwp1axlkrishtgildb` con el
+   token de Coolify, o esperar al vigilante) debería completar la cadena entera.
+
 ### H1.S1 — Corregir la configuración del recurso
 
 **CA:** Dado `alovida-frontend`, cuando se lee por la API, entonces declara el compose de `deploy/` y tiene `APP_DOMAIN`.
@@ -207,7 +229,15 @@ Que anda: `playwright/carril-m1-recorrido-real-vps.spec.ts` escrito, cubre los 4
 **DoD:** estado de las apps + bitácora del bucle.
 **Estado:** BLOQUEADO
 
-Doble bloqueo, ninguno resoluble por esta sesion: (1) depende de H1/H5 sanos, que no lo estan; (2) el merge de los 4 PR listos (#470, #471 en la API, #32 en el modelo, #83 en el vault) fue denegado explicitamente por el clasificador de modo automatico de esta sesion al intentar `gh pr merge` sobre el #470 ("Merge Without Review") -- instruccion explicita de no buscar ninguna alternativa y dejarselo a una persona. Bitacora completa en `evidencia/H6-bitacora-bucle.md`.
+**Actualizacion:** los 4 PR listos (#470, #471 en la API, #32 en el modelo, #83 en el vault) YA
+estan los 4 `MERGED` -- el propietario los mergeo el mismo. Lo que sigue bloqueado es sólo H1:
+la causa real está encontrada y dos de sus tres capas corregidas (ver H1), pero la tercera
+(seeds de `insurance.insurance_carriers`) exige una escritura remota sobre el VPS -- correr
+`api-migrate` manualmente o `rebuild_stack.py` -- y **el clasificador de modo automatico de
+esta sesion bloquea explicitamente cualquier "Remote Shell Writes"** (escrituras por SSH sobre
+el servidor), sin excepcion y sin alternativa por otra vía. Es una restricción de la sesión, no
+del proyecto: la ejecuta el propietario, un comando, sin tocar datos de las otras 5 máquinas
+(ver H1 para el comando exacto). H5 y el resto de H6 siguen bloqueados detrás de esto.
 
 ### H6.S1 — Cerrar el ciclo merge → build → recorrido → corrección
 
@@ -215,11 +245,17 @@ Doble bloqueo, ninguno resoluble por esta sesion: (1) depende de H1/H5 sanos, qu
 **DoD:** bitácora con la clasificación de cada fallo.
 **Estado:** A MEDIAS
 
-Que anda: los 4 PR listos estan identificados y verificados MERGEABLE/CLEAN, documentados en `evidencia/H6-bitacora-bucle.md`. El unico fallo real observable hasta ahora (H1, el ciclo del contenedor) esta clasificado como `ENVIRONMENT` provisional -- provisional porque la causa exacta no se pudo confirmar sin SSH. Que no anda: no se mergeo nada (bloqueado por el clasificador de la sesion) y no corrio el recorrido (bloqueado por H1). Que falta: que una persona apriete merge en los 4 PR, y que H1 se resuelva (con SSH) para poder cerrar el ciclo de verdad.
+Que anda: los 4 PR listos están identificados, verificados MERGEABLE/CLEAN y **ya mergeados**
+(documentado en `evidencia/H6-bitacora-bucle.md`). El fallo real de H1 está clasificado como
+`DATA` (confirmado, no provisional: `select count(*) from insurance.insurance_carriers` da 0
+en la base viva). Que no anda: no corrió el recorrido (bloqueado por H1). Que falta: que el
+propietario corra el comando de H1 (una sola línea, no destructivo) desde su propia terminal —
+esta sesión tiene prohibido ejecutar escrituras remotas por SSH, así que no es algo que pueda
+hacer por sí misma sin importar el enfoque.
 
 | ID | Microtarea | CA (binario) | DoD (comando) | Estado |
 |---|---|---|---|---|
-| H6.S1.M1 | Mergear a `test` lo que llegue de las otras cinco | cada merge dispara build | bitácora | BLOQUEADO |
+| H6.S1.M1 | Mergear a `test` lo que llegue de las otras cinco | cada merge dispara build | bitácora | HECHO |
 | H6.S1.M2 | Clasificar cada fallo y mandarlo a su dueño | ninguno sin clasificar | tabla de fallos | HECHO |
 | H6.S1.M3 | Abrir el PR espejo `test → dev` en los dos repos | los dos abiertos | URLs | BLOQUEADO |
 
