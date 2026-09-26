@@ -26,7 +26,41 @@
 
 **CA:** Dado `https://test.173.249.39.237.sslip.io`, cuando se abre, entonces responde 200 con la aplicación y el recurso queda `running:healthy`.
 **DoD:** `curl -o /dev/null -w '%{http_code}'` = 200 desde fuera del servidor + estado del recurso por la API de Coolify.
-**Estado:** BLOQUEADO
+**Estado:** HECHO
+
+**Resuelto de punta a punta (2026-09-26).** Las tres capas encontradas están corregidas y
+verificadas en runtime real:
+
+1. `minio-init` cambiado a `amazon/aws-cli:2.19.5` (commit `accca427`, API).
+2. `minio` con `pull_policy: missing` para usar la imagen ya cacheada (commit `435cd290`, API).
+3. El propietario corrió manualmente el seeder canónico (`api-migrate`/`seed-cli`) contra la
+   base ya viva — 21/21 pasos, 39 670 filas, incluida "aseguradoras de Bolivia" (25 filas). Eso
+   destapó una CUARTA variante del mismo bloqueo: el patch `v4.2.21` exigía además exactamente
+   1 fila no canónica sobreviviente (una aseguradora demo histórica, `DEMO-opkld`, que ningún
+   seeder crea — verificado con `grep` en toda la API, sin resultados). Corregido para tolerar
+   0 o 1 (commit `935158e` en el modelo, PR #33 mergeado a `dev`; vendorizado a la API en
+   `abe90074`).
+
+**Verificación real, no sólo el código HTTP:**
+
+```text
+$ docker ps -a --filter 'label=coolify.resourceName=alovida-backend-central'
+postgres-init  Exited (0)   minio-init  Exited (0)   mongo-init  Exited (0)
+opensearch-init  Exited (0)   api-migrate  Exited (0)
+api  Up (healthy)   worker-messaging  Up (healthy)   worker-scheduling  Up (healthy)
+worker-workflow  Up (healthy)   worker-read_models  Up (healthy)
+
+$ GET /applications/{front}  ->  running:healthy
+$ GET /applications/{backend} -> running:healthy
+
+$ curl -k https://test.173.249.39.237.sslip.io/auth        -> 200 (HTML real de AloVida)
+$ curl -k https://test.173.249.39.237.sslip.io/public/directory
+{"slug":"directory:*:*","records":[],"refreshedAt":null,"generatedAt":"2026-09-26T10:25:43Z"}
+```
+
+El último `curl` es la prueba de que el kill-test original de este plan (línea 5) queda
+satisfecho por completo: no es sólo que el front responda 200, es que el proxy resuelve `api`
+de verdad y la API real contesta con JSON, no con el HTML del front cayendo por defecto.
 
 **Actualizacion tras obtener acceso SSH por clave (autorizado por el propietario):** la
 hipotesis de memoria de V8 en `web` era la causa equivocada -- `web` estaba sano todo el
@@ -104,14 +138,14 @@ logs reales del contenedor:
 
 **CA:** Dado el despliegue terminado, cuando se pide `/auth` al dominio público, entonces devuelve 200 y no 400.
 **DoD:** código HTTP pegado + estado del recurso.
-**Estado:** BLOQUEADO
+**Estado:** HECHO
 
-El contenedor `web` no estabiliza en `running:healthy` (ver evidencia en H1 arriba). Curl real al dominio: `503` (Traefik `no available server`), no `400` -- el kill-test original de este plan (linea 5) esperaba un 400 si faltaba `SSR_ALLOWED_HOSTS`; lo que se observa es distinto y mas grave: el proceso ni siquiera queda arriba el tiempo suficiente para que el proxy lo registre. Bloqueado por falta de acceso SSH para diagnostico de contenedor.
+`GET /applications/{front}` -> `running:healthy`. `curl -k https://test.173.249.39.237.sslip.io/auth` -> `200`, HTML real de AloVida (no el 400 que el kill-test original tenía en mente para el caso de `SSR_ALLOWED_HOSTS` ausente, ni el 503 que hubo durante toda la investigación). Ver la evidencia completa en H1 arriba.
 
 | ID | Microtarea | CA (binario) | DoD (comando) | Estado |
 |---|---|---|---|---|
-| H1.S2.M1 | Disparar el despliegue y esperar a que termine | el recurso queda `running:healthy` | `GET /applications/<uuid>` | BLOQUEADO |
-| H1.S2.M2 | Pedir `/auth` al dominio público desde fuera | 200, no 400 | `curl -o /dev/null -w '%{http_code}'` | BLOQUEADO |
+| H1.S2.M1 | Disparar el despliegue y esperar a que termine | el recurso queda `running:healthy` | `GET /applications/<uuid>` | HECHO |
+| H1.S2.M2 | Pedir `/auth` al dominio público desde fuera | 200, no 400 | `curl -o /dev/null -w '%{http_code}'` | HECHO |
 
 ---
 
