@@ -149,9 +149,17 @@ BEGIN
   IF v_canonicas <> 17 THEN
     RAISE EXCEPTION 'v4.2.21: se esperaban 17 aseguradoras canónicas y hay %', v_canonicas;
   END IF;
-  -- Sólo puede sobrevivir la aseguradora de demostración (sección C).
-  IF v_sobrantes <> 1 THEN
-    RAISE EXCEPTION 'v4.2.21: se esperaba 1 fila no canónica (la demo) y hay %', v_sobrantes;
+  -- Sólo puede sobrevivir la aseguradora de demostración (sección C), y sólo
+  -- si ya existía: ningún seed la crea (no tiene código BO_ASEG_, nació de
+  -- una corrida de prueba manual), así que en una base que nunca la tuvo el
+  -- resultado correcto es 0, no 1. Lo que este patch no tolera es que sobreviva
+  -- MÁS de una fila no canónica -- eso sí sería el duplicado real que vino a
+  -- limpiar. Corregido 2026-09-26 (M1): la aserción original exigía
+  -- exactamente 1 y reventaba en cualquier entorno sin ese registro histórico
+  -- (reproducido corriendo el patch contra una base con las 17 canónicas
+  -- recién sembradas y 0 filas demo).
+  IF v_sobrantes > 1 THEN
+    RAISE EXCEPTION 'v4.2.21: se esperaban 0 o 1 filas no canónicas (la demo, si existía) y hay %', v_sobrantes;
   END IF;
 
   -- Ninguna fila de negocio puede haber quedado apuntando a una aseguradora
