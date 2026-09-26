@@ -3592,3 +3592,227 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_referral_programs_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: pharma_lab.informational_materials (requiere schema pharma_lab)
+DO $$ BEGIN
+    ALTER TABLE "audit"."informational_materials_history"
+        ADD CONSTRAINT "fk_informational_materials_history_informational_material_id" FOREIGN KEY ("informational_material_id")
+        REFERENCES "pharma_lab"."informational_materials" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "audit"."informational_materials_history"
+        ADD CONSTRAINT "fk_informational_materials_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "audit"."informational_materials_history"
+        ADD CONSTRAINT "fk_informational_materials_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "audit"."informational_materials_history"
+        ADD CONSTRAINT "fk_informational_materials_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: pharma_lab.medical_visitors (requiere schema pharma_lab)
+DO $$ BEGIN
+    ALTER TABLE "audit"."medical_visitors_history"
+        ADD CONSTRAINT "fk_medical_visitors_history_medical_visitor_id" FOREIGN KEY ("medical_visitor_id")
+        REFERENCES "pharma_lab"."medical_visitors" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "audit"."medical_visitors_history"
+        ADD CONSTRAINT "fk_medical_visitors_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "audit"."medical_visitors_history"
+        ADD CONSTRAINT "fk_medical_visitors_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "audit"."medical_visitors_history"
+        ADD CONSTRAINT "fk_medical_visitors_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: pharma_lab.pharmacovigilance_reports (requiere schema pharma_lab)
+DO $$ BEGIN
+    ALTER TABLE "audit"."pharmacovigilance_reports_history"
+        ADD CONSTRAINT "fk_pharmacovigilance_reports_history_pharmacovigilance_696f10eb" FOREIGN KEY ("pharmacovigilance_report_id")
+        REFERENCES "pharma_lab"."pharmacovigilance_reports" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "audit"."pharmacovigilance_reports_history"
+        ADD CONSTRAINT "fk_pharmacovigilance_reports_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "audit"."pharmacovigilance_reports_history"
+        ADD CONSTRAINT "fk_pharmacovigilance_reports_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "audit"."pharmacovigilance_reports_history"
+        ADD CONSTRAINT "fk_pharmacovigilance_reports_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: pharma_lab.pharma_labs (requiere schema pharma_lab)
+DO $$ BEGIN
+    ALTER TABLE "audit"."pharma_labs_history"
+        ADD CONSTRAINT "fk_pharma_labs_history_pharma_lab_id" FOREIGN KEY ("pharma_lab_id")
+        REFERENCES "pharma_lab"."pharma_labs" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "audit"."pharma_labs_history"
+        ADD CONSTRAINT "fk_pharma_labs_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "audit"."pharma_labs_history"
+        ADD CONSTRAINT "fk_pharma_labs_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "audit"."pharma_labs_history"
+        ADD CONSTRAINT "fk_pharma_labs_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: pharma_lab.pharma_lab_staff (requiere schema pharma_lab)
+DO $$ BEGIN
+    ALTER TABLE "audit"."pharma_lab_staff_history"
+        ADD CONSTRAINT "fk_pharma_lab_staff_history_pharma_lab_staff_id" FOREIGN KEY ("pharma_lab_staff_id")
+        REFERENCES "pharma_lab"."pharma_lab_staff" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "audit"."pharma_lab_staff_history"
+        ADD CONSTRAINT "fk_pharma_lab_staff_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "audit"."pharma_lab_staff_history"
+        ADD CONSTRAINT "fk_pharma_lab_staff_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "audit"."pharma_lab_staff_history"
+        ADD CONSTRAINT "fk_pharma_lab_staff_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: pharma_lab.pharma_products (requiere schema pharma_lab)
+DO $$ BEGIN
+    ALTER TABLE "audit"."pharma_products_history"
+        ADD CONSTRAINT "fk_pharma_products_history_pharma_product_id" FOREIGN KEY ("pharma_product_id")
+        REFERENCES "pharma_lab"."pharma_products" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "audit"."pharma_products_history"
+        ADD CONSTRAINT "fk_pharma_products_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "audit"."pharma_products_history"
+        ADD CONSTRAINT "fk_pharma_products_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "audit"."pharma_products_history"
+        ADD CONSTRAINT "fk_pharma_products_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: pharma_lab.regulatory_documents (requiere schema pharma_lab)
+DO $$ BEGIN
+    ALTER TABLE "audit"."regulatory_documents_history"
+        ADD CONSTRAINT "fk_regulatory_documents_history_regulatory_document_id" FOREIGN KEY ("regulatory_document_id")
+        REFERENCES "pharma_lab"."regulatory_documents" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "audit"."regulatory_documents_history"
+        ADD CONSTRAINT "fk_regulatory_documents_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "audit"."regulatory_documents_history"
+        ADD CONSTRAINT "fk_regulatory_documents_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "audit"."regulatory_documents_history"
+        ADD CONSTRAINT "fk_regulatory_documents_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: pharma_lab.visit_requests (requiere schema pharma_lab)
+DO $$ BEGIN
+    ALTER TABLE "audit"."visit_requests_history"
+        ADD CONSTRAINT "fk_visit_requests_history_visit_request_id" FOREIGN KEY ("visit_request_id")
+        REFERENCES "pharma_lab"."visit_requests" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "audit"."visit_requests_history"
+        ADD CONSTRAINT "fk_visit_requests_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "audit"."visit_requests_history"
+        ADD CONSTRAINT "fk_visit_requests_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "audit"."visit_requests_history"
+        ADD CONSTRAINT "fk_visit_requests_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)

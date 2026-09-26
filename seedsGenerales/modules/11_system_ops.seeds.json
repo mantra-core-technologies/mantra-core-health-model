@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "A control tower over the data: a registry of every table with its sensitivity, retention rules and allowed write operations, plus anonymization rules and a generic draft store. Turns governance from policy into enforced practice.",
-    "seed_revision": "2.5.3-v4.1.4"
+    "seed_revision": "2.6.0-v4.2.30"
   },
   "environment_policy": {
     "boot": {
@@ -7869,7 +7869,8 @@
           "evidence_file_id": null,
           "started_at": "2026-05-26T09:15:00Z",
           "finished_at": "2026-05-26T11:15:00Z",
-          "recorded_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6"
+          "recorded_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
+          "objective_status": "NOT_MEASURED"
         },
         {
           "id": "cc23a35e-3eef-52b8-bf0d-5229187003e8",
@@ -7882,7 +7883,8 @@
           "evidence_file_id": null,
           "started_at": "2026-05-31T09:26:00Z",
           "finished_at": "2026-05-31T12:26:00Z",
-          "recorded_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6"
+          "recorded_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
+          "objective_status": "NOT_MEASURED"
         },
         {
           "id": "a3f1b79a-3b41-5408-8923-982336dbd5af",
@@ -7895,7 +7897,8 @@
           "evidence_file_id": null,
           "started_at": "2026-06-05T09:37:00Z",
           "finished_at": "2026-06-05T13:37:00Z",
-          "recorded_by_user_id": "b408997d-9c68-5589-961f-eb5b2aece582"
+          "recorded_by_user_id": "b408997d-9c68-5589-961f-eb5b2aece582",
+          "objective_status": "NOT_MEASURED"
         },
         {
           "id": "bcf6537d-bad2-5846-bcf9-17eb01f76d12",
@@ -7908,7 +7911,8 @@
           "evidence_file_id": null,
           "started_at": "2026-06-10T09:48:00Z",
           "finished_at": "2026-06-10T14:48:00Z",
-          "recorded_by_user_id": "55224953-7ad5-5e7b-b070-8beb020555d5"
+          "recorded_by_user_id": "55224953-7ad5-5e7b-b070-8beb020555d5",
+          "objective_status": "NOT_MEASURED"
         },
         {
           "id": "731272d0-ddaa-5a57-b454-512dd063f8cc",
@@ -7921,7 +7925,8 @@
           "evidence_file_id": null,
           "started_at": "2026-06-15T09:59:00Z",
           "finished_at": "2026-06-15T15:59:00Z",
-          "recorded_by_user_id": "b8b57fec-d512-5793-b297-c39d389f96b2"
+          "recorded_by_user_id": "b8b57fec-d512-5793-b297-c39d389f96b2",
+          "objective_status": "NOT_MEASURED"
         },
         {
           "id": "bab0b97d-2e99-5ace-b6db-d36eebdc3443",
@@ -7934,7 +7939,8 @@
           "evidence_file_id": null,
           "started_at": "2026-06-20T10:10:00Z",
           "finished_at": "2026-06-20T12:10:00Z",
-          "recorded_by_user_id": "e926fb49-acc4-5184-a3ab-7a8f13540da6"
+          "recorded_by_user_id": "e926fb49-acc4-5184-a3ab-7a8f13540da6",
+          "objective_status": "NOT_MEASURED"
         },
         {
           "id": "351dabf1-f38c-546e-9f09-724a198ce69e",
@@ -7947,7 +7953,8 @@
           "evidence_file_id": null,
           "started_at": "2026-06-25T10:21:00Z",
           "finished_at": "2026-06-25T13:21:00Z",
-          "recorded_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6"
+          "recorded_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
+          "objective_status": "NOT_MEASURED"
         },
         {
           "id": "5a7bac5a-52c4-5864-80b7-3eeb2a43ed56",
@@ -7960,7 +7967,8 @@
           "evidence_file_id": null,
           "started_at": "2026-06-30T10:32:00Z",
           "finished_at": "2026-06-30T14:32:00Z",
-          "recorded_by_user_id": "7fc77350-0e92-5d7a-a2fb-e6277505c00e"
+          "recorded_by_user_id": "7fc77350-0e92-5d7a-a2fb-e6277505c00e",
+          "objective_status": "NOT_MEASURED"
         },
         {
           "id": "f0e3ad89-c808-53a1-9dd4-57fcd8311b1d",
@@ -7973,7 +7981,8 @@
           "evidence_file_id": null,
           "started_at": "2026-12-13T14:25:00Z",
           "finished_at": "2026-12-13T14:25:00Z",
-          "recorded_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6"
+          "recorded_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
+          "objective_status": "NOT_MEASURED"
         },
         {
           "id": "7bbefb08-cfaf-500b-9361-cd623f6a5563",
@@ -7986,7 +7995,8 @@
           "evidence_file_id": null,
           "started_at": "2026-07-24T03:42:00Z",
           "finished_at": "2026-07-24T03:42:00Z",
-          "recorded_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6"
+          "recorded_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
+          "objective_status": "NOT_MEASURED"
         },
         {
           "id": "b2d0857b-ce1c-51c1-a61a-d6b83cd57f77",
@@ -7999,7 +8009,8 @@
           "evidence_file_id": null,
           "started_at": "2026-02-08T16:59:00Z",
           "finished_at": "2026-02-08T16:59:00Z",
-          "recorded_by_user_id": "b408997d-9c68-5589-961f-eb5b2aece582"
+          "recorded_by_user_id": "b408997d-9c68-5589-961f-eb5b2aece582",
+          "objective_status": "NOT_MEASURED"
         },
         {
           "id": "bd604b76-2e3d-5000-9d73-a385b60d6f6a",
@@ -8012,7 +8023,8 @@
           "evidence_file_id": null,
           "started_at": "2026-09-19T05:16:00Z",
           "finished_at": "2026-09-19T05:16:00Z",
-          "recorded_by_user_id": "55224953-7ad5-5e7b-b070-8beb020555d5"
+          "recorded_by_user_id": "55224953-7ad5-5e7b-b070-8beb020555d5",
+          "objective_status": "NOT_MEASURED"
         },
         {
           "id": "2338c01b-0b5b-5a71-b192-7cde62318271",
@@ -8025,7 +8037,8 @@
           "evidence_file_id": null,
           "started_at": "2026-04-03T18:33:00Z",
           "finished_at": "2026-04-03T18:33:00Z",
-          "recorded_by_user_id": "b8b57fec-d512-5793-b297-c39d389f96b2"
+          "recorded_by_user_id": "b8b57fec-d512-5793-b297-c39d389f96b2",
+          "objective_status": "NOT_MEASURED"
         },
         {
           "id": "d64dcd76-9503-5b9d-b793-a1bc3008c566",
@@ -8038,7 +8051,8 @@
           "evidence_file_id": null,
           "started_at": "2026-11-14T07:50:00Z",
           "finished_at": "2026-11-14T07:50:00Z",
-          "recorded_by_user_id": "e926fb49-acc4-5184-a3ab-7a8f13540da6"
+          "recorded_by_user_id": "e926fb49-acc4-5184-a3ab-7a8f13540da6",
+          "objective_status": "NOT_MEASURED"
         },
         {
           "id": "1ebd3761-1366-5403-8004-43bd96e55a6e",
@@ -8051,7 +8065,8 @@
           "evidence_file_id": null,
           "started_at": "2026-06-25T20:07:00Z",
           "finished_at": "2026-06-25T20:07:00Z",
-          "recorded_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6"
+          "recorded_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
+          "objective_status": "NOT_MEASURED"
         },
         {
           "id": "271b54f1-f8d0-5a5c-91a8-1c43163873c9",
@@ -8064,7 +8079,8 @@
           "evidence_file_id": null,
           "started_at": "2026-01-09T09:24:00Z",
           "finished_at": "2026-01-09T09:24:00Z",
-          "recorded_by_user_id": "7fc77350-0e92-5d7a-a2fb-e6277505c00e"
+          "recorded_by_user_id": "7fc77350-0e92-5d7a-a2fb-e6277505c00e",
+          "objective_status": "NOT_MEASURED"
         }
       ],
       "cross_border_transfer_events": [

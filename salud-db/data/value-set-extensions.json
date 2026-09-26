@@ -1,0 +1,7 @@
+{
+  "_doc": "Valores que el modelo agrega a value sets cuya nota vive en el vault (ver apply_value_set_extensions en gen_seeds.py). Siempre al final: el orden es el ordinal sembrado.",
+  "vs_affiliation_document_type": {
+    "append": ["certificado_radioproteccion"],
+    "fuente": "D-BR09-1 del carril M7 (API/front): el alta de imagenología pide el PDF de radioprotección y el value set no tenía rol para él. Se agrega el tipo de documento; la autoridad emisora queda en `otro` (existente) porque el organismo regulador boliviano no tiene fuente citada en el repositorio y no se inventa. La API lo mapea como RADIOPROTECTION_CERT_DOC -> CERTIFICADO_RADIOPROTECCION."
+  }
+}

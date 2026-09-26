@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "Models each client organization and its sites, and keeps every organization's data strictly isolated. Supports anything from a single independent doctor to multi-site hospital networks, diagnostic units, pharmacies, insurers, brokers and external authorities. Specialized entities keep their own tenant/data boundary even when hosted at another site.",
-    "seed_revision": "2.5.3-v4.1.4"
+    "seed_revision": "2.6.0-v4.2.30"
   },
   "environment_policy": {
     "boot": {

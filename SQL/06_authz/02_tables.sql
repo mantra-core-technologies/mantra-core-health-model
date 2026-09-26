@@ -142,6 +142,7 @@ CREATE TABLE IF NOT EXISTS "authz"."resource_scope_grants" (
     "tenant_id" uuid,
     "valid_from" timestamptz,
     "valid_to" timestamptz,
+    "reason_text" text,
     "created_at" timestamptz NOT NULL,
     "updated_at" timestamptz NOT NULL,
     "created_by_user_id" uuid,

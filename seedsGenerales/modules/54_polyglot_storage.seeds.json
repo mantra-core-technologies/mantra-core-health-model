@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "Defines where each dataset may live, which store is canonical, how tenants are isolated, and which encryption, residency, retention, replication and consistency rules apply. This module is the control plane. It does not move clinical or financial sources of truth away from PostgreSQL.",
-    "seed_revision": "2.5.3-v4.1.4"
+    "seed_revision": "2.6.0-v4.2.30"
   },
   "environment_policy": {
     "boot": {

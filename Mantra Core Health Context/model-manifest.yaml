@@ -315,9 +315,9 @@ modules:
   code: audit
   title: Audit, Provenance and Version Histories
   file: modules/diagram_10_audit.puml
-  table_like_elements: 123
+  table_like_elements: 131
   view_elements: 0
-  index_sets: 123
+  index_sets: 131
   status: active
 - number: 11
   code: system_ops
@@ -769,4 +769,13 @@ modules:
   table_like_elements: 4
   view_elements: 0
   index_sets: 4
+  status: active
+
+- number: 69
+  code: pharma_lab
+  title: Pharmaceutical Laboratories and Medical Visitors
+  file: modules/diagram_69_pharma_lab.puml
+  table_like_elements: 31
+  view_elements: 0
+  index_sets: 31
   status: active
