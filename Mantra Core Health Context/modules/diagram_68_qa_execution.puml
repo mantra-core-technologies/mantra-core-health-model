@@ -1,0 +1,123 @@
+@startuml SALUD_Module_68_qa_execution
+title Module 68 — Server-side QA Execution Plane\n(schema: qa_execution)
+skinparam shadowing false
+hide circle
+
+' Promoted from published API v4.2.20 (3ca6af0f, 2026-09-21). ADR-0025. The QA lab
+' (module 36, schema qa_lab) only recorded what the client claimed to have sent and
+' received. This schema is the SERVER's execution plane: approved targets per
+' environment, hashed plans, approvals bound to that hash, and a progress log. No
+' CHECK over lifecycle states here: they validate in the domain, same as module 67.
+' This transcribes what the ORM entities and index catalog already declared
+' (`src/modules/qa_execution/entities/*`,
+' `src/orm/catalog/{indexes,foreign-keys}/qa_execution.*.ts`); no column, type or
+' obligatoriness is invented here.
+
+entity execution_targets {
+  * id : uuid <<PK>>
+  * environment_id : uuid <<FK>>
+  * scheme : varchar
+  * host : varchar
+  * port : integer
+  * allowed_path_prefixes : jsonb
+  * allow_private_network : boolean
+  * allow_mutations : boolean
+    auth_secret_ref : varchar
+    auth_header_name : varchar
+  * max_requests : integer
+  * max_duration_seconds : integer
+  * request_timeout_ms : integer
+  * min_interval_ms : integer
+  * status : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity "INDEXES · execution_targets" as idxset_execution_targets <<INDEX_SET>> {
+  PK pk_execution_targets : (id) UNIQUE BTREE
+  UX ux_qa_execution_targets_environment : (environment_id) UNIQUE BTREE
+}
+execution_targets .. idxset_execution_targets : indexed by
+
+entity execution_plans {
+  * id : uuid <<PK>>
+  * run_id : uuid <<FK>>
+  * suite_id : uuid <<FK>>
+  * suite_version : integer
+  * environment_id : uuid <<FK>>
+  * target_id : uuid <<FK>>
+  * plan_hash : varchar
+  * plan_json : jsonb
+  * limits_json : jsonb
+  * requires_approval : boolean
+    approval_reasons : jsonb
+  * status : varchar
+    requested_by_user_id : uuid <<FK>>
+    idempotency_key : varchar
+    lease_owner : varchar
+    lease_expires_at : timestamptz
+  * attempt : integer
+    cancel_requested_at : timestamptz
+    started_at : timestamptz
+    finished_at : timestamptz
+  * requests_sent : integer
+  * cases_passed : integer
+  * cases_failed : integer
+  * cases_not_run : integer
+    error_code : varchar
+    error_message : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity "INDEXES · execution_plans" as idxset_execution_plans <<INDEX_SET>> {
+  PK pk_execution_plans : (id) UNIQUE BTREE
+  IX ix_qa_execution_plans_status_created : (status, created_at) BTREE
+  IX ix_qa_execution_plans_run_id : (run_id) BTREE
+  UX ux_qa_execution_plans_idempotency : (requested_by_user_id, idempotency_key) UNIQUE BTREE WHERE idempotency_key IS NOT NULL
+}
+execution_plans .. idxset_execution_plans : indexed by
+
+entity plan_approvals <<LOG>> {
+  * id : uuid <<PK>>
+  * plan_id : uuid <<FK>>
+  * plan_hash : varchar
+  * decision : varchar
+  * reason : text
+  * approver_user_id : uuid <<FK>>
+  * expires_at : timestamptz
+  * created_at : timestamptz
+}
+
+entity "INDEXES · plan_approvals" as idxset_plan_approvals <<INDEX_SET>> {
+  PK pk_plan_approvals : (id) UNIQUE BTREE
+  IX ix_qa_execution_plan_approvals_plan : (plan_id, created_at) BTREE
+}
+plan_approvals .. idxset_plan_approvals : indexed by
+
+entity plan_events <<LOG>> {
+  * id : uuid <<PK>>
+  * plan_id : uuid <<FK>>
+  * seq : integer
+  * kind : varchar
+    case_id : uuid <<FK>>
+    detail_json : jsonb
+  * created_at : timestamptz
+}
+
+entity "INDEXES · plan_events" as idxset_plan_events <<INDEX_SET>> {
+  PK pk_plan_events : (id) UNIQUE BTREE
+  UX ux_qa_execution_plan_events_seq : (plan_id, seq) UNIQUE BTREE
+}
+plan_events .. idxset_plan_events : indexed by
+
+execution_targets ||--o{ execution_plans
+execution_plans ||--o{ plan_approvals
+execution_plans ||--o{ plan_events
+@enduml

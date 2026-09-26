@@ -30,14 +30,14 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 23 | diagnostic_units | 10 | 69 | 0 | 77 | 0 |
 | 24 | pharmacy | 9 | 64 | 0 | 72 | 0 |
 | 25 | pharmacy_inventory | 20 | 142 | 0 | 154 | 6 |
-| 26 | insurance | 29 | 191 | 0 | 210 | 0 |
+| 26 | insurance | 31 | 203 | 12 | 222 | 0 |
 | 27 | identity_assurance | 11 | 69 | 0 | 76 | 0 |
 | 28 | telemetry | 14 | 73 | 0 | 83 | 0 |
 | 29 | delegated_access | 7 | 51 | 0 | 57 | 0 |
 | 30 | read_models | 13 | 74 | 0 | 89 | 76 |
 | 31 | integration_contracts | 9 | 47 | 0 | 55 | 0 |
 | 32 | workflow | 8 | 49 | 0 | 55 | 9 |
-| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 21 |
+| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 24 |
 | 34 | portal_catalog _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
 | 35 | messaging | 22 | 142 | 0 | 150 | 0 |
 | 36 | qa_lab | 13 | 79 | 0 | 92 | 0 |
@@ -71,7 +71,9 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 64 | audio_assets | 4 | 1 | 0 | 10 | 0 |
 | 65 | surveys | 7 | 36 | 0 | 17 | 0 |
 | 66 | medical_groups | 2 | 14 | 0 | 10 | 0 |
-| **Σ** | **67** | **1175** | | **52** | | **299** |
+| 67 | data_catalog | 8 | 27 | 13 | 15 | 0 |
+| 68 | qa_execution | 4 | 14 | 6 | 6 | 0 |
+| **Σ** | **69** | **1189** | | **83** | | **301** |
 
 ## Detalle de entidades saltadas y avisos
 
@@ -244,6 +246,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - `insurance_claims` — stub de cruce (tabla real en su módulo dueño)
 - `prior_authorization_requests` — stub de cruce (tabla real en su módulo dueño)
 - `service_requests` — stub de cruce (tabla real en su módulo dueño)
+- `insurance_campaigns` — stub de cruce (tabla real en su módulo dueño)
 - `identity_verification_attempts` — stub de cruce (tabla real en su módulo dueño)
 - `user_activity_events` — stub de cruce (tabla real en su módulo dueño)
 - `practitioner_delegate_assignments` — stub de cruce (tabla real en su módulo dueño)
@@ -254,8 +257,10 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - `audit_log` — stub de cruce (tabla real en su módulo dueño)
 - `data_access_log` — stub de cruce (tabla real en su módulo dueño)
 - `billing_quotations` — stub de cruce (tabla real en su módulo dueño)
+- `billing_quotation_installments` — stub de cruce (tabla real en su módulo dueño)
 - `medical_groups_groups` — stub de cruce (tabla real en su módulo dueño)
 - `medical_groups_group_members` — stub de cruce (tabla real en su módulo dueño)
+- `system_ops_restore_test_runs` — stub de cruce (tabla real en su módulo dueño)
 
 ### 35 · messaging
 - ⚠ índice 'uq_adapter_inbound_events_provider_id' omitido: columna(s) inexistente(s) ['received_time_bucket'] en adapter_inbound_events (¿tipo no-SQL descartado? requiere PostGIS)

@@ -173,4 +173,8 @@ entity "medical_groups.groups" as medical_groups_groups <<REFERENCE_ONLY>> {
 entity "medical_groups.group_members" as medical_groups_group_members <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_medical_groups_group_members_invitation_status | "invitation_status" IN ('PENDING', 'ACCEPTED', 'REJECTED')
 }
+entity "system_ops.restore_test_runs" as system_ops_restore_test_runs <<REFERENCE_ONLY>> {
+  ' MCH-023 (promovido en v4.2.20): NOT_MEASURED nunca puede leerse como "cumple".
+  CHECK_SQL : ck_system_ops_restore_test_runs_objective_status | "objective_status" IN ('PASSED', 'FAILED', 'NOT_MEASURED')
+}
 @enduml

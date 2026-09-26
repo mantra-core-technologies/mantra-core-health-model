@@ -318,6 +318,12 @@ entity restore_test_runs <<LOG>> {
   * started_at : timestamptz
     finished_at : timestamptz
     recorded_by_user_id : uuid <<FK>>
+  ' MCH-023 (v4.2.20 sobre bases vivas): trivalente PASSED|FAILED|NOT_MEASURED.
+  ' Antes era un booleano `objectiveBreached` que confundía "no medido" con
+  ' "cumple". Sin DEFAULT: el servicio siempre lo fija de forma explícita
+  ' (`RestoreAssessmentPolicy`), y una base nueva no necesita backfill. El
+  ' CHECK de los tres valores vive en el módulo 33 (ck_system_ops_restore_test_runs_objective_status).
+  * objective_status : varchar
 }
 entity cross_border_transfer_events <<LOG>> {
   * id : uuid <<PK>>

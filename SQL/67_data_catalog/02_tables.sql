@@ -1,0 +1,183 @@
+-- SALUD v4.0.10 · módulo 67 · schema data_catalog
+-- Generado de diagram_67_data_catalog.puml — NO editar a mano.
+
+
+CREATE TABLE IF NOT EXISTS "data_catalog"."catalog_scan_runs" (
+    "id" uuid NOT NULL,
+    "source_code" varchar NOT NULL,
+    "mode" varchar NOT NULL,
+    "status" varchar NOT NULL,
+    "idempotency_key" varchar,
+    "requested_by_user_id" uuid,
+    "requested_at" timestamptz NOT NULL,
+    "started_at" timestamptz,
+    "finished_at" timestamptz,
+    "cancel_requested_at" timestamptz,
+    "lease_owner" varchar,
+    "lease_expires_at" timestamptz,
+    "attempt" integer NOT NULL,
+    "engine_version" varchar,
+    "connector_version" varchar NOT NULL,
+    "excluded_schemas" jsonb,
+    "limitations" jsonb,
+    "objects_observed" integer,
+    "columns_observed" integer,
+    "objects_added" integer,
+    "objects_changed" integer,
+    "objects_not_observed" integer,
+    "objects_reappeared" integer,
+    "columns_added" integer,
+    "columns_changed" integer,
+    "columns_not_observed" integer,
+    "snapshot_hash" varchar,
+    "error_code" varchar,
+    "error_message" text,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_catalog_scan_runs" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "data_catalog"."catalog_objects" (
+    "id" uuid NOT NULL,
+    "source_code" varchar NOT NULL,
+    "schema_name" varchar NOT NULL,
+    "object_name" varchar NOT NULL,
+    "object_kind" varchar NOT NULL,
+    "observation_status" varchar NOT NULL,
+    "table_comment" text,
+    "estimated_rows" bigint,
+    "total_bytes" bigint,
+    "stats_observed_at" timestamptz,
+    "column_count" integer NOT NULL,
+    "primary_key_columns" jsonb,
+    "technical_hash" varchar NOT NULL,
+    "first_seen_scan_id" uuid NOT NULL,
+    "last_seen_scan_id" uuid NOT NULL,
+    "last_seen_at" timestamptz NOT NULL,
+    "not_observed_since" timestamptz,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_catalog_objects" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "data_catalog"."catalog_columns" (
+    "id" uuid NOT NULL,
+    "object_id" uuid NOT NULL,
+    "column_name" varchar NOT NULL,
+    "ordinal" integer NOT NULL,
+    "native_type" varchar NOT NULL,
+    "is_nullable" boolean NOT NULL,
+    "default_expression" text,
+    "is_identity" boolean NOT NULL,
+    "is_generated" boolean NOT NULL,
+    "is_primary_key" boolean NOT NULL,
+    "is_unique" boolean NOT NULL,
+    "foreign_key" jsonb,
+    "column_comment" text,
+    "observation_status" varchar NOT NULL,
+    "technical_hash" varchar NOT NULL,
+    "first_seen_scan_id" uuid NOT NULL,
+    "last_seen_scan_id" uuid NOT NULL,
+    "last_seen_at" timestamptz NOT NULL,
+    "not_observed_since" timestamptz,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_catalog_columns" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "data_catalog"."catalog_change_events" (
+    "id" uuid NOT NULL,
+    "scan_run_id" uuid NOT NULL,
+    "object_id" uuid NOT NULL,
+    "column_id" uuid,
+    "change_kind" varchar NOT NULL,
+    "before_json" jsonb,
+    "after_json" jsonb,
+    "created_at" timestamptz NOT NULL,
+    CONSTRAINT "pk_catalog_change_events" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "data_catalog"."catalog_annotations" (
+    "id" uuid NOT NULL,
+    "target_kind" varchar NOT NULL,
+    "object_id" uuid NOT NULL,
+    "column_id" uuid,
+    "business_name" varchar,
+    "definition" text,
+    "purpose" text,
+    "existence_rationale" text,
+    "row_grain" text,
+    "alternatives_rationale" text,
+    "process_supported" text,
+    "source_of_truth" text,
+    "producers" jsonb,
+    "consumers" jsonb,
+    "deletion_impact" text,
+    "business_owner" varchar,
+    "data_steward" varchar,
+    "technical_owner" varchar,
+    "unit" varchar,
+    "value_domain" text,
+    "null_semantics" text,
+    "sensitivity" varchar NOT NULL,
+    "open_questions" jsonb,
+    "review_status" varchar NOT NULL,
+    "origin" varchar NOT NULL,
+    "current_revision_no" integer NOT NULL,
+    "approved_revision_no" integer,
+    "approved_by_user_id" uuid,
+    "approved_at" timestamptz,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_catalog_annotations" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "data_catalog"."catalog_annotation_revisions" (
+    "id" uuid NOT NULL,
+    "annotation_id" uuid NOT NULL,
+    "revision_no" integer NOT NULL,
+    "content_json" jsonb NOT NULL,
+    "content_hash" varchar NOT NULL,
+    "origin" varchar NOT NULL,
+    "submitted_status" varchar NOT NULL,
+    "change_reason" text,
+    "author_user_id" uuid,
+    "created_at" timestamptz NOT NULL,
+    CONSTRAINT "pk_catalog_annotation_revisions" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "data_catalog"."catalog_review_decisions" (
+    "id" uuid NOT NULL,
+    "annotation_id" uuid NOT NULL,
+    "revision_no" integer NOT NULL,
+    "decision" varchar NOT NULL,
+    "comment" text,
+    "reviewer_user_id" uuid NOT NULL,
+    "decided_at" timestamptz NOT NULL,
+    CONSTRAINT "pk_catalog_review_decisions" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "data_catalog"."catalog_evidence_items" (
+    "id" uuid NOT NULL,
+    "object_id" uuid NOT NULL,
+    "column_id" uuid,
+    "kind" varchar NOT NULL,
+    "reference" text NOT NULL,
+    "excerpt" text,
+    "source_revision" varchar,
+    "added_by_user_id" uuid,
+    "created_at" timestamptz NOT NULL,
+    CONSTRAINT "pk_catalog_evidence_items" PRIMARY KEY ("id")
+);

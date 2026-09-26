@@ -1,0 +1,254 @@
+@startuml SALUD_Module_67_data_catalog
+title Module 67 — Data Catalog and Column Governance\n(schema: data_catalog)
+skinparam shadowing false
+hide circle
+
+' Promoted from published API v4.2.19 (3ca6af0f, 2026-09-21). Module 67 belongs to the
+' administrative portal (ATLAS-inspired "catalog" pillar): answer, per table and column,
+' what it is, WHY IT EXISTS, what a row means, who is accountable and with what evidence —
+' separating technical facts observed by a pg_catalog scan from curated semantics, which a
+' scan never overwrites. This transcribes what the ORM entities and index catalog already
+' declared (`src/modules/data_catalog/entities/*`,
+' `src/orm/catalog/{indexes,foreign-keys}/data_catalog.*.ts`); no column, type or
+' obligatoriness is invented here.
+
+entity catalog_scan_runs {
+  * id : uuid <<PK>>
+  * source_code : varchar
+  * mode : varchar
+  * status : varchar
+    idempotency_key : varchar
+    requested_by_user_id : uuid <<FK>>
+  * requested_at : timestamptz
+    started_at : timestamptz
+    finished_at : timestamptz
+    cancel_requested_at : timestamptz
+    lease_owner : varchar
+    lease_expires_at : timestamptz
+  * attempt : integer
+    engine_version : varchar
+  * connector_version : varchar
+    excluded_schemas : jsonb
+    limitations : jsonb
+    objects_observed : integer
+    columns_observed : integer
+    objects_added : integer
+    objects_changed : integer
+    objects_not_observed : integer
+    objects_reappeared : integer
+    columns_added : integer
+    columns_changed : integer
+    columns_not_observed : integer
+    snapshot_hash : varchar
+    error_code : varchar
+    error_message : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity "INDEXES · catalog_scan_runs" as idxset_catalog_scan_runs <<INDEX_SET>> {
+  PK pk_catalog_scan_runs : (id) UNIQUE BTREE
+  IX ix_data_catalog_scan_runs_status_requested_at : (status, requested_at) BTREE
+  UX ux_data_catalog_scan_runs_one_active : (source_code) UNIQUE BTREE WHERE status IN ('QUEUED', 'RUNNING')
+  UX ux_data_catalog_scan_runs_idempotency : (requested_by_user_id, idempotency_key) UNIQUE BTREE WHERE idempotency_key IS NOT NULL
+}
+catalog_scan_runs .. idxset_catalog_scan_runs : indexed by
+
+entity catalog_objects {
+  * id : uuid <<PK>>
+  * source_code : varchar
+  * schema_name : varchar
+  * object_name : varchar
+  * object_kind : varchar
+  * observation_status : varchar
+    table_comment : text
+    estimated_rows : bigint
+    total_bytes : bigint
+    stats_observed_at : timestamptz
+  * column_count : integer
+    primary_key_columns : jsonb
+  * technical_hash : varchar
+  * first_seen_scan_id : uuid <<FK>>
+  * last_seen_scan_id : uuid <<FK>>
+  * last_seen_at : timestamptz
+    not_observed_since : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity "INDEXES · catalog_objects" as idxset_catalog_objects <<INDEX_SET>> {
+  PK pk_catalog_objects : (id) UNIQUE BTREE
+  UX ux_data_catalog_objects_identity : (source_code, schema_name, object_name) UNIQUE BTREE
+  IX ix_data_catalog_objects_observation_status : (observation_status) BTREE
+}
+catalog_objects .. idxset_catalog_objects : indexed by
+
+entity catalog_columns {
+  * id : uuid <<PK>>
+  * object_id : uuid <<FK>>
+  * column_name : varchar
+  * ordinal : integer
+  * native_type : varchar
+  * is_nullable : boolean
+    default_expression : text
+  * is_identity : boolean
+  * is_generated : boolean
+  * is_primary_key : boolean
+  * is_unique : boolean
+    foreign_key : jsonb
+    column_comment : text
+  * observation_status : varchar
+  * technical_hash : varchar
+  * first_seen_scan_id : uuid <<FK>>
+  * last_seen_scan_id : uuid <<FK>>
+  * last_seen_at : timestamptz
+    not_observed_since : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity "INDEXES · catalog_columns" as idxset_catalog_columns <<INDEX_SET>> {
+  PK pk_catalog_columns : (id) UNIQUE BTREE
+  UX ux_data_catalog_columns_identity : (object_id, column_name) UNIQUE BTREE
+}
+catalog_columns .. idxset_catalog_columns : indexed by
+
+entity catalog_change_events <<LOG>> {
+  * id : uuid <<PK>>
+  * scan_run_id : uuid <<FK>>
+  * object_id : uuid <<FK>>
+    column_id : uuid <<FK>>
+  * change_kind : varchar
+    before_json : jsonb
+    after_json : jsonb
+  * created_at : timestamptz
+}
+
+entity "INDEXES · catalog_change_events" as idxset_catalog_change_events <<INDEX_SET>> {
+  PK pk_catalog_change_events : (id) UNIQUE BTREE
+  IX ix_data_catalog_change_events_scan_run_id : (scan_run_id) BTREE
+  IX ix_data_catalog_change_events_object_created : (object_id, created_at) BTREE
+}
+catalog_change_events .. idxset_catalog_change_events : indexed by
+
+entity catalog_annotations {
+  * id : uuid <<PK>>
+  * target_kind : varchar
+  * object_id : uuid <<FK>>
+    column_id : uuid <<FK>>
+    business_name : varchar
+    definition : text
+    purpose : text
+    existence_rationale : text
+    row_grain : text
+    alternatives_rationale : text
+    process_supported : text
+    source_of_truth : text
+    producers : jsonb
+    consumers : jsonb
+    deletion_impact : text
+    business_owner : varchar
+    data_steward : varchar
+    technical_owner : varchar
+    unit : varchar
+    value_domain : text
+    null_semantics : text
+  * sensitivity : varchar
+    open_questions : jsonb
+  * review_status : varchar
+  * origin : varchar
+  * current_revision_no : integer
+    approved_revision_no : integer
+    approved_by_user_id : uuid <<FK>>
+    approved_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity "INDEXES · catalog_annotations" as idxset_catalog_annotations <<INDEX_SET>> {
+  PK pk_catalog_annotations : (id) UNIQUE BTREE
+  UX ux_data_catalog_annotations_object : (object_id) UNIQUE BTREE WHERE target_kind = 'OBJECT'
+  UX ux_data_catalog_annotations_column : (column_id) UNIQUE BTREE WHERE column_id IS NOT NULL
+  IX ix_data_catalog_annotations_review_status : (review_status) BTREE
+}
+catalog_annotations .. idxset_catalog_annotations : indexed by
+
+entity catalog_annotation_revisions <<LOG>> {
+  * id : uuid <<PK>>
+  * annotation_id : uuid <<FK>>
+  * revision_no : integer
+  * content_json : jsonb
+  * content_hash : varchar
+  * origin : varchar
+  * submitted_status : varchar
+    change_reason : text
+    author_user_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity "INDEXES · catalog_annotation_revisions" as idxset_catalog_annotation_revisions <<INDEX_SET>> {
+  PK pk_catalog_annotation_revisions : (id) UNIQUE BTREE
+  UX ux_data_catalog_annotation_revisions_no : (annotation_id, revision_no) UNIQUE BTREE
+}
+catalog_annotation_revisions .. idxset_catalog_annotation_revisions : indexed by
+
+entity catalog_review_decisions <<LOG>> {
+  * id : uuid <<PK>>
+  * annotation_id : uuid <<FK>>
+  * revision_no : integer
+  * decision : varchar
+    comment : text
+  * reviewer_user_id : uuid <<FK>>
+  * decided_at : timestamptz
+}
+
+entity "INDEXES · catalog_review_decisions" as idxset_catalog_review_decisions <<INDEX_SET>> {
+  PK pk_catalog_review_decisions : (id) UNIQUE BTREE
+  IX ix_data_catalog_review_decisions_annotation : (annotation_id, revision_no) BTREE
+}
+catalog_review_decisions .. idxset_catalog_review_decisions : indexed by
+
+entity catalog_evidence_items <<LOG>> {
+  * id : uuid <<PK>>
+  * object_id : uuid <<FK>>
+    column_id : uuid <<FK>>
+  * kind : varchar
+  * reference : text
+    excerpt : text
+    source_revision : varchar
+    added_by_user_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity "INDEXES · catalog_evidence_items" as idxset_catalog_evidence_items <<INDEX_SET>> {
+  PK pk_catalog_evidence_items : (id) UNIQUE BTREE
+  IX ix_data_catalog_evidence_items_object_id : (object_id) BTREE
+  IX ix_data_catalog_evidence_items_column_id : (column_id) BTREE
+}
+catalog_evidence_items .. idxset_catalog_evidence_items : indexed by
+
+catalog_scan_runs ||--o{ catalog_objects
+catalog_scan_runs ||--o{ catalog_columns
+catalog_objects ||--o{ catalog_columns
+catalog_scan_runs ||--o{ catalog_change_events
+catalog_objects ||--o{ catalog_change_events
+catalog_columns ||--o{ catalog_change_events
+catalog_objects ||--o{ catalog_annotations
+catalog_columns ||--o{ catalog_annotations
+catalog_annotations ||--o{ catalog_annotation_revisions
+catalog_annotations ||--o{ catalog_review_decisions
+catalog_objects ||--o{ catalog_evidence_items
+catalog_columns ||--o{ catalog_evidence_items
+@enduml
