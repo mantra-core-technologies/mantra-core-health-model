@@ -282,6 +282,7 @@ CREATE TABLE IF NOT EXISTS "system_ops"."restore_test_runs" (
     "started_at" timestamptz NOT NULL,
     "finished_at" timestamptz,
     "recorded_by_user_id" uuid,
+    "objective_status" varchar NOT NULL,
     CONSTRAINT "pk_restore_test_runs" PRIMARY KEY ("id")
 );
 

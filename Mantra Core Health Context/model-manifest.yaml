@@ -752,3 +752,21 @@ modules:
   view_elements: 0
   index_sets: 2
   status: active
+
+- number: 67
+  code: data_catalog
+  title: Data Catalog and Column Governance
+  file: modules/diagram_67_data_catalog.puml
+  table_like_elements: 8
+  view_elements: 0
+  index_sets: 8
+  status: active
+
+- number: 68
+  code: qa_execution
+  title: Server-side QA Execution Plane
+  file: modules/diagram_68_qa_execution.puml
+  table_like_elements: 4
+  view_elements: 0
+  index_sets: 4
+  status: active

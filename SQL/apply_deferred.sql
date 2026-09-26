@@ -122,4 +122,8 @@
 \ir 65_surveys/90_fk_deferred.sql
 \echo >>> 66_medical_groups/90_fk_deferred.sql
 \ir 66_medical_groups/90_fk_deferred.sql
+\echo >>> 67_data_catalog/90_fk_deferred.sql
+\ir 67_data_catalog/90_fk_deferred.sql
+\echo >>> 68_qa_execution/90_fk_deferred.sql
+\ir 68_qa_execution/90_fk_deferred.sql
 \echo === apply_deferred completado ===
