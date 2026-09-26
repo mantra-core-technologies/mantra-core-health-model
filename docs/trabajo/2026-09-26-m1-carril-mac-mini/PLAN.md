@@ -28,7 +28,41 @@
 **DoD:** `curl -o /dev/null -w '%{http_code}'` = 200 desde fuera del servidor + estado del recurso por la API de Coolify.
 **Estado:** BLOQUEADO
 
-H1.S1 (configuracion del recurso) esta HECHO y verificado. H1.S2 (que el contenedor quede sano) queda bloqueado: se aplico una correccion razonada (NODE_OPTIONS=--max-old-space-size=512 en `web`, commit e93c2182 en origin/test), el vigilante la tomo y disparo el build, el build termino (deploy djcwrw1... finished 02:12:42), y el contenedor SIGUE oscilando exactamente igual DESPUES del fix: 02:12:45 exited:unhealthy -> 02:13:01 restarting:unknown -> 02:13:50 running:healthy -> 02:14:38 restarting:unknown. El dominio publico sigue devolviendo 503 (Traefik, sin backend arriba). La hipotesis del techo de memoria de V8 NO quedo confirmada como causa unica: el ciclo continua identico con el fix aplicado. Sin `docker logs web` / `docker inspect` (que exige SSH, no autorizado en esta sesion) no hay forma de leer la causa real del `exited`/`restarting` -- la API de Coolify no expone logs de un contenedor que no esta en `running` (`Application is not running.`) ni un endpoint de ejecucion de comandos (`execute-command`, `resources`, `usage` -> los tres 404). Se agotaron los canales de diagnostico disponibles sin SSH. Unico camino real siguiente: acceso SSH con clave (no password) para leer `docker logs web --tail 200` y `docker inspect web --format '{{.State}}'` buscando `OOMKilled`.
+**Actualizacion tras obtener acceso SSH por clave (autorizado por el propietario):** la
+hipotesis de memoria de V8 en `web` era la causa equivocada -- `web` estaba sano todo el
+tiempo (`RestartCount=0`, `OOMKilled=false`, `Health=healthy`). La causa real, leida en los
+logs reales del contenedor:
+
+1. **`proxy` (nginx) moria con `host not found in upstream "api:3000"`** -- no habia NINGUN
+   contenedor `api` en la red `alovida`. Confirmado con `docker network inspect alovida`.
+2. **`alovida-backend-central` viene fallando TODO despliegue desde antes del 2026-09-14**
+   (tabla `application_deployment_queues` de la propia base de Coolify, leida por SSH),
+   siempre en el paso de `docker compose pull`: `quay.io/minio/mc` y `quay.io/minio/minio`
+   devuelven **401 Unauthorized** frescos de quay.io (reproducido en vivo con `docker pull`
+   contra el VPS, con varios tags incluida una version de 2023) -- MinIO retiro el acceso
+   publico anonimo a sus imagenes. El estado `running:healthy` que reportaba la API de
+   Coolify para esa app era enganoso: solo reflejaba los sidecars (mongo/redis/opensearch/
+   minio) que seguian arriba de una corrida vieja: nunca hubo un contenedor `api` de verdad.
+   **Corregido:** `minio-init` paso a `amazon/aws-cli:2.19.5` (commit `accca427`, verificado
+   corriendo la logica nueva contra el `minio` real del VPS antes de aplicar) y `minio` gano
+   `pull_policy: missing` para usar la imagen ya cacheada localmente sin volver a pedirla al
+   registro (commit `435cd290`). Ambos verificados: el siguiente despliegue de prueba ya NO
+   falla en el pull de imagenes.
+3. **Tercera causa, distinta y NO resuelta por esta sesion:** con los dos fixes de arriba,
+   `postgres-init` avanza mucho mas lejos -- aplica todo el DDL y la mayoria de los patches --
+   y revienta en `2026-09-19_v4221_aseguradoras_codigo_unico.sql` con
+   `ERROR: v4.2.21: se esperaban 17 aseguradoras canonicas y hay 0`. Verificado por consulta
+   directa: `select count(*) from insurance.insurance_carriers` en la base viva da **0**. El
+   patch asume que el servicio de seed de la API (`bolivia-insurance-seed.service.ts`) ya
+   corrio -- pero ese servicio corre cuando arranca `api`, y `api` depende de que
+   `postgres-init` termine primero (`service_completed_successfully`): dependencia circular.
+   Consistente con el patron ya documentado en el `CLAUDE.md` de la raiz: `yarn smoke` trunca
+   tablas de negocio y el UNICO camino de recuperacion documentado es
+   `python salud-db/rebuild_stack.py --yes` (`down -v` completo + recarga de seeds) -- **una
+   accion destructiva sobre datos compartidos por las otras 5 maquinas trabajando sobre el
+   mismo `test`**, que el propio `CLAUDE.md` dice explicitamente que NO es un paso de carril y
+   que hay que parar y preguntar antes de correrla. Por eso este hito se cierra `BLOQUEADO`
+   pidiendole la decision al propietario, no ejecutandola.
 
 ### H1.S1 — Corregir la configuración del recurso
 
