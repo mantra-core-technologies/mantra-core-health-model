@@ -3219,6 +3219,191 @@ referral_programs_history .. idxset_referral_programs_history : indexed by
 }
 
 
+entity informational_materials_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * informational_material_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity medical_visitors_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * medical_visitor_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity pharmacovigilance_reports_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * pharmacovigilance_report_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity pharma_labs_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * pharma_lab_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity pharma_lab_staff_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * pharma_lab_staff_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity pharma_products_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * pharma_product_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity regulatory_documents_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * regulatory_document_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+entity visit_requests_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * visit_request_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity "INDEXES · informational_materials_history" as idxset_informational_materials_history <<INDEX_SET>> {
+  PK pk_informational_materials_history : (history_id) UNIQUE BTREE
+  IX ix_informational_materials_history_informational_material_id : (informational_material_id) BTREE
+  IX ix_informational_materials_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_informational_materials_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_informational_materials_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_informational_materials_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+informational_materials_history .. idxset_informational_materials_history : indexed by
+
+entity "INDEXES · medical_visitors_history" as idxset_medical_visitors_history <<INDEX_SET>> {
+  PK pk_medical_visitors_history : (history_id) UNIQUE BTREE
+  IX ix_medical_visitors_history_medical_visitor_id : (medical_visitor_id) BTREE
+  IX ix_medical_visitors_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_medical_visitors_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_medical_visitors_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_medical_visitors_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+medical_visitors_history .. idxset_medical_visitors_history : indexed by
+
+entity "INDEXES · pharmacovigilance_reports_history" as idxset_pharmacovigilance_reports_history <<INDEX_SET>> {
+  PK pk_pharmacovigilance_reports_history : (history_id) UNIQUE BTREE
+  IX ix_pharmacovigilance_reports_history_pharmacovigilance_report_id : (pharmacovigilance_report_id) BTREE
+  IX ix_pharmacovigilance_reports_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_pharmacovigilance_reports_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_pharmacovigilance_reports_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_pharmacovigilance_reports_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+pharmacovigilance_reports_history .. idxset_pharmacovigilance_reports_history : indexed by
+
+entity "INDEXES · pharma_labs_history" as idxset_pharma_labs_history <<INDEX_SET>> {
+  PK pk_pharma_labs_history : (history_id) UNIQUE BTREE
+  IX ix_pharma_labs_history_pharma_lab_id : (pharma_lab_id) BTREE
+  IX ix_pharma_labs_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_pharma_labs_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_pharma_labs_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_pharma_labs_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+pharma_labs_history .. idxset_pharma_labs_history : indexed by
+
+entity "INDEXES · pharma_lab_staff_history" as idxset_pharma_lab_staff_history <<INDEX_SET>> {
+  PK pk_pharma_lab_staff_history : (history_id) UNIQUE BTREE
+  IX ix_pharma_lab_staff_history_pharma_lab_staff_id : (pharma_lab_staff_id) BTREE
+  IX ix_pharma_lab_staff_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_pharma_lab_staff_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_pharma_lab_staff_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_pharma_lab_staff_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+pharma_lab_staff_history .. idxset_pharma_lab_staff_history : indexed by
+
+entity "INDEXES · pharma_products_history" as idxset_pharma_products_history <<INDEX_SET>> {
+  PK pk_pharma_products_history : (history_id) UNIQUE BTREE
+  IX ix_pharma_products_history_pharma_product_id : (pharma_product_id) BTREE
+  IX ix_pharma_products_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_pharma_products_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_pharma_products_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_pharma_products_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+pharma_products_history .. idxset_pharma_products_history : indexed by
+
+entity "INDEXES · regulatory_documents_history" as idxset_regulatory_documents_history <<INDEX_SET>> {
+  PK pk_regulatory_documents_history : (history_id) UNIQUE BTREE
+  IX ix_regulatory_documents_history_regulatory_document_id : (regulatory_document_id) BTREE
+  IX ix_regulatory_documents_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_regulatory_documents_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_regulatory_documents_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_regulatory_documents_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+regulatory_documents_history .. idxset_regulatory_documents_history : indexed by
+
+entity "INDEXES · visit_requests_history" as idxset_visit_requests_history <<INDEX_SET>> {
+  PK pk_visit_requests_history : (history_id) UNIQUE BTREE
+  IX ix_visit_requests_history_visit_request_id : (visit_request_id) BTREE
+  IX ix_visit_requests_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_visit_requests_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_visit_requests_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_visit_requests_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+visit_requests_history .. idxset_visit_requests_history : indexed by
+
 note as PHYSICAL_INDEX_POLICY
   PHYSICAL INDEX POLICY
   - Primary and unique indexes enforce identity and business keys.

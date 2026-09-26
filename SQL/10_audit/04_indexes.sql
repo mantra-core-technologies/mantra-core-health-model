@@ -1307,3 +1307,83 @@ CREATE INDEX IF NOT EXISTS "ix_referral_programs_history_changed_by_user_id" ON 
 CREATE INDEX IF NOT EXISTS "ix_referral_programs_history_change_reason_concept_id" ON "audit"."referral_programs_history" ("change_reason_concept_id");
 
 CREATE INDEX IF NOT EXISTS "brin_referral_programs_history_recorded_at" ON "audit"."referral_programs_history" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_informational_materials_history_informational_material_id" ON "audit"."informational_materials_history" ("informational_material_id");
+
+CREATE INDEX IF NOT EXISTS "ix_informational_materials_history_operation_concept_id" ON "audit"."informational_materials_history" ("operation_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_informational_materials_history_changed_by_user_id" ON "audit"."informational_materials_history" ("changed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_informational_materials_history_change_reason_concept_id" ON "audit"."informational_materials_history" ("change_reason_concept_id");
+
+CREATE INDEX IF NOT EXISTS "brin_informational_materials_history_recorded_at" ON "audit"."informational_materials_history" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_medical_visitors_history_medical_visitor_id" ON "audit"."medical_visitors_history" ("medical_visitor_id");
+
+CREATE INDEX IF NOT EXISTS "ix_medical_visitors_history_operation_concept_id" ON "audit"."medical_visitors_history" ("operation_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_medical_visitors_history_changed_by_user_id" ON "audit"."medical_visitors_history" ("changed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_medical_visitors_history_change_reason_concept_id" ON "audit"."medical_visitors_history" ("change_reason_concept_id");
+
+CREATE INDEX IF NOT EXISTS "brin_medical_visitors_history_recorded_at" ON "audit"."medical_visitors_history" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_pharmacovigilance_reports_history_pharmacovigilance_60e5dded" ON "audit"."pharmacovigilance_reports_history" ("pharmacovigilance_report_id");
+
+CREATE INDEX IF NOT EXISTS "ix_pharmacovigilance_reports_history_operation_concept_id" ON "audit"."pharmacovigilance_reports_history" ("operation_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_pharmacovigilance_reports_history_changed_by_user_id" ON "audit"."pharmacovigilance_reports_history" ("changed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_pharmacovigilance_reports_history_change_reason_concept_id" ON "audit"."pharmacovigilance_reports_history" ("change_reason_concept_id");
+
+CREATE INDEX IF NOT EXISTS "brin_pharmacovigilance_reports_history_recorded_at" ON "audit"."pharmacovigilance_reports_history" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_pharma_labs_history_pharma_lab_id" ON "audit"."pharma_labs_history" ("pharma_lab_id");
+
+CREATE INDEX IF NOT EXISTS "ix_pharma_labs_history_operation_concept_id" ON "audit"."pharma_labs_history" ("operation_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_pharma_labs_history_changed_by_user_id" ON "audit"."pharma_labs_history" ("changed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_pharma_labs_history_change_reason_concept_id" ON "audit"."pharma_labs_history" ("change_reason_concept_id");
+
+CREATE INDEX IF NOT EXISTS "brin_pharma_labs_history_recorded_at" ON "audit"."pharma_labs_history" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_pharma_lab_staff_history_pharma_lab_staff_id" ON "audit"."pharma_lab_staff_history" ("pharma_lab_staff_id");
+
+CREATE INDEX IF NOT EXISTS "ix_pharma_lab_staff_history_operation_concept_id" ON "audit"."pharma_lab_staff_history" ("operation_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_pharma_lab_staff_history_changed_by_user_id" ON "audit"."pharma_lab_staff_history" ("changed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_pharma_lab_staff_history_change_reason_concept_id" ON "audit"."pharma_lab_staff_history" ("change_reason_concept_id");
+
+CREATE INDEX IF NOT EXISTS "brin_pharma_lab_staff_history_recorded_at" ON "audit"."pharma_lab_staff_history" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_pharma_products_history_pharma_product_id" ON "audit"."pharma_products_history" ("pharma_product_id");
+
+CREATE INDEX IF NOT EXISTS "ix_pharma_products_history_operation_concept_id" ON "audit"."pharma_products_history" ("operation_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_pharma_products_history_changed_by_user_id" ON "audit"."pharma_products_history" ("changed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_pharma_products_history_change_reason_concept_id" ON "audit"."pharma_products_history" ("change_reason_concept_id");
+
+CREATE INDEX IF NOT EXISTS "brin_pharma_products_history_recorded_at" ON "audit"."pharma_products_history" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_regulatory_documents_history_regulatory_document_id" ON "audit"."regulatory_documents_history" ("regulatory_document_id");
+
+CREATE INDEX IF NOT EXISTS "ix_regulatory_documents_history_operation_concept_id" ON "audit"."regulatory_documents_history" ("operation_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_regulatory_documents_history_changed_by_user_id" ON "audit"."regulatory_documents_history" ("changed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_regulatory_documents_history_change_reason_concept_id" ON "audit"."regulatory_documents_history" ("change_reason_concept_id");
+
+CREATE INDEX IF NOT EXISTS "brin_regulatory_documents_history_recorded_at" ON "audit"."regulatory_documents_history" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_visit_requests_history_visit_request_id" ON "audit"."visit_requests_history" ("visit_request_id");
+
+CREATE INDEX IF NOT EXISTS "ix_visit_requests_history_operation_concept_id" ON "audit"."visit_requests_history" ("operation_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_visit_requests_history_changed_by_user_id" ON "audit"."visit_requests_history" ("changed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_visit_requests_history_change_reason_concept_id" ON "audit"."visit_requests_history" ("change_reason_concept_id");
+
+CREATE INDEX IF NOT EXISTS "brin_visit_requests_history_recorded_at" ON "audit"."visit_requests_history" USING brin ("recorded_at") WITH (pages_per_range=128);

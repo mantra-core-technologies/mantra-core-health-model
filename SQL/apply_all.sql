@@ -641,5 +641,15 @@
 \echo >>> 68_qa_execution/04_indexes.sql
 \ir 68_qa_execution/04_indexes.sql
 
+-- ═══ módulo 69_pharma_lab ═══
+\echo >>> 69_pharma_lab/01_schema.sql
+\ir 69_pharma_lab/01_schema.sql
+\echo >>> 69_pharma_lab/02_tables.sql
+\ir 69_pharma_lab/02_tables.sql
+\echo >>> 69_pharma_lab/03_fk_intra.sql
+\ir 69_pharma_lab/03_fk_intra.sql
+\echo >>> 69_pharma_lab/04_indexes.sql
+\ir 69_pharma_lab/04_indexes.sql
+
 -- 90_fk_deferred.sql OMITIDOS a propósito.
 \echo === apply_all completado (sin 90_fk_deferred) ===
