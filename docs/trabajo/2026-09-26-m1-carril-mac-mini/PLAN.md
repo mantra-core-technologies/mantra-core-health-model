@@ -57,13 +57,20 @@
 
 **CA:** Dado un commit nuevo en `test`, cuando pasa el intervalo del vigilante, entonces las dos apps se reconstruyen sin intervención.
 **DoD:** diario del vigilante mostrando un despliegue disparado por un commit real.
-**Estado:** TODO
+**Estado:** HECHO
+
+Verificado en runtime, no simulado: se empujó `002bdfdd` a `origin/test` (API) y un
+`Monitor` en segundo plano —sin que yo llamara a `curl` ni a `deploy`— capturó la
+línea propia del vigilante: `2026-09-26 01:49:05  la rama avanzó a 002bdfdd;
+desplegando`. El vigilante corre cada 3 min vía `launchctl` (`bo.alovida.autodeploy-test`,
+PID activo), vigilando las dos apps con estado independiente en
+`~/.local/state/alovida-autodeploy-test/{front,api}/`.
 
 ### H2.S1 — Extender el vigilante a `test` y a las dos apps
 
 **CA:** Dado `--estado`, cuando se corre, entonces informa rama y sha desplegado **por app**.
 **DoD:** salida de `--estado` de las dos apps pegada.
-**Estado:** TODO
+**Estado:** HECHO
 
 | ID | Microtarea | CA (binario) | DoD (comando) | Estado |
 |---|---|---|---|---|
@@ -77,31 +84,35 @@
 
 **CA:** Dado `yarn db:vendor` seguido de `git status database`, cuando se corre, entonces **no borra ningún patch** y el árbol queda limpio.
 **DoD:** `db:vendor:check` exit 0 + `git status database` sin líneas `D`.
-**Estado:** TODO
+**Estado:** HECHO
+
+Verificado: `db:vendor:check` -> `=== database/SQL al dia` / `=== database/NoSQL al dia`, exit 0. `git status --short database` tras `db:vendor` ya no tiene ninguna linea `D` -- los 4 patches viejos fueron reemplazados por sus 4 promovidos con nueva numeracion (v4224-v4227), verificado tambien por nombre de archivo. PRs abiertos: mantra-core-health-model#32 y mantra_core_technologies_health_docs#83 (este ultimo, la dependencia de las 22 notas de FK).
 
 ### H3.S1 — Promover al modelo los dos módulos que sólo viven en la API
 
 **CA:** Dado el repo del modelo, cuando se regenera con `gen_ddl.py`, entonces `SQL/` contiene el DDL de los módulos 67 y 68 y los cuatro patches.
 **DoD:** diff del DDL generado contra el patch existente, pegado.
-**Estado:** TODO
+**Estado:** HECHO
+
+Diff programatico columna por columna (tipo + obligatoriedad) entre el DDL generado y el patch vivo de la API: 0 diferencias en las 8 tablas de data_catalog y 0 en las 4 de qa_execution. Nombres de indice: 15/15 y 6/6 idénticos. Conteo de FK: 27 en data_catalog (14 intra + 13 diferidas) y 14 en qa_execution (3+11), coincidiendo exactamente con los deltas que cada patch declara.
 
 | ID | Microtarea | CA (binario) | DoD (comando) | Estado |
 |---|---|---|---|---|
-| H3.S1.M1 | `diagram_67_data_catalog.puml` transcribiendo las entidades | el DDL generado coincide con el patch | `diff` del DDL | TODO |
-| H3.S1.M2 | `diagram_68_qa_execution.puml` igual | idem | `diff` del DDL | TODO |
-| H3.S1.M3 | Llevar al modelo los patches de RLS de custodia y `objective_status` | los cuatro están en `SQL/patches/` | `ls SQL/patches` | TODO |
-| H3.S1.M4 | Resolver la colisión de numeración (dos `v4219`, dos `v4220`) | no hay dos patches con la misma versión | `ls SQL/patches` | TODO |
+| H3.S1.M1 | `diagram_67_data_catalog.puml` transcribiendo las entidades | el DDL generado coincide con el patch | `diff` del DDL | HECHO |
+| H3.S1.M2 | `diagram_68_qa_execution.puml` igual | idem | `diff` del DDL | HECHO |
+| H3.S1.M3 | Llevar al modelo los patches de RLS de custodia y `objective_status` | los cuatro están en `SQL/patches/` | `ls SQL/patches` | HECHO |
+| H3.S1.M4 | Resolver la colisión de numeración (dos `v4219`, dos `v4220`) | no hay dos patches con la misma versión | `ls SQL/patches` | HECHO |
 
 ### H3.S2 — Vendorizar sin pérdida
 
 **CA:** Dado `yarn db:vendor`, cuando se corre, entonces `git status database` no muestra ninguna `D`.
 **DoD:** salida de `db:vendor:check` y del `git status` pegadas.
-**Estado:** TODO
+**Estado:** HECHO -- ver evidencia en H3 arriba.
 
 | ID | Microtarea | CA (binario) | DoD (comando) | Estado |
 |---|---|---|---|---|
-| H3.S2.M1 | Correr `yarn db:vendor` y comprobar que no borra nada | `git status database` sin `D` | `yarn db:vendor && git status --short database` | TODO |
-| H3.S2.M2 | Dejar el árbol del modelo y el de la API coherentes | `yarn db:vendor:check` exit 0 | `yarn db:vendor:check` | TODO |
+| H3.S2.M1 | Correr `yarn db:vendor` y comprobar que no borra nada | `git status database` sin `D` | `yarn db:vendor && git status --short database` | HECHO |
+| H3.S2.M2 | Dejar el árbol del modelo y el de la API coherentes | `yarn db:vendor:check` exit 0 | `yarn db:vendor:check` | HECHO |
 
 ---
 
@@ -109,18 +120,20 @@
 
 **CA:** Dada la matriz, cuando se lee, entonces cada archivo tiene su seed, su tabla y su conteo medido.
 **DoD:** matriz publicada con las consultas y sus resultados.
-**Estado:** TODO
+**Estado:** HECHO
+
+Matriz en evidencia/H4-matriz-markdown-a-seed.md. 9 de 12 archivos ya llegan a la API (3 mas de lo que decia la verificacion del reparto sin regenerar: clinicas, hospitales 2do/3er nivel y farmacias/laboratorios estaban fusionados en health-facilities.dataset.json con un discriminador tipo, y el arancel odontologico en fee-schedule.dataset.json). Verificado regenerando y diffeando byte a byte contra los 5 .dataset.json comitidos: 0 diferencias en los 5. El hueco real, acotado: los 2 padrones de personas y el directorio de aseguradoras, que si tienen su dataset extraido pero ningun seed lo materializa -- carril de M2 (C1/C2), ahora con menos por descubrir.
 
 ### H4.S1 — Medir, no suponer
 
 **CA:** Dado cada uno de los doce archivos, cuando se busca su destino, entonces queda dicho si llega, por qué camino y con cuántas filas.
 **DoD:** matriz pegada con la fuente de cada cifra.
-**Estado:** TODO
+**Estado:** HECHO
 
 | ID | Microtarea | CA (binario) | DoD (comando) | Estado |
 |---|---|---|---|---|
-| H4.S1.M1 | Cruzar los doce archivos contra los seeds que los leen | cada archivo tiene camino o dice «ninguno» | `grep` sobre `src/common/seed` y `tools/bolivia-datasets` | TODO |
-| H4.S1.M2 | Contar filas por archivo y por dataset emitido | cada fila de la matriz tiene su conteo | conteo de filas de los `.md` y de los `.json` | TODO |
+| H4.S1.M1 | Cruzar los doce archivos contra los seeds que los leen | cada archivo tiene camino o dice «ninguno» | `grep` sobre `src/common/seed` y `tools/bolivia-datasets` | HECHO |
+| H4.S1.M2 | Contar filas por archivo y por dataset emitido | cada fila de la matriz tiene su conteo | conteo de filas de los `.md` y de los `.json` | HECHO |
 
 ---
 
