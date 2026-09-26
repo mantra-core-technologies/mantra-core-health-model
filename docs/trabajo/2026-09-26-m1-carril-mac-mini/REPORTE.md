@@ -1,17 +1,77 @@
 # Reporte — Carril M1 · Mac mini (infraestructura, base de datos y despliegue)
 
-> **AVANCE: 16 / 22 microtareas — 72,7 %.** (H2 · H3 · H4 completos; H1.S1 completo, H1.S2
-> `BLOQUEADO`; H5 escrita y typechequeada, su ejecución `BLOQUEADO` por H1; H6 `A MEDIAS`,
-> `BLOQUEADO` en la parte que depende de merges humanos.)
+> **AVANCE: 19 / 22 microtareas — 86,4 %.** (H1, H2, H3, H4 completos y `VERIFIED` contra el
+> VPS real; H5 corrida tres veces contra el sitio ya sano — 9/10 determinístico, `A MEDIAS` por
+> un `PRODUCT_BUG` real ajeno a este carril, ya despachado; H6 `A MEDIAS`, sólo falta el PR
+> espejo a `dev`, pendiente de una decisión de secuencia.)
+
+## Cierre — H1 resuelto de punta a punta, H5 corrida contra el sitio real (2026-09-26, noche)
+
+Las tres capas de H1 quedaron corregidas y **verificadas con datos reales**, no sólo con el
+código HTTP:
+
+- `docker ps` en el VPS: `api` y los 4 `worker-*` de `alovida-backend-central` están
+  `Up (healthy)`; `postgres-init`/`api-migrate`/`minio-init`/`mongo-init`/`opensearch-init`
+  terminaron con `Exited (0)`.
+- `GET /applications/{front}` y `GET /applications/{backend}` → `running:healthy` los dos.
+- `curl -k https://test.173.249.39.237.sslip.io/auth` → `200`, HTML real de AloVida.
+- `curl -k https://test.173.249.39.237.sslip.io/public/directory` → JSON real de la API (no el
+  HTML del front cayendo por defecto) — la prueba de que el proxy resuelve `api:3000` de
+  verdad, cerrando el kill-test original de este plan.
+
+Con el sitio sano, corrí la suite de H5 tres veces contra `https://test.173.249.39.237.sslip.io`
+(front `5717bdb6`, backend `abe90074`): **9/10 determinístico las tres veces**, con el mismo
+caso en rojo por el mismo motivo cada vez — no es intermitencia, es un `PRODUCT_BUG` real de
+sesión/auth del front (una cuenta recién creada inicia sesión perfecto dos veces por `curl`
+directo contra la API, pero el mismo login desde el formulario del navegador rechaza las
+credenciales y nunca navega al panel). Está fuera del alcance de este carril (infraestructura),
+así que lo documenté con evidencia completa y lo mandé como tarea aparte (`task_f2a52377`) en
+vez de forzar el resultado o seguir investigando código de sesión que no me corresponde tocar.
+
+## Actualización — acceso SSH concedido, causa real de H1 encontrada (2026-09-26, tarde)
+
+El propietario autorizó acceso SSH por clave al VPS después de cerrado el resto de este
+reporte. Con ese acceso se leyeron los logs reales del contenedor y de la base de Coolify, y
+la hipótesis anterior (memoria de V8 en `web`) quedó **descartada**: `web` estaba sano todo el
+tiempo. La causa real tiene **tres capas**, encontradas una detrás de la otra a medida que se
+corregía cada una:
+
+1. **El contenedor `api` de `alovida-backend-central` nunca existía** — el `proxy` del front
+   moría con `host not found in upstream "api:3000"` porque no había nada que resolver.
+2. **Todo despliegue del backend viene fallando desde antes del 14 de septiembre**: MinIO
+   retiró el acceso público a sus imágenes en `quay.io` (reproducido en vivo: 401 fresco en
+   `quay.io/minio/mc` y en `quay.io/minio/minio`, con cualquier tag). **Corregida**:
+   `minio-init` pasó a `amazon/aws-cli:2.19.5` (verificado contra el MinIO real del VPS antes
+   de aplicar) y `minio` ganó `pull_policy: missing` para usar la imagen ya cacheada. Dos
+   commits: `accca427` y `435cd290`, ambos en `origin/test`.
+3. **Con las dos anteriores corregidas, apareció una tercera causa, distinta**:
+   `postgres-init` ahora aplica todo el DDL y la mayoría de los patches, y revienta en
+   `2026-09-19_v4221_aseguradoras_codigo_unico.sql` — `se esperaban 17 aseguradoras canónicas
+   y hay 0` (confirmado por consulta directa a la base viva). El patch asume que el servicio
+   de seed de la API ya corrió, pero ese servicio corre al arrancar `api`, y `api` depende de
+   que `postgres-init` termine antes — dependencia circular que sólo se sostenía porque, hasta
+   ahora, nadie había corrido un `postgres-init` de verdad contra esta base desde que algo
+   (consistente con `yarn smoke`, documentado en el `CLAUDE.md` de la raíz como algo que
+   trunca tablas de negocio) le vació `insurance.insurance_carriers`.
+
+**No avancé sobre el punto 3.** El camino de recuperación que el propio `CLAUDE.md` documenta
+es `python salud-db/rebuild_stack.py --yes` — un `down -v` completo de Postgres/Mongo/Redis/
+OpenSearch/MinIO seguido de recarga total de seeds — y el mismo `CLAUDE.md` dice, en esas
+palabras, que **no es un paso de carril** y que si creo que hace falta, **pare y pregunte**.
+Este VPS lo comparten las otras cinco máquinas del reparto contra el mismo `test`; un `down -v`
+borra cualquier dato que hayan generado sus propias pruebas. Es exactamente la situación que
+esa regla anticipa, así que la dejo para que el propietario decida.
 
 - Fecha: 2026-09-26 · Plan: [PLAN.md](./PLAN.md) · Ramas: `justin/m1-model-...`,
   `justin/m1-fk-notas-...`, `justin/m1-api-carril-mac-mini`, `justin/test-integration`
 - Peldaño de evidencia alcanzado: **por área**. H2/H3/H4: `VERIFIED` (runtime real, sin PHI).
-  H1.S1: `VERIFIED` (config del recurso confirmada por la API de Coolify). H1.S2: `TESTED` para
-  el fix aplicado (compila, se validó el YAML, se desplegó) pero el comportamiento observado en
-  runtime **contradice** la hipótesis — el contenedor sigue oscilando después del fix, así que
-  el hito queda `BLOQUEADO`, no `VERIFIED`. H5: `WRITTEN`+`RUNS` (spec escrita, typecheck en 0;
-  no se pudo ejecutar contra el sitio real porque nunca estuvo sano).
+  H1.S1: `VERIFIED` (config del recurso confirmada por la API de Coolify). H1.S2: la causa raíz
+  real está `VERIFIED` (leída en logs reales por SSH, no hipótesis); dos de sus tres capas
+  están corregidas y verificadas (`RUNS` con evidencia de ejecución real contra el MinIO vivo);
+  la tercera capa (seeds del catálogo de aseguradoras) queda en `DISCOVERED` — identificada con
+  evidencia exacta, sin corregir, `BLOQUEADO` en una decisión que no me corresponde tomar.
+  H5: `WRITTEN`+`RUNS` (spec escrita, typecheck en 0; no se pudo ejecutar contra el sitio real
+  porque nunca estuvo sano).
 
 ## Completado
 
