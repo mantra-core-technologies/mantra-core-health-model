@@ -1,9 +1,32 @@
 # Reporte — Carril M1 · Mac mini (infraestructura, base de datos y despliegue)
 
-> **AVANCE: 16 / 22 microtareas — 72,7 %.** (H2 · H3 · H4 completos; H1.S1 completo, H1.S2
-> `BLOQUEADO` con la causa real ya diagnosticada y dos de sus tres capas ya corregidas; H5
-> escrita y typechequeada, su ejecución `BLOQUEADO` por H1; H6 `A MEDIAS`, `BLOQUEADO` en la
-> parte que depende de merges humanos.)
+> **AVANCE: 19 / 22 microtareas — 86,4 %.** (H1, H2, H3, H4 completos y `VERIFIED` contra el
+> VPS real; H5 corrida tres veces contra el sitio ya sano — 9/10 determinístico, `A MEDIAS` por
+> un `PRODUCT_BUG` real ajeno a este carril, ya despachado; H6 `A MEDIAS`, sólo falta el PR
+> espejo a `dev`, pendiente de una decisión de secuencia.)
+
+## Cierre — H1 resuelto de punta a punta, H5 corrida contra el sitio real (2026-09-26, noche)
+
+Las tres capas de H1 quedaron corregidas y **verificadas con datos reales**, no sólo con el
+código HTTP:
+
+- `docker ps` en el VPS: `api` y los 4 `worker-*` de `alovida-backend-central` están
+  `Up (healthy)`; `postgres-init`/`api-migrate`/`minio-init`/`mongo-init`/`opensearch-init`
+  terminaron con `Exited (0)`.
+- `GET /applications/{front}` y `GET /applications/{backend}` → `running:healthy` los dos.
+- `curl -k https://test.173.249.39.237.sslip.io/auth` → `200`, HTML real de AloVida.
+- `curl -k https://test.173.249.39.237.sslip.io/public/directory` → JSON real de la API (no el
+  HTML del front cayendo por defecto) — la prueba de que el proxy resuelve `api:3000` de
+  verdad, cerrando el kill-test original de este plan.
+
+Con el sitio sano, corrí la suite de H5 tres veces contra `https://test.173.249.39.237.sslip.io`
+(front `5717bdb6`, backend `abe90074`): **9/10 determinístico las tres veces**, con el mismo
+caso en rojo por el mismo motivo cada vez — no es intermitencia, es un `PRODUCT_BUG` real de
+sesión/auth del front (una cuenta recién creada inicia sesión perfecto dos veces por `curl`
+directo contra la API, pero el mismo login desde el formulario del navegador rechaza las
+credenciales y nunca navega al panel). Está fuera del alcance de este carril (infraestructura),
+así que lo documenté con evidencia completa y lo mandé como tarea aparte (`task_f2a52377`) en
+vez de forzar el resultado o seguir investigando código de sesión que no me corresponde tocar.
 
 ## Actualización — acceso SSH concedido, causa real de H1 encontrada (2026-09-26, tarde)
 
