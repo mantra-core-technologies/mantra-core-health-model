@@ -206,6 +206,43 @@ entity network_provider_memberships {
   * row_version : integer
 }
 
+entity insurance_campaigns {
+  * id : uuid <<PK>>
+  --
+  * insurance_carrier_id : uuid <<FK>>
+  * code : varchar
+  * title : varchar
+    description : text
+  * campaign_type_concept_id : uuid <<FK>>
+    target_condition_concept_id : uuid <<FK>>
+  * copay_bonus_percentage : numeric
+  * valid_from : date
+  * valid_to : date
+  * status_concept_id : uuid <<FK>>
+    activated_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity insurance_campaign_partners {
+  * id : uuid <<PK>>
+  --
+  * insurance_campaign_id : uuid <<FK>>
+  * partner_role_concept_id : uuid <<FK>>
+  * partner_type_concept_id : uuid <<FK>>
+  * partner_name : varchar
+    partner_tenant_id : uuid
+    network_provider_membership_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
 entity patient_coverages {
   * id : uuid <<PK>>
   --
@@ -267,6 +304,9 @@ insurance_products ||--o{ insurance_plans
 insurance_plans ||--o{ insurance_plan_benefits
 insurance_carriers ||--o{ provider_networks
 provider_networks ||--o{ network_provider_memberships
+insurance_carriers ||--o{ insurance_campaigns
+insurance_campaigns ||--o{ insurance_campaign_partners
+network_provider_memberships |o--o{ insurance_campaign_partners
 insurance_carriers ||--o{ broker_carrier_agreements
 insurance_brokers ||--o{ broker_carrier_agreements
 insurance_plans ||--o{ patient_coverages
@@ -761,6 +801,30 @@ entity "INDEXES · network_provider_memberships" as idxset_network_provider_memb
 }
 
 network_provider_memberships .. idxset_network_provider_memberships : indexed by
+
+entity "INDEXES · insurance_campaigns" as idxset_insurance_campaigns <<INDEX_SET>> {
+  PK pk_insurance_campaigns : (id) UNIQUE BTREE
+  UK uq_insurance_campaigns_carrier_code : (insurance_carrier_id, code) UNIQUE BTREE
+  IX ix_insurance_campaigns_carrier_status_validity : (insurance_carrier_id, status_concept_id, valid_from, valid_to) BTREE
+  IX ix_insurance_campaigns_campaign_type_concept_id : (campaign_type_concept_id) BTREE
+  IX ix_insurance_campaigns_target_condition_concept_id : (target_condition_concept_id) BTREE
+  IX ix_insurance_campaigns_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_insurance_campaigns_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+insurance_campaigns .. idxset_insurance_campaigns : indexed by
+
+entity "INDEXES · insurance_campaign_partners" as idxset_insurance_campaign_partners <<INDEX_SET>> {
+  PK pk_insurance_campaign_partners : (id) UNIQUE BTREE
+  IX ix_insurance_campaign_partners_insurance_campaign_id : (insurance_campaign_id) BTREE
+  IX ix_insurance_campaign_partners_partner_role_concept_id : (partner_role_concept_id) BTREE
+  IX ix_insurance_campaign_partners_partner_type_concept_id : (partner_type_concept_id) BTREE
+  IX ix_insurance_campaign_partners_network_provider_membership_id : (network_provider_membership_id) BTREE
+  IX ix_insurance_campaign_partners_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_insurance_campaign_partners_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+insurance_campaign_partners .. idxset_insurance_campaign_partners : indexed by
 
 entity "INDEXES · patient_coverages" as idxset_patient_coverages <<INDEX_SET>> {
   PK pk_patient_coverages : (id) UNIQUE BTREE

@@ -32,6 +32,16 @@ ALTER TABLE "insurance"."prior_authorization_requests" DROP CONSTRAINT IF EXISTS
 ALTER TABLE "insurance"."prior_authorization_requests" ADD CONSTRAINT "ck_prior_authorizations_single_order_origin" CHECK (("inventory_reservation_id" IS NULL OR "service_request_id" IS NULL));
 
 
+-- ═══ insurance_campaigns ═══
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "insurance"."insurance_campaigns" DROP CONSTRAINT IF EXISTS "ck_insurance_campaigns_valid_period";
+ALTER TABLE "insurance"."insurance_campaigns" ADD CONSTRAINT "ck_insurance_campaigns_valid_period" CHECK (("valid_from" <= "valid_to"));
+
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "insurance"."insurance_campaigns" DROP CONSTRAINT IF EXISTS "ck_insurance_campaigns_copay_bonus_range";
+ALTER TABLE "insurance"."insurance_campaigns" ADD CONSTRAINT "ck_insurance_campaigns_copay_bonus_range" CHECK (("copay_bonus_percentage" >= 0 AND "copay_bonus_percentage" <= 100));
+
+
 -- ═══ claim_appeal_decisions ═══
 -- TODO UK (dispute + decision version): ALTER TABLE "insurance"."claim_appeal_decisions" ADD CONSTRAINT "uq_claim_appeal_decisions_..." UNIQUE (...);
 --   UPDATE_DELETE: forbidden

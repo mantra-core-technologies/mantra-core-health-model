@@ -176,6 +176,43 @@ CREATE TABLE IF NOT EXISTS "insurance"."network_provider_memberships" (
     CONSTRAINT "pk_network_provider_memberships" PRIMARY KEY ("id")
 );
 
+CREATE TABLE IF NOT EXISTS "insurance"."insurance_campaigns" (
+    "id" uuid NOT NULL,
+    "insurance_carrier_id" uuid NOT NULL,
+    "code" varchar NOT NULL,
+    "title" varchar NOT NULL,
+    "description" text,
+    "campaign_type_concept_id" uuid NOT NULL,
+    "target_condition_concept_id" uuid,
+    "copay_bonus_percentage" numeric NOT NULL,
+    "valid_from" date NOT NULL,
+    "valid_to" date NOT NULL,
+    "status_concept_id" uuid NOT NULL,
+    "activated_at" timestamptz,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_insurance_campaigns" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "insurance"."insurance_campaign_partners" (
+    "id" uuid NOT NULL,
+    "insurance_campaign_id" uuid NOT NULL,
+    "partner_role_concept_id" uuid NOT NULL,
+    "partner_type_concept_id" uuid NOT NULL,
+    "partner_name" varchar NOT NULL,
+    "partner_tenant_id" uuid,
+    "network_provider_membership_id" uuid,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_insurance_campaign_partners" PRIMARY KEY ("id")
+);
+
 CREATE TABLE IF NOT EXISTS "insurance"."patient_coverages" (
     "id" uuid NOT NULL,
     "patient_profile_id" uuid NOT NULL,
