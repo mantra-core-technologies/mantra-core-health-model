@@ -237,9 +237,26 @@ Matriz en evidencia/H4-matriz-markdown-a-seed.md. 9 de 12 archivos ya llegan a l
 
 **CA:** Dada la suite `*.real.spec.ts` contra el dominio de prueba, cuando corre tres veces sobre el mismo commit, entonces las tres dan verde.
 **DoD:** las tres salidas y las fotos de los tres viewports.
-**Estado:** BLOQUEADO
+**Estado:** A MEDIAS
 
-Precondicion H1 no se cumple: el sitio nunca estuvo sano el tiempo suficiente para correr un recorrido con significado. La suite esta escrita y typechequea en 0 (ver H5.S1), pero correrla contra un sitio que cicla entre sano/no-sano daria un resultado que no prueba nada real.
+H1 ya está sano y la suite corrió tres veces reales contra el VPS (front `5717bdb6`, backend
+`abe90074`). Resultado **determinístico, no intermitente**: 9/10 en las tres corridas, siempre
+el mismo test en rojo por el mismo motivo. No es el "tres verdes" que pedía el CA original —
+ese resultado habría sido deshonesto de declarar, así que queda `A MEDIAS` con el detalle
+completo en `evidencia/` (front) `docs/progress/evidence/lane-m1-recorrido-real/`.
+
+Dos correcciones de soporte fueron necesarias antes de poder correrla: `crearMedicoSintetico()`
+no mandaba `nationalId`/`issuerAdministrativeAreaConceptId` (el alta los volvió obligatorios
+después de escrito el helper) y el helper de API no respetaba `E2E_API_URL` (apuntaba a
+`localhost:3005` por defecto). Las dos están corregidas y comiteadas.
+
+El único test que sigue en rojo destapó un **`PRODUCT_BUG` real, ajeno a este carril**: el login
+por API funciona perfecto dos veces seguidas (curl directo, `200` + tokens reales) para una
+cuenta recién creada, pero el mismo login desde el formulario del navegador muestra "Las
+credenciales no son válidas" y nunca navega al panel. Es sesión/auth del front (probablemente
+relacionado con `refreshCookie` o con el estado `verificationStatus: PENDING` de una cuenta
+nueva), no infraestructura ni base de datos — fuera del alcance de M1. Documentado con
+evidencia completa y enviado como tarea aparte para quien lleve esa área (`task_f2a52377`).
 
 ### H5.S1 — Escribir y correr el recorrido
 
@@ -247,13 +264,22 @@ Precondicion H1 no se cumple: el sitio nunca estuvo sano el tiempo suficiente pa
 **DoD:** salida y fotos.
 **Estado:** A MEDIAS
 
-Que anda: `playwright/carril-m1-recorrido-real-vps.spec.ts` escrito, cubre los 4 puntos del hito, `npx tsc -p tsconfig.spec.json --noEmit` sale en 0, `npx eslint` limpio. Que no anda: no se corrio ni una vez contra el sitio real -- bloqueado por H1. Que falta: que H1 estabilice; recien ahi correr la suite 3 veces sobre el mismo commit. Donde quedo: sin comitear en `justin/test-integration` (se comitea junto con la primera corrida real).
+Que anda: `playwright/carril-m1-recorrido-real-vps.spec.ts` escrito y corrido tres veces contra
+el sitio real; 9 de los 10 casos pasan consistentemente (salud de la API por el proxy, alta y
+login de médico y paciente contra la API real, la vitrina pública en 3 viewports × 2 temas con
+consola limpia). Que no anda: el caso de sesión real por navegador, por el `PRODUCT_BUG`
+documentado arriba; y el DoD pedía fotos por viewport como artefacto, y la suite sólo verifica
+consola/red por viewport sin guardar una captura de cada uno (sólo hay captura del fallo). Qué
+falta: que se resuelva el bug de sesión (fuera de este carril) y, si hace falta el artefacto
+fotográfico por viewport, agregar `page.screenshot()` a esa sección de la suite. Dónde quedó:
+comiteado en `justin/test-integration` → `origin/test` (`c8c30949`), con las tres salidas y el
+README de hallazgo en `docs/progress/evidence/lane-m1-recorrido-real/` (front).
 
 | ID | Microtarea | CA (binario) | DoD (comando) | Estado |
 |---|---|---|---|---|
 | H5.S1.M1 | Escribir la suite contra el dominio de prueba | cubre los cuatro puntos | archivo + salida | HECHO |
-| H5.S1.M2 | Correrla y sacar foto de cada viewport | 3 viewports × 2 temas | fotos en `evidencia/` | BLOQUEADO |
-| H5.S1.M3 | Repetirla tres veces sobre el mismo commit | tres verdes seguidos | las tres salidas | BLOQUEADO |
+| H5.S1.M2 | Correrla y sacar foto de cada viewport | 3 viewports × 2 temas | fotos en `evidencia/` | A MEDIAS |
+| H5.S1.M3 | Repetirla tres veces sobre el mismo commit | tres verdes seguidos | las tres salidas | A MEDIAS |
 
 ---
 
@@ -261,17 +287,13 @@ Que anda: `playwright/carril-m1-recorrido-real-vps.spec.ts` escrito, cubre los 4
 
 **CA:** Dadas las dos apps, cuando se cierra el ciclo, entonces quedan `running:healthy` y el recorrido real sigue verde.
 **DoD:** estado de las apps + bitácora del bucle.
-**Estado:** BLOQUEADO
+**Estado:** A MEDIAS
 
-**Actualizacion:** los 4 PR listos (#470, #471 en la API, #32 en el modelo, #83 en el vault) YA
-estan los 4 `MERGED` -- el propietario los mergeo el mismo. Lo que sigue bloqueado es sólo H1:
-la causa real está encontrada y dos de sus tres capas corregidas (ver H1), pero la tercera
-(seeds de `insurance.insurance_carriers`) exige una escritura remota sobre el VPS -- correr
-`api-migrate` manualmente o `rebuild_stack.py` -- y **el clasificador de modo automatico de
-esta sesion bloquea explicitamente cualquier "Remote Shell Writes"** (escrituras por SSH sobre
-el servidor), sin excepcion y sin alternativa por otra vía. Es una restricción de la sesión, no
-del proyecto: la ejecuta el propietario, un comando, sin tocar datos de las otras 5 máquinas
-(ver H1 para el comando exacto). H5 y el resto de H6 siguen bloqueados detrás de esto.
+Las dos apps están `running:healthy` y verificadas con datos reales (ver H1). El recorrido
+corrió tres veces (ver H5): 9/10 determinístico, con un `PRODUCT_BUG` real de sesión/auth del
+front (ajeno a este carril, ya enviado como tarea aparte). No es "el recorrido real sigue
+verde" al 100 % — por eso el hito cierra `A MEDIAS`, no `HECHO`, con el detalle honesto en vez
+de forzarlo.
 
 ### H6.S1 — Cerrar el ciclo merge → build → recorrido → corrección
 
@@ -279,13 +301,12 @@ del proyecto: la ejecuta el propietario, un comando, sin tocar datos de las otra
 **DoD:** bitácora con la clasificación de cada fallo.
 **Estado:** A MEDIAS
 
-Que anda: los 4 PR listos están identificados, verificados MERGEABLE/CLEAN y **ya mergeados**
-(documentado en `evidencia/H6-bitacora-bucle.md`). El fallo real de H1 está clasificado como
-`DATA` (confirmado, no provisional: `select count(*) from insurance.insurance_carriers` da 0
-en la base viva). Que no anda: no corrió el recorrido (bloqueado por H1). Que falta: que el
-propietario corra el comando de H1 (una sola línea, no destructivo) desde su propia terminal —
-esta sesión tiene prohibido ejecutar escrituras remotas por SSH, así que no es algo que pueda
-hacer por sí misma sin importar el enfoque.
+Que anda: los 4 PR originales están mergeados; el fallo de H1 (capas 1–3, quay.io + patch
+v4.2.21) está clasificado y corregido; el recorrido corrió de verdad y su único fallo
+persistente está clasificado como `PRODUCT_BUG` con causa raíz aislada (ver H5). Que no anda: el
+PR espejo `test → dev` no se abrió. Que falta: decidir si conviene abrirlo ya (con el
+`PRODUCT_BUG` de sesión todavía sin resolver en `test`) o esperar a que esa tarea aparte lo
+cierre primero — es una decisión de secuencia, no una que este carril deba tomar solo.
 
 | ID | Microtarea | CA (binario) | DoD (comando) | Estado |
 |---|---|---|---|---|
