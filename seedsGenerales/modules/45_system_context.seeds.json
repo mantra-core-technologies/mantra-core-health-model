@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "Provides versioned system context for agents, modules and workflows, and database-driven enumerations resolved from governed terminology value sets. Consumers receive reproducible context instead of ad-hoc JSON or hard-coded lists.",
-    "seed_revision": "2.5.3-v4.1.4"
+    "seed_revision": "2.6.0-v4.2.30"
   },
   "environment_policy": {
     "boot": {
@@ -49,7 +49,7 @@
       "dynamic_enum_options",
       "dynamic_enum_bindings"
     ],
-    "record_count": 749,
+    "record_count": 776,
     "records": {
       "system_contexts": [
         {
@@ -1430,6 +1430,63 @@
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1
+        },
+        {
+          "id": "e81b260b-c659-513d-80d6-e1b3ea970199",
+          "code": "VS_CARE_PLAN_INTENT",
+          "name": "Intención del plan de cuidados",
+          "description": "Enum dinámico del value set vs_care_plan_intent (patch v4.2.29).",
+          "value_set_id": "dab17c34-8ad8-5fc8-a2f7-f0e51d9b9d16",
+          "scope_type_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "tenant_id": null,
+          "country_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
+          "selection_mode_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "allow_tenant_extension": false,
+          "allow_custom_value": false,
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-07-31T09:27:00Z",
+          "updated_at": "2026-07-31T09:47:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "d8b19bad-e602-5ba1-9091-36b6222cc157",
+          "code": "VS_CARE_PLAN_ACTIVITY",
+          "name": "Clase de actividad del plan de cuidados",
+          "description": "Enum dinámico del value set vs_care_plan_activity (patch v4.2.29).",
+          "value_set_id": "603222c8-fef8-5a5e-83e1-bf661b0c4d49",
+          "scope_type_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "tenant_id": null,
+          "country_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
+          "selection_mode_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "allow_tenant_extension": false,
+          "allow_custom_value": false,
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-10-02T00:37:00Z",
+          "updated_at": "2026-10-02T00:57:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "a792f5ef-e48d-5dad-a032-ff368809501f",
+          "code": "VS_DOCUMENT_CATEGORY",
+          "name": "Categoría documental",
+          "description": "Enum dinámico del value set vs_document_category (patch v4.2.29).",
+          "value_set_id": "df3409c5-dccd-5bae-9179-b3ec6e66efe7",
+          "scope_type_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "tenant_id": null,
+          "country_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
+          "selection_mode_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "allow_tenant_extension": false,
+          "allow_custom_value": false,
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-10-17T08:10:00Z",
+          "updated_at": "2026-10-17T08:30:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
         }
       ],
       "dynamic_enum_versions": [
@@ -2029,6 +2086,45 @@
           "effective_to": null,
           "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
           "recorded_at": "2026-09-09T05:42:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "3116b435-ccb3-5263-af1f-e35f22ff6629",
+          "dynamic_enum_definition_id": "e81b260b-c659-513d-80d6-e1b3ea970199",
+          "version_number": 1,
+          "value_set_version_id": "503bf8eb-7d56-52a3-ad60-e66cdab24710",
+          "schema_version": "1.0.0",
+          "cache_token": "507358ffc7a9d6d42b38796075df7867",
+          "effective_from": "2026-07-31T09:27:00Z",
+          "effective_to": null,
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "recorded_at": "2026-07-31T09:27:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "1ff90c98-942b-5856-a247-5afa99f9be19",
+          "dynamic_enum_definition_id": "d8b19bad-e602-5ba1-9091-36b6222cc157",
+          "version_number": 1,
+          "value_set_version_id": "6f5ecc24-a156-51a3-8afb-aa0711bed722",
+          "schema_version": "1.0.0",
+          "cache_token": "94e6574b68b197160149b482e80b28e8",
+          "effective_from": "2026-10-02T00:37:00Z",
+          "effective_to": null,
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "recorded_at": "2026-10-02T00:37:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "044fcaeb-48e5-5f9a-b768-d044425466be",
+          "dynamic_enum_definition_id": "a792f5ef-e48d-5dad-a032-ff368809501f",
+          "version_number": 1,
+          "value_set_version_id": "737e3c57-f553-5e8c-9fac-0d76927f8d17",
+          "schema_version": "1.0.0",
+          "cache_token": "a5e8e99a3c77ce0afa54156eb920ddd0",
+          "effective_from": "2026-10-17T08:10:00Z",
+          "effective_to": null,
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "recorded_at": "2026-10-17T08:10:00Z",
           "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
         }
       ],
@@ -11516,6 +11612,294 @@
           },
           "recorded_at": "2026-10-07T06:48:00Z",
           "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "619b4083-5f71-581f-9a21-e2c1e4d98b85",
+          "dynamic_enum_version_id": "d8bc32e6-93d9-5387-9874-acdaee10c8fd",
+          "concept_id": "ff892461-cf8e-514e-a55a-832f4166616c",
+          "code": "CERTIFICADO_RADIOPROTECCION",
+          "display": "Certificado de radioprotección",
+          "ordinal": 9,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_affiliation_document_type",
+            "patch": "v4.0.3"
+          },
+          "recorded_at": "2026-10-22T02:13:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "69aae594-9df7-548d-baf3-11c14da4835e",
+          "dynamic_enum_version_id": "3116b435-ccb3-5263-af1f-e35f22ff6629",
+          "concept_id": "afcb5210-52da-5e5b-b781-869c399da9c6",
+          "code": "chart:CAREPLAN_INTENT_PLAN",
+          "display": "Plan",
+          "ordinal": 1,
+          "is_default": true,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_care_plan_intent",
+            "patch": "v4.2.29"
+          },
+          "recorded_at": "2026-10-15T20:03:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "ce09a184-a8f7-5a28-b5db-f0a70457faf3",
+          "dynamic_enum_version_id": "3116b435-ccb3-5263-af1f-e35f22ff6629",
+          "concept_id": "984cb111-50f6-509b-bf6b-62f51054f9c0",
+          "code": "chart:CAREPLAN_INTENT_PROPOSAL",
+          "display": "Propuesta",
+          "ordinal": 2,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_care_plan_intent",
+            "patch": "v4.2.29"
+          },
+          "recorded_at": "2026-08-05T22:07:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "2dc92c78-7831-5535-b725-ae50d4501c41",
+          "dynamic_enum_version_id": "3116b435-ccb3-5263-af1f-e35f22ff6629",
+          "concept_id": "e12c2039-b82a-5bc7-9f76-09d53f33eee4",
+          "code": "chart:CAREPLAN_INTENT_ORDER",
+          "display": "Indicación",
+          "ordinal": 3,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_care_plan_intent",
+            "patch": "v4.2.29"
+          },
+          "recorded_at": "2026-08-12T18:05:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "80a2832a-0243-5d45-a91d-004e063a1885",
+          "dynamic_enum_version_id": "3116b435-ccb3-5263-af1f-e35f22ff6629",
+          "concept_id": "bce9856d-a3fe-50a3-8ef8-4c3bf3fcaed2",
+          "code": "chart:CAREPLAN_INTENT_OPTION",
+          "display": "Opción",
+          "ordinal": 4,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_care_plan_intent",
+            "patch": "v4.2.29"
+          },
+          "recorded_at": "2026-09-13T04:52:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "83ca28d7-db2f-559d-84be-3a782c7c332a",
+          "dynamic_enum_version_id": "1ff90c98-942b-5856-a247-5afa99f9be19",
+          "concept_id": "1720abda-98f0-5aba-909a-3ef1d06fa9dd",
+          "code": "chart:ACTIVITY_DEFAULT",
+          "display": "Actividad general",
+          "ordinal": 1,
+          "is_default": true,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_care_plan_activity",
+            "patch": "v4.2.29"
+          },
+          "recorded_at": "2026-09-14T01:08:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "1968fab9-3786-5568-a7f3-4282db00e543",
+          "dynamic_enum_version_id": "1ff90c98-942b-5856-a247-5afa99f9be19",
+          "concept_id": "1c4183b4-29db-58a2-94da-88401aed4c91",
+          "code": "chart:ACTIVITY_CLASS_CONTROL",
+          "display": "Control clínico",
+          "ordinal": 2,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_care_plan_activity",
+            "patch": "v4.2.29"
+          },
+          "recorded_at": "2026-09-01T10:01:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "6f2bf703-98fe-570e-9f01-20e0419e1154",
+          "dynamic_enum_version_id": "1ff90c98-942b-5856-a247-5afa99f9be19",
+          "concept_id": "388ebcc0-e288-5c62-861b-bac2b436f1c0",
+          "code": "chart:ACTIVITY_CLASS_STUDY",
+          "display": "Estudio o laboratorio",
+          "ordinal": 3,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_care_plan_activity",
+            "patch": "v4.2.29"
+          },
+          "recorded_at": "2026-09-02T17:17:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "fd491abd-3ccc-579c-8fe5-b8d8fe4601ad",
+          "dynamic_enum_version_id": "1ff90c98-942b-5856-a247-5afa99f9be19",
+          "concept_id": "b16c9d1b-14cb-50cc-8e8e-42d30fa762cd",
+          "code": "chart:ACTIVITY_CLASS_TREATMENT",
+          "display": "Tratamiento",
+          "ordinal": 4,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_care_plan_activity",
+            "patch": "v4.2.29"
+          },
+          "recorded_at": "2026-10-05T13:39:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "51717e23-8dd3-5a26-bb34-c18757ca1cc7",
+          "dynamic_enum_version_id": "1ff90c98-942b-5856-a247-5afa99f9be19",
+          "concept_id": "5221123a-ca8f-5ab8-b839-6556415947fd",
+          "code": "chart:ACTIVITY_CLASS_EDUCATION",
+          "display": "Educación de la persona",
+          "ordinal": 5,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_care_plan_activity",
+            "patch": "v4.2.29"
+          },
+          "recorded_at": "2026-07-25T09:29:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "b318d2f8-4779-55eb-aeb9-b48a2bd24b39",
+          "dynamic_enum_version_id": "1ff90c98-942b-5856-a247-5afa99f9be19",
+          "concept_id": "fabaec2d-9b33-5ad9-b1c2-370412ad0f96",
+          "code": "chart:ACTIVITY_CLASS_REFERRAL",
+          "display": "Derivación",
+          "ordinal": 6,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_care_plan_activity",
+            "patch": "v4.2.29"
+          },
+          "recorded_at": "2026-10-17T03:10:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "61ec7c42-8caa-52dc-816e-3c12d832179f",
+          "dynamic_enum_version_id": "044fcaeb-48e5-5f9a-b768-d044425466be",
+          "concept_id": "b53e6248-fab7-5dc3-b1e6-2f7d0051ac78",
+          "code": "chart:DOC_CATEGORY_GENERAL",
+          "display": "Documento general",
+          "ordinal": 1,
+          "is_default": true,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_document_category",
+            "patch": "v4.2.29"
+          },
+          "recorded_at": "2026-08-28T01:41:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "9e6ced90-fe03-506a-ac7d-59c106f13ed7",
+          "dynamic_enum_version_id": "044fcaeb-48e5-5f9a-b768-d044425466be",
+          "concept_id": "f17469b2-0ffd-5b5d-a7df-af94c31cc3c4",
+          "code": "chart:DOC_CATEGORY_REPORT",
+          "display": "Informe clínico",
+          "ordinal": 2,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_document_category",
+            "patch": "v4.2.29"
+          },
+          "recorded_at": "2026-09-17T22:25:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "f53a3516-dcba-5c4f-8865-8e98e0413126",
+          "dynamic_enum_version_id": "044fcaeb-48e5-5f9a-b768-d044425466be",
+          "concept_id": "0b1e27d9-d3df-5722-a5cf-6f144cde0394",
+          "code": "chart:DOC_CATEGORY_LAB",
+          "display": "Resultado de laboratorio",
+          "ordinal": 3,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_document_category",
+            "patch": "v4.2.29"
+          },
+          "recorded_at": "2026-09-28T19:25:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "9235f580-8582-5bb4-a26d-33fe823a70d8",
+          "dynamic_enum_version_id": "044fcaeb-48e5-5f9a-b768-d044425466be",
+          "concept_id": "75d488a2-1113-5c0d-b256-635442124015",
+          "code": "chart:DOC_CATEGORY_IMAGING",
+          "display": "Estudio de imagen",
+          "ordinal": 4,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_document_category",
+            "patch": "v4.2.29"
+          },
+          "recorded_at": "2026-08-28T03:32:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "a47d4130-01be-56a5-b357-00f1b07c4a94",
+          "dynamic_enum_version_id": "044fcaeb-48e5-5f9a-b768-d044425466be",
+          "concept_id": "7ea63f0b-606c-53b2-aaf3-a68e99e54a0a",
+          "code": "chart:DOC_CATEGORY_CONSENT",
+          "display": "Consentimiento informado",
+          "ordinal": 5,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_document_category",
+            "patch": "v4.2.29"
+          },
+          "recorded_at": "2026-10-14T00:33:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "8439d2be-0dff-5e3e-8a9b-188541035963",
+          "dynamic_enum_version_id": "044fcaeb-48e5-5f9a-b768-d044425466be",
+          "concept_id": "59fa4768-4a10-5e96-9251-9f5f85b21b03",
+          "code": "chart:DOC_CATEGORY_CERTIFICATE",
+          "display": "Certificado",
+          "ordinal": 6,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_document_category",
+            "patch": "v4.2.29"
+          },
+          "recorded_at": "2026-08-21T06:43:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "adf53090-80fe-58fb-b6af-5de9a9e74a2f",
+          "dynamic_enum_version_id": "044fcaeb-48e5-5f9a-b768-d044425466be",
+          "concept_id": "4b48ee49-efd5-5c34-ab84-90a954e390fe",
+          "code": "chart:DOC_CATEGORY_DISCHARGE",
+          "display": "Epicrisis o alta",
+          "ordinal": 7,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_document_category",
+            "patch": "v4.2.29"
+          },
+          "recorded_at": "2026-07-31T06:02:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
         }
       ],
       "dynamic_enum_bindings": [
@@ -12283,6 +12667,57 @@
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1
+        },
+        {
+          "id": "5aa0fff8-d1a9-5f91-8b8e-83dfabe3cbbd",
+          "dynamic_enum_definition_id": "e81b260b-c659-513d-80d6-e1b3ea970199",
+          "target_schema_name": "chart",
+          "target_entity_name": "care_plans",
+          "target_field_name": "intent_concept_id",
+          "system_context_id": null,
+          "required": true,
+          "fallback_concept_id": null,
+          "validation_mode_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-07-31T09:27:00Z",
+          "updated_at": "2026-07-31T09:47:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "08c93df5-73bd-5eab-b3f8-ad8b23ba1d40",
+          "dynamic_enum_definition_id": "d8b19bad-e602-5ba1-9091-36b6222cc157",
+          "target_schema_name": "chart",
+          "target_entity_name": "care_plan_activities",
+          "target_field_name": "activity_concept_id",
+          "system_context_id": null,
+          "required": true,
+          "fallback_concept_id": null,
+          "validation_mode_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-10-02T00:37:00Z",
+          "updated_at": "2026-10-02T00:57:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "9d8395df-7e7c-5737-b9af-8760d409969d",
+          "dynamic_enum_definition_id": "a792f5ef-e48d-5dad-a032-ff368809501f",
+          "target_schema_name": "chart",
+          "target_entity_name": "document_records",
+          "target_field_name": "category_concept_id",
+          "system_context_id": null,
+          "required": true,
+          "fallback_concept_id": null,
+          "validation_mode_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-10-17T08:10:00Z",
+          "updated_at": "2026-10-17T08:30:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
         }
       ]
     },
@@ -12485,7 +12920,7 @@
       }
     ],
     "summary": {
-      "record_count": 749,
+      "record_count": 776,
       "entity_count": 6,
       "populated_entity_count": 6,
       "scenario_count": null,

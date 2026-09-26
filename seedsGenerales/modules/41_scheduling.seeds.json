@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "The full booking (agenda) layer on top of the clinical appointment record. Models bookable resources (practitioners, rooms, equipment), schedule templates and rules that generate slots, availability exceptions, concurrency-safe slot holds (the distributed reservation lock for CU-10), confirmed bookings, reschedules, cancellations with policy-driven fees, waitlists and reminders. The canonical clinical appointment stays in module 08/18; this module owns the reservation lifecycle and anti-double-booking guarantees.",
-    "seed_revision": "2.5.3-v4.1.4"
+    "seed_revision": "2.6.0-v4.2.30"
   },
   "environment_policy": {
     "boot": {

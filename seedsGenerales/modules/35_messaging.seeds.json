@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "Provides durable domain events, transactional outbox publication, subscriptions, generic worker queues, retries and dead-letter evidence. User notification delivery is separated into module 35B while remaining in the same messaging schema.",
-    "seed_revision": "2.5.3-v4.1.4"
+    "seed_revision": "2.6.0-v4.2.30"
   },
   "environment_policy": {
     "boot": {

@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "The internal CRM the clients asked for: a first-class contact and company (account) database, lead capture and qualification, sales/partnership pipelines with stages and opportunities, a logged activity timeline (calls, emails, meetings, notes, tasks), and a dedicated partnerships/alliances registry that ties commercial relationships to formal contracts (module 38 ERP) and advertising partners (module 43 ads). This is the commercial system-of-record for the operator, kept separate from clinical patient data.",
-    "seed_revision": "2.5.3-v4.1.4"
+    "seed_revision": "2.6.0-v4.2.30"
   },
   "environment_policy": {
     "boot": {

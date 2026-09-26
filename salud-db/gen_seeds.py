@@ -70,7 +70,7 @@ VAULT = paths.VAULT
 MODEL_VERSION = "4.0.7"
 SOURCE_MODEL_VERSION = "4.0.9"
 RELEASE_LABEL = "4.0.9"
-SEED_REVISION = "2.5.3-v4.1.4"
+SEED_REVISION = "2.6.0-v4.2.30"
 # Namespace uuid5 por patch, misma regla que MODEL_VERSION: identifica las filas de las
 # 5 tablas ALOVIDA ya sembradas. v4.0.9 no añade uno propio porque no trae tablas que
 # sembrar — `iam.email_verifications` y `iam.password_resets` guardan tokens de runtime
@@ -260,6 +260,8 @@ VS_DISPLAY = {
     # sigla en mayúsculas que usa el resto del dominio salud.
     "vs_affiliation_document_type": {
         "certificado_sedes": "Certificado del SEDES",
+        # v4.2.29 (cierre M7): el PDF de radioprotección de imagenología (D-BR09-1).
+        "certificado_radioproteccion": "Certificado de radioprotección",
     },
     "vs_issuing_authority": {
         "sedes": "SEDES",
@@ -459,6 +461,63 @@ BACKEND_CONCEPTS = [
     ("common:id-type:tax", "TAX_ID", "Tax identification number"),
     ("common:use:official", "OFFICIAL", "Official"),
 ]
+
+# --- v4.2.29 · catálogos del cierre M7 (CL-25 y jurisdicciones) ---------------
+# Conceptos de módulo (chart y profiles): el `code` almacenado es la CLAVE completa, como
+# hace TerminologySeedService. Los tres primeros de cada catálogo YA existen en la API
+# (`chart.concepts.ts`, `profiles.concepts.ts`); los demás nacen acá con la clave y el
+# display en inglés que la API debe declarar tal cual para que los ids coincidan (misma
+# regla que SURVEYS_BACKEND_CONCEPTS: ambos lados insertan por id).
+# (clave, display en inglés, display en castellano, es_por_defecto)
+M7_CATALOGS = [
+    {
+        "vs": "vs_care_plan_intent", "module": "15",
+        "name": "Intención del plan de cuidados",
+        "description": ("Qué clase de plan es (`chart.care_plans.intent_concept_id`). Subconjunto "
+                        "de CarePlan.intent de HL7 FHIR R4 (request-intent): proposal, plan, order, option."),
+        "bindings": [("chart", "care_plans", "intent_concept_id")],
+        "concepts": [
+            ("chart:CAREPLAN_INTENT_PLAN", "Care plan intent: plan", "Plan", True),
+            ("chart:CAREPLAN_INTENT_PROPOSAL", "Care plan intent: proposal", "Propuesta", False),
+            ("chart:CAREPLAN_INTENT_ORDER", "Care plan intent: order", "Indicación", False),
+            ("chart:CAREPLAN_INTENT_OPTION", "Care plan intent: option", "Opción", False),
+        ],
+    },
+    {
+        "vs": "vs_care_plan_activity", "module": "15",
+        "name": "Clase de actividad del plan de cuidados",
+        "description": ("Qué clase de paso es (`chart.care_plan_activities.activity_concept_id`). "
+                        "Lista de producto tomada de las pantallas del plan de cuidados (control, estudio, "
+                        "tratamiento, educación, derivación) más la clase general que la API ya usaba por defecto."),
+        "bindings": [("chart", "care_plan_activities", "activity_concept_id")],
+        "concepts": [
+            ("chart:ACTIVITY_DEFAULT", "General care plan activity", "Actividad general", True),
+            ("chart:ACTIVITY_CLASS_CONTROL", "Care plan activity: clinical follow-up", "Control clínico", False),
+            ("chart:ACTIVITY_CLASS_STUDY", "Care plan activity: study or laboratory", "Estudio o laboratorio", False),
+            ("chart:ACTIVITY_CLASS_TREATMENT", "Care plan activity: treatment", "Tratamiento", False),
+            ("chart:ACTIVITY_CLASS_EDUCATION", "Care plan activity: patient education", "Educación de la persona", False),
+            ("chart:ACTIVITY_CLASS_REFERRAL", "Care plan activity: referral", "Derivación", False),
+        ],
+    },
+    {
+        "vs": "vs_document_category", "module": "15",
+        "name": "Categoría documental",
+        "description": ("Qué clase de papel es (`chart.document_records.category_concept_id`). Lista de "
+                        "producto tomada de las pantallas de documentos del expediente más la categoría "
+                        "general que la API ya usaba por defecto."),
+        "bindings": [("chart", "document_records", "category_concept_id")],
+        "concepts": [
+            ("chart:DOC_CATEGORY_GENERAL", "General document category", "Documento general", True),
+            ("chart:DOC_CATEGORY_REPORT", "Document category: clinical report", "Informe clínico", False),
+            ("chart:DOC_CATEGORY_LAB", "Document category: laboratory result", "Resultado de laboratorio", False),
+            ("chart:DOC_CATEGORY_IMAGING", "Document category: imaging study", "Estudio de imagen", False),
+            ("chart:DOC_CATEGORY_CONSENT", "Document category: informed consent", "Consentimiento informado", False),
+            ("chart:DOC_CATEGORY_CERTIFICATE", "Document category: certificate", "Certificado", False),
+            ("chart:DOC_CATEGORY_DISCHARGE", "Document category: discharge summary", "Epicrisis o alta", False),
+        ],
+    },
+]
+
 
 # --- v4.0.11 · los 40 conceptos del módulo 23 -------------------------------
 # Espejo literal de `src/modules/diagnostic_units/diagnostic_units.concepts.ts`. Van con la
@@ -663,6 +722,47 @@ def titleize(code: str) -> str:
 VS_DISPLAY["vs_bo_municipality"] = municipios_display()
 
 
+# Jurisdicciones de Bolivia: la nacional y un SEDES (Servicio Departamental de Salud) por
+# departamento. Las siglas y los nombres son los de `vs_administrative_area` (los nueve
+# departamentos, en el orden del INE), no se escribe ninguno de nuevo. La nacional y
+# Santa Cruz ya existen en la API; los otros ocho nacen acá con la misma forma de clave.
+M7_JURISDICTION_ORDER = ["ch", "lp", "cb", "or", "pt", "tj", "sc", "be", "pa"]
+
+
+def m7_jurisdiction_concepts() -> list:
+    out = [("profiles:JURISDICTION_NATIONAL", "National jurisdiction", "Nacional", True)]
+    for sigla in M7_JURISDICTION_ORDER:
+        nombre = VS_DISPLAY["vs_administrative_area"][sigla]
+        if sigla == "sc":  # existe en la API con este display: se espeja textual
+            out.append(("profiles:JURISDICTION_SEDES_SANTA_CRUZ",
+                        "SEDES — Gobernación Autónoma Departamental de Santa Cruz",
+                        "SEDES Santa Cruz", False))
+        else:
+            out.append(("profiles:JURISDICTION_SEDES_" + slugify(nombre),
+                        "SEDES — Servicio Departamental de Salud de " + nombre,
+                        "SEDES " + nombre, False))
+    return out
+
+
+M7_CATALOGS.append({
+    "vs": "vs_bo_jurisdiction", "module": "05",
+    "name": "Jurisdicciones de Bolivia",
+    "description": ("Ámbito territorial de una habilitación o de una organización "
+                    "(`profiles.jurisdiction_authorizations.jurisdiction_concept_id`, "
+                    "`directory.tenants.jurisdiction_concept_id`): la nacional y el SEDES de cada uno de "
+                    "los nueve departamentos. Sin enum dinámico propio: la API ya publica `jurisdiction`."),
+    "bindings": [],
+    "enum": False,
+    "concepts": m7_jurisdiction_concepts(),
+})
+
+# Espejo de los conceptos de esos catálogos en el paquete (los mismos ids de la API).
+_M7_MIRRORED = {key for cat in M7_CATALOGS for key, *_ in cat["concepts"]}
+BACKEND_CONCEPTS.extend((key, key, display_en)
+                        for cat in M7_CATALOGS
+                        for key, display_en, _es, _d in cat["concepts"])
+
+
 def iso(dt: datetime) -> str:
     return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -752,7 +852,33 @@ def load_value_sets():
     missing = set(VS_OWNER) - set(out)
     if missing:
         sys.exit(f"value sets declarados pero sin nota en el vault: {sorted(missing)}")
+    apply_value_set_extensions(out)
     return out
+
+
+# Valores que el MODELO agrega a un value set cuya nota vive en el vault, sin editar la
+# nota (el vault es otro repositorio y otro ciclo de PR). Cada valor va AL FINAL: el orden
+# de la lista es el ordinal que se siembra y correrlo movería el de una base ya poblada.
+# La nota del vault debe absorber el valor cuando se promueva; `apply_value_set_extensions`
+# lo tolera (no duplica) para que ese día no haya que tocar nada acá.
+VS_EXTENSIONS_FILE = paths.DATA_DIR / "value-set-extensions.json"
+
+
+def apply_value_set_extensions(value_sets: dict) -> None:
+    """Agrega a `value_sets` los valores declarados en `value-set-extensions.json`."""
+    if not VS_EXTENSIONS_FILE.exists():
+        return
+    ext = json.loads(VS_EXTENSIONS_FILE.read_text(encoding="utf-8"))
+    for name, spec in ext.items():
+        if name.startswith("_"):
+            continue
+        if name not in value_sets:
+            sys.exit(f"{VS_EXTENSIONS_FILE.name}: extiende {name}, que no existe en el vault")
+        vistos = {c.upper() for c in value_sets[name]["codes"]}
+        for code in spec["append"]:
+            if code.upper() not in vistos:
+                value_sets[name]["codes"].append(code)
+                vistos.add(code.upper())
 
 
 def concept_id(vs_name: str, code: str, vs_meta: dict) -> str:
@@ -943,6 +1069,16 @@ def pick(values: list, *seed):
     return values[h % len(values)]
 
 
+# Columnas de texto cuyo dominio lo cierra un CHECK del modelo (`05_constraints.sql`): el
+# relleno genérico («Tabla · columna 00») viola el CHECK y load_seeds descarta el grupo
+# entero de filas. valor por defecto + valores permitidos. `phase_notnull` también
+# repara las filas que ya traían un valor fuera del dominio.
+COLUMN_LITERALS = {
+    "system_ops.restore_test_runs.objective_status":
+        ("NOT_MEASURED", {"PASSED", "FAILED", "NOT_MEASURED"}),
+}
+
+
 class ValueFactory:
     """Genera valores deterministas para una columna, respetando tipo y FK del DDL."""
 
@@ -962,6 +1098,9 @@ class ValueFactory:
 
     def value(self, table, col, meta, vs_map, seed, section):
         ctype = meta["type"].lower()
+        literal = COLUMN_LITERALS.get(f"{table}.{col}")
+        if literal is not None:
+            return literal[0]
         base = BOOT_BASE if section == "boot" else MOCK_BASE
         when = det_time(base, table, col, *seed)
 
@@ -3165,6 +3304,11 @@ def phase_notnull(docs, ddl, fks, value_sets) -> dict:
                             if m["not_null"] and not m["default"] and c in cols]
                 for i, row in enumerate(rows):
                     for col in required:
+                        lit = COLUMN_LITERALS.get(f"{tkey}.{col}")
+                        if lit is not None and row.get(col) not in lit[1]:
+                            row[col] = lit[0]
+                            fixed[f"{tkey}.{col}"] = fixed.get(f"{tkey}.{col}", 0) + 1
+                            continue
                         if col in row and row[col] is not None:
                             continue
                         v = vf.value(tkey, col, cols[col], None, (i,), section)
@@ -3446,7 +3590,38 @@ COVERAGE_TABLES = OrderedDict([
 # Tablas que deben quedar SIN filas, con el motivo. La fase de cobertura falla si
 # aparece una tabla vacía que no esté acá ni en COVERAGE_TABLES: así un hueco nuevo
 # se ve en la próxima corrida en vez de descubrirse cargando la base.
+# v4.2.30 (cierre M7) — esquemas enteros cuyas filas las escribe el negocio o un worker, no
+# el arranque. Se declaran por esquema y no tabla por tabla para que una tabla nueva del
+# módulo no reabra el hueco de cobertura sin que nadie lo decida:
+#   pharma_lab    31 tablas de visitadores, materiales y farmacovigilancia: datos de un
+#                 laboratorio real, sin ningún catálogo de arranque (sus conceptos son de terminología).
+#   data_catalog  lo llena el escáner (`worker-data_catalog`, ADR-0024) leyendo la base viva.
+#   qa_execution  planes y ejecuciones de una corrida de QA: runtime puro.
+INTENTIONALLY_EMPTY_SCHEMAS = {"pharma_lab", "data_catalog", "qa_execution"}
+
+# Las historias de `audit.*` (`<<HISTORY>>`) las escribe el disparador al mutar la fila
+# origen; sembrarlas falsearía un historial que nadie produjo.
+def is_intentionally_empty(tkey: str) -> bool:
+    schema, table = tkey.split(".", 1)
+    return (tkey in INTENTIONALLY_EMPTY
+            or schema in INTENTIONALLY_EMPTY_SCHEMAS
+            or (schema == "audit" and table.endswith("_history")))
+
+
 INTENTIONALLY_EMPTY = {
+    # v4.2.30 — datos que crea un usuario o la app al operar (cotizaciones y cuotas,
+    # respuestas automáticas y adjuntos de comentario, campañas y aliados de una
+    # aseguradora, grupos médicos y su membresía, el estado de pago de una cita).
+    # Sembrarlos daría pagos, campañas y grupos que nadie hizo.
+    "billing.quotations",
+    "billing.quotation_installments",
+    "community.chat_auto_replies",
+    "community.comment_media",
+    "insurance.insurance_campaigns",
+    "insurance.insurance_campaign_partners",
+    "medical_groups.groups",
+    "medical_groups.group_members",
+    "scheduling.appointment_payment_states",
     # v4.0.11 — módulo 64. El catálogo de plantillas lo siembra la propia app al
     # arrancar (`AudioAssetsSeedService`), así que sembrarlo también desde el paquete
     # daría dos dueños del mismo catálogo con ids distintos y la resolución dependería
@@ -3870,6 +4045,191 @@ def rebuild_manifest_and_checksums() -> dict:
 
 # ============================================================ main
 
+# ============================================================ fase 1c · catálogos del cierre M7
+
+PATCH_M7 = "4.2.29"
+ISO_3166_FILE = paths.DATA_DIR / "iso-3166-1.json"
+
+
+def _sort_key_es(text: str) -> str:
+    """Orden alfabético en castellano sin depender del locale de la máquina."""
+    base = unicodedata.normalize("NFKD", text.lower())
+    return "".join(c for c in base if not unicodedata.combining(c))
+
+
+def phase_m7_catalogs(docs: dict) -> dict:
+    """CL-25, jurisdicciones por departamento y los miembros de VS_COUNTRY (ISO 3166-1).
+
+    Los conceptos de los catálogos M7 son conceptos del backend (ids de `backend_id`), los
+    inserta `phase_backend_bridge`; acá se crean el value set, su versión, los miembros y, si
+    el catálogo lo pide, el enum dinámico con sus bindings (el que sirve a
+    `GET /system-context/dynamic-enums?target=…`). Idempotente por id.
+    """
+    doc03, doc45 = docs["03"], docs["45"]
+    stats = {"value_sets": 0, "miembros": 0, "enums": 0, "bindings": 0, "paises": 0}
+    for cat in M7_CATALOGS:
+        vs_name = cat["vs"]
+        meta = {"patch": PATCH_M7, "module": cat["module"]}
+        vs_id, vsv_id = vs_ids(vs_name, meta)
+        t = det_time(BOOT_BASE, vs_name)
+        stamp, stamp2 = iso(t), iso(t + timedelta(minutes=20))
+        who = [("created_by_user_id", SEED_USER_ID), ("updated_by_user_id", SEED_USER_ID),
+               ("row_version", 1)]
+        upsert_rows(doc03, "boot", "value_sets", [OrderedDict([
+            ("id", vs_id), ("internal_code", vs_name.upper()), ("name", cat["name"]),
+            ("canonical_url", "https://salud.example.invalid/fhir/ValueSet/" + vs_name),
+            ("description", cat["description"]),
+            ("jurisdiction_concept_id", JURISDICTION_CONCEPT_ID),
+            ("state_concept_id", CONCEPT_ACTIVE),
+            ("created_at", stamp), ("updated_at", stamp2), *who])])
+        upsert_rows(doc03, "boot", "value_set_versions", [OrderedDict([
+            ("id", vsv_id), ("value_set_id", vs_id), ("version", "1.0.0"),
+            ("valid_from", stamp), ("valid_to", None), ("is_default", True),
+            ("state_concept_id", CONCEPT_ACTIVE),
+            ("created_at", stamp), ("updated_at", stamp2), *who])])
+        stats["value_sets"] += 1
+        members, options = [], []
+        for i, (key, _en, es, default) in enumerate(cat["concepts"], start=1):
+            cid = backend_id(key)
+            ct = det_time(BOOT_BASE, vs_name, key)
+            cs, cs2 = iso(ct), iso(ct + timedelta(minutes=20))
+            members.append(OrderedDict([
+                ("id", stable_uuid("SALUD", PATCH_M7, "boot", cat["module"],
+                                   "terminology.value_set_members", vs_name, key)),
+                ("value_set_version_id", vsv_id), ("concept_id", cid),
+                ("included", True), ("ordinal", i),
+                ("created_at", cs), ("updated_at", cs2), *who]))
+            options.append(OrderedDict([
+                ("id", stable_uuid("SALUD", PATCH_M7, "boot", cat["module"],
+                                   "system_context.dynamic_enum_options", vs_name, key)),
+                ("dynamic_enum_version_id", stable_uuid(
+                    "SALUD", PATCH_M7, "boot", cat["module"],
+                    "system_context.dynamic_enum_versions", vs_name)),
+                ("concept_id", cid), ("code", key), ("display", es),
+                ("ordinal", i), ("is_default", bool(default)), ("enabled", True),
+                ("metadata_json", {"value_set": vs_name, "patch": "v" + PATCH_M7}),
+                ("recorded_at", cs), ("recorded_by_user_id", SEED_USER_ID)]))
+        stats["miembros"] += upsert_rows(doc03, "boot", "value_set_members", members)
+        if not cat.get("enum", True):
+            continue
+        ed_id = stable_uuid("SALUD", PATCH_M7, "boot", cat["module"],
+                            "system_context.dynamic_enum_definitions", vs_name)
+        ev_id = stable_uuid("SALUD", PATCH_M7, "boot", cat["module"],
+                            "system_context.dynamic_enum_versions", vs_name)
+        stats["enums"] += upsert_rows(doc45, "boot", "dynamic_enum_definitions", [OrderedDict([
+            ("id", ed_id), ("code", vs_name.upper()), ("name", cat["name"]),
+            ("description", "Enum dinámico del value set {} (patch v{}).".format(vs_name, PATCH_M7)),
+            ("value_set_id", vs_id), ("scope_type_concept_id", CONCEPT_ACTIVE),
+            ("tenant_id", None), ("country_concept_id", JURISDICTION_CONCEPT_ID),
+            ("selection_mode_concept_id", CONCEPT_ACTIVE),
+            ("allow_tenant_extension", False), ("allow_custom_value", False),
+            ("status_concept_id", CONCEPT_ACTIVE),
+            ("created_at", stamp), ("updated_at", stamp2), *who])])
+        upsert_rows(doc45, "boot", "dynamic_enum_versions", [OrderedDict([
+            ("id", ev_id), ("dynamic_enum_definition_id", ed_id), ("version_number", 1),
+            ("value_set_version_id", vsv_id), ("schema_version", "1.0.0"),
+            ("cache_token", hashlib.sha256((vs_name + "|1.0.0").encode()).hexdigest()[:32]),
+            ("effective_from", stamp), ("effective_to", None),
+            ("status_concept_id", CONCEPT_ACTIVE),
+            ("recorded_at", stamp), ("recorded_by_user_id", SEED_USER_ID)])])
+        upsert_rows(doc45, "boot", "dynamic_enum_options", options)
+        binds = [OrderedDict([
+            ("id", stable_uuid("SALUD", PATCH_M7, "boot", cat["module"],
+                               "system_context.dynamic_enum_bindings", vs_name,
+                               schema + "." + entity, col)),
+            ("dynamic_enum_definition_id", ed_id),
+            ("target_schema_name", schema), ("target_entity_name", entity),
+            ("target_field_name", col), ("system_context_id", None),
+            ("required", True), ("fallback_concept_id", None),
+            ("validation_mode_concept_id", CONCEPT_ACTIVE),
+            ("status_concept_id", CONCEPT_ACTIVE),
+            ("created_at", stamp), ("updated_at", stamp2), *who])
+            for schema, entity, col in cat["bindings"]]
+        stats["bindings"] += upsert_rows(doc45, "boot", "dynamic_enum_bindings", binds)
+    stats["paises"] = phase_iso_countries(doc03)
+    return stats
+
+
+def phase_iso_countries(doc03: dict) -> int:
+    """Los 249 países de ISO 3166-1 como miembros de VS_COUNTRY (antes sólo tenía BOLIVIA).
+
+    El código del concepto es el alpha-2 y la etiqueta el nombre en castellano (CLDR); el
+    nombre corto ISO en inglés y los códigos alpha-3 y numérico van en `definition`. Bolivia
+    NO se vuelve a crear: ya es el concepto `BOLIVIA` (`JURISDICTION_CONCEPT_ID`), el mismo
+    que usan las 15 columnas `country_concept_id`, y duplicarlo dejaría dos conceptos para
+    un país. Los conceptos nacen en su propia versión del sistema SALUD_CORE para que los
+    alpha-2 (`ES`, `PT`, `EN`…) no choquen con `uq_catalog_concepts_version_code`.
+    """
+    data = json.loads(ISO_3166_FILE.read_text(encoding="utf-8"))
+    boot = doc03["boot"]["records"]
+    vs = next((v for v in boot["value_sets"] if v["internal_code"] == "VS_COUNTRY"), None)
+    if vs is None:
+        sys.exit("VS_COUNTRY no está en el paquete (03_terminology)")
+    versions = [v for v in boot["value_set_versions"] if v["value_set_id"] == vs["id"]]
+    vsv = next((v for v in versions if v.get("is_default")), versions[0])
+    ordinals = [m["ordinal"] for m in boot["value_set_members"]
+                if m["value_set_version_id"] == vsv["id"]]
+    # Los ordinales ya sembrados de las 249 filas son estables: base = el máximo SIN contar
+    # los que esta misma fase agregó, o cada corrida los movería.
+    propios = {stable_uuid("SALUD", PATCH_M7, "boot", "03", "terminology.value_set_members",
+                           "vs_country", c["alpha2"]) for c in data["countries"]}
+    base_ordinal = max((m["ordinal"] for m in boot["value_set_members"]
+                        if m["value_set_version_id"] == vsv["id"] and m["id"] not in propios),
+                       default=0)
+    del ordinals
+
+    csv_id = stable_uuid("SALUD", PATCH_M7, "boot", "03",
+                         "terminology.code_system_versions", "vs_country_iso3166")
+    t0 = det_time(BOOT_BASE, "vs_country_iso3166")
+    upsert_rows(doc03, "boot", "code_system_versions", [OrderedDict([
+        ("id", csv_id), ("code_system_id", CODE_SYSTEM_ID),
+        ("version", "1.0.0-vs_country-iso3166-1"), ("published_at", iso(t0)),
+        ("valid_from", iso(t0)), ("valid_to", None),
+        ("checksum", hashlib.sha256("|".join(
+            c["alpha2"] for c in data["countries"]).encode()).hexdigest()),
+        ("is_default", False), ("state_concept_id", CONCEPT_ACTIVE),
+        ("created_at", iso(t0)), ("updated_at", iso(t0 + timedelta(minutes=20))),
+        ("created_by_user_id", SEED_USER_ID), ("updated_by_user_id", SEED_USER_ID),
+        ("row_version", 1)])])
+
+    concepts, designations, members = [], [], []
+    paises = sorted((c for c in data["countries"] if c["alpha2"] != "BO"),
+                    key=lambda c: _sort_key_es(c["name_es"]))
+    who = [("created_by_user_id", SEED_USER_ID), ("updated_by_user_id", SEED_USER_ID),
+           ("row_version", 1)]
+    for i, c in enumerate(paises, start=1):
+        code = c["alpha2"]
+        cid = stable_uuid("SALUD", PATCH_M7, "boot", "03",
+                          "terminology.catalog_concepts", "vs_country", code)
+        ct = det_time(BOOT_BASE, "vs_country", code)
+        cs, cs2 = iso(ct), iso(ct + timedelta(minutes=20))
+        concepts.append(OrderedDict([
+            ("id", cid), ("code_system_version_id", csv_id), ("code", code),
+            ("display", c["name_es"]),
+            ("definition", "ISO 3166-1: alpha-2 {} · alpha-3 {} · numérico {}. Nombre ISO: {}."
+             .format(code, c["alpha3"], c["numeric"], c["name_en"])),
+            ("abstract", False), ("selectable", True),
+            ("valid_from", cs), ("valid_to", None), ("replaced_by_concept_id", None),
+            ("state_concept_id", CONCEPT_ACTIVE),
+            ("created_at", cs), ("updated_at", cs2), *who]))
+        designations.append(OrderedDict([
+            ("id", stable_uuid("SALUD", PATCH_M7, "boot", "03",
+                               "terminology.concept_designations", "vs_country", code)),
+            ("concept_id", cid), ("language_concept_id", LANGUAGE_CONCEPT_ID),
+            ("designation_type_concept_id", DESIGNATION_TYPE_CONCEPT_ID),
+            ("value", c["name_es"]), ("preferred", True),
+            ("created_at", cs), ("updated_at", cs2), *who]))
+        members.append(OrderedDict([
+            ("id", stable_uuid("SALUD", PATCH_M7, "boot", "03",
+                               "terminology.value_set_members", "vs_country", code)),
+            ("value_set_version_id", vsv["id"]), ("concept_id", cid),
+            ("included", True), ("ordinal", base_ordinal + i),
+            ("created_at", cs), ("updated_at", cs2), *who]))
+    upsert_rows(doc03, "boot", "catalog_concepts", concepts)
+    upsert_rows(doc03, "boot", "concept_designations", designations)
+    return upsert_rows(doc03, "boot", "value_set_members", members)
+
+
 def main() -> None:
     try:
         sys.stdout.reconfigure(encoding="utf-8")
@@ -3894,6 +4254,11 @@ def main() -> None:
         print("[1] value sets  · {} value sets · {} conceptos · {} miembros · "
               "{} enums dinámicos · {} bindings".format(
                   s["value_sets"], s["conceptos"], s["miembros"], s["enums"], s["bindings"]))
+    if run("valuesets"):
+        s = phase_m7_catalogs(docs)
+        print("[1c] catálogos M7 · {} value sets · {} miembros · {} enums · {} bindings · "
+              "{} países ISO 3166-1".format(s["value_sets"], s["miembros"], s["enums"],
+                                             s["bindings"], s["paises"]))
     if args.only in (None, "tables", "backend"):
         s = phase_backend_bridge(docs)
         print("[1b] puente backend · {} filas espejadas ({} conceptos)".format(
@@ -3923,7 +4288,7 @@ def main() -> None:
             print("      SIN DESTINO {:<50} {:>4}".format(k, v))
         s = phase_coverage(docs, ddl, fks, value_sets, uniques)
         vacias = empty_tables(docs, ddl)
-        sin_declarar = [t for t in vacias if t not in INTENTIONALLY_EMPTY]
+        sin_declarar = [t for t in vacias if not is_intentionally_empty(t)]
         print("[2c] cobertura · {} filas sembradas · {} tablas vacías ({} declaradas, "
               "{} SIN DECLARAR)".format(sum(s.values()), len(vacias),
                                         len(vacias) - len(sin_declarar), len(sin_declarar)))

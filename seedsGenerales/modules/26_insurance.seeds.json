@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "Reconciles insurer companies, brokers, patients, healthcare infrastructure, practitioners, diagnostic units and pharmacies without collapsing them into one generic actor. Each relationship is temporal, auditable and scoped.",
-    "seed_revision": "2.5.3-v4.1.4"
+    "seed_revision": "2.6.0-v4.2.30"
   },
   "environment_policy": {
     "boot": {
