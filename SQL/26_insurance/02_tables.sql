@@ -341,6 +341,8 @@ CREATE TABLE IF NOT EXISTS "insurance"."prior_authorization_determinations" (
     "approved_quantity" numeric,
     "approved_amount" numeric,
     "denial_reason_concept_id" uuid,
+    "policy_clause_reference" varchar,
+    "denial_rationale" text,
     "valid_from" date,
     "valid_to" date,
     "supporting_file_id" uuid,

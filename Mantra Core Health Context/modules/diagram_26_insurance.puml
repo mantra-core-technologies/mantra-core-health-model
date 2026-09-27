@@ -406,6 +406,8 @@ entity prior_authorization_determinations <<IMMUTABLE>> {
     approved_quantity : numeric
     approved_amount : numeric
     denial_reason_concept_id : uuid <<FK>>
+    policy_clause_reference : varchar
+    denial_rationale : text
     valid_from : date
     valid_to : date
     supporting_file_id : uuid <<FK>>
