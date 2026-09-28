@@ -141,6 +141,24 @@ DECLARE
   v_huerfanas   integer;
 BEGIN
   SELECT count(*) INTO v_total     FROM insurance.insurance_carriers;
+
+  -- Base recién creada: no hay NINGUNA aseguradora, así que no hay nada que
+  -- reconciliar ni verificar. `postgres-init` aplica este patch ANTES de que
+  -- `api-migrate` siembre las 17 canónicas, y el nombre del archivo no dice
+  -- `backfill`, así que no se omite en una base nueva. Las secciones A y B ya
+  -- no tocaron nada (los pares salen vacíos) y la API siembra después con los
+  -- mismos códigos que el paquete, de modo que el duplicado no puede nacer.
+  -- Corregido 2026-09-28: la aserción de abajo exigía 17 canónicas en
+  -- cualquier base y reventaba el despliegue desde cero con «se esperaban 17
+  -- aseguradoras canónicas y hay 0» (salida 3; reproducido en el servidor de
+  -- test y contra un volcado --schema-only de su base). La salida es SÓLO para
+  -- `v_total = 0`: una base con filas viejas (`ALIANZA_VIDA`…) y 0 canónicas
+  -- sigue reventando, porque ahí la API nunca sembró y repuntar es imposible.
+  IF v_total = 0 THEN
+    RAISE NOTICE 'v4.2.21: base sin aseguradoras (despliegue desde cero) — nada que reconciliar; las canónicas las siembra la API después';
+    RETURN;
+  END IF;
+
   SELECT count(*) INTO v_canonicas FROM insurance.insurance_carriers
    WHERE carrier_code ~ '^BO_ASEG_';
   SELECT count(*) INTO v_sobrantes FROM insurance.insurance_carriers
