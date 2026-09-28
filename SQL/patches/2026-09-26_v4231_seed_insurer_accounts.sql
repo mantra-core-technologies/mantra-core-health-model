@@ -6,7 +6,7 @@ BEGIN;
 
 -- Cuenta para BO_ASEG_ALIANZA_VIDA_S_A: acceso@alianza.com
 INSERT INTO iam.users (id, status_concept_id, display_name, time_zone, email_verified, phone_verified, created_at, updated_at, row_version)
-VALUES ('2ca8c8aa-b379-573a-be22-78f3a4152fe4', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Operador Alianza Vida S.A.', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
+VALUES ('2ca8c8aa-b379-573a-be22-78f3a4152fe4', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Representante Legal - Alianza Vida S.A.', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
 ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, status_concept_id = EXCLUDED.status_concept_id;
 
 INSERT INTO iam.authentication_credentials (id, user_id, method_concept_id, external_subject, secret_hash, hash_algorithm_concept_id, state_concept_id, created_at, updated_at, row_version)
@@ -25,7 +25,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Cuenta para BO_ASEG_ALIANZA_VIDA_S_A: acceso@alianzavida.com
 INSERT INTO iam.users (id, status_concept_id, display_name, time_zone, email_verified, phone_verified, created_at, updated_at, row_version)
-VALUES ('64aa05fa-beb5-55db-83db-864616b162a1', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Operador Alianza Vida S.A.', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
+VALUES ('64aa05fa-beb5-55db-83db-864616b162a1', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Representante Legal - Alianza Vida S.A.', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
 ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, status_concept_id = EXCLUDED.status_concept_id;
 
 INSERT INTO iam.authentication_credentials (id, user_id, method_concept_id, external_subject, secret_hash, hash_algorithm_concept_id, state_concept_id, created_at, updated_at, row_version)
@@ -44,7 +44,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Cuenta para BO_ASEG_ALIANZA_SEGUROS_S_A: acceso@alianzagenerales.com
 INSERT INTO iam.users (id, status_concept_id, display_name, time_zone, email_verified, phone_verified, created_at, updated_at, row_version)
-VALUES ('5f0c78c8-4b09-5017-bf83-59ff3835eab4', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Operador Alianza Seguros Patrimoniales', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
+VALUES ('5f0c78c8-4b09-5017-bf83-59ff3835eab4', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Representante Legal - Alianza Seguros Patrimoniales', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
 ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, status_concept_id = EXCLUDED.status_concept_id;
 
 INSERT INTO iam.authentication_credentials (id, user_id, method_concept_id, external_subject, secret_hash, hash_algorithm_concept_id, state_concept_id, created_at, updated_at, row_version)
@@ -63,7 +63,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Cuenta para BO_ASEG_BISA_SEGUROS_Y_REASEGUROS_S_A: acceso@bisa.com
 INSERT INTO iam.users (id, status_concept_id, display_name, time_zone, email_verified, phone_verified, created_at, updated_at, row_version)
-VALUES ('b02e26fc-e6d2-5388-a137-a672286c8bf8', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Operador BISA Seguros', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
+VALUES ('b02e26fc-e6d2-5388-a137-a672286c8bf8', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Representante Legal - BISA Seguros', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
 ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, status_concept_id = EXCLUDED.status_concept_id;
 
 INSERT INTO iam.authentication_credentials (id, user_id, method_concept_id, external_subject, secret_hash, hash_algorithm_concept_id, state_concept_id, created_at, updated_at, row_version)
@@ -82,7 +82,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Cuenta para BO_ASEG_BISA_SEGUROS_Y_REASEGUROS_S_A: acceso@bisaseguros.com
 INSERT INTO iam.users (id, status_concept_id, display_name, time_zone, email_verified, phone_verified, created_at, updated_at, row_version)
-VALUES ('51322efc-cb9c-5e57-9065-a918d9b9cb60', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Operador BISA Seguros', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
+VALUES ('51322efc-cb9c-5e57-9065-a918d9b9cb60', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Representante Legal - BISA Seguros', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
 ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, status_concept_id = EXCLUDED.status_concept_id;
 
 INSERT INTO iam.authentication_credentials (id, user_id, method_concept_id, external_subject, secret_hash, hash_algorithm_concept_id, state_concept_id, created_at, updated_at, row_version)
@@ -101,7 +101,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Cuenta para BO_ASEG_CREDISEGURO_S_A_SEGUROS_PERSONALES: acceso@crediseguro.com
 INSERT INTO iam.users (id, status_concept_id, display_name, time_zone, email_verified, phone_verified, created_at, updated_at, row_version)
-VALUES ('01dac2c0-dff7-5c85-9131-d01e60e293df', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Operador Crediseguro Personales', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
+VALUES ('01dac2c0-dff7-5c85-9131-d01e60e293df', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Representante Legal - Crediseguro Personales', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
 ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, status_concept_id = EXCLUDED.status_concept_id;
 
 INSERT INTO iam.authentication_credentials (id, user_id, method_concept_id, external_subject, secret_hash, hash_algorithm_concept_id, state_concept_id, created_at, updated_at, row_version)
@@ -120,7 +120,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Cuenta para BO_ASEG_CREDISEGURO_S_A_SEGUROS_GENERALES: acceso@credisegurogenerales.com
 INSERT INTO iam.users (id, status_concept_id, display_name, time_zone, email_verified, phone_verified, created_at, updated_at, row_version)
-VALUES ('2c57e8dd-7909-5b60-90a7-fa982740290c', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Operador Crediseguro Generales', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
+VALUES ('2c57e8dd-7909-5b60-90a7-fa982740290c', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Representante Legal - Crediseguro Generales', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
 ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, status_concept_id = EXCLUDED.status_concept_id;
 
 INSERT INTO iam.authentication_credentials (id, user_id, method_concept_id, external_subject, secret_hash, hash_algorithm_concept_id, state_concept_id, created_at, updated_at, row_version)
@@ -139,7 +139,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Cuenta para BO_ASEG_FORTALEZA_SEGUROS_Y_REASEGUROS_S_A: acceso@fortaleza.com
 INSERT INTO iam.users (id, status_concept_id, display_name, time_zone, email_verified, phone_verified, created_at, updated_at, row_version)
-VALUES ('7930f84f-717a-59a5-a7b8-973a63b6f210', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Operador Fortaleza Seguros', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
+VALUES ('7930f84f-717a-59a5-a7b8-973a63b6f210', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Representante Legal - Fortaleza Seguros', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
 ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, status_concept_id = EXCLUDED.status_concept_id;
 
 INSERT INTO iam.authentication_credentials (id, user_id, method_concept_id, external_subject, secret_hash, hash_algorithm_concept_id, state_concept_id, created_at, updated_at, row_version)
@@ -158,7 +158,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Cuenta para BO_ASEG_FORTALEZA_SEGUROS_Y_REASEGUROS_S_A: acceso@segurosfortaleza.com
 INSERT INTO iam.users (id, status_concept_id, display_name, time_zone, email_verified, phone_verified, created_at, updated_at, row_version)
-VALUES ('d904e373-a03f-5b18-b9f5-e399a5b3b380', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Operador Fortaleza Seguros', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
+VALUES ('d904e373-a03f-5b18-b9f5-e399a5b3b380', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Representante Legal - Fortaleza Seguros', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
 ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, status_concept_id = EXCLUDED.status_concept_id;
 
 INSERT INTO iam.authentication_credentials (id, user_id, method_concept_id, external_subject, secret_hash, hash_algorithm_concept_id, state_concept_id, created_at, updated_at, row_version)
@@ -177,7 +177,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Cuenta para BO_ASEG_LA_BOLIVIANA_CIACRUZ_SEGUROS_PERSONALES_S_A: acceso@ciacruz.com
 INSERT INTO iam.users (id, status_concept_id, display_name, time_zone, email_verified, phone_verified, created_at, updated_at, row_version)
-VALUES ('e8413b56-9a53-505d-ba1b-0160f93ab326', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Operador La Boliviana Ciacruz Personales', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
+VALUES ('e8413b56-9a53-505d-ba1b-0160f93ab326', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Representante Legal - La Boliviana Ciacruz Personales', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
 ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, status_concept_id = EXCLUDED.status_concept_id;
 
 INSERT INTO iam.authentication_credentials (id, user_id, method_concept_id, external_subject, secret_hash, hash_algorithm_concept_id, state_concept_id, created_at, updated_at, row_version)
@@ -196,7 +196,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Cuenta para BO_ASEG_LA_BOLIVIANA_CIACRUZ_SEGUROS_PERSONALES_S_A: acceso@lbc.bo
 INSERT INTO iam.users (id, status_concept_id, display_name, time_zone, email_verified, phone_verified, created_at, updated_at, row_version)
-VALUES ('816074ed-9d6e-5533-8c90-be9620c75fa5', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Operador La Boliviana Ciacruz Personales', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
+VALUES ('816074ed-9d6e-5533-8c90-be9620c75fa5', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Representante Legal - La Boliviana Ciacruz Personales', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
 ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, status_concept_id = EXCLUDED.status_concept_id;
 
 INSERT INTO iam.authentication_credentials (id, user_id, method_concept_id, external_subject, secret_hash, hash_algorithm_concept_id, state_concept_id, created_at, updated_at, row_version)
@@ -215,7 +215,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Cuenta para BO_ASEG_LA_BOLIVIANA_CIACRUZ_DE_SEGUROS_Y_REASEGUROS: acceso@ciacruzgenerales.com
 INSERT INTO iam.users (id, status_concept_id, display_name, time_zone, email_verified, phone_verified, created_at, updated_at, row_version)
-VALUES ('3a4f004f-c6f9-584a-9ad3-ff9a65d0c130', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Operador La Boliviana Ciacruz Generales', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
+VALUES ('3a4f004f-c6f9-584a-9ad3-ff9a65d0c130', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Representante Legal - La Boliviana Ciacruz Generales', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
 ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, status_concept_id = EXCLUDED.status_concept_id;
 
 INSERT INTO iam.authentication_credentials (id, user_id, method_concept_id, external_subject, secret_hash, hash_algorithm_concept_id, state_concept_id, created_at, updated_at, row_version)
@@ -234,7 +234,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Cuenta para BO_ASEG_LA_VITALICIA_SEGUROS_Y_REASEGUROS_DE_VIDA_S_: acceso@lavitalicia.com
 INSERT INTO iam.users (id, status_concept_id, display_name, time_zone, email_verified, phone_verified, created_at, updated_at, row_version)
-VALUES ('dae75ab0-5db1-58ed-a519-2b8a7ea8152d', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Operador La Vitalicia Seguros', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
+VALUES ('dae75ab0-5db1-58ed-a519-2b8a7ea8152d', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Representante Legal - La Vitalicia Seguros', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
 ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, status_concept_id = EXCLUDED.status_concept_id;
 
 INSERT INTO iam.authentication_credentials (id, user_id, method_concept_id, external_subject, secret_hash, hash_algorithm_concept_id, state_concept_id, created_at, updated_at, row_version)
@@ -253,7 +253,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Cuenta para BO_ASEG_MERCANTIL_SANTA_CRUZ_SEGUROS_Y_REASEGUROS_GE: acceso@mercantil.com
 INSERT INTO iam.users (id, status_concept_id, display_name, time_zone, email_verified, phone_verified, created_at, updated_at, row_version)
-VALUES ('3031eb53-d8c0-546f-82c5-332d1d33e831', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Operador Mercantil Santa Cruz Seguros', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
+VALUES ('3031eb53-d8c0-546f-82c5-332d1d33e831', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Representante Legal - Mercantil Santa Cruz Seguros', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
 ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, status_concept_id = EXCLUDED.status_concept_id;
 
 INSERT INTO iam.authentication_credentials (id, user_id, method_concept_id, external_subject, secret_hash, hash_algorithm_concept_id, state_concept_id, created_at, updated_at, row_version)
@@ -272,7 +272,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Cuenta para BO_ASEG_MERCANTIL_SANTA_CRUZ_SEGUROS_Y_REASEGUROS_GE: acceso@msc.com
 INSERT INTO iam.users (id, status_concept_id, display_name, time_zone, email_verified, phone_verified, created_at, updated_at, row_version)
-VALUES ('f1e62a3e-f4bf-50c3-87de-08be812d4dd3', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Operador Mercantil Santa Cruz Seguros', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
+VALUES ('f1e62a3e-f4bf-50c3-87de-08be812d4dd3', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Representante Legal - Mercantil Santa Cruz Seguros', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
 ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, status_concept_id = EXCLUDED.status_concept_id;
 
 INSERT INTO iam.authentication_credentials (id, user_id, method_concept_id, external_subject, secret_hash, hash_algorithm_concept_id, state_concept_id, created_at, updated_at, row_version)
@@ -291,7 +291,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Cuenta para BO_ASEG_NACIONAL_SEGUROS_VIDA_Y_SALUD_S_A: acceso@nacional.com
 INSERT INTO iam.users (id, status_concept_id, display_name, time_zone, email_verified, phone_verified, created_at, updated_at, row_version)
-VALUES ('1327eb3e-8d5c-525b-8713-6c782bb67344', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Operador Nacional Seguros Vida y Salud', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
+VALUES ('1327eb3e-8d5c-525b-8713-6c782bb67344', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Representante Legal - Nacional Seguros Vida y Salud', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
 ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, status_concept_id = EXCLUDED.status_concept_id;
 
 INSERT INTO iam.authentication_credentials (id, user_id, method_concept_id, external_subject, secret_hash, hash_algorithm_concept_id, state_concept_id, created_at, updated_at, row_version)
@@ -310,7 +310,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Cuenta para BO_ASEG_NACIONAL_SEGUROS_VIDA_Y_SALUD_S_A: acceso@nacionalsalud.com
 INSERT INTO iam.users (id, status_concept_id, display_name, time_zone, email_verified, phone_verified, created_at, updated_at, row_version)
-VALUES ('0127ce63-611c-517b-b35a-324a9bf90d3a', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Operador Nacional Seguros Vida y Salud', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
+VALUES ('0127ce63-611c-517b-b35a-324a9bf90d3a', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Representante Legal - Nacional Seguros Vida y Salud', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
 ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, status_concept_id = EXCLUDED.status_concept_id;
 
 INSERT INTO iam.authentication_credentials (id, user_id, method_concept_id, external_subject, secret_hash, hash_algorithm_concept_id, state_concept_id, created_at, updated_at, row_version)
@@ -329,7 +329,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Cuenta para BO_ASEG_NACIONAL_SEGUROS_PATRIMONIALES_Y_FIANZAS_S_A: acceso@nacionalpatrimoniales.com
 INSERT INTO iam.users (id, status_concept_id, display_name, time_zone, email_verified, phone_verified, created_at, updated_at, row_version)
-VALUES ('9fbbdeb0-323b-5173-8294-eae7b57b974b', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Operador Nacional Seguros Patrimoniales', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
+VALUES ('9fbbdeb0-323b-5173-8294-eae7b57b974b', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Representante Legal - Nacional Seguros Patrimoniales', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
 ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, status_concept_id = EXCLUDED.status_concept_id;
 
 INSERT INTO iam.authentication_credentials (id, user_id, method_concept_id, external_subject, secret_hash, hash_algorithm_concept_id, state_concept_id, created_at, updated_at, row_version)
@@ -348,7 +348,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Cuenta para BO_ASEG_SANTA_CRUZ_VIDA_Y_SALUD_S_A: acceso@santacruz.com
 INSERT INTO iam.users (id, status_concept_id, display_name, time_zone, email_verified, phone_verified, created_at, updated_at, row_version)
-VALUES ('b55bcbcc-43dc-5f4c-a3ce-d081dcfd26bd', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Operador Santa Cruz Vida y Salud', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
+VALUES ('b55bcbcc-43dc-5f4c-a3ce-d081dcfd26bd', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Representante Legal - Santa Cruz Vida y Salud', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
 ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, status_concept_id = EXCLUDED.status_concept_id;
 
 INSERT INTO iam.authentication_credentials (id, user_id, method_concept_id, external_subject, secret_hash, hash_algorithm_concept_id, state_concept_id, created_at, updated_at, row_version)
@@ -367,7 +367,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Cuenta para BO_ASEG_SANTA_CRUZ_VIDA_Y_SALUD_S_A: consultasSCVS@santacruzfg.com
 INSERT INTO iam.users (id, status_concept_id, display_name, time_zone, email_verified, phone_verified, created_at, updated_at, row_version)
-VALUES ('eceb6865-be41-50ee-b6cd-e0df13ba33fa', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Operador Santa Cruz Vida y Salud', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
+VALUES ('eceb6865-be41-50ee-b6cd-e0df13ba33fa', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Representante Legal - Santa Cruz Vida y Salud', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
 ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, status_concept_id = EXCLUDED.status_concept_id;
 
 INSERT INTO iam.authentication_credentials (id, user_id, method_concept_id, external_subject, secret_hash, hash_algorithm_concept_id, state_concept_id, created_at, updated_at, row_version)
@@ -386,7 +386,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Cuenta para BO_ASEG_SEGUROS_ILLIMANI_S_A: acceso@illimani.com
 INSERT INTO iam.users (id, status_concept_id, display_name, time_zone, email_verified, phone_verified, created_at, updated_at, row_version)
-VALUES ('11203252-99d5-5eed-b998-3067cc6cb417', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Operador Seguros Illimani', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
+VALUES ('11203252-99d5-5eed-b998-3067cc6cb417', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Representante Legal - Seguros Illimani', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
 ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, status_concept_id = EXCLUDED.status_concept_id;
 
 INSERT INTO iam.authentication_credentials (id, user_id, method_concept_id, external_subject, secret_hash, hash_algorithm_concept_id, state_concept_id, created_at, updated_at, row_version)
@@ -405,7 +405,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Cuenta para BO_ASEG_SEGUROS_Y_REASEGUROS_CREDINFORM_INTERNATIONA: acceso@credinform.com
 INSERT INTO iam.users (id, status_concept_id, display_name, time_zone, email_verified, phone_verified, created_at, updated_at, row_version)
-VALUES ('fd9930dc-6ae6-5722-8cee-322c9795dd94', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Operador Credinform International', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
+VALUES ('fd9930dc-6ae6-5722-8cee-322c9795dd94', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Representante Legal - Credinform International', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
 ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, status_concept_id = EXCLUDED.status_concept_id;
 
 INSERT INTO iam.authentication_credentials (id, user_id, method_concept_id, external_subject, secret_hash, hash_algorithm_concept_id, state_concept_id, created_at, updated_at, row_version)
@@ -424,7 +424,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Cuenta para BO_ASEG_UNIBIENES_S_A: acceso@unibienes.com
 INSERT INTO iam.users (id, status_concept_id, display_name, time_zone, email_verified, phone_verified, created_at, updated_at, row_version)
-VALUES ('1e289549-c3ea-581f-b234-cc55ee71c9ba', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Operador UNIBIENES Seguros', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
+VALUES ('1e289549-c3ea-581f-b234-cc55ee71c9ba', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Representante Legal - UNIBIENES Seguros', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
 ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, status_concept_id = EXCLUDED.status_concept_id;
 
 INSERT INTO iam.authentication_credentials (id, user_id, method_concept_id, external_subject, secret_hash, hash_algorithm_concept_id, state_concept_id, created_at, updated_at, row_version)
@@ -443,7 +443,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Cuenta para BO_ASEG_UNIVIDA_S_A: acceso@univida.com
 INSERT INTO iam.users (id, status_concept_id, display_name, time_zone, email_verified, phone_verified, created_at, updated_at, row_version)
-VALUES ('47d37221-bb88-543c-bfb8-8efd43561f1d', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Operador UNIVIDA Seguros', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
+VALUES ('47d37221-bb88-543c-bfb8-8efd43561f1d', '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1', 'Representante Legal - UNIVIDA Seguros', 'America/La_Paz', TRUE, FALSE, NOW(), NOW(), 1)
 ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, status_concept_id = EXCLUDED.status_concept_id;
 
 INSERT INTO iam.authentication_credentials (id, user_id, method_concept_id, external_subject, secret_hash, hash_algorithm_concept_id, state_concept_id, created_at, updated_at, row_version)
