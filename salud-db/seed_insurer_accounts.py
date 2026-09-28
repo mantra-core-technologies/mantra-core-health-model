@@ -59,87 +59,87 @@ CARRIER_ACCOUNTS = {
     "BO_ASEG_ALIANZA_VIDA_S_A": {
         "email": "acceso@alianza.com",
         "aliases": ["acceso@alianzavida.com"],
-        "display_name": "Operador Alianza Vida S.A.",
+        "display_name": "Representante Legal - Alianza Vida S.A.",
     },
     "BO_ASEG_ALIANZA_SEGUROS_S_A": {
         "email": "acceso@alianzagenerales.com",
         "aliases": [],
-        "display_name": "Operador Alianza Seguros Patrimoniales",
+        "display_name": "Representante Legal - Alianza Seguros Patrimoniales",
     },
     "BO_ASEG_BISA_SEGUROS_Y_REASEGUROS_S_A": {
         "email": "acceso@bisa.com",
         "aliases": ["acceso@bisaseguros.com"],
-        "display_name": "Operador BISA Seguros",
+        "display_name": "Representante Legal - BISA Seguros",
     },
     "BO_ASEG_CREDISEGURO_S_A_SEGUROS_PERSONALES": {
         "email": "acceso@crediseguro.com",
         "aliases": [],
-        "display_name": "Operador Crediseguro Personales",
+        "display_name": "Representante Legal - Crediseguro Personales",
     },
     "BO_ASEG_CREDISEGURO_S_A_SEGUROS_GENERALES": {
         "email": "acceso@credisegurogenerales.com",
         "aliases": [],
-        "display_name": "Operador Crediseguro Generales",
+        "display_name": "Representante Legal - Crediseguro Generales",
     },
     "BO_ASEG_FORTALEZA_SEGUROS_Y_REASEGUROS_S_A": {
         "email": "acceso@fortaleza.com",
         "aliases": ["acceso@segurosfortaleza.com"],
-        "display_name": "Operador Fortaleza Seguros",
+        "display_name": "Representante Legal - Fortaleza Seguros",
     },
     "BO_ASEG_LA_BOLIVIANA_CIACRUZ_SEGUROS_PERSONALES_S_A": {
         "email": "acceso@ciacruz.com",
         "aliases": ["acceso@lbc.bo"],
-        "display_name": "Operador La Boliviana Ciacruz Personales",
+        "display_name": "Representante Legal - La Boliviana Ciacruz Personales",
     },
     "BO_ASEG_LA_BOLIVIANA_CIACRUZ_DE_SEGUROS_Y_REASEGUROS": {
         "email": "acceso@ciacruzgenerales.com",
         "aliases": [],
-        "display_name": "Operador La Boliviana Ciacruz Generales",
+        "display_name": "Representante Legal - La Boliviana Ciacruz Generales",
     },
     "BO_ASEG_LA_VITALICIA_SEGUROS_Y_REASEGUROS_DE_VIDA_S_": {
         "email": "acceso@lavitalicia.com",
         "aliases": [],
-        "display_name": "Operador La Vitalicia Seguros",
+        "display_name": "Representante Legal - La Vitalicia Seguros",
     },
     "BO_ASEG_MERCANTIL_SANTA_CRUZ_SEGUROS_Y_REASEGUROS_GE": {
         "email": "acceso@mercantil.com",
         "aliases": ["acceso@msc.com"],
-        "display_name": "Operador Mercantil Santa Cruz Seguros",
+        "display_name": "Representante Legal - Mercantil Santa Cruz Seguros",
     },
     "BO_ASEG_NACIONAL_SEGUROS_VIDA_Y_SALUD_S_A": {
         "email": "acceso@nacional.com",
         "aliases": ["acceso@nacionalsalud.com"],
-        "display_name": "Operador Nacional Seguros Vida y Salud",
+        "display_name": "Representante Legal - Nacional Seguros Vida y Salud",
     },
     "BO_ASEG_NACIONAL_SEGUROS_PATRIMONIALES_Y_FIANZAS_S_A": {
         "email": "acceso@nacionalpatrimoniales.com",
         "aliases": [],
-        "display_name": "Operador Nacional Seguros Patrimoniales",
+        "display_name": "Representante Legal - Nacional Seguros Patrimoniales",
     },
     "BO_ASEG_SANTA_CRUZ_VIDA_Y_SALUD_S_A": {
         "email": "acceso@santacruz.com",
         "aliases": ["consultasSCVS@santacruzfg.com"],
-        "display_name": "Operador Santa Cruz Vida y Salud",
+        "display_name": "Representante Legal - Santa Cruz Vida y Salud",
     },
     "BO_ASEG_SEGUROS_ILLIMANI_S_A": {
         "email": "acceso@illimani.com",
         "aliases": [],
-        "display_name": "Operador Seguros Illimani",
+        "display_name": "Representante Legal - Seguros Illimani",
     },
     "BO_ASEG_SEGUROS_Y_REASEGUROS_CREDINFORM_INTERNATIONA": {
         "email": "acceso@credinform.com",
         "aliases": [],
-        "display_name": "Operador Credinform International",
+        "display_name": "Representante Legal - Credinform International",
     },
     "BO_ASEG_UNIBIENES_S_A": {
         "email": "acceso@unibienes.com",
         "aliases": [],
-        "display_name": "Operador UNIBIENES Seguros",
+        "display_name": "Representante Legal - UNIBIENES Seguros",
     },
     "BO_ASEG_UNIVIDA_S_A": {
         "email": "acceso@univida.com",
         "aliases": [],
-        "display_name": "Operador UNIVIDA Seguros",
+        "display_name": "Representante Legal - UNIVIDA Seguros",
     },
     "BO_PUB_BANCA_PRIVADA": {
         "email": "acceso@csbp.com.bo",
@@ -310,7 +310,7 @@ def seed_accounts(dry_run=False, password=DEFAULT_PASSWORD):
                         now, now
                     ))
 
-                    # 3. Insertar iam.user_global_roles (USER)
+                    # 3. Insertar iam.user_global_roles (solo USER, el acceso a aseguradora lo da el tenant)
                     cur.execute("""
                         INSERT INTO iam.user_global_roles (
                             id, user_id, role_concept_id, state_concept_id,
