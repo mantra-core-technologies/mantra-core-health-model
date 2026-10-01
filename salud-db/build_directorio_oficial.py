@@ -142,12 +142,14 @@ class Padron:
     def __init__(self) -> None:
         data = json.loads((ROOT / "salud-db" / "data" / "bo-territorio.json").read_text(encoding="utf-8"))
         self.por_dep: dict[str, dict[str, str]] = {}
+        self.nombre: dict[str, str] = {}
         for dep in data:
             sigla = DEPARTAMENTOS[fold(dep["departamento"])]
             for prov in dep["provincias"]:
                 for mun in prov["municipios"]:
                     # Mismo código que `municipios_display()` de gen_seeds.py.
                     self.por_dep.setdefault(sigla, {})[slug(mun)] = f"{sigla}-{slugify(mun).lower()}"
+                    self.nombre[f"{sigla}-{slugify(mun).lower()}"] = mun
 
     SIGLAS_EN_PARENTESIS = {"SCZ", "TJA", "TRJ", "BEN", "CBB", "ORR", "PTS", "LPZ", "CHQ", "PND", "TJ", "LP", "SC", "CB"}
 
@@ -467,6 +469,9 @@ def main() -> None:
     oficiales = {(e["department"], fold(e["name"])) for e in farmacias + establecimientos}
     lugares = leer_overture(archivos["overture"], padron, geo, oficiales, excluidos)
     rues_con_coordenada = coordenadas_para_rues(establecimientos, lugares)
+    for fila in farmacias + establecimientos + lugares:
+        # El nombre del padrón, tal como lo muestra la app (`vs_bo_municipality`).
+        fila["municipalityName"] = padron.nombre.get(fila["municipalityCode"]) if fila["municipalityCode"] else None
 
     OUT.mkdir(parents=True, exist_ok=True)
     viejo = OUT / "lugares-comunitarios.json"

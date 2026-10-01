@@ -3016,8 +3016,13 @@ def build_official_directory(docs, value_sets) -> dict:
                  ("created_by_user_id", SEED_USER_ID),
                  ("updated_by_user_id", SEED_USER_ID), ("row_version", 1)]
 
+    # Los slugs ocupados por OTRAS fichas. Las del propio directorio se excluyen:
+    # en una regeneración ya están en el paquete, y contarlas les agregaría un
+    # «-2» a todas (el generador dejaría de ser idempotente).
+    propias = {new_id("community.public_profiles", r["id"]) for _, r in registros}
     usados = {r.get("slug") for code in docs for sec in ("boot", "mock")
-              for r in docs[code].get(sec, {}).get("records", {}).get("public_profiles", [])}
+              for r in docs[code].get(sec, {}).get("records", {}).get("public_profiles", [])
+              if r.get("id") not in propias}
 
     def slug_unico(nombre: str, municipio: str | None, clave: str) -> str:
         base = slug_de(f"{nombre} {municipio or ''}")[:110]
