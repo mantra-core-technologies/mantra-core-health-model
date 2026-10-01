@@ -53,7 +53,7 @@
       "value_set_members",
       "tenant_catalog_policies"
     ],
-    "record_count": 4451,
+    "record_count": 4458,
     "records": {
       "terminology_sources": [
         {
@@ -31616,6 +31616,83 @@
           "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
           "code": "profiles:JURISDICTION_SEDES_PANDO",
           "display": "SEDES — Servicio Departamental de Salud de Pando",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "d4b76620-22a3-52ae-8e11-ed7315485dbd",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "directory:TENANT_REGISTRY_LISTED",
+          "display": "Tenant listed in official registry",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "dc724a32-7c7b-5077-a1c2-a15031b54836",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "pharmacy:PHARMACY_TYPE_RETAIL",
+          "display": "Retail pharmacy",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "b38cbc26-74b2-5749-923a-6d78ba9f6d67",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "pharmacy:OWNERSHIP_PRIVATE",
+          "display": "Private ownership",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "10ab8db0-2847-52ba-bd75-b2eefd2bbbfd",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "pharmacy:VERIFICATION_PENDING",
+          "display": "Verification pending",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "7e2446c4-6707-5455-8168-87b28bcfd292",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "pharmacy:PHARMACY_ACTIVE",
+          "display": "Pharmacy active",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "19ec0df6-d7ad-5f8b-9029-7af19e04c7e1",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "pharmacy:LICENSE_TYPE_OPERATING",
+          "display": "Operating license",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "25f8508d-c0eb-5c18-8c0d-7fd4268c8b3c",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "pharmacy:VERIFICATION_VERIFIED",
+          "display": "Verification verified",
           "abstract": false,
           "selectable": true,
           "created_at": "2026-08-17T21:45:00Z",
@@ -65792,7 +65869,7 @@
       }
     ],
     "summary": {
-      "record_count": 4451,
+      "record_count": 4458,
       "entity_count": 10,
       "populated_entity_count": 10,
       "scenario_count": null,

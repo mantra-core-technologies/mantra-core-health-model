@@ -1,0 +1,141 @@
+{
+  "generadoPor": "salud-db/build_directorio_oficial.py",
+  "fuentes": {
+    "agemed": {
+      "archivo": "farmacias_nacional.xlsx",
+      "url": "https://www.agemed.gob.bo/archivos_vigilancia/farmacias/farmacias_nacional.xlsx",
+      "actualizacion": "2026-10-01",
+      "sha256": "ff5fdfad88f3d4e125ca2c9b6d9198d90a803862c32f428aa4d37f690a94c369",
+      "licencia": "Información pública del Estado (AGEMED, Ministerio de Salud y Deportes de Bolivia); se cita la fuente."
+    },
+    "rues": {
+      "archivo": "rues_estructura_2026.json",
+      "url": "https://estadisticas.minsalud.gob.bo/Reportes_Dinamicos/Estructura_2026.aspx",
+      "sha256": "1a0b3f7e10959ddbf3414c3fde2c50e0391cf989934231aca96dd7b142efc797",
+      "licencia": "Información pública del Estado (Ministerio de Salud y Deportes / SNIS, Bolivia); se cita la fuente."
+    },
+    "overture": {
+      "archivo": "salud-bolivia-2026-09-23.1.jsonl",
+      "version": "2026-09-23.1",
+      "extraidoCon": "salud-db/extract_overture_salud.py",
+      "sha256": "15af4c969c780d0bc92e11b2129298dc51eb58e84e19af6a18a227849cf5d0d4",
+      "licencia": "CDLA-Permissive-2.0 / Apache-2.0 / CC0-1.0 según sources[].license de cada lugar",
+      "confianzaMinima": 0.6
+    },
+    "limites": {
+      "archivos": [
+        "geoBoundaries-BOL-ADM1_simplified.geojson",
+        "geoBoundaries-BOL-ADM3_simplified.geojson"
+      ],
+      "url": "https://www.geoboundaries.org (gbOpen BOL, de GeoBolivia)",
+      "licencia": "dominio público"
+    }
+  },
+  "farmacias": {
+    "filas": 6977,
+    "porDepartamento": {
+      "be": 297,
+      "cb": 1449,
+      "ch": 551,
+      "lp": 1689,
+      "or": 637,
+      "pa": 134,
+      "pt": 315,
+      "sc": 1306,
+      "tj": 599
+    },
+    "porTipo": {
+      "PHARMACY": 6977
+    },
+    "conCoordenadas": 6603,
+    "municipioCruzado": 6973,
+    "comoSeCruzoElMunicipio": {
+      "nombre": 5895,
+      "prefijo-unico": 46,
+      "coordenadas (nombre)": 138,
+      "coordenadas (alias)": 1,
+      "sufijo-unico": 34,
+      "alias": 859,
+      "sin-cruce": 3,
+      "sin-dato": 1
+    },
+    "municipiosSinCruce": {
+      "ch:REDENCION PAMPA": 1,
+      "pt:None": 1,
+      "pt:RÍO VERDE (QUILA QUILA)": 1,
+      "pt:CATAVI": 1
+    }
+  },
+  "establecimientos": {
+    "filas": 4404,
+    "porDepartamento": {
+      "be": 292,
+      "cb": 656,
+      "ch": 426,
+      "lp": 940,
+      "or": 251,
+      "pa": 87,
+      "pt": 619,
+      "sc": 824,
+      "tj": 309
+    },
+    "porTipo": {
+      "HEALTH_FACILITY": 4404
+    },
+    "conCoordenadas": 0,
+    "municipioCruzado": 4376,
+    "comoSeCruzoElMunicipio": {
+      "sin-cruce": 28,
+      "nombre": 4129,
+      "prefijo-unico": 59,
+      "sufijo-unico": 60,
+      "alias": 128
+    },
+    "municipiosSinCruce": {
+      "be:TIOC-TERRITORIO INDIGENA MULTIETNICO (GIA-TIM)_": 11,
+      "cb:TIOC-TERRITORIO INDIGENA ORIGINARIO CAMPESINO RAQAYPAMPA_": 6,
+      "pt:TIOC-JATUN AYLLU YURA_": 6,
+      "cb:TERRITORIO INDIGENA ORIGINARIO CAMPESINO CHALLA_": 5
+    },
+    "coordenadaTomadaDeOverture": 0
+  },
+  "lugaresOverture": {
+    "filas": 3911,
+    "porDepartamento": {
+      "be": 72,
+      "cb": 858,
+      "ch": 157,
+      "lp": 800,
+      "or": 102,
+      "pa": 27,
+      "pt": 56,
+      "sc": 1661,
+      "tj": 178
+    },
+    "porTipo": {
+      "CLINIC": 1783,
+      "DENTAL": 1758,
+      "LABORATORY": 304,
+      "IMAGING": 66
+    },
+    "conCoordenadas": 3911,
+    "municipioCruzado": 3911,
+    "comoSeCruzoElMunicipio": {
+      "coordenadas (nombre)": 3883,
+      "coordenadas (sufijo-unico)": 4,
+      "coordenadas (prefijo-unico)": 20,
+      "coordenadas (alias)": 4
+    },
+    "municipiosSinCruce": {}
+  },
+  "overtureExcluidos": {
+    "overture con confianza < 0.6": 3177,
+    "ya está en RUES o AGEMED (mismo nombre y departamento)": 135,
+    "overture que no es un servicio de salud (nombre)": 51,
+    "overture fuera de Bolivia por coordenada": 2
+  },
+  "repetidasEnLaFuenteFusionadas": {
+    "agemed": 24
+  },
+  "noUsado": "El CSV del observatorio que entregó el propietario: su parte AGEMED la reemplaza la lista vigente de AGEMED, su parte SNIS el RUES 2026, su parte Overture la extracción nacional de Overture, y su parte OSM/Geofabrik es ODbL (no se usa)."
+}
