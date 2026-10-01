@@ -83,6 +83,9 @@ PATCH_V4011 = "4.0.11"
 # módulo 26 (y de sus tenants, NIT y direcciones). Las filas anteriores conservan el suyo.
 PATCH_V414 = "4.1.4"
 PATCH_V416 = "4.1.6"   # farmacias reales + su ficha pública
+# Directorio oficial de salud de Bolivia (AGEMED 2026, RUES 2026, Overture Places):
+# namespace de los uuid5 de sus filas, que van al paquete BOOT.
+PATCH_DIRECTORIO = "directorio-oficial-2026-10"
 
 # Mismo namespace que seedsGenerales/tools/generate-deep-seeds.py::stable_uuid.
 # El concepto FREE ya insertado en la BD viva se deriva con este esquema:
@@ -600,6 +603,23 @@ COMMUNITY_PROFILE_TARGET_CONCEPTS = [
 
 BACKEND_CONCEPTS += COMMUNITY_PROFILE_TARGET_CONCEPTS
 BACKEND_CONCEPTS += DIAGNOSTIC_UNITS_BACKEND_CONCEPTS
+
+# --- directorio oficial · conceptos de módulo que sus filas BOOT referencian -----
+# Misma regla que los del módulo 23 (code = la CLAVE; los servicios comparan por id).
+# Displays literales de `directory.concepts.ts` y `pharmacy.concepts.ts`. Sin el
+# espejo, la FK diferida a `catalog_concepts` rechaza la fila al cargar en una base
+# donde la app todavía no arrancó.
+DIRECTORIO_BACKEND_CONCEPTS = [
+    (key, key, display) for key, display in [
+        ("directory:TENANT_REGISTRY_LISTED", "Tenant listed in official registry"),
+        ("pharmacy:PHARMACY_TYPE_RETAIL", "Retail pharmacy"),
+        ("pharmacy:OWNERSHIP_PRIVATE", "Private ownership"),
+        ("pharmacy:VERIFICATION_VERIFIED", "Verification verified"),
+        ("pharmacy:PHARMACY_ACTIVE", "Pharmacy active"),
+        ("pharmacy:LICENSE_TYPE_OPERATING", "Operating license"),
+    ]
+]
+BACKEND_CONCEPTS += DIRECTORIO_BACKEND_CONCEPTS
 
 # --- v4.1.4 · conceptos del módulo 26 usados por aseguradoras y pedidos vinculados ---
 # Misma regla que los del módulo 23: el `code` almacenado es la CLAVE de derivación
@@ -2926,6 +2946,195 @@ def build_real_labs_and_clinics(docs) -> dict:
     return packs
 
 
+
+# --- directorio oficial de salud de Bolivia (BOOT) --------------------------
+# Fuente: `salud-db/data/directorio-oficial/`, que arma `build_directorio_oficial.py`
+# desde AGEMED (farmacias vigentes al 01/10/2026), el RUES 2026 (MSyD/SNIS) y
+# Overture Places (CDLA-Permissive-2.0 / Apache-2.0 / CC0). Va a BOOT porque es
+# dato público y real: el directorio de producción lo necesita y no hay nada de
+# demostración en él.
+#
+# Estados (los del backend, porque son los que el buscador compara):
+# - tenant AGEMED y RUES → `DIR_TENANT_REGISTRY_LISTED`: existe porque un padrón
+#   oficial lo lista y nadie lo administra todavía. Overture → `DIR_TENANT_UNVERIFIED`.
+#   Ninguno se marca «verificado»: AloVida no verificó a nadie.
+# - ficha pública → visible y ACTIVE del backend (`state:active`); sin eso no
+#   aparece en ninguna búsqueda.
+# - el nº de resolución de AGEMED es la licencia de funcionamiento de la farmacia
+#   (`pharmacy_licenses`), y el código RUES va en `tenants.code` (`RUES_<código>`).
+# - la FARMACIA y su LICENCIA van `VERIFICATION_VERIFIED`: lo que se verifica de una
+#   farmacia es su habilitación, y ésta figura en la lista vigente del ente regulador
+#   (AGEMED, 01/10/2026). Sin eso el directorio —que sólo muestra verificadas— no
+#   las ve. El TENANT sigue «listado en registro oficial»: nadie lo reclamó.
+# - laboratorios e imagen de Overture quedan `VERIFICATION_PENDING`: no los verificó
+#   nadie, y el buscador de centros exige verificación. Aparecen en la búsqueda
+#   pública general por su ficha.
+
+DIRECTORIO_DIR = paths.DATA_DIR / "directorio-oficial"
+
+DIRECTORIO_HEADLINE = {
+    "PHARMACY": "Farmacia",
+    "LABORATORY": "Laboratorio clínico",
+    "IMAGING": "Centro de diagnóstico por imagen",
+    "CLINIC": "Consultorio o clínica",
+    "DENTAL": "Consultorio odontológico",
+}
+
+
+def _titulo(texto: str) -> str:
+    """«FARMACIA SAN JUAN» → «Farmacia San Juan»; respeta lo que ya trae minúsculas."""
+    if not texto or texto != texto.upper():
+        return texto
+    menores = {"de", "del", "la", "las", "los", "y", "e", "el", "en", "para", "por", "con"}
+    palabras = texto.lower().split()
+    return " ".join(p if i and p in menores else p[:1].upper() + p[1:] for i, p in enumerate(palabras))
+
+
+def build_official_directory(docs, value_sets) -> dict:
+    """El directorio oficial como filas BOOT, cada una con su ficha pública y su dirección."""
+    packs = {"tenants": [], "addresses": [], "pharmacies": [], "pharmacy_licenses": [],
+             "diagnostic_units": [], "public_profiles": []}
+    if not DIRECTORIO_DIR.exists():
+        return packs
+    leer = lambda nombre: json.loads((DIRECTORIO_DIR / nombre).read_text(encoding="utf-8"))
+    registros = ([("AGEMED", r) for r in leer("farmacias-agemed.json")]
+                 + [("RUES", r) for r in leer("establecimientos-rues.json")]
+                 + [("OVT", r) for r in leer("lugares-overture.json")])
+
+    tenant_molde = docs["04"]["boot"]["records"]["tenants"][0]
+    addr_molde = docs["02"]["mock"]["records"]["addresses"][0]
+    perfil_molde = docs["19"]["mock"]["records"]["public_profiles"][0]
+    vs_dep, vs_mun = value_sets["vs_administrative_area"], value_sets["vs_bo_municipality"]
+    municipios = {c.upper() for c in vs_mun["codes"]}
+    nombre_municipio = VS_DISPLAY["vs_bo_municipality"]
+
+    def new_id(table: str, *parts) -> str:
+        return stable_uuid("SALUD", PATCH_DIRECTORIO, "boot", table, "id", *parts)
+
+    stamp = iso(BOOT_BASE)
+    auditoria = [("created_at", stamp), ("updated_at", stamp),
+                 ("created_by_user_id", SEED_USER_ID),
+                 ("updated_by_user_id", SEED_USER_ID), ("row_version", 1)]
+
+    usados = {r.get("slug") for code in docs for sec in ("boot", "mock")
+              for r in docs[code].get(sec, {}).get("records", {}).get("public_profiles", [])}
+
+    def slug_unico(nombre: str, municipio: str | None, clave: str) -> str:
+        base = slug_de(f"{nombre} {municipio or ''}")[:110]
+        slug, n = base, 1
+        while slug in usados:
+            n += 1
+            slug = f"{base}-{n}"
+        usados.add(slug)
+        return slug
+
+    for origen, r in sorted(registros, key=lambda x: (x[0], x[1]["id"])):
+        clave = r["id"]
+        nombre = _titulo(r["name"])
+        tenant_id = new_id("directory.tenants", clave)
+        perfil_id = new_id("community.public_profiles", clave)
+        listado = "directory:TENANT_REGISTRY_LISTED" if origen in ("AGEMED", "RUES") else "directory:TENANT_UNVERIFIED"
+        codigo = {"AGEMED": "AGEMED_" + clave.split("-", 1)[1].upper(),
+                  "RUES": "RUES_" + r.get("officialCode", clave),
+                  "OVT": "OVT_" + clave.split("-", 1)[1][:32].upper()}[origen]
+        packs["tenants"].append(OrderedDict([
+            ("id", tenant_id), ("code", codigo),
+            ("tenant_type_concept_id", backend_id("directory:tenant-type:provider")),
+            ("legal_name", nombre), ("trade_name", nombre),
+            ("legal_entity_type_concept_id", backend_id("directory:legal-entity:company")),
+            ("status_concept_id", backend_id("directory:tenant-status:active")),
+            ("verification_status_concept_id", backend_id(listado)),
+            ("country_concept_id", JURISDICTION_CONCEPT_ID),
+            ("jurisdiction_concept_id", JURISDICTION_CONCEPT_ID),
+            ("data_residency_region_concept_id", tenant_molde["data_residency_region_concept_id"]),
+            ("currency_concept_id", tenant_molde["currency_concept_id"]),
+            ("time_zone", "America/La_Paz"), ("parent_tenant_id", None),
+            *auditoria]))
+
+        mun_code = r.get("municipalityCode")
+        mun_code = mun_code if mun_code and mun_code.upper() in municipios else None
+        if r.get("address") or mun_code or r.get("latitude") is not None:
+            packs["addresses"].append(OrderedDict([
+                ("id", new_id("common.addresses", clave)),
+                ("owner_type_concept_id", backend_id("common:owner-type:tenant")),
+                ("owner_id", tenant_id),
+                ("use_concept_id", addr_molde["use_concept_id"]),
+                ("type_concept_id", addr_molde["type_concept_id"]),
+                ("lines", r.get("address")),
+                ("city", nombre_municipio.get(mun_code) if mun_code else r.get("municipalityText")),
+                ("administrative_area_concept_id",
+                 concept_id("vs_administrative_area", r["department"], vs_dep) if r.get("department") else None),
+                ("municipality_concept_id", concept_id("vs_bo_municipality", mun_code, vs_mun) if mun_code else None),
+                ("postal_code", None),
+                ("country_concept_id", JURISDICTION_CONCEPT_ID),
+                ("latitude", r.get("latitude")), ("longitude", r.get("longitude")),
+                ("valid_from", BOOT_BASE.date().isoformat()), ("valid_to", None),
+                *auditoria]))
+
+        kind = r["kind"]
+        if kind == "PHARMACY":
+            target_key, target_id = "community:PROFILE_TARGET_PHARMACY", new_id("pharmacy.pharmacies", clave)
+            packs["pharmacies"].append(OrderedDict([
+                ("id", target_id), ("tenant_id", tenant_id), ("code", codigo),
+                ("legal_name", nombre), ("trade_name", nombre),
+                ("pharmacy_type_concept_id", backend_id("pharmacy:PHARMACY_TYPE_RETAIL")),
+                ("ownership_type_concept_id",
+                 backend_id("pharmacy:OWNERSHIP_PRIVATE") if "PRIVADA" in (r.get("subtype") or "").upper() else None),
+                ("public_profile_id", perfil_id),
+                ("default_currency_concept_id", tenant_molde["currency_concept_id"]),
+                ("verification_status_concept_id", backend_id("pharmacy:VERIFICATION_VERIFIED")),
+                ("status_concept_id", backend_id("pharmacy:PHARMACY_ACTIVE")),
+                *auditoria]))
+            if r.get("license"):
+                packs["pharmacy_licenses"].append(OrderedDict([
+                    ("id", new_id("pharmacy.pharmacy_licenses", clave)),
+                    ("pharmacy_id", target_id), ("pharmacy_site_id", None),
+                    ("license_type_concept_id", backend_id("pharmacy:LICENSE_TYPE_OPERATING")),
+                    ("license_number", r["license"]["number"]),
+                    ("issuing_authority_tenant_id", None),
+                    ("jurisdiction_concept_id", JURISDICTION_CONCEPT_ID),
+                    ("valid_from", None), ("valid_to", None), ("evidence_file_id", None),
+                    # La resolución figura en la lista vigente de AGEMED: verificada contra el regulador.
+                    ("verification_status_concept_id", backend_id("pharmacy:VERIFICATION_VERIFIED")),
+                    *auditoria]))
+        elif kind in ("LABORATORY", "IMAGING"):
+            target_key, target_id = "community:PROFILE_TARGET_DIAGNOSTIC_UNIT", new_id("diagnostic_units.diagnostic_units", clave)
+            packs["diagnostic_units"].append(OrderedDict([
+                ("id", target_id), ("tenant_id", tenant_id),
+                ("practice_id", None), ("primary_practice_site_id", None),
+                ("code", codigo), ("name", nombre),
+                ("diagnostic_unit_type_concept_id",
+                 backend_id("diagnostic_units:UNIT_TYPE_IMAGING" if kind == "IMAGING" else "diagnostic_units:UNIT_TYPE_LABORATORY")),
+                ("ownership_type_concept_id", None),
+                ("public_profile_id", perfil_id),
+                # La fuente no dice si atiende sin cita, a domicilio u órdenes externas.
+                ("accepts_external_orders", None), ("walk_in_available", None), ("home_collection_available", None),
+                ("verification_status_concept_id", backend_id("diagnostic_units:VERIFICATION_PENDING")),
+                ("status_concept_id", backend_id("diagnostic_units:UNIT_ACTIVE")),
+                *auditoria]))
+        else:
+            target_key, target_id = "community:PROFILE_TARGET_ORGANIZATION", tenant_id
+
+        headline = DIRECTORIO_HEADLINE.get(kind) or " · ".join(
+            x for x in (_titulo(r.get("subtype") or ""), r.get("level"), r.get("subsector")) if x)
+        packs["public_profiles"].append(OrderedDict([
+            ("id", perfil_id), ("tenant_id", tenant_id),
+            ("target_type_concept_id", backend_id(target_key)),
+            ("target_id", target_id),
+            ("slug", slug_unico(nombre, nombre_municipio.get(mun_code) if mun_code else r.get("municipalityText"), clave)),
+            ("display_name", nombre),
+            ("headline", headline[:200]),
+            ("biography", None),
+            ("avatar_file_id", None), ("cover_file_id", None),
+            ("verification_status_concept_id", backend_id(listado)),
+            ("visibility_concept_id", backend_id("community:PROFILE_VISIBILITY_PUBLIC")),
+            ("accepts_reviews", perfil_molde.get("accepts_reviews", True)),
+            ("comments_default_enabled", perfil_molde.get("comments_default_enabled", True)),
+            ("status_concept_id", backend_id("state:active")),
+            *auditoria]))
+    return packs
+
+
 def slug_de(nombre: str) -> str:
     """Slug ASCII estable para la ruta corta de la ficha pública."""
     base = unicodedata.normalize("NFKD", nombre).encode("ascii", "ignore").decode().lower()
@@ -3274,6 +3483,19 @@ def phase_tables(docs, ddl, fks, value_sets, uniques) -> dict:
         if n:
             stats[tkey + " (labs y clínicas reales)"] = n
         id_index.setdefault(tkey, []).extend(r["id"] for r in lab_pack[entity])
+    # --- directorio oficial de salud de Bolivia (BOOT) ----------------------
+    dir_pack = build_official_directory(docs, value_sets)
+    for module, entity, tkey in (
+            ("04", "tenants", "directory.tenants"),
+            ("02", "addresses", "common.addresses"),
+            ("24", "pharmacies", "pharmacy.pharmacies"),
+            ("24", "pharmacy_licenses", "pharmacy.pharmacy_licenses"),
+            ("23", "diagnostic_units", "diagnostic_units.diagnostic_units"),
+            ("19", "public_profiles", "community.public_profiles")):
+        n = upsert_rows(docs[module], "boot", entity, dir_pack[entity], update=True)
+        if n:
+            stats[tkey + " (directorio oficial)"] = n
+        id_index.setdefault(tkey, []).extend(r["id"] for r in dir_pack[entity])
     return stats
 
 
