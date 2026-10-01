@@ -92,6 +92,12 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 | `inventory_ledger_entries` | `IMMUTABLE, REFERENCE_ONLY` | **UK** pharmacy + idempotency_key; **UK** pharmacy + ledger_sequence; **CHECK** non-zero delta; **UPDATE_DELETE** forbidden |
 | `inventory_reservations` | `REFERENCE_ONLY` | **UK** pharmacy + idempotency_key; **EXCLUDE** active allocation overlap when required; **WORKER** expiration release |
 
+### Módulo 41 · `scheduling`
+
+| Tabla | Estereotipo | Reglas declaradas |
+|-------|-------------|-------------------|
+| `practitioner_service_offerings` | `REFERENCE_ONLY` | **CHECK_SQL** ck_practitioner_service_offerings_duration_range \| ("min_duration_minutes" > 0 AND "min_duration_minutes" <= "max_duration_minutes" AND "max_duration_minutes" <= 720); **CHECK_SQL** ck_practitioner_service_offerings_buffers \| (COALESCE("prep_minutes", 0) >= 0 AND COALESCE("cleanup_minutes", 0) >= 0) |
+
 ### Módulo 11 · `system_ops`
 
 | Tabla | Estereotipo | Reglas declaradas |

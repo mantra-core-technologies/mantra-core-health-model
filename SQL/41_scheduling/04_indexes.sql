@@ -2,6 +2,18 @@
 -- Generado de diagram_41_scheduling.puml — NO editar a mano.
 
 
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_practitioner_service_offerings_practitioner_service" ON "scheduling"."practitioner_service_offerings" ("practitioner_profile_id", "service_catalog_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_service_offerings_service_catalog_id" ON "scheduling"."practitioner_service_offerings" ("service_catalog_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_service_offerings_channel_concept_id" ON "scheduling"."practitioner_service_offerings" ("channel_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_service_offerings_status_concept_id" ON "scheduling"."practitioner_service_offerings" ("status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_service_offerings_created_by_user_id" ON "scheduling"."practitioner_service_offerings" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_service_offerings_updated_by_user_id" ON "scheduling"."practitioner_service_offerings" ("updated_by_user_id");
+
 CREATE INDEX IF NOT EXISTS "ix_booking_confirmation_rules_tenant_id" ON "scheduling"."booking_confirmation_rules" ("tenant_id");
 
 CREATE INDEX IF NOT EXISTS "ix_booking_confirmation_rules_scope" ON "scheduling"."booking_confirmation_rules" ("scope_type_concept_id", "scope_id");
@@ -67,6 +79,8 @@ CREATE INDEX IF NOT EXISTS "ix_schedule_templates_updated_by_user_id" ON "schedu
 CREATE INDEX IF NOT EXISTS "gist_schedule_templates_effective_period" ON "scheduling"."schedule_templates" USING gist (daterange(valid_from, valid_to, '[)'));
 
 CREATE INDEX IF NOT EXISTS "ix_schedule_rules_schedule_template_id" ON "scheduling"."schedule_rules" ("schedule_template_id");
+
+CREATE INDEX IF NOT EXISTS "ix_schedule_rules_booking_mode_concept_id" ON "scheduling"."schedule_rules" ("booking_mode_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_schedule_rules_created_by_user_id" ON "scheduling"."schedule_rules" ("created_by_user_id");
 
@@ -145,6 +159,8 @@ CREATE INDEX IF NOT EXISTS "ix_appointment_bookings_booked_by_user_id" ON "sched
 CREATE INDEX IF NOT EXISTS "ix_appointment_bookings_status_concept_id" ON "scheduling"."appointment_bookings" ("status_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_appointment_bookings_booking_policy_id" ON "scheduling"."appointment_bookings" ("booking_policy_id");
+
+CREATE INDEX IF NOT EXISTS "ix_appointment_bookings_practitioner_service_offering_id" ON "scheduling"."appointment_bookings" ("practitioner_service_offering_id");
 
 CREATE INDEX IF NOT EXISTS "ix_appointment_bookings_created_by_user_id" ON "scheduling"."appointment_bookings" ("created_by_user_id");
 

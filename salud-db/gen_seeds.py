@@ -3613,6 +3613,10 @@ INTENTIONALLY_EMPTY = {
     # respuestas automáticas y adjuntos de comentario, campañas y aliados de una
     # aseguradora, grupos médicos y su membresía, el estado de pago de una cita).
     # Sembrarlos daría pagos, campañas y grupos que nadie hizo.
+    # v4.2.3 — la oferta de un servicio la declara cada profesional sobre un servicio de su
+    # práctica: sembrarla inventaría duraciones que ningún médico firmó. El mock sí las
+    # trae (ver `mock/`) para que las pantallas tengan qué mostrar.
+    "scheduling.practitioner_service_offerings",
     "billing.quotations",
     "billing.quotation_installments",
     "community.chat_auto_replies",
