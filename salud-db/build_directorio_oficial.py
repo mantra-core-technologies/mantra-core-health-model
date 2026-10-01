@@ -59,6 +59,9 @@ CIUDAD_DEPARTAMENTO = {
 # Rectángulo de Bolivia (con margen): una coordenada fuera no es de un establecimiento boliviano.
 BBOX = (-23.0, -9.6, -69.7, -57.4)  # lat_min, lat_max, lon_min, lon_max
 
+# Overture recomienda descartar lo de confianza baja; 0,6 deja fuera lo dudoso.
+CONFIANZA_MINIMA = 0.6
+
 # Diferencias de escritura entre las fuentes y el padrón: `<dep>:<texto plegado de
 # la fuente>` → nombre EXACTO del padrón. Sólo variantes de escritura o la capital
 # que da nombre al municipio; lo dudoso (Calcha K, Catavi, Río Verde, Redención
@@ -182,9 +185,59 @@ class Padron:
         return None, "sin-cruce"
 
 
+class Geo:
+    """Punto → (departamento, municipio) con los límites de geoBoundaries BOL ADM1/ADM3
+    (GeoBolivia, dominio público). Punto en polígono por paridad de cruces, sin
+    dependencias; cada polígono lleva su rectángulo para descartar rápido."""
+
+    ISO_DEP = {"BO-B": "be", "BO-C": "cb", "BO-H": "ch", "BO-L": "lp", "BO-N": "pa", "BO-O": "or", "BO-P": "pt", "BO-S": "sc", "BO-T": "tj"}
+
+    def __init__(self, carpeta: Path) -> None:
+        self.deps = [(self.ISO_DEP[f["properties"]["shapeISO"]], *self._partes(f)) for f in self._leer(carpeta / "geoBoundaries-BOL-ADM1_simplified.geojson")]
+        self.muns = [(f["properties"]["shapeName"], *self._partes(f)) for f in self._leer(carpeta / "geoBoundaries-BOL-ADM3_simplified.geojson")]
+
+    @staticmethod
+    def _leer(path: Path) -> list[dict]:
+        return json.loads(path.read_text(encoding="utf-8"))["features"]
+
+    @staticmethod
+    def _partes(feature: dict):
+        g = feature["geometry"]
+        polys = g["coordinates"] if g["type"] == "MultiPolygon" else [g["coordinates"]]
+        xs = [x for poly in polys for x, _ in poly[0]]
+        ys = [y for poly in polys for _, y in poly[0]]
+        return (min(xs), max(xs), min(ys), max(ys)), polys
+
+    @staticmethod
+    def _en_anillo(x: float, y: float, anillo) -> bool:
+        dentro = False
+        j = len(anillo) - 1
+        for i in range(len(anillo)):
+            xi, yi = anillo[i]
+            xj, yj = anillo[j]
+            if (yi > y) != (yj > y) and x < (xj - xi) * (y - yi) / ((yj - yi) or 1e-12) + xi:
+                dentro = not dentro
+            j = i
+        return dentro
+
+    def _buscar(self, capas, lat: float, lon: float):
+        for nombre, (x0, x1, y0, y1), polys in capas:
+            if not (x0 <= lon <= x1 and y0 <= lat <= y1):
+                continue
+            for poly in polys:
+                if self._en_anillo(lon, lat, poly[0]) and not any(self._en_anillo(lon, lat, h) for h in poly[1:]):
+                    return nombre
+        return None
+
+    def ubicar(self, lat: float | None, lon: float | None) -> tuple[str | None, str | None]:
+        if lat is None or lon is None:
+            return None, None
+        return self._buscar(self.deps, lat, lon), self._buscar(self.muns, lat, lon)
+
+
 # --- 1 · AGEMED -------------------------------------------------------------------
 
-def leer_agemed(path: Path, padron: Padron, repetidas: Counter) -> list[dict]:
+def leer_agemed(path: Path, padron: Padron, geo: Geo, repetidas: Counter) -> list[dict]:
     import openpyxl
 
     ws = openpyxl.load_workbook(path, read_only=True, data_only=True).worksheets[0]
@@ -209,6 +262,16 @@ def leer_agemed(path: Path, padron: Padron, repetidas: Counter) -> list[dict]:
         mun_texto = col(r, "MUNICIPIO")
         mun, como = padron.codigo(sigla, mun_texto)
         lat, lon = coord(col(r, "LATITUD"), col(r, "LONGITUD"))
+        coordenada = "fuente" if lat is not None else None
+        dep_punto, mun_punto = geo.ubicar(lat, lon)
+        if lat is not None and sigla and dep_punto and dep_punto != sigla:
+            # Coordenada en otro departamento que el declarado: no se muestra un
+            # pin en el lugar equivocado. El texto de la dirección queda.
+            lat = lon = None
+            coordenada = "descartada: cae fuera del departamento declarado"
+        elif mun is None and mun_punto and sigla == dep_punto:
+            mun, como = padron.codigo(sigla, mun_punto)
+            como = f"coordenadas ({como})" if mun else como
         resolucion = col(r, "NO DE RESOLUCI")
         telefono = col(r, "TELEFONO")
         fid = "agemed-" + stable_id(resolucion, fold(nombre), sigla, fold(mun_texto), fold(col(r, "DIRECCION")))
@@ -230,6 +293,7 @@ def leer_agemed(path: Path, padron: Padron, repetidas: Counter) -> list[dict]:
             "municipalityMatch": como,
             "latitude": lat,
             "longitude": lon,
+            "coordinateNote": coordenada,
             "phone": telefono if telefono and telefono not in ("0",) else None,
             "license": {"number": resolucion, "authority": "AGEMED"} if resolucion else None,
             "source": "agemed",
@@ -272,101 +336,143 @@ def leer_rues(path: Path, padron: Padron) -> list[dict]:
     return out
 
 
-# --- 3 · Observatorio (sólo lo que ni AGEMED ni RUES cubren) ------------------------
+# --- 3 · Overture Places (todo lo que ni AGEMED ni el RUES cubren) ------------------
 
-FAMILIA_KIND = {
-    "DIAGNOSTICO_IMAGEN": "IMAGING", "OV_RADIOLOGY": "IMAGING",
-    "LABORATORIO_CLINICO": "LABORATORY", "OV_LABORATORY_TESTING": "LABORATORY",
-    "HOSPITAL": "CLINIC", "CLINICA": "CLINIC", "CLINICA_PRIVADA": "CLINIC", "CONSULTORIO_MEDICO": "CLINIC",
-    "POLICONSULTORIO": "CLINIC", "OV_MEDICAL_SERVICE_ORGANIZATION": "CLINIC", "OV_HEALTH_CARE": "CLINIC",
-    "OV_EMERGENCY_DEPARTMENT": "CLINIC", "OV_SURGERY_CENTER": "CLINIC", "CENTRO_DIALISIS": "CLINIC",
-    "OFTALMOLOGIA": "CLINIC", "FISIOTERAPIA_REHABILITACION": "CLINIC", "PSICOLOGIA_SALUD_MENTAL": "CLINIC",
-    "ODONTOLOGIA": "DENTAL", "CONSULTORIO_ODONTOLOGICO": "DENTAL", "OV_GENERAL_DENTISTRY": "DENTAL",
-    "OV_COSMETIC_DENTISTRY": "DENTAL", "OV_ORTHODONTICS": "DENTAL", "OV_PEDIATRIC_DENTISTRY": "DENTAL",
-    "OV_ENDODONTICS": "DENTAL", "OV_PERIODONTICS": "DENTAL", "OV_ORAL_AND_MAXILLOFACIAL_SURGERY": "DENTAL",
+IMAGEN = re.compile(r"\b(IMAGEN|IMAGENES|IMAGENOLOGI|RAYOS X|RX\b|ECOGRAF|TOMOGRAF|RESONANCIA|RADIOLOG|MAMOGRAF|DENSITOMETR|ULTRASONIDO|DIAGNOSTICO POR IMAGEN)")
+LABORATORIO = re.compile(r"\b(LABORATORIO|LAB\b|ANALISIS CLINICO|BIOQUIMIC)")
+
+# Lugares que Overture pone en salud y no lo son: laboratorios de ingeniería o de
+# alimentos, y comercios de insumos (la categoría «imagen o laboratorio» los mezcla).
+NO_ES_SALUD = re.compile(r"\b(HIDRAULIC|SUELOS|MATERIALES|CONCRETO|ALIMENTOS|AGUAS?\b|IMPORTACION|IMPORTADORA|DISTRIBUIDORA|INSUMOS|FERRETERIA|VETERINAR|MASCOTA)")
+
+BASICA_KIND = {
+    "hospital": "CLINIC", "health_care": "CLINIC", "medical_service": "CLINIC", "specialized_health_care": "CLINIC",
+    "primary_care_or_general_clinic": "CLINIC", "pediatric_clinic": "CLINIC", "specialized_medical_facility": "CLINIC",
+    "behavioral_or_mental_health_clinic": "CLINIC", "vision_or_eye_care_clinic": "CLINIC", "dental_clinic": "DENTAL",
 }
-# Consultorios de especialidad médica de Overture (`OV_<ESPECIALIDAD>`): también son consultorios.
-OV_ESPECIALIDADES = {
-    "OV_OBSTETRICS_AND_GYNECOLOGY", "OV_SURGERY", "OV_PLASTIC_AND_RECONSTRUCTIVE_SURGERY", "OV_DERMATOLOGY",
-    "OV_UROLOGY", "OV_ORTHOPEDICS", "OV_CARDIOLOGY", "OV_EAR_NOSE_AND_THROAT", "OV_ENDOCRINOLOGY",
-    "OV_PEDIATRIC_CLINIC", "OV_VISION_OR_EYE_CARE_CLINIC", "OV_NEUROLOGY", "OV_ONCOLOGY", "OV_GASTROENTEROLOGY",
-    "OV_PULMONOLOGY", "OV_INTERNAL_MEDICINE", "OV_RHEUMATOLOGY", "OV_FAMILY_PRACTICE", "OV_FERTILITY_CLINIC",
-    "OV_NEPHROLOGY", "OV_REPRODUCTIVE_PERINATAL_AND_WOMENS_CARE", "OV_INFECTIOUS_DISEASE", "OV_ALLERGY_AND_IMMUNOLOGY",
-    "OV_ANESTHESIOLOGY", "OV_PROCTOLOGY", "OV_PSYCHOLOGY", "OV_AUDIOLOGY", "OV_PODIATRY", "OV_OCCUPATIONAL_THERAPY",
-}
-FAMILIA_KIND.update({f: "CLINIC" for f in OV_ESPECIALIDADES})
 
 
-def origen(id_de_lugar: str) -> str:
-    return id_de_lugar.split(":")[0] if ":" in id_de_lugar else "overture"  # GERS id (uuid) = Overture
+def clasificar_overture(row: dict) -> tuple[str, str]:
+    """Tipo del lugar y la regla que lo decidió (queda en el registro)."""
+    nombre = fold(row["name"])
+    if row["basic_category"] == "diagnostics_imaging_or_lab_service":
+        if row["category"] in ("radiology", "diagnostic_imaging"):
+            return "IMAGING", f"categoría Overture {row['category']}"
+        if row["category"] == "laboratory_testing":
+            return "LABORATORY", "categoría Overture laboratory_testing"
+        if IMAGEN.search(nombre):
+            return "IMAGING", "categoría Overture de diagnóstico + nombre de imagen"
+        if LABORATORIO.search(nombre):
+            return "LABORATORY", "categoría Overture de diagnóstico + nombre de laboratorio"
+        return "CLINIC", "categoría Overture de diagnóstico sin modalidad en el nombre"
+    if row["basic_category"] != "dental_clinic" and IMAGEN.search(nombre):
+        return "IMAGING", f"categoría Overture {row['basic_category']} + nombre de imagen"
+    if row["basic_category"] != "dental_clinic" and LABORATORIO.search(nombre):
+        return "LABORATORY", f"categoría Overture {row['basic_category']} + nombre de laboratorio"
+    return BASICA_KIND[row["basic_category"]], f"categoría Overture {row['basic_category']}"
 
 
-def leer_observatorio(carpeta: Path, padron: Padron, nombres_oficiales: set[tuple[str, str]]) -> tuple[list[dict], Counter]:
-    excluidos: Counter = Counter()
-    out, vistos = [], set()
-    for f in sorted(carpeta.glob("observatorio-lugares*.csv")):
-        for r in csv.DictReader(f.open(encoding="utf-8")):
-            kind = FAMILIA_KIND.get(r["familia"])
-            if kind is None:
-                excluidos[f"familia {r['familia']}"] += 1
-                continue
-            o = origen(r["id_de_lugar"])
-            if o not in ("overture", "fsq"):
-                excluidos[f"licencia u origen {o}"] += 1
-                continue
-            conf = float(r["confianza"]) if r["confianza"] else None
-            if o == "overture" and (conf is None or conf < 0.6):
-                excluidos["overture con confianza < 0,6"] += 1
-                continue
-            sigla = CIUDAD_DEPARTAMENTO.get(r["ciudad"])
-            if (sigla, fold(r["nombre"])) in nombres_oficiales:
-                excluidos["ya está en RUES o AGEMED (mismo nombre y departamento)"] += 1
-                continue
-            if r["id_de_lugar"] in vistos:
-                continue
-            vistos.add(r["id_de_lugar"])
-            mun, como = padron.codigo(sigla, r["ciudad"])
-            lat, lon = coord(r["latitud"], r["longitud"])
-            out.append({
-                "id": "obs-" + stable_id(r["id_de_lugar"]),
-                "kind": kind,
-                "name": r["nombre"].strip(),
-                "subtype": r["familia"],
-                "address": r["direccion"].strip() or None,
-                "department": sigla,
-                "municipalityCode": mun,
-                "municipalityText": r["ciudad"],
-                "municipalityMatch": como,
-                "latitude": lat,
-                "longitude": lon,
-                "sourcePlaceId": r["id_de_lugar"],
-                "confidence": conf,
-                "source": o,
-            })
-    return out, excluidos
+def leer_overture(path: Path, padron: Padron, geo: Geo, oficiales: set[tuple[str, str]], excluidos: Counter) -> list[dict]:
+    out = []
+    for linea in path.read_text(encoding="utf-8").splitlines():
+        r = json.loads(linea)
+        if not r["name"]:
+            excluidos["overture sin nombre"] += 1
+            continue
+        if NO_ES_SALUD.search(fold(r["name"])):
+            excluidos["overture que no es un servicio de salud (nombre)"] += 1
+            continue
+        if r["confidence"] is None or r["confidence"] < CONFIANZA_MINIMA:
+            excluidos[f"overture con confianza < {CONFIANZA_MINIMA}"] += 1
+            continue
+        if r["operating_status"] not in (None, "open"):
+            excluidos[f"overture {r['operating_status']}"] += 1
+            continue
+        lat, lon = coord(r["lat"], r["lon"])
+        sigla, mun_geo = geo.ubicar(lat, lon)
+        if sigla is None:
+            excluidos["overture fuera de Bolivia por coordenada"] += 1
+            continue
+        if (sigla, fold(r["name"])) in oficiales:
+            excluidos["ya está en RUES o AGEMED (mismo nombre y departamento)"] += 1
+            continue
+        mun, como = padron.codigo(sigla, mun_geo)
+        kind, regla = clasificar_overture(r)
+        direccion = next((a.get("freeform") for a in (r["addresses"] or []) if a.get("freeform")), None)
+        licencias = sorted({f"{x['dataset']} ({x['license']})" for x in (r["sources"] or []) if x.get("license")})
+        out.append({
+            "id": "ovt-" + r["id"],
+            "kind": kind,
+            "kindRule": regla,
+            "name": r["name"].strip(),
+            "subtype": r["category"] or r["basic_category"],
+            "address": direccion,
+            "department": sigla,
+            "municipalityCode": mun,
+            "municipalityText": mun_geo,
+            "municipalityMatch": f"coordenadas ({como})" if mun else "sin-cruce",
+            "latitude": lat,
+            "longitude": lon,
+            "phone": (r["phones"] or [None])[0],
+            "website": (r["websites"] or [None])[0],
+            "confidence": round(r["confidence"], 3),
+            "sourcePlaceId": r["id"],
+            "sourceLicenses": licencias,
+            "source": "overture",
+        })
+    return out
+
+
+def coordenadas_para_rues(establecimientos: list[dict], lugares: list[dict]) -> int:
+    """Un establecimiento del RUES toma la coordenada de un lugar de Overture sólo si
+    tienen EXACTAMENTE el mismo nombre (plegado) en el mismo municipio y el nombre
+    es único en los dos lados. Lo demás queda sin coordenada."""
+    clave = lambda e: (e["municipalityCode"], fold(e["name"]))
+    rues = Counter(clave(e) for e in establecimientos if e["municipalityCode"])
+    ovt = Counter(clave(l) for l in lugares if l["municipalityCode"] and l["latitude"] is not None)
+    por_clave = {clave(l): l for l in lugares if ovt[clave(l)] == 1}
+    n = 0
+    for e in establecimientos:
+        k = clave(e)
+        if e["municipalityCode"] and rues[k] == 1 and k in por_clave:
+            l = por_clave[k]
+            e["latitude"], e["longitude"] = l["latitude"], l["longitude"]
+            e["coordinateNote"] = f"de Overture {l['sourcePlaceId']}: mismo nombre en el mismo municipio"
+            n += 1
+    return n
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--sources", required=True, type=Path, help="carpeta bolivia-sources/")
+    ap.add_argument("--overture-release", default="2026-09-23.1")
     a = ap.parse_args()
     src = a.sources
     archivos = {
         "agemed": src / "agemed" / "2026-10" / "farmacias_nacional.xlsx",
         "rues": src / "snis" / "rues_estructura_2026.json",
+        "overture": src / "overture" / f"salud-bolivia-{a.overture_release}.jsonl",
+        "adm1": src / "geo" / "geoBoundaries-BOL-ADM1_simplified.geojson",
+        "adm3": src / "geo" / "geoBoundaries-BOL-ADM3_simplified.geojson",
     }
     for nombre, p in archivos.items():
         if not p.exists():
             sys.exit(f"falta la fuente {nombre}: {p}")
     padron = Padron()
+    geo = Geo(src / "geo")
     repetidas: Counter = Counter()
-    farmacias = leer_agemed(archivos["agemed"], padron, repetidas)
+    excluidos: Counter = Counter()
+    farmacias = leer_agemed(archivos["agemed"], padron, geo, repetidas)
     establecimientos = leer_rues(archivos["rues"], padron)
     oficiales = {(e["department"], fold(e["name"])) for e in farmacias + establecimientos}
-    lugares, excluidos = leer_observatorio(src / "observatorio", padron, oficiales)
+    lugares = leer_overture(archivos["overture"], padron, geo, oficiales, excluidos)
+    rues_con_coordenada = coordenadas_para_rues(establecimientos, lugares)
 
     OUT.mkdir(parents=True, exist_ok=True)
-    salidas = {"farmacias-agemed.json": farmacias, "establecimientos-rues.json": establecimientos, "lugares-comunitarios.json": lugares}
+    viejo = OUT / "lugares-comunitarios.json"
+    if viejo.exists():
+        viejo.unlink()
+    salidas = {"farmacias-agemed.json": farmacias, "establecimientos-rues.json": establecimientos, "lugares-overture.json": lugares}
     for nombre, filas in salidas.items():
         ids = [f["id"] for f in filas]
         dup = [i for i, n in Counter(ids).items() if n > 1]
@@ -381,6 +487,7 @@ def main() -> None:
             "porTipo": dict(Counter(f["kind"] for f in filas)),
             "conCoordenadas": sum(1 for f in filas if f["latitude"] is not None),
             "municipioCruzado": sum(1 for f in filas if f["municipalityCode"]),
+            "comoSeCruzoElMunicipio": dict(Counter(f["municipalityMatch"] for f in filas)),
             "municipiosSinCruce": dict(Counter(f"{f['department']}:{f['municipalityText']}" for f in filas if not f["municipalityCode"]).most_common(40)),
         }
 
@@ -389,16 +496,18 @@ def main() -> None:
         "fuentes": {
             "agemed": {"archivo": archivos["agemed"].name, "url": "https://www.agemed.gob.bo/archivos_vigilancia/farmacias/farmacias_nacional.xlsx", "actualizacion": "2026-10-01", "sha256": sha256(archivos["agemed"]), "licencia": LICENCIAS["agemed"]},
             "rues": {"archivo": archivos["rues"].name, "url": "https://estadisticas.minsalud.gob.bo/Reportes_Dinamicos/Estructura_2026.aspx", "sha256": sha256(archivos["rues"]), "licencia": LICENCIAS["rues"]},
-            "observatorio": {"archivos": sorted(p.name for p in (src / "observatorio").glob("*.csv")), "licencias": {k: LICENCIAS[k] for k in ("overture", "fsq")}},
+            "overture": {"archivo": archivos["overture"].name, "version": a.overture_release, "extraidoCon": "salud-db/extract_overture_salud.py", "sha256": sha256(archivos["overture"]), "licencia": "CDLA-Permissive-2.0 / Apache-2.0 / CC0-1.0 según sources[].license de cada lugar", "confianzaMinima": CONFIANZA_MINIMA},
+            "limites": {"archivos": [archivos["adm1"].name, archivos["adm3"].name], "url": "https://www.geoboundaries.org (gbOpen BOL, de GeoBolivia)", "licencia": "dominio público"},
         },
         "farmacias": resumen(farmacias),
-        "establecimientos": resumen(establecimientos),
-        "lugaresComunitarios": resumen(lugares),
-        "observatorioExcluidos": dict(excluidos.most_common()),
+        "establecimientos": {**resumen(establecimientos), "coordenadaTomadaDeOverture": rues_con_coordenada},
+        "lugaresOverture": resumen(lugares),
+        "overtureExcluidos": dict(excluidos.most_common()),
         "repetidasEnLaFuenteFusionadas": dict(repetidas),
+        "noUsado": "El CSV del observatorio que entregó el propietario: su parte AGEMED la reemplaza la lista vigente de AGEMED, su parte SNIS el RUES 2026, su parte Overture la extracción nacional de Overture, y su parte OSM/Geofabrik es ODbL (no se usa).",
     }
     (OUT / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps({k: v for k, v in manifest.items() if k != "fuentes"}, ensure_ascii=False, indent=1)[:6000])
+    print(json.dumps({k: v for k, v in manifest.items() if k != "fuentes"}, ensure_ascii=False, indent=1)[:8000])
 
 
 if __name__ == "__main__":
