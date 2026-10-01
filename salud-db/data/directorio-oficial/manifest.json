@@ -1,0 +1,159 @@
+{
+  "generadoPor": "salud-db/build_directorio_oficial.py",
+  "fuentes": {
+    "agemed": {
+      "archivo": "farmacias_nacional.xlsx",
+      "url": "https://www.agemed.gob.bo/archivos_vigilancia/farmacias/farmacias_nacional.xlsx",
+      "actualizacion": "2026-10-01",
+      "sha256": "ff5fdfad88f3d4e125ca2c9b6d9198d90a803862c32f428aa4d37f690a94c369",
+      "licencia": "Información pública del Estado (AGEMED, Ministerio de Salud y Deportes de Bolivia); se cita la fuente."
+    },
+    "rues": {
+      "archivo": "rues_estructura_2026.json",
+      "url": "https://estadisticas.minsalud.gob.bo/Reportes_Dinamicos/Estructura_2026.aspx",
+      "sha256": "1a0b3f7e10959ddbf3414c3fde2c50e0391cf989934231aca96dd7b142efc797",
+      "licencia": "Información pública del Estado (Ministerio de Salud y Deportes / SNIS, Bolivia); se cita la fuente."
+    },
+    "observatorio": {
+      "archivos": [
+        "observatorio-lugares (1).csv",
+        "observatorio-lugares (2).csv",
+        "observatorio-lugares (3).csv",
+        "observatorio-lugares (4).csv",
+        "observatorio-lugares (5).csv",
+        "observatorio-lugares (6).csv",
+        "observatorio-lugares (7).csv",
+        "observatorio-lugares.csv"
+      ],
+      "licencias": {
+        "overture": "CDLA-Permissive-2.0 (Overture Maps Foundation)",
+        "fsq": "Apache-2.0 (Foursquare Open Source Places)"
+      }
+    }
+  },
+  "farmacias": {
+    "filas": 6977,
+    "porDepartamento": {
+      "be": 297,
+      "cb": 1449,
+      "ch": 551,
+      "lp": 1689,
+      "or": 637,
+      "pa": 134,
+      "pt": 315,
+      "sc": 1306,
+      "tj": 599
+    },
+    "porTipo": {
+      "PHARMACY": 6977
+    },
+    "conCoordenadas": 6621,
+    "municipioCruzado": 6834,
+    "municipiosSinCruce": {
+      "cb:None": 90,
+      "ch:None": 27,
+      "pt:None": 5,
+      "sc:None": 5,
+      "lp:None": 4,
+      "or:None": 4,
+      "be:None": 1,
+      "ch:NO DEFINIDO": 1,
+      "ch:REDENCION PAMPA": 1,
+      "ch:YACO": 1,
+      "cb:SAN ANDRÉS DE MACHACA": 1,
+      "pt:CALCHA K": 1,
+      "pt:RÍO VERDE (QUILA QUILA)": 1,
+      "pt:CATAVI": 1
+    }
+  },
+  "establecimientos": {
+    "filas": 4404,
+    "porDepartamento": {
+      "be": 292,
+      "cb": 656,
+      "ch": 426,
+      "lp": 940,
+      "or": 251,
+      "pa": 87,
+      "pt": 619,
+      "sc": 824,
+      "tj": 309
+    },
+    "porTipo": {
+      "HEALTH_FACILITY": 4404
+    },
+    "conCoordenadas": 0,
+    "municipioCruzado": 4376,
+    "municipiosSinCruce": {
+      "be:TIOC-TERRITORIO INDIGENA MULTIETNICO (GIA-TIM)_": 11,
+      "cb:TIOC-TERRITORIO INDIGENA ORIGINARIO CAMPESINO RAQAYPAMPA_": 6,
+      "pt:TIOC-JATUN AYLLU YURA_": 6,
+      "cb:TERRITORIO INDIGENA ORIGINARIO CAMPESINO CHALLA_": 5
+    }
+  },
+  "lugaresComunitarios": {
+    "filas": 2985,
+    "porDepartamento": {
+      "be": 50,
+      "cb": 742,
+      "ch": 187,
+      "lp": 120,
+      "or": 115,
+      "pt": 50,
+      "sc": 1538,
+      "tj": 183
+    },
+    "porTipo": {
+      "CLINIC": 1153,
+      "IMAGING": 291,
+      "LABORATORY": 79,
+      "DENTAL": 1462
+    },
+    "conCoordenadas": 2985,
+    "municipioCruzado": 2985,
+    "municipiosSinCruce": {}
+  },
+  "observatorioExcluidos": {
+    "familia FARMACIA": 5220,
+    "overture con confianza < 0,6": 1721,
+    "licencia u origen osm": 1307,
+    "familia VETERINARIA": 580,
+    "familia OPTICA": 436,
+    "licencia u origen geofabrik": 336,
+    "familia CENTRO_SALUD": 212,
+    "ya está en RUES o AGEMED (mismo nombre y departamento)": 86,
+    "familia OV_VETERINARIAN": 53,
+    "familia OV_COUNSELING": 50,
+    "familia INSUMOS_MEDICOS": 46,
+    "familia CAJA_DE_SALUD": 33,
+    "familia OV_PET_GROOMER": 28,
+    "familia OV_ANIMAL_OR_PET_SERVICE": 27,
+    "familia OV_NATUROPATHIC_MEDICINE": 26,
+    "licencia u origen snis": 21,
+    "familia PUESTO_DE_SALUD": 15,
+    "familia OV_ANIMAL_SHELTER": 10,
+    "familia OV_CHIROPRACTIC": 9,
+    "familia OV_NEUROPATHOLOGY": 5,
+    "familia BANCO_SANGRE": 4,
+    "familia CENTRO_DISCAPACIDAD": 4,
+    "familia OV_AMBULANCE_OR_EMS_SERVICE": 4,
+    "familia OV_DOG_TRAINER": 2,
+    "familia CENTRO_ADULTO_MAYOR": 2,
+    "familia OV_OPTOMETRY": 2,
+    "familia OV_PET_BOARDING": 2,
+    "familia OV_AROMATHERAPY": 1,
+    "familia OV_HOSPICE": 1,
+    "familia OV_REFRACTIVE_SURGERY_OR_LASIK": 1,
+    "familia OV_ABUSE_AND_ADDICTION_TREATMENT_CENTER": 1,
+    "familia OV_OSTEOPATHIC_MEDICINE": 1,
+    "familia POSTA_SANITARIA": 1,
+    "familia OV_MARRIAGE_OR_RELATIONSHIP_COUNSELING": 1,
+    "familia OV_ANIMAL_RESCUE_SERVICE": 1,
+    "familia OV_ACUPUNCTURE": 1,
+    "familia OV_HOME_HEALTH_CARE": 1,
+    "familia OV_HORSE_TRAINER": 1
+  },
+  "repetidasEnLaFuenteFusionadas": {
+    "agemed": 24
+  }
+}
