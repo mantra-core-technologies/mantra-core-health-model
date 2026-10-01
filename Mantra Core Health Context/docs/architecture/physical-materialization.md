@@ -49,6 +49,35 @@ comentados como TODO. FK envueltas en `DO … EXCEPTION WHEN duplicate_object` (
 
 ## 3. Estado actual del build
 
+### Directorio oficial de salud de Bolivia en BOOT (2026-10-01) — SIN cambio de esquema
+
+Antes el directorio sembrado eran 642 establecimientos, **sólo de Santa Cruz**. Ahora
+`salud-db/build_directorio_oficial.py` normaliza tres fuentes a
+`salud-db/data/directorio-oficial/` (con `manifest.json`: URL, fecha, sha256 y licencia de cada
+una) y `gen_seeds.py` (`build_official_directory`) las siembra en el paquete **BOOT**:
+
+| Fuente | Qué entra | Filas | Estado de verificación |
+|---|---|---|---|
+| AGEMED `farmacias_nacional.xlsx` (vigente 01/10/2026) | farmacias + `pharmacy_licenses` con el nº de resolución | 6 977 (9 dptos.) | `pharmacy:VERIFICATION_VERIFIED` (licencia de la autoridad) |
+| RUES 2026 (Min. de Salud / SNIS) | establecimientos con código oficial, nivel, subsector | 4 404 | `directory:TENANT_REGISTRY_LISTED` |
+| Overture Places 2026-09-23.1 (CDLA-Permissive / Apache / CC0; **sin ODbL**) | consultorios, odontología, 304 laboratorios, 66 centros de imagen | 3 911 | `DIR_TENANT_UNVERIFIED` / `diagnostic_units:VERIFICATION_PENDING` |
+
+- Municipio por nombre normalizado contra el padrón de conceptos (alias, prefijo, sufijo) y, si
+  falla, por **punto en polígono** de geoBoundaries ADM3 (dominio público): 6 973/6 977
+  farmacias cruzadas.
+- Los conceptos del módulo que el paquete referencia (`pharmacy:VERIFICATION_VERIFIED`…) van en
+  el **puente backend** (`DIRECTORIO_BACKEND_CONCEPTS`, uuid5 del namespace `3f2b6c14-…`).
+- Sin datos personales: el regente farmacéutico de AGEMED **no** se copia. Sin médicos: no
+  existe registro público de matrícula (SIREPRO tramita, no consulta).
+- Slugs estables al regenerar (la unicidad excluye los perfiles del propio builder).
+
+**Verificado en una base aislada** (contenedores propios en 5544/27544/6599, no el stack
+compartido): DDL de `SQL/` (1 254 tablas) + 54 patches, `load_seeds.py --skip-prod
+--skip-opensearch --skip-redis` → **7 082 FKs, 0 `NOT VALID`**, re-carga = 0 filas nuevas. BOOT
+pasa a **68 213 filas**. Dos patches preexistentes fallan en base limpia y **no** son de este
+cambio: `2026-09-08_v428_billing_quotations.sql` (espera un CHECK) y
+`2026-09-26_v4231_seed_insurer_accounts.sql` (necesita el catálogo cargado antes).
+
 ### TAREA-07 — índice de búsqueda por CI en `common.identifiers` (2026-09-02)
 
 `ChartReadService` necesita buscar pacientes por tipo de documento + valor (AC-07-3); el
