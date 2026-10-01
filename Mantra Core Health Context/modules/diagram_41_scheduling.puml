@@ -154,6 +154,10 @@ entity bookable_slots {
   * resource_id : uuid <<FK>>
     schedule_template_id : uuid <<FK>>
     service_concept_id : uuid <<FK>>
+  ' + v4.2.40 — el cupo de un SERVICIO nace al retener (no se pre-genera) y guarda de qué
+  ' oferta es: es lo que le dice al confirmar cuánto dura, a qué precio y con qué
+  ' colchones, sin fiarse de un dato que mande el navegador. NULL ≡ cupo de consulta.
+    practitioner_service_offering_id : uuid <<FK>>
   * start_at : timestamptz
   * end_at : timestamptz
   * capacity : integer
@@ -493,6 +497,7 @@ entity "INDEXES · bookable_slots" as idxset_bookable_slots <<INDEX_SET>> {
   IX ix_bookable_slots_resource_id : (resource_id) BTREE
   IX ix_bookable_slots_schedule_template_id : (schedule_template_id) BTREE
   IX ix_bookable_slots_service_concept_id : (service_concept_id) BTREE
+  IX ix_bookable_slots_practitioner_service_offering_id : (practitioner_service_offering_id) BTREE
   IX ix_bookable_slots_status_concept_id : (status_concept_id) BTREE
   IX ix_bookable_slots_created_by_user_id : (created_by_user_id) BTREE
   IX ix_bookable_slots_updated_by_user_id : (updated_by_user_id) BTREE

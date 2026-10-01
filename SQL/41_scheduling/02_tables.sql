@@ -118,6 +118,7 @@ CREATE TABLE IF NOT EXISTS "scheduling"."bookable_slots" (
     "resource_id" uuid NOT NULL,
     "schedule_template_id" uuid,
     "service_concept_id" uuid,
+    "practitioner_service_offering_id" uuid,
     "start_at" timestamptz NOT NULL,
     "end_at" timestamptz NOT NULL,
     "capacity" integer NOT NULL,

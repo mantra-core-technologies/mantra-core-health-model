@@ -19,6 +19,8 @@
 --       (CONSULTATIONS · SERVICES · MIXED). NULL ≡ «sólo consultas».
 --   3 · scheduling.appointment_bookings.practitioner_service_offering_id y
 --       service_snapshot — la reserva de un servicio y lo que el paciente aceptó.
+--       scheduling.bookable_slots.practitioner_service_offering_id — de qué oferta es el
+--       cupo de un servicio (nace al retener); NULL ≡ cupo de consulta.
 --   4 · 2 CHECK de la matriz del módulo 33 sobre la oferta.
 --
 -- ⚠️ ACOPLE CON EL CATÁLOGO ORM: los índices y FKs nuevos viajan en el catálogo
@@ -27,8 +29,8 @@
 -- Este archivo es salida de gen_ddl.py 41 y gen_integrity.py, no DDL escrito a mano.
 -- Correlo con `psql -v ON_ERROR_STOP=1 -f`. Con `rebuild_stack.py --yes` no hace falta.
 --
--- Delta esperado: +1 tabla · +8 FK · +8 índices (6 de la tabla nueva sin su PK + 2) · +3 columnas
--- (1 en schedule_rules, 2 en appointment_bookings) · +2 CHECK.
+-- Delta esperado: +1 tabla · +9 FK · +9 índices (6 de la tabla nueva sin su PK + 3) · +4 columnas
+-- (1 en schedule_rules, 2 en appointment_bookings, 1 en bookable_slots) · +2 CHECK.
 -- ============================================================================
 
 -- 1 · la oferta de servicio (de SQL/41_scheduling/02_tables.sql)
@@ -58,6 +60,7 @@ ALTER TABLE "scheduling"."schedule_rules" ADD COLUMN IF NOT EXISTS "booking_mode
 -- 3 · la reserva de un servicio
 ALTER TABLE "scheduling"."appointment_bookings" ADD COLUMN IF NOT EXISTS "practitioner_service_offering_id" uuid;
 ALTER TABLE "scheduling"."appointment_bookings" ADD COLUMN IF NOT EXISTS "service_snapshot" jsonb;
+ALTER TABLE "scheduling"."bookable_slots" ADD COLUMN IF NOT EXISTS "practitioner_service_offering_id" uuid;
 
 -- índices (de SQL/41_scheduling/04_indexes.sql)
 CREATE UNIQUE INDEX IF NOT EXISTS "ux_practitioner_service_offerings_practitioner_service" ON "scheduling"."practitioner_service_offerings" ("practitioner_profile_id", "service_catalog_id");
@@ -68,6 +71,7 @@ CREATE INDEX IF NOT EXISTS "ix_practitioner_service_offerings_created_by_user_id
 CREATE INDEX IF NOT EXISTS "ix_practitioner_service_offerings_updated_by_user_id" ON "scheduling"."practitioner_service_offerings" ("updated_by_user_id");
 CREATE INDEX IF NOT EXISTS "ix_schedule_rules_booking_mode_concept_id" ON "scheduling"."schedule_rules" ("booking_mode_concept_id");
 CREATE INDEX IF NOT EXISTS "ix_appointment_bookings_practitioner_service_offering_id" ON "scheduling"."appointment_bookings" ("practitioner_service_offering_id");
+CREATE INDEX IF NOT EXISTS "ix_bookable_slots_practitioner_service_offering_id" ON "scheduling"."bookable_slots" ("practitioner_service_offering_id");
 
 -- FK (de SQL/41_scheduling/03_fk_intra.sql y 90_fk_deferred.sql)
 DO $$ BEGIN
@@ -125,6 +129,12 @@ DO $$ BEGIN
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 
+
+DO $$ BEGIN
+    ALTER TABLE "scheduling"."bookable_slots"
+        ADD CONSTRAINT "fk_bookable_slots_practitioner_service_offering_id" FOREIGN KEY ("practitioner_service_offering_id")
+        REFERENCES "scheduling"."practitioner_service_offerings" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 
 -- CHECK (de SQL/41_scheduling/05_constraints.sql)
 -- CHECK concreto declarado por el modelo (CHECK_SQL).

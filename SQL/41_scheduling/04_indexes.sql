@@ -104,6 +104,8 @@ CREATE INDEX IF NOT EXISTS "ix_bookable_slots_schedule_template_id" ON "scheduli
 
 CREATE INDEX IF NOT EXISTS "ix_bookable_slots_service_concept_id" ON "scheduling"."bookable_slots" ("service_concept_id");
 
+CREATE INDEX IF NOT EXISTS "ix_bookable_slots_practitioner_service_offering_id" ON "scheduling"."bookable_slots" ("practitioner_service_offering_id");
+
 CREATE INDEX IF NOT EXISTS "ix_bookable_slots_status_concept_id" ON "scheduling"."bookable_slots" ("status_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_bookable_slots_created_by_user_id" ON "scheduling"."bookable_slots" ("created_by_user_id");
