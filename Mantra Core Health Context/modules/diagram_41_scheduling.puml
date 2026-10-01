@@ -120,7 +120,7 @@ entity schedule_rules {
   ' falta, porque `NULL` ≡ «sin respiro» dice exactamente lo mismo que 0. El `?? 0` lo
   ' pone el servicio, igual que ya hace con `slot_minutes ?? DEFAULT_SLOT_MINUTES`.
     gap_minutes : integer
-  ' + v4.2.3 — qué admite la franja: consultas, servicios o ambos. Nullable y SIN
+  ' + v4.2.40 — qué admite la franja: consultas, servicios o ambos. Nullable y SIN
   ' default, como `gap_minutes`: `NULL` ≡ «sólo consultas» (lo que toda franja era antes),
   ' así que ninguna fila existente cambia de significado. El valor es un concepto del
   ' value set `scheduling:rule-booking-mode` (CONSULTATIONS · SERVICES · MIXED), no un enum.
@@ -228,7 +228,7 @@ entity appointment_bookings {
   ' como se aceptó al reservar. Se guarda el snapshot, no una FK, justamente para
   ' que un cambio posterior de la política no reescriba lo que el paciente aceptó.
     cancellation_policy_snapshot : jsonb
-  ' + v4.2.3 — la reserva de un servicio (no de una consulta). `practitioner_service_offering_id`
+  ' + v4.2.40 — la reserva de un servicio (no de una consulta). `practitioner_service_offering_id`
   ' apunta a la oferta del profesional; `service_snapshot` congela lo que el paciente
   ' aceptó (nombre, precio, moneda, duración mín/máx y colchones) con el mismo criterio
   ' que `cancellation_policy_snapshot`: un cambio posterior de la oferta no reescribe la
@@ -237,7 +237,7 @@ entity appointment_bookings {
     service_snapshot : jsonb
 }
 
-' + v4.2.3 — Oferta de servicio de un profesional: «cómo ofrece ESTE médico ESTE servicio».
+' + v4.2.40 — Oferta de servicio de un profesional: «cómo ofrece ESTE médico ESTE servicio».
 ' El catálogo (`billing.service_catalog`) es POR PRÁCTICA y fija nombre y precio; lo que
 ' varía de un médico a otro dentro de la misma práctica es cuánto tarda, y por eso la
 ' duración vive acá y no en el catálogo. El turno de un servicio NO se pre-genera: nace al

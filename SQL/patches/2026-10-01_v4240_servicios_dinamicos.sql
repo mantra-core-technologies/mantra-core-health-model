@@ -1,5 +1,5 @@
 -- ============================================================================
--- SALUD · patch v4.2.32 (scheduling · reserva de servicios con duración dinámica)
+-- SALUD · patch v4.2.40 (scheduling · reserva de servicios con duración dinámica)
 -- sobre una BD viva
 -- Fecha: 2026-10-01
 -- Idempotente (CREATE TABLE / ADD COLUMN / CREATE INDEX IF NOT EXISTS · FK con
