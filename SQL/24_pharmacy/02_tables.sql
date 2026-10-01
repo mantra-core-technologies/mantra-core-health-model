@@ -76,6 +76,8 @@ CREATE TABLE IF NOT EXISTS "pharmacy"."pharmacy_products" (
     "package_size_text" varchar,
     "requires_prescription" boolean,
     "cold_chain_required" boolean,
+    "catalog_product_concept_id" uuid,
+    "catalog_presentation_code" varchar,
     "status_concept_id" uuid NOT NULL,
     "created_at" timestamptz NOT NULL,
     "updated_at" timestamptz NOT NULL,

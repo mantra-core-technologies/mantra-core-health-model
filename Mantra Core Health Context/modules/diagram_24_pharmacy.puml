@@ -91,6 +91,8 @@ entity pharmacy_products {
     package_size_text : varchar
     requires_prescription : boolean
     cold_chain_required : boolean
+    catalog_product_concept_id : uuid <<FK>>
+    catalog_presentation_code : varchar
   * status_concept_id : uuid <<FK>>
   * created_at : timestamptz
   * updated_at : timestamptz
@@ -264,6 +266,9 @@ entity "INDEXES · pharmacy_products" as idxset_pharmacy_products <<INDEX_SET>> 
   IX ix_pharmacy_products_inventory_item_concept_id : (inventory_item_concept_id) BTREE
   IX ix_pharmacy_products_manufacturer_tenant_id : (manufacturer_tenant_id) BTREE
   IX ix_pharmacy_products_dosage_form_concept_id : (dosage_form_concept_id) BTREE
+  IX ix_pharmacy_products_catalog_product_concept_id : (catalog_product_concept_id) BTREE
+  UK uq_pharmacy_products_catalog_presentation : (pharmacy_id, catalog_product_concept_id, catalog_presentation_code) UNIQUE BTREE WHERE catalog_product_concept_id IS NOT NULL AND catalog_presentation_code IS NOT NULL
+  UK uq_pharmacy_products_catalog_no_presentation : (pharmacy_id, catalog_product_concept_id) UNIQUE BTREE WHERE catalog_product_concept_id IS NOT NULL AND catalog_presentation_code IS NULL
   IX ix_pharmacy_products_status_concept_id : (status_concept_id) BTREE
   IX ix_pharmacy_products_created_by_user_id : (created_by_user_id) BTREE
   IX ix_pharmacy_products_updated_by_user_id : (updated_by_user_id) BTREE
