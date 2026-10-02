@@ -51,6 +51,12 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
+    ALTER TABLE "scheduling"."bookable_slots"
+        ADD CONSTRAINT "fk_bookable_slots_practitioner_service_offering_id" FOREIGN KEY ("practitioner_service_offering_id")
+        REFERENCES "scheduling"."practitioner_service_offerings" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+DO $$ BEGIN
     ALTER TABLE "scheduling"."slot_holds"
         ADD CONSTRAINT "fk_slot_holds_bookable_slot_id" FOREIGN KEY ("bookable_slot_id")
         REFERENCES "scheduling"."bookable_slots" ("id");
@@ -73,6 +79,12 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_appointment_bookings_booking_policy_id" FOREIGN KEY ("booking_policy_id")
         REFERENCES "scheduling"."booking_policies" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "scheduling"."appointment_bookings"
+        ADD CONSTRAINT "fk_appointment_bookings_practitioner_service_offering_id" FOREIGN KEY ("practitioner_service_offering_id")
+        REFERENCES "scheduling"."practitioner_service_offerings" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 
 DO $$ BEGIN
     ALTER TABLE "scheduling"."booking_reschedules"

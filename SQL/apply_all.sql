@@ -418,6 +418,8 @@
 \ir 41_scheduling/03_fk_intra.sql
 \echo >>> 41_scheduling/04_indexes.sql
 \ir 41_scheduling/04_indexes.sql
+\echo >>> 41_scheduling/05_constraints.sql
+\ir 41_scheduling/05_constraints.sql
 
 -- ═══ módulo 42_payments ═══
 \echo >>> 42_payments/01_schema.sql

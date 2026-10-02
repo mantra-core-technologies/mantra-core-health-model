@@ -120,6 +120,11 @@ entity schedule_rules {
   ' falta, porque `NULL` ≡ «sin respiro» dice exactamente lo mismo que 0. El `?? 0` lo
   ' pone el servicio, igual que ya hace con `slot_minutes ?? DEFAULT_SLOT_MINUTES`.
     gap_minutes : integer
+  ' + v4.2.40 — qué admite la franja: consultas, servicios o ambos. Nullable y SIN
+  ' default, como `gap_minutes`: `NULL` ≡ «sólo consultas» (lo que toda franja era antes),
+  ' así que ninguna fila existente cambia de significado. El valor es un concepto del
+  ' value set `scheduling:rule-booking-mode` (CONSULTATIONS · SERVICES · MIXED), no un enum.
+    booking_mode_concept_id : uuid <<FK>>
     valid_from : date
     valid_to : date
   * created_at : timestamptz
@@ -149,6 +154,10 @@ entity bookable_slots {
   * resource_id : uuid <<FK>>
     schedule_template_id : uuid <<FK>>
     service_concept_id : uuid <<FK>>
+  ' + v4.2.40 — el cupo de un SERVICIO nace al retener (no se pre-genera) y guarda de qué
+  ' oferta es: es lo que le dice al confirmar cuánto dura, a qué precio y con qué
+  ' colchones, sin fiarse de un dato que mande el navegador. NULL ≡ cupo de consulta.
+    practitioner_service_offering_id : uuid <<FK>>
   * start_at : timestamptz
   * end_at : timestamptz
   * capacity : integer
@@ -223,7 +232,53 @@ entity appointment_bookings {
   ' como se aceptó al reservar. Se guarda el snapshot, no una FK, justamente para
   ' que un cambio posterior de la política no reescriba lo que el paciente aceptó.
     cancellation_policy_snapshot : jsonb
+  ' + v4.2.40 — la reserva de un servicio (no de una consulta). `practitioner_service_offering_id`
+  ' apunta a la oferta del profesional; `service_snapshot` congela lo que el paciente
+  ' aceptó (nombre, precio, moneda, duración mín/máx y colchones) con el mismo criterio
+  ' que `cancellation_policy_snapshot`: un cambio posterior de la oferta no reescribe la
+  ' reserva. Ambas NULL ≡ consulta.
+    practitioner_service_offering_id : uuid <<FK>>
+    service_snapshot : jsonb
 }
+
+' + v4.2.40 — Oferta de servicio de un profesional: «cómo ofrece ESTE médico ESTE servicio».
+' El catálogo (`billing.service_catalog`) es POR PRÁCTICA y fija nombre y precio; lo que
+' varía de un médico a otro dentro de la misma práctica es cuánto tarda, y por eso la
+' duración vive acá y no en el catálogo. El turno de un servicio NO se pre-genera: nace al
+' retener, con `max_duration_minutes` como tiempo comprometido (el sobrante se libera al
+' completar antes). `prep_minutes`/`cleanup_minutes` son aire del profesional alrededor del
+' turno: el paciente no los ve ni los reserva, pero ningún otro turno puede ocuparlos.
+entity practitioner_service_offerings {
+  * id : uuid <<PK>>
+  --
+  * practitioner_profile_id : uuid <<FK>>
+  * service_catalog_id : uuid <<FK>>
+  * min_duration_minutes : integer
+  * max_duration_minutes : integer
+    prep_minutes : integer
+    cleanup_minutes : integer
+  * is_patient_bookable : boolean
+  * requires_approval : boolean
+    channel_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity "INDEXES · practitioner_service_offerings" as idxset_practitioner_service_offerings <<INDEX_SET>> {
+  PK pk_practitioner_service_offerings : (id) UNIQUE BTREE
+  UX ux_practitioner_service_offerings_practitioner_service : (practitioner_profile_id, service_catalog_id) UNIQUE BTREE
+  IX ix_practitioner_service_offerings_service_catalog_id : (service_catalog_id) BTREE
+  IX ix_practitioner_service_offerings_channel_concept_id : (channel_concept_id) BTREE
+  IX ix_practitioner_service_offerings_status_concept_id : (status_concept_id) BTREE
+  IX ix_practitioner_service_offerings_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_practitioner_service_offerings_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+practitioner_service_offerings .. idxset_practitioner_service_offerings : indexed by
 
 ' + v4.0.8 (ALOVIDA C-11) — Motor de confirmación automática de reservas.
 ' Reglas deterministas que deciden si una solicitud se auto-confirma, se
@@ -328,6 +383,7 @@ schedulable_resources ||--o{ schedule_templates
 practitioner_schedules |o--o{ schedule_templates
 schedule_templates ||--o{ schedule_rules
 schedulable_resources ||--o{ availability_exceptions
+practitioner_service_offerings |o--o{ appointment_bookings
 schedulable_resources ||--o{ bookable_slots
 schedule_templates |o--o{ bookable_slots
 bookable_slots ||--o{ slot_holds
@@ -417,6 +473,7 @@ schedule_templates .. idxset_schedule_templates : indexed by
 entity "INDEXES · schedule_rules" as idxset_schedule_rules <<INDEX_SET>> {
   PK pk_schedule_rules : (id) UNIQUE BTREE
   IX ix_schedule_rules_schedule_template_id : (schedule_template_id) BTREE
+  IX ix_schedule_rules_booking_mode_concept_id : (booking_mode_concept_id) BTREE
   IX ix_schedule_rules_created_by_user_id : (created_by_user_id) BTREE
   IX ix_schedule_rules_updated_by_user_id : (updated_by_user_id) BTREE
   GIST gist_schedule_rules_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
@@ -440,6 +497,7 @@ entity "INDEXES · bookable_slots" as idxset_bookable_slots <<INDEX_SET>> {
   IX ix_bookable_slots_resource_id : (resource_id) BTREE
   IX ix_bookable_slots_schedule_template_id : (schedule_template_id) BTREE
   IX ix_bookable_slots_service_concept_id : (service_concept_id) BTREE
+  IX ix_bookable_slots_practitioner_service_offering_id : (practitioner_service_offering_id) BTREE
   IX ix_bookable_slots_status_concept_id : (status_concept_id) BTREE
   IX ix_bookable_slots_created_by_user_id : (created_by_user_id) BTREE
   IX ix_bookable_slots_updated_by_user_id : (updated_by_user_id) BTREE
@@ -486,6 +544,7 @@ entity "INDEXES · appointment_bookings" as idxset_appointment_bookings <<INDEX_
   IX ix_appointment_bookings_booked_by_user_id : (booked_by_user_id) BTREE
   IX ix_appointment_bookings_status_concept_id : (status_concept_id) BTREE
   IX ix_appointment_bookings_booking_policy_id : (booking_policy_id) BTREE
+  IX ix_appointment_bookings_practitioner_service_offering_id : (practitioner_service_offering_id) BTREE
   IX ix_appointment_bookings_created_by_user_id : (created_by_user_id) BTREE
   IX ix_appointment_bookings_updated_by_user_id : (updated_by_user_id) BTREE
   IX ix_appointment_bookings_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE

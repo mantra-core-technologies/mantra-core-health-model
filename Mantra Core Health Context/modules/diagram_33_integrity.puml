@@ -52,6 +52,13 @@ entity insurance_campaigns <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_insurance_campaigns_valid_period | ("valid_from" <= "valid_to")
   CHECK_SQL : ck_insurance_campaigns_copay_bonus_range | ("copay_bonus_percentage" >= 0 AND "copay_bonus_percentage" <= 100)
 }
+' + v4.2.40 — la oferta de un servicio: duración mínima y máxima coherentes. `NOT NULL` ya
+' garantiza que existan; esto garantiza que tengan sentido (positivas, mín ≤ máx, y un
+' techo de 12 h que es el mismo del contrato de la API) y que los colchones no sean negativos.
+entity practitioner_service_offerings <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_practitioner_service_offerings_duration_range | ("min_duration_minutes" > 0 AND "min_duration_minutes" <= "max_duration_minutes" AND "max_duration_minutes" <= 720)
+  CHECK_SQL : ck_practitioner_service_offerings_buffers | (COALESCE("prep_minutes", 0) >= 0 AND COALESCE("cleanup_minutes", 0) >= 0)
+}
 entity identity_verification_attempts <<REFERENCE_ONLY>> {
   UK : case + endpoint + attempt number
   UK : endpoint + idempotency key
