@@ -86,7 +86,8 @@ SET post_type_concept_id          = '0dd08eed-1323-5b55-a0be-b1a924b1eb09',  -- 
                         THEN now() - interval '1 hour'
                         ELSE published_at END,
     comments_enabled = true,
-    updated_at = now();
+    updated_at = now()
+WHERE id IN ('0b7b01cc-21e4-508f-b25e-404550175b94'::uuid, '79c01cdd-7169-54d8-969b-dea1867468b6'::uuid, 'e0b899d7-2907-59bc-9201-a32afadd14e7'::uuid, 'b9014ad6-db86-53ef-af42-7e73412e4a56'::uuid, '912dc55a-ffe4-5901-bbc7-11944ec7cf98'::uuid, 'f169a189-ae8c-5809-91b8-14d95f57e8c8'::uuid, '82563a84-3029-5380-b22c-e9c30ad5d3a4'::uuid, '619dc094-3880-5ee6-a105-6f40bd129ebe'::uuid, '344621ca-c97f-5363-9416-1775a63ba53f'::uuid, 'ff219baa-019c-575e-a7e9-684469c1b9da'::uuid, '6afc4e5a-3d62-51e8-b77b-c2eee33f545c'::uuid, '6d245684-193f-594f-a7d3-c9d9d3d2782f'::uuid, '89eb9e42-d457-5730-a31a-5f76c8828e8e'::uuid, '56b58741-3365-5903-998a-5449a7430f95'::uuid, '9dd167ca-f725-5a92-9d31-e922cbccef57'::uuid, '7394a323-e50d-5df4-8333-54330dba1f3a'::uuid);
 
 COMMIT;
 
@@ -105,4 +106,5 @@ WHERE visibility_concept_id = '62221f98-088c-53dc-ab2a-11376f720a57'
   AND publication_status_concept_id = 'db373689-6e98-5cbb-925f-a0a8d83091eb'
   AND published_at <= now();
 
-SELECT slug, display_name, headline FROM community.public_profiles ORDER BY display_name LIMIT 6;
+SELECT count(*) AS perfiles_publicos_demo FROM community.public_profiles
+WHERE target_type_concept_id = '45d61ae6-f540-5b5f-90ef-c1f2dcad6e2d';
