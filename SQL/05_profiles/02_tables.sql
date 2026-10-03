@@ -121,6 +121,8 @@ CREATE TABLE IF NOT EXISTS "profiles"."health_practitioner_profiles" (
     "practice_status_concept_id" uuid NOT NULL,
     "professional_bio" text,
     "photo_file_id" uuid,
+    "signature_file_id" uuid,
+    "seal_file_id" uuid,
     "accepts_new_patients" boolean,
     "telehealth_available" boolean,
     "created_at" timestamptz NOT NULL,

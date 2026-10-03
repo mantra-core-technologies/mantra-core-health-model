@@ -153,6 +153,8 @@ entity health_practitioner_profiles {
   * practice_status_concept_id : uuid <<FK>>
     professional_bio : text
     photo_file_id : uuid <<FK>>
+    signature_file_id : uuid <<FK>>
+    seal_file_id : uuid <<FK>>
     accepts_new_patients : boolean
     telehealth_available : boolean
   * created_at : timestamptz
@@ -534,6 +536,8 @@ entity "INDEXES · health_practitioner_profiles" as idxset_health_practitioner_p
   IX ix_health_practitioner_profiles_verification_status_concept_id : (verification_status_concept_id) BTREE
   IX ix_health_practitioner_profiles_practice_status_concept_id : (practice_status_concept_id) BTREE
   IX ix_health_practitioner_profiles_photo_file_id : (photo_file_id) BTREE
+  IX ix_health_practitioner_profiles_signature_file_id : (signature_file_id) BTREE
+  IX ix_health_practitioner_profiles_seal_file_id : (seal_file_id) BTREE
   IX ix_health_practitioner_profiles_created_by_user_id : (created_by_user_id) BTREE
   IX ix_health_practitioner_profiles_updated_by_user_id : (updated_by_user_id) BTREE
 }

@@ -124,6 +124,10 @@ CREATE INDEX IF NOT EXISTS "ix_health_practitioner_profiles_practice_status_conc
 
 CREATE INDEX IF NOT EXISTS "ix_health_practitioner_profiles_photo_file_id" ON "profiles"."health_practitioner_profiles" ("photo_file_id");
 
+CREATE INDEX IF NOT EXISTS "ix_health_practitioner_profiles_signature_file_id" ON "profiles"."health_practitioner_profiles" ("signature_file_id");
+
+CREATE INDEX IF NOT EXISTS "ix_health_practitioner_profiles_seal_file_id" ON "profiles"."health_practitioner_profiles" ("seal_file_id");
+
 CREATE INDEX IF NOT EXISTS "ix_health_practitioner_profiles_created_by_user_id" ON "profiles"."health_practitioner_profiles" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_health_practitioner_profiles_updated_by_user_id" ON "profiles"."health_practitioner_profiles" ("updated_by_user_id");

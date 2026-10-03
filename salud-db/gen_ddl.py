@@ -586,6 +586,8 @@ def resolve_fk_convention(schema, table, col, registry):
         return ("iam", "users") if exists("iam", "users") else None
     if col == "tenant_id":
         return ("directory", "tenants") if exists("directory", "tenants") else None
+    if col.endswith("_file_id"):
+        return ("common", "files") if exists("common", "files") else None
     if col.endswith("_id"):
         prefix = col[:-3]
         for cand in _plural_candidates(prefix):

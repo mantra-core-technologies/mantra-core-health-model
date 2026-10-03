@@ -303,6 +303,20 @@ DO $$ BEGIN
         REFERENCES "common"."files" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- destino: common.files (requiere schema common)
+DO $$ BEGIN
+    ALTER TABLE "profiles"."health_practitioner_profiles"
+        ADD CONSTRAINT "fk_health_practitioner_profiles_signature_file_id" FOREIGN KEY ("signature_file_id")
+        REFERENCES "common"."files" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: common.files (requiere schema common)
+DO $$ BEGIN
+    ALTER TABLE "profiles"."health_practitioner_profiles"
+        ADD CONSTRAINT "fk_health_practitioner_profiles_seal_file_id" FOREIGN KEY ("seal_file_id")
+        REFERENCES "common"."files" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "profiles"."health_practitioner_profiles"
