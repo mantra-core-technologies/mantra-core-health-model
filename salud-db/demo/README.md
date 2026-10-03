@@ -23,8 +23,8 @@ conceptos y deja huérfanas, porque la carga corre con
 
 | Script | Qué arregla |
 |---|---|
-| `00-huerfanas-post-carga.sql` | Las 4 filas que la carga deja apuntando a `value_sets` que no insertó, porque ya existía uno con el mismo `internal_code` bajo otro id. |
-| `01-conceptos-reales.sql` | Especialidades al sistema de códigos de la API, estado de los 16 profesionales, perfiles públicos atados a un profesional cada uno, publicaciones en estado publicado. |
+| `00-huerfanas-post-carga.sql` | Reapunta las referencias de conjuntos duplicados al catálogo de la API. Compara versiones y códigos de miembros antes de retirar las versiones huérfanas; falla si difieren. |
+| `01-conceptos-reales.sql` | Especialidades al sistema de códigos de la API, estado de los 16 profesionales, perfiles públicos atados a un profesional cada uno y sólo las 16 publicaciones del paquete en estado publicado. |
 | `02-textos-publicaciones.sql` | Reemplaza el relleno del cuerpo de las 16 publicaciones por divulgación acorde a la especialidad de quien firma. |
 | `03-imagenes.py` | Genera un avatar por vitrina y una portada por publicación, y escribe las filas de `common.files` y `common.file_versions` para que `GET /public/media/:id` las sirva. |
 
