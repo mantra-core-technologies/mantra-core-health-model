@@ -24,6 +24,7 @@
 |---|---|---|---|---|
 | H1.S1.M1 | Contar datos base y demo | Conteos por entorno registrados | `psql` con `count(*)` → dos inventarios | HECHO |
 | H1.S1.M2 | Respaldar PostgreSQL Dev y Test | Dos dumps legibles | `pg_restore --list` → exit 0 en ambos | HECHO |
+| H1.S1.M3 | Comparar respaldo previo al reinicio | Se conoce si contenía más profundidad operativa | `pg_restore --section=pre-data --section=data` en base temporal y `count(*)` agregados; eliminar base temporal | HECHO |
 
 ## H2 — Cargar lo faltante
 
@@ -58,6 +59,24 @@
 | H3.S1.M2 | Documentar diferencias con mockup | Los módulos aún vacíos quedan identificados | inventario de fixtures ↔ seeds/APIs | A MEDIAS |
 | H3.S1.M3 | Auditar conceptos de relleno | El alcance de `DEFAULT_*` queda cuantificado | SQL de referencias por 11 esquemas → agregados por entorno | HECHO |
 | H3.S1.M4 | Recorrer pantallas reales | Directorio y muro se ven poblados | navegador en Dev y Test → capturas y red limpia | BLOQUEADO |
+
+## H4 — Recuperar perfiles sintéticos anteriores en Test
+
+**CA:** Dado el respaldo sintético del 27/09 confirmado por el propietario, cuando se incorporan las filas faltantes, entonces los pacientes antiguos vuelven a Test sin reemplazar los actuales.
+**DoD:** Copia previa restaurable, fusión ensayada en transacción revertida, ejecución aditiva y consultas de integridad y API.
+**Estado:** HECHO
+
+### H4.S1 — Fusionar el subconjunto de cuentas y perfiles
+
+**CA:** Dado un perfil antiguo, cuando se consulta Test, entonces su persona, cuenta y dependencias necesarias existen. **DoD:** Conteos de IDs de respaldo recuperados y verificador FK → 0 huérfanas. **Estado:** HECHO
+
+| ID | Microtarea | CA (binario) | DoD (comando de verificación) | Estado |
+|---|---|---|---|---|
+| H4.S1.M1 | Respaldar Test y aislar origen | Dos estados independientes para comparar y volver atrás | `pg_dump -Fc`, `pg_restore --list`, `pg_restore --section=pre-data --section=data` → exit 0 | HECHO |
+| H4.S1.M2 | Identificar cierre de dependencias | Sólo se copian filas antiguas requeridas para las cuentas y perfiles | 11 tablas, preflight FK → 0 referencias faltantes | HECHO |
+| H4.S1.M3 | Ensayar fusión reversible | La fusión no rompe restricciones ni pisa registros actuales | `recuperar_perfiles_test.py` sin `--apply` → 96/96 pacientes, `ROLLBACK` | HECHO |
+| H4.S1.M4 | Aplicar fusión en Test | Los 96 perfiles antiguos están en Test sin perder los existentes | `recuperar_perfiles_test.py --apply` → `COMMIT`; `--audit` → 0 filas pendientes | HECHO |
+| H4.S1.M5 | Comprobar lecturas finales | API y base muestran los perfiles recuperados | HTTP autenticado → 161 pacientes, 42 profesionales; FK → 0 huérfanas | HECHO |
 
 ## Riesgos y bloqueos previstos
 
