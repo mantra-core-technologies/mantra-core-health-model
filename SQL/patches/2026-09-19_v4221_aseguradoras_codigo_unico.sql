@@ -137,7 +137,7 @@ DO $$
 DECLARE
   v_total       integer;
   v_canonicas   integer;
-  v_sobrantes   integer;
+  v_viejas      integer;
   v_huerfanas   integer;
 BEGIN
   SELECT count(*) INTO v_total     FROM insurance.insurance_carriers;
@@ -161,23 +161,28 @@ BEGIN
 
   SELECT count(*) INTO v_canonicas FROM insurance.insurance_carriers
    WHERE carrier_code ~ '^BO_ASEG_';
-  SELECT count(*) INTO v_sobrantes FROM insurance.insurance_carriers
-   WHERE carrier_code !~ '^BO_';
+  SELECT count(*) INTO v_viejas FROM insurance.insurance_carriers
+   WHERE carrier_code IN (SELECT viejo FROM _v4221_mapa);
 
   IF v_canonicas <> 17 THEN
     RAISE EXCEPTION 'v4.2.21: se esperaban 17 aseguradoras canónicas y hay %', v_canonicas;
   END IF;
-  -- Sólo puede sobrevivir la aseguradora de demostración (sección C), y sólo
-  -- si ya existía: ningún seed la crea (no tiene código BO_ASEG_, nació de
-  -- una corrida de prueba manual), así que en una base que nunca la tuvo el
-  -- resultado correcto es 0, no 1. Lo que este patch no tolera es que sobreviva
-  -- MÁS de una fila no canónica -- eso sí sería el duplicado real que vino a
-  -- limpiar. Corregido 2026-09-26 (M1): la aserción original exigía
-  -- exactamente 1 y reventaba en cualquier entorno sin ese registro histórico
-  -- (reproducido corriendo el patch contra una base con las 17 canónicas
-  -- recién sembradas y 0 filas demo).
-  IF v_sobrantes > 1 THEN
-    RAISE EXCEPTION 'v4.2.21: se esperaban 0 o 1 filas no canónicas (la demo, si existía) y hay %', v_sobrantes;
+  -- Lo que este patch promete es que no sobreviva NINGUNA de las nueve
+  -- aseguradoras viejas del paquete (el duplicado real). Se verifica eso y
+  -- nada más.
+  --
+  -- Corregido 2026-10-04: la aserción anterior contaba CUALQUIER aseguradora
+  -- con código que no empezara por `BO_` y admitía como mucho una (la demo).
+  -- Como este archivo se re-aplica en CADA despliegue (`postgres-init`), una
+  -- sola aseguradora dada de alta por la app o por una corrida de pruebas
+  -- bastaba para tumbar todos los despliegues de la API. Pasó en test el
+  -- 2026-10-03: 7 «Aseguradora de Prueba …» creadas entre las 06:38 y las
+  -- 06:48 → «se esperaban 0 o 1 filas no canónicas … y hay 7», salida 3,
+  -- `api-migrate` y la API quedaron en `Created` y el sitio dio 503.
+  -- Las altas legítimas no son un duplicado: no le corresponde a este patch
+  -- juzgarlas.
+  IF v_viejas <> 0 THEN
+    RAISE EXCEPTION 'v4.2.21: quedan % aseguradoras con código viejo del paquete (ALIANZA_VIDA…)', v_viejas;
   END IF;
 
   -- Ninguna fila de negocio puede haber quedado apuntando a una aseguradora
