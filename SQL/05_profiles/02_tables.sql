@@ -142,6 +142,8 @@ CREATE TABLE IF NOT EXISTS "profiles"."professional_credentials" (
     "issuing_institution_text" varchar,
     "issuing_country_concept_id" uuid,
     "issuing_city_text" varchar,
+    "issuing_country_text" varchar,
+    "profession_concept_id" uuid,
     "issue_date" date,
     "expiry_date" date,
     "state_concept_id" uuid NOT NULL,

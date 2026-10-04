@@ -355,6 +355,13 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "profiles"."professional_credentials"
+        ADD CONSTRAINT "fk_professional_credentials_profession_concept_id" FOREIGN KEY ("profession_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "profiles"."professional_credentials"
         ADD CONSTRAINT "fk_professional_credentials_state_concept_id" FOREIGN KEY ("state_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
