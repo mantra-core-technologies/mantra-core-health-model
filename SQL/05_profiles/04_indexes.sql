@@ -140,6 +140,8 @@ CREATE INDEX IF NOT EXISTS "ix_professional_credentials_issuing_authority_tenant
 
 CREATE INDEX IF NOT EXISTS "ix_professional_credentials_issuing_country_concept_id" ON "profiles"."professional_credentials" ("issuing_country_concept_id");
 
+CREATE INDEX IF NOT EXISTS "ix_professional_credentials_profession_concept_id" ON "profiles"."professional_credentials" ("profession_concept_id");
+
 CREATE INDEX IF NOT EXISTS "ix_professional_credentials_state_concept_id" ON "profiles"."professional_credentials" ("state_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_professional_credentials_file_id" ON "profiles"."professional_credentials" ("file_id");

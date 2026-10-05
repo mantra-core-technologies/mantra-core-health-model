@@ -174,6 +174,20 @@ entity professional_credentials {
     issuing_institution_text : varchar
     issuing_country_concept_id : uuid <<FK>>
     issuing_city_text : varchar
+  ' + v4.2.41 — el país del título como texto, al lado del concepto: VS_COUNTRY
+  ' tiene un solo miembro, así que el concepto no puede representar «Cuba» ni
+  ' «Argentina», y el alta descartaba el país elegido. Mismo patrón que la
+  ' ocupación de `persons`: el concepto gana cuando vienen los dos.
+    issuing_country_text : varchar
+  ' + v4.2.41 — qué profesión acredita el título, como miembro de
+  ' VS_BO_PROFESSION (COB-2023 del INE, grandes grupos 2 y 3; lo publica la API
+  ' al arrancar, un solo dueño). Era texto escrito a mano en el alta («Otra
+  ' profesión») y no viajaba: el propietario pidió lista normalizada.
+    profession_concept_id : uuid <<FK>>
+  ' + v4.2.41 — cómo se llama el título cuando no hay catálogo que lo diga
+  ' («Diplomado en Salud Pública», «Maestría en Epidemiología»). El alta lo pide
+  ' en diplomados, maestrías y doctorados y lo descartaba.
+    title_text : varchar
     issue_date : date
     expiry_date : date
   * state_concept_id : uuid <<FK>>
@@ -550,6 +564,7 @@ entity "INDEXES · professional_credentials" as idxset_professional_credentials 
   IX ix_professional_credentials_credential_type_concept_id : (credential_type_concept_id) BTREE
   IX ix_professional_credentials_issuing_authority_tenant_id : (issuing_authority_tenant_id) BTREE
   IX ix_professional_credentials_issuing_country_concept_id : (issuing_country_concept_id) BTREE
+  IX ix_professional_credentials_profession_concept_id : (profession_concept_id) BTREE
   IX ix_professional_credentials_state_concept_id : (state_concept_id) BTREE
   IX ix_professional_credentials_file_id : (file_id) BTREE
   IX ix_professional_credentials_verified_by_user_id : (verified_by_user_id) BTREE
