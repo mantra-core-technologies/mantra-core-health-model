@@ -184,6 +184,10 @@ entity professional_credentials {
   ' al arrancar, un solo dueño). Era texto escrito a mano en el alta («Otra
   ' profesión») y no viajaba: el propietario pidió lista normalizada.
     profession_concept_id : uuid <<FK>>
+  ' + v4.2.41 — cómo se llama el título cuando no hay catálogo que lo diga
+  ' («Diplomado en Salud Pública», «Maestría en Epidemiología»). El alta lo pide
+  ' en diplomados, maestrías y doctorados y lo descartaba.
+    title_text : varchar
     issue_date : date
     expiry_date : date
   * state_concept_id : uuid <<FK>>

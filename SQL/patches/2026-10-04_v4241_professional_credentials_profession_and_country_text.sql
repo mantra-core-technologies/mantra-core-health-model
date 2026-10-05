@@ -17,12 +17,15 @@
 --     de VS_BO_PROFESSION (COB-2023 del INE, grandes grupos 2 y 3, lo publica
 --     la API al arrancar). Era texto escrito a mano; el propietario pidió lista
 --     normalizada (2026-10-04).
+--   - `title_text`: cómo se llama el título cuando no hay catálogo
+--     («Diplomado en Salud Pública»); el alta lo pide en diplomados,
+--     maestrías y doctorados.
 --   - `issuing_country_text`: el país como texto. `issuing_country_concept_id`
 --     no alcanza porque VS_COUNTRY tiene un solo miembro. El concepto gana
 --     cuando vienen los dos, igual que la ocupación de `persons`.
 --
 -- DELTAS ESPERADOS sobre la base viva:
---   columnas de profiles.professional_credentials  +2
+--   columnas de profiles.professional_credentials  +3
 --   FKs +1 (fk_professional_credentials_profession_concept_id)
 --   índices +1 (ix_professional_credentials_profession_concept_id) · tablas ±0
 -- ============================================================================
@@ -34,6 +37,9 @@ ALTER TABLE "profiles"."professional_credentials"
 
 ALTER TABLE "profiles"."professional_credentials"
     ADD COLUMN IF NOT EXISTS "profession_concept_id" uuid;
+
+ALTER TABLE "profiles"."professional_credentials"
+    ADD COLUMN IF NOT EXISTS "title_text" varchar;
 
 CREATE INDEX IF NOT EXISTS "ix_professional_credentials_profession_concept_id"
     ON "profiles"."professional_credentials" ("profession_concept_id");
@@ -55,7 +61,7 @@ BEGIN
     FROM information_schema.columns
     WHERE table_schema = 'profiles'
       AND table_name = 'professional_credentials'
-      AND column_name IN ('issuing_country_text', 'profession_concept_id')
+      AND column_name IN ('issuing_country_text', 'profession_concept_id', 'title_text')
       AND is_nullable = 'YES';
 
     SELECT count(*) INTO n_fk
@@ -67,13 +73,13 @@ BEGIN
     WHERE schemaname = 'profiles'
       AND indexname = 'ix_professional_credentials_profession_concept_id';
 
-    IF n_columnas <> 2 OR n_fk <> 1 OR n_ix <> 1 THEN
+    IF n_columnas <> 3 OR n_fk <> 1 OR n_ix <> 1 THEN
         RAISE EXCEPTION
-            'v4.2.41 incompleto: columnas=% fk=% índices=% (esperado 2/1/1)',
+            'v4.2.41 incompleto: columnas=% fk=% índices=% (esperado 3/1/1)',
             n_columnas, n_fk, n_ix;
     END IF;
 
-    RAISE NOTICE 'v4.2.41 aplicado: 2 columnas, 1 FK, 1 índice.';
+    RAISE NOTICE 'v4.2.41 aplicado: 3 columnas, 1 FK, 1 índice.';
 END $$;
 
 COMMIT;
