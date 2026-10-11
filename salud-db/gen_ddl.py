@@ -537,6 +537,35 @@ def resolve_fk(schema, table, col):
     return (m.group(1), m.group(2)) if m else None
 
 
+def resolve_fk_from_diagram(puml, schema, table, col):
+    """Resolve an explicitly labeled ER edge to its canonical target entity.
+
+    Reference-only stubs keep cross-module targets visible in the source model.
+    The edge label names the FK column, so multiple FKs to the same entity stay
+    unambiguous without relying on a name-based guess or an external vault note.
+    """
+    text = puml.read_text(encoding="utf-8")
+    aliases = {}
+    entity_re = re.compile(
+        r'^\s*entity\s+"([^\"]+)"\s+as\s+([A-Za-z0-9_]+)', re.MULTILINE
+    )
+    for qualified, alias in entity_re.findall(text):
+        if "." in qualified:
+            aliases[alias] = tuple(qualified.split(".", 1))
+        else:
+            aliases[alias] = (schema, qualified)
+
+    relation_re = re.compile(
+        r'^\s*([A-Za-z0-9_]+)\s+\S*--\S*\s+'
+        r'([A-Za-z0-9_]+)\s*:\s*([A-Za-z_][A-Za-z0-9_]*)\s*$',
+        re.MULTILINE,
+    )
+    for source, target, label in relation_re.findall(text):
+        if source == table and label == col and target in aliases:
+            return aliases[target]
+    return None
+
+
 def build_registry(codes):
     """Mapa nombre_tabla → [(schema, tabla)] de TODAS las tablas PG (para la convención)."""
     reg: dict[str, set] = {}
@@ -644,6 +673,8 @@ def emit(module_code: str, report: list, registry: dict, pk_map: dict):
             if not c.is_fk:
                 continue
             tgt = resolve_fk(schema, e.name, c.name)     # 1º: destino canónico del vault
+            if tgt is None:
+                tgt = resolve_fk_from_diagram(puml, schema, e.name, c.name)
             # El vault a veces resuelve a <mismo_schema>.<tabla> asumiendo same-schema, pero la
             # tabla vive en otro schema (p.ej. scheduling.appointments → clinical.appointments).
             # Si el destino del vault NO existe en el registro, se descarta y se re-resuelve.
