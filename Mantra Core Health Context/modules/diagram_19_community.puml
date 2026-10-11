@@ -5,6 +5,29 @@ skinparam linetype ortho
 skinparam packageStyle rectangle
 hide circle
 
+' Canonical FK targets declared in their owning modules.
+entity "profiles.patient_profiles" as profiles_patient_profiles <<REFERENCE_ONLY>> {
+  * profile_id : uuid <<PK>>
+}
+entity "profiles.health_practitioner_profiles" as profiles_health_practitioner_profiles <<REFERENCE_ONLY>> {
+  * profile_id : uuid <<PK>>
+}
+entity "practice.practices" as practice_practices <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity "clinical.encounters" as clinical_encounters <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity "practice.practitioner_role_assignments" as practice_practitioner_role_assignments <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity "terminology.catalog_concepts" as terminology_catalog_concepts <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity "iam.users" as iam_users <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
 ' ------------------------------------------------------------------------------
 ' SOURCE CONSOLIDATED: diagram_19_community.puml
 ' ------------------------------------------------------------------------------
@@ -174,6 +197,18 @@ entity rating_aggregates <<MATERIALIZED_VIEW>> {
     dimension_averages_json : jsonb
     calculated_at : timestamptz
 }
+
+party_ratings }o--|| profiles_patient_profiles : reviewer_patient_profile_id
+party_ratings }o--|| profiles_health_practitioner_profiles : reviewer_practitioner_profile_id
+party_ratings }o--|| practice_practices : reviewer_practice_id
+party_ratings }o--|| profiles_patient_profiles : target_patient_profile_id
+party_ratings }o--|| profiles_health_practitioner_profiles : target_practitioner_profile_id
+party_ratings }o--|| practice_practices : target_practice_id
+party_ratings }o--|| clinical_encounters : verified_encounter_id
+party_ratings }o--|| practice_practitioner_role_assignments : verified_role_assignment_id
+party_ratings }o--|| terminology_catalog_concepts : moderation_status_concept_id
+party_ratings }o--|| iam_users : created_by_user_id
+party_ratings }o--|| iam_users : updated_by_user_id
 
 public_profiles ||--o{ social_posts
 public_profiles ||--o{ service_reviews
