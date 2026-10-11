@@ -5,6 +5,29 @@ skinparam linetype ortho
 skinparam packageStyle rectangle
 hide circle
 
+' Canonical FK targets declared in their owning modules.
+entity "profiles.patient_profiles" as profiles_patient_profiles <<REFERENCE_ONLY>> {
+  * profile_id : uuid <<PK>>
+}
+entity "profiles.health_practitioner_profiles" as profiles_health_practitioner_profiles <<REFERENCE_ONLY>> {
+  * profile_id : uuid <<PK>>
+}
+entity "practice.practices" as practice_practices <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity "clinical.encounters" as clinical_encounters <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity "practice.practitioner_role_assignments" as practice_practitioner_role_assignments <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity "terminology.catalog_concepts" as terminology_catalog_concepts <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity "iam.users" as iam_users <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
 ' ------------------------------------------------------------------------------
 ' SOURCE CONSOLIDATED: diagram_19_community.puml
 ' ------------------------------------------------------------------------------
@@ -113,6 +136,44 @@ entity review_responses {
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
 }
+' v4.2.42 — calificación en malla (propietario, 2026-10-08): médico, paciente y
+' organización se califican entre sí con estrellas 1–5. Paciente ↔ paciente y
+' organización ↔ organización NO se califican.
+'
+' Por qué no es service_reviews: esa tabla exige que el calificado tenga vitrina
+' (community.public_profiles) y que el autor sea un paciente. En los entornos
+' desplegados no hay ninguna vitrina (dev y test: 0 filas, medido el
+' 2026-10-08), el paciente no tiene vitrina por diseño, y su nota no debe llegar
+' nunca a rating_aggregates ni al buscador. Cada parte se nombra por su id
+' canónico: médico = health_practitioner_profiles, paciente = patient_profiles,
+' organización = practice.practices.
+'
+' Reglas del servicio (gen_ddl.py no emite CHECK):
+'   - exactamente un reviewer_* y exactamente un target_* van llenos;
+'   - el respaldo es una atención terminada (verified_encounter_id) cuando hay un
+'     paciente de por medio, y el vínculo de trabajo
+'     (verified_role_assignment_id, vigente o pasado) entre médico y organización;
+'   - la nota de un paciente sólo la leen profesionales y el propio paciente.
+entity party_ratings {
+  * id : uuid <<PK>>
+  --
+    reviewer_patient_profile_id : uuid <<FK>>
+    reviewer_practitioner_profile_id : uuid <<FK>>
+    reviewer_practice_id : uuid <<FK>>
+    target_patient_profile_id : uuid <<FK>>
+    target_practitioner_profile_id : uuid <<FK>>
+    target_practice_id : uuid <<FK>>
+    verified_encounter_id : uuid <<FK>>
+    verified_role_assignment_id : uuid <<FK>>
+  * overall_rating : smallint
+    comment_text : text
+  * moderation_status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
 entity content_reports {
   * id : uuid <<PK>>
   --
@@ -136,6 +197,18 @@ entity rating_aggregates <<MATERIALIZED_VIEW>> {
     dimension_averages_json : jsonb
     calculated_at : timestamptz
 }
+
+party_ratings }o--|| profiles_patient_profiles : reviewer_patient_profile_id
+party_ratings }o--|| profiles_health_practitioner_profiles : reviewer_practitioner_profile_id
+party_ratings }o--|| practice_practices : reviewer_practice_id
+party_ratings }o--|| profiles_patient_profiles : target_patient_profile_id
+party_ratings }o--|| profiles_health_practitioner_profiles : target_practitioner_profile_id
+party_ratings }o--|| practice_practices : target_practice_id
+party_ratings }o--|| clinical_encounters : verified_encounter_id
+party_ratings }o--|| practice_practitioner_role_assignments : verified_role_assignment_id
+party_ratings }o--|| terminology_catalog_concepts : moderation_status_concept_id
+party_ratings }o--|| iam_users : created_by_user_id
+party_ratings }o--|| iam_users : updated_by_user_id
 
 public_profiles ||--o{ social_posts
 public_profiles ||--o{ service_reviews
@@ -864,6 +937,27 @@ entity "INDEXES · service_reviews" as idxset_service_reviews <<INDEX_SET>> {
 }
 
 service_reviews .. idxset_service_reviews : indexed by
+
+' Una calificación por autor, calificado y respaldo: volver a calificar la misma
+' atención (o el mismo vínculo) actualiza la fila, no crea otra. El coalesce
+' junta en una sola clave las columnas mutuamente excluyentes.
+entity "INDEXES · party_ratings" as idxset_party_ratings <<INDEX_SET>> {
+  PK pk_party_ratings : (id) UNIQUE BTREE
+  IX ix_party_ratings_reviewer_patient_profile_id : (reviewer_patient_profile_id) BTREE
+  IX ix_party_ratings_reviewer_practitioner_profile_id : (reviewer_practitioner_profile_id) BTREE
+  IX ix_party_ratings_reviewer_practice_id : (reviewer_practice_id) BTREE
+  IX ix_party_ratings_target_patient_profile_id : (target_patient_profile_id) BTREE
+  IX ix_party_ratings_target_practitioner_profile_id : (target_practitioner_profile_id) BTREE
+  IX ix_party_ratings_target_practice_id : (target_practice_id) BTREE
+  IX ix_party_ratings_verified_encounter_id : (verified_encounter_id) BTREE
+  IX ix_party_ratings_verified_role_assignment_id : (verified_role_assignment_id) BTREE
+  IX ix_party_ratings_moderation_status_concept_id : (moderation_status_concept_id) BTREE
+  IX ix_party_ratings_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_party_ratings_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_party_ratings_basis : (coalesce(reviewer_patient_profile_id, reviewer_practitioner_profile_id, reviewer_practice_id), coalesce(target_patient_profile_id, target_practitioner_profile_id, target_practice_id), coalesce(verified_encounter_id, verified_role_assignment_id)) UNIQUE BTREE
+}
+
+party_ratings .. idxset_party_ratings : indexed by
 
 entity "INDEXES · review_dimension_scores" as idxset_review_dimension_scores <<INDEX_SET>> {
   PK pk_review_dimension_scores : (id) UNIQUE BTREE
