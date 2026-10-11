@@ -145,6 +145,7 @@ CREATE TABLE IF NOT EXISTS "practice"."practitioner_role_assignments" (
     "is_primary" boolean,
     "valid_from" date,
     "valid_to" date,
+    "contact_phone" varchar,
     "status_concept_id" uuid NOT NULL,
     "created_at" timestamptz NOT NULL,
     "updated_at" timestamptz NOT NULL,
