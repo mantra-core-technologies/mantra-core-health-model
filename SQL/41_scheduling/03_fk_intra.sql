@@ -87,6 +87,12 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 
 DO $$ BEGIN
+    ALTER TABLE "scheduling"."appointment_bookings"
+        ADD CONSTRAINT "fk_appointment_bookings_follow_up_of_booking_id" FOREIGN KEY ("follow_up_of_booking_id")
+        REFERENCES "scheduling"."appointment_bookings" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
     ALTER TABLE "scheduling"."booking_reschedules"
         ADD CONSTRAINT "fk_booking_reschedules_booking_id" FOREIGN KEY ("booking_id")
         REFERENCES "scheduling"."appointment_bookings" ("id");

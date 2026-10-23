@@ -195,6 +195,8 @@ CREATE TABLE IF NOT EXISTS "scheduling"."appointment_bookings" (
     "cancellation_policy_snapshot" jsonb,
     "practitioner_service_offering_id" uuid,
     "service_snapshot" jsonb,
+    "follow_up_of_booking_id" uuid,
+    "form_instance_id" uuid,
     CONSTRAINT "pk_appointment_bookings" PRIMARY KEY ("id")
 );
 

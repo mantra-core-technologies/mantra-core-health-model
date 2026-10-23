@@ -256,6 +256,8 @@ CREATE INDEX IF NOT EXISTS "ix_service_requests_performer_tenant_id" ON "clinica
 
 CREATE INDEX IF NOT EXISTS "ix_service_requests_previous_diagnostic_report_id" ON "clinical"."service_requests" ("previous_diagnostic_report_id");
 
+CREATE INDEX IF NOT EXISTS "ix_service_requests_form_instance_id" ON "clinical"."service_requests" ("form_instance_id");
+
 CREATE INDEX IF NOT EXISTS "ix_service_requests_created_by_user_id" ON "clinical"."service_requests" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_service_requests_updated_by_user_id" ON "clinical"."service_requests" ("updated_by_user_id");
@@ -313,6 +315,8 @@ CREATE INDEX IF NOT EXISTS "ix_medication_requests_route_concept_id" ON "clinica
 CREATE INDEX IF NOT EXISTS "ix_medication_requests_unit_concept_id" ON "clinical"."medication_requests" ("unit_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_medication_requests_indication_condition_id" ON "clinical"."medication_requests" ("indication_condition_id");
+
+CREATE INDEX IF NOT EXISTS "ix_medication_requests_form_instance_id" ON "clinical"."medication_requests" ("form_instance_id");
 
 CREATE INDEX IF NOT EXISTS "ix_medication_requests_created_by_user_id" ON "clinical"."medication_requests" ("created_by_user_id");
 

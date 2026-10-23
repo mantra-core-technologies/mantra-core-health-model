@@ -164,6 +164,10 @@ CREATE INDEX IF NOT EXISTS "ix_appointment_bookings_booking_policy_id" ON "sched
 
 CREATE INDEX IF NOT EXISTS "ix_appointment_bookings_practitioner_service_offering_id" ON "scheduling"."appointment_bookings" ("practitioner_service_offering_id");
 
+CREATE INDEX IF NOT EXISTS "ix_appointment_bookings_follow_up_of_booking_id" ON "scheduling"."appointment_bookings" ("follow_up_of_booking_id");
+
+CREATE INDEX IF NOT EXISTS "ix_appointment_bookings_form_instance_id" ON "scheduling"."appointment_bookings" ("form_instance_id");
+
 CREATE INDEX IF NOT EXISTS "ix_appointment_bookings_created_by_user_id" ON "scheduling"."appointment_bookings" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_appointment_bookings_updated_by_user_id" ON "scheduling"."appointment_bookings" ("updated_by_user_id");

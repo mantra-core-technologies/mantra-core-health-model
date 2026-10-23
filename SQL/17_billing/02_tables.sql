@@ -205,6 +205,46 @@ CREATE TABLE IF NOT EXISTS "billing"."payments_made" (
     CONSTRAINT "pk_payments_made" PRIMARY KEY ("id")
 );
 
+CREATE TABLE IF NOT EXISTS "billing"."siat_simulated_invoices" (
+    "id" uuid NOT NULL,
+    "invoice_id" uuid NOT NULL,
+    "encounter_id" uuid,
+    "practice_id" uuid NOT NULL,
+    "patient_profile_id" uuid NOT NULL,
+    "issuer_nit" varchar(20) NOT NULL,
+    "invoice_number" integer NOT NULL,
+    "cuf" varchar(200) NOT NULL,
+    "cufd" varchar(200) NOT NULL,
+    "issued_at_text" varchar(23) NOT NULL,
+    "cabecera" jsonb NOT NULL,
+    "detalle" jsonb NOT NULL,
+    "xml" text NOT NULL,
+    "hash_archivo" varchar(64) NOT NULL,
+    "compressed_bytes" integer NOT NULL,
+    "status" varchar(12) NOT NULL,
+    "status_at_reception" varchar(12) NOT NULL,
+    "siat_response" jsonb NOT NULL,
+    "events" jsonb NOT NULL,
+    "simulated" boolean NOT NULL DEFAULT true,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_siat_simulated_invoices" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "billing"."siat_simulated_outbox" (
+    "id" uuid NOT NULL,
+    "siat_invoice_id" uuid NOT NULL,
+    "to_email" varchar(320) NOT NULL,
+    "attachments" jsonb NOT NULL,
+    "status" varchar(24) NOT NULL,
+    "queued_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    CONSTRAINT "pk_siat_simulated_outbox" PRIMARY KEY ("id")
+);
+
 CREATE TABLE IF NOT EXISTS "billing"."reimbursements" (
     "id" uuid NOT NULL,
     "claim_id" uuid NOT NULL,
