@@ -48,6 +48,13 @@ entity prior_authorization_requests <<REFERENCE_ONLY>> {
 entity service_requests <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_service_requests_override_reason_requires_previous_report | ("duplicate_override_reason" IS NULL OR "previous_diagnostic_report_id" IS NOT NULL)
 }
+' + 2026-10-23 (C-01) — comprobante de pago del paciente: un comprobante por QR lleva archivo,
+' un rechazo lleva motivo, y el monto en unidades menores es positivo.
+entity payment_proofs <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_payment_proofs_qr_requires_file | ("method_concept_id" <> '78a2a1c8-5e68-5aaa-b43f-b23d00f69e95' OR "file_id" IS NOT NULL)
+  CHECK_SQL : ck_payment_proofs_rejected_requires_reason | ("status_concept_id" <> 'c487d958-3cbf-5082-8b6a-735cb2186cd8' OR NULLIF(BTRIM("rejection_reason"), '') IS NOT NULL)
+  CHECK_SQL : ck_payment_proofs_amount_positive | ("amount_minor" > 0)
+}
 entity insurance_campaigns <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_insurance_campaigns_valid_period | ("valid_from" <= "valid_to")
   CHECK_SQL : ck_insurance_campaigns_copay_bonus_range | ("copay_bonus_percentage" >= 0 AND "copay_bonus_percentage" <= 100)

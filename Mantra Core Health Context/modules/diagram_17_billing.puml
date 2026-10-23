@@ -24,6 +24,11 @@ entity "accounting.clearing_documents" as accounting_clearing_documents <<REFERE
 entity "accounting.clearing_items" as accounting_clearing_items <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 entity "accounting.company_bank_accounts" as accounting_company_bank_accounts <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 entity "payments.payment_transactions" as payments_payment_transactions <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "clinical.encounters" as clinical_encounters <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "practice.practice_sites" as practice_practice_sites <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "profiles.patient_profiles" as profiles_patient_profiles <<REFERENCE_ONLY>> { * profile_id : uuid <<PK>> }
+entity "directory.tenants" as directory_tenants <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "common.files" as common_files <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 
 note as BIZ_diagram_17_billing
   Manages service billing, invoices, patient statements, vendor bills and
@@ -125,6 +130,44 @@ entity payments_received {
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
 }
+
+entity payment_proofs {
+  * id : uuid <<PK>>
+  --
+  * encounter_id : uuid <<FK>>
+  * tenant_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+    practice_site_id : uuid <<FK>>
+  * method_concept_id : uuid <<FK>>
+    file_id : uuid <<FK>>
+  * amount_minor : bigint
+  * currency : varchar
+  * status_concept_id : uuid <<FK>>
+    rejection_reason : text
+    reviewed_by_user_id : uuid <<FK>>
+    reviewed_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+note right of payment_proofs
+  PAYMENT PROOF (C-01, 2026-10-23)
+  - The charge of a consultation IS the encounter (`clinical.encounters`):
+    there is no `billing.charges` table, so `encounter_id` materializes the
+    contract's `charge_id`. The patient uploads the proof against the site's
+    static bank QR (`practice.practice_sites.bank_qr_file_id`) or declares cash.
+  - `method_concept_id`: billing PM_QR_TRANSFER | PM_CASH. `file_id` is
+    mandatory for PM_QR_TRANSFER (CHECK ck_payment_proofs_qr_requires_file).
+  - `status_concept_id`: PROOF_PENDING_REVIEW → PROOF_ACCEPTED | PROOF_REJECTED.
+    Only one PENDING_REVIEW proof per encounter (partial unique index).
+    `rejection_reason` is mandatory when rejected (CHECK).
+  - Money in minor units (`amount_minor` bigint + ISO `currency`), never numeric.
+  - The charge state (PENDING | PAID) is derived from the accepted proof;
+    it replaces the manual appointment payment flag for the patient.
+end note
 
 entity patient_statements {
   * id : uuid <<PK>>
@@ -236,6 +279,11 @@ entity payments_made {
 invoices ||--o{ invoice_lines
 service_catalog |o--o{ invoice_lines
 invoices ||--o{ payments_received
+clinical_encounters ||--o{ payment_proofs : encounter_id
+directory_tenants ||--o{ payment_proofs : tenant_id
+profiles_patient_profiles ||--o{ payment_proofs : patient_profile_id
+practice_practice_sites |o--o{ payment_proofs : practice_site_id
+common_files |o--o{ payment_proofs : file_id
 vendors ||--o{ bills
 bills ||--o{ bill_lines
 bills ||--o{ payments_made
@@ -714,6 +762,24 @@ entity "INDEXES · payments_received" as idxset_payments_received <<INDEX_SET>> 
 }
 
 payments_received .. idxset_payments_received : indexed by
+
+entity "INDEXES · payment_proofs" as idxset_payment_proofs <<INDEX_SET>> {
+  PK pk_payment_proofs : (id) UNIQUE BTREE
+  IX ix_payment_proofs_encounter_id : (encounter_id) BTREE
+  IX ix_payment_proofs_tenant_id : (tenant_id) BTREE
+  IX ix_payment_proofs_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_payment_proofs_practice_site_id : (practice_site_id) BTREE
+  IX ix_payment_proofs_method_concept_id : (method_concept_id) BTREE
+  IX ix_payment_proofs_file_id : (file_id) BTREE
+  IX ix_payment_proofs_status_concept_id : (status_concept_id) BTREE
+  IX ix_payment_proofs_reviewed_by_user_id : (reviewed_by_user_id) BTREE
+  IX ix_payment_proofs_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_payment_proofs_updated_by_user_id : (updated_by_user_id) BTREE
+  UX ux_payment_proofs_pending_per_charge : (encounter_id) UNIQUE BTREE WHERE status_concept_id = '351d39c9-7ffe-598b-96f5-d30125186cfe'
+  IX ix_payment_proofs_patient_profile_id_created_at : (patient_profile_id, created_at DESC) BTREE
+}
+
+payment_proofs .. idxset_payment_proofs : indexed by
 
 entity "INDEXES · patient_statements" as idxset_patient_statements <<INDEX_SET>> {
   PK pk_patient_statements : (id) UNIQUE BTREE

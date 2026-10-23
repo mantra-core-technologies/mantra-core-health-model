@@ -253,6 +253,76 @@ DO $$ BEGIN
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- destino: clinical.encounters (requiere schema clinical)
+DO $$ BEGIN
+    ALTER TABLE "billing"."payment_proofs"
+        ADD CONSTRAINT "fk_payment_proofs_encounter_id" FOREIGN KEY ("encounter_id")
+        REFERENCES "clinical"."encounters" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "billing"."payment_proofs"
+        ADD CONSTRAINT "fk_payment_proofs_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: profiles.patient_profiles (requiere schema profiles)
+DO $$ BEGIN
+    ALTER TABLE "billing"."payment_proofs"
+        ADD CONSTRAINT "fk_payment_proofs_patient_profile_id" FOREIGN KEY ("patient_profile_id")
+        REFERENCES "profiles"."patient_profiles" ("profile_id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: practice.practice_sites (requiere schema practice)
+DO $$ BEGIN
+    ALTER TABLE "billing"."payment_proofs"
+        ADD CONSTRAINT "fk_payment_proofs_practice_site_id" FOREIGN KEY ("practice_site_id")
+        REFERENCES "practice"."practice_sites" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "billing"."payment_proofs"
+        ADD CONSTRAINT "fk_payment_proofs_method_concept_id" FOREIGN KEY ("method_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: common.files (requiere schema common)
+DO $$ BEGIN
+    ALTER TABLE "billing"."payment_proofs"
+        ADD CONSTRAINT "fk_payment_proofs_file_id" FOREIGN KEY ("file_id")
+        REFERENCES "common"."files" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "billing"."payment_proofs"
+        ADD CONSTRAINT "fk_payment_proofs_status_concept_id" FOREIGN KEY ("status_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "billing"."payment_proofs"
+        ADD CONSTRAINT "fk_payment_proofs_reviewed_by_user_id" FOREIGN KEY ("reviewed_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "billing"."payment_proofs"
+        ADD CONSTRAINT "fk_payment_proofs_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "billing"."payment_proofs"
+        ADD CONSTRAINT "fk_payment_proofs_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
 -- destino: practice.practices (requiere schema practice)
 DO $$ BEGIN
     ALTER TABLE "billing"."patient_statements"

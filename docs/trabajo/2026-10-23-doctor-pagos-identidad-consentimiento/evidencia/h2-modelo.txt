@@ -1,0 +1,20 @@
+$ SALUD_WORKSPACE=<scratchpad/salud-ws> python3 salud-db/gen_ddl.py 17
+[17/billing] 23 tablas · 19 FK intra · 141 FK diferidas · 10 inferidas · 179 índices · 22 saltadas
+exit=0
+Diff limpio salvo lo nuevo en SQL/17_billing/{02_tables,04_indexes,90_fk_deferred}.sql.
+(`gen_ddl.py all` también reescribe SQL/26_insurance y SQL/69_pharma_lab: deriva PREVIA, ajena a este trabajo, revertida y anotada.)
+
+$ python3 salud-db/gen_integrity.py
+→ integrity-matrix.md · 26 entidades · 4 relaciones   exit=0
+SQL/17_billing/05_constraints.sql: ck_payment_proofs_qr_requires_file, ck_payment_proofs_rejected_requires_reason, ck_payment_proofs_amount_positive
+
+$ psql -f SQL/patches/2026-10-23_v4247_payment_proofs.sql   (BD viva local)
+aplicado exit=0
+$ psql -f SQL/patches/2026-10-23_v4247_payment_proofs.sql   (segunda pasada, idempotencia)
+segunda exit=0   (NOTICE ... already exists, skipping)
+$ select contype counts from pg_constraint where conrelid='billing.payment_proofs'
+10 FK | 3 CHECK | 1 PK ; 13 índices
+
+$ (API) yarn orm:catalog && yarn orm:audit
+catalog exit=0 · audit exit=0 · "fkDeclaradas": 6771, "fkEnCatalogo": 6771
+Al catálogo de la API sólo entran las 10 FK y 12 índices de payment_proofs (el resto de la regeneración era deriva previa de la bóveda y se descartó).

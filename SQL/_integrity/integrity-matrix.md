@@ -36,6 +36,7 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 
 | Tabla | Estereotipo | Reglas declaradas |
 |-------|-------------|-------------------|
+| `payment_proofs` | `REFERENCE_ONLY` | **CHECK_SQL** ck_payment_proofs_qr_requires_file \| ("method_concept_id" <> '78a2a1c8-5e68-5aaa-b43f-b23d00f69e95' OR "file_id" IS NOT NULL); **CHECK_SQL** ck_payment_proofs_rejected_requires_reason \| ("status_concept_id" <> 'c487d958-3cbf-5082-8b6a-735cb2186cd8' OR NULLIF(BTRIM("rejection_reason"), '') IS NOT NULL); **CHECK_SQL** ck_payment_proofs_amount_positive \| ("amount_minor" > 0) |
 | `billing.quotations` | `REFERENCE_ONLY` | **CHECK_SQL** chk_quotations_payment_frequency \| "payment_frequency" IN ('WEEKLY', 'BIWEEKLY', 'MONTHLY'); **CHECK_SQL** chk_quotations_down_payment_range \| ("down_payment_amount" >= 0 AND "down_payment_amount" <= "offered_price") |
 | `billing.quotation_installments` | `REFERENCE_ONLY` | **CHECK_SQL** chk_quotation_installments_amount_positive \| "amount" > 0 |
 
