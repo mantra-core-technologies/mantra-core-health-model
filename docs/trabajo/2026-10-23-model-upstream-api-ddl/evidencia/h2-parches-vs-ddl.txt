@@ -43,3 +43,10 @@
   ok  fk_schedule_rules_booking_mode_concept_id
 
 TOTAL objetos de esquema sin equivalente: 0
+
+## 2026-10-23_allergy_intolerances_encounter_id.sql
+  COLUMNA clinical.allergy_intolerances.encounter_id uuid: ok
+  ok  ix_allergy_intolerances_encounter_id
+  ok  fk_allergy_intolerances_encounter_id
+
+TOTAL objetos de esquema sin equivalente: 0

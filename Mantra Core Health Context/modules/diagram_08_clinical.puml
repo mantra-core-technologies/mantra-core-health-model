@@ -213,6 +213,11 @@ entity allergy_intolerances {
     clinical_status_concept_id : uuid <<FK>>
     verification_status_concept_id : uuid <<FK>>
     recorded_by_user_id : uuid <<FK>>
+  ' + v4.2.46 (P26 / CL-01): el encuentro en el que se detectó la alergia. Nullable: hay
+  ' alergias declaradas fuera de una atención, igual que en `conditions`. La entidad de la
+  ' API ya declaraba la columna («pedido a M1») pero ni el modelo ni la base la tenían, de
+  ' modo que cualquier lectura de alergias fallaba con «column does not exist».
+    encounter_id : uuid <<FK>>
   * created_at : timestamptz
   * updated_at : timestamptz
     created_by_user_id : uuid <<FK>>
@@ -774,6 +779,7 @@ entity "INDEXES · allergy_intolerances" as idxset_allergy_intolerances <<INDEX_
   IX ix_allergy_intolerances_clinical_status_concept_id : (clinical_status_concept_id) BTREE
   IX ix_allergy_intolerances_verification_status_concept_id : (verification_status_concept_id) BTREE
   IX ix_allergy_intolerances_recorded_by_user_id : (recorded_by_user_id) BTREE
+  IX ix_allergy_intolerances_encounter_id : (encounter_id) BTREE
   IX ix_allergy_intolerances_created_by_user_id : (created_by_user_id) BTREE
   IX ix_allergy_intolerances_updated_by_user_id : (updated_by_user_id) BTREE
   IX ix_allergy_intolerances_custodian_tenant_id_updated_at : (custodian_tenant_id, updated_at DESC) BTREE

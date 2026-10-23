@@ -193,6 +193,7 @@ CREATE TABLE IF NOT EXISTS "clinical"."allergy_intolerances" (
     "clinical_status_concept_id" uuid,
     "verification_status_concept_id" uuid,
     "recorded_by_user_id" uuid,
+    "encounter_id" uuid,
     "created_at" timestamptz NOT NULL,
     "updated_at" timestamptz NOT NULL,
     "created_by_user_id" uuid,

@@ -214,6 +214,8 @@ CREATE INDEX IF NOT EXISTS "ix_allergy_intolerances_verification_status_concept_
 
 CREATE INDEX IF NOT EXISTS "ix_allergy_intolerances_recorded_by_user_id" ON "clinical"."allergy_intolerances" ("recorded_by_user_id");
 
+CREATE INDEX IF NOT EXISTS "ix_allergy_intolerances_encounter_id" ON "clinical"."allergy_intolerances" ("encounter_id");
+
 CREATE INDEX IF NOT EXISTS "ix_allergy_intolerances_created_by_user_id" ON "clinical"."allergy_intolerances" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_allergy_intolerances_updated_by_user_id" ON "clinical"."allergy_intolerances" ("updated_by_user_id");
