@@ -1,0 +1,26 @@
+=== mantra-core-technologies/mantra-core-health-model #50
+$ gh pr view 50 --json isDraft,mergeable,mergeStateStatus
+{"isDraft":false,"mergeStateStatus":"CLEAN","mergeable":"MERGEABLE"}
+$ gh pr checks 50
+no checks reported on the 'marcelo/lane16-invoice-claim-model' branch
+
+=== mdavila-2001/mantra_core_technologies_health_docs #90
+$ gh pr view 90 --json isDraft,mergeable,mergeStateStatus
+{"isDraft":false,"mergeStateStatus":"CLEAN","mergeable":"MERGEABLE"}
+$ gh pr checks 90
+no checks reported on the 'marcelo/lane16-invoice-claim-model' branch
+
+=== mdavila-2001/mantra-core-health-api #672
+$ gh pr view 672 --json isDraft,mergeable,mergeStateStatus
+{"isDraft":false,"mergeStateStatus":"BLOCKED","mergeable":"MERGEABLE"}
+$ gh pr checks 672
+no checks reported on the 'marcelo/lane16-invoice-claim-model' branch
+
+$ gh pr view 672 --json reviewDecision,reviewRequests,statusCheckRollup,baseRefName
+{"baseRefName":"dev","reviewDecision":"REVIEW_REQUIRED","reviewRequests":[],"statusCheckRollup":[]}
+
+(referencia) PR #671 del mismo carril:
+{"mergeStateStatus":"BLOCKED","reviewDecision":"REVIEW_REQUIRED"}
+
+$ proteccion de dev
+{"checks":[],"enforce_admins":false,"reviews":1}

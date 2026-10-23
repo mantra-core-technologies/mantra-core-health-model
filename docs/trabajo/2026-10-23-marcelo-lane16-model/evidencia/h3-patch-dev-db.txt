@@ -1,0 +1,3 @@
+base: alovida (host enmascarado)
+ANTES   | columnas: 0 | FKs: 0 | FKs con CASCADE: 0 | índices: 0
+DESPUÉS | columnas: 1 | FKs: 3 | FKs con CASCADE: 3 | índices: 2
