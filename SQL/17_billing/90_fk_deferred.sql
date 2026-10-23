@@ -4,8 +4,6 @@
 
 -- FK sin destino canónico (no forzadas, temperatura-0):
 --   invoice_lines.service_id
---   reimbursements.claim_id
---   billing_document_links.claim_id
 
 
 -- destino: practice.practices (requiere schema practice)
@@ -139,6 +137,13 @@ DO $$ BEGIN
     ALTER TABLE "billing"."invoices"
         ADD CONSTRAINT "fk_invoices_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: insurance.insurance_claim_lines (requiere schema insurance)
+DO $$ BEGIN
+    ALTER TABLE "billing"."invoice_lines"
+        ADD CONSTRAINT "fk_invoice_lines_insurance_claim_line_id" FOREIGN KEY ("insurance_claim_line_id")
+        REFERENCES "insurance"."insurance_claim_lines" ("id") ON DELETE CASCADE;
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: accounting.accounts (requiere schema accounting)
@@ -512,6 +517,13 @@ DO $$ BEGIN
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- destino: insurance.insurance_claims (requiere schema insurance)
+DO $$ BEGIN
+    ALTER TABLE "billing"."reimbursements"
+        ADD CONSTRAINT "fk_reimbursements_claim_id" FOREIGN KEY ("claim_id")
+        REFERENCES "insurance"."insurance_claims" ("id") ON DELETE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 -- destino: accounting.journal_transactions (requiere schema accounting)
 DO $$ BEGIN
     ALTER TABLE "billing"."reimbursements"
@@ -783,6 +795,13 @@ DO $$ BEGIN
     ALTER TABLE "billing"."billing_document_links"
         ADD CONSTRAINT "fk_billing_document_links_purchase_order_id" FOREIGN KEY ("purchase_order_id")
         REFERENCES "erp"."purchase_orders" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: insurance.insurance_claims (requiere schema insurance)
+DO $$ BEGIN
+    ALTER TABLE "billing"."billing_document_links"
+        ADD CONSTRAINT "fk_billing_document_links_claim_id" FOREIGN KEY ("claim_id")
+        REFERENCES "insurance"."insurance_claims" ("id") ON DELETE CASCADE;
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: clinical.encounters (requiere schema clinical)

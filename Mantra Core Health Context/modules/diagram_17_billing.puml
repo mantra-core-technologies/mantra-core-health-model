@@ -24,6 +24,8 @@ entity "accounting.clearing_documents" as accounting_clearing_documents <<REFERE
 entity "accounting.clearing_items" as accounting_clearing_items <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 entity "accounting.company_bank_accounts" as accounting_company_bank_accounts <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 entity "payments.payment_transactions" as payments_payment_transactions <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "insurance.insurance_claims" as insurance_insurance_claims <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "insurance.insurance_claim_lines" as insurance_insurance_claim_lines <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 
 note as BIZ_diagram_17_billing
   Manages service billing, invoices, patient statements, vendor bills and
@@ -86,6 +88,7 @@ entity invoice_lines {
   --
   * invoice_id : uuid <<FK>>
     service_id : uuid <<FK>>
+    insurance_claim_line_id : uuid <<FK, ON_DELETE_CASCADE>>
     description : varchar
   * quantity : numeric
   * unit_price : numeric
@@ -253,14 +256,10 @@ note as BIZ_diagram_17b_financial_planning
   from the earlier billing claim model to the richer insurance domain.
 end note
 
-entity insurance_claims <<REFERENCE_ONLY>> {
-  * id : uuid <<PK>>
-}
-
 entity reimbursements {
   * id : uuid <<PK>>
   --
-  * claim_id : uuid <<FK>>
+  * claim_id : uuid <<FK, ON_DELETE_CASCADE>>
   * amount : numeric
     received_at : timestamptz
     transaction_id : uuid <<FK>>
@@ -360,7 +359,9 @@ entity receivables_aging_view <<VIEW>> {
     bucket : varchar
 }
 
-insurance_claims ||--o{ reimbursements
+reimbursements }o--|| insurance_insurance_claims : claim_id
+billing_document_links }o--o| insurance_insurance_claims : claim_id
+invoice_lines }o--o| insurance_insurance_claim_lines : insurance_claim_line_id
 budgets ||--o{ budget_lines
 
 note as MIGRATION_diagram_17b_financial_planning
@@ -422,7 +423,7 @@ entity billing_document_links {
   contract_id : uuid <<FK>>
   sales_order_id : uuid <<FK>>
   purchase_order_id : uuid <<FK>>
-  claim_id : uuid <<FK>>
+  claim_id : uuid <<FK, ON_DELETE_CASCADE>>
   encounter_id : uuid <<FK>>
   * relation_type_concept_id : uuid <<FK>>
   * created_at : timestamptz
@@ -686,6 +687,8 @@ entity "INDEXES · invoice_lines" as idxset_invoice_lines <<INDEX_SET>> {
   PK pk_invoice_lines : (id) UNIQUE BTREE
   IX ix_invoice_lines_invoice_id : (invoice_id) BTREE
   IX ix_invoice_lines_service_id : (service_id) BTREE
+  IX ix_invoice_lines_insurance_claim_line_id : (insurance_claim_line_id) BTREE
+  UK uq_invoice_lines_insurance_claim_line_id : (insurance_claim_line_id) UNIQUE BTREE WHERE insurance_claim_line_id IS NOT NULL
   IX ix_invoice_lines_tax_code_id : (tax_code_id) BTREE
   IX ix_invoice_lines_income_account_id : (income_account_id) BTREE
   IX ix_invoice_lines_cost_center_id : (cost_center_id) BTREE
