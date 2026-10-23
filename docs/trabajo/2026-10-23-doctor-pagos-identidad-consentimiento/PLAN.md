@@ -23,8 +23,11 @@ registra el estado real de cada microtarea en este repo a medida que se ejecuta,
 | H1.S2.M1–M4 | Publicar C-01, C-05, C-06, C-10 | HECHO | DTOs en `planes/06/README.md §5` |
 | H1.S2.M5 | Kill-tests `@pablo` en rojo | HECHO | plan 06, `evidencia/kill-tests-api-real.txt` (MD-06, MD-01, MD-02, MD-03, MD-05 ×3 rojos) |
 | H2.S1.M1–M3 | Modelo `payment_proofs` (puml M17 + CHECK en M33 + patch v4247 + entidad + catálogo) | HECHO | `evidencia/h2-modelo.txt` (en el repo del modelo) |
-| H2.S2.M1–M9 | API C-01: contexto, comprobante, lista, aceptar/rechazar con precondición, cierre con candado, factura, tabla del prestador, avisos | HECHO (M5 parcial: `payment-state` marcado deprecado; el cargo NO nace en `start`, se deriva del encuentro) | `evidencia/h2-int-spec-c01.txt`, `h2-api-verificacion.txt`, `h2-regresion-cierre-encuentro.txt` (en el repo de la API) |
-| H2.S3.M1–M6 | Caja Pagos y tabla del proveedor (front) | TODO | |
+| H2.S2.M1–M4, M6, M8, M9 | API C-01: contexto, comprobante, lista, aceptar/rechazar con precondición, cierre con candado, tabla del prestador, avisos, imagen autorizada por contexto | HECHO | `evidencia/h2-int-spec-c01.txt`, `h2-api-verificacion.txt`, `h2-regresion-cierre-encuentro.txt` (en el repo de la API) |
+| H2.S2.M5 | El cargo nace en `start` y reemplaza la bandera manual | A MEDIAS | `PUT payment-state` marcado deprecado; el cargo se deriva del encuentro, no nace en `start` |
+| H2.S2.M7 | `issue-from-encounter` real exige PAID | A MEDIAS | la factura simulada exige pago (422 PAYMENT_REQUIRED, int-spec 2b); el camino real no se extendió |
+| H2.S3.M1–M5 | Cliente C-01, caja «Comprobantes del paciente» (miniatura + lightbox, aceptar/rechazar con motivo), cierre con PAYMENT_REQUIRED y excepción, «Pagos por sesión» (Contabilidad del médico y `/billing`), simulador en 3 niveles | HECHO | `evidencia/doble-revision.md`, `h2-e2e-mutacion-api-real.txt`, `h2-regresion-front.md` (repo del front) |
+| H2.S3.M6 | Móvil: `consultation_billing_sheet.dart` | TODO | no empezado |
 | H3.S1.M1–M4 | Modelo y repositorio del documento único | TODO | |
 | H3.S2.M1–M6 | Altas y `document-availability` | TODO | |
 | H4.S1.M1–M3 · H4.S2.M1–M5 | Colegio Médico | TODO | |
@@ -40,6 +43,8 @@ registra el estado real de cada microtarea en este repo a medida que se ejecuta,
 - **Aviso sin `destination`.** La bandeja colapsa avisos sin leer con el mismo destino: «pagado» quedaba tapado por un «rechazado» anterior. El aviso va sin destino y con el cargo en `payloadJson`.
 - **C-02 contra un doble** (`NoCoveragePatientShare`, siempre `NO_COVERAGE`): falta integrar con el puerto real de Richard.
 - **Patch v4247.** La serie v42xx de la copia de despliegue de la API llega a v4246 con cambios que no volvieron al repo del modelo (deriva previa, anotada).
+
+**Avance: 23 / 79 microtareas HECHO — 29,1 %** (H1 8, H2 15; H3–H8 sin empezar). Detalle en `REPORTE.md`.
 
 ## Riesgos y bloqueos previstos
 | Riesgo | Impacto | Mitigación |
