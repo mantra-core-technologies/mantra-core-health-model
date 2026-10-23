@@ -3,7 +3,7 @@
 - Fecha: 2026-10-23 · Plan: [PLAN.md](./PLAN.md) · Rama(s): `marcelo/lane16-invoice-claim-model` (modelo, vault y API) · Base: `origin/dev` (modelo `eceb98f`, API `6ea11561`, vault `0b421692`)
 - PR: modelo [#50](https://github.com/mantra-core-technologies/mantra-core-health-model/pull/50) · vault [#90](https://github.com/mdavila-2001/mantra_core_technologies_health_docs/pull/90) · API [#672](https://github.com/mdavila-2001/mantra-core-health-api/pull/672)
 - Peldaño de evidencia alcanzado: **TESTED**, con una comprobación contra la base real. No llega a `VERIFIED`: el flujo HTTP no se ejercitó y la regresión completa no se corrió. Mejor palabra permitida: «las pruebas dirigidas pasan; las constraints se comprobaron contra Postgres real».
-- Avance: **43 / 47 microtareas HECHO (91,5 %)**, calculado: 2 `DESCARTADO`, 1 `A MEDIAS`, 1 `TODO`.
+- Avance: **44 / 47 microtareas HECHO (93,6 %)**, calculado: 2 `DESCARTADO`, 1 `A MEDIAS`, 0 `TODO`.
 
 ## Completado
 
@@ -29,6 +29,7 @@
 | H3.S3.M4 | Commit de la API | `git log -1 --stat` | `ac96a9c3`, 12 archivos |
 | H4.S1.M1–M3 | Tres PR contra `dev`, no draft | `gh pr create` · `gh pr view` | #50, #90, #672 |
 | H4.S1.M4 | Este reporte | — | — |
+| H4.S1.M5 | Entorno retirado: junctions y `C:\Alovida\ws-lane16` borradas (el vault conservó sus 6 784 notas), worktree de la API retirado, clon del vault devuelto a `dev`. El worktree del modelo se retira justo después del push de este reporte. Las tres ramas `marcelo/lane16-invoice-claim-model` se conservan en local y remoto | `cmd /c rmdir` · `git worktree remove` · `git switch dev` | `git worktree list` de la API solo muestra el clon principal; vault `dev...origin/dev` |
 
 ## A medias
 
@@ -42,7 +43,9 @@
 
 | ID | Estado | Qué lo destraba |
 |---|---|---|
-| H4.S1.M5 | TODO (deliberado) | Retirar los dos worktrees (`wt-marcelo-model-lane16`, `wt-marcelo-api-lane16`) y las junctions de `C:\Alovida\ws-lane16` cuando los PR se mergeen o no necesiten más cambios; hoy están en revisión y se conservan para poder atender comentarios. Las ramas se conservan |
+| `db:vendor` de la API | TODO, fuera de este corte | PR aparte que resincronice `database/SQL` con el modelo (29 faltantes, 16 sobrantes, 31 distintos) y deje `yarn ddl:sources` en exit 0. Requiere `rsync` (hay en WSL) |
+| Fase 2 del carril 16 | TODO, fuera de este corte | Cálculo de la parte del paciente en el servidor, consentimiento, desglose, objeción, control de IDOR por tenant, rol `BILLING`/`FINANCE`. Cada punto necesita decisión o trabajo propio |
+| PR hacia `test` | TODO, fuera de este corte | Decisión del propietario sobre si la API replica el cambio en `test`; el modelo no tiene esa rama |
 | H3.S3.M1 | DESCARTADO | Ver «Desvíos»: se reemplazó por una prueba a nivel ORM porque el filtro global ya traduce la FK a 422 |
 | H3.S1.M3 | DESCARTADO | Ver «Desvíos»: `docs:tsdoc` no se puede acotar y reescribe ~2 000 archivos |
 | Aprobación humana de #672 | BLOQUEADO | La protección de `dev` exige 1 revisión (`REVIEW_REQUIRED`). Depende de un revisor distinto del autor |
@@ -111,7 +114,8 @@ Casos que cubre la prueba de integración (la base lo rechaza, no un mock): lín
 - **El patch ya está aplicado en la base de desarrollo compartida.** Con autorización del propietario y 0 huérfanos previos. Cualquier otro entorno necesita aplicarlo con el mismo patch.
 - **Cambio de contrato:** consumidores que envíen un `claimId` inexistente recibirán 422 en vez de 201.
 - **Conflicto posible con el PR #671** (corte 1) en insurance; este corte no toca `claims.service.ts`.
-- **El `.env` de la API se copió al worktree** (ignorado por git; no se pegó ni se subió).
+- **El `.env` de la API se copió al worktree** (ignorado por git; no se pegó ni se subió). Desapareció con el worktree al retirarlo.
+- **Para atender comentarios de revisión** hay que recrear los worktrees desde las ramas conservadas (`git worktree add ../wt-… marcelo/lane16-invoice-claim-model`); el workspace sintético con junctions ya no existe y hay que armarlo otra vez para regenerar con `gen_ddl.py`/`gen_entities.py`.
 
 ## Decisiones y ambigüedades
 
