@@ -28,8 +28,10 @@ registra el estado real de cada microtarea en este repo a medida que se ejecuta,
 | H2.S2.M7 | `issue-from-encounter` real exige PAID | A MEDIAS | la factura simulada exige pago (422 PAYMENT_REQUIRED, int-spec 2b); el camino real no se extendió |
 | H2.S3.M1–M5 | Cliente C-01, caja «Comprobantes del paciente» (miniatura + lightbox, aceptar/rechazar con motivo), cierre con PAYMENT_REQUIRED y excepción, «Pagos por sesión» (Contabilidad del médico y `/billing`), simulador en 3 niveles | HECHO | `evidencia/doble-revision.md`, `h2-e2e-mutacion-api-real.txt`, `h2-regresion-front.md` (repo del front) |
 | H2.S3.M6 | Móvil: `consultation_billing_sheet.dart` | TODO | no empezado |
-| H3.S1.M1–M4 | Modelo y repositorio del documento único | TODO | |
-| H3.S2.M1–M6 | Altas y `document-availability` | TODO | |
+| H3.S1.M1–M4 | Modelo (`owner_kind_concept_id`, M02), patch v4248, conceptos, búsqueda por tipo de usuario | HECHO | `evidencia/h3-seed-y-patch.txt`, `h3-orm-audit-resumen.txt` (API) |
+| H3.S2.M1, M4, M7 | 409 del médico (también asistido y en carrera), `document-availability` del contrato, `form-field` AA | HECHO | `evidencia/h3-int-spec-c10.txt` 11/11 (API); front: capturas y doble revisión |
+| H3.S2.M2, M3, M5 | Persona única médico↔paciente; representantes; validador en organización | A MEDIAS | decisión Q-13 y supuesto de representantes, ver REPORTE |
+| H3.S2.M6 | Móvil | TODO | |
 | H4.S1.M1–M3 · H4.S2.M1–M5 | Colegio Médico | TODO | |
 | H5.S1.M1–M3 · H5.S2.M1–M5 · H5.S3.M1–M4 | Consentimiento | TODO | |
 | H6.S1.M1–M3 · H6.S2.M1–M6 · H6.S3.M1–M6 | Encuestas y formularios | TODO | |
@@ -44,7 +46,7 @@ registra el estado real de cada microtarea en este repo a medida que se ejecuta,
 - **C-02 contra un doble** (`NoCoveragePatientShare`, siempre `NO_COVERAGE`): falta integrar con el puerto real de Richard.
 - **Patch v4247.** La serie v42xx de la copia de despliegue de la API llega a v4246 con cambios que no volvieron al repo del modelo (deriva previa, anotada).
 
-**Avance: 23 / 79 microtareas HECHO — 29,1 %** (H1 8, H2 15; H3–H8 sin empezar). Detalle en `REPORTE.md`.
+**Avance: 30 / 80 microtareas HECHO — 37,5 %** (H1 8, H2 15, H3 7; H4–H8 sin empezar). Detalle en `REPORTE.md` (el mismo en los tres repos; el PLAN detallado de H3 está en el del front).
 
 ## Riesgos y bloqueos previstos
 | Riesgo | Impacto | Mitigación |

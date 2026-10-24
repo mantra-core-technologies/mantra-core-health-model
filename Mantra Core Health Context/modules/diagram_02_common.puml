@@ -35,6 +35,16 @@ entity identifiers {
   ' con nombres distintos —el otro, ya en `dev`, la escribió `issuer_`— y se
   ' unificó en el nombre que el código ya usaba, para no arrastrar el conflicto.
     issuer_administrative_area_concept_id : uuid <<FK>>
+  ' + v4.2.48 (C-10 / MD-01, 2026-10-24) — para qué tipo de usuario se registró el
+  ' documento: PATIENT | PRACTITIONER | ORGANIZATION_REP (conceptos
+  ' common:document-holder-kind:*). `owner_type_concept_id` dice QUÉ tabla es el
+  ' dueño (persona, paciente, tenant…) y no alcanza: un médico y un paciente son,
+  ' los dos, personas. La unicidad del documento es por (tipo, número,
+  ' departamento emisor, tipo de usuario): el mismo CI con otra terminación no
+  ' colisiona, y un médico que además es paciente tampoco. Los representantes de
+  ' organización quedan FUERA del índice único: una persona puede representar a
+  ' varias empresas. Nullable: las filas anteriores sin tipo conocido quedan NULL.
+    owner_kind_concept_id : uuid <<FK>>
     assigner_tenant_id : uuid <<FK>>
   ' + v4.2.2 — a nombre de quién sale el comprobante. El registro de procesos pide
   ' para el paciente «Nombre o Razón social» Y «Número de NIT» (PACIENTE §1.15), y
@@ -207,6 +217,8 @@ entity "INDEXES · identifiers" as idxset_identifiers <<INDEX_SET>> {
   IX ix_identifiers_type_concept_id_value : (type_concept_id, value) BTREE
   IX ix_identifiers_issuer_country_concept_id : (issuer_country_concept_id) BTREE
   IX ix_identifiers_issuer_administrative_area_concept_id : (issuer_administrative_area_concept_id) BTREE
+  IX ix_identifiers_owner_kind_concept_id : (owner_kind_concept_id) BTREE
+  UX ux_identifiers_document_owner_kind : (type_concept_id, value, issuer_administrative_area_concept_id, owner_kind_concept_id) UNIQUE BTREE WHERE state_concept_id = '38a1d301-f40d-5b17-a695-5e6d605f8b19' AND owner_kind_concept_id IN ('ff9ab690-d4ae-5d5e-9784-76d8e9e1ff37', '64e1ccaf-e90d-5255-8af0-9d8362817ea9')
   IX ix_identifiers_assigner_tenant_id : (assigner_tenant_id) BTREE
   IX ix_identifiers_state_concept_id : (state_concept_id) BTREE
   IX ix_identifiers_created_by_user_id : (created_by_user_id) BTREE

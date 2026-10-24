@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS "common"."identifiers" (
     "value" varchar NOT NULL,
     "issuer_country_concept_id" uuid,
     "issuer_administrative_area_concept_id" uuid,
+    "owner_kind_concept_id" uuid,
     "assigner_tenant_id" uuid,
     "holder_name" varchar,
     "valid_from" date,
