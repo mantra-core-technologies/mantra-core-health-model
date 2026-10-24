@@ -2,8 +2,8 @@
   "package": "SALUD_v4.0_module_seeds_enhanced",
   "seed_revision": "2.6.0-v4.2.30",
   "module_count": 64,
-  "boot_record_count": 83512,
-  "mock_record_count": 19488,
+  "boot_record_count": 83511,
+  "mock_record_count": 19472,
   "validation_status": "PASS",
   "mock_production_policy": "hard-fail",
   "modules": [
@@ -110,10 +110,10 @@
       "number": 11,
       "code": "system_ops",
       "file": "modules/11_system_ops.seeds.json",
-      "boot_records": 126,
-      "mock_records": 408,
-      "line_count": 11426,
-      "sha256": "d0bea2b5bf01e88cddaf31571a2a4a9e8d5f9475ff332efa28f180986825cca5"
+      "boot_records": 125,
+      "mock_records": 392,
+      "line_count": 11128,
+      "sha256": "856d1834de8961da832cb7b98ec66aa6cde545d5c303cd1885034535848f65dc"
     },
     {
       "number": 12,
