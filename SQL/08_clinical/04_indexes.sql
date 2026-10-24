@@ -422,7 +422,7 @@ CREATE INDEX IF NOT EXISTS "ix_appointments_patient_profile_id_updated_at" ON "c
 
 CREATE INDEX IF NOT EXISTS "gist_appointments_effective_period" ON "clinical"."appointments" USING gist (tstzrange(start_at, end_at, '[)'));
 
--- TODO(predicado placeholder, definir funciones): CREATE INDEX IF NOT EXISTS "gist_appointments_practitioner_time" ON "clinical"."appointments" USING gist ("practitioner_profile_id", tstzrange(start_at, end_at, '[)')) WHERE status_concept_id IN (held_status(), confirmed_status());
+-- OMITIDO (predicado con función placeholder del modelo, sin definir en la base): CREATE INDEX IF NOT EXISTS "gist_appointments_practitioner_time" ON "clinical"."appointments" USING gist ("practitioner_profile_id", tstzrange(start_at, end_at, '[)')) WHERE status_concept_id IN (held_status(), confirmed_status());
 
 CREATE INDEX IF NOT EXISTS "ix_appointments_patient_start" ON "clinical"."appointments" ("patient_profile_id", "start_at" DESC);
 

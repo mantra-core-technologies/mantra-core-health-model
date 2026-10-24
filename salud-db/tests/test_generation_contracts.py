@@ -25,6 +25,25 @@ class ConcreteIntegrityTests(unittest.TestCase):
             with self.subTest(declaration=declaration), self.assertRaises(ValueError):
                 gen_integrity.concrete_check('insurance', 'insurance_claims', declaration)
 
+    def test_prose_rules_stay_as_comments_and_list_existing_uniques(self):
+        entity = {'name': 'inventory_reservations', 'stereo': 'REFERENCE_ONLY',
+                  'owner': ('pharmacy_inventory', 'inventory_reservations'),
+                  'rules': [('UK', 'pharmacy + idempotency_key'),
+                            ('EXCLUDE', 'active allocation overlap')]}
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / '25_pharmacy_inventory').mkdir()
+            (root / '25_pharmacy_inventory/04_indexes.sql').write_text(
+                'CREATE UNIQUE INDEX IF NOT EXISTS "uq_res_idem" ON '
+                '"pharmacy_inventory"."inventory_reservations" ("idempotency_key");\n',
+                encoding='utf-8')
+            with patch.object(gen_integrity, 'SQL_DIR', root):
+                lines = gen_integrity.entity_block(entity)
+        self.assertTrue(all(line.strip().startswith('--') for line in lines))
+        self.assertIn('--   UK: pharmacy + idempotency_key  (en prosa', '\n'.join(lines))
+        self.assertIn('uq_res_idem', lines[-1])
+        self.assertNotIn('ALTER TABLE', '\n'.join(lines))
+
     def test_qualified_owner_disambiguates_groups(self):
         entries = [{'name': 'medical_groups.groups'}]
         registry = {'groups': [('community', 'groups'), ('medical_groups', 'groups')]}

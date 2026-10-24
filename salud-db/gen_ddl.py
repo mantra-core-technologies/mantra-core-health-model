@@ -751,8 +751,8 @@ def emit(module_code: str, report: list, registry: dict, pk_map: dict):
             # → no existe en la BD; se emite COMENTADO para no romper el apply (temperatura-0).
             if ix.where and re.search(r"[a-z_][a-z0-9_]*\(\s*\)", ix.where, re.IGNORECASE):
                 warnings.append(f"índice '{ix.name}': predicado referencia función(es) placeholder "
-                                f"del modelo → emitido COMENTADO (definir función o reemplazar por IDs).")
-                idx_sql.append(f'-- TODO(predicado placeholder, definir funciones): '
+                                f"del modelo → emitido COMENTADO (la función no existe en la base).")
+                idx_sql.append(f'-- OMITIDO (predicado con función placeholder del modelo, sin definir en la base): '
                                f'CREATE {uniq}INDEX IF NOT EXISTS "{pg_ident(ix.name)}" ON {q(schema, table)}'
                                f'{using} ({cols}){with_c} WHERE {ix.where};\n')
                 continue
@@ -809,7 +809,7 @@ def write_report(report):
 
 # Vocabulario de `terminology.technical_data_type`, el único enum nativo del modelo.
 #
-# Hasta v4.0.8 el enum se creaba VACÍO con un TODO. La consecuencia era doble: la
+# Hasta v4.0.8 el enum se creaba VACÍO, sin valores. La consecuencia era doble: la
 # aplicación no podía escribir sus tipos reales (`POST /forms/field-definitions`
 # moría con `invalid input value for enum`), y `gen_seeds.py` lo rellenaba con
 # 78 placeholders sintéticos derivados de los seeds —`DYNAMIC_FIELD_DEFINITIONS_01`,
@@ -817,7 +817,7 @@ def write_report(report):
 #
 # Estos 14 valores no se inventan acá: son los que la aplicación ya declara y usa en
 # `src/modules/forms/dto/create-field-definition.dto.ts` (TECHNICAL_DATA_TYPES), y
-# los dos primeros son literalmente los que el TODO del modelo ponía de ejemplo.
+# los dos primeros son literalmente los que el modelo ponía de ejemplo.
 TECHNICAL_DATA_TYPES = (
     "string", "text", "integer", "decimal", "boolean", "date", "datetime",
     "time", "uuid", "json", "binary", "reference", "code",

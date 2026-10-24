@@ -38,7 +38,8 @@ curadas:
 - `relations.csv`: claves foráneas activas en el DDL y su destino físico. El archivo no intenta
   decidir si el destino se originó en una nota del modelo o en una convención histórica.
 - `constraints.csv`: PK, FK, índices únicos y restricciones activas detectables en el SQL generado;
-  comentarios de scaffold/TODO del modelo no se tratan como restricciones aplicadas.
+  las reglas que el modelo declara en prosa (comentarios de `05_constraints.sql`) no se tratan
+  como restricciones aplicadas.
 - `indexes.csv`: índices declarados en el DDL canónico.
 
 Las columnas técnicas reflejan el DDL del workspace. No afirman que una base desplegada esté
@@ -59,8 +60,8 @@ esté vacío o su estado sea `PENDING_REVIEW`.
 ## Piloto y avance
 
 Las **1.230 tablas** tienen un motivo de existencia inicial respaldado por su diagrama de módulo y
-quedan con estado `DOMAIN_CURATED_DRAFT`; **ninguna está marcada como pendiente**, pero todas
-requieren revisión de su responsable de dominio antes de considerarlas aprobadas. `domains.csv`
+quedan con estado `DOMAIN_CURATED_DRAFT`: el motivo es del modelo, no una aprobación del
+responsable de dominio. `domains.csv`
 resume la cobertura por schema y `tables.csv` permite filtrar las narrativas.
 
 ## Criterios por ficha de tabla

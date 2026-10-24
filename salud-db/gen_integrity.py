@@ -10,7 +10,8 @@ materializa en:
 Temperatura-0: el módulo 33 declara las reglas de forma SEMI-concreta (columnas lógicas y
 CHECK/EXCLUDE en prosa). Se genera concreto SOLO lo mecánico (guardas de inmutabilidad para
 UPDATE_DELETE: forbidden). CHECK_SQL y EXCLUDE_SQL materializan expresiones concretas
-declaradas por el modelo; UK/CHECK/EXCLUDE en prosa quedan como scaffold TODO.
+declaradas por el modelo; UK/CHECK/EXCLUDE en prosa salen como comentario con la regla
+textual, porque el modelo no declara su expresión SQL y completarla sería adivinar.
 """
 from __future__ import annotations
 import re
@@ -122,22 +123,34 @@ def immutability_guard(schema, table, ops=("UPDATE", "DELETE")):
 
 
 # ------------------------------------------------------------------ 05_constraints por dueño
-def rule_line(sch, tbl, k, v):
-    """Una regla de la matriz como línea de 05_constraints (comentario o scaffold)."""
+PROSA = "en prosa; el módulo 33 no declara su expresión SQL"
+
+
+def unique_indexes(sch, tbl):
+    """Nombres de los índices UNIQUE que `04_indexes.sql` ya crea sobre la tabla.
+
+    Sólo se listan: emparejarlos con una regla en prosa sería adivinar columnas.
+    Le dicen al lector qué unicidad física existe al lado de la regla textual."""
+    folder = owner_folder(sch)
+    path = folder / "04_indexes.sql" if folder else None
+    if not path or not path.exists():
+        return []
+    pat = re.compile(r'^CREATE UNIQUE INDEX IF NOT EXISTS "([^"]+)" ON "'
+                     + re.escape(sch) + r'"\."' + re.escape(tbl) + r'"', re.MULTILINE)
+    return pat.findall(path.read_text(encoding="utf-8"))
+
+
+def rule_line(sch, tbl, k, v, concrete=()):
+    """Una regla de la matriz como línea de 05_constraints (comentario o SQL concreto)."""
     if k in ("PK", "VERSION"):
         return f"--   {k}: {v}  (ya en 02_tables/04_indexes)"
     if k == "UK":
-        return (f"-- TODO UK ({v}): "
-                f'ALTER TABLE "{sch}"."{tbl}" ADD CONSTRAINT "uq_{tbl}_..." UNIQUE (...);')
-    if k == "CHECK":
-        return (f"-- TODO CHECK ({v}): "
-                f'ALTER TABLE "{sch}"."{tbl}" ADD CONSTRAINT "ck_{tbl}_..." CHECK (...);')
+        return f"--   UK: {v}  ({PROSA})"
+    if k in ("CHECK", "EXCLUDE"):
+        extra = f"; ver {k}_SQL abajo" if f"{k}_SQL" in concrete else ""
+        return f"--   {k}: {v}  ({PROSA}{extra})"
     if k == "CHECK_SQL":
         return concrete_check(sch, tbl, v)
-    if k == "EXCLUDE":
-        return (f"-- TODO EXCLUDE ({v}): "
-                f'ALTER TABLE "{sch}"."{tbl}" ADD CONSTRAINT "ex_{tbl}_..." '
-                f"EXCLUDE USING gist (... WITH =, tstzrange(...) WITH &&) [WHERE ...];")
     if k == "EXCLUDE_SQL":
         return exclude_concreto(sch, tbl, v)
     return f"--   {k}: {v}"
@@ -164,8 +177,8 @@ def escape_table_cell(value):
 def exclude_concreto(schema, table, decl):
     """Un EXCLUDE con la expresión que el MODELO declara, no una inventada.
 
-    `EXCLUDE : <prosa>` sigue saliendo como scaffold TODO, porque el modelo la
-    declara en palabras y completarla sería adivinar columnas. `EXCLUDE_SQL` es
+    `EXCLUDE : <prosa>` sale como comentario con la regla textual, porque el modelo
+    la declara en palabras y completarla sería adivinar columnas. `EXCLUDE_SQL` es
     la otra mitad: el modelo ya trae la expresión exacta y acá sólo se la
     envuelve. Temperatura-0 intacta — este generador no compone ningún predicado.
 
@@ -196,7 +209,11 @@ def entity_block(e):
     """Las líneas de 05_constraints de una entidad de la matriz, guard incluido."""
     sch, tbl = e["owner"]
     lines = [f"\n-- ═══ {tbl} ═══"]
-    lines += [rule_line(sch, tbl, k, v) for k, v in e["rules"]]
+    concrete = {k for k, _ in e["rules"] if k.endswith("_SQL")}
+    lines += [rule_line(sch, tbl, k, v, concrete) for k, v in e["rules"]]
+    uniques = unique_indexes(sch, tbl) if any(k == "UK" for k, _ in e["rules"]) else []
+    if uniques:
+        lines.append(f"--   índices únicos que la tabla ya tiene en 04_indexes: {', '.join(uniques)}")
     forbidden = any(k == "UPDATE_DELETE" and "forbid" in v.lower() for k, v in e["rules"])
     # Caso parcial (v4.0.10): `UPDATE : forbidden` sin prohibir DELETE.
     update_only = not forbidden and any(
@@ -222,8 +239,9 @@ def write_constraints(ents):
         has_exclude = any(k == "EXCLUDE" for e in group for k, _ in e["rules"])
         out = [f"-- SALUD {gen_ddl.VERSION} · schema {schema} · constraints de integridad (módulo 33)\n"
                "-- Aplicar DESPUÉS de 04_indexes.sql y de SQL/_integrity/00_integrity_functions.sql.\n"
-               "-- Reglas textuales del modelo. Las UK/CHECK/EXCLUDE son SCAFFOLD (completar\n"
-               "-- columnas/expresión exactas contra la tabla): el modelo las declara en prosa.\n"]
+               "-- Reglas del módulo 33. Las UK/CHECK/EXCLUDE en prosa quedan como comentario:\n"
+               "-- el modelo no declara su expresión SQL y no se inventa (temperatura-0).\n"
+               "-- CHECK_SQL y EXCLUDE_SQL sí se materializan con la expresión del modelo.\n"]
         if has_exclude:
             out.append("CREATE EXTENSION IF NOT EXISTS btree_gist;  -- requerido por EXCLUDE\n")
         for e in group:
@@ -238,7 +256,7 @@ def write_matrix_doc(ents, rels, notes):
     L = [f"# Matriz de integridad y concurrencia — SALUD {gen_ddl.VERSION} (módulo 33)\n",
          "El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación "
          "cross-dominio. Cada regla se implementa en la **migración de la tabla dueña** "
-         "(su módulo) y se repite aquí como checklist. Extraído fielmente del `.puml`.\n"]
+         "(su módulo) y se repite aquí como referencia. Extraído fielmente del `.puml`.\n"]
     if "TX_diagram_33_concurrency_and_integrity" in notes:
         L += ["## Política transaccional\n", "```",
               notes["TX_diagram_33_concurrency_and_integrity"], "```\n"]
@@ -271,8 +289,9 @@ def write_matrix_doc(ents, rels, notes):
           "- **`SQL/_integrity/00_integrity_functions.sql`** — schema `integrity` + "
           "`forbid_mutation()` (guarda de inmutabilidad).",
           "- **`SQL/<NN>_<schema>/05_constraints.sql`** — por módulo dueño: guarda concreta "
-          "para `UPDATE_DELETE: forbidden`; UK/CHECK/EXCLUDE como scaffold TODO (completar la "
-          "expresión exacta contra la tabla, ya que el modelo las declara en prosa).",
+          "para `UPDATE_DELETE: forbidden`, `CHECK_SQL` y `EXCLUDE_SQL`; las UK/CHECK/EXCLUDE en "
+          "prosa quedan como comentario con la regla textual (el modelo no declara su "
+          "expresión SQL) y la lista de índices únicos que la tabla ya tiene.",
           "- **Concurrencia** (`LOCK`/`SERIALIZABLE`/`SKIP LOCKED`/outbox) → capa de servicio "
           "(MikroORM Unit of Work + retry en `SQLSTATE 40001`), ver orm-mapping-guide §0.\n"]
     (OUT / "integrity-matrix.md").write_text("\n".join(L), encoding="utf-8")

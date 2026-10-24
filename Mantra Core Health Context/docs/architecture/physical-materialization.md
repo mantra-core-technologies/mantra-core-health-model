@@ -45,7 +45,7 @@ El `.puml` declara expresiones que PostgreSQL rechaza en índices; el generador 
 cambiar la intención: `concat_ws` (STABLE) → `coalesce(…)||…`; constructor de rango por el tipo
 real de columna (`date`→`daterange`, `timestamptz`→`tstzrange`); operator class GIN pegado a la
 columna (`col jsonb_path_ops`). Predicados con funciones placeholder (`held_status()`) se emiten
-comentados como TODO. FK envueltas en `DO … EXCEPTION WHEN duplicate_object` (re-aplicables).
+comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_object` (re-aplicables).
 
 ## 3. Estado actual del build
 

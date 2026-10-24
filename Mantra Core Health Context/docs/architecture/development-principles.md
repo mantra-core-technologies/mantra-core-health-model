@@ -53,8 +53,8 @@ matriz del módulo 33 (concurrencia e integridad). La fuente de verdad del domin
   regeneran desde los `.puml`; si algo está mal, se arregla **el generador** y se
   regenera. Un archivo generado editado a mano es un bug.
 - **Temperatura-0 también en código:** no inventar FKs, valores de enums, columnas ni
-  contratos que el modelo no declare. Lo no resuelto se marca con TODO explícito y
-  rastreable — no se adivina.
+  contratos que el modelo no declare. Lo que el modelo no resuelve no se adivina: se
+  omite y se documenta por qué, en el `.puml` o en el registro del cambio.
 
 ## 3. Invariantes del modelo que el código debe honrar
 
