@@ -4,7 +4,7 @@
 -- Idempotente (ADD COLUMN IF NOT EXISTS).
 -- UNA sola pasada. Sin backfill, y no debe haberlo — ver más abajo.
 --
--- Contexto: subtarea 2.2 del backlog de correcciones. El registro de procesos
+-- Contexto: subtarea 2.2 del registro de correcciones. El registro de procesos
 -- del stakeholder (MODULO ASEGURADORA · 2 · 3) exige que la app "responda con
 -- APROBADO y NO APROBADO indicando por qué no está APROBADO según la clausula
 -- del contrato y porque tiene excepción de alguna enfermedad según su contrato

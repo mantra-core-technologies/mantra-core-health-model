@@ -16,8 +16,8 @@
 -- nacían y TODO endpoint del módulo moría con
 -- `relation "surveys.*" does not exist`. El primero que lo vio un usuario fue
 -- F-14: «Mis cuestionarios» devolvía 500 sin haber hecho nada. Mientras tanto
--- `listInvitationsOf` degrada a `200 []` con un TODO(F-14) que este patch
--- habilita a quitar.
+-- `listInvitationsOf` degradaba a `200 []` con una marca F-14 en el código, que
+-- este patch permitió quitar (la API ya no la tiene).
 --
 -- Es la misma familia que audio_assets (módulo 64): un módulo que vivía sólo en
 -- el código. El .puml TRANSCRIBE lo que las entidades ya declaraban —columna,

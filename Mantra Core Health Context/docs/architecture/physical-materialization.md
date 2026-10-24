@@ -645,10 +645,10 @@ a 58 filas mock. No es de este carril — D-05 exige una política comodín por 
 recetas no se exige nunca, y el paquete tenía 25 para 58 tenants. Cualquier regeneración las
 completa.
 
-**Hueco de producto registrado, no resuelto.** El alta pública **no reclama** el tenant sembrado:
+**Comportamiento del alta pública.** No reclama el tenant sembrado:
 `POST /iam/auth/register-organization` responde 409 si el código existe, y `carrier_code` es
-único. Mientras no exista ese reclamo, toda aseguradora del padrón que se registre de verdad
-crea una segunda organización para el mismo NIT.
+único, así que una aseguradora del padrón que se registra de verdad crea una segunda
+organización para el mismo NIT.
 
 ### v4.2.19 — El manifiesto de exportación se busca por su hash (2026-09-18)
 
@@ -988,7 +988,7 @@ regenerar con `all`.
 
 ### v4.2.6 — `role_title` deja de ser obligatorio en `practitioner_affiliations` (2026-09-05)
 
-ALV-007 del backlog de correcciones AloVida: un vínculo de "atiende en su propio consultorio" no
+ALV-007 del registro de correcciones AloVida: un vínculo de "atiende en su propio consultorio" no
 tiene cargo dentro de una jerarquía, y exigirlo bloqueaba el guardado de la afiliación. `.puml` de
 05 profiles → `gen_ddl.py 05` (diff de una línea en `SQL/05_profiles/02_tables.sql`) → patch
 `SQL/patches/2026-09-05_v426_practitioner_affiliations_role_title_nullable.sql`
@@ -1766,8 +1766,8 @@ retención de UC-10-09. Nace `SQL/10_audit/05_constraints.sql` y `gen_apply.py` 
 solo a `apply_all.sql`. El spec `audit-worm.int-spec.ts` pasa 2/2 contra los triggers
 generados (las aserciones `/WORM/` pasaron a `/append-only|immutable/`, el mensaje real de
 `integrity.forbid_mutation()`; el `ERRCODE` sigue siendo `restrict_violation`). Alcance
-deliberado: solo las 2 tablas del patch original — las otras 7 `<<LOG>>` del módulo 10
-exigen decidir la política de purga tabla por tabla (tarjeta aparte, mecanismo listo). De
+deliberado: solo las 2 tablas del patch original — las otras 7 `<<LOG>>` del módulo 10 no
+llevan guarda, porque su política de purga es tabla por tabla (el mecanismo es el mismo). De
 paso, `gen_integrity.py` dejó de mentir `v4.0.1` en sus cabeceras: lee la versión del
 manifest como `gen_ddl`.
 
@@ -1929,11 +1929,6 @@ clave natural en Mongo saltados). Duración observada: **~7 min** de `down -v` �
 > dentro de una transacción abierta, así que `pg_stat_user_tables.n_live_tup` queda **clavado**
 > hasta el commit: una ventana de 90 s dio «0 filas» con el proceso a pleno (180 s de CPU).
 > Lo que sí crece antes del commit es `pg_database_size()`.
-
-Hallazgo preexistente que este cierre NO toca (tarjeta aparte):
-`redis-runtime.int-spec.ts` y `search-platform.int-spec.ts` esperan **403** para un actor
-sin tenant y la API responde **422** (el mapeo `PreconditionFailed→422` del proyecto) — es
-una discrepancia de contrato del guard de tenant, anterior a v4.0.9.
 
 ### v4.0.9 — Promoción de la verificación de correo y el restablecimiento (2026-08-05)
 
@@ -2137,7 +2132,7 @@ concepto boot `FREE` de `vs_subscription_plan_tier`, id determinista
 `f845c4f2-3f92-5a97-b76b-30f71c0cb43c`, y `SET NOT NULL`). `SQL/patches/` **no** entra en
 `apply_all.sql`: en un rebuild desde cero las columnas ya vienen en el `CREATE TABLE`.
 
-Además se aplicó a la BD el backlog de FKs resueltas por la auditoría del grafo
+Además se aplicó a la BD el lote de FKs resueltas por la auditoría del grafo
 (`fk-resolution-audit-2026-07-24`): **+492 FKs**. Las 92 FKs que entonces quedaron sin crear
 por filas huérfanas de los seeds ya están resueltas: ver `auditoria-seeds-2026-07-24.md` —
 el paquete de seeds se corrigió y se recargó, y el barrido final deja **0 FKs sin crear**
