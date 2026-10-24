@@ -7,9 +7,9 @@
 > El patch fue redactado contra una variante distinta del modelo. Al integrarlo se aplicó:
 > - **Base real:** SALUD **v4.0** (64 módulos `diagram_*.puml`). El patch decía "base v3.9 · 760 UC · 60 módulos"; nuestro paquete **no** tiene diagramas de casos de uso (`casos_uso_*.puml`), así que los 37 UC se representan como **notas en el grafo Obsidian**, no como `.puml`.
 > - **Normalización de nombres a los canónicos existentes:** `audit.audit_events` → **`audit.audit_log`**; `messaging.outbox_events` → **`messaging.outbox_messages`**. (Coinciden en responsabilidad; no se duplican tablas.)
-> - **Entidades nuevas (planned v4.0.1, aún NO materializadas en los ER `diagram_*.puml`):** `authz.service_principals`; `crm.contact_channel_endpoints`; `marketing.campaign_schedules`, `campaign_dispatches`, `campaign_dispatch_recipients`; `messaging.adapter_tracking_capabilities`, `adapter_event_mappings`, `adapter_inbound_events`, `delivery_tracking_events`, `delivery_status_transitions`, `delivery_reconciliation_runs`; `read_models.campaign_dispatch_summary`, `recipient_delivery_timeline`, `adapter_health_summary`; más `*_history` en `audit` y máquinas de estado en `workflow` (32).
+> - **Entidades nuevas de v4.0.1 (materializadas en los ER `diagram_*.puml`):** `authz.service_principals`; `crm.contact_channel_endpoints`; `marketing.campaign_schedules`, `campaign_dispatches`, `campaign_dispatch_recipients`; `messaging.adapter_tracking_capabilities`, `adapter_event_mappings`, `adapter_inbound_events`, `delivery_tracking_events`, `delivery_status_transitions`, `delivery_reconciliation_runs`; `read_models.campaign_dispatch_summary`, `recipient_delivery_timeline`, `adapter_health_summary`; más `*_history` en `audit` y máquinas de estado en `workflow` (32).
 > - **Referencias ya coincidentes (sin cambios):** `redis_runtime.idempotency_entries`/`distributed_lock_entries`, `consent.consents`/`privacy_restrictions`, value sets en `system_context` (45), `iam.security_events`.
-> - **Materialización en los ER `diagram_*.puml`:** pendiente, como paso posterior explícito (no se editó el modelo canónico para no inventar campos no especificados).
+> - **Materialización en los ER `diagram_*.puml`:** aplicada en los módulos 06, 30, 35, 48, 49 y 50 (`model-manifest.yaml`, `status: materialized-in-er`).
 >
 > El resto de este documento es el patch original con esos dos nombres ya normalizados.
 
@@ -38,10 +38,10 @@ Cada caso de uso nuevo usa el mismo contrato de detalle que el resto del proyect
 - **Concurrencia:** `row_version` optimista, `SELECT … FOR UPDATE`, `SKIP LOCKED`, constraints `UNIQUE`/idempotencia.
 - **Eventos / Auditoría:** `messaging.outbox_messages` en la misma tx; `audit.*_history` + `audit.audit_log` (append-only, WORM).
 - **Proyección (eventual, vía outbox):** `read_models` / `search_platform` / `time_series`, etc.
-- **Fase:** fase de despliegue (§8) en la que se implementa.
+- **Fase:** grupo de dependencia (§8) al que pertenece.
 - **AC:** criterio(s) de aceptación del plan fuente (§26/§27) que valida el caso.
 
-**Namespace de IDs:** los casos nuevos continúan la numeración de cada módulo (p. ej. `UC-50-13` sigue a `UC-50-12`). Un sufijo `[v4.0]` los marca como parte de este patch. Se integran en los `.puml` existentes `casos_uso_06/10/30/35/48/49/50_*.puml` (ver §10).
+**Namespace de IDs:** los casos nuevos continúan la numeración de cada módulo (p. ej. `UC-50-13` sigue a `UC-50-12`). Un sufijo `[v4.0]` los marca como parte de este patch. Viven como notas del grafo Obsidian (`SALUD/Patch v4.0.1/`), no como `.puml`.
 
 ---
 
@@ -61,9 +61,9 @@ Multi-tenant/RLS (`tenant_id`/`custodian_tenant_id`), `row_version` optimista, p
 
 ---
 
-## 3. Supuestos y decisiones pendientes que condicionan estos casos de uso
+## 3. Supuestos adoptados que condicionan estos casos de uso
 
-El plan fuente (§30) deja 12 decisiones para el propietario del sistema. Para no bloquear la especificación, cada caso afectado usa un **default marcado `‹SUPUESTO›`**; deben confirmarse antes de desarrollar y no deben "inventarse" en implementación:
+Cada caso afectado usa el **default marcado `‹SUPUESTO›`**, que la implementación respeta tal cual y no reinterpreta:
 
 - **Código de rol:** `SITE_ADMINISTRATION` ‹SUPUESTO, plan §2.1›.
 - **Quién asigna/revoca el rol:** flujo de seguridad de plataforma con doble control ‹SUPUESTO›.
@@ -71,8 +71,7 @@ El plan fuente (§30) deja 12 decisiones para el propietario del sistema. Para n
 - **`quiet_hours`:** reprograma (no excluye) salvo política explícita ‹SUPUESTO, plan §6.3›.
 - **`missed_run_policy` por defecto:** `skip` (nunca `run_all_missed`) ‹SUPUESTO, plan §6.1›.
 - **`overlap_policy` por defecto:** `forbid` ‹SUPUESTO›.
-- **Alcance de campañas:** global de plataforma con `tenant_id` nullable ‹SUPUESTO, plan §31›.
-- **Doble aprobación para gran volumen, retención por país, límites de volumen/frecuencia, exportación de tracking, tipos no-comerciales que usan el motor:** pendientes ‹SUPUESTO›.
+- **Alcance de campañas:** global de plataforma con `tenant_id` nullable ‹SUPUESTO›.
 
 ---
 
@@ -580,21 +579,22 @@ Cada transición: valida guarda → escribe estado + evento en la **misma tx** �
 
 ---
 
-## 8. Plan de implementación por fases (alineado con el plan fuente §19/§25)
+## 8. Fases: orden de dependencia de los casos de uso
 
-| Fase | Nombre | Casos de uso | Migraciones (§19) | Gate de salida |
+Cada fase supone las anteriores; la columna *Tablas* indica qué parte del modelo usa.
+
+| Fase | Nombre | Casos de uso | Tablas | Gate de salida |
 |---|---|---|---|---|
-| 0 | Confirmación de contrato | — (decisiones §3) | ADRs, matriz de permisos, taxonomía | "Administración del sitio" con código/alcance inequívocos |
-| 1 | Seguridad y anti-bypass | UC-06-13..18, UC-10-14 | Fase 1 (rol, permisos protegidos, triggers, service principal, RLS) | Pruebas negativas completas (§21.1) |
-| 2 | Programación formal | UC-50-16, UC-50-17, UC-50-18, UC-48-15 | Fase 2 (schedules) + trigger link | Dos workers no crean doble dispatch (§21.2) |
-| 3 | Dispatch y audiencia | UC-50-13..15, UC-50-19, UC-49-16..17 | Fases 2–3 (dispatches, recipients, endpoints) | Audiencia reproducible y auditada (§21.3) |
-| 4 | Request y delivery | UC-35-14..15, UC-35-17..18, UC-50-20 | Fase 4 (adaptadores) + ext requests/deliveries | ≤1 request por clave de recipient (§21.4) |
-| 5 | Tracking base | UC-35-16, UC-35-19..23, UC-10-15, UC-50-21 | Fase 5 (inbound, tracking, transitions, reconciliation) | Duplicados/out-of-order no corrompen estado (§21.5) |
-| 6 | Adaptador internal app | UC-35-24..26, UC-50-22, UC-30-14..15 | Fase 6 (in-app ext + endpoints) | Timeline completo campaña→lectura interna (§21.6) |
-| 7 | Panel + proyecciones | UC-30-16 + endpoints de consulta | Fase 7 (workers, dashboards) | No autorizados sin acceso por UI ni API |
-| 8 | Endurecimiento | (todos) | Fase 8 (RLS, particionado, retención, carga, rollback) | Evidencia de carga y restauración |
+| 1 | Seguridad y anti-bypass | UC-06-13..18, UC-10-14 | rol, permisos protegidos, triggers, service principal, RLS | Pruebas negativas completas (§21.1) |
+| 2 | Programación formal | UC-50-16, UC-50-17, UC-50-18, UC-48-15 | schedules + trigger link | Dos workers no crean doble dispatch (§21.2) |
+| 3 | Dispatch y audiencia | UC-50-13..15, UC-50-19, UC-49-16..17 | dispatches, recipients, endpoints | Audiencia reproducible y auditada (§21.3) |
+| 4 | Request y delivery | UC-35-14..15, UC-35-17..18, UC-50-20 | adaptadores + ext requests/deliveries | ≤1 request por clave de recipient (§21.4) |
+| 5 | Tracking base | UC-35-16, UC-35-19..23, UC-10-15, UC-50-21 | inbound, tracking, transitions, reconciliation | Duplicados/out-of-order no corrompen estado (§21.5) |
+| 6 | Adaptador internal app | UC-35-24..26, UC-50-22, UC-30-14..15 | in-app ext + endpoints | Timeline completo campaña→lectura interna (§21.6) |
+| 7 | Panel + proyecciones | UC-30-16 + endpoints de consulta | workers, dashboards | No autorizados sin acceso por UI ni API |
+| 8 | Endurecimiento | (todos) | RLS, particionado, retención, carga, rollback | Evidencia de carga y restauración |
 
-**Workers a desplegar (persistentes, separados del API, `SIGTERM`/`SIGINT`, `SELECT … FOR UPDATE SKIP LOCKED`):** `campaign-scheduler-worker`, `campaign-audience-snapshot-worker`, `notification-request-worker`, `notification-delivery-worker`, `adapter-event-normalizer-worker`, `delivery-projection-worker`, `delivery-reconciliation-worker`. (Plan §12.)
+**Workers del diseño (persistentes, separados del API, `SIGTERM`/`SIGINT`, `SELECT … FOR UPDATE SKIP LOCKED`):** `campaign-scheduler-worker`, `campaign-audience-snapshot-worker`, `notification-request-worker`, `notification-delivery-worker`, `adapter-event-normalizer-worker`, `delivery-projection-worker`, `delivery-reconciliation-worker`. (Plan §12.)
 
 **Idempotencia por nivel (plan §12.4):** schedule (`schedule_id + planned_at_norm`), dispatch (`campaign_version + occurrence_key`), recipient (`dispatch + recipient + channel + step`), request (`dispatch_recipient + content_hash`), attempt (`request + attempt_number`), provider send (clave externa), inbound (`provider + external_event_id`), canonical (`delivery + provider_event_id + canonical_type`).
 
@@ -644,22 +644,13 @@ Cada transición: valida guarda → escribe estado + evento en la **misma tx** �
 
 ---
 
-## 10. Deltas a los diagramas `.puml` (alineado con plan §24)
+## 10. Deltas a los diagramas `.puml`
 
-Aplicar sobre los archivos existentes de este proyecto (`casos_uso_*.puml`) y sobre los diagramas de modelo (`diagram_*.puml`):
-
-- **`casos_uso_06_authz.puml` / `diagram_06_authz.puml`:** añadir `UC-06-13..18`; en el modelo, columnas `permissions.is_role_restricted/required_role_code/allow_direct_user_grant`, rol `SITE_ADMINISTRATION` (seed/nota), tabla `service_principals`, y nota de prohibición de grants directos.
-- **`casos_uso_50_marketing.puml` / `diagram_50_marketing.puml`:** añadir `UC-50-13..22`; entidades `campaign_schedules`, `campaign_dispatches`, `campaign_dispatch_recipients`; extensiones de `marketing_campaigns` y `marketing_touchpoints`; boundary de Administración del sitio; estados y constraints.
-- **`casos_uso_35_messaging.puml` / `diagram_35_messaging.puml`:** añadir `UC-35-14..26`; entidades `adapter_tracking_capabilities`, `adapter_event_mappings`, `adapter_inbound_events` `<<LOG>>`, `delivery_tracking_events` `<<LOG>>`, `delivery_status_transitions`, `delivery_reconciliation_runs`; extensiones de `messaging_providers`, `provider_channel_configs`, `notification_requests` (destinatario flexible), `notification_deliveries`, `in_app_notifications`; relaciones dispatch→request→delivery→event.
-- **`casos_uso_48_automation.puml` / `diagram_48_automation.puml`:** `UC-48-15`; extensión `automation_triggers.campaign_schedule_id` + `schedule_source_concept_id`; nota "worker no cambia contenido/audiencia; approvals ≠ RBAC".
-- **`casos_uso_49_crm.puml` / `diagram_49_crm.puml`:** `UC-49-16..17`; entidad `contact_channel_endpoints`.
-- **`casos_uso_10_audit.puml` / `diagram_10_audit.puml`:** `UC-10-14..15`; nuevos tipos de evento de gobierno (§16.1) y acceso a tracking crudo.
-- **`casos_uso_30_read_models.puml` / `diagram_30_read_models.puml`:** `UC-30-14..16`; vistas `campaign_dispatch_summary`, `recipient_delivery_timeline`, `adapter_health_summary`.
-- **`casos_uso_00_INDICE_MAESTRO.puml`:** añadir flujos `M06→M50→M48→M35→M30/M10` y `M49→M35`.
-
-**Nuevos diagramas de comportamiento a crear** (plan §24.8): `activityDiagramScheduledCampaign.puml`, `stateDiagramCampaignSchedule.puml`, `stateDiagramCampaignDispatch.puml`, `stateDiagramNotificationDelivery.puml`, `sequenceDiagramInternalAppDelivery.puml`, `sequenceDiagramExternalAdapterWebhook.puml`, `componentDiagramMessagingAdapters.puml`.
-
-> Si quieres, en un siguiente paso genero directamente estos `.puml` (los 7 nuevos + los deltas insertados en los archivos de casos de uso existentes), con el mismo lint 0-errores.
+Aplicados en los diagramas de modelo `diagram_06_authz`, `diagram_30_read_models`,
+`diagram_35_messaging`, `diagram_48_automation`, `diagram_49_crm` y `diagram_50_marketing`
+(`model-manifest.yaml`, `status: materialized-in-er`). El paquete no tiene diagramas de casos de
+uso ni de comportamiento: los casos de uso son notas del grafo y las máquinas de estado se
+registran en el módulo 32 (§7).
 
 ---
 
@@ -680,12 +671,6 @@ Aplicar sobre los archivos existentes de este proyecto (`casos_uso_*.puml`) y so
 **Riesgos clave mitigados por diseño:** doble envío (idempotency keys + unique) · bypass por grant directo (permisos protegidos no delegables, UC-06-16) · evento duplicado (`UNIQUE` provider event id/hash) · evento tardío (`is_late` + precedencia) · proveedor sin tracking (capability matrix, `local_only`) · confundir `accepted`/`delivered` (semántica canónica) · PHI (boundary + validación de variables) · contacto sin IAM (endpoint polimórfico) · payload sensible (cifrado + acceso excepcional + retención corta) · timezone (IANA + tests DST) · contadores divergentes (proyección idempotente + reconciliación) · webhook falsificado (firma + timestamp + anti-replay).
 
 **Rollback (expand/contract):** feature flag `SITE_SCHEDULED_CAMPAIGNS_V2`; mantener columnas antiguas (`recipient_address`, `delivery_receipts`, status previos) durante la transición; etapas expand → dual-write controlado → backfill → lectura v2 → validar → dejar de escribir v1 → retirar v1 en release posterior. **Kill switch** global: pausar nuevos dispatches / pausar un adaptador / pausar entregas externas / mantener internal app si se autoriza — sin borrar jobs ni datos.
-
----
-
-## 13. Definición de terminado (para este patch)
-
-El patch se considera implementable-completo cuando, por cada caso de uso, existan: migración versionada (sin `sync alter`/`force`), seeds boot idempotentes (rol, permisos, canal/adaptador `INTERNAL_APP`, capacidades, eventos/estados/transiciones canónicos, value sets), servicios/workers, adaptador interno de extremo a extremo, tracking en 3 capas, permisos anti-bypass probados, endpoints con guard + policy + validación de dominio, UI administrativa, pruebas negativas y de idempotencia/carga, auditoría, observabilidad (métricas sin `user_id` como label), documentación (ADR/runbook/README por módulo) y plan de rollback. Cualquier entrega que omita uno de estos elementos se presenta como **parcial**, no como capacidad de producción. (Plan §32.)
 
 ---
 

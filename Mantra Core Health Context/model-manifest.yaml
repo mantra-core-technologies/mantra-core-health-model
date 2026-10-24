@@ -11,7 +11,7 @@ model:
     status: materialized-in-er
     summary: >-
       Plan maestro normativo. Define esquema completo (campos, constraints,
-      value sets, workers, índices, fases, criterios de aceptación) para envíos
+      value sets, workers, índices, criterios de aceptación) para envíos
       programados, gobierno exclusivo SITE_ADMINISTRATION y tracking multicanal
       en 3 capas. Fuente de los § que cita el patch-02.
   - id: patch-02-use-cases-scheduled-campaigns-tracking
