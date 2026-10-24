@@ -16,7 +16,7 @@ CREATE INDEX IF NOT EXISTS "ix_identifiers_issuer_administrative_area_concept_id
 
 CREATE INDEX IF NOT EXISTS "ix_identifiers_owner_kind_concept_id" ON "common"."identifiers" ("owner_kind_concept_id");
 
-CREATE UNIQUE INDEX IF NOT EXISTS "ux_identifiers_document_owner_kind" ON "common"."identifiers" ("type_concept_id", "value", "issuer_administrative_area_concept_id", "owner_kind_concept_id") WHERE state_concept_id = '38a1d301-f40d-5b17-a695-5e6d605f8b19' AND owner_kind_concept_id IN ('ff9ab690-d4ae-5d5e-9784-76d8e9e1ff37', '64e1ccaf-e90d-5255-8af0-9d8362817ea9');
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_identifiers_document_owner_kind" ON "common"."identifiers" ("type_concept_id", "value", "issuer_administrative_area_concept_id", "owner_kind_concept_id") WHERE state_concept_id = '38a1d301-f40d-5b17-a695-5e6d605f8b19' AND type_concept_id = '595e7a3d-ba37-5014-9a72-635363b94864' AND owner_kind_concept_id IN ('ff9ab690-d4ae-5d5e-9784-76d8e9e1ff37', '64e1ccaf-e90d-5255-8af0-9d8362817ea9');
 
 CREATE INDEX IF NOT EXISTS "ix_identifiers_assigner_tenant_id" ON "common"."identifiers" ("assigner_tenant_id");
 

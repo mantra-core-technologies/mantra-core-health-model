@@ -42,7 +42,7 @@ DO $$ BEGIN
     ALTER TABLE "common"."identifiers"
         ADD CONSTRAINT "fk_identifiers_owner_kind_concept_id" FOREIGN KEY ("owner_kind_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: directory.tenants (requiere schema directory)
 DO $$ BEGIN
