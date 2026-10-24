@@ -166,16 +166,13 @@ de maquillarlo.** Con datos de `seedsGenerales` (`--skip-prod --refresh`, 27 fil
 — es la decisión correcta por costo: para una tabla de una página, cualquier índice es
 estrictamente más caro que leer la página entera. Se verificó que el índice es estructuralmente
 correcto forzándolo (`SET enable_seqscan = off`): `Index Scan using
-ix_identifiers_type_concept_id_value`, `Index Cond` sobre las dos columnas, plan válido. La
-demostración de `Index Scan` **natural** contra volumen real queda pendiente de un stack con más
-identificadores por persona que el paquete de seeds de desarrollo produce hoy — no es una
-regresión de este cambio, es el tamaño de la tabla en este entorno.
+ix_identifiers_type_concept_id_value`, `Index Cond` sobre las dos columnas, plan válido. Con
+este volumen no hay `Index Scan` **natural** que observar: no es una regresión de este cambio, es
+el tamaño de la tabla en este entorno.
 
-**Deuda que este cambio destapó, sin resolver:** la copia de despliegue vendorizada
-(`mantra-core-health-api/database/SQL`) queda un patch atrás hasta que alguien corra
-`yarn db:vendor` después de que este PR se mergee — mecanismo esperado, no un defecto (ver
-`ddl-sources.md` §«La excepción»). Y `yarn orm:catalog` sigue rompiendo `surveys` al
-regenerar (B-10, preexistente): se revirtió a mano, como en cada promoción anterior.
+La copia de despliegue vendorizada (`mantra-core-health-api/database/SQL`) se pone al día con
+`yarn db:vendor` después del merge — mecanismo esperado, no un defecto (ver `ddl-sources.md`
+§«La excepción»).
 
 ### 3.0 · Jornada del 2026-08-15 — lo que cambió el estado documentado
 
@@ -326,13 +323,11 @@ módulo 08), y `check_ddl_sources.py` sigue devolviendo `Fuentes de DDL OK`. Los
 cambio; **no están medidos**, porque Docker Desktop estaba apagado el 20/08. Patch para bases
 vivas: `SQL/patches/2026-08-20_v412_conditions_clinical_course.sql`; en base limpia no hace falta.
 
-> **Deuda que destapó, y que este cambio NO cierra (ficha B-10).** Regenerar `yarn orm:catalog`
-> devuelve `surveys` de módulo **65 a `null`** y emite **1 de sus 36** FKs: la promoción del
-> módulo 65 llegó al `.puml`, a `SQL/` y a las entidades, pero **nunca escribió las notas de la
-> bóveda** (0 notas `E surveys.*`, 1 nota `FK surveys.*`), y el `65` que hay en `dev` se escribió
-> **a mano** sobre un archivo generado. Por eso el catálogo **hoy no es reproducible**: regenerar
-> no deja el árbol byte a byte idéntico. La salida es escribir las notas del módulo 65, no volver
-> a editar el catálogo a mano.
+> **Ficha B-10 (cerrada después).** Regenerar `yarn orm:catalog` devolvía `surveys` de módulo
+> **65 a `null`** y emitía **1 de sus 36** FKs: la promoción del módulo 65 había llegado al
+> `.puml`, a `SQL/` y a las entidades, pero **no a las notas de la bóveda** (0 notas
+> `E surveys.*`, 1 nota `FK surveys.*`), y el `65` de `dev` estaba escrito a mano sobre un archivo
+> generado. Se cerró escribiendo las notas del módulo 65: el catálogo volvió a ser reproducible.
 
 ### v4.1.3 — Notas clínicas, indicaciones al paciente, y el hueco de B-9 (2026-08-20)
 
@@ -422,8 +417,8 @@ lección de B-10— y `clinical_ext` pasó de 12 a 13 tablas; `gen_seeds.py --dr
 nueva (17 declaradas vacías, antes 16) y las 8 «SIN DECLARAR» siguen siendo las preexistentes;
 `yarn typecheck` 0 · `yarn lint` 0 · **52 suites / 351 pruebas en verde** en clinical+forms+chart.
 Deltas **esperados** en base viva, **no medidos** (Docker apagado el 21/08): tablas +1, FKs +8,
-índices +9. Patches en la cola: `2026-08-21_v416_medication_requests_indication_condition.sql` y
-`2026-08-21_v417_prescription_favorites.sql`.
+índices +9. Patches para bases vivas: `2026-08-21_v416_medication_requests_indication_condition.sql`
+y `2026-08-21_v417_prescription_favorites.sql`.
 
 > **Hallazgo ajeno que este carril destapó y dejó resuelto.** `gen_seeds.py` **abortaba entero**
 > con `value sets declarados pero sin nota en el vault: ['vs_bo_municipality']`: el carril v4.1.5
@@ -523,10 +518,9 @@ contenido y código, no esquema.
   /insurance-carriers` filtra por tenant y cada aseguradora vive en el suyo, así que desde el
   tenant de un paciente devolvía vacío. Cruza tenants pero acotado a los ids deterministas del
   catálogo sembrado.
-- **Deuda declarada**: `insurance_carriers` no tiene columna de tipo de pagador ni existe value
-  set público/privado — el `isPublic` se deriva del catálogo en código. Cerrarlo es trabajo de
-  modelo.
-- **Razón social**: no entra. `common.identifiers` sólo tiene `value`; queda en la tarjeta T-04.
+- **Tipo de pagador**: `insurance_carriers` no tiene columna de tipo de pagador ni existe value
+  set público/privado; el `isPublic` se deriva del catálogo en código.
+- **Razón social**: no entra. `common.identifiers` sólo tiene `value`.
 
 **Verificado**: typecheck 0 en ambos repos · API 22 suites / 220 pruebas + 9 del catálogo nuevo ·
 front 48/48 del formulario y 3 850/3 853 de la suite completa (los 3 rojos son preexistentes de
@@ -684,15 +678,14 @@ y el reporte) → patch `SQL/patches/2026-09-18_v4219_health_export_manifests_co
 - **Hallazgo lateral (no de este patch)**: `gen_ddl.py all` regenerado sobre `origin/dev` reescribe
   además `SQL/19_community/04_indexes.sql` y `SQL/65_surveys/{03_fk_intra,90_fk_deferred}.sql`
   (deriva preexistente y ajena, ya documentada — B-10 de `surveys` y el reordenamiento de
-  `community`); se revirtió antes de commitear. Y **la sección de v4.2.18 (cotizaciones) todavía no
-  tiene su espejo en este documento** pese a estar en `origin/dev` — deuda ajena, no se escribe acá.
+  `community`); se revirtió antes de commitear.
 
 ### v4.2.18 — Cotizaciones sin interés: plan de pagos flexible (2026-09-18)
 
 **Fuente**: pedido del propietario — «quitar totalmente lo de tasa de interés y simulación de
 crédito; tienen que ir planes de pago ultra flexibles, al abrir la consulta si corresponde por
 plan o tratamiento». Un consultorio no financia: reparte el precio de un tratamiento en cuotas a
-medida de la persona. P35 de `mantra-core-health/PENDIENTES-BACKEND.md`.
+medida de la persona. Pedido P35 del frontend (`mantra-core-health`).
 
 `.puml` 17 billing + 33 integrity → `gen_ddl.py 17` + `gen_integrity.py` (diff acotado a
 `SQL/17_billing/02_tables.sql`, `05_constraints.sql` y `_integrity/integrity-matrix.md`) → patch
@@ -755,12 +748,33 @@ regenerar) → `python salud-db/gen_integrity.py` (`SQL/08_clinical/05_constrain
 Deltas esperados sobre la base viva: columnas de `service_requests` 16 → 18, FK +1, índice +1,
 CHECK +1.
 
-**Hallazgo lateral, no corregido acá**: las secciones de v4.2.15 (`practice_sites.bank_qr_file_id`)
-y v4.2.16 (`encounters.content_hash`/`sealed_at`) siguen sin escribirse en este documento — deuda
-ajena, preexistente a esta promoción, declarada para quien la cierre.
-
 **Ojo con la numeración**: v4.2.15 es el QR bancario de la sede y v4.2.16 el sello de cierre del
 encuentro — esta promoción es v4.2.17.
+
+### v4.2.16 — El encuentro cerrado lleva su sello (2026-09-16)
+
+**Fuente**: subtarea C.4 del plan maestro — sello SHA-256 inmutable del encuentro clínico,
+calculado al cerrarlo.
+
+`.puml` 08 clinical → `gen_ddl.py 08` → patch `SQL/patches/2026-09-16_v4216_encounters_content_hash.sql`.
+`clinical.encounters` gana `content_hash varchar` (hash hexadecimal del JSON canónico del
+contenido en el momento del cierre) y `sealed_at timestamptz`. Las dos son **nullable**: un
+encuentro en curso todavía no tiene sello, y lo calcula `EncountersService.close()` al pasarlo a
+`ENCOUNTER_FINISHED`. **Sin backfill**: sellar ahora un encuentro cerrado antes de v4.2.16 sería
+firmar sin haber estado en el cierre; esos quedan sin sello y su PDF oficial lo declara (`422`).
+Deltas sobre la base viva: columnas de `clinical.encounters` 18 → 20; FK, índices y tablas ±0.
+
+### v4.2.15 — La sede guarda su QR de cobro (2026-09-15)
+
+**Fuente**: subtarea A.1 del plan maestro — cobro por QR bancario de la sede (P33).
+
+`.puml` 14 practice → `gen_ddl.py 14` → patch `SQL/patches/2026-09-15_v4215_practice_sites_bank_qr_file_id.sql`.
+`practice.practice_sites.bank_qr_file_id` es una FK **nullable** a `common.files` (no toda sede
+cobra por QR), con su índice `ix_practice_sites_bank_qr_file_id`. El binario vive en
+`common.files`, igual que `professional_credentials.file_id` y `jurisdiction_authorizations.file_id`:
+una sola puerta de subida, con escaneo antivirus y tipo deducido de los bytes. Sin backfill: no
+había ninguna fila con el dato. Lo expone `PUT /practitioners/me/sites/:siteId/bank-qr` en la API.
+Deltas sobre la base viva: columnas de `practice_sites` 17 → 18, FK +1, índice +1, tablas ±0.
 
 ### v4.2.14 — El plan declara su prima de lista mensual, y nace el tablero de siniestralidad (2026-09-14)
 
@@ -800,15 +814,13 @@ backfill) → `gen_entities.py 26` + `prettier --write` (colapsa el diff a `insu
 Deltas esperados sobre la base viva: columnas de `insurance.insurance_plans` 15 → **16**, FKs e
 índices ±0, tablas ±0.
 
-**Hallazgo lateral, no corregido acá**: `insurance_claims` no tiene ningún índice sobre
-`submitted_at` ni compuesto `(insurance_carrier_id, submitted_at)`, que es exactamente el predicado
-del tablero; hoy resuelve por `ix_insurance_claims_insurance_carrier_id` y filtra en el heap. Con
-el volumen actual alcanza; queda registrado en T-25 para cuando haga falta (agregarlo exige
-`.puml` + `orm:catalog`). Y al correr `gen_ddl.py all` el generador reescribió con OTRO contenido
-`SQL/19_community/04_indexes.sql` (orden de índices), `SQL/65_surveys/03_fk_intra.sql` y
-`SQL/65_surveys/90_fk_deferred.sql` (35 FK que el reporte contaba como diferidas pasan a intra), es
-decir, el `SQL/` versionado de esos dos módulos no coincide con lo que hoy emite el generador desde
-los `.puml`. Se revirtió para no mezclarlo en esta promoción; es deriva ajena, pendiente de su carril.
+**Rendimiento medido**: el tablero filtra `insurance_claims` por `(insurance_carrier_id,
+submitted_at)` y resuelve por `ix_insurance_claims_insurance_carrier_id` filtrando en el heap; con
+el volumen actual alcanza, así que no se agregó un índice sobre `submitted_at`. Al correr
+`gen_ddl.py all` el generador reescribió además `SQL/19_community/04_indexes.sql` (orden de
+índices) y `SQL/65_surveys/{03_fk_intra,90_fk_deferred}.sql` (35 FK de diferidas a intra): deriva
+ajena que se revirtió para no mezclarla en esta promoción. Regenerados hoy, esos dos módulos
+salen sin diferencias.
 
 **Ojo con la numeración:** v4.2.11 son los reclamos vinculados a pedidos, v4.2.12 el archivo de
 la autorización jurisdiccional y v4.2.13 la versión de precio por producto — esta promoción es
@@ -941,9 +953,9 @@ nota, cero cayeron a la convención por nombre.
 **Diferencia real entre lo generado y lo mergeado, registrada y no resuelta por el generador:**
 `gen_ddl.py` no tiene mecanismo para emitir `CHECK` — ninguna de las 65 tablas que sí genera
 lleva uno. La API mergeada declara `interest_calculation_method varchar NOT NULL CHECK IN
-('FLAT','FRENCH')`. El patch agrega ese `CHECK` a mano porque el generador no puede expresarlo;
-si el pipeline gana soporte de `CHECK` más adelante, el patch queda redundante con lo generado,
-no contradictorio. Segunda diferencia, sin acción: `appointment_id` no lleva FK, igual que en
+('FLAT','FRENCH')`. El patch agrega ese `CHECK` a mano porque el generador no podía expresarlo;
+después el pipeline ganó `CHECK_SQL` (módulo 33 → `gen_integrity.py`), y un `CHECK` declarado ahí
+deja el patch redundante con lo generado, no contradictorio. Segunda diferencia, sin acción: `appointment_id` no lleva FK, igual que en
 lo mergeado (comentario propio del autor original: «sin destino canónico, evita anillo» entre
 `scheduling` y `billing`).
 
@@ -955,10 +967,6 @@ un valor fuera de `('FLAT','FRENCH')`: rechazado en runtime, no sólo declarado.
 cambio; son preexistentes y ajenos a T24). `gen_seeds.py --dry`: sin abortar; el único delta es
 el esperado — `quotations`/`quotation_installments` entran a «tablas vacías sin declarar» (no
 hay fila viva de cotización que sembrar) y +1 columna `*_concept_id` sin binding declarado.
-
-**Pendiente, fuera de este cambio:** `yarn db:vendor` + `yarn db:vendor:check` en la API (para
-que la copia vendida vuelva a coincidir con el modelo) y la corrida E2E de T24 contra un stack
-con las tablas — los coordina Ender, no son parte de esta pasada de modelo.
 
 **Una décima FK, posterior a esa verificación (2026-09-11).** Crear `billing.quotations`
 desbloqueó una FK huérfana de otro módulo: `pharmacy_inventory.inventory_reservations
@@ -986,10 +994,9 @@ tiene cargo dentro de una jerarquía, y exigirlo bloqueaba el guardado de la afi
 `SQL/patches/2026-09-05_v426_practitioner_affiliations_role_title_nullable.sql`
 (`ALTER COLUMN role_title DROP NOT NULL`, idempotente, sin backfill).
 
-**Efecto lateral documentado, no corregido acá:** los dos índices únicos parciales de la tabla
-incluyen `role_title` en la tupla; con la columna nullable, dos filas sin cargo en la misma
-institución el mismo día ya no chocan contra el `UX` — sólo el `409` del servicio las detiene. Es
-una deuda conocida de esta versión, no una omisión: ALV-007 no pedía tocar los índices.
+**Efecto lateral:** los dos índices únicos parciales de la tabla incluyen `role_title` en la
+tupla; con la columna nullable, dos filas sin cargo en la misma institución el mismo día no
+chocan contra el `UX` — las detiene el `409` del servicio. ALV-007 no pedía tocar los índices.
 
 **Verificado**: `check_ddl_sources.py` PASS (única divergencia preexistente: la copia vendida de
 `database/SQL` en el repo de la API, desfasada desde el merge de v4.2.5 — `yarn db:vendor` no corre
@@ -1122,7 +1129,7 @@ declarados en `04_indexes.sql` más la PK que crea Postgres sola).
   (`totalOf()`). Un concepto propio haría que el total congelado y el recalculado no se
   reconocieran como la misma moneda, así que `currency_concept_id` se congela **copiando** el de la
   lista de precios usada. La divergencia de fondo —el procurement hardcodea USD mientras el front y
-  los seeds hablan de bolivianos— es **anterior a este patch y sigue abierta**.
+  los seeds hablan de bolivianos— es **anterior a este patch y ajena a él**.
 - **El único del código de retiro es PARCIAL, y el prefijo lo dice.** La enorme mayoría de las
   filas no tiene código —reservas de mostrador y pedidos que aún no llegaron a
   `LISTO_PARA_RETIRO`—, y un único total no las acotaría (Postgres considera cada `NULL` distinto)
@@ -1172,10 +1179,10 @@ una modalidad inexistentes se rechazan con `23503`. **Fidelidad ORM en `dry-run`
 sin una sola categoría nueva**, con `columna-ausente` en **0**: las ocho columnas nuevas están en la
 base y mapeadas. La app mapeó 1 184 rutas.
 
-**Falta un paso, y es de despliegue.** Los siete conceptos los siembra la API al arrancar y el
-contenedor corre una imagen anterior, así que hoy `PINV_DELIVERY_RETIRO` **todavía no existe** en
-`terminology.catalog_concepts` — la FK lo rechaza, correctamente. La columna de modalidad no se
-puede usar hasta redesplegar la API.
+**Dependía del despliegue de la API.** Los siete conceptos los siembra la API al arrancar y el
+contenedor verificado corría una imagen anterior, así que en ese momento `PINV_DELIVERY_RETIRO`
+no existía en `terminology.catalog_concepts` — la FK lo rechazaba, correctamente. La columna de
+modalidad se usa en cuanto arranca una API que los siembra.
 
 **Y algo que se destapó al verificar:** en esa base **tampoco están los diez `PINV_ORDER_*` de
 FAR-E1**, que ya está mergeado en `dev`. La terminología del stack vivo está atrasada respecto de
@@ -1183,13 +1190,12 @@ FAR-E1**, que ya está mergeado en `dev`. La terminología del stack vivo está 
 están **vacías** —huella del `yarn smoke`, que las trunca—. No es consecuencia de este patch, pero
 cualquiera que pruebe el carril de farmacia contra ese stack se choca con eso antes que con nada.
 
-**Dos hallazgos laterales, sin resolver.** (1) Los conteos de `model-manifest.yaml` estaban
-**desactualizados**: el módulo 18 declara 12/12 y son 13/13 desde v4.1.7. Se corrigió el módulo 25
-(19/19 → 20/20); el resto sigue viejo. Nada los consume programáticamente —`gen_ddl.py` sólo lee
-`version:`—, son documentación. (2) `yarn orm:catalog` **sigue siendo destructivo para `surveys`**
-(ficha B-10): regenerarlo devuelve el módulo 65 a `null` y emite un `surveys.fk.ts` con 1 de sus 36
-FK. Se revirtió a mano, como en v4.1.4. La causa —las notas de bóveda del módulo 65 no existen—
-sigue en pie.
+**Dos hallazgos laterales, resueltos después.** (1) Los conteos de `model-manifest.yaml` estaban
+**desactualizados** (el módulo 18 declaraba 12/12 y eran 13/13 desde v4.1.7). Acá se corrigió el
+módulo 25 (19/19 → 20/20); el resto se recontó con `tools/model_inventory.py` el 2026-10-24. Nada
+los consume programáticamente —`gen_ddl.py` sólo lee `version:`—, son documentación. (2) `yarn
+orm:catalog` era destructivo para `surveys` (ficha B-10) porque faltaban las notas de bóveda del
+módulo 65; acá se revirtió a mano, como en v4.1.4, y la ficha se cerró al escribir esas notas.
 
 ### v4.1.9 — El vínculo médico–institución deja de ser texto libre sin aprobación (2026-08-25)
 
@@ -1311,17 +1317,13 @@ haría desaparecer del perfil.
 > Y de paso: los `cache_token` de esta base **no se reproducen** con la fórmula que hoy tiene el
 > código (`sha1(code + ' ' + ids)[:16]`) — ni siquiera los de conjuntos que nadie tocó—, así que
 > el patch no puede predecir el valor esperado y escribe uno propio, determinista. Las dos cosas
-> son del sembrador y van como tarjeta propia.
+> son del sembrador de la API, no del modelo.
 
-**Lo que esta promoción NO cierra**, y no es suyo:
-- **H-4** (no hay estado de onboarding del profesional) sigue abierto.
-- La columna que ataría un `directory.tenants` con la ficha del padrón de la que nació —la que hace
-  falta para el reclamo— se decidió dejar para después: no bloquea el vínculo.
-- **B-10 sigue abierto.** `yarn orm:catalog` sigue devolviendo `surveys` a módulo `null`, truncando
-  sus FKs a 1 de 36 y borrando el comentario escrito a mano de `diagnostic_units.idx.ts`. Acá se
-  corrió el generador —que es el único lector real de la bóveda, y por eso vale la pena— y se
-  revirtieron esos tres archivos más el `surveys.fk.ts` que crea; el diff quedó acotado a
-  `profiles.idx.ts` y `profiles.fk.ts`.
+**Fuera de esta promoción.** La columna que ataría un `directory.tenants` con la ficha del padrón
+de la que nació no entra: no bloquea el vínculo. En esta corrida `yarn orm:catalog` todavía
+devolvía `surveys` a módulo `null` (ficha B-10, cerrada después): se corrió el generador —que es
+el único lector real de la bóveda— y se revirtieron esos archivos más el `surveys.fk.ts` que crea;
+el diff quedó acotado a `profiles.idx.ts` y `profiles.fk.ts`.
 
 ### v4.1.8 — Ocupación de la persona y sigla de la aseguradora, promovidas de verdad (2026-08-22)
 
@@ -1393,27 +1395,22 @@ python salud-db/check_ddl_sources.py
 > comparadas se borran (los `.zip` siguen en la raíz). Es literalmente la «segunda fuente de DDL»
 > que `ddl-sources.md` prohíbe.
 
-**Pendiente:** aplicar a las bases vivas. Docker estaba apagado el 22/08, así que los deltas
-esperados (tablas sin cambio · FKs 6 705 → 6 706 · índices 9 154 → 9 155, sumados a los de v4.1.2
-y v4.1.6/4.1.7) **no están medidos**. La cola de patches sin aplicar es
-`v412 · v413 · v414 · v415 · v416 · v417 · v418`
-(v419 se aplicó a la base de desarrollo el 25/08 y no está en esta cola); con la base ya poblada el camino es
-`rebuild_stack.py --yes`, no patches sueltos.
+**Bases vivas.** Docker estaba apagado el 22/08, así que los deltas esperados (tablas sin cambio
+· FKs 6 705 → 6 706 · índices 9 154 → 9 155, sumados a los de v4.1.2 y v4.1.6/4.1.7) no se
+midieron ese día. Con la base ya poblada el camino es `rebuild_stack.py --yes`, no patches sueltos.
 
-**Lo que esta promoción NO cierra**, y no es suyo:
-- ~~`uq_diagnostic_units_tenant_id_code`~~ — **RESUELTO el 2026-08-23**: la unicidad de
+**Lo que siguió a esta promoción:**
+- `uq_diagnostic_units_tenant_id_code` — **resuelto el 2026-08-23**: la unicidad de
   `diagnostic_units` pasó a ser compuesta `(tenant_id, code)` por las cuatro capas
   (nota de bóveda → `.puml` 23 → `gen_ddl.py` → patch a bases vivas → catálogo del ORM,
   este último a mano por B-10). Cierra las 3 pruebas en rojo que arrastraba `dev`.
   Verificado en runtime: `yarn seed:diagnostic-units` ya no muere con «no unique or
   exclusion constraint matching the ON CONFLICT specification» y deja 6 unidades en un
-  mismo tenant. **Su gemela `uq_insurance_carriers_tenant_id` sigue pendiente**: misma
-  pregunta, sin prueba en rojo que la fuerce, semántica menos obvia.
-- El front referencia `VS_ADMINISTRATIVE_AREA` en nueve sitios y el nombre ganador es
-  `VS_BO_DEPARTMENT`: esos desplegables siguen sin llenarse.
-- B-10 sigue abierto: la bóveda no tiene las notas del módulo 65, así que `yarn orm:catalog`
-  completo sigue siendo destructivo. Las dos filas del catálogo de esta promoción se escribieron a
-  mano, en la posición exacta en que el generador las emitiría.
+  mismo tenant. Su gemela `uq_insurance_carriers_tenant_id` se mantiene: una aseguradora por
+  tenant es el diseño sobre el que se apoya v4.2.21.
+- El front volvió a leer `VS_BO_DEPARTMENT`, el nombre ganador (`bo-departments.service.ts`).
+- B-10 se cerró al escribir las notas de bóveda del módulo 65. Las dos filas del catálogo de esta
+  promoción se escribieron a mano, en la posición exacta en que el generador las emitiría.
 
 > [!info] Reconciliación de las copias v2 (2026-08-22)
 > Las carpetas `SQLv2/` y `Mantra Core Health Context v2/` —la copia del modelo de la otra
@@ -1457,8 +1454,8 @@ el departamento y la ocupación.
 > **Nota de nomenclatura.** El PR #203 de Marcelo resolvió a favor de `dev` el choque entre
 > `issuing_administrative_area_concept_id` / `vs_administrative_area` (su rama) e
 > `issuer_administrative_area_concept_id` / `VS_BO_DEPARTMENT` (dev). Este patch materializa
-> **el nombre ganador**. El front todavía referencia `VS_ADMINISTRATIVE_AREA` en nueve sitios:
-> es la mitad que falta.
+> **el nombre ganador**. El front pasó después a leer `VS_BO_DEPARTMENT`
+> (`bo-departments.service.ts`).
 
 ### Seeds v4.1.4 — datos reales de Bolivia (2026-08-22)
 
@@ -1534,15 +1531,14 @@ orm:catalog` suma la FK 46→47 y el índice 49→50 de `common` (**con el diff 
 por B-10**: se revirtió el `surveys` 65→`null` y el `surveys.fk.ts` de 1/36 FKs que la
 regeneración vuelve a producir); `gen_seeds.py` emite `1 value sets · 9 conceptos · 9
 miembros · 1 enums dinámicos`; `yarn typecheck` en 0. Los deltas **esperados** en base viva
-son FKs 6 706 → **6 707** e índices 9 155 → **9 156** (contando los de v4.1.2 pendientes);
-**no están medidos**: Docker Desktop seguía apagado el 20/08, así que el patch
-`SQL/patches/2026-08-20_v414_identifiers_issuing_administrative_area.sql` queda **en la misma
-cola de aplicación que v4.1.2 y v4.1.3**, y la carga del set exige `load_seeds.py --skip-prod
---refresh` (las 16 filas reasignadas de `addresses` no llegan sin `--refresh`).
+son FKs 6 706 → **6 707** e índices 9 155 → **9 156** (contando los de v4.1.2); no se midieron
+porque Docker Desktop seguía apagado el 20/08. El patch para bases vivas es
+`SQL/patches/2026-08-20_v414_identifiers_issuing_administrative_area.sql`, y la carga del set
+exige `load_seeds.py --skip-prod --refresh` (las 16 filas reasignadas de `addresses` no llegan
+sin `--refresh`).
 
-> **Pendiente de producto (no de modelo):** capturar el dato en el alta — DTO de registro +
-> select del front leyendo `vs_administrative_area` por terminología, con el patrón de
-> validación de `vs_medical_specialty` (`422` si el uuid no pertenece al set).
+> **Producto:** el alta captura el dato — `issuerAdministrativeAreaConceptId` en el DTO de
+> registro de la API y en los formularios del front.
 
 **v4.1.4 (bis) — las 9 aseguradoras reales de Bolivia en el paquete (2026-08-20).** Mismo molde
 que `canonical_diagnostic_units` (módulo 23): el builder **`canonical_insurance_carriers`** de
@@ -1709,10 +1705,10 @@ siempre, **cero** `columna-ausente`); re-aplicar ambos patches → no-ops.
 > 2026-08-10 en las 4 capas… **de esta máquina**. `Mantra Core Health Context/`, `SQL/` y
 > `salud-db/` no son repos git, así que el trabajo nunca llegó a los entornos de los demás:
 > el autorregistro devolvía 500 (`column "name" of relation "persons" does not exist`) en
-> toda base construida desde una copia vieja de `SQL/`, y quedó documentado como P14 en
-> `PENDIENTES-BACKEND.md` del front. Hasta que `SQL/` tenga un canal de distribución
-> versionado, **todo cambio del modelo viaja con su patch y se anuncia**; el patch es el
-> vehículo, no el arreglo (regla de `db-fidelity`).
+> toda base construida desde una copia vieja de `SQL/`, y quedó documentado como P14 en el
+> registro del front. Desde el 28/08 el modelo tiene repositorio propio
+> (`mantra-core-health-model`), que es ese canal de distribución; para las bases vivas el patch
+> sigue siendo el vehículo, no el arreglo (regla de `db-fidelity`).
 
 ### v4.0.11 — Tres defectos del rebuild en limpio, corregidos (2026-08-13)
 
@@ -1842,9 +1838,9 @@ no `dist/main`.
    que confirma de paso que el generador es determinista y que el catálogo estaba al día.
 
 > Los **58 índices descartados** que reporta `orm:catalog` no son un defecto: son predicados
-> que invocan una función sin argumentos (`active_status()`), marcador de un valor que el
-> modelo todavía no decidió. `gen_ddl.py` los emite comentados en `SQL/` por el mismo motivo,
-> así que las dos capas coinciden.
+> que invocan una función sin argumentos (`active_status()`), un marcador que el modelo no
+> define. `gen_ddl.py` los emite comentados en `SQL/` por el mismo motivo, así que las dos capas
+> coinciden.
 
 **Con el auditor ya ejecutable aparecieron 3 derivas más, las tres corregidas (2026-08-07).**
 El informe pasó de `columnasSobrantes: 5 · tiposDivergentes: 6 · obligatoriedadDivergente: 2`
@@ -1861,11 +1857,10 @@ a **las seis categorías en 0**:
    tienen **nullable** — el patch `2026-07-25_v407_nullable_…` se aplicó a la base y la
    entidad nunca se regeneró. Insertar sin esos campos habría fallado en el ORM contra una
    base que sí lo permite. Corregidas a `nullable: true` + `?`.
-   > **Causa de fondo, con tarjeta propia:** las **26 entidades de `vector_rag` y
-   > `time_series` no las produce ningún generador** — `gen_entities.py 59` responde
-   > `sin entidades relacionales (especializado/no-SQL) — omitido`. Por eso esta deriva pudo
-   > sobrevivir desde el 2026-07-25: no hay nada que regenerar y diffear. Extender
-   > `gen_entities.py` a los stores materializados en PG es el arreglo real.
+   > **Causa de fondo:** las **26 entidades de `vector_rag` y `time_series` no las produce
+   > ningún generador** — `gen_entities.py 59` responde `sin entidades relacionales
+   > (especializado/no-SQL) — omitido`. Por eso esta deriva pudo sobrevivir desde el
+   > 2026-07-25: no hay nada que regenerar y diffear.
 3. **6 falsos positivos de tipo** que enterraban lo anterior: la bóveda escribe
    `technical_data_type` y la entidad `"terminology"."technical_data_type"`. La tabla de
    equivalencias del auditor **ya** contemplaba el par, pero su normalizador no quitaba las
@@ -2023,11 +2018,9 @@ sustituye está en [`ddl-sources.md`](ddl-sources.md) y en
 (tabla-ausente=6)` — las 6 históricas y ninguna nueva, con `columna-ausente`,
 `columna-obligatoria-no-mapeada` y `obligatoriedad-divergente` en 0.
 
-> **Deriva conocida que este trabajo destapó y no resuelve:** el bootstrap propondría 58
-> claves foráneas que la base no tiene. No son FKs faltantes: son las mismas constraints con
-> **otro nombre**, porque `gen_ddl.py` y el lector de la bóveda las nombran distinto. Con
-> `ORM_SCHEMA_SYNC=off` es inocuo, pero es deuda con tarjeta propia: hay que decidir qué
-> nomenclatura manda y alinear los dos generadores.
+> **Deriva conocida:** el bootstrap propondría 58 claves foráneas que la base no tiene. No son
+> FKs faltantes: son las mismas constraints con **otro nombre**, porque `gen_ddl.py` y el lector
+> de la bóveda las nombran distinto. Con `ORM_SCHEMA_SYNC=off` es inocuo.
 
 ### v4.0.8 — Promoción de las reglas ALOVIDA al modelo canónico (2026-07-30)
 
@@ -2091,8 +2084,8 @@ vivas en la base). Tres piezas nuevas:
    (`jurisdiction_code`/`medication_type_concept_id`/`channel_concept_id` en NULL,
    `signature_required = true`) por tenant del paquete en
    `clinical.prescription_signature_policies`: **11 boot + 16 mock = 27 filas**. Lo
-   jurisdiccional fino sigue **PENDIENTE_DE_APROBACIÓN** (decisión legal D-11 del vault);
-   ver `SALUD/Arquitectura/politica-firma-recetas-d05.md`.
+   jurisdiccional fino es la decisión legal D-11 del vault y no se siembra; ver
+   `SALUD/Arquitectura/politica-firma-recetas-d05.md`.
 
 **D-05 verificado ejercitando la regla** contra la política sembrada del tenant `DEFAULT`
 (2026-08-05): `POST /clinical/medication-requests` → 201; `POST …/issue` sin firmar →
@@ -2225,40 +2218,6 @@ orden 03 boot → resto boot → corpus MeSH por shards → mock solo dev):
 Entidades MikroORM **generadas**: 1 147 entidades / 55 módulos en
 `mantra-core-health-api/src/modules/<schema>/entities/` (camelCase + `fieldName`, verificadas con
 tsc/build/lint + discovery offline). Scaffolding Nest (module/controller/service) en los 55 módulos.
-
-## 4. Pendientes
-
-- Confirmar con el propietario los **precios del catálogo de planes** (`subscription-plans-catalog.md`),
-  hoy marcados `‹SUPUESTO›` y sembrados con esos valores (Free 0 · PRO 29/290 · MAX 99/990), y
-  asignar por tier las 3 métricas y 2 features que los value sets declaran y el catálogo no cubre.
-- **6 avisos de carga**, ninguno de PostgreSQL: 3 duplicados de clave natural en Mongo, 16 docs
-  de OpenSearch que fallan por el formato de `geo_point`, y el mock de `document_store` que se
-  inserta con `bypass_document_validation` por tipos string vs BSON.
-- **`*_concept_id` sin binding declarado: 2 247 columnas** (antes 2 363). El modelo declara el
-  binding de dos formas: `dynamic_enum_bindings` para las columnas de los 33 value sets de los
-  patches, y el bloque `## Columnas` de la nota del value set en el vault (`*.columna` para todas
-  las tablas que la declaren, o `schema.tabla.columna`). El generador **no infiere bindings por
-  nombre**: sin declaración, la columna no se toca. Ampliar la cobertura es declarar más columnas
-  en el vault, no tocar el generador.
-- **Cuatro casos que NO se pudieron atar** porque el value set, no la columna, es lo que está
-  incompleto o mal planteado — cada uno es una decisión de modelo:
-  - `VS_LANGUAGE` tiene un solo miembro (`EN`) pero el modelo usa `ES_BO` en **1 117** celdas de
-    `language_concept_id`. Falta el miembro, no sobra el dato.
-  - `VS_SEVERITY` está en inglés (`CRITICAL·INFO·LOW·MEDIUM`) y los datos usan el vocabulario
-    castellano (`BAJA·MEDIA·ALTA·CRITICA`). Hay que unificar el vocabulario primero.
-  - `VS_PURPOSE_OF_USE` no incluye `RESEARCH` ni `LEGAL_OBLIGATION`, que el modelo sí usa.
-  - `status_concept_id` / `state_concept_id` (585 columnas) **no** comparten un value set global:
-    cada entidad tiene su propia máquina de estados (`vs_security_incident_status`,
-    `vs_feedback_status`, …). Atarlas a `VS_LIFECYCLE_STATE` rompería 132 celdas correctas.
-    El binding correcto es por entidad, en la nota del value set de cada una.
-- Definir el vocabulario canónico del enum `technical_data_type` (§3.2 del análisis semántico);
-  hoy contiene placeholders sintéticos agregados para poder cargar.
-- Completar `UK/CHECK/EXCLUDE` de `SQL/*/05_constraints.sql` (el módulo 33 los declara en prosa).
-- Cerrar las **23** FK sin destino canónico restantes (antes 472; el resto se resolvió con la
-  auditoría del 2026-07-24 y ya está aplicado a la BD).
-- Casos de uso del backend (services/controllers son stubs); paquete de migraciones MikroORM.
-  Los casos de uso deben honrar la **regla 11** (v4.0.7): registro atómico padre+hija CTI en una
-  sola transacción (ver `data-modeling-standards.md` regla 11 y `orm-mapping-guide.md`).
 
 ## v4.2.11 — Reclamos vinculados a pedidos
 
