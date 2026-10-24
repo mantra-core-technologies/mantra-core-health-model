@@ -212,6 +212,13 @@ DO $$ BEGIN
         REFERENCES "profiles"."health_practitioner_profiles" ("profile_id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- destino: forms.form_instances (requiere schema forms)
+DO $$ BEGIN
+    ALTER TABLE "chart"."care_plans"
+        ADD CONSTRAINT "fk_care_plans_form_instance_id" FOREIGN KEY ("form_instance_id")
+        REFERENCES "forms"."form_instances" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "chart"."care_plans"

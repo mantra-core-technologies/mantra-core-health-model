@@ -57,6 +57,16 @@ entity dynamic_field_definitions {
     fhir_extension_url : text
     schema_version : integer
     state_concept_id : uuid <<FK>>
+  ' + v4.2.38 — opciones PROPIAS de un campo de elección (`data_type = 'code'` sin
+  ' `value_set_id`), escritas por quien arma el formulario: `options` (lista ordenada),
+  ' `multiple` (admite varias respuestas), `allow_other` (ofrece «Otro» con texto libre) y
+  ' `description` (ayuda bajo la pregunta). Todas nullable y sin backfill: los campos
+  ' existentes siguen viviendo de su `value_set_id`. Estaban sólo en el parche
+  ' 2026-10-05_v4238_forms_choice_field_options y en la copia de la API.
+    options : jsonb
+    multiple : boolean
+    allow_other : boolean
+    description : text
   * created_at : timestamptz
   * updated_at : timestamptz
     created_by_user_id : uuid <<FK>>
@@ -166,6 +176,10 @@ entity field_values {
     effective_to : timestamptz
     value_version : integer
     supersedes_value_id : uuid <<FK>>
+  ' + v4.2.38 — la opción elegida cuando el campo no tiene `value_set_id`. Va aparte de
+  ' `value_concept_id` porque éste es uuid con FK a terminology y no puede guardar una
+  ' opción tecleada a mano («Ex fumador»). Nullable y sin backfill.
+    value_code : text
   * created_at : timestamptz
   * updated_at : timestamptz
     created_by_user_id : uuid <<FK>>

@@ -1,0 +1,14 @@
+﻿
+## 2026-10-05_v4238_forms_choice_field_options.sql
+  COLUMNA forms.dynamic_field_definitions.options jsonb: ok
+  COLUMNA forms.dynamic_field_definitions.multiple boolean: ok
+  COLUMNA forms.dynamic_field_definitions.allow_other boolean: ok
+  COLUMNA forms.dynamic_field_definitions.description text: ok
+  COLUMNA forms.field_values.value_code text: ok
+
+## 2026-10-23_allergy_intolerances_encounter_id.sql
+  COLUMNA clinical.allergy_intolerances.encounter_id uuid: ok
+  ok  ix_allergy_intolerances_encounter_id
+  ok  fk_allergy_intolerances_encounter_id
+
+TOTAL objetos de esquema sin equivalente: 0

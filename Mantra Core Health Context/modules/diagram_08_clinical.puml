@@ -8,6 +8,8 @@ hide circle
 ' ------------------------------------------------------------------------------
 ' SOURCE CONSOLIDATED: diagram_08_clinical.puml
 ' ------------------------------------------------------------------------------
+entity "forms.form_instances" as forms_form_instances <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+
 entity family_member_history {
   * id : uuid <<PK>>
   --
@@ -211,6 +213,11 @@ entity allergy_intolerances {
     clinical_status_concept_id : uuid <<FK>>
     verification_status_concept_id : uuid <<FK>>
     recorded_by_user_id : uuid <<FK>>
+  ' + v4.2.46 (P26 / CL-01): el encuentro en el que se detectó la alergia. Nullable: hay
+  ' alergias declaradas fuera de una atención, igual que en `conditions`. La entidad de la
+  ' API ya declaraba la columna («pedido a M1») pero ni el modelo ni la base la tenían, de
+  ' modo que cualquier lectura de alergias fallaba con «column does not exist».
+    encounter_id : uuid <<FK>>
   * created_at : timestamptz
   * updated_at : timestamptz
     created_by_user_id : uuid <<FK>>
@@ -252,6 +259,11 @@ entity service_requests {
     ' el medico insistio y la aseguradora lo lee.
     previous_diagnostic_report_id : uuid <<FK>>
     duplicate_override_reason : text
+    ' + v4.2.32 (P43): la orden puede salir de la respuesta CERRADA del formulario médico
+    ' de una consulta. Nullable y sin backfill: desde la historia del paciente se sigue
+    ' emitiendo sin formulario. La API valida (422) que la instancia exista, esté cerrada
+    ' y sea del mismo encuentro. FK → forms.form_instances.
+    form_instance_id : uuid <<FK>>
   * created_at : timestamptz
   * updated_at : timestamptz
     created_by_user_id : uuid <<FK>>
@@ -286,6 +298,8 @@ encounters ||--o{ conditions
 allergy_intolerances ||--o{ allergy_reactions
 encounters ||--o{ service_requests
 service_requests ||--o{ diagnostic_reports
+service_requests }o--o| forms_form_instances : form_instance_id
+medication_requests }o--o| forms_form_instances : form_instance_id
 diagnostic_reports |o--o{ service_requests : previous_diagnostic_report
 
 note as DEP_diagram_08_clinical
@@ -347,6 +361,13 @@ entity medication_requests {
   ' `indication_conditions`): se declara en la nota del vault
   ' `SALUD/FK/FK clinical.medication_requests.indication_condition_id.md`.
     indication_condition_id : uuid <<FK>>
+  ' + v4.2.38: el motivo de la receta en texto libre, para prescribir sin un diagnóstico
+  ' codificado. Excluyente con indication_condition_id (gana el concepto; lo aplica el
+  ' servicio). Aditivo y anulable. Estaba en el parche 2026-10-11_v4238 y en la entidad.
+    indication_text : varchar(200)
+  ' + v4.2.32 (P43): receta emitida desde la respuesta CERRADA del formulario médico.
+  ' Nullable y sin backfill. FK → forms.form_instances.
+    form_instance_id : uuid <<FK>>
   * created_at : timestamptz
   * updated_at : timestamptz
     created_by_user_id : uuid <<FK>>
@@ -758,6 +779,7 @@ entity "INDEXES · allergy_intolerances" as idxset_allergy_intolerances <<INDEX_
   IX ix_allergy_intolerances_clinical_status_concept_id : (clinical_status_concept_id) BTREE
   IX ix_allergy_intolerances_verification_status_concept_id : (verification_status_concept_id) BTREE
   IX ix_allergy_intolerances_recorded_by_user_id : (recorded_by_user_id) BTREE
+  IX ix_allergy_intolerances_encounter_id : (encounter_id) BTREE
   IX ix_allergy_intolerances_created_by_user_id : (created_by_user_id) BTREE
   IX ix_allergy_intolerances_updated_by_user_id : (updated_by_user_id) BTREE
   IX ix_allergy_intolerances_custodian_tenant_id_updated_at : (custodian_tenant_id, updated_at DESC) BTREE
@@ -791,6 +813,7 @@ entity "INDEXES · service_requests" as idxset_service_requests <<INDEX_SET>> {
   IX ix_service_requests_requester_profile_id : (requester_profile_id) BTREE
   IX ix_service_requests_performer_tenant_id : (performer_tenant_id) BTREE
   IX ix_service_requests_previous_diagnostic_report_id : (previous_diagnostic_report_id) BTREE
+  IX ix_service_requests_form_instance_id : (form_instance_id) BTREE
   IX ix_service_requests_created_by_user_id : (created_by_user_id) BTREE
   IX ix_service_requests_updated_by_user_id : (updated_by_user_id) BTREE
   IX ix_service_requests_custodian_tenant_id_status_concept_id : (custodian_tenant_id, status_concept_id, updated_at DESC) BTREE
@@ -832,6 +855,7 @@ entity "INDEXES · medication_requests" as idxset_medication_requests <<INDEX_SE
   IX ix_medication_requests_route_concept_id : (route_concept_id) BTREE
   IX ix_medication_requests_unit_concept_id : (unit_concept_id) BTREE
   IX ix_medication_requests_indication_condition_id : (indication_condition_id) BTREE
+  IX ix_medication_requests_form_instance_id : (form_instance_id) BTREE
   IX ix_medication_requests_created_by_user_id : (created_by_user_id) BTREE
   IX ix_medication_requests_updated_by_user_id : (updated_by_user_id) BTREE
   IX ix_medication_requests_custodian_tenant_id_status_concept_id : (custodian_tenant_id, status_concept_id, updated_at DESC) BTREE

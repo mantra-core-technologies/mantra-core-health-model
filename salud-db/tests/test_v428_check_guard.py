@@ -57,9 +57,28 @@ class V428CheckGuardTests(unittest.TestCase):
         )
 
     def test_missing_check_still_fails_closed(self) -> None:
+        # Antes esta aserción fijaba `n_check <> 1`. Esa condición abortaba TODA base
+        # nueva: v4.2.18 retira la columna y su CHECK, el DDL base ya nace sin ellos, y
+        # `n_check` valía 0 («check=0 (esperado 1)», reproducido contra un Postgres
+        # recién creado). El requisito real es: el CHECK se exige MIENTRAS la columna
+        # exista, y entonces sigue fallando cerrado.
         verification = self.sql[self.sql.index("-- D. verificación") :]
-        self.assertIn("n_check <> 1", verification)
+        self.assertIn("n_check <> n_columna", verification)
         self.assertIn("RAISE EXCEPTION", verification)
+
+    def test_check_is_required_only_while_the_column_exists(self) -> None:
+        verification = self.sql[self.sql.index("-- D. verificación") :]
+        self.assertIn("SELECT count(*) INTO n_columna", verification)
+        self.assertIn("column_name = 'interest_calculation_method'", verification)
+        # el guard no puede relajarse a «n_check >= 0» ni quitar la comparación
+        self.assertNotIn("n_check >= 0", verification)
+        self.assertNotIn("n_check <> 1", verification)
+
+    def test_whole_patch_is_skipped_when_v4218_already_replaced_it(self) -> None:
+        self.assertIn("ya_reemplazado_por_v4218", self.sql)
+        self.assertIn("\\if :ya_reemplazado_por_v4218", self.sql)
+        self.assertIn("column_name = 'down_payment_amount'", self.sql)
+        self.assertIn("\\endif", self.sql)
 
     def test_idempotent_patch_contract_is_preserved(self) -> None:
         self.assertEqual(

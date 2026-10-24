@@ -1,0 +1,52 @@
+
+## 2026-09-26_v4232_form_instance_id.sql
+  COLUMNA clinical.medication_requests.form_instance_id uuid: ok
+  ok  ix_medication_requests_form_instance_id
+  ok  fk_medication_requests_form_instance_id
+  COLUMNA clinical.service_requests.form_instance_id uuid: ok
+  ok  ix_service_requests_form_instance_id
+  ok  fk_service_requests_form_instance_id
+  COLUMNA chart.care_plans.form_instance_id uuid: ok
+  ok  ix_care_plans_form_instance_id
+  ok  fk_care_plans_form_instance_id
+  COLUMNA scheduling.appointment_bookings.form_instance_id uuid: ok
+  ok  ix_appointment_bookings_form_instance_id
+  ok  fk_appointment_bookings_form_instance_id
+
+## 2026-09-26_v4237_appointment_follow_up_of.sql
+  COLUMNA scheduling.appointment_bookings.follow_up_of_booking_id uuid: ok
+  ok  ix_appointment_bookings_follow_up_of_booking_id
+  ok  fk_appointment_bookings_follow_up_of_booking_id
+
+## 2026-10-11_v4238_medication_requests_indication_text.sql
+  COLUMNA clinical.medication_requests.indication_text varchar(200): ok
+
+## 2026-10-11_v4243_branches_description_location_url.sql
+  COLUMNA directory.branches.description text: ok
+  COLUMNA directory.branches.location_url varchar(2000): ok
+
+## 2026-10-11_v4244_billing_siat_simulated.sql
+  TABLA billing.siat_simulated_invoices: 25 columnas; faltan/difieren en el modelo: 0
+  TABLA billing.siat_simulated_outbox: 7 columnas; faltan/difieren en el modelo: 0
+  ok  fk_siat_simulated_invoices_invoice_id
+  ok  fk_siat_simulated_invoices_practice_id
+  ok  fk_siat_simulated_outbox_siat_invoice_id
+  ok  ix_siat_simulated_invoices_invoice_id
+  ok  ix_siat_simulated_invoices_encounter_id
+  ok  ix_siat_simulated_invoices_patient_profile_id
+  ok  uk_siat_simulated_invoices_practice_number
+  ok  ix_siat_simulated_outbox_siat_invoice_id
+
+## 2026-10-11_v4245_schedule_rules_booking_mode_concept.sql
+  COLUMNA scheduling.schedule_rules.booking_mode_concept_id uuid: ok
+  ok  ix_schedule_rules_booking_mode_concept_id
+  ok  fk_schedule_rules_booking_mode_concept_id
+
+TOTAL objetos de esquema sin equivalente: 0
+
+## 2026-10-23_allergy_intolerances_encounter_id.sql
+  COLUMNA clinical.allergy_intolerances.encounter_id uuid: ok
+  ok  ix_allergy_intolerances_encounter_id
+  ok  fk_allergy_intolerances_encounter_id
+
+TOTAL objetos de esquema sin equivalente: 0

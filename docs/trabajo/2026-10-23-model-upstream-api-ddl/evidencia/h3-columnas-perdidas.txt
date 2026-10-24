@@ -1,0 +1,9 @@
+clinical.allergy_intolerances: pierde - · gana ['encounter_id']
+clinical.service_requests: pierde - · gana ['form_instance_id']
+clinical.medication_requests: pierde - · gana ['form_instance_id']
+forms.dynamic_field_definitions: pierde - · gana ['options', 'multiple', 'allow_other', 'description']
+forms.field_values: pierde - · gana ['value_code']
+chart.care_plans: pierde - · gana ['form_instance_id']
+scheduling.appointment_bookings: pierde - · gana ['follow_up_of_booking_id', 'form_instance_id']
+
+Tablas con cambios de columnas: 7 · COLUMNAS PERDIDAS (ignorando defaults): 0

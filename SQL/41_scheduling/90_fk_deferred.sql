@@ -366,6 +366,13 @@ DO $$ BEGIN
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- destino: forms.form_instances (requiere schema forms)
+DO $$ BEGIN
+    ALTER TABLE "scheduling"."appointment_bookings"
+        ADD CONSTRAINT "fk_appointment_bookings_form_instance_id" FOREIGN KEY ("form_instance_id")
+        REFERENCES "forms"."form_instances" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 -- destino: profiles.health_practitioner_profiles (requiere schema profiles)
 DO $$ BEGIN
     ALTER TABLE "scheduling"."practitioner_service_offerings"

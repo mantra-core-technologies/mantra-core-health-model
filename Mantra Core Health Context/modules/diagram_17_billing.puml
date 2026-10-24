@@ -26,6 +26,11 @@ entity "accounting.company_bank_accounts" as accounting_company_bank_accounts <<
 entity "payments.payment_transactions" as payments_payment_transactions <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 entity "insurance.insurance_claims" as insurance_insurance_claims <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 entity "insurance.insurance_claim_lines" as insurance_insurance_claim_lines <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "practice.practices" as practice_practices <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+' Stubs propios del módulo para declarar las FK de las tablas SIAT simuladas (la
+' convención por nombre no resuelve siat_invoice_id → siat_simulated_invoices).
+entity "billing.invoices" as billing_invoices <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "billing.siat_simulated_invoices" as billing_siat_simulated_invoices <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 
 note as BIZ_diagram_17_billing
   Manages service billing, invoices, patient statements, vendor bills and
@@ -256,6 +261,60 @@ note as BIZ_diagram_17b_financial_planning
   from the earlier billing claim model to the richer insurance domain.
 end note
 
+' + v4.2.44 (2026-10-11) — Facturación SIAT SIMULADA (rutas /billing/simulated/*).
+' La factura FISCAL simulada (CUF/CUFD/XML ficticios y deterministas) cuelga de la
+' factura/cuenta por cobrar REAL (billing.invoices). Nada de esto es un documento
+' tributario válido: cada fila declara simulated = true y el CHECK del módulo 33 lo exige.
+'
+' Estaba sólo en el parche 2026-10-11_v4244 y escrita a mano en la copia de la API.
+' Mismo contrato que el parche: patient_profile_id, encounter_id y los usuarios de
+' auditoría son uuid SIN FK (la API nunca los declaró; agregarlas endurecería una base
+' nueva respecto de las ya desplegadas).
+'
+' Defaults: el modelo no emite now() ni gen_random_uuid() ni literales (sólo row_version
+' y los booleanos DEFAULT_TRUE/FALSE). El servicio fija id, created_at, updated_at y
+' events/attachments de forma explícita; la base ya poblada conserva los defaults del parche.
+' Clase de dato: to_email (outbox) es PII; la bandeja es simulada y no se envía.
+entity siat_simulated_invoices {
+  * id : uuid <<PK>>
+  --
+  * invoice_id : uuid <<FK>>
+    encounter_id : uuid
+  * practice_id : uuid <<FK>>
+  * patient_profile_id : uuid
+  * issuer_nit : varchar(20)
+  * invoice_number : integer
+  * cuf : varchar(200)
+  * cufd : varchar(200)
+  * issued_at_text : varchar(23)
+  * cabecera : jsonb
+  * detalle : jsonb
+  * xml : text
+  * hash_archivo : varchar(64)
+  * compressed_bytes : integer
+  * status : varchar(12)
+  * status_at_reception : varchar(12)
+  * siat_response : jsonb
+  * events : jsonb
+  * simulated : boolean <<DEFAULT_TRUE>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid
+    updated_by_user_id : uuid
+  * row_version : integer
+}
+
+entity siat_simulated_outbox {
+  * id : uuid <<PK>>
+  --
+  * siat_invoice_id : uuid <<FK>>
+  * to_email : varchar(320)
+  * attachments : jsonb
+  * status : varchar(24)
+  * queued_at : timestamptz
+    created_by_user_id : uuid
+}
+
 entity reimbursements {
   * id : uuid <<PK>>
   --
@@ -360,6 +419,9 @@ entity receivables_aging_view <<VIEW>> {
 }
 
 reimbursements }o--|| insurance_insurance_claims : claim_id
+siat_simulated_invoices }o--|| billing_invoices : invoice_id
+siat_simulated_invoices }o--|| practice_practices : practice_id
+siat_simulated_outbox }o--|| billing_siat_simulated_invoices : siat_invoice_id
 billing_document_links }o--o| insurance_insurance_claims : claim_id
 invoice_lines }o--o| insurance_insurance_claim_lines : insurance_claim_line_id
 budgets ||--o{ budget_lines
@@ -800,6 +862,23 @@ entity "INDEXES · reimbursements" as idxset_reimbursements <<INDEX_SET>> {
 }
 
 reimbursements .. idxset_reimbursements : indexed by
+
+entity "INDEXES · siat_simulated_invoices" as idxset_siat_simulated_invoices <<INDEX_SET>> {
+  PK pk_siat_simulated_invoices : (id) UNIQUE BTREE
+  IX ix_siat_simulated_invoices_invoice_id : (invoice_id) BTREE
+  IX ix_siat_simulated_invoices_encounter_id : (encounter_id) BTREE
+  IX ix_siat_simulated_invoices_patient_profile_id : (patient_profile_id) BTREE
+  UK uk_siat_simulated_invoices_practice_number : (practice_id, invoice_number) UNIQUE BTREE WHERE "status" <> 'REJECTED'
+}
+
+siat_simulated_invoices .. idxset_siat_simulated_invoices : indexed by
+
+entity "INDEXES · siat_simulated_outbox" as idxset_siat_simulated_outbox <<INDEX_SET>> {
+  PK pk_siat_simulated_outbox : (id) UNIQUE BTREE
+  IX ix_siat_simulated_outbox_siat_invoice_id : (siat_invoice_id) BTREE
+}
+
+siat_simulated_outbox .. idxset_siat_simulated_outbox : indexed by
 
 entity "INDEXES · tax_codes" as idxset_tax_codes <<INDEX_SET>> {
   PK pk_tax_codes : (id) UNIQUE BTREE
