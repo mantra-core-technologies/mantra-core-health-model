@@ -1,0 +1,52 @@
+{
+  "base-del-modelo-sin-defaults": {
+    "intentos": [
+      {
+        "version": "dev (antes)",
+        "invoice_insert": "23502 null value in column \"created_at\" of relation \"siat_simulated_invoices\" violates not-null constraint",
+        "outbox_insert": "23502 null value in column \"status\" of relation \"siat_simulated_outbox\" violates not-null constraint"
+      },
+      {
+        "version": "esta rama",
+        "invoice_insert": "OK",
+        "outbox_insert": "OK"
+      }
+    ],
+    "fila_factura": {
+      "simulated": true,
+      "row_version": 1,
+      "has_created": true,
+      "has_updated": true,
+      "status": "VALIDATED"
+    },
+    "fila_outbox": {
+      "status": "NOT_SENT_SIMULATED",
+      "attachments": []
+    }
+  },
+  "base-de-la-api-con-defaults": {
+    "intentos": [
+      {
+        "version": "dev (antes)",
+        "invoice_insert": "OK",
+        "outbox_insert": "OK"
+      },
+      {
+        "version": "esta rama",
+        "invoice_insert": "OK",
+        "outbox_insert": "OK"
+      }
+    ],
+    "fila_factura": {
+      "simulated": true,
+      "row_version": 1,
+      "has_created": true,
+      "has_updated": true,
+      "status": "VALIDATED"
+    },
+    "fila_outbox": {
+      "status": "NOT_SENT_SIMULATED",
+      "attachments": []
+    }
+  }
+}
