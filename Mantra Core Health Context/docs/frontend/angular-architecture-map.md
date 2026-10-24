@@ -7,31 +7,6 @@
 
 ---
 
-## 0 · Estado real de la superficie HTTP (leer antes que nada)
-
-**Hoy no existen endpoints de dominio.** Este documento describe el modelo y el destino, no una
-API en funcionamiento.
-
-| Aspecto | Estado verificado |
-|---|---|
-| Módulos NestJS registrados en `AppModule` | **57** (+ `LoggingModule`, `OrmModule`) |
-| Controllers de dominio | 57 archivos, **todos clases vacías** (`@Controller('iam') export class IamController {}`) |
-| Endpoints reales en todo el repo | **1** — `GET /` → `"Hello World!"` (`src/app.controller.ts:8`) |
-| Servicios de dominio | 57 archivos, **todos cuerpo vacío** |
-| `setGlobalPrefix` / versionado / CORS | **No existen** |
-| Swagger / OpenAPI | **No existe** (`@nestjs/swagger` instalado, sin usar) |
-| `ValidationPipe` global / DTOs | **No existen** |
-| Autenticación (login, JWT, guards) | **No existe** — `@nestjs/jwt`, `passport`, `argon2`, `@casl/ability` instalados y sin usar |
-
-Lo que **sí** existe y es el activo pesado del proyecto: **~1 179 entidades MikroORM** mapeadas
-contra 1 173 tablas físicas, con verificación de fidelidad en runtime y en dev-time.
-
-> Consecuencia para Angular: cualquier afirmación funcional sobre datos reales es **BLOCKED**
-> hasta que exista el primer endpoint. El trabajo que sí se puede hacer hoy es el sistema de
-> diseño, el árbol de rutas, los shells de portal y los componentes dirigidos por metadatos.
-
----
-
 ## 1 · La decisión estructural
 
 **Las features de Angular se mapean a los 17 portales del Módulo 34, no a los 64 módulos del
@@ -611,16 +586,13 @@ cuenta, se rompe la consistencia que el M34 declara obligatoria.
    `portal_code` cargados hoy son `CORE`, `STANDARD`, `EXTENDED`, `RESTRICTED`,
    `INTERNATIONAL`, `DISABLED_TEMPLATE`, `PORTAL_SURFACES_07`…, con
    `default_route = 'core_default_route'` y `route_pattern = 'core_route_pattern'`. **No son
-   rutas de producto.** Poblarlos con los 17 portales reales es trabajo pendiente y va en
-   `salud-db/gen_seeds.py` — nunca a mano en la base.
+   rutas de producto**, y cualquier cambio a esas filas se hace en `salud-db/gen_seeds.py`,
+   nunca a mano en la base.
 2. **Las 76 proyecciones están declaradas en el `.puml` pero no materializadas en `SQL/`.**
    `SQL/30_read_models/02_tables.sql` crea las 13 tablas de metadatos, no las vistas.
 3. **No existe un value set poblado de tipos de portal** en terminología: solo un
    `DEFAULT_PORTAL_TYPE` genérico.
-4. **No hay auth ni `/me`.** Es el primer bloqueo real: sin resolución de rol y tenant no hay
-   guard de portal posible, y sin guard de portal no hay ruta protegida que se pueda construir
-   de verdad.
-5. **Deriva de conteo menor:** el `.puml` del M30 declara **76** proyecciones
+4. **Deriva de conteo menor:** el `.puml` del M30 declara **76** proyecciones
    (`<<VIEW>>` + `<<MATERIALIZED_VIEW>>`); la nota del vault reporta «Vistas: 73» porque
    contabiliza aparte las 3 añadidas en v4.0.1 (`adapter_health_summary`,
    `campaign_dispatch_summary`, `recipient_delivery_timeline`).

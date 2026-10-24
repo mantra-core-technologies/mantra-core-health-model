@@ -37,7 +37,7 @@ gestiona las entidades de negocio; el SQL espacial vive explícito donde se nece
   Aplicar vía **filtro global de MikroORM** (`@Filter`) + RLS a nivel PostgreSQL (la RLS
   es la barrera dura; el filtro del ORM es conveniencia, no la defensa).
 
-## 2. Las tres decisiones de mapeo (resolver antes de generar)
+## 2. Las tres decisiones de mapeo
 
 ### 2.1 `row_version` → optimistic locking
 El modelo declara `row_version` en 52 de 64 módulos (los 12 sin él son stores NoSQL, que
@@ -98,15 +98,15 @@ como entidades del ORM**: se alimentan por outbox + workers idempotentes desde P
 (`docs/architecture/nosql-storage-allocation.md`). El ORM escribe la tabla canónica y el
 evento outbox en la misma transacción; el worker proyecta al store especializado.
 
-## 5. Verificación de "casa única" del dato clínico (hacer al mapear)
+## 5. "Casa única" del dato clínico
 
-Con el pivote políglota, cada dato clínico canónico debe tener UNA sola casa. Al mapear,
-verificar tabla por tabla que no haya doble fuente de verdad. Casos a confirmar:
+Con el pivote políglota, cada dato clínico canónico tiene UNA sola casa; al mapear una tabla se
+verifica que no haya doble fuente de verdad. Los casos con dos stores:
 
 - **Signos vitales**: lectura cruda de dispositivo → `<<TIMESERIES_MEASUREMENT>>`
   (`normalized_vital_series`, módulo 58); observación clínicamente validada →
-  `clinical.observations` (PostgreSQL). Están separadas por diseño: confirmar que el ORM
-  solo trata la observación validada como fuente de verdad, y la serie como telemetría.
+  `clinical.observations` (PostgreSQL). Están separadas por diseño: el ORM trata solo la
+  observación validada como fuente de verdad, y la serie como telemetría.
 - **Documento FHIR completo**: original/versionado → `document_envelopes` (módulo 55, Mongo);
   los campos estructurados validados → tablas `clinical`/`health_data`. La proyección Mongo
   NO es fuente de verdad de un valor codificable.
@@ -116,7 +116,10 @@ verificar tabla por tabla que no haya doble fuente de verdad. Casos a confirmar:
 Regla: si un valor codificable (diagnóstico, observación, medicación) aparece como "verdad"
 en un store no relacional Y en PostgreSQL, es un error de mapeo — corregir antes de generar.
 
-## 6. Lo que este documento NO decide (queda para el ADR del ORM)
+## 6. Lo que este documento NO decide
+
+Lo decide el ADR del ORM del repo de la API (`docs/adr/ADR-0002-orm-mikroorm.md`), con
+ADR-0022 para la generación de entidades:
 
 - Versión exacta de MikroORM y driver.
 - Estrategia de migraciones (MikroORM migrations vs SQL crudo versionado).

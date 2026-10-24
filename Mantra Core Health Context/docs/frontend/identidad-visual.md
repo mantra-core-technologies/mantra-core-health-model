@@ -21,11 +21,11 @@
 >    documento (Sora, Plus Jakarta Sans, Manrope) quedaron descartadas.
 > 3. **El hex del manual manda**: si un par no llega al umbral WCAG, no se ajusta el tono — se
 >    registra como excepción (Parte 8) y se avisa al diseñador.
-> 4. **Solo tokens, sin renombrar**: la UI sigue diciendo *Mantra Core Health* hasta que la marca
->    ALOVIDA se confirme como nombre de producto. Repos y paquetes no se tocan.
+> 4. **Solo tokens, sin renombrar repos**: la UI muestra la marca AloVida; repos y paquetes
+>    conservan el nombre *Mantra Core Health*.
 >
 > El HTML del diseñador queda como **spec viva de componentes** (botones, inputs, badges,
-> modales, tablas, header/sidebar): no se portan a Angular/Flutter hasta que existan pantallas.
+> modales, tablas, header/sidebar): cada uno se porta a Angular/Flutter con la pantalla que lo usa.
 
 ---
 
@@ -149,9 +149,8 @@ paleta no crece, se reinterpreta); **error** es un terracota `#B5533C`, no un ro
 > **DANGER** — Los `st-*` son semántica de PRODUCTO, no severidad clínica
 > Success/warning/error/info cubren formularios, procesos y mensajes del sistema (aprobado,
 > pendiente, rechazado, informativo). La **escala de severidad clínica**
-> (crítico / alerta / estable / indeterminado) **sigue pendiente** — ver Parte 11. Cuando se
-> defina, estas rampas son el material del que derivarla en armonía; mientras tanto, no usar
-> `st-error` como atajo para «paciente crítico».
+> (crítico / alerta / estable / indeterminado) no forma parte de este sistema y los `st-*` no
+> la sustituyen: no usar `st-error` como atajo para «paciente crítico».
 
 ---
 
@@ -210,7 +209,7 @@ Dos desvíos deliberados del patrón, ambos medidos:
 > **NOTE** — Por qué no se usó aguamarina para `secondary`
 > `--brand-secondary` es aqua, pero `--c-info-*` **ya es un alias de aqua**: un chip
 > `secondary` en aqua sería indistinguible de uno `info`. Menta es la familia de marca
-> contigua y mantiene la distinción. Pendiente de validación del diseñador.
+> contigua y mantiene la distinción.
 
 ---
 
@@ -396,7 +395,7 @@ rellenos de acento llevan tinta oscura, jamás blanca.
 
 > **BUG** — Cuatro pares no llegan al umbral y NO se corrigen
 > Por decisión explícita se respetan los valores del manual. Cada par queda fijado en un test
-> de Flutter con su ratio medido y la razón apuntando acá. **Pendiente: avisar al diseñador.**
+> de Flutter con su ratio medido y la razón apuntando acá.
 >
 > | # | Par | Medido | Umbral | Mitigación de uso |
 > |---|---|---|---|---|
@@ -512,9 +511,8 @@ scaffold vacío).
 > **WARNING** — `outline` es extensión propia — NO está en el spec ALOVIDA
 > El diseñador solo define una variante con borde (`btn-secondary`, borde de marca). `outline`
 > (decisión del usuario 2026-07-29) es un outline **neutro**: borde `--border-strong`, tinta
-> `--text-primary`, hover `--bg-inset` — solo tokens, cero hex nuevos. Pendiente de validación
-> del diseñador (pendientes, Parte 11), igual que el tratamiento disabled de las variantes
-> transparentes, que el spec no define.
+> `--text-primary`, hover `--bg-inset` — solo tokens, cero hex nuevos. Es extensión propia, igual
+> que el tratamiento disabled de las variantes transparentes, que el spec no define.
 
 #### Badge — `atoms/badge/` (2026-07-30)
 
@@ -561,7 +559,7 @@ Traducción del bloque `Avatars` del spec (líneas 409–422 y 704–705). Talle
 > ámbar — y la Parte 8.1 de este mismo documento mide **blanco sobre aqua en 2,51 y sobre
 > ámbar en 2,06**, y prohíbe esos rellenos con tinta clara. Dos de cada tres avatares habrían
 > sido ilegibles. Cada tono lleva su tinta: blanco solo sobre petróleo (8,03); petróleo-900
-> sobre aqua (6,91) y ámbar (8,43). **Pendiente de avisar al diseñador.**
+> sobre aqua (6,91) y ámbar (8,43).
 
 > **NOTE** — Dos hex de la especificación de entrada no coincidían con su token
 > Se pidió `--st-success-fg` «(#2E8B6E)» y `--c-neutral-300` «(#A2A4A4)», pero esos hex son
@@ -669,7 +667,7 @@ Verificado con Playwright: `playwright/lane-08-reactive-background.spec.ts` capt
 completo aparece/se-retira con `--fondo-presencia` en `1` y en `.35`, y el
 `prefers-reduced-motion` que nunca la toca. Las rutas con sesión (`/dashboard`,
 `/medical-records`, `/glossary`) quedaron **fuera** de esta corrida: este entorno no tiene una
-cuenta `PRACTITIONER` sembrada (`tools/alovida/` no existe) — pendiente, no maquillado.
+cuenta `PRACTITIONER` sembrada (`tools/alovida/` no existe), y se declara así en vez de maquillarlo.
 
 `src/app/core/alovida/alovida-runtime.service.spec.ts` ganó 3 casos (`describe('fondoReactivo')`):
 antes cubría todo **menos** este método.
@@ -727,8 +725,8 @@ etiquetas ya resueltas del M30, `dotOnly` y `child` (overlay sobre la esquina de
 `Stack` con `Clip.none`).
 
 Tercer componente: **`MantraAvatar`** + **`MantraAvatarStack`** en
-`lib/shared/atoms/avatar/`. **No tiene par en la web todavía** — es el primer átomo que nace
-en móvil, así que estas decisiones son las que va a tener que espejar Angular.
+`lib/shared/atoms/avatar/`. Es el primer átomo que nació en móvil; su par web vive en
+`src/app/shared/components/atoms/avatar/` de `mantra-core-health`.
 
 Degrada en tres escalones: **foto → iniciales → ícono**, así un avatar nunca queda vacío ni
 rompe el layout de una lista clínica. Escala móvil `xs 24 · sm 32 · md 40 · lg 44 · xl 56`
@@ -833,7 +831,7 @@ disabled resuelto antes que hover, foco siempre aqua/menta, **ninguna variante u
 | Superficie | Proyecto | Stack | Alcance |
 |---|---|---|---|
 | Web | `mantra-core-health/` | Angular 21 + SSR | los 17 portales del M34 portal_catalog |
-| Móvil | `mantra_core_health_mobile/` | Flutter · **Android + iOS** | subconjunto, todavía sin definir |
+| Móvil | `mantra_core_health_mobile/` | Flutter · **Android + iOS** | subconjunto de los portales |
 
 > **WARNING** — Una pantalla, una superficie canónica
 > El scaffold Flutter generó también `web/`, `windows/`, `linux/` y `macos/`. **No son
@@ -867,7 +865,7 @@ Reglas que acompañan (heredadas, siguen vigentes):
 
 ---
 
-# Parte 11 · Estado y pendientes
+# Parte 11 · Estado
 
 **Materializado el 2026-07-29 en las dos superficies** (adopción ALOVIDA v1.0):
 
@@ -875,32 +873,6 @@ Reglas que acompañan (heredadas, siguen vigentes):
 |---|---|---|
 | Web | `mantra-core-health/src/styles.css` + `src/app/core/tokens/` (capa TS, §9.1.1) + `shared/components/` y Vitrina (§9.1.2) | `yarn build` OK (3 rutas prerenderizadas, **0 warnings de presupuesto**) · `yarn test --watch=false` **162/162** · SSR ejercitado con `curl`: `/design-system` sirve los 24 botones y los 20 badges, **0 labels huérfanos**, 8 radios con exactamente 3 marcados (uno por grupo), 28 `aria-describedby` resueltos y 24 avatares con su tono por hash, en el HTML del servidor |
 | Móvil | `mantra_core_health_mobile/lib/theme/` (6 archivos + 7 de los tres átomos) | `flutter analyze` **0 issues** · `flutter test` **106/106** (barridos WCAG de 5 superficies + excepciones E1–E4 fijadas con su ratio) |
-
-Pendientes reales:
-
-1. **Confirmar ALOVIDA como nombre de producto.** El manual corporativo ya se llama ALOVIDA, pero
-   la decisión de UI (2026-07-29) fue «solo tokens, sin renombrar»: wordmark y títulos siguen en
-   *Mantra Core Health* hasta confirmación. Al confirmarse: renombre de carpeta + `package.json`
-   + `angular.json` + título + `pubspec.yaml`.
-2. **Avisar al diseñador las excepciones E1–E4** (Parte 8.2) — en particular E3: los bordes
-   translúcidos del modo oscuro no delimitan controles según WCAG 1.4.11. Sumar al mismo aviso
-   los **chips de marca** `--st-primary-*` / `--st-secondary-*` (§3.1, con sus dos desvíos
-   medidos) y las **extensiones del AppButton** (§9.1.2): la variante `outline` neutra y el tratamiento
-   disabled de las variantes transparentes, que el spec no define.
-3. **Escala de severidad clínica** (crítico / alerta / estable / indeterminado) — sigue sin
-   definir. Los `st-*` de ALOVIDA son semántica de producto y no la sustituyen; cuando se defina,
-   derivarla de las rampas de la Parte 2.2 en armonía. El `error` de Material sigue siendo
-   validación de formulario, no severidad.
-4. **Ninguna pantalla de PORTAL consume los tokens todavía.** En web ya existen el AppButton y
-   la Vitrina (`/design-system`, §9.1.2) — pero `Home` y `Auth` son scaffolds vacíos y ningún
-   portal del M34 portal_catalog está construido; en Flutter `PantallaTokens` existe solo
-   para observar el tema y se borra con la primera pantalla real. La primera UI se construye
-   sobre estos tokens, nunca sobre hex literales — y los componentes se toman del spec del HTML
-   del diseñador.
-5. **Alcance de la app móvil sin definir** — qué subconjunto de los 17 portales vive en Flutter.
-6. ~~Falta el control de tema en la UI~~ — **resuelto 2026-07-29**: selector
-   Claro/Oscuro/Sistema en la Vitrina de Diseño (§9.1.2). Cuando exista chrome de aplicación,
-   migrar el control ahí.
 
 ## Ver también
 
