@@ -76,6 +76,7 @@ SEED_REVISION = "2.6.0-v4.2.30"
 # sembrar — `iam.email_verifications` y `iam.password_resets` guardan tokens de runtime
 # y nacen vacías a propósito.
 PATCH_V408 = "4.0.8"
+PATCH_V4248 = "4.2.48"
 # v4.0.11 — namespace de las filas que nacen con el saneo de la demo (el catálogo de
 # laboratorios del módulo 23 y su práctica). Las filas anteriores conservan el suyo.
 PATCH_V4011 = "4.0.11"
@@ -1584,6 +1585,100 @@ def v408_overrides(cfg: dict, tkey: str, section: str, pk: str, index: int) -> d
     if cfg.get("patch"):
         out[pk] = stable_uuid("SALUD", cfg["patch"], section, tkey, pk, index)
     return out
+
+
+# v4.2.48 · vocabulario de sensibilidad del centro de datos (system_ops.data_classifications).
+# Nueve niveles, del menos al más restringido. Fuente: HIPAA 45 CFR 160.103 y 164.514(b)(2);
+# LGPD arts. 5, 11, 12 y 13. `FINANCIAL` no es un nivel de sensibilidad de salud y sale.
+# Cada fila: (code, nombre, is_pii, is_phi, definición, marco normativo, manejo, retención).
+_RET_FINALIDAD = {"plazo": "hasta el fin de la finalidad del tratamiento",
+                  "base": ["LGPD arts. 15-16"], "legal_hold": "suspende todo plazo"}
+_RET_CLINICA = {"plazo": "20 años desde el último registro de la historia clínica",
+                "base": ["Lei 13.787/2018 art. 6"], "legal_hold": "suspende todo plazo"}
+_RET_ACCESOS = {"plazo": "6 años para la auditoría y los registros de acceso",
+                "base": ["45 CFR 164.316(b)(2)", "45 CFR 164.528"],
+                "legal_hold": "suspende todo plazo"}
+DATA_CLASSIFICATION_LEVELS = (
+    ("ANONYMIZED", "Anonimizado", False, False,
+     "Dato que ya no permite identificar a la persona por medios razonables.",
+     ["LGPD arts. 5 y 12", "45 CFR 164.514(b)(2)"],
+     ["No es dato personal mientras la anonimización sea irreversible",
+      "Si el dato se vuelve a vincular con una persona, se reclasifica"],
+     [_RET_FINALIDAD]),
+    ("PUBLIC", "Público", False, False,
+     "Información de libre acceso, sin relación con una persona identificable.",
+     ["LGPD art. 5"],
+     ["Puede publicarse sin restricción de lectura"],
+     [_RET_FINALIDAD]),
+    ("INTERNAL", "Uso interno", False, False,
+     "Información de la organización que no se publica y no identifica a una persona.",
+     ["LGPD art. 5"],
+     ["Acceso limitado al personal autorizado", "No se publica"],
+     [_RET_FINALIDAD]),
+    ("PSEUDONYMIZED", "Seudonimizado", True, False,
+     "Dato asociado a un código; la clave de reidentificación se guarda aparte.",
+     ["LGPD arts. 5 y 13", "45 CFR 164.514(b)(2)"],
+     ["La clave de reidentificación se guarda separada del dato",
+      "Sigue siendo dato personal mientras exista la clave"],
+     [_RET_FINALIDAD]),
+    ("PERSONAL", "Personal", True, False,
+     "Dato relacionado con una persona natural identificada o identificable.",
+     ["LGPD art. 5"],
+     ["Solo para la finalidad informada a la persona", "Acceso por necesidad"],
+     [_RET_FINALIDAD]),
+    ("PHI_IDENTIFIER", "Salud: identificador", True, True,
+     "Identificador directo de una persona vinculado a su atención de salud "
+     "(los 18 identificadores de Safe Harbor).",
+     ["45 CFR 160.103", "45 CFR 164.514(b)(2)", "LGPD art. 5"],
+     ["Acceso solo por necesidad de la atención", "Cada lectura queda registrada",
+      "Se quita o generaliza al desidentificar"],
+     [_RET_CLINICA, _RET_ACCESOS]),
+    ("PHI_SENSITIVE", "Salud: sensible", True, True,
+     "Dato de salud de una persona: diagnósticos, tratamientos, resultados.",
+     ["45 CFR 160.103", "LGPD arts. 5 y 11"],
+     ["Acceso solo por necesidad de la atención", "Cada lectura queda registrada",
+      "Tratamiento solo con las bases legales del art. 11 de la LGPD"],
+     [_RET_CLINICA, _RET_ACCESOS]),
+    ("PHI_SPECIAL", "Salud: especial", True, True,
+     "Nivel más alto de dato de salud. Ante duda entre niveles de salud se asigna este "
+     "y la ficha queda en revisión.",
+     ["45 CFR 160.103", "LGPD arts. 5 y 11"],
+     ["Acceso mínimo y registrado", "Toda clasificación automática en duda va a revisión",
+      "Nunca baja de nivel sin revisión humana"],
+     [_RET_CLINICA, _RET_ACCESOS]),
+    ("CREDENTIAL", "Credencial", False, False,
+     "Secreto de autenticación o firma: contraseñas, tokens, llaves.",
+     [],
+     ["El valor no se muestra ni se registra", "Acceso solo del servicio que lo necesita"],
+     [_RET_FINALIDAD]),
+)
+
+
+def canonical_data_classifications(existing: list) -> list:
+    """Los nueve niveles de sensibilidad, sin relleno ni montos.
+
+    Reemplaza lo que sembró el bucle genérico (`PUBLIC_009`, montos en BOB, `is_pii` y
+    `is_phi` invertidos). Conserva el `id` de los códigos que ya existían: la clave
+    natural es `code` (UK) y un id nuevo para el mismo código chocaría al cargar.
+    """
+    ids = {r["code"]: r["id"] for r in existing}
+    table = "system_ops.data_classifications"
+    rows = []
+    for rank, (code, name, pii, phi, definition, norms, rules, retention) in enumerate(
+            DATA_CLASSIFICATION_LEVELS, start=1):
+        stamp = iso(det_time(BOOT_BASE, table, code))
+        rows.append(OrderedDict([
+            ("id", ids.get(code) or stable_uuid("SALUD", PATCH_V4248, "boot", table, "id", code)),
+            ("code", code), ("name", name), ("rank", rank),
+            ("is_pii", pii), ("is_phi", phi),
+            ("handling_rules_json", OrderedDict([
+                ("definicion", definition), ("marco_normativo", norms),
+                ("manejo", rules), ("retencion", retention)])),
+            ("state_concept_id", CONCEPT_ACTIVE),
+            ("created_at", stamp), ("updated_at", stamp),
+            ("created_by_user_id", SEED_USER_ID), ("updated_by_user_id", SEED_USER_ID),
+            ("row_version", 1)]))
+    return rows
 
 
 def canonical_signature_policies(docs) -> dict:
@@ -3405,6 +3500,18 @@ def phase_tables(docs, ddl, fks, value_sets, uniques) -> dict:
             r["id"] for r in policy_pack[section])
     ensure_policy(docs["08"], "prescription_signature_policies", ddl[policy_key],
                   "id", uniques.get(policy_key, []), "RELATIONAL_TABLE", True, True)
+
+    # v4.2.48 · vocabulario de sensibilidad: los nueve niveles reemplazan el relleno genérico.
+    # Van solo en boot; el mock queda vacío para que `code` (UK) no admita más que esos nueve.
+    class_key = "system_ops.data_classifications"
+    class_rows = canonical_data_classifications(
+        docs["11"]["boot"]["records"].get("data_classifications", []))
+    stats[class_key] = replace_rows(docs["11"], "boot", "data_classifications", class_rows)
+    replace_rows(docs["11"], "mock", "data_classifications", [])
+    id_index[class_key] = [r["id"] for r in class_rows]
+    for pol in docs["11"]["boot"].get("entity_seed_policies", []):
+        if pol.get("entity") == "data_classifications":
+            pol["mock_seeded"] = False
 
     # v4.0.11 · el directorio de laboratorios reemplaza lo que produjo el bucle genérico.
     lab_pack = canonical_diagnostic_units(docs, value_sets)

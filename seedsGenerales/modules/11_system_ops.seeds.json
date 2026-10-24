@@ -56,29 +56,71 @@
       "partition_specs",
       "encryption_keys"
     ],
-    "record_count": 126,
+    "record_count": 125,
     "records": {
       "data_classifications": [
+        {
+          "id": "99d6485f-e20d-5456-b1e3-d9cd1eb9e52b",
+          "code": "ANONYMIZED",
+          "name": "Anonimizado",
+          "rank": 1,
+          "is_pii": false,
+          "is_phi": false,
+          "handling_rules_json": {
+            "definicion": "Dato que ya no permite identificar a la persona por medios razonables.",
+            "marco_normativo": [
+              "LGPD arts. 5 y 12",
+              "45 CFR 164.514(b)(2)"
+            ],
+            "manejo": [
+              "No es dato personal mientras la anonimización sea irreversible",
+              "Si el dato se vuelve a vincular con una persona, se reclasifica"
+            ],
+            "retencion": [
+              {
+                "plazo": "hasta el fin de la finalidad del tratamiento",
+                "base": [
+                  "LGPD arts. 15-16"
+                ],
+                "legal_hold": "suspende todo plazo"
+              }
+            ]
+          },
+          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-08-03T12:07:00Z",
+          "updated_at": "2026-08-03T12:07:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
         {
           "id": "b5f0f50c-1263-5577-a002-59393b464e43",
           "code": "PUBLIC",
           "name": "Público",
-          "rank": 1,
-          "is_pii": true,
-          "is_phi": true,
+          "rank": 2,
+          "is_pii": false,
+          "is_phi": false,
           "handling_rules_json": {
-            "module": "system_ops",
-            "entity": "data_classifications",
-            "seq": 0,
-            "ref": "54c04aec-8ff5-5817-ae39-e3d8a0707a95",
-            "status": "active",
-            "amount": 120.0,
-            "currency": "BOB",
-            "occurred_at": "2026-04-06T06:09:00Z"
+            "definicion": "Información de libre acceso, sin relación con una persona identificable.",
+            "marco_normativo": [
+              "LGPD art. 5"
+            ],
+            "manejo": [
+              "Puede publicarse sin restricción de lectura"
+            ],
+            "retencion": [
+              {
+                "plazo": "hasta el fin de la finalidad del tratamiento",
+                "base": [
+                  "LGPD arts. 15-16"
+                ],
+                "legal_hold": "suspende todo plazo"
+              }
+            ]
           },
           "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
-          "created_at": "2026-01-27T08:00:00Z",
-          "updated_at": "2026-01-27T08:20:00Z",
+          "created_at": "2026-09-17T07:26:00Z",
+          "updated_at": "2026-09-17T07:26:00Z",
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1
@@ -87,142 +129,228 @@
           "id": "86eb5638-4996-56ff-97be-11a4f1e646b6",
           "code": "INTERNAL",
           "name": "Uso interno",
-          "rank": 2,
-          "is_pii": true,
-          "is_phi": true,
+          "rank": 3,
+          "is_pii": false,
+          "is_phi": false,
           "handling_rules_json": {
-            "module": "system_ops",
-            "entity": "data_classifications",
-            "seq": 1,
-            "ref": "b0362efb-1161-5c1b-acb5-62367ad317f4",
-            "status": "pending",
-            "amount": 257.25,
-            "currency": "BOB",
-            "occurred_at": "2026-11-17T19:26:00Z"
+            "definicion": "Información de la organización que no se publica y no identifica a una persona.",
+            "marco_normativo": [
+              "LGPD art. 5"
+            ],
+            "manejo": [
+              "Acceso limitado al personal autorizado",
+              "No se publica"
+            ],
+            "retencion": [
+              {
+                "plazo": "hasta el fin de la finalidad del tratamiento",
+                "base": [
+                  "LGPD arts. 15-16"
+                ],
+                "legal_hold": "suspende todo plazo"
+              }
+            ]
           },
           "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
-          "created_at": "2026-02-01T08:11:00Z",
-          "updated_at": "2026-02-01T08:32:00Z",
+          "created_at": "2026-07-28T17:17:00Z",
+          "updated_at": "2026-07-28T17:17:00Z",
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1
         },
         {
-          "id": "eaf86abe-528c-5c46-a4b1-7447384f4470",
-          "code": "CONFIDENTIAL",
-          "name": "Confidencial",
-          "rank": 3,
-          "is_pii": true,
-          "is_phi": true,
-          "handling_rules_json": {
-            "module": "system_ops",
-            "entity": "data_classifications",
-            "seq": 2,
-            "ref": "7599be74-bdd9-59a6-acf3-39c422e70878",
-            "status": "in_progress",
-            "amount": 394.5,
-            "currency": "BOB",
-            "occurred_at": "2026-06-01T08:43:00Z"
-          },
-          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
-          "created_at": "2026-02-06T08:22:00Z",
-          "updated_at": "2026-02-06T08:44:00Z",
-          "created_by_user_id": "b34febe5-f547-58a4-871c-9705d259ce10",
-          "updated_by_user_id": "b34febe5-f547-58a4-871c-9705d259ce10",
-          "row_version": 1
-        },
-        {
-          "id": "77daca20-ff87-5fcb-80e4-abac91616c7d",
-          "code": "RESTRICTED",
-          "name": "Información clínica protegida",
+          "id": "5e6fec65-8064-521d-9549-7b250c207f88",
+          "code": "PSEUDONYMIZED",
+          "name": "Seudonimizado",
           "rank": 4,
           "is_pii": true,
-          "is_phi": true,
+          "is_phi": false,
           "handling_rules_json": {
-            "module": "system_ops",
-            "entity": "data_classifications",
-            "seq": 3,
-            "ref": "c8dc9eee-572e-5ff0-bdcc-f390e32d9eb4",
-            "status": "completed",
-            "amount": 531.75,
-            "currency": "BOB",
-            "occurred_at": "2026-01-12T21:00:00Z"
+            "definicion": "Dato asociado a un código; la clave de reidentificación se guarda aparte.",
+            "marco_normativo": [
+              "LGPD arts. 5 y 13",
+              "45 CFR 164.514(b)(2)"
+            ],
+            "manejo": [
+              "La clave de reidentificación se guarda separada del dato",
+              "Sigue siendo dato personal mientras exista la clave"
+            ],
+            "retencion": [
+              {
+                "plazo": "hasta el fin de la finalidad del tratamiento",
+                "base": [
+                  "LGPD arts. 15-16"
+                ],
+                "legal_hold": "suspende todo plazo"
+              }
+            ]
           },
           "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
-          "created_at": "2026-02-11T08:33:00Z",
-          "updated_at": "2026-02-11T08:56:00Z",
-          "created_by_user_id": "b9bec8f0-d32e-5079-8ec7-ba835d10458e",
-          "updated_by_user_id": "b9bec8f0-d32e-5079-8ec7-ba835d10458e",
+          "created_at": "2026-09-18T04:54:00Z",
+          "updated_at": "2026-09-18T04:54:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1
         },
         {
-          "id": "66b1e67c-72ca-5af2-9409-8f6928648c8e",
-          "code": "PII",
-          "name": "Datos personales",
+          "id": "d9f368d1-f4f0-5dd0-b291-00b0cd6fb0dd",
+          "code": "PERSONAL",
+          "name": "Personal",
           "rank": 5,
+          "is_pii": true,
+          "is_phi": false,
+          "handling_rules_json": {
+            "definicion": "Dato relacionado con una persona natural identificada o identificable.",
+            "marco_normativo": [
+              "LGPD art. 5"
+            ],
+            "manejo": [
+              "Solo para la finalidad informada a la persona",
+              "Acceso por necesidad"
+            ],
+            "retencion": [
+              {
+                "plazo": "hasta el fin de la finalidad del tratamiento",
+                "base": [
+                  "LGPD arts. 15-16"
+                ],
+                "legal_hold": "suspende todo plazo"
+              }
+            ]
+          },
+          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-09-19T18:06:00Z",
+          "updated_at": "2026-09-19T18:06:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "9af8b4f8-ea85-5f12-ae90-e221e452ee84",
+          "code": "PHI_IDENTIFIER",
+          "name": "Salud: identificador",
+          "rank": 6,
           "is_pii": true,
           "is_phi": true,
           "handling_rules_json": {
-            "module": "system_ops",
-            "entity": "data_classifications",
-            "seq": 4,
-            "ref": "43444b23-c587-5207-aaf8-cb5f7ac7f292",
-            "status": "failed",
-            "amount": 668.0,
-            "currency": "BOB",
-            "occurred_at": "2026-08-23T10:17:00Z"
+            "definicion": "Identificador directo de una persona vinculado a su atención de salud (los 18 identificadores de Safe Harbor).",
+            "marco_normativo": [
+              "45 CFR 160.103",
+              "45 CFR 164.514(b)(2)",
+              "LGPD art. 5"
+            ],
+            "manejo": [
+              "Acceso solo por necesidad de la atención",
+              "Cada lectura queda registrada",
+              "Se quita o generaliza al desidentificar"
+            ],
+            "retencion": [
+              {
+                "plazo": "20 años desde el último registro de la historia clínica",
+                "base": [
+                  "Lei 13.787/2018 art. 6"
+                ],
+                "legal_hold": "suspende todo plazo"
+              },
+              {
+                "plazo": "6 años para la auditoría y los registros de acceso",
+                "base": [
+                  "45 CFR 164.316(b)(2)",
+                  "45 CFR 164.528"
+                ],
+                "legal_hold": "suspende todo plazo"
+              }
+            ]
           },
           "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
-          "created_at": "2026-02-16T08:44:00Z",
-          "updated_at": "2026-02-16T09:08:00Z",
-          "created_by_user_id": "23cfcb91-648c-5c26-9da1-35ec6c04c142",
-          "updated_by_user_id": "23cfcb91-648c-5c26-9da1-35ec6c04c142",
+          "created_at": "2026-07-31T13:52:00Z",
+          "updated_at": "2026-07-31T13:52:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1
         },
         {
-          "id": "c32d09a0-1a38-55ba-8803-d3bb04b13a57",
-          "code": "PHI",
-          "name": "Información financiera",
-          "rank": 6,
-          "is_pii": false,
-          "is_phi": false,
-          "handling_rules_json": {
-            "module": "system_ops",
-            "entity": "data_classifications",
-            "seq": 5,
-            "ref": "bf58bd60-194b-5839-a3a8-41650b06fa03",
-            "status": "cancelled",
-            "amount": 805.25,
-            "currency": "BOB",
-            "occurred_at": "2026-03-07T23:34:00Z"
-          },
-          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
-          "created_at": "2026-02-21T08:55:00Z",
-          "updated_at": "2026-02-21T09:20:00Z",
-          "created_by_user_id": "61f19c22-994e-5f45-976e-1a0d0dc66900",
-          "updated_by_user_id": "61f19c22-994e-5f45-976e-1a0d0dc66900",
-          "row_version": 1
-        },
-        {
-          "id": "fb5e918f-0822-5d0a-9eb9-a346299214ef",
-          "code": "FINANCIAL",
-          "name": "Información de seguridad",
+          "id": "9a084d0e-a7d0-54e7-a0a6-686cee94cea0",
+          "code": "PHI_SENSITIVE",
+          "name": "Salud: sensible",
           "rank": 7,
           "is_pii": true,
           "is_phi": true,
           "handling_rules_json": {
-            "module": "system_ops",
-            "entity": "data_classifications",
-            "seq": 6,
-            "ref": "4f8e713d-2629-591c-941f-cd0adc9c331a",
-            "status": "on_hold",
-            "amount": 942.5,
-            "currency": "BOB",
-            "occurred_at": "2026-10-18T12:51:00Z"
+            "definicion": "Dato de salud de una persona: diagnósticos, tratamientos, resultados.",
+            "marco_normativo": [
+              "45 CFR 160.103",
+              "LGPD arts. 5 y 11"
+            ],
+            "manejo": [
+              "Acceso solo por necesidad de la atención",
+              "Cada lectura queda registrada",
+              "Tratamiento solo con las bases legales del art. 11 de la LGPD"
+            ],
+            "retencion": [
+              {
+                "plazo": "20 años desde el último registro de la historia clínica",
+                "base": [
+                  "Lei 13.787/2018 art. 6"
+                ],
+                "legal_hold": "suspende todo plazo"
+              },
+              {
+                "plazo": "6 años para la auditoría y los registros de acceso",
+                "base": [
+                  "45 CFR 164.316(b)(2)",
+                  "45 CFR 164.528"
+                ],
+                "legal_hold": "suspende todo plazo"
+              }
+            ]
           },
           "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
-          "created_at": "2026-02-26T09:06:00Z",
-          "updated_at": "2026-02-26T09:32:00Z",
+          "created_at": "2026-08-11T04:12:00Z",
+          "updated_at": "2026-08-11T04:12:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "006a987d-65ab-5cc0-90da-20107d3c1c5c",
+          "code": "PHI_SPECIAL",
+          "name": "Salud: especial",
+          "rank": 8,
+          "is_pii": true,
+          "is_phi": true,
+          "handling_rules_json": {
+            "definicion": "Nivel más alto de dato de salud. Ante duda entre niveles de salud se asigna este y la ficha queda en revisión.",
+            "marco_normativo": [
+              "45 CFR 160.103",
+              "LGPD arts. 5 y 11"
+            ],
+            "manejo": [
+              "Acceso mínimo y registrado",
+              "Toda clasificación automática en duda va a revisión",
+              "Nunca baja de nivel sin revisión humana"
+            ],
+            "retencion": [
+              {
+                "plazo": "20 años desde el último registro de la historia clínica",
+                "base": [
+                  "Lei 13.787/2018 art. 6"
+                ],
+                "legal_hold": "suspende todo plazo"
+              },
+              {
+                "plazo": "6 años para la auditoría y los registros de acceso",
+                "base": [
+                  "45 CFR 164.316(b)(2)",
+                  "45 CFR 164.528"
+                ],
+                "legal_hold": "suspende todo plazo"
+              }
+            ]
+          },
+          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-08-30T20:51:00Z",
+          "updated_at": "2026-08-30T20:51:00Z",
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1
@@ -230,71 +358,30 @@
         {
           "id": "73993ecd-0b7a-5add-bfc2-1e8e3e097df4",
           "code": "CREDENTIAL",
-          "name": "Investigación desidentificada",
-          "rank": 8,
-          "is_pii": true,
-          "is_phi": true,
-          "handling_rules_json": {
-            "module": "system_ops",
-            "entity": "data_classifications",
-            "seq": 7,
-            "ref": "3df1fb50-c571-58b9-a8e1-56733892c133",
-            "status": "approved",
-            "amount": 179.75,
-            "currency": "BOB",
-            "occurred_at": "2026-05-02T01:08:00Z"
-          },
-          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
-          "created_at": "2026-03-03T09:17:00Z",
-          "updated_at": "2026-03-03T09:44:00Z",
-          "created_by_user_id": "44a7a672-7b66-5f38-a595-69406745da5f",
-          "updated_by_user_id": "44a7a672-7b66-5f38-a595-69406745da5f",
-          "row_version": 1
-        },
-        {
-          "id": "95edb925-f3b5-5ad4-96a4-979dd37be9e5",
-          "code": "SECRET",
-          "name": "Público",
+          "name": "Credencial",
           "rank": 9,
-          "is_pii": true,
-          "is_phi": true,
-          "handling_rules_json": {
-            "module": "system_ops",
-            "entity": "data_classifications",
-            "seq": 8,
-            "ref": "baa3bdc2-0650-59ef-87d0-e5f1562ccd59",
-            "status": "rejected",
-            "amount": 316.0,
-            "currency": "BOB",
-            "occurred_at": "2026-12-13T14:25:00Z"
-          },
-          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
-          "created_at": "2026-03-08T09:28:00Z",
-          "updated_at": "2026-03-08T09:56:00Z",
-          "created_by_user_id": "b34febe5-f547-58a4-871c-9705d259ce10",
-          "updated_by_user_id": "b34febe5-f547-58a4-871c-9705d259ce10",
-          "row_version": 1
-        },
-        {
-          "id": "c8a681d7-e69d-5e6e-9e69-20bdee90089a",
-          "code": "PUBLIC_009",
-          "name": "Público (caso 09)",
-          "rank": 1,
           "is_pii": false,
           "is_phi": false,
           "handling_rules_json": {
-            "module": "system_ops",
-            "entity": "data_classifications",
-            "seq": 9,
-            "ref": "c478a9cb-3ef9-53b2-9805-fcdc94ce9237",
-            "status": "retrying",
-            "amount": 453.25,
-            "currency": "BOB",
-            "occurred_at": "2026-07-24T03:42:00Z"
+            "definicion": "Secreto de autenticación o firma: contraseñas, tokens, llaves.",
+            "marco_normativo": [],
+            "manejo": [
+              "El valor no se muestra ni se registra",
+              "Acceso solo del servicio que lo necesita"
+            ],
+            "retencion": [
+              {
+                "plazo": "hasta el fin de la finalidad del tratamiento",
+                "base": [
+                  "LGPD arts. 15-16"
+                ],
+                "legal_hold": "suspende todo plazo"
+              }
+            ]
           },
           "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
-          "created_at": "2026-07-24T03:42:00Z",
-          "updated_at": "2026-07-24T03:42:00Z",
+          "created_at": "2026-10-03T16:01:00Z",
+          "updated_at": "2026-10-03T16:01:00Z",
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1
@@ -472,7 +559,7 @@
           "schema_name": "Extended Entity Registry",
           "table_name": "Extended Entity Registry",
           "domain_id": "ce6902b2-ffb6-5bde-8411-5f0e9a50af07",
-          "classification_id": "eaf86abe-528c-5c46-a4b1-7447384f4470",
+          "classification_id": "73993ecd-0b7a-5add-bfc2-1e8e3e097df4",
           "is_append_only": true,
           "is_soft_delete": true,
           "has_history": true,
@@ -494,7 +581,7 @@
           "schema_name": "Restricted Entity Registry",
           "table_name": "Restricted Entity Registry",
           "domain_id": "09abb54b-b047-5650-a327-5c1b5789fc98",
-          "classification_id": "77daca20-ff87-5fcb-80e4-abac91616c7d",
+          "classification_id": "9a084d0e-a7d0-54e7-a0a6-686cee94cea0",
           "is_append_only": true,
           "is_soft_delete": true,
           "has_history": false,
@@ -516,7 +603,7 @@
           "schema_name": "International Entity Registry",
           "table_name": "International Entity Registry",
           "domain_id": "288532c2-91b8-5d90-a13e-ddb26b76cca7",
-          "classification_id": "66b1e67c-72ca-5af2-9409-8f6928648c8e",
+          "classification_id": "b5f0f50c-1263-5577-a002-59393b464e43",
           "is_append_only": true,
           "is_soft_delete": true,
           "has_history": true,
@@ -538,7 +625,7 @@
           "schema_name": "Disabled Entity Registry Template",
           "table_name": "Disabled Entity Registry Template",
           "domain_id": "ac8682fa-5da7-558e-9d51-4833eaa9b77d",
-          "classification_id": "c32d09a0-1a38-55ba-8803-d3bb04b13a57",
+          "classification_id": "86eb5638-4996-56ff-97be-11a4f1e646b6",
           "is_append_only": false,
           "is_soft_delete": false,
           "has_history": false,
@@ -560,7 +647,7 @@
           "schema_name": "Entity registry — remediación prioritaria 07",
           "table_name": "Entity registry — remediación prioritaria 07",
           "domain_id": "283c9a80-cacb-5e14-af61-288a75945243",
-          "classification_id": "fb5e918f-0822-5d0a-9eb9-a346299214ef",
+          "classification_id": "73993ecd-0b7a-5add-bfc2-1e8e3e097df4",
           "is_append_only": true,
           "is_soft_delete": true,
           "has_history": true,
@@ -681,7 +768,7 @@
           "id": "3ab9bf18-8b70-5632-9b1a-1e49a94be78e",
           "entity_registry_id": "a1dab520-1b23-5b8c-8433-23697085cb56",
           "column_name": "Extended Field Registry",
-          "classification_id": "eaf86abe-528c-5c46-a4b1-7447384f4470",
+          "classification_id": "006a987d-65ab-5cc0-90da-20107d3c1c5c",
           "is_pii": true,
           "is_phi": true,
           "masking_strategy_concept_id": "789d2c2c-3bcf-5c07-b8dc-2cdb84d18bde",
@@ -697,7 +784,7 @@
           "id": "9da4ce9a-6a06-5e09-92aa-9a72fa9ccd22",
           "entity_registry_id": "cbf70878-6ed9-5c80-82b4-b22667b4e57d",
           "column_name": "Restricted Field Registry",
-          "classification_id": "77daca20-ff87-5fcb-80e4-abac91616c7d",
+          "classification_id": "b5f0f50c-1263-5577-a002-59393b464e43",
           "is_pii": true,
           "is_phi": true,
           "masking_strategy_concept_id": "789d2c2c-3bcf-5c07-b8dc-2cdb84d18bde",
@@ -713,7 +800,7 @@
           "id": "566b62f5-442a-5ae4-94db-ab881c06c758",
           "entity_registry_id": "1e462083-4c8b-519d-b12c-c6ea34a7e995",
           "column_name": "International Field Registry",
-          "classification_id": "66b1e67c-72ca-5af2-9409-8f6928648c8e",
+          "classification_id": "86eb5638-4996-56ff-97be-11a4f1e646b6",
           "is_pii": true,
           "is_phi": true,
           "masking_strategy_concept_id": "789d2c2c-3bcf-5c07-b8dc-2cdb84d18bde",
@@ -729,7 +816,7 @@
           "id": "c42a5190-e9a4-52d5-88b0-77bf55d5ca9e",
           "entity_registry_id": "9684d410-f37b-551d-a620-ad4cff340a1e",
           "column_name": "Disabled Field Registry Template",
-          "classification_id": "c32d09a0-1a38-55ba-8803-d3bb04b13a57",
+          "classification_id": "73993ecd-0b7a-5add-bfc2-1e8e3e097df4",
           "is_pii": false,
           "is_phi": false,
           "masking_strategy_concept_id": "789d2c2c-3bcf-5c07-b8dc-2cdb84d18bde",
@@ -745,7 +832,7 @@
           "id": "f3ab88cb-83a7-593b-894d-ff8b8185403b",
           "entity_registry_id": "e8ad6077-cbf2-5e66-93da-3adca53bd7c4",
           "column_name": "Field registry — remediación prioritaria 07",
-          "classification_id": "fb5e918f-0822-5d0a-9eb9-a346299214ef",
+          "classification_id": "5e6fec65-8064-521d-9549-7b250c207f88",
           "is_pii": true,
           "is_phi": true,
           "masking_strategy_concept_id": "789d2c2c-3bcf-5c07-b8dc-2cdb84d18bde",
@@ -1399,7 +1486,7 @@
           "id": "0b532b54-e90f-5f1b-a762-fb28d3ed2340",
           "code": "EMERGENCY",
           "jurisdiction_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
-          "data_classification_id": "eaf86abe-528c-5c46-a4b1-7447384f4470",
+          "data_classification_id": "9af8b4f8-ea85-5f12-ae90-e221e452ee84",
           "allowed_storage_region_value_set_id": "cda4c68a-f383-5e5b-ba55-346cd0e52b8b",
           "allowed_processing_region_value_set_id": "cda4c68a-f383-5e5b-ba55-346cd0e52b8b",
           "cross_border_transfer_basis_concept_id": "1a6e97ae-ffde-5cb0-9f3d-327bb13ac167",
@@ -1418,7 +1505,7 @@
           "id": "d660510e-5a8b-5182-ba0a-9c3ba9137a18",
           "code": "RESEARCH",
           "jurisdiction_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
-          "data_classification_id": "77daca20-ff87-5fcb-80e4-abac91616c7d",
+          "data_classification_id": "5e6fec65-8064-521d-9549-7b250c207f88",
           "allowed_storage_region_value_set_id": "cda4c68a-f383-5e5b-ba55-346cd0e52b8b",
           "allowed_processing_region_value_set_id": "cda4c68a-f383-5e5b-ba55-346cd0e52b8b",
           "cross_border_transfer_basis_concept_id": "1a6e97ae-ffde-5cb0-9f3d-327bb13ac167",
@@ -1437,7 +1524,7 @@
           "id": "04a12321-3542-5be2-bc56-4bbd0820b6b1",
           "code": "ARCHIVE",
           "jurisdiction_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
-          "data_classification_id": "66b1e67c-72ca-5af2-9409-8f6928648c8e",
+          "data_classification_id": "d9f368d1-f4f0-5dd0-b291-00b0cd6fb0dd",
           "allowed_storage_region_value_set_id": "cda4c68a-f383-5e5b-ba55-346cd0e52b8b",
           "allowed_processing_region_value_set_id": "cda4c68a-f383-5e5b-ba55-346cd0e52b8b",
           "cross_border_transfer_basis_concept_id": "1a6e97ae-ffde-5cb0-9f3d-327bb13ac167",
@@ -1456,7 +1543,7 @@
           "id": "30d464c0-e455-56e9-9ee1-a5da59c7a6ec",
           "code": "DISABLED_TEMPLATE",
           "jurisdiction_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
-          "data_classification_id": "c32d09a0-1a38-55ba-8803-d3bb04b13a57",
+          "data_classification_id": "9af8b4f8-ea85-5f12-ae90-e221e452ee84",
           "allowed_storage_region_value_set_id": "cda4c68a-f383-5e5b-ba55-346cd0e52b8b",
           "allowed_processing_region_value_set_id": "cda4c68a-f383-5e5b-ba55-346cd0e52b8b",
           "cross_border_transfer_basis_concept_id": "1a6e97ae-ffde-5cb0-9f3d-327bb13ac167",
@@ -1475,7 +1562,7 @@
           "id": "494a1039-a82b-58e0-b186-877589e6fc7d",
           "code": "DATA_RESIDENCY_POLICIES_07",
           "jurisdiction_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
-          "data_classification_id": "fb5e918f-0822-5d0a-9eb9-a346299214ef",
+          "data_classification_id": "9af8b4f8-ea85-5f12-ae90-e221e452ee84",
           "allowed_storage_region_value_set_id": "cda4c68a-f383-5e5b-ba55-346cd0e52b8b",
           "allowed_processing_region_value_set_id": "cda4c68a-f383-5e5b-ba55-346cd0e52b8b",
           "cross_border_transfer_basis_concept_id": "1a6e97ae-ffde-5cb0-9f3d-327bb13ac167",
@@ -2501,7 +2588,7 @@
         "entity": "data_classifications",
         "stereotype": "RELATIONAL_TABLE",
         "boot_seeded": true,
-        "mock_seeded": true,
+        "mock_seeded": false,
         "rationale": "Catálogo/configuración mínima segura y determinística para prod y dev.",
         "required_fields": [
           "id",
@@ -3122,7 +3209,7 @@
       }
     ],
     "summary": {
-      "record_count": 126,
+      "record_count": 125,
       "entity_count": 13,
       "populated_entity_count": 11,
       "scenario_count": null,
@@ -3169,394 +3256,9 @@
       "security_incidents",
       "breach_notifications"
     ],
-    "record_count": 408,
+    "record_count": 392,
     "records": {
-      "data_classifications": [
-        {
-          "id": "e474957a-4f71-52da-8464-9f869afd3d58",
-          "code": "PUBLIC_MOCK",
-          "name": "Público",
-          "rank": 1,
-          "is_pii": true,
-          "is_phi": true,
-          "handling_rules_json": {
-            "module": "system_ops",
-            "entity": "data_classifications",
-            "seq": 0,
-            "ref": "54c04aec-8ff5-5817-ae39-e3d8a0707a95",
-            "status": "active",
-            "amount": 120.0,
-            "currency": "BOB",
-            "occurred_at": "2026-04-06T06:09:00Z"
-          },
-          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
-          "created_at": "2026-05-26T07:30:00Z",
-          "updated_at": "2026-05-26T07:50:00Z",
-          "created_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
-          "updated_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
-          "row_version": 1
-        },
-        {
-          "id": "fe891344-3348-5fdc-b916-83eac7609d20",
-          "code": "INTERNAL_MOCK",
-          "name": "Uso interno",
-          "rank": 2,
-          "is_pii": true,
-          "is_phi": true,
-          "handling_rules_json": {
-            "module": "system_ops",
-            "entity": "data_classifications",
-            "seq": 1,
-            "ref": "b0362efb-1161-5c1b-acb5-62367ad317f4",
-            "status": "pending",
-            "amount": 257.25,
-            "currency": "BOB",
-            "occurred_at": "2026-11-17T19:26:00Z"
-          },
-          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
-          "created_at": "2026-05-31T07:41:00Z",
-          "updated_at": "2026-05-31T08:02:00Z",
-          "created_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
-          "updated_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
-          "row_version": 1
-        },
-        {
-          "id": "c5af25e7-5c37-5df6-a1a6-a1cb530aa8ac",
-          "code": "CONFIDENTIAL_MOCK",
-          "name": "Confidencial",
-          "rank": 3,
-          "is_pii": true,
-          "is_phi": true,
-          "handling_rules_json": {
-            "module": "system_ops",
-            "entity": "data_classifications",
-            "seq": 2,
-            "ref": "7599be74-bdd9-59a6-acf3-39c422e70878",
-            "status": "in_progress",
-            "amount": 394.5,
-            "currency": "BOB",
-            "occurred_at": "2026-06-01T08:43:00Z"
-          },
-          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
-          "created_at": "2026-06-05T07:52:00Z",
-          "updated_at": "2026-06-05T08:14:00Z",
-          "created_by_user_id": "b408997d-9c68-5589-961f-eb5b2aece582",
-          "updated_by_user_id": "b408997d-9c68-5589-961f-eb5b2aece582",
-          "row_version": 1
-        },
-        {
-          "id": "4826143d-81b0-5832-aa09-8cfce9037feb",
-          "code": "PHI_MOCK",
-          "name": "Información clínica protegida",
-          "rank": 4,
-          "is_pii": true,
-          "is_phi": true,
-          "handling_rules_json": {
-            "module": "system_ops",
-            "entity": "data_classifications",
-            "seq": 3,
-            "ref": "c8dc9eee-572e-5ff0-bdcc-f390e32d9eb4",
-            "status": "completed",
-            "amount": 531.75,
-            "currency": "BOB",
-            "occurred_at": "2026-01-12T21:00:00Z"
-          },
-          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
-          "created_at": "2026-06-10T08:03:00Z",
-          "updated_at": "2026-06-10T08:26:00Z",
-          "created_by_user_id": "55224953-7ad5-5e7b-b070-8beb020555d5",
-          "updated_by_user_id": "55224953-7ad5-5e7b-b070-8beb020555d5",
-          "row_version": 1
-        },
-        {
-          "id": "3953c981-c19f-561c-9ce6-42542b5320cb",
-          "code": "PII_MOCK",
-          "name": "Datos personales",
-          "rank": 5,
-          "is_pii": true,
-          "is_phi": true,
-          "handling_rules_json": {
-            "module": "system_ops",
-            "entity": "data_classifications",
-            "seq": 4,
-            "ref": "43444b23-c587-5207-aaf8-cb5f7ac7f292",
-            "status": "failed",
-            "amount": 668.0,
-            "currency": "BOB",
-            "occurred_at": "2026-08-23T10:17:00Z"
-          },
-          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
-          "created_at": "2026-06-15T08:14:00Z",
-          "updated_at": "2026-06-15T08:38:00Z",
-          "created_by_user_id": "b8b57fec-d512-5793-b297-c39d389f96b2",
-          "updated_by_user_id": "b8b57fec-d512-5793-b297-c39d389f96b2",
-          "row_version": 1
-        },
-        {
-          "id": "683d6094-85d9-5efd-a2d1-fffa55bd3042",
-          "code": "FINANCIAL_MOCK",
-          "name": "Información financiera",
-          "rank": 6,
-          "is_pii": false,
-          "is_phi": false,
-          "handling_rules_json": {
-            "module": "system_ops",
-            "entity": "data_classifications",
-            "seq": 5,
-            "ref": "bf58bd60-194b-5839-a3a8-41650b06fa03",
-            "status": "cancelled",
-            "amount": 805.25,
-            "currency": "BOB",
-            "occurred_at": "2026-03-07T23:34:00Z"
-          },
-          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
-          "created_at": "2026-06-20T08:25:00Z",
-          "updated_at": "2026-06-20T08:50:00Z",
-          "created_by_user_id": "e926fb49-acc4-5184-a3ab-7a8f13540da6",
-          "updated_by_user_id": "e926fb49-acc4-5184-a3ab-7a8f13540da6",
-          "row_version": 1
-        },
-        {
-          "id": "3d04ef4e-9361-5c46-8f78-e1b8f5bd7ca4",
-          "code": "SECURITY",
-          "name": "Información de seguridad",
-          "rank": 7,
-          "is_pii": true,
-          "is_phi": true,
-          "handling_rules_json": {
-            "module": "system_ops",
-            "entity": "data_classifications",
-            "seq": 6,
-            "ref": "4f8e713d-2629-591c-941f-cd0adc9c331a",
-            "status": "on_hold",
-            "amount": 942.5,
-            "currency": "BOB",
-            "occurred_at": "2026-10-18T12:51:00Z"
-          },
-          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
-          "created_at": "2026-06-25T08:36:00Z",
-          "updated_at": "2026-06-25T09:02:00Z",
-          "created_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
-          "updated_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
-          "row_version": 1
-        },
-        {
-          "id": "d2795e89-a850-5422-af07-7557cc9225a8",
-          "code": "RESEARCH_DEID",
-          "name": "Investigación desidentificada",
-          "rank": 8,
-          "is_pii": true,
-          "is_phi": true,
-          "handling_rules_json": {
-            "module": "system_ops",
-            "entity": "data_classifications",
-            "seq": 7,
-            "ref": "3df1fb50-c571-58b9-a8e1-56733892c133",
-            "status": "approved",
-            "amount": 179.75,
-            "currency": "BOB",
-            "occurred_at": "2026-05-02T01:08:00Z"
-          },
-          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
-          "created_at": "2026-06-30T08:47:00Z",
-          "updated_at": "2026-06-30T09:14:00Z",
-          "created_by_user_id": "7fc77350-0e92-5d7a-a2fb-e6277505c00e",
-          "updated_by_user_id": "7fc77350-0e92-5d7a-a2fb-e6277505c00e",
-          "row_version": 1
-        },
-        {
-          "id": "1841cb02-d6dd-50b4-8309-959601b3c68f",
-          "code": "PUBLIC_008",
-          "name": "Público (caso 08)",
-          "rank": 1,
-          "is_pii": true,
-          "is_phi": true,
-          "handling_rules_json": {
-            "module": "system_ops",
-            "entity": "data_classifications",
-            "seq": 8,
-            "ref": "baa3bdc2-0650-59ef-87d0-e5f1562ccd59",
-            "status": "rejected",
-            "amount": 316.0,
-            "currency": "BOB",
-            "occurred_at": "2026-12-13T14:25:00Z"
-          },
-          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
-          "created_at": "2026-12-13T14:25:00Z",
-          "updated_at": "2026-12-13T14:25:00Z",
-          "created_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
-          "updated_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
-          "row_version": 1
-        },
-        {
-          "id": "d69a25a9-5095-5275-befc-e83e4457f2e4",
-          "code": "INTERNAL_009",
-          "name": "Uso interno (caso 09)",
-          "rank": 2,
-          "is_pii": false,
-          "is_phi": false,
-          "handling_rules_json": {
-            "module": "system_ops",
-            "entity": "data_classifications",
-            "seq": 9,
-            "ref": "c478a9cb-3ef9-53b2-9805-fcdc94ce9237",
-            "status": "retrying",
-            "amount": 453.25,
-            "currency": "BOB",
-            "occurred_at": "2026-07-24T03:42:00Z"
-          },
-          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
-          "created_at": "2026-07-24T03:42:00Z",
-          "updated_at": "2026-07-24T03:42:00Z",
-          "created_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
-          "updated_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
-          "row_version": 1
-        },
-        {
-          "id": "e5b61410-168c-58bc-96fe-89e6b29ec76d",
-          "code": "CONFIDENTIAL_010",
-          "name": "Confidencial (caso 10)",
-          "rank": 3,
-          "is_pii": true,
-          "is_phi": true,
-          "handling_rules_json": {
-            "module": "system_ops",
-            "entity": "data_classifications",
-            "seq": 10,
-            "ref": "bfbf1bf7-b0e1-58a2-ac27-2e4970a33da6",
-            "status": "active",
-            "amount": 590.5,
-            "currency": "BOB",
-            "occurred_at": "2026-02-08T16:59:00Z"
-          },
-          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
-          "created_at": "2026-02-08T16:59:00Z",
-          "updated_at": "2026-02-08T16:59:00Z",
-          "created_by_user_id": "b408997d-9c68-5589-961f-eb5b2aece582",
-          "updated_by_user_id": "b408997d-9c68-5589-961f-eb5b2aece582",
-          "row_version": 1
-        },
-        {
-          "id": "97fb20ff-fc62-5042-becf-a9867774a33e",
-          "code": "PHI_011",
-          "name": "Información clínica protegida (caso 11)",
-          "rank": 4,
-          "is_pii": false,
-          "is_phi": false,
-          "handling_rules_json": {
-            "module": "system_ops",
-            "entity": "data_classifications",
-            "seq": 11,
-            "ref": "1d0cce5c-110c-5086-aaaf-352dcf936b97",
-            "status": "pending",
-            "amount": 727.75,
-            "currency": "BOB",
-            "occurred_at": "2026-09-19T05:16:00Z"
-          },
-          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
-          "created_at": "2026-09-19T05:16:00Z",
-          "updated_at": "2026-09-19T05:16:00Z",
-          "created_by_user_id": "55224953-7ad5-5e7b-b070-8beb020555d5",
-          "updated_by_user_id": "55224953-7ad5-5e7b-b070-8beb020555d5",
-          "row_version": 1
-        },
-        {
-          "id": "caf71ae7-9439-55c5-a6b3-602f5b342421",
-          "code": "PII_012",
-          "name": "Datos personales (caso 12)",
-          "rank": 5,
-          "is_pii": true,
-          "is_phi": true,
-          "handling_rules_json": {
-            "module": "system_ops",
-            "entity": "data_classifications",
-            "seq": 12,
-            "ref": "24107364-1a8e-50c1-a8f2-326607f4f1c2",
-            "status": "in_progress",
-            "amount": 864.0,
-            "currency": "BOB",
-            "occurred_at": "2026-04-03T18:33:00Z"
-          },
-          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
-          "created_at": "2026-04-03T18:33:00Z",
-          "updated_at": "2026-04-03T18:33:00Z",
-          "created_by_user_id": "b8b57fec-d512-5793-b297-c39d389f96b2",
-          "updated_by_user_id": "b8b57fec-d512-5793-b297-c39d389f96b2",
-          "row_version": 1
-        },
-        {
-          "id": "6d4b94c3-cce2-5b12-92bc-f1e1b13bc84d",
-          "code": "FINANCIAL_013",
-          "name": "Información financiera (caso 13)",
-          "rank": 6,
-          "is_pii": false,
-          "is_phi": false,
-          "handling_rules_json": {
-            "module": "system_ops",
-            "entity": "data_classifications",
-            "seq": 13,
-            "ref": "844c6cf6-f892-5cd9-9627-507e0ecfbd88",
-            "status": "completed",
-            "amount": 1001.25,
-            "currency": "BOB",
-            "occurred_at": "2026-11-14T07:50:00Z"
-          },
-          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
-          "created_at": "2026-11-14T07:50:00Z",
-          "updated_at": "2026-11-14T07:50:00Z",
-          "created_by_user_id": "e926fb49-acc4-5184-a3ab-7a8f13540da6",
-          "updated_by_user_id": "e926fb49-acc4-5184-a3ab-7a8f13540da6",
-          "row_version": 1
-        },
-        {
-          "id": "1db41087-62fd-560a-8329-122f9b8423b6",
-          "code": "SECURITY_014",
-          "name": "Información de seguridad (caso 14)",
-          "rank": 7,
-          "is_pii": true,
-          "is_phi": true,
-          "handling_rules_json": {
-            "module": "system_ops",
-            "entity": "data_classifications",
-            "seq": 14,
-            "ref": "a602be02-962b-53e6-b2c9-01761289a58a",
-            "status": "failed",
-            "amount": 238.5,
-            "currency": "BOB",
-            "occurred_at": "2026-06-25T20:07:00Z"
-          },
-          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
-          "created_at": "2026-06-25T20:07:00Z",
-          "updated_at": "2026-06-25T20:07:00Z",
-          "created_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
-          "updated_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
-          "row_version": 1
-        },
-        {
-          "id": "2060a49f-2503-5222-ab09-60ad5b4c3ef9",
-          "code": "RESEARCH_DEID_015",
-          "name": "Investigación desidentificada (caso 15)",
-          "rank": 8,
-          "is_pii": false,
-          "is_phi": false,
-          "handling_rules_json": {
-            "module": "system_ops",
-            "entity": "data_classifications",
-            "seq": 15,
-            "ref": "6b975626-8cdc-5bcd-a00a-3e893aece639",
-            "status": "cancelled",
-            "amount": 375.75,
-            "currency": "BOB",
-            "occurred_at": "2026-01-09T09:24:00Z"
-          },
-          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
-          "created_at": "2026-01-09T09:24:00Z",
-          "updated_at": "2026-01-09T09:24:00Z",
-          "created_by_user_id": "7fc77350-0e92-5d7a-a2fb-e6277505c00e",
-          "updated_by_user_id": "7fc77350-0e92-5d7a-a2fb-e6277505c00e",
-          "row_version": 1
-        }
-      ],
+      "data_classifications": [],
       "data_domains": [
         {
           "id": "fbf8b9bf-dc31-504d-bc3c-b64c1eff6f6a",
@@ -3757,7 +3459,7 @@
           "schema_name": "Entity registry — gobierno de datos clínicos",
           "table_name": "Entity registry — gobierno de datos clínicos",
           "domain_id": "fbf8b9bf-dc31-504d-bc3c-b64c1eff6f6a",
-          "classification_id": "e474957a-4f71-52da-8464-9f869afd3d58",
+          "classification_id": "006a987d-65ab-5cc0-90da-20107d3c1c5c",
           "is_append_only": true,
           "is_soft_delete": true,
           "has_history": true,
@@ -3779,7 +3481,7 @@
           "schema_name": "Entity registry — retención legal",
           "table_name": "Entity registry — retención legal",
           "domain_id": "fbf8b9bf-dc31-504d-bc3c-b64c1eff6f6a",
-          "classification_id": "e474957a-4f71-52da-8464-9f869afd3d58",
+          "classification_id": "86eb5638-4996-56ff-97be-11a4f1e646b6",
           "is_append_only": true,
           "is_soft_delete": true,
           "has_history": false,
@@ -3801,7 +3503,7 @@
           "schema_name": "Entity registry — residencia Bolivia",
           "table_name": "Entity registry — residencia Bolivia",
           "domain_id": "01d85ce3-389d-5836-bcb9-ae24218cf6d9",
-          "classification_id": "c5af25e7-5c37-5df6-a1a6-a1cb530aa8ac",
+          "classification_id": "73993ecd-0b7a-5add-bfc2-1e8e3e097df4",
           "is_append_only": true,
           "is_soft_delete": true,
           "has_history": true,
@@ -3823,7 +3525,7 @@
           "schema_name": "Entity registry — respaldo diario",
           "table_name": "Entity registry — respaldo diario",
           "domain_id": "5b91fc29-76eb-5b7c-81fb-197eb105f7ed",
-          "classification_id": "4826143d-81b0-5832-aa09-8cfce9037feb",
+          "classification_id": "9a084d0e-a7d0-54e7-a0a6-686cee94cea0",
           "is_append_only": true,
           "is_soft_delete": true,
           "has_history": false,
@@ -3845,7 +3547,7 @@
           "schema_name": "Entity registry — restauración trimestral",
           "table_name": "Entity registry — restauración trimestral",
           "domain_id": "904fc64e-e10c-5170-8061-9e7702b7200e",
-          "classification_id": "3953c981-c19f-561c-9ce6-42542b5320cb",
+          "classification_id": "b5f0f50c-1263-5577-a002-59393b464e43",
           "is_append_only": true,
           "is_soft_delete": true,
           "has_history": true,
@@ -3867,7 +3569,7 @@
           "schema_name": "Entity registry — hallazgo de control",
           "table_name": "Entity registry — hallazgo de control",
           "domain_id": "2005e25b-a782-5b36-ab9d-21bf1669e102",
-          "classification_id": "683d6094-85d9-5efd-a2d1-fffa55bd3042",
+          "classification_id": "86eb5638-4996-56ff-97be-11a4f1e646b6",
           "is_append_only": false,
           "is_soft_delete": false,
           "has_history": false,
@@ -3889,7 +3591,7 @@
           "schema_name": "Entity registry — remediación prioritaria",
           "table_name": "Entity registry — remediación prioritaria",
           "domain_id": "c3e61a9a-084a-5088-9784-739d9c71d635",
-          "classification_id": "3d04ef4e-9361-5c46-8f78-e1b8f5bd7ca4",
+          "classification_id": "73993ecd-0b7a-5add-bfc2-1e8e3e097df4",
           "is_append_only": true,
           "is_soft_delete": true,
           "has_history": true,
@@ -3911,7 +3613,7 @@
           "schema_name": "Entity registry — clasificación PHI",
           "table_name": "Entity registry — clasificación PHI",
           "domain_id": "ac26b5f4-e842-5065-bc15-7044670d96cd",
-          "classification_id": "d2795e89-a850-5422-af07-7557cc9225a8",
+          "classification_id": "9a084d0e-a7d0-54e7-a0a6-686cee94cea0",
           "is_append_only": true,
           "is_soft_delete": true,
           "has_history": false,
@@ -3933,7 +3635,7 @@
           "schema_name": "Entity registry (caso 08)",
           "table_name": "Entity registry (caso 08)",
           "domain_id": "fbf8b9bf-dc31-504d-bc3c-b64c1eff6f6a",
-          "classification_id": "e474957a-4f71-52da-8464-9f869afd3d58",
+          "classification_id": "5e6fec65-8064-521d-9549-7b250c207f88",
           "is_append_only": true,
           "is_soft_delete": true,
           "has_history": true,
@@ -3955,7 +3657,7 @@
           "schema_name": "Entity registry (caso 09)",
           "table_name": "Entity registry (caso 09)",
           "domain_id": "fbf8b9bf-dc31-504d-bc3c-b64c1eff6f6a",
-          "classification_id": "e474957a-4f71-52da-8464-9f869afd3d58",
+          "classification_id": "99d6485f-e20d-5456-b1e3-d9cd1eb9e52b",
           "is_append_only": false,
           "is_soft_delete": false,
           "has_history": false,
@@ -3977,7 +3679,7 @@
           "schema_name": "Entity registry (caso 10)",
           "table_name": "Entity registry (caso 10)",
           "domain_id": "01d85ce3-389d-5836-bcb9-ae24218cf6d9",
-          "classification_id": "c5af25e7-5c37-5df6-a1a6-a1cb530aa8ac",
+          "classification_id": "006a987d-65ab-5cc0-90da-20107d3c1c5c",
           "is_append_only": true,
           "is_soft_delete": true,
           "has_history": true,
@@ -3999,7 +3701,7 @@
           "schema_name": "Entity registry (caso 11)",
           "table_name": "Entity registry (caso 11)",
           "domain_id": "5b91fc29-76eb-5b7c-81fb-197eb105f7ed",
-          "classification_id": "4826143d-81b0-5832-aa09-8cfce9037feb",
+          "classification_id": "9a084d0e-a7d0-54e7-a0a6-686cee94cea0",
           "is_append_only": false,
           "is_soft_delete": false,
           "has_history": false,
@@ -4021,7 +3723,7 @@
           "schema_name": "Entity registry (caso 12)",
           "table_name": "Entity registry (caso 12)",
           "domain_id": "904fc64e-e10c-5170-8061-9e7702b7200e",
-          "classification_id": "3953c981-c19f-561c-9ce6-42542b5320cb",
+          "classification_id": "d9f368d1-f4f0-5dd0-b291-00b0cd6fb0dd",
           "is_append_only": true,
           "is_soft_delete": true,
           "has_history": true,
@@ -4043,7 +3745,7 @@
           "schema_name": "Entity registry (caso 13)",
           "table_name": "Entity registry (caso 13)",
           "domain_id": "2005e25b-a782-5b36-ab9d-21bf1669e102",
-          "classification_id": "683d6094-85d9-5efd-a2d1-fffa55bd3042",
+          "classification_id": "d9f368d1-f4f0-5dd0-b291-00b0cd6fb0dd",
           "is_append_only": false,
           "is_soft_delete": false,
           "has_history": false,
@@ -4065,7 +3767,7 @@
           "schema_name": "Entity registry (caso 14)",
           "table_name": "Entity registry (caso 14)",
           "domain_id": "c3e61a9a-084a-5088-9784-739d9c71d635",
-          "classification_id": "3d04ef4e-9361-5c46-8f78-e1b8f5bd7ca4",
+          "classification_id": "86eb5638-4996-56ff-97be-11a4f1e646b6",
           "is_append_only": true,
           "is_soft_delete": true,
           "has_history": true,
@@ -4087,7 +3789,7 @@
           "schema_name": "Entity registry (caso 15)",
           "table_name": "Entity registry (caso 15)",
           "domain_id": "ac26b5f4-e842-5065-bc15-7044670d96cd",
-          "classification_id": "d2795e89-a850-5422-af07-7557cc9225a8",
+          "classification_id": "9a084d0e-a7d0-54e7-a0a6-686cee94cea0",
           "is_append_only": false,
           "is_soft_delete": false,
           "has_history": false,
@@ -4110,7 +3812,7 @@
           "id": "3af47138-3bb1-5a65-9434-47a1b4ec94f3",
           "entity_registry_id": "7597657e-9949-5945-9aa6-b05bb8c7a3b2",
           "column_name": "Field registry — gobierno de datos clínicos",
-          "classification_id": "e474957a-4f71-52da-8464-9f869afd3d58",
+          "classification_id": "b5f0f50c-1263-5577-a002-59393b464e43",
           "is_pii": true,
           "is_phi": true,
           "masking_strategy_concept_id": "789d2c2c-3bcf-5c07-b8dc-2cdb84d18bde",
@@ -4126,7 +3828,7 @@
           "id": "fe8ff039-d433-54ae-aab9-b4f3f98b47a8",
           "entity_registry_id": "7597657e-9949-5945-9aa6-b05bb8c7a3b2",
           "column_name": "Field registry — retención legal",
-          "classification_id": "e474957a-4f71-52da-8464-9f869afd3d58",
+          "classification_id": "86eb5638-4996-56ff-97be-11a4f1e646b6",
           "is_pii": true,
           "is_phi": true,
           "masking_strategy_concept_id": "789d2c2c-3bcf-5c07-b8dc-2cdb84d18bde",
@@ -4142,7 +3844,7 @@
           "id": "e9eeee18-19dd-56e2-8c78-90476580a9f1",
           "entity_registry_id": "337e66fd-19b2-533a-a3c5-22d51a1feb44",
           "column_name": "Field registry — residencia Bolivia",
-          "classification_id": "c5af25e7-5c37-5df6-a1a6-a1cb530aa8ac",
+          "classification_id": "006a987d-65ab-5cc0-90da-20107d3c1c5c",
           "is_pii": true,
           "is_phi": true,
           "masking_strategy_concept_id": "789d2c2c-3bcf-5c07-b8dc-2cdb84d18bde",
@@ -4158,7 +3860,7 @@
           "id": "cff4b2b1-9cb3-5aea-9350-9c26e9fcdd30",
           "entity_registry_id": "c62ccdce-41a0-5c49-aa4a-0e8ffc460fed",
           "column_name": "Field registry — respaldo diario",
-          "classification_id": "4826143d-81b0-5832-aa09-8cfce9037feb",
+          "classification_id": "b5f0f50c-1263-5577-a002-59393b464e43",
           "is_pii": true,
           "is_phi": true,
           "masking_strategy_concept_id": "789d2c2c-3bcf-5c07-b8dc-2cdb84d18bde",
@@ -4174,7 +3876,7 @@
           "id": "1f835465-8bd0-5278-ac27-ef501bddc134",
           "entity_registry_id": "175b19cc-cac6-5bf1-8390-e8429c7a2352",
           "column_name": "Field registry — restauración trimestral",
-          "classification_id": "3953c981-c19f-561c-9ce6-42542b5320cb",
+          "classification_id": "86eb5638-4996-56ff-97be-11a4f1e646b6",
           "is_pii": true,
           "is_phi": true,
           "masking_strategy_concept_id": "789d2c2c-3bcf-5c07-b8dc-2cdb84d18bde",
@@ -4190,7 +3892,7 @@
           "id": "c7a18164-7bf6-58ca-a5f9-c53bfa450dff",
           "entity_registry_id": "031144ea-ec24-5a1e-abd7-60a0b9f0903c",
           "column_name": "Field registry — hallazgo de control",
-          "classification_id": "683d6094-85d9-5efd-a2d1-fffa55bd3042",
+          "classification_id": "73993ecd-0b7a-5add-bfc2-1e8e3e097df4",
           "is_pii": false,
           "is_phi": false,
           "masking_strategy_concept_id": "789d2c2c-3bcf-5c07-b8dc-2cdb84d18bde",
@@ -4206,7 +3908,7 @@
           "id": "4cfd87a2-079c-5dbe-92d5-aeac5fc4e94e",
           "entity_registry_id": "9394804c-bc37-5cf6-86cf-357da0612ed9",
           "column_name": "Field registry — remediación prioritaria",
-          "classification_id": "3d04ef4e-9361-5c46-8f78-e1b8f5bd7ca4",
+          "classification_id": "5e6fec65-8064-521d-9549-7b250c207f88",
           "is_pii": true,
           "is_phi": true,
           "masking_strategy_concept_id": "789d2c2c-3bcf-5c07-b8dc-2cdb84d18bde",
@@ -4222,7 +3924,7 @@
           "id": "87ea04c7-9585-5b72-a504-e585370a75a0",
           "entity_registry_id": "4a873527-aa25-5d6a-88ea-653216e5d2da",
           "column_name": "Field registry — clasificación PHI",
-          "classification_id": "d2795e89-a850-5422-af07-7557cc9225a8",
+          "classification_id": "b5f0f50c-1263-5577-a002-59393b464e43",
           "is_pii": true,
           "is_phi": true,
           "masking_strategy_concept_id": "789d2c2c-3bcf-5c07-b8dc-2cdb84d18bde",
@@ -4238,7 +3940,7 @@
           "id": "6d057201-0756-56ba-a91b-df53926d926c",
           "entity_registry_id": "7597657e-9949-5945-9aa6-b05bb8c7a3b2",
           "column_name": "Field registry (caso 08)",
-          "classification_id": "e474957a-4f71-52da-8464-9f869afd3d58",
+          "classification_id": "006a987d-65ab-5cc0-90da-20107d3c1c5c",
           "is_pii": true,
           "is_phi": true,
           "masking_strategy_concept_id": "789d2c2c-3bcf-5c07-b8dc-2cdb84d18bde",
@@ -4254,7 +3956,7 @@
           "id": "53f3c65f-a53b-5cd3-8d38-ff9b308a6699",
           "entity_registry_id": "7597657e-9949-5945-9aa6-b05bb8c7a3b2",
           "column_name": "Field registry (caso 09)",
-          "classification_id": "e474957a-4f71-52da-8464-9f869afd3d58",
+          "classification_id": "d9f368d1-f4f0-5dd0-b291-00b0cd6fb0dd",
           "is_pii": false,
           "is_phi": false,
           "masking_strategy_concept_id": "789d2c2c-3bcf-5c07-b8dc-2cdb84d18bde",
@@ -4270,7 +3972,7 @@
           "id": "6a47d047-6174-58bd-bfda-c4f0282b77a0",
           "entity_registry_id": "337e66fd-19b2-533a-a3c5-22d51a1feb44",
           "column_name": "Field registry (caso 10)",
-          "classification_id": "c5af25e7-5c37-5df6-a1a6-a1cb530aa8ac",
+          "classification_id": "5e6fec65-8064-521d-9549-7b250c207f88",
           "is_pii": true,
           "is_phi": true,
           "masking_strategy_concept_id": "789d2c2c-3bcf-5c07-b8dc-2cdb84d18bde",
@@ -4286,7 +3988,7 @@
           "id": "974b369b-20da-5b29-97d6-19484adb1b99",
           "entity_registry_id": "c62ccdce-41a0-5c49-aa4a-0e8ffc460fed",
           "column_name": "Field registry (caso 11)",
-          "classification_id": "4826143d-81b0-5832-aa09-8cfce9037feb",
+          "classification_id": "86eb5638-4996-56ff-97be-11a4f1e646b6",
           "is_pii": false,
           "is_phi": false,
           "masking_strategy_concept_id": "789d2c2c-3bcf-5c07-b8dc-2cdb84d18bde",
@@ -4302,7 +4004,7 @@
           "id": "7721789d-097a-5fb1-a82f-579ebdf68707",
           "entity_registry_id": "175b19cc-cac6-5bf1-8390-e8429c7a2352",
           "column_name": "Field registry (caso 12)",
-          "classification_id": "3953c981-c19f-561c-9ce6-42542b5320cb",
+          "classification_id": "73993ecd-0b7a-5add-bfc2-1e8e3e097df4",
           "is_pii": true,
           "is_phi": true,
           "masking_strategy_concept_id": "789d2c2c-3bcf-5c07-b8dc-2cdb84d18bde",
@@ -4318,7 +4020,7 @@
           "id": "c58df5f9-07ed-5b46-ac9d-fe0294ff8025",
           "entity_registry_id": "031144ea-ec24-5a1e-abd7-60a0b9f0903c",
           "column_name": "Field registry (caso 13)",
-          "classification_id": "683d6094-85d9-5efd-a2d1-fffa55bd3042",
+          "classification_id": "9a084d0e-a7d0-54e7-a0a6-686cee94cea0",
           "is_pii": false,
           "is_phi": false,
           "masking_strategy_concept_id": "789d2c2c-3bcf-5c07-b8dc-2cdb84d18bde",
@@ -4334,7 +4036,7 @@
           "id": "e93f3a9d-f8cc-5c4f-b4b2-d10af352c30c",
           "entity_registry_id": "9394804c-bc37-5cf6-86cf-357da0612ed9",
           "column_name": "Field registry (caso 14)",
-          "classification_id": "3d04ef4e-9361-5c46-8f78-e1b8f5bd7ca4",
+          "classification_id": "73993ecd-0b7a-5add-bfc2-1e8e3e097df4",
           "is_pii": true,
           "is_phi": true,
           "masking_strategy_concept_id": "789d2c2c-3bcf-5c07-b8dc-2cdb84d18bde",
@@ -4350,7 +4052,7 @@
           "id": "40c99111-4231-5599-9a45-2c14eec8a739",
           "entity_registry_id": "4a873527-aa25-5d6a-88ea-653216e5d2da",
           "column_name": "Field registry (caso 15)",
-          "classification_id": "d2795e89-a850-5422-af07-7557cc9225a8",
+          "classification_id": "99d6485f-e20d-5456-b1e3-d9cd1eb9e52b",
           "is_pii": false,
           "is_phi": false,
           "masking_strategy_concept_id": "789d2c2c-3bcf-5c07-b8dc-2cdb84d18bde",
@@ -6766,7 +6468,7 @@
           "id": "98727f00-1cfa-5728-a4c8-6c1b8cff0e04",
           "code": "DATA_RESIDENCY_POLICIES_01",
           "jurisdiction_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
-          "data_classification_id": "e474957a-4f71-52da-8464-9f869afd3d58",
+          "data_classification_id": "b5f0f50c-1263-5577-a002-59393b464e43",
           "allowed_storage_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "allowed_processing_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "cross_border_transfer_basis_concept_id": "1a6e97ae-ffde-5cb0-9f3d-327bb13ac167",
@@ -6785,7 +6487,7 @@
           "id": "4ff57774-d155-565c-89f0-32212093c80f",
           "code": "DATA_RESIDENCY_POLICIES_02",
           "jurisdiction_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
-          "data_classification_id": "e474957a-4f71-52da-8464-9f869afd3d58",
+          "data_classification_id": "73993ecd-0b7a-5add-bfc2-1e8e3e097df4",
           "allowed_storage_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "allowed_processing_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "cross_border_transfer_basis_concept_id": "1a6e97ae-ffde-5cb0-9f3d-327bb13ac167",
@@ -6804,7 +6506,7 @@
           "id": "27996493-9639-5155-8814-6403d28e8ca5",
           "code": "DATA_RESIDENCY_POLICIES_03",
           "jurisdiction_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
-          "data_classification_id": "c5af25e7-5c37-5df6-a1a6-a1cb530aa8ac",
+          "data_classification_id": "9af8b4f8-ea85-5f12-ae90-e221e452ee84",
           "allowed_storage_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "allowed_processing_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "cross_border_transfer_basis_concept_id": "1a6e97ae-ffde-5cb0-9f3d-327bb13ac167",
@@ -6823,7 +6525,7 @@
           "id": "83c7e934-8adf-5aa0-a82d-5f035932d74c",
           "code": "DATA_RESIDENCY_POLICIES_04",
           "jurisdiction_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
-          "data_classification_id": "4826143d-81b0-5832-aa09-8cfce9037feb",
+          "data_classification_id": "5e6fec65-8064-521d-9549-7b250c207f88",
           "allowed_storage_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "allowed_processing_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "cross_border_transfer_basis_concept_id": "1a6e97ae-ffde-5cb0-9f3d-327bb13ac167",
@@ -6842,7 +6544,7 @@
           "id": "c2f8b538-7fc9-5594-9391-3bd8183da100",
           "code": "DATA_RESIDENCY_POLICIES_05",
           "jurisdiction_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
-          "data_classification_id": "3953c981-c19f-561c-9ce6-42542b5320cb",
+          "data_classification_id": "d9f368d1-f4f0-5dd0-b291-00b0cd6fb0dd",
           "allowed_storage_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "allowed_processing_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "cross_border_transfer_basis_concept_id": "1a6e97ae-ffde-5cb0-9f3d-327bb13ac167",
@@ -6861,7 +6563,7 @@
           "id": "1c2e95be-1ed6-564c-b8d1-a23cbc8686c8",
           "code": "DATA_RESIDENCY_POLICIES_06",
           "jurisdiction_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
-          "data_classification_id": "683d6094-85d9-5efd-a2d1-fffa55bd3042",
+          "data_classification_id": "9af8b4f8-ea85-5f12-ae90-e221e452ee84",
           "allowed_storage_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "allowed_processing_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "cross_border_transfer_basis_concept_id": "1a6e97ae-ffde-5cb0-9f3d-327bb13ac167",
@@ -6880,7 +6582,7 @@
           "id": "77a479b6-d0ad-5982-843e-340fe1fe4bc1",
           "code": "DATA_RESIDENCY_POLICIES_07_MOCK",
           "jurisdiction_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
-          "data_classification_id": "3d04ef4e-9361-5c46-8f78-e1b8f5bd7ca4",
+          "data_classification_id": "9af8b4f8-ea85-5f12-ae90-e221e452ee84",
           "allowed_storage_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "allowed_processing_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "cross_border_transfer_basis_concept_id": "1a6e97ae-ffde-5cb0-9f3d-327bb13ac167",
@@ -6899,7 +6601,7 @@
           "id": "1dc9bbd4-0c02-5bf9-a21a-f1c4f11db909",
           "code": "DATA_RESIDENCY_POLICIES_08_MOCK",
           "jurisdiction_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
-          "data_classification_id": "d2795e89-a850-5422-af07-7557cc9225a8",
+          "data_classification_id": "73993ecd-0b7a-5add-bfc2-1e8e3e097df4",
           "allowed_storage_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "allowed_processing_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "cross_border_transfer_basis_concept_id": "1a6e97ae-ffde-5cb0-9f3d-327bb13ac167",
@@ -6918,7 +6620,7 @@
           "id": "4643313f-1471-563e-a535-92a6e1de34d3",
           "code": "DATA_RESIDENCY_POLICIES_008",
           "jurisdiction_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
-          "data_classification_id": "e474957a-4f71-52da-8464-9f869afd3d58",
+          "data_classification_id": "006a987d-65ab-5cc0-90da-20107d3c1c5c",
           "allowed_storage_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "allowed_processing_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "cross_border_transfer_basis_concept_id": "1a6e97ae-ffde-5cb0-9f3d-327bb13ac167",
@@ -6937,7 +6639,7 @@
           "id": "2ba40c02-5300-5c54-aafd-b2354d1a5168",
           "code": "DATA_RESIDENCY_POLICIES_009",
           "jurisdiction_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
-          "data_classification_id": "e474957a-4f71-52da-8464-9f869afd3d58",
+          "data_classification_id": "86eb5638-4996-56ff-97be-11a4f1e646b6",
           "allowed_storage_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "allowed_processing_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "cross_border_transfer_basis_concept_id": "1a6e97ae-ffde-5cb0-9f3d-327bb13ac167",
@@ -6956,7 +6658,7 @@
           "id": "2d890531-bb48-5de1-bf7a-40f8b80504bf",
           "code": "DATA_RESIDENCY_POLICIES_010",
           "jurisdiction_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
-          "data_classification_id": "c5af25e7-5c37-5df6-a1a6-a1cb530aa8ac",
+          "data_classification_id": "86eb5638-4996-56ff-97be-11a4f1e646b6",
           "allowed_storage_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "allowed_processing_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "cross_border_transfer_basis_concept_id": "1a6e97ae-ffde-5cb0-9f3d-327bb13ac167",
@@ -6975,7 +6677,7 @@
           "id": "58a27395-4657-5cc3-a8b5-45b971b93ea6",
           "code": "DATA_RESIDENCY_POLICIES_011",
           "jurisdiction_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
-          "data_classification_id": "4826143d-81b0-5832-aa09-8cfce9037feb",
+          "data_classification_id": "73993ecd-0b7a-5add-bfc2-1e8e3e097df4",
           "allowed_storage_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "allowed_processing_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "cross_border_transfer_basis_concept_id": "1a6e97ae-ffde-5cb0-9f3d-327bb13ac167",
@@ -6994,7 +6696,7 @@
           "id": "f8cafdba-5901-5bef-8ea3-bf8ffaf35391",
           "code": "DATA_RESIDENCY_POLICIES_012",
           "jurisdiction_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
-          "data_classification_id": "3953c981-c19f-561c-9ce6-42542b5320cb",
+          "data_classification_id": "d9f368d1-f4f0-5dd0-b291-00b0cd6fb0dd",
           "allowed_storage_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "allowed_processing_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "cross_border_transfer_basis_concept_id": "1a6e97ae-ffde-5cb0-9f3d-327bb13ac167",
@@ -7013,7 +6715,7 @@
           "id": "7a9a08db-a157-519e-b693-74439f6b8c40",
           "code": "DATA_RESIDENCY_POLICIES_013",
           "jurisdiction_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
-          "data_classification_id": "683d6094-85d9-5efd-a2d1-fffa55bd3042",
+          "data_classification_id": "86eb5638-4996-56ff-97be-11a4f1e646b6",
           "allowed_storage_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "allowed_processing_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "cross_border_transfer_basis_concept_id": "1a6e97ae-ffde-5cb0-9f3d-327bb13ac167",
@@ -7032,7 +6734,7 @@
           "id": "bc23da01-5943-5939-ae0b-7db9626bdd77",
           "code": "DATA_RESIDENCY_POLICIES_014",
           "jurisdiction_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
-          "data_classification_id": "3d04ef4e-9361-5c46-8f78-e1b8f5bd7ca4",
+          "data_classification_id": "86eb5638-4996-56ff-97be-11a4f1e646b6",
           "allowed_storage_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "allowed_processing_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "cross_border_transfer_basis_concept_id": "1a6e97ae-ffde-5cb0-9f3d-327bb13ac167",
@@ -7051,7 +6753,7 @@
           "id": "89550651-d287-5d47-8084-024906b3f9e8",
           "code": "DATA_RESIDENCY_POLICIES_015",
           "jurisdiction_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
-          "data_classification_id": "d2795e89-a850-5422-af07-7557cc9225a8",
+          "data_classification_id": "99d6485f-e20d-5456-b1e3-d9cd1eb9e52b",
           "allowed_storage_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "allowed_processing_region_value_set_id": "29414106-2223-5e7d-9c22-d27a86810b0d",
           "cross_border_transfer_basis_concept_id": "1a6e97ae-ffde-5cb0-9f3d-327bb13ac167",
@@ -11135,7 +10837,7 @@
           "status_concept_id": "56e3c84c-b0ac-564a-bde4-a97090222c02",
           "vector_concept_id": "4229d269-65cd-53f0-8479-ca961f119f61",
           "assigned_to_user_id": "434f17f7-7b49-594c-8712-4641ebf330be",
-          "data_classification_id": "c32d09a0-1a38-55ba-8803-d3bb04b13a57",
+          "data_classification_id": "d9f368d1-f4f0-5dd0-b291-00b0cd6fb0dd",
           "created_at": "2026-08-31T05:30:00Z",
           "updated_at": "2026-09-07T15:02:00Z",
           "created_by_user_id": "e926fb49-acc4-5184-a3ab-7a8f13540da6",
@@ -11151,7 +10853,7 @@
           "status_concept_id": "ccb333f9-b5a6-5c2b-ae13-437238758e27",
           "vector_concept_id": "6ca9df0a-a996-52f6-8744-50de7b202ae3",
           "assigned_to_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
-          "data_classification_id": "caf71ae7-9439-55c5-a6b3-602f5b342421",
+          "data_classification_id": "99d6485f-e20d-5456-b1e3-d9cd1eb9e52b",
           "created_at": "2026-08-10T14:53:00Z",
           "updated_at": "2026-09-05T17:53:00Z",
           "created_by_user_id": "44a7a672-7b66-5f38-a595-69406745da5f",
@@ -11167,7 +10869,7 @@
           "status_concept_id": "56e3c84c-b0ac-564a-bde4-a97090222c02",
           "vector_concept_id": "a127de0b-b677-5215-98ba-33493c0a35fc",
           "assigned_to_user_id": "fde0c8db-0de4-590e-9e63-3a3fb5e42c75",
-          "data_classification_id": "66b1e67c-72ca-5af2-9409-8f6928648c8e",
+          "data_classification_id": "5e6fec65-8064-521d-9549-7b250c207f88",
           "created_at": "2026-09-06T14:34:00Z",
           "updated_at": "2026-09-27T08:13:00Z",
           "created_by_user_id": "def93011-0121-5301-9836-8788c30fa8aa",
@@ -11183,7 +10885,7 @@
           "status_concept_id": "56e3c84c-b0ac-564a-bde4-a97090222c02",
           "vector_concept_id": "c753a443-902d-510f-8bbd-3537b10e55b6",
           "assigned_to_user_id": "b408997d-9c68-5589-961f-eb5b2aece582",
-          "data_classification_id": "e5b61410-168c-58bc-96fe-89e6b29ec76d",
+          "data_classification_id": "73993ecd-0b7a-5add-bfc2-1e8e3e097df4",
           "created_at": "2026-10-11T09:23:00Z",
           "updated_at": "2026-08-23T06:53:00Z",
           "created_by_user_id": "55224953-7ad5-5e7b-b070-8beb020555d5",
@@ -11199,7 +10901,7 @@
           "status_concept_id": "ccb333f9-b5a6-5c2b-ae13-437238758e27",
           "vector_concept_id": "249df135-6446-53b1-931f-ce014fcd18f5",
           "assigned_to_user_id": "434f17f7-7b49-594c-8712-4641ebf330be",
-          "data_classification_id": "fb5e918f-0822-5d0a-9eb9-a346299214ef",
+          "data_classification_id": "9af8b4f8-ea85-5f12-ae90-e221e452ee84",
           "created_at": "2026-10-17T15:26:00Z",
           "updated_at": "2026-08-06T23:21:00Z",
           "created_by_user_id": "def93011-0121-5301-9836-8788c30fa8aa",
@@ -11215,7 +10917,7 @@
           "status_concept_id": "9885804f-9961-5cd5-b4f5-71bf31a8bab7",
           "vector_concept_id": "154cd89c-9457-5386-b5c3-531315957ed0",
           "assigned_to_user_id": "b34febe5-f547-58a4-871c-9705d259ce10",
-          "data_classification_id": "4826143d-81b0-5832-aa09-8cfce9037feb",
+          "data_classification_id": "006a987d-65ab-5cc0-90da-20107d3c1c5c",
           "created_at": "2026-09-21T07:41:00Z",
           "updated_at": "2026-10-17T00:54:00Z",
           "created_by_user_id": "992f3e2c-0ac1-5ec6-ac51-620c3605c96c",
@@ -11231,7 +10933,7 @@
           "status_concept_id": "9885804f-9961-5cd5-b4f5-71bf31a8bab7",
           "vector_concept_id": "969b8328-097a-5887-9009-4110b33bcf05",
           "assigned_to_user_id": "44a7a672-7b66-5f38-a595-69406745da5f",
-          "data_classification_id": "d69a25a9-5095-5275-befc-e83e4457f2e4",
+          "data_classification_id": "d9f368d1-f4f0-5dd0-b291-00b0cd6fb0dd",
           "created_at": "2026-08-12T18:46:00Z",
           "updated_at": "2026-10-11T10:16:00Z",
           "created_by_user_id": "d6f517dd-8a8c-5e24-80db-0414be3dcdaf",
@@ -11371,8 +11073,8 @@
       ]
     },
     "summary": {
-      "record_count": 408,
-      "entity_count": 27,
+      "record_count": 392,
+      "entity_count": 26,
       "populated_entity_count": 24,
       "scenario_count": 8,
       "seed_revision": "2.0.0-enhanced"

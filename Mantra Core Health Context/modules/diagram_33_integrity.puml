@@ -131,6 +131,26 @@ entity data_access_log <<APPEND_ONLY, REFERENCE_ONLY>> {
   DELETE : retention purge only (UC-10-09)
 }
 
+' v4.2.48 (centro de datos) — WORM de las cuatro <<LOG>> del modulo 67 (data_catalog).
+' Son el historial que un escaneo o una edicion jamas debe reescribir: eventos de cambio,
+' revisiones de ficha, decisiones de revision y evidencia. Se prohibe UPDATE y NO el DELETE
+' (decision D3, opcion b, igual que data_access_log): la limpieza de datos de prueba de la
+' integracion del catalogo (data-catalog-admin.int-spec.ts, repo de la API) borra estas
+' tablas, y UPDATE_DELETE la romperia. Endurecer a UPDATE_DELETE exige reescribir esa
+' limpieza en la misma entrega.
+entity catalog_change_events <<LOG, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+}
+entity catalog_annotation_revisions <<LOG, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+}
+entity catalog_review_decisions <<LOG, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+}
+entity catalog_evidence_items <<LOG, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+}
+
 inventory_stock_positions --> inventory_ledger_entries : atomic projection
 inventory_reservations --> inventory_ledger_entries : reserve/release
 patient_coverages --> claim_adjudication_versions : adjudication basis

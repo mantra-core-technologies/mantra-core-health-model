@@ -555,6 +555,12 @@ def resolve_fk_from_diagram(puml, schema, table, col):
         else:
             aliases[alias] = (schema, qualified)
 
+    # Entidades reales del propio módulo (sin alias): también son destino válido de una
+    # arista etiquetada. `setdefault`: un alias de cruce con el mismo nombre manda.
+    local_re = re.compile(r'^\s*entity\s+([A-Za-z0-9_]+)\s*(?:<<[^>]*>>)?\s*\{', re.MULTILINE)
+    for name in local_re.findall(text):
+        aliases.setdefault(name, (schema, name))
+
     relation_re = re.compile(
         r'^\s*([A-Za-z0-9_]+)\s+\S*--\S*\s+'
         r'([A-Za-z0-9_]+)\s*:\s*([A-Za-z_][A-Za-z0-9_]*)\s*$',

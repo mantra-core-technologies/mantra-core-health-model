@@ -49,6 +49,64 @@ comentados como TODO. FK envueltas en `DO … EXCEPTION WHEN duplicate_object` (
 
 ## 3. Estado actual del build
 
+### v4.2.48 — Centro de datos: mapa operaciones ↔ datos, WORM del catálogo y vocabulario de sensibilidad (2026-10-24)
+
+**Cambio de esquema: +5 tablas en `data_catalog` (módulo 67) y +4 barreras WORM (módulo 33).**
+Parche: `SQL/patches/2026-10-24_v4248_data_catalog_operaciones_y_worm.sql` (a mano, idempotente, fuera de
+`apply_all.sql`, como `2026-09-26_v4224_data_catalog.sql`). El número `v4248` no tiene colisión en los remotos.
+
+**Tablas nuevas** (`diagram_67_data_catalog.puml`): `catalog_operations`, `catalog_operation_impacts`,
+`catalog_processes`, `catalog_process_steps`, `catalog_process_step_operations`. Las columnas salen de los campos que el inventario de la API ya
+produce (`inventario/endpoints/*.json`, `inventario/flujos/procesos.json`); cada una lleva además
+`created_at`, `updated_at`, `created_by_user_id`, `updated_by_user_id` y `row_version`, como el resto del 67.
+Claves únicas: `operation_key`, `process_code` y (`process_id`, `ordinal`). FK: las del análisis más las de
+auditoría (sin `CASCADE`). Delta del módulo 67: 8 → 13 tablas.
+
+**Sin CHECK en los textos acotados** (`access_kind`, `risk_level`, `kind`, `observation_status`), por el mismo
+motivo que `catalog_annotations.sensitivity`. Valores esperados, medidos en el inventario el 2026-10-24:
+`access_kind` = `LEE` (6237) · `ESCRIBE` (2907) · `BORRA` (48), sobre 1541 operaciones; `kind` = `MODULO` (72) ·
+`CRITICO` (2), sobre 74 procesos; `risk_level` = `CRITICAL` · `HIGH` · `MEDIUM` · `LOW`. **El inventario emite
+`riesgo.nivel` = `ALTO` (182) · `MEDIO` (883) · `BAJO` (476), sin nivel crítico**: la correspondencia con los
+cuatro niveles la fija quien cargue la tabla.
+
+**Operaciones de una etapa en tabla puente.** En el inventario 205 de las 732 etapas listan más de una operación
+(y 3 ninguna), así que `catalog_process_steps` no lleva `operation_id`: las operaciones van en
+`catalog_process_step_operations` (`step_id`, `operation_id`, `ordinal`; UK `step_id`+`operation_id`).
+
+**Barrera WORM** (`diagram_33_integrity.puml` → `SQL/67_data_catalog/05_constraints.sql`, que no existía):
+`UPDATE : forbidden` en `catalog_change_events`, `catalog_annotation_revisions`, `catalog_review_decisions` y
+`catalog_evidence_items`. Se prohíbe UPDATE y **no** DELETE (como `audit.data_access_log`): la limpieza de la
+integración del catálogo borra estas tablas. Endurecer a `UPDATE_DELETE` pide reescribir esa limpieza en la
+misma entrega.
+
+**Generador.** `gen_ddl.resolve_fk_from_diagram` ahora también reconoce, como destino de una arista
+etiquetada con la columna, las entidades reales del propio módulo. Antes sólo veía alias de cruce, así que una
+FK intra-módulo sin nota en la bóveda (`SALUD/FK/`) quedaba «sin destino canónico». Las notas de la bóveda
+siguen mandando cuando existen. Las cuatro tablas nuevas declaran sus FK con aristas etiquetadas en el `.puml`.
+
+**Seeds** (`gen_seeds.py` → `seedsGenerales/modules/11_system_ops.seeds.json`): `system_ops.data_classifications`
+queda con exactamente nueve `code` en boot — `ANONYMIZED`, `PUBLIC`, `INTERNAL`, `PSEUDONYMIZED`, `PERSONAL`,
+`PHI_IDENTIFIER`, `PHI_SENSITIVE`, `PHI_SPECIAL`, `CREDENTIAL` — y ninguno en mock. Sale `FINANCIAL` y salen
+los de relleno (`PUBLIC_009`, `*_MOCK`, etc.). Los flags `is_pii`/`is_phi` ya no están invertidos
+(`PUBLIC` e `INTERNAL`, `false/false`; los tres `PHI_*`, `true/true`). `handling_rules_json` trae definición,
+marco normativo (HIPAA 45 CFR 160.103 y 164.514(b)(2); LGPD arts. 5, 11, 12 y 13), reglas de manejo y retención
+(historia clínica 20 años, Lei 13.787/2018 art. 6; auditoría y accesos 6 años, 45 CFR 164.316(b)(2) y 164.528;
+administrativos hasta el fin de la finalidad, LGPD arts. 15-16; el *legal hold* suspende todo plazo), sin montos.
+Se conservan los `id` de `PUBLIC`, `INTERNAL` y `CREDENTIAL`, porque `code` es UK. Los consumidores
+(`entity_registry`, `field_registry`, `data_residency_policies`, `security_incidents`) quedaron apuntando a
+los nueve por la fase de referencias. **La carga no borra los códigos viejos de una base ya poblada**
+(`load_seeds.py --refresh` sólo actualiza por `id`): retirarlos exige repuntar antes las filas que los
+referencian.
+
+**Fuera de alcance / pendiente.** La API sigue validando `SENSITIVITIES` con los seis valores anteriores
+(`catalog.constants.ts:34-41`): los nueve códigos los acepta la base y los rechaza la API hasta cambiar la
+constante. El espejo de la bóveda (`SALUD/Arquitectura/materializacion-fisica-bd.md`) queda para su dueño.
+`model-manifest.yaml` no sube de versión: sigue en 4.0.10, como en todos los parches v4.2.x anteriores, y
+subirla reescribiría la cabecera de todo el DDL generado.
+
+**Verificación.** `gen_ddl.py all`, `gen_integrity.py`, `gen_apply.py` y `gen_seeds.py` regenerados; sin base
+viva: el parche no se aplicó contra Postgres.
+
 ### Directorio oficial de salud de Bolivia en BOOT (2026-10-01) — SIN cambio de esquema
 
 Antes el directorio sembrado eran 642 establecimientos, **sólo de Santa Cruz**. Ahora

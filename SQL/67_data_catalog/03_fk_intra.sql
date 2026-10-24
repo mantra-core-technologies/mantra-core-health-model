@@ -85,3 +85,39 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_catalog_evidence_items_column_id" FOREIGN KEY ("column_id")
         REFERENCES "data_catalog"."catalog_columns" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "data_catalog"."catalog_operation_impacts"
+        ADD CONSTRAINT "fk_catalog_operation_impacts_operation_id" FOREIGN KEY ("operation_id")
+        REFERENCES "data_catalog"."catalog_operations" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "data_catalog"."catalog_operation_impacts"
+        ADD CONSTRAINT "fk_catalog_operation_impacts_object_id" FOREIGN KEY ("object_id")
+        REFERENCES "data_catalog"."catalog_objects" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "data_catalog"."catalog_operation_impacts"
+        ADD CONSTRAINT "fk_catalog_operation_impacts_column_id" FOREIGN KEY ("column_id")
+        REFERENCES "data_catalog"."catalog_columns" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "data_catalog"."catalog_process_steps"
+        ADD CONSTRAINT "fk_catalog_process_steps_process_id" FOREIGN KEY ("process_id")
+        REFERENCES "data_catalog"."catalog_processes" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "data_catalog"."catalog_process_step_operations"
+        ADD CONSTRAINT "fk_catalog_process_step_operations_step_id" FOREIGN KEY ("step_id")
+        REFERENCES "data_catalog"."catalog_process_steps" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "data_catalog"."catalog_process_step_operations"
+        ADD CONSTRAINT "fk_catalog_process_step_operations_operation_id" FOREIGN KEY ("operation_id")
+        REFERENCES "data_catalog"."catalog_operations" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
