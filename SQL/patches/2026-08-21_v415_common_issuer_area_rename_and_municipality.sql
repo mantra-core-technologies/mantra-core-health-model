@@ -39,13 +39,11 @@
 -- modules/diagram_02_common.puml` (entidad + su bloque <<INDEX_SET>>) y los
 -- destinos de FK en `SALUD/FK/FK common.{identifiers,addresses}.*.md`.
 --
--- PENDIENTE que este patch NO cubre: los value sets. La columna del
--- departamento se resuelve contra `VS_ADMINISTRATIVE_AREA`, que el paquete ya
--- siembra (hace falta `load_seeds.py --refresh` para que llegue a esta base).
--- La del municipio se resuelve contra `vs_bo_municipality` —340 conceptos— que
--- **todavía no existe en ninguna capa**: hasta que se siembre, la columna es
--- utilizable pero no hay catálogo que ofrecer. Ambas son nullable, así que eso
--- no rompe nada.
+-- Lo que este patch NO trae: los value sets. La columna del departamento se
+-- resuelve contra `VS_ADMINISTRATIVE_AREA` (9 departamentos) y la del municipio
+-- contra `VS_BO_MUNICIPALITY` (340 conceptos); los dos los siembra el paquete y
+-- llegan a una base viva con `load_seeds.py --refresh`.
+-- Ambas columnas son nullable: sin el catálogo cargado no rompe nada.
 -- ============================================================================
 
 -- --- 1a. Renombre, sólo donde exista el nombre viejo (v4.1.4) ---------------

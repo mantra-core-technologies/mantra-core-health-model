@@ -36,17 +36,16 @@
 -- ella hasta que su dueño escriba la suya.
 --
 -- ADVERTENCIA DE ALCANCE — QUIÉN VE LA IMAGEN. `common.files` entrega el
--- contenido a quien subió el archivo o a un rol de revisión. Para que un
--- paciente vea la imagen de un servicio hace falta una decisión de acceso que
--- todavía no se tomó (P-22-8 de la ficha TAREA-22). Este patch abre la columna;
--- no resuelve el permiso.
+-- contenido a quien subió el archivo o a un rol de revisión; que un paciente
+-- vea la imagen de un servicio es una decisión de acceso (P-22-8 de la ficha
+-- TAREA-22) ajena a este patch, que sólo abre la columna.
 --
 -- LO QUE ESTE PATCH NO TRAE, Y NO ES OLVIDO. Los términos y condiciones del
 -- servicio (FT-22-R04/R06/R07). El pedido les exige versión, edición e
 -- historial: un texto legal que se sobrescribe sin dejar rastro de qué versión
 -- aceptó cada paciente no cubre nada, que es lo contrario de lo que el modal de
--- confirmación promete. Eso es una tabla, no una columna, y está bloqueado
--- (B-2).
+-- confirmación promete. Eso es una tabla, no una columna: no entra en este
+-- patch.
 --
 -- DELTAS ESPERADOS sobre la base viva:
 --   columnas de billing.service_catalog  15 → 17

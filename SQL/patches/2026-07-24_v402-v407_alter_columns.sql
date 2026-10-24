@@ -39,9 +39,9 @@ ALTER TABLE "payments"."subscription_plans"
 -- (mismo NAMESPACE que seedsGenerales/tools/generate-deep-seeds.py::stable_uuid).
 -- code_system_version / state_concept / created_by: los mismos boot rows que usan
 -- los conceptos de arranque del módulo 03 (p. ej. el concepto ACTIVE).
--- Los conceptos PRO y MAX quedan a cargo del generador de seeds (TODO documentado
--- en physical-materialization.md — no se siembran aquí porque el backfill solo
--- necesita el tier por defecto).
+-- Los conceptos PRO y MAX los siembra el generador de seeds (VS_SUBSCRIPTION_PLAN_TIER
+-- trae FREE, PRO y MAX); no se siembran aquí porque el backfill solo necesita el
+-- tier por defecto.
 -- ----------------------------------------------------------------------------
 -- Las filas de las que este bloque cuelga se buscan POR SU CLAVE NATURAL, no
 -- por un uuid escrito acá. Los ids literales que tenía antes —la versión

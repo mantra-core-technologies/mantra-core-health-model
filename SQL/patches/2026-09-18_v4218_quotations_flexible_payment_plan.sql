@@ -7,8 +7,8 @@
 -- Contexto: T24 (cotizaciones). El propietario pidió quitar por completo la
 -- tasa de interés y la simulación de crédito: un consultorio no financia,
 -- reparte el precio de un tratamiento en cuotas a medida de la persona, cada
--- una con su propia fecha y su propio monto. Ver P35 en
--- mantra-core-health/PENDIENTES-BACKEND.md.
+-- una con su propia fecha y su propio monto (pedido P35 del frontend
+-- mantra-core-health).
 --
 -- QUÉ CAMBIA.
 --   billing.quotations
