@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS "billing"."invoice_lines" (
     "id" uuid NOT NULL,
     "invoice_id" uuid NOT NULL,
     "service_id" uuid,
+    "insurance_claim_line_id" uuid,
     "description" varchar,
     "quantity" numeric NOT NULL,
     "unit_price" numeric NOT NULL,

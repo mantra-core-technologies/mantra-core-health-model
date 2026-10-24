@@ -154,6 +154,10 @@ CREATE INDEX IF NOT EXISTS "ix_invoice_lines_invoice_id" ON "billing"."invoice_l
 
 CREATE INDEX IF NOT EXISTS "ix_invoice_lines_service_id" ON "billing"."invoice_lines" ("service_id");
 
+CREATE INDEX IF NOT EXISTS "ix_invoice_lines_insurance_claim_line_id" ON "billing"."invoice_lines" ("insurance_claim_line_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_invoice_lines_insurance_claim_line_id" ON "billing"."invoice_lines" ("insurance_claim_line_id") WHERE insurance_claim_line_id IS NOT NULL;
+
 CREATE INDEX IF NOT EXISTS "ix_invoice_lines_tax_code_id" ON "billing"."invoice_lines" ("tax_code_id");
 
 CREATE INDEX IF NOT EXISTS "ix_invoice_lines_income_account_id" ON "billing"."invoice_lines" ("income_account_id");

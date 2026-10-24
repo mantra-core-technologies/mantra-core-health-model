@@ -1,0 +1,18 @@
+{
+  "entidadesBoveda": 1356,
+  "conjuntosDeIndicesBoveda": 1245,
+  "entidadesMapeadas": 1263,
+  "entidadesFaltantes": 3,
+  "entidadesSobrantes": 55,
+  "columnasFaltantes": 6,
+  "columnasSobrantes": 28,
+  "tiposDivergentes": 0,
+  "obligatoriedadDivergente": 23,
+  "vistasNoMaterializadas": 78,
+  "indicesDeclarados": 7861,
+  "indicesEnCatalogo": 7793,
+  "fkDeclaradas": 6764,
+  "fkEnCatalogo": 6764
+}
+
+Informe completo: fidelity-audit.json

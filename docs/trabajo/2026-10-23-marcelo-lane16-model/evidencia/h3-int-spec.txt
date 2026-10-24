@@ -1,0 +1,26 @@
+(node:7540) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+[Nest] 7540  - 23/10/2026, 18:00:21    WARN [MikroORM] Object(5) {
+  msg: 'consulta lenta',
+  tookMs: 1587,
+  thresholdMs: 200,
+  rows: 1,
+  query: "select 1 from pg_database where datname = 'alovida'"
+}
+[Nest] 7540  - 23/10/2026, 18:00:22    WARN [MikroORM] Object(5) {
+  msg: 'consulta lenta',
+  tookMs: 405,
+  thresholdMs: 200,
+  rows: undefined,
+  query: 'insert into billing.invoice_lines\n         (id, invoice_id, insurance_claim_line_id, quantity, unit_price, created_at, updated_at)\n       values (?, ?, ?, 1, 10, now(), now())'
+}
+  console.log
+    LANE16 limpieza: filas con la marca LANE16-3a918fc7 restantes = 0
+
+      at Object.log (test/integration/billing-invoice-claim-link.int-spec.ts:175:15)
+
+Test Suites: 1 passed, 1 total
+Tests:       8 passed, 8 total
+Snapshots:   0 total
+Time:        24.218 s
+Ran all test suites matching billing-invoice-claim-link.

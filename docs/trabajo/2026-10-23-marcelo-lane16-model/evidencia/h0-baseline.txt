@@ -1,0 +1,10 @@
+# H0.S2.M1 baseline gen_ddl.py all sobre origin/dev eceb98f (SALUD_WORKSPACE=ws-lane16)
+archivos modificados por status (incluye ruido CRLF): 307
+archivos con diferencia real (git diff --numstat, EOL normalizado):
+3	3	SQL/26_insurance/03_fk_intra.sql
+9	9	SQL/26_insurance/90_fk_deferred.sql
+0	42	SQL/69_pharma_lab/03_fk_intra.sql
+12	14	SQL/69_pharma_lab/90_fk_deferred.sql
+16	8	SQL/_generation_report.md
+
+17_billing con diferencia real: 0

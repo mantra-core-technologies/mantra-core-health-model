@@ -1,0 +1,24 @@
+(node:26044) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:32404) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+Jest: importing JSON without an import attribute is deprecated and will be a hard error in the next major. Update the import of "C:\Alovida\wt-marcelo-api-lane16\src\common\seed\data\bolivia\insurance-carriers.dataset.json" (from C:\Alovida\wt-marcelo-api-lane16\src\common\seed\bolivia-insurance.catalog.ts): use `with { type: 'json' }` for static imports, or pass `{ with: { type: 'json' } }` as the second argument to dynamic `import()`.
+Jest: importing JSON without an import attribute is deprecated and will be a hard error in the next major. Update the import of "C:\Alovida\wt-marcelo-api-lane16\src\common\seed\data\bolivia\insurance-carrier-contact-channels.dataset.json" (from C:\Alovida\wt-marcelo-api-lane16\src\common\seed\bolivia-insurance.catalog.ts): use `with { type: 'json' }` for static imports, or pass `{ with: { type: 'json' } }` as the second argument to dynamic `import()`.
+Jest: importing JSON without an import attribute is deprecated and will be a hard error in the next major. Update the import of "C:\Alovida\wt-marcelo-api-lane16\src\common\seed\data\bolivia\insurance-carriers.dataset.json" (from C:\Alovida\wt-marcelo-api-lane16\src\common\seed\bolivia-insurance.catalog.ts): use `with { type: 'json' }` for static imports, or pass `{ with: { type: 'json' } }` as the second argument to dynamic `import()`.
+Jest: importing JSON without an import attribute is deprecated and will be a hard error in the next major. Update the import of "C:\Alovida\wt-marcelo-api-lane16\src\common\seed\data\bolivia\insurance-carrier-contact-channels.dataset.json" (from C:\Alovida\wt-marcelo-api-lane16\src\common\seed\bolivia-insurance.catalog.ts): use `with { type: 'json' }` for static imports, or pass `{ with: { type: 'json' } }` as the second argument to dynamic `import()`.
+(node:27668) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:29992) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+Jest: importing JSON without an import attribute is deprecated and will be a hard error in the next major. Update the import of "C:\Alovida\wt-marcelo-api-lane16\src\common\seed\data\bolivia\insurance-carriers.dataset.json" (from C:\Alovida\wt-marcelo-api-lane16\src\common\seed\bolivia-insurance.catalog.ts): use `with { type: 'json' }` for static imports, or pass `{ with: { type: 'json' } }` as the second argument to dynamic `import()`.
+Jest: importing JSON without an import attribute is deprecated and will be a hard error in the next major. Update the import of "C:\Alovida\wt-marcelo-api-lane16\src\common\seed\data\bolivia\insurance-carrier-contact-channels.dataset.json" (from C:\Alovida\wt-marcelo-api-lane16\src\common\seed\bolivia-insurance.catalog.ts): use `with { type: 'json' }` for static imports, or pass `{ with: { type: 'json' } }` as the second argument to dynamic `import()`.
+(node:14168) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:32276) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+Test Suites: 68 passed, 68 total
+Tests:       840 passed, 840 total
+Snapshots:   0 total
+Time:        37.379 s
+Ran all test suites matching modules/billing|modules/insurance|src/orm|src/architecture.

@@ -1,0 +1,12 @@
+## eslint (archivos tocados)
+C:\Alovida\wt-marcelo-api-lane16\src\orm\catalog\foreign-keys\billing.fk.ts
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+C:\Alovida\wt-marcelo-api-lane16\src\orm\catalog\indexes\billing.idx.ts
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+✖ 2 problems (0 errors, 2 warnings)
+
+eslint exit=0
+## typecheck
+typecheck exit=0

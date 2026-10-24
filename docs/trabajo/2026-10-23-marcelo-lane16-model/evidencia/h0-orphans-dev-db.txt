@@ -1,0 +1,9 @@
+◇ injected env (34) from ..\wt-marcelo-api-lane16\.env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+db_name_check => {"x":false,"ro":"on"}
+claims_total => {"n":0}
+bdl_claim_id_not_null => {"n":0}
+bdl_orphans => {"n":0}
+reimb_total => {"n":0}
+reimb_orphans => {"n":0}
+new_column_exists => {"n":0}
+existing_fks => {"n":0}
