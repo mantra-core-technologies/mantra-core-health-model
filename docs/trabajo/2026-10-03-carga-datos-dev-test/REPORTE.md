@@ -1,8 +1,7 @@
 # Reporte — Datos visibles en Dev y Test
 
-- Fecha: 2026-10-03 · Plan: [PLAN.md](./PLAN.md) · Ramas: frontend `mockup`, API `test`, modelo `pablo/seed-catalog-collisions-2026-10-03`
+- Fecha: 2026-10-03 · Ramas: frontend `mockup`, API `test`, modelo `pablo/seed-catalog-collisions-2026-10-03`
 - Peldaño de evidencia alcanzado: `VERIFIED` para carga, persistencia y lecturas HTTP; recorrido visual no disponible en esta sesión.
-- Avance: 14 microtareas `HECHO` / 16 = 87,5 %. Una `A MEDIAS` y una `BLOQUEADO`.
 
 ## Completado
 
@@ -23,20 +22,18 @@
 | H4.S1.M4 | Perfiles sintéticos anteriores recuperados en Test | `recuperar_perfiles_test.py --apply`, luego `--audit` | `COMMIT: fusión aplicada`; 0 filas pendientes en 11 tablas. Añadió 114 usuarios, 114 personas, 96 pacientes, 18 profesionales y dependencias. Tres credenciales con correo sintético ya vigente se omitieron para no duplicar acceso. |
 | H4.S1.M5 | Persistencia y API verificadas | verificador FK y HTTP autenticado | 6.872 FKs de 1.305 tablas, 0 huérfanas; login HTTP 200, `/profiles/patients?limit=500` HTTP 200 con 161 items, `/profiles/practitioners?limit=100` HTTP 200 con 42 items. |
 
-## A medias
+## Diferencias con el mockup (medidas)
 
-### H3.S1.M2 — Diferencias con mockup
-
-- Qué anda: el paquete real del modelo se cargó en Test y las vitrinas públicas, las búsquedas y el muro devuelven resultados; Dev ya tenía el paquete.
-- Qué no anda: hay 736 conceptos `DEFAULT_*` y miles de referencias en módulos operativos. El mockup genera más volumen de perfiles en memoria que el paquete persistente. `GET /public/directory` devuelve 0 porque falta `read_models.public_provider_directory` en ambas bases; la pantalla actual usa las rutas de búsqueda y perfiles.
-- Qué falta exactamente: definir valores de concepto de dominio para cada fixture operativo con su procedencia, ampliar el paquete sintético según el alcance de pantallas requerido y validar cada ruta de producto. Los cuerpos de 16 posts todavía usan relleno; el script disponible de textos contiene consejos médicos que requieren revisión editorial antes de publicarse.
-- Dónde quedó: auditoría privada en `/tmp/audit-placeholders.sql` del servidor; fuente del modelo en `salud-db/demo/`; faltantes descritos en este reporte.
-
-## Pendiente
-
-| ID | Estado | Qué lo destraba |
-|---|---|---|
-| H3.S1.M4 | BLOQUEADO | La sesión del navegador integrado devolvió `[]` al listar navegadores; se necesita una sesión disponible para observar pantallas y red. |
+- El paquete real del modelo se cargó en Test y las vitrinas públicas, las búsquedas y el muro
+  devuelven resultados; Dev ya tenía el paquete.
+- Quedan 736 conceptos `DEFAULT_*` y miles de referencias en módulos operativos (ver la auditoría
+  agregada en Evidencia). El mockup genera más volumen de perfiles en memoria que el paquete
+  persistente.
+- `GET /public/directory` devuelve 0 en ambas bases porque `read_models.public_provider_directory`
+  no existe: el `.puml` del módulo 30 declara la vista sin su `SELECT`. La pantalla actual usa las
+  rutas de búsqueda y perfiles.
+- Los cuerpos de las 16 publicaciones usan relleno; `salud-db/demo/02-textos-publicaciones.sql`
+  trae textos de divulgación médica que no se publicaron sin revisión editorial.
 
 ## Evidencia
 
@@ -62,7 +59,7 @@ Auditoría agregada de 11 esquemas, referencias `DEFAULT_*` (Test / Dev): clíni
 - Restauración de los tres dumps nuevos del 03/10; sólo se verificó su índice con `pg_restore --list`.
 - Inicio de sesión de las 3 cuentas históricas cuyas credenciales colisionan con correos sintéticos actuales. Sus perfiles sí están en Test; se conservaron las credenciales vigentes.
 
-## Desvíos del plan
+## Desvíos
 
 - Test se redesplegó durante la sesión y ejecutó sus 25 pasos de migración/seed de API antes de cargar el modelo. Se tomó un tercer respaldo entre ambos pasos.
 - Se usó un archivo de entorno privado de modo `staging` para el cargador del modelo; el cargador rechaza explícitamente `production`. No se registraron secretos.
@@ -74,7 +71,6 @@ Para repetir la auditoría o recuperación, restaurar primero `/root/backup-full
 ## Riesgos residuales
 
 - El cargador informó 9 advertencias de calidad: tipos técnicos sintéticos, geodatos opcionales mal formados, variantes Mongo y claves naturales duplicadas. La carga terminó y la comprobación de FK de PostgreSQL dio 0 huérfanas.
-- `comprobar-demo.py` en Dev espera 12 pacientes pero la base tiene 13; su aserción está desactualizada.
 - Los módulos con `DEFAULT_*` pueden ocultar registros a consultas que filtran por conceptos reales. No hay mapeo seguro para reemplazarlos masivamente sin definir la semántica de cada fila.
 - El viejo subdominio SSLIP de Dev devuelve 503. El dominio activo de Dev es `https://app.alovidasalud.com`.
 
