@@ -98,9 +98,9 @@ los nueve por la fase de referencias. **La carga no borra los códigos viejos de
 (`load_seeds.py --refresh` sólo actualiza por `id`): retirarlos exige repuntar antes las filas que los
 referencian.
 
-**Fuera de alcance / pendiente.** La API sigue validando `SENSITIVITIES` con los seis valores anteriores
-(`catalog.constants.ts:34-41`): los nueve códigos los acepta la base y los rechaza la API hasta cambiar la
-constante. El espejo de la bóveda (`SALUD/Arquitectura/materializacion-fisica-bd.md`) queda para su dueño.
+**Fuera de alcance.** La API valida `SENSITIVITIES` con los seis valores anteriores
+(`catalog.constants.ts:34-41`): la base acepta los nueve códigos y la API sólo los seis de esa constante.
+El espejo de la bóveda (`SALUD/Arquitectura/materializacion-fisica-bd.md`) no se tocó en este cambio.
 `model-manifest.yaml` no sube de versión: sigue en 4.0.10, como en todos los parches v4.2.x anteriores, y
 subirla reescribiría la cabecera de todo el DDL generado.
 

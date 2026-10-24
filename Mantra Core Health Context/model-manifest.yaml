@@ -173,12 +173,12 @@ model:
   inventory:
     modules_puml: 70
     schemas: 58
-    entity_declarations_total: 2841
-    table_like_elements: 1321
+    entity_declarations_total: 2855
+    table_like_elements: 1330
     view_elements: 81
-    index_sets: 1301
+    index_sets: 1306
     reference_only_stubs: 138
-    fk_references: 7076
+    fk_references: 7092
     note: >-
       Cifras producidas por tools/model_inventory.py (fuente única reproducible:
       clasifica cada `entity` en una sola clase, suma == total). v4.0 base
@@ -200,8 +200,8 @@ model:
       entity / 1245 table_like / 81 vistas / 1225 idx / 6672 FK / 120 ref /
       52 schemas. Recontado el 2026-10-24 sobre los módulos 00–69 (incluye las
       promociones posteriores: 64–69 y las columnas/tablas de v4.0.11–v4.2.x):
-      2841 entity / 1321 table_like / 81 vistas / 1301 idx /
-      7076 FK / 138 ref / 58 schemas; los conteos por módulo de
+      2855 entity / 1330 table_like / 81 vistas / 1306 idx /
+      7092 FK / 138 ref / 58 schemas; los conteos por módulo de
       `modules` salen de la misma corrida.
   database: PostgreSQL canonical + governed specialized stores
   rules:
@@ -503,7 +503,7 @@ modules:
   code: integrity
   title: Concurrency, Constraints and Integrity Matrix
   file: modules/diagram_33_integrity.puml
-  table_like_elements: 9
+  table_like_elements: 13
   view_elements: 0
   index_sets: 0
   status: active
@@ -779,9 +779,9 @@ modules:
   code: data_catalog
   title: Data Catalog and Column Governance
   file: modules/diagram_67_data_catalog.puml
-  table_like_elements: 8
+  table_like_elements: 13
   view_elements: 0
-  index_sets: 8
+  index_sets: 13
   status: active
 
 - number: 68
