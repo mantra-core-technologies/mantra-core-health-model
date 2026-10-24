@@ -1,6 +1,6 @@
 # Matriz de integridad y concurrencia — SALUD v4.0.10 (módulo 33)
 
-El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación cross-dominio. Cada regla se implementa en la **migración de la tabla dueña** (su módulo) y se repite aquí como checklist. Extraído fielmente del `.puml`.
+El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación cross-dominio. Cada regla se implementa en la **migración de la tabla dueña** (su módulo) y se repite aquí como referencia. Extraído fielmente del `.puml`.
 
 ## Política transaccional
 
@@ -129,5 +129,5 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 ## Cómo se materializa
 
 - **`SQL/_integrity/00_integrity_functions.sql`** — schema `integrity` + `forbid_mutation()` (guarda de inmutabilidad).
-- **`SQL/<NN>_<schema>/05_constraints.sql`** — por módulo dueño: guarda concreta para `UPDATE_DELETE: forbidden`; UK/CHECK/EXCLUDE como scaffold TODO (completar la expresión exacta contra la tabla, ya que el modelo las declara en prosa).
+- **`SQL/<NN>_<schema>/05_constraints.sql`** — por módulo dueño: guarda concreta para `UPDATE_DELETE: forbidden`, `CHECK_SQL` y `EXCLUDE_SQL`; las UK/CHECK/EXCLUDE en prosa quedan como comentario con la regla textual (el modelo no declara su expresión SQL) y la lista de índices únicos que la tabla ya tiene.
 - **Concurrencia** (`LOCK`/`SERIALIZABLE`/`SKIP LOCKED`/outbox) → capa de servicio (MikroORM Unit of Work + retry en `SQLSTATE 40001`), ver orm-mapping-guide §0.

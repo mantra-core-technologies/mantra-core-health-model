@@ -33,9 +33,9 @@
 --
 -- ── Alcance ─────────────────────────────────────────────────────────────────
 -- Cubre la mitad del pedido del módulo 33: «practitioner/**location** time
--- overlap». El solape por SALA (`branch_id`) sigue declarado como TODO en
--- `SQL/08_clinical/05_constraints.sql` y necesita su propia decisión: dos citas
--- en la misma sala a la vez es un conflicto distinto, con otras excepciones.
+-- overlap». El solape por SALA (`branch_id`) queda como regla en prosa en
+-- `SQL/08_clinical/05_constraints.sql`, fuera de este patch: dos citas en la
+-- misma sala a la vez es un conflicto distinto, con otras excepciones.
 --
 -- Canónico: `Mantra Core Health Context/modules/diagram_33_integrity.puml`
 --           (clave `EXCLUDE_SQL` sobre `appointments`)

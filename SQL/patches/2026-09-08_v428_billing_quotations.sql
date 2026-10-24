@@ -29,9 +29,9 @@
 -- columna `CHECK` en las 65 tablas que sí genera. La API mergeada declara
 -- `interest_calculation_method varchar NOT NULL CHECK IN ('FLAT','FRENCH')`.
 -- Este patch SÍ agrega ese `CHECK` a mano (no lo agrega el generador), para
--- no dejar la base viva más laxa que la API que ya corre contra ella. Si el
--- pipeline llegara a ganar soporte de `CHECK` más adelante, este patch queda
--- redundante con lo generado, no contradictorio.
+-- no dejar la base viva más laxa que la API que ya corre contra ella. Después
+-- el pipeline ganó `CHECK_SQL` (`gen_integrity.py`): un `CHECK` declarado ahí
+-- deja este patch redundante con lo generado, no contradictorio.
 --
 -- POR QUÉ `appointment_id` NO LLEVA FK. Así está en el DDL mergeado, con el
 -- comentario propio del autor original: «sin destino canónico, evita anillo»

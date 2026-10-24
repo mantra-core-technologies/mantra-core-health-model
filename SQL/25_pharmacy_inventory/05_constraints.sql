@@ -1,23 +1,25 @@
 -- SALUD v4.0.10 · schema pharmacy_inventory · constraints de integridad (módulo 33)
 -- Aplicar DESPUÉS de 04_indexes.sql y de SQL/_integrity/00_integrity_functions.sql.
--- Reglas textuales del modelo. Las UK/CHECK/EXCLUDE son SCAFFOLD (completar
--- columnas/expresión exactas contra la tabla): el modelo las declara en prosa.
+-- Reglas del módulo 33. Las UK/CHECK/EXCLUDE en prosa quedan como comentario:
+-- el modelo no declara su expresión SQL y no se inventa (temperatura-0).
+-- CHECK_SQL y EXCLUDE_SQL sí se materializan con la expresión del modelo.
 
 CREATE EXTENSION IF NOT EXISTS btree_gist;  -- requerido por EXCLUDE
 
 
 -- ═══ inventory_stock_positions ═══
 --   PK: id  (ya en 02_tables/04_indexes)
--- TODO UK (location + product + lot): ALTER TABLE "pharmacy_inventory"."inventory_stock_positions" ADD CONSTRAINT "uq_inventory_stock_positions_..." UNIQUE (...);
--- TODO CHECK (quantities >= 0): ALTER TABLE "pharmacy_inventory"."inventory_stock_positions" ADD CONSTRAINT "ck_inventory_stock_positions_..." CHECK (...);
+--   UK: location + product + lot  (en prosa; el módulo 33 no declara su expresión SQL)
+--   CHECK: quantities >= 0  (en prosa; el módulo 33 no declara su expresión SQL)
 --   LOCK: SELECT FOR UPDATE
 --   VERSION: row_version  (ya en 02_tables/04_indexes)
 
 -- ═══ inventory_ledger_entries ═══
--- TODO UK (pharmacy + idempotency_key): ALTER TABLE "pharmacy_inventory"."inventory_ledger_entries" ADD CONSTRAINT "uq_inventory_ledger_entries_..." UNIQUE (...);
--- TODO UK (pharmacy + ledger_sequence): ALTER TABLE "pharmacy_inventory"."inventory_ledger_entries" ADD CONSTRAINT "uq_inventory_ledger_entries_..." UNIQUE (...);
--- TODO CHECK (non-zero delta): ALTER TABLE "pharmacy_inventory"."inventory_ledger_entries" ADD CONSTRAINT "ck_inventory_ledger_entries_..." CHECK (...);
+--   UK: pharmacy + idempotency_key  (en prosa; el módulo 33 no declara su expresión SQL)
+--   UK: pharmacy + ledger_sequence  (en prosa; el módulo 33 no declara su expresión SQL)
+--   CHECK: non-zero delta  (en prosa; el módulo 33 no declara su expresión SQL)
 --   UPDATE_DELETE: forbidden
+--   índices únicos que la tabla ya tiene en 04_indexes: uq_inventory_ledger_entries_pharmacy_id_ledger_sequence, uq_inventory_ledger_entries_idempotency, uq_inventory_ledger_idempotency
 -- UPDATE_DELETE: forbidden → barrera física (append-only)
 REVOKE UPDATE, DELETE ON "pharmacy_inventory"."inventory_ledger_entries" FROM PUBLIC;
 DROP TRIGGER IF EXISTS trg_forbid_mutation ON "pharmacy_inventory"."inventory_ledger_entries";
@@ -26,6 +28,7 @@ CREATE TRIGGER trg_forbid_mutation BEFORE UPDATE OR DELETE ON "pharmacy_inventor
 
 
 -- ═══ inventory_reservations ═══
--- TODO UK (pharmacy + idempotency_key): ALTER TABLE "pharmacy_inventory"."inventory_reservations" ADD CONSTRAINT "uq_inventory_reservations_..." UNIQUE (...);
--- TODO EXCLUDE (active allocation overlap when required): ALTER TABLE "pharmacy_inventory"."inventory_reservations" ADD CONSTRAINT "ex_inventory_reservations_..." EXCLUDE USING gist (... WITH =, tstzrange(...) WITH &&) [WHERE ...];
+--   UK: pharmacy + idempotency_key  (en prosa; el módulo 33 no declara su expresión SQL)
+--   EXCLUDE: active allocation overlap when required  (en prosa; el módulo 33 no declara su expresión SQL)
 --   WORKER: expiration release
+--   índices únicos que la tabla ya tiene en 04_indexes: uq_inventory_reservations_idempotency, ux_inventory_reservations_pharmacy_site_pickup_code

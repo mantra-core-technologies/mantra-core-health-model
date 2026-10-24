@@ -64,10 +64,10 @@ docker exec mantra-redesa-minio-1 sh -c \
    mc cp --recursive /tmp/imgs/ local/mantra-redesa-health-files/p5-media/'
 ```
 
-## Lo que queda sin cubrir
+## Alcance
 
-Sólo se arregló lo que sostiene el directorio público y el muro. Siguen con
-conceptos placeholder, y por lo tanto invisibles para el producto, los datos de
-farmacia e inventario, facturación, contabilidad, agenda y el resto de los
-módulos operativos. El mismo patrón sirve para arreglarlos: encontrar el
-concepto real que la consulta pide y reemplazar el `DEFAULT_*`.
+Estos scripts cubren lo que sostiene el directorio público y el muro. Los datos
+de farmacia e inventario, facturación, contabilidad, agenda y el resto de los
+módulos operativos conservan los conceptos placeholder del mock, y por eso las
+consultas del producto no los ven. Para un módulo nuevo el patrón es el mismo:
+encontrar el concepto real que la consulta pide y reemplazar el `DEFAULT_*`.

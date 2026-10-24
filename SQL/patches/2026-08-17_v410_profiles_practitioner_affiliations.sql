@@ -14,7 +14,7 @@
 -- `GET`/`POST /profiles/practitioners/me/affiliations` mergeados en `dev`, pero
 -- la tabla nunca llegó al modelo canónico: los dos endpoints respondían 500 y la
 -- pestaña Trayectoria del perfil no tenía dónde persistir. La deuda estaba
--- documentada al inicio de ESTADO-Y-PENDIENTES.md del repo de la API.
+-- documentada en el registro de estado del repo de la API.
 --
 -- Este archivo es la salida de gen_ddl.py 05, no DDL escrito a mano: la tabla se
 -- declara en `Mantra Core Health Context/modules/diagram_05_profiles.puml` y el

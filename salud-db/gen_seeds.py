@@ -1688,8 +1688,8 @@ def canonical_signature_policies(docs) -> dict:
     `isSignatureRequired` devuelve false y la firma no se exige nunca. La política
     por defecto es deliberadamente la más amplia — jurisdicción, tipo de medicamento
     y canal en NULL (comodín) — porque el ajuste jurisdiccional fino es una decisión
-    legal PENDIENTE_DE_APROBACIÓN (vault: politica-firma-recetas-d05) y no se inventa
-    acá. Además la emisión solo evalúa `medicationType`: una política acotada por
+    legal (D-11, vault: politica-firma-recetas-d05) que este generador no toma ni
+    inventa. Además la emisión solo evalúa `medicationType`: una política acotada por
     jurisdicción o canal jamás matchearía.
     """
     table = "clinical.prescription_signature_policies"
@@ -3777,7 +3777,7 @@ def phase_refs(docs, ddl, fks, only_owned: bool = False) -> dict:
     derivada de los propios datos (por eso el paquete se auto-declaraba PASS).
 
     Si el padre no tiene ninguna fila en el paquete no se inventa nada: la columna se
-    anula si es nullable y, si no, se reporta como pendiente.
+    anula si es nullable y, si no, se reporta como irresoluble.
     """
     id_index = build_id_index(docs)
     id_sets = {k: set(v) for k, v in id_index.items()}

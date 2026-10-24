@@ -16,10 +16,9 @@
 -- `mantra_core_technologies_health_docs`). Por eso este archivo SÍ es DDL
 -- escrito a mano, no una salida regenerada — la única excepción a la regla que
 -- este carril pudo permitirse sin bloquear la entrega de FT-21 por completo.
--- Queda pendiente que quien mantiene el `.puml` declare `diagram_21_medical_
--- groups.puml` con este mismo contenido y lo audite contra este patch (ver
--- `known_gaps` del carril FT-21). El número de módulo `21` se eligió porque
--- `SQL/` no lo usa (salta de `20_diagnostics` a `22_organization_extensions`).
+-- Después se declaró en el modelo como `diagram_66_medical_groups.puml` (el 21
+-- es deployment); `SQL/66_medical_groups/` es la salida generada y este archivo
+-- queda como el patch de bases vivas.
 --
 -- QUÉ CIERRA. FT-21 «Corrección de grupo médico»: el grupo médico es un evento
 -- de equipo (servicio médico + fecha/lugar + roster con pago por cargo) con

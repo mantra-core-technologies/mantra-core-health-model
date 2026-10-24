@@ -46,7 +46,7 @@ CREATE INDEX IF NOT EXISTS "ix_person_account_links_updated_by_user_id" ON "prof
 
 CREATE INDEX IF NOT EXISTS "gist_person_account_links_effective_period" ON "profiles"."person_account_links" USING gist (tstzrange(valid_from, valid_to, '[)'));
 
--- TODO(predicado placeholder, definir funciones): CREATE UNIQUE INDEX IF NOT EXISTS "uq_person_account_links_active_user" ON "profiles"."person_account_links" ("user_id") WHERE status_concept_id = active_status();
+-- OMITIDO (predicado con función placeholder del modelo, sin definir en la base): CREATE UNIQUE INDEX IF NOT EXISTS "uq_person_account_links_active_user" ON "profiles"."person_account_links" ("user_id") WHERE status_concept_id = active_status();
 
 CREATE INDEX IF NOT EXISTS "ix_person_profiles_person_id" ON "profiles"."person_profiles" ("person_id");
 

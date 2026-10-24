@@ -134,37 +134,29 @@ Aggregate roots candidatos (con qué contextos limitan vía `<<REFERENCE_ONLY>>`
 
 ---
 
-## 7. Retos semánticos para el ORM (decidir al mapear)
+## 7. Retos semánticos para el ORM
 
-1. **Referencias polimórficas (`*_ref_id`)** — ~30+ columnas apuntan "a cualquier entidad del tipo `*_type_concept_id`", sin FK. El ORM **no** las expresa como relación; se resuelven en la aplicación por discriminador. Definir un catálogo explícito de tipos válidos por cada `*_ref_id`.
+1. **Referencias polimórficas (`*_ref_id`)** — ~30+ columnas apuntan "a cualquier entidad del tipo `*_type_concept_id`", sin FK. El ORM **no** las expresa como relación; se resuelven en la aplicación por discriminador.
 2. **`concept_id` ≠ enum tipado** — no esperar type-safety del motor; la validez la impone el `value_set` (BD). Opcional: constantes generadas por value_set para DX. (`orm-mapping-guide.md §2.2`.)
 3. **Perfiles = CTI** — `patient_profiles`/`health_practitioner_profiles` comparten PK con `persons`; mapear como 1:1, no como tabla suelta. (`orm-mapping-guide.md §1`.)
-4. **Temporalidad** — entidades con `valid_from/to` no son "una fila mutable"; decidir estrategia (append versión vs. cierre de período).
+4. **Temporalidad** — entidades con `valid_from/to` no son "una fila mutable"; la estrategia (append de versión o cierre de período) se elige por entidad.
 5. **Solo lectura / solo inserción** — `<<VIEW>>`/`<<MATERIALIZED_VIEW>>` no se escriben; `<<LOG>>`/`<<HISTORY>>`/`<<IMMUTABLE>>` no se actualizan. (`orm-mapping-guide.md §3`.)
 6. **Frontera relacional ↔ NoSQL** — no mapear módulos 54–63 como entidades; son proyección por outbox. (`orm-mapping-guide.md §4`.)
 7. **Casa única del dato clínico** — verificar que ningún valor codificable tenga doble fuente de verdad (Postgres y un store). (`orm-mapping-guide.md §5`.)
 
 ---
 
-## 8. Ambigüedades a resolver antes de generar (propias de una maqueta)
+## 8. Cómo se generó el ORM
 
-- **Refs polimórficas sin catálogo de tipos** — falta declarar explícitamente qué conceptos son válidos como `*_type_concept_id` de cada `*_ref_id`.
-- **Múltiples nociones de "actividad/interacción"** — `crm.crm_activities`, `marketing.marketing_touchpoints` y `messaging.delivery_tracking_events` modelan cosas parecidas; confirmar límites y no fusionarlos.
-- **Cruces cross-schema de v4.0.1** — las nuevas entidades se enlazan por **nombre** (aún no por stubs `<<REFERENCE_ONLY>>`); al formalizar, añadir las costuras para que el límite de contexto quede explícito.
-- **Doble fuente de verdad potencial** — signos vitales (serie vs. observación), documento FHIR (Mongo vs. campos estructurados), imagen (binario vs. metadatos): decidir la casa única (ver §7.7).
-
----
-
-## 9. Cómo usar esto para el ORM (secuencia sugerida)
-
-1. **Identificar aggregate roots** por contexto usando §5 y las costuras `<<REFERENCE_ONLY>>`.
-2. **Decidir value objects/embeddables** (§4) vs. entidades compartidas.
-3. **Clasificar relaciones**: FK normal (`@ManyToOne`/`@OneToMany`) vs. **polimórfica** (`*_ref_id`, resolución en app) vs. **CTI** (perfiles).
-4. **Aplicar las convenciones mecánicas** de `orm-mapping-guide.md` (PK, `@Version`, tenant filter, concept_id, stereotypes).
-5. **Generar por introspección** (`mikro-orm/entity-generator`) contra la base levantada desde el DDL, y afinar a mano solo lo no inferible (filtros, subscribers, tipos custom, polimórficos).
+Las entidades no salieron por introspección de la base: las genera `salud-db/gen_entities.py`
+desde los mismos `.puml` que el DDL (ADR-0022 del repo de la API; ver `orm-mapping-guide.md`
+§2.3). Las costuras `<<REFERENCE_ONLY>>`, los value objects (§4), la clasificación de relaciones
+(FK normal, polimórfica `*_ref_id` resuelta en la aplicación, CTI de perfiles) y la casa única del
+dato clínico (§7.7) son las que aplica ese generador y la capa de servicio.
 
 ---
 
-## 10. Lo que este documento NO decide
+## 9. Lo que este documento NO decide
 
-Queda para el **ADR del ORM** (ver `orm-mapping-guide.md §6`): versión de MikroORM y driver, estrategia de migraciones, diseño de filtros de tenant vs. RLS, tipos custom PostGIS, y política de regeneración ante cambios del modelo. Este análisis es el **mapa semántico**; el ADR es la **decisión de ingeniería**.
+Lo decide el **ADR del ORM** (`mantra-core-health-api/docs/adr/ADR-0002-orm-mikroorm.md`; ver
+`orm-mapping-guide.md §6`): versión de MikroORM y driver, estrategia de migraciones, diseño de filtros de tenant vs. RLS, tipos custom PostGIS, y política de regeneración ante cambios del modelo. Este análisis es el **mapa semántico**; el ADR es la **decisión de ingeniería**.

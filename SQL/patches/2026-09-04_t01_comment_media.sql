@@ -12,9 +12,9 @@
 --  `comment_id`: mismas columnas, mismo tipo, mismo patrón de FK. No hay
 --  `.puml` para esta tabla porque el módulo 19 completo se generó antes de
 --  este requisito; ver la nota "el flujo es `.puml` → `SQL/` → BD → ORM" en
---  `database/SQL/README.md`. Hasta que alguien actualice
---  `diagram_19_community.puml` y regenere, este patch es la única fuente de
---  la tabla — igual que los `ALTER` incrementales que ya viven acá.
+--  `database/SQL/README.md`. Después la tabla se declaró en
+--  `diagram_19_community.puml` y `SQL/19_community/` la genera; este patch
+--  queda para bases vivas, igual que los `ALTER` incrementales que viven acá.
 --
 --  Tres roles de medio, no dos: además de `MEDIA_ROLE_IMAGE` (ya existía para
 --  `post_media`) se sube el concepto con `MEDIA_ROLE_STICKER` y

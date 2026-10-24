@@ -1,15 +1,14 @@
 # Reporte — Carril 16 · Fase 1: vínculo canónico factura ↔ reclamo
 
-- Fecha: 2026-10-23 · Plan: [PLAN.md](./PLAN.md) · Rama(s): `marcelo/lane16-invoice-claim-model` (modelo, vault y API) · Base: `origin/dev` (modelo `eceb98f`, API `6ea11561`, vault `0b421692`)
+- Fecha: 2026-10-23 · Rama(s): `marcelo/lane16-invoice-claim-model` (modelo, vault y API) · Base: `origin/dev` (modelo `eceb98f`, API `6ea11561`, vault `0b421692`)
 - PR: modelo [#50](https://github.com/mantra-core-technologies/mantra-core-health-model/pull/50) · vault [#90](https://github.com/mdavila-2001/mantra_core_technologies_health_docs/pull/90) · API [#672](https://github.com/mdavila-2001/mantra-core-health-api/pull/672)
 - Peldaño de evidencia alcanzado: **TESTED**, con una comprobación contra la base real. No llega a `VERIFIED`: el flujo HTTP no se ejercitó y la regresión completa no se corrió. Mejor palabra permitida: «las pruebas dirigidas pasan; las constraints se comprobaron contra Postgres real».
-- Avance: **44 / 47 microtareas HECHO (93,6 %)**, calculado: 2 `DESCARTADO`, 1 `A MEDIAS`, 0 `TODO`.
 
 ## Completado
 
 | ID | Qué se logró | Comando | Resultado |
 |---|---|---|---|
-| H0.S1.M1–M5 | Worktrees de modelo y API en `origin/dev`, rama del vault, workspace sintético con junctions, `PLAN.md` en disco antes del primer edit | `git worktree list` · `python -c "import paths; …"` | `True` + ruta del worktree de la API |
+| H0.S1.M1–M5 | Worktrees de modelo y API en `origin/dev`, rama del vault, workspace sintético con junctions, plan en disco antes del primer edit | `git worktree list` · `python -c "import paths; …"` | `True` + ruta del worktree de la API |
 | H0.S2.M1 | Línea base del generador medida (con desvío, ver abajo) | `gen_ddl.py all` | `evidencia/h0-baseline.txt` |
 | H0.S2.M2 | Pruebas del generador en la línea base | `python -m unittest discover -s salud-db/tests` | `Ran 18 tests … OK` |
 | H0.S2.M3 | Huérfanos en la base de desarrollo, solo lectura (`BEGIN READ ONLY`) | script de solo lectura | `bdl_orphans 0 · reimb_orphans 0 · claims_total 0 · new_column_exists 0` |
@@ -30,25 +29,6 @@
 | H4.S1.M1–M3 | Tres PR contra `dev`, no draft | `gh pr create` · `gh pr view` | #50, #90, #672 |
 | H4.S1.M4 | Este reporte | — | — |
 | H4.S1.M5 | Entorno retirado: junctions y `C:\Alovida\ws-lane16` borradas (el vault conservó sus 6 784 notas), worktree de la API retirado, clon del vault devuelto a `dev`. El worktree del modelo se retira justo después del push de este reporte. Las tres ramas `marcelo/lane16-invoice-claim-model` se conservan en local y remoto | `cmd /c rmdir` · `git worktree remove` · `git switch dev` | `git worktree list` de la API solo muestra el clon principal; vault `dev...origin/dev` |
-
-## A medias
-
-### H3.S1.M5 — Copia vendorizada `database/SQL` en la API
-- Qué anda: los 3 archivos de `database/SQL/17_billing/` y el patch llevan exactamente los hunks del modelo (`+1`, `+4`, `+23`, más el patch de 69 líneas).
-- Qué no anda: `yarn ddl:sources` sale con **exit 1**. Informa que `database/SQL` ya estaba desfasada de `SQL/`: faltan 29, sobran 16, difieren 31 archivos. Es deriva previa, no de este cambio.
-- Qué falta exactamente: un `yarn db:vendor` completo (con `rsync`, disponible en WSL), en un PR aparte, que resincronice los ~76 archivos ajenos. No se hizo aquí para no arrastrarlos a este PR.
-- Dónde quedó: API `ac96a9c3`, PR #672.
-
-## Pendiente
-
-| ID | Estado | Qué lo destraba |
-|---|---|---|
-| `db:vendor` de la API | TODO, fuera de este corte | PR aparte que resincronice `database/SQL` con el modelo (29 faltantes, 16 sobrantes, 31 distintos) y deje `yarn ddl:sources` en exit 0. Requiere `rsync` (hay en WSL) |
-| Fase 2 del carril 16 | TODO, fuera de este corte | Cálculo de la parte del paciente en el servidor, consentimiento, desglose, objeción, control de IDOR por tenant, rol `BILLING`/`FINANCE`. Cada punto necesita decisión o trabajo propio |
-| PR hacia `test` | TODO, fuera de este corte | Decisión del propietario sobre si la API replica el cambio en `test`; el modelo no tiene esa rama |
-| H3.S3.M1 | DESCARTADO | Ver «Desvíos»: se reemplazó por una prueba a nivel ORM porque el filtro global ya traduce la FK a 422 |
-| H3.S1.M3 | DESCARTADO | Ver «Desvíos»: `docs:tsdoc` no se puede acotar y reescribe ~2 000 archivos |
-| Aprobación humana de #672 | BLOQUEADO | La protección de `dev` exige 1 revisión (`REVIEW_REQUIRED`). Depende de un revisor distinto del autor |
 
 ## Evidencia
 
@@ -90,16 +70,20 @@ Casos que cubre la prueba de integración (la base lo rechaza, no un mock): lín
 - **`yarn test` completo de la API y del front:** solo se corrió la regresión dirigida (840 pruebas). La puerta P0 (REQ-16-035) exige la suite completa.
 - **`yarn docs:validate`, `yarn docs:build`** y la reconstrucción desde cero (`rebuild_stack.py`, `db:verify-clean-init`) no se corrieron.
 - **PR hacia `test`:** no existe; el modelo no tiene rama `test` y la API tendría que replicarse aparte.
+- **Copia vendorizada de la API (`database/SQL`):** se copiaron sólo los hunks de este cambio (los 3
+  archivos de `17_billing/` y el patch). `yarn ddl:sources` sale con exit 1 por deriva previa de esa
+  copia (faltan 29, sobran 16, difieren 31 archivos); resincronizarla entera es un `yarn db:vendor`
+  completo que no entra en este PR.
 - **Reclamo de otro tenant (IDOR):** el vínculo no valida que la línea de reclamo pertenezca al mismo paciente o práctica que la factura. La base solo garantiza existencia y unicidad.
 - **Fase 2 completa:** cálculo de la parte del paciente en el servidor, factura generada desde ese cálculo, consentimiento, desglose, objeción, aviso. El rol `BILLING`/`FINANCE` sigue sin mapear en `role-mapping.ts`.
 
-## Desvíos del plan
+## Desvíos
 
 1. **H0.S2.M1 — la línea base no quedó limpia.** `gen_ddl.py all` sobre `origin/dev` sin tocar nada dejó 307 archivos modificados: 302 por fin de línea (CRLF que escribe Python en Windows; git los normaliza) y 5 con diferencias reales: `26_insurance` (2), `69_pharma_lab` (2) y `_generation_report.md`. Es la misma deriva previa del handoff de Codex (2.1). `17_billing` regeneró idéntico. Se revirtió todo; en cada regeneración posterior se descartó lo ajeno y solo se commiteó `17_billing`.
 2. **H3.S3.M1 — se descartó la validación 404 en el servicio.** Con la FK en la base, el filtro global ya traduce `ForeignKeyConstraintViolationException` a 422 `PRECONDITION_FAILED`. Es mejor que lo planeado: no acopla `billing` a entidades de `insurance` y no deja una ventana entre comprobar e insertar. Se reemplazó por la prueba a nivel ORM. **Cambio de contrato visible:** el reclamo inexistente pasa de 201 a 422.
 3. **H3.S1.M3 — no se corrió `yarn docs:tsdoc`.** No acepta alcance: reescribió 1 329 archivos y creó 685 READMEs. Se revirtió por completo y se agregó a mano el JSDoc de la propiedad nueva con la plantilla del generador.
 4. **H3.S1.M6 — `yarn docs:data:sync` se descartó y se editó una sola fila.** Mezclaba deriva ajena (`party_ratings`, `branches`, …).
-5. **H3.S1.M5 — hunks en lugar de `db:vendor`.** Ver «A medias». Copiar archivos enteros arrastraba 45+ líneas ajenas.
+5. **H3.S1.M5 — hunks en lugar de `db:vendor`.** Ver «No cubierto». Copiar archivos enteros arrastraba 45+ líneas ajenas.
 6. **Microtarea no prevista:** se actualizó la nota `E billing.idxset_invoice_lines` del vault, porque el catálogo de índices de la API sale de ahí y sin ella los dos índices nuevos no figuraban (`billing.idx.ts` no cambiaba). No estaba en el plan.
 7. **Catálogo ORM:** `yarn orm:catalog` trajo cambios en otros 17 archivos de la API (deriva del vault, incluso dos archivos borrados). Se descartaron; solo se conservan `billing.fk.ts` y `billing.idx.ts`.
 8. **`fidelity-audit.json`** (versionado) lo reescribe `orm:audit`; se revirtió.
@@ -119,7 +103,7 @@ Casos que cubre la prueba de integración (la base lo rechaza, no un mock): lín
 
 ## Decisiones y ambigüedades
 
-| # | Ambigüedad / decisión | Supuesto tomado | A quién confirmar |
+| # | Ambigüedad / decisión | Supuesto tomado | Dueño de la decisión |
 |---|---|---|---|
 | 1 | El pedido nombraba `diagram_25_billing.puml` | No existe; es `diagram_17_billing.puml` (el 25 es `pharmacy_inventory`) | Propietario |
 | 2 | `claims.service.int-spec.ts` junto al servicio | Jest solo toma `test/integration/**/*.int-spec.ts`; se creó `billing-invoice-claim-link.int-spec.ts` | Propietario |
@@ -128,5 +112,5 @@ Casos que cubre la prueba de integración (la base lo rechaza, no un mock): lín
 | 5 | «Un PR por base» (dev y test) | Solo `dev` en este corte | Propietario |
 | 6 | ADR-0021 dice que `database/` se eliminó; `database/README.md` lo reinstaura | Vale la excepción de copia vendorizada | Equipo de plataforma |
 | 7 | Cardinalidad 1:1, `ON DELETE CASCADE`, incluir `reimbursements.claim_id`, aplicar el patch en la base de desarrollo, tercer PR en el vault, ajustar el smoke | **Decididas por el propietario en esta sesión** | — |
-| 8 | Las notas obsoletas `MIGRATION_diagram_17b_financial_planning` (habla de un puente `billing.insurance_claims` que ya no existe) | Fuera de alcance; se deja anotado | Propietario |
-| 9 | `invoice_lines.service_id` y `reimbursements.invoice_id` siguen sin FK canónica | Fuera de alcance | Propietario |
+| 8 | Las notas obsoletas `MIGRATION_diagram_17b_financial_planning` (habla de un puente `billing.insurance_claims` que ya no existe) | Fuera de alcance de este corte | Propietario |
+| 9 | `invoice_lines.service_id` y `reimbursements.invoice_id` no tienen FK canónica | Fuera de alcance de este corte | Propietario |

@@ -85,10 +85,10 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - ⚠ índice 'gist_branches_location' omitido: columna(s) inexistente(s) ['geography_point'] en branches (¿tipo no-SQL descartado? requiere PostGIS)
 
 ### 05 · profiles
-- ⚠ índice 'uq_person_account_links_active_user': predicado referencia función(es) placeholder del modelo → emitido COMENTADO (definir función o reemplazar por IDs).
+- ⚠ índice 'uq_person_account_links_active_user': predicado referencia función(es) placeholder del modelo → emitido COMENTADO (la función no existe en la base).
 
 ### 08 · clinical
-- ⚠ índice 'gist_appointments_practitioner_time': predicado referencia función(es) placeholder del modelo → emitido COMENTADO (definir función o reemplazar por IDs).
+- ⚠ índice 'gist_appointments_practitioner_time': predicado referencia función(es) placeholder del modelo → emitido COMENTADO (la función no existe en la base).
 
 ### 09 · forms
 - `resource_fields_view` — vista (sin SELECT en el .puml)

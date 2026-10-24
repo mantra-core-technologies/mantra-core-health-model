@@ -69,7 +69,7 @@ leerse allí; el dibujo anterior solo destaca las relaciones principales del mó
   todos los flujos.
 - La existencia de un índice o FK no expresa por sí sola una regla clínica.
 - Las notas del modelo describen invariantes de custodia por tenant y del valor de observación;
-  algunas expresiones `CHECK`/`UNIQUE`/`EXCLUDE` figuran como scaffold pendiente de materialización.
-  Este catálogo no las da por aplicadas si no aparecen en el DDL activo.
+  algunas expresiones `CHECK`/`UNIQUE`/`EXCLUDE` están declaradas sólo en prosa (comentarios de
+  `05_constraints.sql`). Este catálogo no las da por aplicadas si no aparecen en el DDL activo.
 - La dispensación e inventario de farmacia se modelan en schemas propios; no se deben inferir de
   `clinical.medication_records`.

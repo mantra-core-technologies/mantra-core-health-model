@@ -1,7 +1,8 @@
 -- SALUD v4.0.10 · schema audit · constraints de integridad (módulo 33)
 -- Aplicar DESPUÉS de 04_indexes.sql y de SQL/_integrity/00_integrity_functions.sql.
--- Reglas textuales del modelo. Las UK/CHECK/EXCLUDE son SCAFFOLD (completar
--- columnas/expresión exactas contra la tabla): el modelo las declara en prosa.
+-- Reglas del módulo 33. Las UK/CHECK/EXCLUDE en prosa quedan como comentario:
+-- el modelo no declara su expresión SQL y no se inventa (temperatura-0).
+-- CHECK_SQL y EXCLUDE_SQL sí se materializan con la expresión del modelo.
 
 
 -- ═══ audit_log ═══

@@ -39,8 +39,9 @@ SQL/
 El módulo 33 (`integrity`) no tiene tablas: es la matriz de concurrencia/integridad. Se
 materializó en `_integrity/integrity-matrix.md` (documento accionable + política transaccional)
 y en un `05_constraints.sql` por módulo dueño. Las guardas de inmutabilidad
-(`UPDATE_DELETE: forbidden`) son **concretas**; las `UK/CHECK/EXCLUDE` son **scaffold TODO**
-con la regla textual del modelo (declaradas en prosa → no se inventa la expresión exacta).
+(`UPDATE_DELETE: forbidden`) y las `CHECK_SQL`/`EXCLUDE_SQL` son **concretas**; las
+`UK/CHECK/EXCLUDE` en prosa quedan como **comentario** con la regla textual del modelo (no se
+inventa la expresión exacta), junto a los índices únicos que la tabla ya tiene.
 
 Todos los scripts son **idempotentes** (`IF NOT EXISTS` / `IF NOT EXISTS` en índices),
 así que reaplicarlos no rompe nada. Las sentencias `ALTER TABLE … ADD CONSTRAINT`
@@ -63,8 +64,8 @@ un bloque de reintento si necesitás re-correrlo.
   modelo y cerrar esa dirección de cambio. Lo emite `column_default()` en `gen_ddl.py`.
   Verificable: `select count(*) from information_schema.columns where column_default is not
   null and column_name <> 'row_version'` debe dar **0**.
-- Único enum nativo: `terminology.technical_data_type` (ver `00_shared/00_types.sql`;
-  valores pendientes de definir).
+- Único enum nativo: `terminology.technical_data_type` (ver `00_shared/00_types.sql`; su
+  vocabulario es `TECHNICAL_DATA_TYPES` de `gen_ddl.py`, el mismo que usa la API en `forms`).
 - **FK inferidas por convención** (32): cuando el vault no tenía destino, se resuelve por
   convención (`*_concept_id→terminology.catalog_concepts`, `*_user_id→iam.users`,
   `tenant_id→directory.tenants`, `<x>_id→<x>s` si es unívoco). Van marcadas
