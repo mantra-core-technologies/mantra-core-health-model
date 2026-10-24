@@ -181,3 +181,89 @@ CREATE TABLE IF NOT EXISTS "data_catalog"."catalog_evidence_items" (
     "created_at" timestamptz NOT NULL,
     CONSTRAINT "pk_catalog_evidence_items" PRIMARY KEY ("id")
 );
+
+CREATE TABLE IF NOT EXISTS "data_catalog"."catalog_operations" (
+    "id" uuid NOT NULL,
+    "source_code" varchar NOT NULL,
+    "operation_key" varchar NOT NULL,
+    "http_method" varchar NOT NULL,
+    "route_template" varchar NOT NULL,
+    "module_code" varchar,
+    "controller_name" varchar,
+    "handler_name" varchar,
+    "source_ref" varchar,
+    "is_public" boolean NOT NULL,
+    "required_roles" jsonb,
+    "risk_level" varchar NOT NULL,
+    "observation_status" varchar NOT NULL,
+    "technical_hash" varchar,
+    "first_seen_at" timestamptz NOT NULL,
+    "last_seen_at" timestamptz NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_catalog_operations" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "data_catalog"."catalog_operation_impacts" (
+    "id" uuid NOT NULL,
+    "operation_id" uuid NOT NULL,
+    "object_id" uuid NOT NULL,
+    "column_id" uuid,
+    "access_kind" varchar NOT NULL,
+    "access_detail" varchar,
+    "confidence" varchar,
+    "call_path" jsonb,
+    "source_ref" varchar,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_catalog_operation_impacts" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "data_catalog"."catalog_processes" (
+    "id" uuid NOT NULL,
+    "process_code" varchar NOT NULL,
+    "kind" varchar NOT NULL,
+    "name" varchar NOT NULL,
+    "module_code" varchar,
+    "purpose" text,
+    "source_ref" text,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_catalog_processes" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "data_catalog"."catalog_process_steps" (
+    "id" uuid NOT NULL,
+    "process_id" uuid NOT NULL,
+    "ordinal" integer NOT NULL,
+    "step_code" varchar NOT NULL,
+    "name" varchar NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_catalog_process_steps" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "data_catalog"."catalog_process_step_operations" (
+    "id" uuid NOT NULL,
+    "step_id" uuid NOT NULL,
+    "operation_id" uuid NOT NULL,
+    "ordinal" integer NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_catalog_process_step_operations" PRIMARY KEY ("id")
+);

@@ -239,6 +239,143 @@ entity "INDEXES · catalog_evidence_items" as idxset_catalog_evidence_items <<IN
 }
 catalog_evidence_items .. idxset_catalog_evidence_items : indexed by
 
+' ── v4.2.48 · mapa operaciones ↔ datos (centro de datos) ────────────────────────────────
+' Cuatro tablas para guardar lo que el inventario de la API ya produce: qué operación HTTP
+' existe, qué objetos del catálogo toca y con qué acceso, y los procesos que las agrupan.
+' Las columnas salen de los campos del inventario (`inventario/endpoints/*.json` y
+' `inventario/flujos/procesos.json`, repo de la API); ninguna se inventa acá.
+'
+' Sin CHECK sobre los textos acotados (mismo criterio que `catalog_annotations.sensitivity`,
+' ver SQL/patches/2026-09-26_v4224_data_catalog.sql): el ORM crea las tablas en una base
+' vacía sin CHECKs, y ponerlos sólo en el DDL haría que dos bases «iguales» validen distinto.
+' Los valores se validan en el dominio del módulo. Valores esperados:
+'   access_kind  = LEE | ESCRIBE | BORRA        (medidos en `tablas[].operacion`: 6237 / 2907 / 48
+'                                                 sobre 1541 operaciones, 2026-10-24)
+'   kind         = MODULO | CRITICO             (medidos en `procesos[].tipo`: 72 / 2 sobre 74)
+'   risk_level   = CRITICAL | HIGH | MEDIUM | LOW   (analisis-2026-10-23 §5: CRITICAL exportación
+'                  masiva de PHI, cambio de permisos o break-glass; HIGH escritura de PHI;
+'                  MEDIUM lectura de PHI de un paciente; LOW sin PHI). TODO: el inventario hoy
+'                  emite `riesgo.nivel` = ALTO | MEDIO | BAJO (sin CRITICO); la correspondencia
+'                  la fija quien cargue la tabla, no este diagrama.
+'   observation_status = OBSERVED | NOT_OBSERVED | RETIRED  (igual que catalog_objects)
+' Una etapa puede citar varias operaciones (205 de 732 etapas del inventario): van en la tabla
+' puente `catalog_process_step_operations`, con `ordinal` para conservar el orden del inventario.
+
+entity catalog_operations {
+  * id : uuid <<PK>>
+  * source_code : varchar
+  * operation_key : varchar
+  * http_method : varchar
+  * route_template : varchar
+    module_code : varchar
+    controller_name : varchar
+    handler_name : varchar
+    source_ref : varchar
+  * is_public : boolean
+    required_roles : jsonb
+  * risk_level : varchar
+  * observation_status : varchar
+    technical_hash : varchar
+  * first_seen_at : timestamptz
+  * last_seen_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity "INDEXES · catalog_operations" as idxset_catalog_operations <<INDEX_SET>> {
+  PK pk_catalog_operations : (id) UNIQUE BTREE
+  UX ux_data_catalog_operations_key : (operation_key) UNIQUE BTREE
+}
+catalog_operations .. idxset_catalog_operations : indexed by
+
+entity catalog_operation_impacts {
+  * id : uuid <<PK>>
+  * operation_id : uuid <<FK>>
+  * object_id : uuid <<FK>>
+    column_id : uuid <<FK>>
+  * access_kind : varchar
+    access_detail : varchar
+    confidence : varchar
+    call_path : jsonb
+    source_ref : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity "INDEXES · catalog_operation_impacts" as idxset_catalog_operation_impacts <<INDEX_SET>> {
+  PK pk_catalog_operation_impacts : (id) UNIQUE BTREE
+  IX ix_data_catalog_operation_impacts_operation_id : (operation_id) BTREE
+  IX ix_data_catalog_operation_impacts_object_id : (object_id) BTREE
+  IX ix_data_catalog_operation_impacts_column_id : (column_id) BTREE
+}
+catalog_operation_impacts .. idxset_catalog_operation_impacts : indexed by
+
+entity catalog_processes {
+  * id : uuid <<PK>>
+  * process_code : varchar
+  * kind : varchar
+  * name : varchar
+    module_code : varchar
+    purpose : text
+    source_ref : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity "INDEXES · catalog_processes" as idxset_catalog_processes <<INDEX_SET>> {
+  PK pk_catalog_processes : (id) UNIQUE BTREE
+  UX ux_data_catalog_processes_code : (process_code) UNIQUE BTREE
+}
+catalog_processes .. idxset_catalog_processes : indexed by
+
+entity catalog_process_steps {
+  * id : uuid <<PK>>
+  * process_id : uuid <<FK>>
+  * ordinal : integer
+  * step_code : varchar
+  * name : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity "INDEXES · catalog_process_steps" as idxset_catalog_process_steps <<INDEX_SET>> {
+  PK pk_catalog_process_steps : (id) UNIQUE BTREE
+  UX ux_data_catalog_process_steps_ordinal : (process_id, ordinal) UNIQUE BTREE
+}
+catalog_process_steps .. idxset_catalog_process_steps : indexed by
+
+entity catalog_process_step_operations {
+  * id : uuid <<PK>>
+  * step_id : uuid <<FK>>
+  * operation_id : uuid <<FK>>
+  * ordinal : integer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity "INDEXES · catalog_process_step_operations" as idxset_catalog_process_step_operations <<INDEX_SET>> {
+  PK pk_catalog_process_step_operations : (id) UNIQUE BTREE
+  UX ux_data_catalog_process_step_operations_pair : (step_id, operation_id) UNIQUE BTREE
+  IX ix_data_catalog_process_step_operations_step_id : (step_id) BTREE
+  IX ix_data_catalog_process_step_operations_operation_id : (operation_id) BTREE
+}
+catalog_process_step_operations .. idxset_catalog_process_step_operations : indexed by
+
 catalog_scan_runs ||--o{ catalog_objects
 catalog_scan_runs ||--o{ catalog_columns
 catalog_objects ||--o{ catalog_columns
@@ -251,4 +388,13 @@ catalog_annotations ||--o{ catalog_annotation_revisions
 catalog_annotations ||--o{ catalog_review_decisions
 catalog_objects ||--o{ catalog_evidence_items
 catalog_columns ||--o{ catalog_evidence_items
+' Las FK de las cuatro tablas del mapa operaciones <-> datos van con la columna como
+' etiqueta: `gen_ddl.resolve_fk_from_diagram` resuelve el destino por esa etiqueta, sin
+' depender de una nota FK de la boveda.
+catalog_operation_impacts }o--|| catalog_operations : operation_id
+catalog_operation_impacts }o--|| catalog_objects : object_id
+catalog_operation_impacts }o--o| catalog_columns : column_id
+catalog_process_steps }o--|| catalog_processes : process_id
+catalog_process_step_operations }o--|| catalog_process_steps : step_id
+catalog_process_step_operations }o--|| catalog_operations : operation_id
 @enduml

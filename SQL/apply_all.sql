@@ -632,6 +632,8 @@
 \ir 67_data_catalog/03_fk_intra.sql
 \echo >>> 67_data_catalog/04_indexes.sql
 \ir 67_data_catalog/04_indexes.sql
+\echo >>> 67_data_catalog/05_constraints.sql
+\ir 67_data_catalog/05_constraints.sql
 
 -- ═══ módulo 68_qa_execution ═══
 \echo >>> 68_qa_execution/01_schema.sql

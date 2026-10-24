@@ -31,3 +31,21 @@ CREATE INDEX IF NOT EXISTS "ix_data_catalog_review_decisions_annotation" ON "dat
 CREATE INDEX IF NOT EXISTS "ix_data_catalog_evidence_items_object_id" ON "data_catalog"."catalog_evidence_items" ("object_id");
 
 CREATE INDEX IF NOT EXISTS "ix_data_catalog_evidence_items_column_id" ON "data_catalog"."catalog_evidence_items" ("column_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_data_catalog_operations_key" ON "data_catalog"."catalog_operations" ("operation_key");
+
+CREATE INDEX IF NOT EXISTS "ix_data_catalog_operation_impacts_operation_id" ON "data_catalog"."catalog_operation_impacts" ("operation_id");
+
+CREATE INDEX IF NOT EXISTS "ix_data_catalog_operation_impacts_object_id" ON "data_catalog"."catalog_operation_impacts" ("object_id");
+
+CREATE INDEX IF NOT EXISTS "ix_data_catalog_operation_impacts_column_id" ON "data_catalog"."catalog_operation_impacts" ("column_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_data_catalog_processes_code" ON "data_catalog"."catalog_processes" ("process_code");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_data_catalog_process_steps_ordinal" ON "data_catalog"."catalog_process_steps" ("process_id", "ordinal");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_data_catalog_process_step_operations_pair" ON "data_catalog"."catalog_process_step_operations" ("step_id", "operation_id");
+
+CREATE INDEX IF NOT EXISTS "ix_data_catalog_process_step_operations_step_id" ON "data_catalog"."catalog_process_step_operations" ("step_id");
+
+CREATE INDEX IF NOT EXISTS "ix_data_catalog_process_step_operations_operation_id" ON "data_catalog"."catalog_process_step_operations" ("operation_id");
