@@ -254,7 +254,7 @@ catalog_evidence_items .. idxset_catalog_evidence_items : indexed by
 '   kind         = MODULO | CRITICO             (medidos en `procesos[].tipo`: 72 / 2 sobre 74)
 '   risk_level   = CRITICAL | HIGH | MEDIUM | LOW   (analisis-2026-10-23 §5: CRITICAL exportación
 '                  masiva de PHI, cambio de permisos o break-glass; HIGH escritura de PHI;
-'                  MEDIUM lectura de PHI de un paciente; LOW sin PHI). TODO: el inventario hoy
+'                  MEDIUM lectura de PHI de un paciente; LOW sin PHI). El inventario hoy
 '                  emite `riesgo.nivel` = ALTO | MEDIO | BAJO (sin CRITICO); la correspondencia
 '                  la fija quien cargue la tabla, no este diagrama.
 '   observation_status = OBSERVED | NOT_OBSERVED | RETIRED  (igual que catalog_objects)
