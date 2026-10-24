@@ -218,7 +218,7 @@ def insert_records(conn, schema, table, records, report, refresh=False):
             if missing:
                 skipped += len(group)
                 report.warn(f"{schema}.{table}: {len(group)} recs sin NOT NULL {sorted(missing)}"
-                            " — saltados (TODO: defecto del paquete de seeds)")
+                            " — saltados (el paquete de seeds no trae esas columnas)")
                 continue
             columns = sorted(key_set)
             col_list = ", ".join(f'"{c}"' for c in columns)
@@ -261,8 +261,9 @@ def run_module_transaction(conn, action):
 
 # ----------------------------------------------------------------- enum technical_data_type
 def ensure_enum_values(conn, report, only=None):
-    """El único enum nativo del modelo quedó vacío en el DDL (valores TODO, no estaban en el
-    contexto); los seeds traen valores → se agregan aditiva e idempotentemente antes de cargar."""
+    """El único enum nativo del modelo nace en el DDL con `gen_ddl.TECHNICAL_DATA_TYPES`; el
+    mock de `seedsGenerales` trae además valores sintéticos (`*_data_type`) fuera de ese
+    vocabulario → se agregan aditiva e idempotentemente antes de cargar, con aviso."""
     enum_columns = conn.execute(
         "SELECT table_name, column_name FROM information_schema.columns"
         " WHERE udt_schema = 'terminology' AND udt_name = 'technical_data_type'").fetchall()
@@ -289,7 +290,7 @@ def ensure_enum_values(conn, report, only=None):
     conn.commit()
     if missing:
         report.warn(f"technical_data_type: {len(missing)} valores agregados desde los seeds"
-                    " (placeholders sintéticos — vocabulario canónico §3.2 sigue TODO)")
+                    " (placeholders sintéticos del mock, fuera de gen_ddl.TECHNICAL_DATA_TYPES)")
 
 
 # ----------------------------------------------------------------- seedsGenerales (PG)
@@ -429,7 +430,7 @@ def load_mongo(cfg, report, only=None):
     # Los mock traen strings donde los validadores $jsonSchema exigen binData/date/array:
     # se insertan con bypass (los validadores quedan activos para la API).
     report.warn("55_document_store mock: tipos string vs validadores $jsonSchema (binData/date/"
-                "array) — insertados con bypass_document_validation (TODO: regenerar mock con tipos BSON)")
+                "array) — insertados con bypass_document_validation (el mock trae tipos string, no BSON)")
     from pymongo.errors import BulkWriteError
     DUPLICATE_KEY = 11000
     for entity in data["mock"]["load_order"]:
