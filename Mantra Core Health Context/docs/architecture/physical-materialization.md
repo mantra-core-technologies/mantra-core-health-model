@@ -49,6 +49,32 @@ comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_obje
 
 ## 3. Estado actual del build
 
+### v4.2.49 — Servicios recibidos del paciente: intervenciones y vacunas como tipos de servicio (2026-10-25)
+
+**Cambio de esquema: +1 tabla en `clinical` (módulo 08) y +1 CHECK (módulo 33).**
+Parche: `SQL/patches/2026-10-25_v4249_clinical_received_services.sql` (a mano, idempotente, fuera de
+`apply_all.sql`; trae también el backfill de lo ya registrado). El número `v4249` no tiene colisión en los remotos.
+
+**Tabla nueva** (`diagram_08_clinical.puml`): `received_services`, una fila por servicio que el paciente recibió.
+El tipo (`service_type_concept_id`) es un concepto del value set `vs_received_service_type`
+(`INTERVENTION`, `VACCINATION`), sembrado por `gen_seeds.py`: un tipo nuevo se agrega como concepto, sin migrar.
+El origen es `source_procedure_id` (`clinical.procedures`), `source_immunization_id` (`clinical.immunizations`) o
+`procedure_case_id` (caso M53, que comparte fila con su procedimiento principal); cada uno es único cuando no es
+nulo, así que la proyección es idempotente. Costo y cobertura **no se copian**: `service_catalog_id`,
+`invoice_line_id` e `insurance_claim_line_id` apuntan a `billing` e `insurance`, que siguen siendo dueños del
+importe, y se llenan solo cuando el cargo del servicio es inequívoco.
+
+**CHECK** (`diagram_33_integrity.puml`): `ck_received_services_has_source`, al menos uno de los tres orígenes.
+
+**Delta del módulo 08:** 22 → 23 tablas, 22 → 23 conjuntos de índices, +17 FK, +19 índices, +7 stubs de destino
+(`REFERENCE_ONLY`). Inventario: 2855 → 2865 declaraciones · 1330 → 1331 tablas · 1306 → 1307 index sets ·
+138 → 146 stubs · 7092 → 7109 FK. `SEED_REVISION` pasa a `2.7.0-v4.2.49`.
+
+**Verificado** con PostgreSQL 16: el DDL generado (`apply_all.sql` + `apply_deferred.sql`) aplica sin errores y
+deja 19 restricciones en la tabla (PK, 17 FK, CHECK). El parche corrió dos veces sobre filas de prueba: la primera
+insertó un procedimiento (con su caso y su cargo en una sola fila), una vacuna y un caso M53 sin procedimiento; la
+segunda insertó 0. No se aplicó contra una base con datos reales.
+
 ### v4.2.48 — Centro de datos: mapa operaciones ↔ datos, WORM del catálogo y vocabulario de sensibilidad (2026-10-24)
 
 **Cambio de esquema: +5 tablas en `data_catalog` (módulo 67) y +4 barreras WORM (módulo 33).**

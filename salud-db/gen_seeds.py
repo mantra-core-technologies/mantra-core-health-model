@@ -70,7 +70,7 @@ VAULT = paths.VAULT
 MODEL_VERSION = "4.0.7"
 SOURCE_MODEL_VERSION = "4.0.9"
 RELEASE_LABEL = "4.0.9"
-SEED_REVISION = "2.6.0-v4.2.30"
+SEED_REVISION = "2.7.0-v4.2.49"
 # Namespace uuid5 por patch, misma regla que MODEL_VERSION: identifica las filas de las
 # 5 tablas ALOVIDA ya sembradas. v4.0.9 no añade uno propio porque no trae tablas que
 # sembrar — `iam.email_verifications` y `iam.password_resets` guardan tokens de runtime
@@ -518,6 +518,18 @@ M7_CATALOGS = [
             ("chart:DOC_CATEGORY_CONSENT", "Document category: informed consent", "Consentimiento informado", False),
             ("chart:DOC_CATEGORY_CERTIFICATE", "Document category: certificate", "Certificado", False),
             ("chart:DOC_CATEGORY_DISCHARGE", "Document category: discharge summary", "Epicrisis o alta", False),
+        ],
+    },
+    {
+        "vs": "vs_received_service_type", "module": "08",
+        "name": "Tipo de servicio recibido",
+        "description": ("Qué clase de servicio recibió el paciente (`clinical.received_services.service_type_concept_id`): "
+                        "una intervención médica realizada o una vacuna aplicada. Un tipo nuevo se agrega al final de "
+                        "esta lista; el orden es el ordinal sembrado y no se reordena."),
+        "bindings": [("clinical", "received_services", "service_type_concept_id")],
+        "concepts": [
+            ("clinical:RECEIVED_SERVICE_INTERVENTION", "Received service: medical intervention", "Intervención médica", True),
+            ("clinical:RECEIVED_SERVICE_VACCINATION", "Received service: vaccination", "Vacunación", False),
         ],
     },
 ]
@@ -3960,6 +3972,10 @@ INTENTIONALLY_EMPTY = {
     "medical_groups.groups",
     "medical_groups.group_members",
     "scheduling.appointment_payment_states",
+    # v4.2.49 — cada fila la escribe el proyector de la API en la misma transacción que
+    # registra el procedimiento o la vacuna que la origina: sembrarla daría servicios que
+    # ningún paciente recibió.
+    "clinical.received_services",
     # v4.0.11 — módulo 64. El catálogo de plantillas lo siembra la propia app al
     # arrancar (`AudioAssetsSeedService`), así que sembrarlo también desde el paquete
     # daría dos dueños del mismo catálogo con ids distintos y la resolución dependería

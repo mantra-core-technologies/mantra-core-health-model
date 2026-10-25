@@ -173,12 +173,12 @@ model:
   inventory:
     modules_puml: 70
     schemas: 58
-    entity_declarations_total: 2855
-    table_like_elements: 1330
+    entity_declarations_total: 2865
+    table_like_elements: 1331
     view_elements: 81
-    index_sets: 1306
-    reference_only_stubs: 138
-    fk_references: 7092
+    index_sets: 1307
+    reference_only_stubs: 146
+    fk_references: 7109
     note: >-
       Cifras producidas por tools/model_inventory.py (fuente única reproducible:
       clasifica cada `entity` en una sola clase, suma == total). v4.0 base
@@ -303,9 +303,9 @@ modules:
   code: clinical
   title: Core Clinical Record, Orders and Encounter Logistics
   file: modules/diagram_08_clinical.puml
-  table_like_elements: 22
+  table_like_elements: 23
   view_elements: 0
-  index_sets: 22
+  index_sets: 23
   status: active
 - number: 9
   code: forms
