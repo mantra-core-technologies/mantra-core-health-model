@@ -117,109 +117,65 @@ CREATE TABLE IF NOT EXISTS "medical_groups"."group_members" (
 );
 
 -- ---------------------------------------------------------------------------
--- Fase 3 · FK intra-schema
--- ---------------------------------------------------------------------------
-DO $$ BEGIN
-    ALTER TABLE "medical_groups"."group_members"
-        ADD CONSTRAINT "fk_medical_groups_group_members_group_id"
-        FOREIGN KEY ("group_id") REFERENCES "medical_groups"."groups" ("id")
-        ON DELETE CASCADE;
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
--- ---------------------------------------------------------------------------
--- Fase 4 · FK cross-schema (equivalente a 90_fk_deferred; aplicadas ya porque
--- todos los schemas destino existen en cualquier base sobre la que este patch
--- pueda correr).
+-- Fase 3+4 · FKs (intra-schema y cross-schema)
+--
+-- Nombres = los de `SQL/66_medical_groups/03_fk_intra.sql` y
+-- `90_fk_deferred.sql` (convención `fk_<tabla>_<columna>` de `gen_ddl.py`).
+-- Cada FK se crea SOLO si la columna no tiene ya una FK hacia el mismo destino,
+-- sea cual sea su nombre.
+--
+-- Por qué (2026-10-25): este bloque las creaba con otro nombre
+-- (`fk_medical_groups_<tabla>_<columna>`) y con `EXCEPTION WHEN
+-- duplicate_object`, que solo atrapa la colisión de NOMBRE. En un rebuild
+-- desde cero `postgres-init` aplica primero `SQL/66_medical_groups/` y después
+-- este patch, así que la base terminaba con las 14 FKs DOS veces y
+-- `rebuild_stack.py` fallaba con «FKs BD == SQL/ esperado 7231 observado 7245».
 --
 -- Los perfiles se referencian por `profile_id`, NO por `id`: en
 -- `profiles.health_practitioner_profiles` y `profiles.patient_profiles` la
--- clave primaria ES `profile_id` (heredan la identidad del perfil base). Con
--- `("id")` esto moría en «column "id" referenced in foreign key constraint does
--- not exist», y como nunca llegó a aplicarse —el bucle de migraciones apuntaba
--- a un directorio inexistente y daba cero vueltas— el error no salió hasta la
--- primera base construida de cero.
+-- clave primaria ES `profile_id` (heredan la identidad del perfil base).
 -- ---------------------------------------------------------------------------
-DO $$ BEGIN
-    ALTER TABLE "medical_groups"."groups"
-        ADD CONSTRAINT "fk_medical_groups_groups_tenant_id"
-        FOREIGN KEY ("tenant_id") REFERENCES "directory"."tenants" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
-DO $$ BEGIN
-    ALTER TABLE "medical_groups"."groups"
-        ADD CONSTRAINT "fk_medical_groups_groups_practice_id"
-        FOREIGN KEY ("practice_id") REFERENCES "practice"."practices" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
-DO $$ BEGIN
-    ALTER TABLE "medical_groups"."groups"
-        ADD CONSTRAINT "fk_medical_groups_groups_service_catalog_id"
-        FOREIGN KEY ("service_catalog_id") REFERENCES "billing"."service_catalog" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
-DO $$ BEGIN
-    ALTER TABLE "medical_groups"."groups"
-        ADD CONSTRAINT "fk_medical_groups_groups_requesting_practitioner_id"
-        FOREIGN KEY ("requesting_practitioner_id")
-        REFERENCES "profiles"."health_practitioner_profiles" ("profile_id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
-DO $$ BEGIN
-    ALTER TABLE "medical_groups"."groups"
-        ADD CONSTRAINT "fk_medical_groups_groups_patient_profile_id"
-        FOREIGN KEY ("patient_profile_id") REFERENCES "profiles"."patient_profiles" ("profile_id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
-DO $$ BEGIN
-    ALTER TABLE "medical_groups"."groups"
-        ADD CONSTRAINT "fk_medical_groups_groups_condition_id"
-        FOREIGN KEY ("condition_id") REFERENCES "clinical"."conditions" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
-DO $$ BEGIN
-    ALTER TABLE "medical_groups"."groups"
-        ADD CONSTRAINT "fk_medical_groups_groups_proposed_by_practitioner_id"
-        FOREIGN KEY ("proposed_by_practitioner_id")
-        REFERENCES "profiles"."health_practitioner_profiles" ("profile_id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
-DO $$ BEGIN
-    ALTER TABLE "medical_groups"."groups"
-        ADD CONSTRAINT "fk_medical_groups_groups_created_by_user_id"
-        FOREIGN KEY ("created_by_user_id") REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
-DO $$ BEGIN
-    ALTER TABLE "medical_groups"."groups"
-        ADD CONSTRAINT "fk_medical_groups_groups_updated_by_user_id"
-        FOREIGN KEY ("updated_by_user_id") REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
-DO $$ BEGIN
-    ALTER TABLE "medical_groups"."group_members"
-        ADD CONSTRAINT "fk_medical_groups_group_members_practitioner_profile_id"
-        FOREIGN KEY ("practitioner_profile_id")
-        REFERENCES "profiles"."health_practitioner_profiles" ("profile_id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
-DO $$ BEGIN
-    ALTER TABLE "medical_groups"."group_members"
-        ADD CONSTRAINT "fk_medical_groups_group_members_currency_concept_id"
-        FOREIGN KEY ("agreed_payment_currency_concept_id")
-        REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
-DO $$ BEGIN
-    ALTER TABLE "medical_groups"."group_members"
-        ADD CONSTRAINT "fk_medical_groups_group_members_created_by_user_id"
-        FOREIGN KEY ("created_by_user_id") REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
-DO $$ BEGIN
-    ALTER TABLE "medical_groups"."group_members"
-        ADD CONSTRAINT "fk_medical_groups_group_members_updated_by_user_id"
-        FOREIGN KEY ("updated_by_user_id") REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$
+DECLARE
+    fk record;
+BEGIN
+    FOR fk IN
+        SELECT * FROM (VALUES
+            ('group_members', 'group_id',                           'medical_groups', 'groups',                       'id',         'fk_group_members_group_id',                           ' ON DELETE CASCADE'),
+            ('groups',        'tenant_id',                          'directory',      'tenants',                      'id',         'fk_groups_tenant_id',                                 ''),
+            ('groups',        'practice_id',                        'practice',       'practices',                    'id',         'fk_groups_practice_id',                               ''),
+            ('groups',        'service_catalog_id',                 'billing',        'service_catalog',              'id',         'fk_groups_service_catalog_id',                        ''),
+            ('groups',        'requesting_practitioner_id',         'profiles',       'health_practitioner_profiles', 'profile_id', 'fk_groups_requesting_practitioner_id',                ''),
+            ('groups',        'patient_profile_id',                 'profiles',       'patient_profiles',             'profile_id', 'fk_groups_patient_profile_id',                        ''),
+            ('groups',        'condition_id',                       'clinical',       'conditions',                   'id',         'fk_groups_condition_id',                              ''),
+            ('groups',        'proposed_by_practitioner_id',        'profiles',       'health_practitioner_profiles', 'profile_id', 'fk_groups_proposed_by_practitioner_id',               ''),
+            ('groups',        'created_by_user_id',                 'iam',            'users',                        'id',         'fk_groups_created_by_user_id',                        ''),
+            ('groups',        'updated_by_user_id',                 'iam',            'users',                        'id',         'fk_groups_updated_by_user_id',                        ''),
+            ('group_members', 'practitioner_profile_id',            'profiles',       'health_practitioner_profiles', 'profile_id', 'fk_group_members_practitioner_profile_id',            ''),
+            ('group_members', 'agreed_payment_currency_concept_id', 'terminology',    'catalog_concepts',             'id',         'fk_group_members_agreed_payment_currency_concept_id', ''),
+            ('group_members', 'created_by_user_id',                 'iam',            'users',                        'id',         'fk_group_members_created_by_user_id',                 ''),
+            ('group_members', 'updated_by_user_id',                 'iam',            'users',                        'id',         'fk_group_members_updated_by_user_id',                 '')
+        ) AS t(tabla, columna, ref_schema, ref_tabla, ref_columna, nombre, accion)
+    LOOP
+        IF EXISTS (
+            SELECT 1
+            FROM pg_constraint c
+            JOIN pg_attribute a
+              ON a.attrelid = c.conrelid AND a.attnum = c.conkey[1]
+            WHERE c.contype = 'f'
+              AND c.conrelid = format('medical_groups.%I', fk.tabla)::regclass
+              AND c.confrelid = format('%I.%I', fk.ref_schema, fk.ref_tabla)::regclass
+              AND cardinality(c.conkey) = 1
+              AND a.attname = fk.columna
+        ) THEN
+            CONTINUE;
+        END IF;
+        EXECUTE format(
+            'ALTER TABLE medical_groups.%I ADD CONSTRAINT %I FOREIGN KEY (%I) REFERENCES %I.%I (%I)%s',
+            fk.tabla, fk.nombre, fk.columna,
+            fk.ref_schema, fk.ref_tabla, fk.ref_columna, fk.accion);
+    END LOOP;
+END $$;
 
 -- ---------------------------------------------------------------------------
 -- Fase 5 · índices
@@ -276,7 +232,9 @@ BEGIN
                      WHERE table_schema = 'medical_groups' AND table_name = 'group_members')),
         ('fk group_members -> groups',
             EXISTS (SELECT 1 FROM pg_constraint
-                     WHERE conname = 'fk_medical_groups_group_members_group_id')),
+                     WHERE contype = 'f'
+                       AND conrelid = 'medical_groups.group_members'::regclass
+                       AND confrelid = 'medical_groups.groups'::regclass)),
         ('unique (group_id, practitioner_profile_id)',
             EXISTS (
                 SELECT 1
@@ -322,5 +280,5 @@ BEGIN
         RAISE EXCEPTION 'patch v4.2.6 incompleto - faltan: %', faltantes;
     END IF;
 
-    RAISE NOTICE 'patch v4.2.6 · medical_groups: esquema completo (2 tablas · 13 FK · 9 índices)';
+    RAISE NOTICE 'patch v4.2.6 · medical_groups: esquema completo (2 tablas · 14 FK · 9 índices)';
 END $$;

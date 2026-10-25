@@ -53,7 +53,7 @@
       "value_set_members",
       "tenant_catalog_policies"
     ],
-    "record_count": 4521,
+    "record_count": 4533,
     "records": {
       "terminology_sources": [
         {
@@ -1280,6 +1280,22 @@
           "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
           "created_at": "2026-08-18T19:14:00Z",
           "updated_at": "2026-08-18T19:34:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "311c7b08-2072-501f-8a85-a96e227143ad",
+          "code_system_id": "6750d75b-a410-53a3-8f25-dd1619bad333",
+          "version": "1.0.0-vs_pregnancy_applicability",
+          "published_at": "2026-09-22T05:48:00Z",
+          "valid_from": "2026-09-22T05:48:00Z",
+          "valid_to": null,
+          "checksum": "836c60878c4932b5b75d397cfc8f3a15d33a64d571e35b45fcd04342ba198bb1",
+          "is_default": false,
+          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-09-22T05:48:00Z",
+          "updated_at": "2026-09-22T06:08:00Z",
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1
@@ -32054,6 +32070,60 @@
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1
+        },
+        {
+          "id": "af526f7b-8317-51c6-8e49-b843fe6010b0",
+          "code_system_version_id": "311c7b08-2072-501f-8a85-a96e227143ad",
+          "code": "PREGNANCY",
+          "display": "Embarazo",
+          "definition": "Valor pregnancy del value set vs_pregnancy_applicability (patch v4.2.50).",
+          "abstract": false,
+          "selectable": true,
+          "valid_from": "2026-08-02T13:19:00Z",
+          "valid_to": null,
+          "replaced_by_concept_id": null,
+          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-08-02T13:19:00Z",
+          "updated_at": "2026-08-02T13:39:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "b1ce837d-0516-51e4-862b-ee27d4eaa055",
+          "code_system_version_id": "311c7b08-2072-501f-8a85-a96e227143ad",
+          "code": "LACTATION",
+          "display": "Lactancia",
+          "definition": "Valor lactation del value set vs_pregnancy_applicability (patch v4.2.50).",
+          "abstract": false,
+          "selectable": true,
+          "valid_from": "2026-09-02T13:27:00Z",
+          "valid_to": null,
+          "replaced_by_concept_id": null,
+          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-09-02T13:27:00Z",
+          "updated_at": "2026-09-02T13:47:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "d5de8c15-df39-56d8-8855-27ecfcdfd44c",
+          "code_system_version_id": "311c7b08-2072-501f-8a85-a96e227143ad",
+          "code": "REPRODUCTIVE_POTENTIAL",
+          "display": "Mujeres y hombres con capacidad reproductiva",
+          "definition": "Valor reproductive_potential del value set vs_pregnancy_applicability (patch v4.2.50).",
+          "abstract": false,
+          "selectable": true,
+          "valid_from": "2026-08-12T23:24:00Z",
+          "valid_to": null,
+          "replaced_by_concept_id": null,
+          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-08-12T23:24:00Z",
+          "updated_at": "2026-08-12T23:44:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
         }
       ],
       "concept_designations": [
@@ -53285,6 +53355,45 @@
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1
+        },
+        {
+          "id": "cc19a013-e41f-5245-87e0-5299f9278551",
+          "concept_id": "af526f7b-8317-51c6-8e49-b843fe6010b0",
+          "language_concept_id": "4535601f-316b-52a0-a068-bcc832910077",
+          "designation_type_concept_id": "1115f950-d892-5413-8019-e6234e2dbac5",
+          "value": "Embarazo",
+          "preferred": true,
+          "created_at": "2026-08-02T13:19:00Z",
+          "updated_at": "2026-08-02T13:39:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "113478bb-c9bc-5f36-b826-62579e81c5e6",
+          "concept_id": "b1ce837d-0516-51e4-862b-ee27d4eaa055",
+          "language_concept_id": "4535601f-316b-52a0-a068-bcc832910077",
+          "designation_type_concept_id": "1115f950-d892-5413-8019-e6234e2dbac5",
+          "value": "Lactancia",
+          "preferred": true,
+          "created_at": "2026-09-02T13:27:00Z",
+          "updated_at": "2026-09-02T13:47:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "a9330304-068f-5bc8-ba4b-e6a1e5d21ff8",
+          "concept_id": "d5de8c15-df39-56d8-8855-27ecfcdfd44c",
+          "language_concept_id": "4535601f-316b-52a0-a068-bcc832910077",
+          "designation_type_concept_id": "1115f950-d892-5413-8019-e6234e2dbac5",
+          "value": "Mujeres y hombres con capacidad reproductiva",
+          "preferred": true,
+          "created_at": "2026-08-12T23:24:00Z",
+          "updated_at": "2026-08-12T23:44:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
         }
       ],
       "concept_properties": [
@@ -54690,6 +54799,20 @@
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1
+        },
+        {
+          "id": "fd60c051-a8c5-5c0f-8022-c97c681728c3",
+          "internal_code": "VS_PREGNANCY_APPLICABILITY",
+          "name": "Pregnancy Applicability",
+          "canonical_url": "https://salud.example.invalid/fhir/ValueSet/vs_pregnancy_applicability",
+          "description": "Value set del patch v4.2.50 (módulo 03); 3 conceptos gobernados.",
+          "jurisdiction_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
+          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-09-22T05:48:00Z",
+          "updated_at": "2026-09-22T06:08:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
         }
       ],
       "value_set_versions": [
@@ -55459,6 +55582,20 @@
           "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
           "created_at": "2026-08-18T19:14:00Z",
           "updated_at": "2026-08-18T19:34:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "5ef31518-1fd6-599e-a7ae-f1966ad9ee05",
+          "value_set_id": "fd60c051-a8c5-5c0f-8022-c97c681728c3",
+          "version": "1.0.0",
+          "valid_from": "2026-09-22T05:48:00Z",
+          "valid_to": null,
+          "is_default": true,
+          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-09-22T05:48:00Z",
+          "updated_at": "2026-09-22T06:08:00Z",
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1
@@ -66324,6 +66461,42 @@
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1
+        },
+        {
+          "id": "1ecdaa1a-54fd-58c1-91af-840462b81217",
+          "value_set_version_id": "5ef31518-1fd6-599e-a7ae-f1966ad9ee05",
+          "concept_id": "af526f7b-8317-51c6-8e49-b843fe6010b0",
+          "included": true,
+          "ordinal": 1,
+          "created_at": "2026-08-02T13:19:00Z",
+          "updated_at": "2026-08-02T13:39:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "7c2bc1e1-5eeb-503c-9b80-c4e2f0d9f3a6",
+          "value_set_version_id": "5ef31518-1fd6-599e-a7ae-f1966ad9ee05",
+          "concept_id": "b1ce837d-0516-51e4-862b-ee27d4eaa055",
+          "included": true,
+          "ordinal": 2,
+          "created_at": "2026-09-02T13:27:00Z",
+          "updated_at": "2026-09-02T13:47:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "bdb5e9da-44eb-580d-a3c8-d56edceaccb0",
+          "value_set_version_id": "5ef31518-1fd6-599e-a7ae-f1966ad9ee05",
+          "concept_id": "d5de8c15-df39-56d8-8855-27ecfcdfd44c",
+          "included": true,
+          "ordinal": 3,
+          "created_at": "2026-08-12T23:24:00Z",
+          "updated_at": "2026-08-12T23:44:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
         }
       ],
       "value_set_rules": [],
@@ -66764,7 +66937,7 @@
       }
     ],
     "summary": {
-      "record_count": 4521,
+      "record_count": 4533,
       "entity_count": 10,
       "populated_entity_count": 10,
       "scenario_count": null,
