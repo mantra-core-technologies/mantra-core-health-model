@@ -570,7 +570,7 @@ CREATE INDEX IF NOT EXISTS "ix_cost_center_maps_created_by_user_id" ON "accounti
 
 CREATE INDEX IF NOT EXISTS "ix_cost_center_maps_updated_by_user_id" ON "accounting"."cost_center_maps" ("updated_by_user_id");
 
-CREATE UNIQUE INDEX IF NOT EXISTS "uq_journal_transactions_transaction_number" ON "accounting"."journal_transactions" ("transaction_number");
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_journal_transactions_practice_id_transaction_number" ON "accounting"."journal_transactions" ("practice_id", "transaction_number");
 
 CREATE INDEX IF NOT EXISTS "ix_journal_transactions_practice_id" ON "accounting"."journal_transactions" ("practice_id");
 

@@ -8,6 +8,8 @@ hide circle
 ' ------------------------------------------------------------------------------
 ' SOURCE CONSOLIDATED: diagram_10_audit.puml
 ' ------------------------------------------------------------------------------
+entity "iam.sessions" as iam_sessions <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+
 note as BIZ_diagram_10_audit
   Provides append-only security/privacy evidence, data-access accounting, data
   subject request tracking and the core identity/governance history tables.
@@ -26,6 +28,16 @@ entity audit_log <<LOG>> {
   * outcome_concept_id : uuid <<FK>>
     ip : inet
     device_id : uuid <<FK>>
+  ' + v4.2.49 (CAN-AUDIT-001 / C-19): los tres campos de la auditoria canonica que
+  ' faltaban. session_id ata la fila a la sesion (iam.sessions) que actuo;
+  ' correlation_id ata las lecturas y escrituras de una misma operacion (p. ej. el
+  ' conjunto que habilito una sesion de emergencia, authz.break_glass_sessions);
+  ' actor_role_snapshot CONGELA el rol con el que actuo el usuario: la auditoria
+  ' posterior lee el rol que autorizo el acto, no el actual. Los tres nullable: las
+  ' filas anteriores no los tienen y la tabla es WORM (no se pueden completar).
+    session_id : uuid <<FK>>
+    correlation_id : uuid
+    actor_role_snapshot : varchar
     previous_hash : varchar
   * record_hash : varchar
   * recorded_at : timestamptz
@@ -1222,6 +1234,36 @@ entity campaigns_history <<HISTORY>> {
   * recorded_at : timestamptz
 }
 
+' + v4.2.49 (CAN-VERSION-001, issue #57): historial de versiones de los dos objetos de
+' versionado obligatorio que no lo tenian. Mismo patron que campaigns_history.
+entity insurance_products_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * insurance_product_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
+entity procedure_cases_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * procedure_case_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+
 entity ad_sets_history <<HISTORY>> {
   * history_id : uuid <<PK>>
   --
@@ -1833,12 +1875,15 @@ entity "INDEXES · audit_log" as idxset_audit_log <<INDEX_SET>> {
   IX ix_audit_log_branch_id : (branch_id) BTREE
   IX ix_audit_log_outcome_concept_id : (outcome_concept_id) BTREE
   IX ix_audit_log_device_id : (device_id) BTREE
+  IX ix_audit_log_session_id : (session_id) BTREE
+  IX ix_audit_log_correlation_id : (correlation_id) BTREE WHERE correlation_id IS NOT NULL
   IX ix_audit_log_recorded_by_user_id : (recorded_by_user_id) BTREE
   IX ix_audit_log_tenant_id_recorded_at : (tenant_id, recorded_at DESC) BTREE
   BRIN brin_audit_log_recorded_at : (recorded_at) BRIN pages_per_range=128
 }
 
 audit_log .. idxset_audit_log : indexed by
+audit_log }o--o| iam_sessions : session_id
 
 entity "INDEXES · data_access_log" as idxset_data_access_log <<INDEX_SET>> {
   PK pk_data_access_log : (id) UNIQUE BTREE
@@ -2741,6 +2786,28 @@ entity "INDEXES · campaigns_history" as idxset_campaigns_history <<INDEX_SET>> 
 }
 
 campaigns_history .. idxset_campaigns_history : indexed by
+
+entity "INDEXES · insurance_products_history" as idxset_insurance_products_history <<INDEX_SET>> {
+  PK pk_insurance_products_history : (history_id) UNIQUE BTREE
+  IX ix_insurance_products_history_insurance_product_id : (insurance_product_id) BTREE
+  IX ix_insurance_products_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_insurance_products_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_insurance_products_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_insurance_products_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+insurance_products_history .. idxset_insurance_products_history : indexed by
+
+entity "INDEXES · procedure_cases_history" as idxset_procedure_cases_history <<INDEX_SET>> {
+  PK pk_procedure_cases_history : (history_id) UNIQUE BTREE
+  IX ix_procedure_cases_history_procedure_case_id : (procedure_case_id) BTREE
+  IX ix_procedure_cases_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_procedure_cases_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_procedure_cases_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_procedure_cases_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+procedure_cases_history .. idxset_procedure_cases_history : indexed by
 
 entity "INDEXES · ad_sets_history" as idxset_ad_sets_history <<INDEX_SET>> {
   PK pk_ad_sets_history : (history_id) UNIQUE BTREE

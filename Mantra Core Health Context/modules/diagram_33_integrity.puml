@@ -207,4 +207,55 @@ entity "system_ops.restore_test_runs" as system_ops_restore_test_runs <<REFERENC
   ' MCH-023 (promovido en v4.2.20): NOT_MEASURED nunca puede leerse como "cumple".
   CHECK_SQL : ck_system_ops_restore_test_runs_objective_status | "objective_status" IN ('PASSED', 'FAILED', 'NOT_MEASURED')
 }
+' v4.2.49 — reglas fisicas de la tanda de issues #54..#60 y de las correcciones de la API
+' (#782 CE-03, #806 SURV-02). Todo CHECK_SQL/EXCLUDE_SQL lleva la expresion concreta: el
+' generador no compone ninguna.
+entity "surveys.survey_templates" as surveys_survey_templates <<REFERENCE_ONLY>> {
+  ' CAN-SURVEY-001 (REC 65.6): un solo dueno por plantilla — el profesional, o el par tipado.
+  CHECK_SQL : ck_survey_templates_single_owner | ("owner_practitioner_id" IS NOT NULL AND "owner_type_concept_id" IS NULL AND "owner_id" IS NULL) OR ("owner_practitioner_id" IS NULL AND "owner_type_concept_id" IS NOT NULL AND "owner_id" IS NOT NULL)
+}
+entity "surveys.survey_versions" as surveys_survey_versions <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_survey_versions_max_reminders | ("max_reminders" IS NULL OR "max_reminders" >= 0)
+}
+entity "surveys.survey_invitations" as surveys_survey_invitations <<REFERENCE_ONLY>> {
+  ' CAN-SURVEY-001 (REC 65.7): toda invitacion cuelga de una reserva o de un sujeto tipado; el par es todo-o-nada.
+  CHECK_SQL : ck_survey_invitations_anchor | ("appointment_booking_id" IS NOT NULL OR "subject_id" IS NOT NULL) AND (("subject_type_concept_id" IS NULL) = ("subject_id" IS NULL))
+}
+entity "surveys.survey_invitation_reminders" as surveys_survey_invitation_reminders <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_survey_invitation_reminders_number | "reminder_number" >= 1
+}
+entity "surveys.survey_answers" as surveys_survey_answers <<REFERENCE_ONLY>> {
+  ' SURV-02 (REC 65.3): exactamente una columna value_* con valor.
+  CHECK_SQL : ck_survey_answers_single_value | num_nonnulls("value_text", "value_number", "value_boolean", "value_choices") = 1
+}
+entity "clinical_ext.cds_rule_versions" as clinical_ext_cds_rule_versions <<REFERENCE_ONLY>> {
+  ' CE-03: las instantaneas de una regla CDS no se editan. UPDATE prohibido; DELETE queda libre
+  ' (igual que data_access_log) para no atar la limpieza de la integracion.
+  UPDATE : forbidden
+  CHECK_SQL : ck_cds_rule_versions_number | "version_number" >= 1
+}
+entity "procedures_perioperative.procedure_cases" as procedures_perioperative_procedure_cases <<REFERENCE_ONLY>> {
+  ' ORG-QUI-005: la regla que periop-cases.service ya aplica (findOverlappingCases), ahora en la base.
+  ' Estados que ocupan el quirofano (CASE_SCHEDULED, CASE_READY, SURG_CASE_IN_PROGRESS) como UUID
+  ' literales: el predicado de un EXCLUDE tiene que ser inmutable. Rango semiabierto [), igual que
+  ' la comparacion `<`/`>` del servicio. La preparacion y la limpieza NO entran en el rango: sumar un
+  ' intervalo a un timestamptz es STABLE y un indice no lo admite; las aplica el servicio.
+  EXCLUDE : operating room time overlap
+  EXCLUDE_SQL : ex_procedure_cases_operating_room_time | "operating_room_id" WITH =, tstzrange("scheduled_start_at", "scheduled_end_at", '[)') WITH && | "operating_room_id" IS NOT NULL AND "scheduled_start_at" IS NOT NULL AND "scheduled_end_at" IS NOT NULL AND "status_concept_id" IN ('6fe38139-ad1d-5214-84c1-8c184e4e58fb', 'f6985cd5-f867-5d76-b70c-1138667fd2ab', 'fdc78cc9-eda6-5625-9a26-1bdcec4dc203')
+  CHECK_SQL : ck_procedure_cases_buffers | (COALESCE("prep_minutes", 0) >= 0 AND COALESCE("cleanup_minutes", 0) >= 0)
+}
+entity "practice.care_spaces" as practice_care_spaces <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_care_spaces_buffers | (COALESCE("prep_minutes", 0) >= 0 AND COALESCE("cleanup_minutes", 0) >= 0)
+}
+entity "scheduling.booking_policies" as scheduling_booking_policies <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_booking_policies_no_show_fee_percentage | ("no_show_fee_percentage" IS NULL OR ("no_show_fee_percentage" >= 0 AND "no_show_fee_percentage" <= 100))
+}
+entity "insurance.insurance_products" as insurance_insurance_products <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_insurance_products_age_range | (COALESCE("min_age_years", 0) >= 0 AND ("max_age_years" IS NULL OR "max_age_years" >= COALESCE("min_age_years", 0)))
+  CHECK_SQL : ck_insurance_products_valid_period | ("effective_from" IS NULL OR "effective_to" IS NULL OR "effective_from" <= "effective_to")
+}
+entity "delegated_access.shared_access_link_uses" as delegated_access_shared_access_link_uses <<LOG, REFERENCE_ONLY>> {
+  ' A-12: el rastro de uso de un token compartido no se reescribe (UPDATE prohibido, DELETE libre para la retencion).
+  UPDATE : forbidden
+}
 @enduml

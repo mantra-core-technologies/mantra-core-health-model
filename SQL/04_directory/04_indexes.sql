@@ -64,6 +64,10 @@ CREATE INDEX IF NOT EXISTS "ix_tenant_memberships_updated_by_user_id" ON "direct
 
 CREATE INDEX IF NOT EXISTS "ix_tenant_memberships_tenant_id_status_concept_id" ON "directory"."tenant_memberships" ("tenant_id", "status_concept_id", "updated_at" DESC);
 
+CREATE INDEX IF NOT EXISTS "ix_tenant_memberships_workday_concept_id" ON "directory"."tenant_memberships" ("workday_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_tenant_memberships_responsible_user_id" ON "directory"."tenant_memberships" ("responsible_user_id");
+
 CREATE INDEX IF NOT EXISTS "ix_branch_memberships_tenant_membership_id" ON "directory"."branch_memberships" ("tenant_membership_id");
 
 CREATE INDEX IF NOT EXISTS "ix_branch_memberships_branch_id" ON "directory"."branch_memberships" ("branch_id");
@@ -75,6 +79,10 @@ CREATE INDEX IF NOT EXISTS "ix_branch_memberships_status_concept_id" ON "directo
 CREATE INDEX IF NOT EXISTS "ix_branch_memberships_created_by_user_id" ON "directory"."branch_memberships" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_branch_memberships_updated_by_user_id" ON "directory"."branch_memberships" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_branch_memberships_workday_concept_id" ON "directory"."branch_memberships" ("workday_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_branch_memberships_responsible_user_id" ON "directory"."branch_memberships" ("responsible_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_tenant_affiliation_documents_tenant_id" ON "directory"."tenant_affiliation_documents" ("tenant_id");
 

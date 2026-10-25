@@ -268,6 +268,12 @@ entity service_requests {
   * status_concept_id : uuid <<FK>>
     requester_profile_id : uuid <<FK>>
     performer_tenant_id : uuid <<FK>>
+    ' + centros medicos (M-01..M-03): quien ejecuta la orden es una RECOMENDACION del
+    ' medico, no un candado ni una custodia. performer_tenant_id sigue siendo la unica
+    ' columna que concede acceso a la orden; estas tres no.
+    performer_selection_concept_id : uuid <<FK>>
+    performer_practitioner_profile_id : uuid <<FK>>
+    suggested_practice_site_id : uuid <<FK>>
     ' + v4.2.17 (subtarea 3.2): antiduplicacion de estudios. El informe liberado o
     ' final del MISMO estudio (code_concept_id) que el motor encontro dentro de la
     ' ventana al pedir. Con duplicate_override_reason NULL la orden nace
@@ -309,6 +315,16 @@ encounters ||--o{ conditions
 allergy_intolerances ||--o{ allergy_reactions
 encounters ||--o{ service_requests
 service_requests ||--o{ diagnostic_reports
+
+' Destinos canonicos de las FK de centros medicos, declarados en su modulo dueno.
+entity "profiles.health_practitioner_profiles" as profiles_health_practitioner_profiles <<REFERENCE_ONLY>> {
+  * profile_id : uuid <<PK>>
+}
+entity "practice.practice_sites" as practice_practice_sites <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+service_requests }o--o| profiles_health_practitioner_profiles : performer_practitioner_profile_id
+service_requests }o--o| practice_practice_sites : suggested_practice_site_id
 diagnostic_reports |o--o{ service_requests : previous_diagnostic_report
 
 note as DEP_diagram_08_clinical
@@ -851,6 +867,8 @@ entity "INDEXES · service_requests" as idxset_service_requests <<INDEX_SET>> {
   IX ix_service_requests_status_concept_id : (status_concept_id) BTREE
   IX ix_service_requests_requester_profile_id : (requester_profile_id) BTREE
   IX ix_service_requests_performer_tenant_id : (performer_tenant_id) BTREE
+  IX ix_service_requests_performer_practitioner_profile_id : (performer_practitioner_profile_id) BTREE
+  IX ix_service_requests_suggested_practice_site_id : (suggested_practice_site_id) BTREE
   IX ix_service_requests_previous_diagnostic_report_id : (previous_diagnostic_report_id) BTREE
   IX ix_service_requests_created_by_user_id : (created_by_user_id) BTREE
   IX ix_service_requests_updated_by_user_id : (updated_by_user_id) BTREE

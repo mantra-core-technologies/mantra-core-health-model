@@ -76,6 +76,7 @@ CREATE TABLE IF NOT EXISTS "community"."service_reviews" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "verified_crm_case_id" uuid,
     CONSTRAINT "pk_service_reviews" PRIMARY KEY ("id")
 );
 

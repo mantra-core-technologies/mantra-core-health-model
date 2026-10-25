@@ -379,3 +379,220 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_diagnostic_unit_accreditations_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_medical_visitors"
+        ADD CONSTRAINT "fk_unit_medical_visitors_user_id" FOREIGN KEY ("user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_medical_visitors"
+        ADD CONSTRAINT "fk_unit_medical_visitors_supervisor_user_id" FOREIGN KEY ("supervisor_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.branches (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_medical_visitors"
+        ADD CONSTRAINT "fk_unit_medical_visitors_branch_id" FOREIGN KEY ("branch_id")
+        REFERENCES "directory"."branches" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_medical_visitors"
+        ADD CONSTRAINT "fk_unit_medical_visitors_identity_verification_concept_id" FOREIGN KEY ("identity_verification_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_medical_visitors"
+        ADD CONSTRAINT "fk_unit_medical_visitors_contract_verification_concept_id" FOREIGN KEY ("contract_verification_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_medical_visitors"
+        ADD CONSTRAINT "fk_unit_medical_visitors_credential_verification_concept_id" FOREIGN KEY ("credential_verification_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_medical_visitors"
+        ADD CONSTRAINT "fk_unit_medical_visitors_status_concept_id" FOREIGN KEY ("status_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_medical_visitors"
+        ADD CONSTRAINT "fk_unit_medical_visitors_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_medical_visitors"
+        ADD CONSTRAINT "fk_unit_medical_visitors_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_visit_requests"
+        ADD CONSTRAINT "fk_unit_visit_requests_doctor_user_id" FOREIGN KEY ("doctor_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_visit_requests"
+        ADD CONSTRAINT "fk_unit_visit_requests_doctor_tenant_id" FOREIGN KEY ("doctor_tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_visit_requests"
+        ADD CONSTRAINT "fk_unit_visit_requests_modality_concept_id" FOREIGN KEY ("modality_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_visit_requests"
+        ADD CONSTRAINT "fk_unit_visit_requests_status_concept_id" FOREIGN KEY ("status_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_visit_requests"
+        ADD CONSTRAINT "fk_unit_visit_requests_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_visit_requests"
+        ADD CONSTRAINT "fk_unit_visit_requests_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_visit_request_events"
+        ADD CONSTRAINT "fk_unit_visit_request_events_action_concept_id" FOREIGN KEY ("action_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_visit_request_events"
+        ADD CONSTRAINT "fk_unit_visit_request_events_previous_status_concept_id" FOREIGN KEY ("previous_status_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_visit_request_events"
+        ADD CONSTRAINT "fk_unit_visit_request_events_new_status_concept_id" FOREIGN KEY ("new_status_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_visit_request_events"
+        ADD CONSTRAINT "fk_unit_visit_request_events_actor_user_id" FOREIGN KEY ("actor_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_visit_request_events"
+        ADD CONSTRAINT "fk_unit_visit_request_events_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_visit_records"
+        ADD CONSTRAINT "fk_unit_visit_records_doctor_user_id" FOREIGN KEY ("doctor_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_visit_records"
+        ADD CONSTRAINT "fk_unit_visit_records_modality_concept_id" FOREIGN KEY ("modality_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_visit_records"
+        ADD CONSTRAINT "fk_unit_visit_records_visitor_attendance_concept_id" FOREIGN KEY ("visitor_attendance_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_visit_records"
+        ADD CONSTRAINT "fk_unit_visit_records_doctor_attendance_concept_id" FOREIGN KEY ("doctor_attendance_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_visit_records"
+        ADD CONSTRAINT "fk_unit_visit_records_confirmation_concept_id" FOREIGN KEY ("confirmation_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_visit_records"
+        ADD CONSTRAINT "fk_unit_visit_records_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_visit_records"
+        ADD CONSTRAINT "fk_unit_visit_records_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_visit_ratings"
+        ADD CONSTRAINT "fk_unit_visit_ratings_doctor_user_id" FOREIGN KEY ("doctor_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_visit_ratings"
+        ADD CONSTRAINT "fk_unit_visit_ratings_kind_concept_id" FOREIGN KEY ("kind_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_visit_ratings"
+        ADD CONSTRAINT "fk_unit_visit_ratings_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."unit_visit_ratings"
+        ADD CONSTRAINT "fk_unit_visit_ratings_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)

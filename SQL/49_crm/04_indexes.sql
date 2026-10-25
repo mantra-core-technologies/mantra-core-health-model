@@ -268,6 +268,8 @@ CREATE INDEX IF NOT EXISTS "ix_crm_cases_owner_status_updated" ON "crm"."crm_cas
 
 CREATE INDEX IF NOT EXISTS "gin_crm_cases_search" ON "crm"."crm_cases" USING gin (to_tsvector('simple', (coalesce(case_number, '') || ' ' || coalesce(subject, ''))));
 
+CREATE INDEX IF NOT EXISTS "ix_crm_cases_insurance_claim_id" ON "crm"."crm_cases" ("insurance_claim_id");
+
 CREATE UNIQUE INDEX IF NOT EXISTS "uq_crm_case_contacts_crm_case_id_contact_id_role_concept_id" ON "crm"."crm_case_contacts" ("crm_case_id", "contact_id", "role_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_crm_case_contacts_crm_case_id" ON "crm"."crm_case_contacts" ("crm_case_id");
@@ -299,6 +301,18 @@ CREATE INDEX IF NOT EXISTS "ix_crm_case_status_history_changed_by_user_id" ON "c
 CREATE INDEX IF NOT EXISTS "ix_crm_case_status_history_case_changed" ON "crm"."crm_case_status_history" ("crm_case_id", "changed_at" DESC);
 
 CREATE INDEX IF NOT EXISTS "brin_crm_case_status_history_created_at" ON "crm"."crm_case_status_history" USING brin ("created_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_crm_case_owner_history_crm_case_id" ON "crm"."crm_case_owner_history" ("crm_case_id");
+
+CREATE INDEX IF NOT EXISTS "ix_crm_case_owner_history_from_owner_user_id" ON "crm"."crm_case_owner_history" ("from_owner_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_crm_case_owner_history_to_owner_user_id" ON "crm"."crm_case_owner_history" ("to_owner_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_crm_case_owner_history_changed_by_user_id" ON "crm"."crm_case_owner_history" ("changed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_crm_case_owner_history_case_changed" ON "crm"."crm_case_owner_history" ("crm_case_id", "changed_at" DESC);
+
+CREATE INDEX IF NOT EXISTS "brin_crm_case_owner_history_created_at" ON "crm"."crm_case_owner_history" USING brin ("created_at") WITH (pages_per_range=128);
 
 CREATE INDEX IF NOT EXISTS "ix_crm_entitlements_tenant_id" ON "crm"."crm_entitlements" ("tenant_id");
 

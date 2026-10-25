@@ -22,10 +22,10 @@ CREATE TABLE IF NOT EXISTS "object_storage"."object_manifests" (
     "namespace_id" uuid NOT NULL,
     "logical_object_id" uuid NOT NULL,
     "object_type" varchar NOT NULL,
-    "patient_profile_id" uuid NOT NULL,
-    "current_version_id" uuid NOT NULL,
+    "patient_profile_id" uuid,
+    "current_version_id" uuid,
     "lifecycle_state" varchar NOT NULL,
-    "retention_policy_code" varchar NOT NULL,
+    "retention_policy_code" varchar,
     "created_at" timestamptz NOT NULL,
     "updated_at" timestamptz NOT NULL,
     CONSTRAINT "pk_object_manifests" PRIMARY KEY ("id")
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS "object_storage"."object_locations" (
     "provider_uri" varchar NOT NULL,
     "storage_class" varchar NOT NULL,
     "replication_state" varchar NOT NULL,
-    "verified_at" timestamptz NOT NULL,
+    "verified_at" timestamptz,
     CONSTRAINT "pk_object_locations" PRIMARY KEY ("id")
 );
 
@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS "object_storage"."object_checksums" (
     "algorithm" varchar NOT NULL,
     "checksum" varchar NOT NULL,
     "source" varchar NOT NULL,
-    "verified_at" timestamptz NOT NULL,
+    "verified_at" timestamptz,
     "verification_status" varchar NOT NULL,
     CONSTRAINT "pk_object_checksums" PRIMARY KEY ("id")
 );
@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS "object_storage"."object_retention_locks" (
     "retain_until" timestamptz NOT NULL,
     "policy_code" varchar NOT NULL,
     "applied_at" timestamptz NOT NULL,
-    "released_at" timestamptz NOT NULL,
+    "released_at" timestamptz,
     CONSTRAINT "pk_object_retention_locks" PRIMARY KEY ("id")
 );
 
@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS "object_storage"."object_legal_holds" (
     "hold_state" varchar NOT NULL,
     "placed_by_user_id" uuid NOT NULL,
     "placed_at" timestamptz NOT NULL,
-    "released_at" timestamptz NOT NULL,
+    "released_at" timestamptz,
     CONSTRAINT "pk_object_legal_holds" PRIMARY KEY ("id")
 );
 
@@ -138,8 +138,8 @@ CREATE TABLE IF NOT EXISTS "object_storage"."dicom_study_manifests" (
     "imaging_study_id" uuid NOT NULL,
     "study_instance_uid" varchar NOT NULL,
     "accession_number" varchar NOT NULL,
-    "study_date" date NOT NULL,
-    "modality_codes" varchar[] NOT NULL,
+    "study_date" date,
+    "modality_codes" varchar[],
     "series_count" integer NOT NULL,
     "instance_count" integer NOT NULL,
     "lifecycle_state" varchar NOT NULL,
@@ -152,9 +152,9 @@ CREATE TABLE IF NOT EXISTS "object_storage"."dicom_series_manifests" (
     "series_instance_uid" varchar NOT NULL,
     "modality" varchar NOT NULL,
     "series_number" integer NOT NULL,
-    "body_part_examined" varchar NOT NULL,
+    "body_part_examined" varchar,
     "instance_count" integer NOT NULL,
-    "thumbnail_object_manifest_id" uuid NOT NULL,
+    "thumbnail_object_manifest_id" uuid,
     CONSTRAINT "pk_dicom_series_manifests" PRIMARY KEY ("id")
 );
 
@@ -162,12 +162,12 @@ CREATE TABLE IF NOT EXISTS "object_storage"."dicom_instance_manifests" (
     "id" uuid NOT NULL,
     "dicom_series_manifest_id" uuid NOT NULL,
     "sop_instance_uid" varchar NOT NULL,
-    "sop_class_uid" varchar NOT NULL,
-    "instance_number" integer NOT NULL,
-    "transfer_syntax_uid" varchar NOT NULL,
+    "sop_class_uid" varchar,
+    "instance_number" integer,
+    "transfer_syntax_uid" varchar,
     "object_manifest_id" uuid NOT NULL,
-    "frame_count" integer NOT NULL,
-    "metadata_json" jsonb NOT NULL,
+    "frame_count" integer,
+    "metadata_json" jsonb,
     CONSTRAINT "pk_dicom_instance_manifests" PRIMARY KEY ("id")
 );
 
@@ -194,7 +194,7 @@ CREATE TABLE IF NOT EXISTS "object_storage"."archive_manifests" (
     "record_count" bigint NOT NULL,
     "manifest_hash" varchar NOT NULL,
     "created_at" timestamptz NOT NULL,
-    "verified_at" timestamptz NOT NULL,
+    "verified_at" timestamptz,
     CONSTRAINT "pk_archive_manifests" PRIMARY KEY ("id")
 );
 

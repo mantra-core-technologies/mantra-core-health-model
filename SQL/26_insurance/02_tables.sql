@@ -58,7 +58,36 @@ CREATE TABLE IF NOT EXISTS "insurance"."broker_carrier_agreements" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "representation_mode_concept_id" uuid,
+    "relationship_type_concept_id" uuid,
+    "branch_id" uuid,
+    "commercial_area" varchar,
+    "supervisor_user_id" uuid,
+    "assigned_zone" varchar,
     CONSTRAINT "pk_broker_carrier_agreements" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "insurance"."insurance_terms_conditions" (
+    "id" uuid NOT NULL,
+    "insurance_carrier_id" uuid NOT NULL,
+    "title" varchar NOT NULL,
+    "version_number" integer NOT NULL,
+    "document_file_id" uuid NOT NULL,
+    "insurance_product_id" uuid,
+    "insurance_plan_id" uuid,
+    "service_concept_id" uuid,
+    "contract_id" uuid,
+    "jurisdiction_concept_id" uuid,
+    "client_type_concept_id" uuid,
+    "effective_from" date NOT NULL,
+    "effective_to" date,
+    "status_concept_id" uuid NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_insurance_terms_conditions" PRIMARY KEY ("id")
 );
 
 CREATE TABLE IF NOT EXISTS "insurance"."employer_groups" (
@@ -90,6 +119,12 @@ CREATE TABLE IF NOT EXISTS "insurance"."insurance_products" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "version_number" integer,
+    "effective_from" date,
+    "effective_to" date,
+    "min_age_years" integer,
+    "max_age_years" integer,
+    "eligibility_requirements" jsonb,
     CONSTRAINT "pk_insurance_products" PRIMARY KEY ("id")
 );
 

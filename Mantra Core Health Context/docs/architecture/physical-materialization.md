@@ -76,6 +76,33 @@ deja 19 restricciones en la tabla (PK, 17 FK, CHECK). El parche trae la polític
 insertó un procedimiento (con su caso y su cargo en una sola fila), una vacuna y un caso M53 sin procedimiento; la
 segunda insertó 0. No se aplicó contra una base con datos reales.
 
+### Centros médicos — quién ejecuta la orden y el precio del procedimiento por sede (2026-10-25)
+
+Cuatro columnas nuevas, todas opcionales, y un índice único. Nada se siembra ni se migra:
+las filas existentes no tienen valor y elegirlo por ellas sería decidir por ellas.
+
+| Tabla | Cambio | Para qué |
+|---|---|---|
+| `clinical.service_requests` | `performer_selection_concept_id` → `terminology.catalog_concepts` | Modo de ejecutor: lo hace el médico, se recomienda un centro o elige el paciente |
+| `clinical.service_requests` | `performer_practitioner_profile_id` → `profiles.health_practitioner_profiles` (+ `ix_service_requests_performer_practitioner_profile_id`) | Médico ejecutor («lo hago yo») |
+| `clinical.service_requests` | `suggested_practice_site_id` → `practice.practice_sites` (+ `ix_service_requests_suggested_practice_site_id`) | Sede sugerida; el paciente compara sedes, no organizaciones |
+| `practice.healthcare_services` | `service_catalog_id` → `billing.service_catalog` (+ `ix_healthcare_services_service_catalog_id`) | Ítem que fija el precio del procedimiento en esa sede |
+| `practice.healthcare_services` | `ux_healthcare_services_site_service` único `(practice_site_id, service_concept_id)` | Un procedimiento por sede. Los servicios sin sede quedan fuera de la regla |
+
+**La recomendación no concede acceso.** `performer_tenant_id` sigue siendo la única columna
+que le da a una organización acceso a la orden; las tres columnas nuevas no lo hacen.
+
+Las tres FK de entidad no resuelven por convención de nombre, así que el destino va
+explícito en el `.puml` con un stub `<<REFERENCE_ONLY>>` y una arista etiquetada con la
+columna (mismo patrón que `diagram_19_community.puml`).
+
+**Verificación (2026-10-25, PostgreSQL 16 desechable):**
+- Base construida con el SQL anterior → `SQL/patches/2026-10-25_centros_medicos.sql` aplicado
+  dos veces: 0 errores; la segunda pasada solo emite avisos de «ya existe».
+- Esa base y otra construida desde el SQL nuevo tienen columnas, índices y constraints
+  idénticos en las dos tablas.
+- `gen_integrity.py` y `gen_seeds.py --dry`: sin cambios.
+
 ### v4.2.48 — Centro de datos: mapa operaciones ↔ datos, WORM del catálogo y vocabulario de sensibilidad (2026-10-24)
 
 **Cambio de esquema: +5 tablas en `data_catalog` (módulo 67) y +4 barreras WORM (módulo 33).**

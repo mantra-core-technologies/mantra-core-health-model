@@ -151,6 +151,20 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
+    ALTER TABLE "directory"."tenant_memberships"
+        ADD CONSTRAINT "fk_tenant_memberships_workday_concept_id" FOREIGN KEY ("workday_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "directory"."tenant_memberships"
+        ADD CONSTRAINT "fk_tenant_memberships_responsible_user_id" FOREIGN KEY ("responsible_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
     ALTER TABLE "directory"."branch_memberships"
         ADD CONSTRAINT "fk_branch_memberships_local_role_concept_id" FOREIGN KEY ("local_role_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
@@ -176,6 +190,20 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_branch_memberships_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "directory"."branch_memberships"
+        ADD CONSTRAINT "fk_branch_memberships_workday_concept_id" FOREIGN KEY ("workday_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "directory"."branch_memberships"
+        ADD CONSTRAINT "fk_branch_memberships_responsible_user_id" FOREIGN KEY ("responsible_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN

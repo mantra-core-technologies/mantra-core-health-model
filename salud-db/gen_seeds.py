@@ -4011,6 +4011,26 @@ INTENTIONALLY_EMPTY = {
     "messaging.delivery_reconciliation_runs",
     "messaging.delivery_status_transitions",
     "messaging.delivery_tracking_events",
+    # v4.2.49 — tanda de los issues #54..#60. Todas las escribe la operación, nunca el arranque:
+    #   cds_rule_versions         la escribe la publicación de una regla CDS (instantánea inmutable);
+    #   crm_case_owner_history    cambios de responsable de un caso real;
+    #   shared_access_links(+uses) credenciales de un solo paciente y su rastro de uso: un seed sería
+    #                             un token pregenerado y vivo en cualquier entorno que cargue el paquete;
+    #   unit_*                    visitadores y visitas de un laboratorio médico real (mismo criterio
+    #                             que pharma_lab: datos de una organización, sin catálogo de arranque);
+    #   insurance_terms_conditions los términos los carga cada aseguradora sobre sus planes;
+    #   survey_invitation_reminders un recordatorio enviado a un paciente real.
+    "clinical_ext.cds_rule_versions",
+    "crm.crm_case_owner_history",
+    "delegated_access.shared_access_links",
+    "delegated_access.shared_access_link_uses",
+    "diagnostic_units.unit_medical_visitors",
+    "diagnostic_units.unit_visit_requests",
+    "diagnostic_units.unit_visit_request_events",
+    "diagnostic_units.unit_visit_records",
+    "diagnostic_units.unit_visit_ratings",
+    "insurance.insurance_terms_conditions",
+    "surveys.survey_invitation_reminders",
 }
 
 

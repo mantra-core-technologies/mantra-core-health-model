@@ -33,6 +33,12 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
+    ALTER TABLE "surveys"."survey_invitation_reminders"
+        ADD CONSTRAINT "fk_survey_invitation_reminders_survey_invitation_id" FOREIGN KEY ("survey_invitation_id")
+        REFERENCES "surveys"."survey_invitations" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+DO $$ BEGIN
     ALTER TABLE "surveys"."survey_responses"
         ADD CONSTRAINT "fk_survey_responses_survey_invitation_id" FOREIGN KEY ("survey_invitation_id")
         REFERENCES "surveys"."survey_invitations" ("id");

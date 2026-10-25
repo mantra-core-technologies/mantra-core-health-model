@@ -8,6 +8,8 @@ hide circle
 ' ------------------------------------------------------------------------------
 ' SOURCE CONSOLIDATED: diagram_23_diagnostic_units.puml
 ' ------------------------------------------------------------------------------
+entity "directory.tenants" as directory_tenants <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+
 note as BIZ_diagram_23_diagnostic_units
   BUSINESS PURPOSE
   Gives a diagnostic unit a first-class identity, its own governance boundary,
@@ -208,6 +210,150 @@ entity diagnostic_unit_accreditations {
   * row_version : integer
 }
 
+' ------------------------------------------------------------------------------
+' + v4.2.49 (LAB-VIS-001..014 / LAB-RSL-008, issue #56): visitadores del LABORATORIO MEDICO.
+' pharma_lab.medical_visitors ancla al visitador en pharma_lab.pharma_labs (farmaceutico,
+' fabricante, distribuidor...); una unidad diagnostica no podia tener visitadores que
+' presenten sus servicios a los doctores. Se REPLICA el patron en este schema en vez de
+' generalizar el ancla de pharma_lab: asi ninguna columna NOT NULL de pharma_lab cambia de
+' significado. Mismos campos y misma maquina de estados (conceptos) que sus homologas de
+' pharma_lab, sin lo que es propio del farmaceutico (materiales informativos, productos,
+' personal del laboratorio). Las politicas y ventanas de visita son del DOCTOR
+' (pharma_lab.doctor_visit_policies / doctor_visit_windows) y se reusan tal cual: no hay copia.
+'
+' LAB-VIS-012 / LAB-RSL-008 — un visitador NO accede a historial, recetas ni resultados.
+' Nace con el dominio: ninguna de estas tablas tiene una columna que apunte a un paciente,
+' un encuentro, una receta o un resultado, y ninguna debe agregarla.
+' ------------------------------------------------------------------------------
+entity unit_medical_visitors {
+  * id : uuid <<PK>>
+  --
+  * diagnostic_unit_id : uuid <<FK>>
+  * user_id : uuid <<FK>>
+  * full_name : varchar
+    photo_url : varchar
+  * internal_code : varchar
+    position : varchar
+    supervisor_user_id : uuid <<FK>>
+    branch_id : uuid <<FK>>
+    region : varchar
+    commercial_area : varchar
+    assigned_zone : varchar
+  * started_on : date
+    ended_on : date
+  * identity_verification_concept_id : uuid <<FK>>
+  * contract_verification_concept_id : uuid <<FK>>
+  * credential_verification_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * publicly_listed : boolean <<DEFAULT_TRUE>>
+    unlinked_at : timestamptz
+    unlink_reason : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity unit_visit_requests {
+  * id : uuid <<PK>>
+  --
+  * unit_medical_visitor_id : uuid <<FK>>
+  * diagnostic_unit_id : uuid <<FK>>
+  * doctor_user_id : uuid <<FK>>
+    doctor_tenant_id : uuid <<FK>>
+  * reason : text
+  * requested_start_at : timestamptz
+  * duration_minutes : integer
+  * time_zone : varchar
+  * modality_concept_id : uuid <<FK>>
+    location : varchar
+    attachments : jsonb
+    observations : text
+  * status_concept_id : uuid <<FK>>
+    proposed_start_at : timestamptz
+    confirmed_at : timestamptz
+    closed_at : timestamptz
+    rescheduled_from_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity unit_visit_request_events {
+  * id : uuid <<PK>>
+  --
+  * unit_visit_request_id : uuid <<FK>>
+  * action_concept_id : uuid <<FK>>
+  * previous_status_concept_id : uuid <<FK>>
+  * new_status_concept_id : uuid <<FK>>
+    proposed_start_at : timestamptz
+    note : text
+  * actor_user_id : uuid <<FK>>
+  * occurred_at : timestamptz
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+
+entity unit_visit_records {
+  * id : uuid <<PK>>
+  --
+  * unit_visit_request_id : uuid <<FK>>
+  * doctor_user_id : uuid <<FK>>
+  * unit_medical_visitor_id : uuid <<FK>>
+  * diagnostic_unit_id : uuid <<FK>>
+  * occurred_at : timestamptz
+    location : varchar
+  * modality_concept_id : uuid <<FK>>
+    topics_discussed : text
+    questions : text
+    commitments : text
+    next_action : text
+    observations : text
+  * visitor_attendance_concept_id : uuid <<FK>>
+  * doctor_attendance_concept_id : uuid <<FK>>
+  * confirmation_concept_id : uuid <<FK>>
+    confirmed_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity unit_visit_ratings {
+  * id : uuid <<PK>>
+  --
+  * unit_visit_record_id : uuid <<FK>>
+  * doctor_user_id : uuid <<FK>>
+  * kind_concept_id : uuid <<FK>>
+    punctuality : integer
+    information_quality : integer
+    clarity : integer
+    relevance : integer
+    professional_conduct : integer
+    overall_satisfaction : integer
+    comment : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+diagnostic_units ||--o{ unit_medical_visitors
+diagnostic_units ||--o{ unit_visit_requests
+diagnostic_units ||--o{ unit_visit_records
+unit_medical_visitors ||--o{ unit_visit_requests
+unit_medical_visitors ||--o{ unit_visit_records
+unit_visit_requests ||--o{ unit_visit_request_events
+unit_visit_requests ||--o| unit_visit_records
+unit_visit_records ||--o{ unit_visit_ratings
+unit_visit_requests }o--o| directory_tenants : doctor_tenant_id
+unit_visit_requests }o--o| unit_visit_requests : rescheduled_from_id
+
 diagnostic_units ||--o{ diagnostic_unit_sites
 diagnostic_units ||--o{ diagnostic_unit_specialties
 diagnostic_units ||--o{ diagnostic_unit_practitioner_assignments
@@ -372,6 +518,76 @@ entity "INDEXES · diagnostic_unit_accreditations" as idxset_diagnostic_unit_acc
 }
 
 diagnostic_unit_accreditations .. idxset_diagnostic_unit_accreditations : indexed by
+
+entity "INDEXES · unit_medical_visitors" as idxset_unit_medical_visitors <<INDEX_SET>> {
+  PK pk_unit_medical_visitors : (id) UNIQUE BTREE
+  UX ux_unit_medical_visitors_user_id : (user_id) UNIQUE BTREE
+  IX ix_unit_medical_visitors_diagnostic_unit_id : (diagnostic_unit_id) BTREE
+  IX ix_unit_medical_visitors_supervisor_user_id : (supervisor_user_id) BTREE
+  IX ix_unit_medical_visitors_branch_id : (branch_id) BTREE
+  IX ix_unit_medical_visitors_identity_verification_concept_id : (identity_verification_concept_id) BTREE
+  IX ix_unit_medical_visitors_contract_verification_concept_id : (contract_verification_concept_id) BTREE
+  IX ix_unit_medical_visitors_credential_verification_concept_id : (credential_verification_concept_id) BTREE
+  IX ix_unit_medical_visitors_status_concept_id : (status_concept_id) BTREE
+  IX ix_unit_medical_visitors_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_unit_medical_visitors_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+unit_medical_visitors .. idxset_unit_medical_visitors : indexed by
+
+entity "INDEXES · unit_visit_requests" as idxset_unit_visit_requests <<INDEX_SET>> {
+  PK pk_unit_visit_requests : (id) UNIQUE BTREE
+  IX ix_unit_visit_requests_unit_medical_visitor_id : (unit_medical_visitor_id) BTREE
+  IX ix_unit_visit_requests_diagnostic_unit_id : (diagnostic_unit_id) BTREE
+  IX ix_unit_visit_requests_doctor_user_id : (doctor_user_id) BTREE
+  IX ix_unit_visit_requests_doctor_tenant_id : (doctor_tenant_id) BTREE
+  IX ix_unit_visit_requests_modality_concept_id : (modality_concept_id) BTREE
+  IX ix_unit_visit_requests_status_concept_id : (status_concept_id) BTREE
+  IX ix_unit_visit_requests_rescheduled_from_id : (rescheduled_from_id) BTREE
+  IX ix_unit_visit_requests_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_unit_visit_requests_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+unit_visit_requests .. idxset_unit_visit_requests : indexed by
+
+entity "INDEXES · unit_visit_request_events" as idxset_unit_visit_request_events <<INDEX_SET>> {
+  PK pk_unit_visit_request_events : (id) UNIQUE BTREE
+  IX ix_unit_visit_request_events_unit_visit_request_id : (unit_visit_request_id) BTREE
+  IX ix_unit_visit_request_events_action_concept_id : (action_concept_id) BTREE
+  IX ix_unit_visit_request_events_previous_status_concept_id : (previous_status_concept_id) BTREE
+  IX ix_unit_visit_request_events_new_status_concept_id : (new_status_concept_id) BTREE
+  IX ix_unit_visit_request_events_actor_user_id : (actor_user_id) BTREE
+  IX ix_unit_visit_request_events_created_by_user_id : (created_by_user_id) BTREE
+}
+
+unit_visit_request_events .. idxset_unit_visit_request_events : indexed by
+
+entity "INDEXES · unit_visit_records" as idxset_unit_visit_records <<INDEX_SET>> {
+  PK pk_unit_visit_records : (id) UNIQUE BTREE
+  UX ux_unit_visit_records_unit_visit_request_id : (unit_visit_request_id) UNIQUE BTREE
+  IX ix_unit_visit_records_doctor_user_id : (doctor_user_id) BTREE
+  IX ix_unit_visit_records_unit_medical_visitor_id : (unit_medical_visitor_id) BTREE
+  IX ix_unit_visit_records_diagnostic_unit_id : (diagnostic_unit_id) BTREE
+  IX ix_unit_visit_records_modality_concept_id : (modality_concept_id) BTREE
+  IX ix_unit_visit_records_visitor_attendance_concept_id : (visitor_attendance_concept_id) BTREE
+  IX ix_unit_visit_records_doctor_attendance_concept_id : (doctor_attendance_concept_id) BTREE
+  IX ix_unit_visit_records_confirmation_concept_id : (confirmation_concept_id) BTREE
+  IX ix_unit_visit_records_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_unit_visit_records_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+unit_visit_records .. idxset_unit_visit_records : indexed by
+
+entity "INDEXES · unit_visit_ratings" as idxset_unit_visit_ratings <<INDEX_SET>> {
+  PK pk_unit_visit_ratings : (id) UNIQUE BTREE
+  IX ix_unit_visit_ratings_unit_visit_record_id : (unit_visit_record_id) BTREE
+  IX ix_unit_visit_ratings_doctor_user_id : (doctor_user_id) BTREE
+  IX ix_unit_visit_ratings_kind_concept_id : (kind_concept_id) BTREE
+  IX ix_unit_visit_ratings_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_unit_visit_ratings_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+unit_visit_ratings .. idxset_unit_visit_ratings : indexed by
 }
 
 

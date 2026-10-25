@@ -73,6 +73,7 @@ entity identity_verification_policies {
 entity identity_verification_cases {
   * id : uuid <<PK>>
   --
+    tenant_id : uuid <<FK>>
   * subject_type_concept_id : uuid <<FK>>
   * subject_entity_id : uuid
   * identity_verification_policy_id : uuid <<FK>>
@@ -272,6 +273,7 @@ identity_verification_policies .. idxset_identity_verification_policies : indexe
 
 entity "INDEXES · identity_verification_cases" as idxset_identity_verification_cases <<INDEX_SET>> {
   PK pk_identity_verification_cases : (id) UNIQUE BTREE
+  IX ix_identity_verification_cases_tenant_id : (tenant_id) BTREE
   IX ix_identity_verification_cases_subject_type_concept_id : (subject_type_concept_id) BTREE
   IX ix_identity_verification_cases_identity_verification_policy_id : (identity_verification_policy_id) BTREE
   IX ix_identity_verification_cases_requested_assurance_lev_ebd923e4 : (requested_assurance_level_concept_id) BTREE

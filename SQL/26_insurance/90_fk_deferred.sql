@@ -135,6 +135,90 @@ DO $$ BEGIN
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "insurance"."broker_carrier_agreements"
+        ADD CONSTRAINT "fk_broker_carrier_agreements_representation_mode_concept_id" FOREIGN KEY ("representation_mode_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "insurance"."broker_carrier_agreements"
+        ADD CONSTRAINT "fk_broker_carrier_agreements_relationship_type_concept_id" FOREIGN KEY ("relationship_type_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.branches (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "insurance"."broker_carrier_agreements"
+        ADD CONSTRAINT "fk_broker_carrier_agreements_branch_id" FOREIGN KEY ("branch_id")
+        REFERENCES "directory"."branches" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "insurance"."broker_carrier_agreements"
+        ADD CONSTRAINT "fk_broker_carrier_agreements_supervisor_user_id" FOREIGN KEY ("supervisor_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: common.files (requiere schema common)
+DO $$ BEGIN
+    ALTER TABLE "insurance"."insurance_terms_conditions"
+        ADD CONSTRAINT "fk_insurance_terms_conditions_document_file_id" FOREIGN KEY ("document_file_id")
+        REFERENCES "common"."files" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "insurance"."insurance_terms_conditions"
+        ADD CONSTRAINT "fk_insurance_terms_conditions_service_concept_id" FOREIGN KEY ("service_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: erp.contracts (requiere schema erp)
+DO $$ BEGIN
+    ALTER TABLE "insurance"."insurance_terms_conditions"
+        ADD CONSTRAINT "fk_insurance_terms_conditions_contract_id" FOREIGN KEY ("contract_id")
+        REFERENCES "erp"."contracts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "insurance"."insurance_terms_conditions"
+        ADD CONSTRAINT "fk_insurance_terms_conditions_jurisdiction_concept_id" FOREIGN KEY ("jurisdiction_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "insurance"."insurance_terms_conditions"
+        ADD CONSTRAINT "fk_insurance_terms_conditions_client_type_concept_id" FOREIGN KEY ("client_type_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "insurance"."insurance_terms_conditions"
+        ADD CONSTRAINT "fk_insurance_terms_conditions_status_concept_id" FOREIGN KEY ("status_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "insurance"."insurance_terms_conditions"
+        ADD CONSTRAINT "fk_insurance_terms_conditions_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "insurance"."insurance_terms_conditions"
+        ADD CONSTRAINT "fk_insurance_terms_conditions_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
 -- destino: directory.tenants (requiere schema directory)
 DO $$ BEGIN
     ALTER TABLE "insurance"."employer_groups"

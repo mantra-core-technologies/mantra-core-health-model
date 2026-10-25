@@ -155,3 +155,83 @@ CREATE INDEX IF NOT EXISTS "ix_diagnostic_unit_accreditations_verification_statu
 CREATE INDEX IF NOT EXISTS "ix_diagnostic_unit_accreditations_created_by_user_id" ON "diagnostic_units"."diagnostic_unit_accreditations" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_diagnostic_unit_accreditations_updated_by_user_id" ON "diagnostic_units"."diagnostic_unit_accreditations" ("updated_by_user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_unit_medical_visitors_user_id" ON "diagnostic_units"."unit_medical_visitors" ("user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_medical_visitors_diagnostic_unit_id" ON "diagnostic_units"."unit_medical_visitors" ("diagnostic_unit_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_medical_visitors_supervisor_user_id" ON "diagnostic_units"."unit_medical_visitors" ("supervisor_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_medical_visitors_branch_id" ON "diagnostic_units"."unit_medical_visitors" ("branch_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_medical_visitors_identity_verification_concept_id" ON "diagnostic_units"."unit_medical_visitors" ("identity_verification_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_medical_visitors_contract_verification_concept_id" ON "diagnostic_units"."unit_medical_visitors" ("contract_verification_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_medical_visitors_credential_verification_concept_id" ON "diagnostic_units"."unit_medical_visitors" ("credential_verification_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_medical_visitors_status_concept_id" ON "diagnostic_units"."unit_medical_visitors" ("status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_medical_visitors_created_by_user_id" ON "diagnostic_units"."unit_medical_visitors" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_medical_visitors_updated_by_user_id" ON "diagnostic_units"."unit_medical_visitors" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_visit_requests_unit_medical_visitor_id" ON "diagnostic_units"."unit_visit_requests" ("unit_medical_visitor_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_visit_requests_diagnostic_unit_id" ON "diagnostic_units"."unit_visit_requests" ("diagnostic_unit_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_visit_requests_doctor_user_id" ON "diagnostic_units"."unit_visit_requests" ("doctor_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_visit_requests_doctor_tenant_id" ON "diagnostic_units"."unit_visit_requests" ("doctor_tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_visit_requests_modality_concept_id" ON "diagnostic_units"."unit_visit_requests" ("modality_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_visit_requests_status_concept_id" ON "diagnostic_units"."unit_visit_requests" ("status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_visit_requests_rescheduled_from_id" ON "diagnostic_units"."unit_visit_requests" ("rescheduled_from_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_visit_requests_created_by_user_id" ON "diagnostic_units"."unit_visit_requests" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_visit_requests_updated_by_user_id" ON "diagnostic_units"."unit_visit_requests" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_visit_request_events_unit_visit_request_id" ON "diagnostic_units"."unit_visit_request_events" ("unit_visit_request_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_visit_request_events_action_concept_id" ON "diagnostic_units"."unit_visit_request_events" ("action_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_visit_request_events_previous_status_concept_id" ON "diagnostic_units"."unit_visit_request_events" ("previous_status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_visit_request_events_new_status_concept_id" ON "diagnostic_units"."unit_visit_request_events" ("new_status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_visit_request_events_actor_user_id" ON "diagnostic_units"."unit_visit_request_events" ("actor_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_visit_request_events_created_by_user_id" ON "diagnostic_units"."unit_visit_request_events" ("created_by_user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_unit_visit_records_unit_visit_request_id" ON "diagnostic_units"."unit_visit_records" ("unit_visit_request_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_visit_records_doctor_user_id" ON "diagnostic_units"."unit_visit_records" ("doctor_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_visit_records_unit_medical_visitor_id" ON "diagnostic_units"."unit_visit_records" ("unit_medical_visitor_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_visit_records_diagnostic_unit_id" ON "diagnostic_units"."unit_visit_records" ("diagnostic_unit_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_visit_records_modality_concept_id" ON "diagnostic_units"."unit_visit_records" ("modality_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_visit_records_visitor_attendance_concept_id" ON "diagnostic_units"."unit_visit_records" ("visitor_attendance_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_visit_records_doctor_attendance_concept_id" ON "diagnostic_units"."unit_visit_records" ("doctor_attendance_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_visit_records_confirmation_concept_id" ON "diagnostic_units"."unit_visit_records" ("confirmation_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_visit_records_created_by_user_id" ON "diagnostic_units"."unit_visit_records" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_visit_records_updated_by_user_id" ON "diagnostic_units"."unit_visit_records" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_visit_ratings_unit_visit_record_id" ON "diagnostic_units"."unit_visit_ratings" ("unit_visit_record_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_visit_ratings_doctor_user_id" ON "diagnostic_units"."unit_visit_ratings" ("doctor_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_visit_ratings_kind_concept_id" ON "diagnostic_units"."unit_visit_ratings" ("kind_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_visit_ratings_created_by_user_id" ON "diagnostic_units"."unit_visit_ratings" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_unit_visit_ratings_updated_by_user_id" ON "diagnostic_units"."unit_visit_ratings" ("updated_by_user_id");

@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS "identity_assurance"."identity_verification_policies"
 
 CREATE TABLE IF NOT EXISTS "identity_assurance"."identity_verification_cases" (
     "id" uuid NOT NULL,
+    "tenant_id" uuid,
     "subject_type_concept_id" uuid NOT NULL,
     "subject_entity_id" uuid NOT NULL,
     "identity_verification_policy_id" uuid NOT NULL,
