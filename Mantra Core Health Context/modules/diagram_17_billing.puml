@@ -40,6 +40,7 @@ entity service_catalog {
   * code : varchar
   * name : varchar
     description_text : text
+    terms_text : text
     image_file_id : uuid <<FK>>
     service_concept_id : uuid <<FK>>
   * default_price : numeric
