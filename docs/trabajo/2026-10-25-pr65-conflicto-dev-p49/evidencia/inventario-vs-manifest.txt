@@ -1,0 +1,26 @@
+$ python "Mantra Core Health Context/tools/model_inventory.py"
+SALUD � inventario can�nico (reproducible)
+  modules_puml               : 70
+  schemas                    : 58
+  entity_declarations_total  : 2920
+    tables_stores            : 1348
+    views                    : 81
+    reference_only           : 168
+    index_sets               : 1323
+    (suma clases)            : 2920  OK
+  fk_references              : 7224
+
+# manifest (bloque inventory:) tras la resolución
+  inventory:
+    modules_puml: 70
+    schemas: 58
+    entity_declarations_total: 2920
+    table_like_elements: 1348
+    view_elements: 81
+    index_sets: 1323
+    reference_only_stubs: 168
+    fk_references: 7224
+    note: >-
+
+# comparación por módulo manifest vs script: diferencias=0 | módulos script=70 manifest=70
+# YAML parseado con PyYAML: OK (worktree). git grep de marcadores de conflicto: 0 líneas

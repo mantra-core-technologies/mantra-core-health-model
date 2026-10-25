@@ -523,3 +523,21 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_accrual_postings_ledger_entry_id" FOREIGN KEY ("ledger_entry_id")
         REFERENCES "accounting"."ledger_entries" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "accounting"."practitioner_simple_records"
+        ADD CONSTRAINT "fk_practitioner_simple_records_account_id" FOREIGN KEY ("account_id")
+        REFERENCES "accounting"."practitioner_simple_accounts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "accounting"."practitioner_simple_transactions"
+        ADD CONSTRAINT "fk_practitioner_simple_transactions_debit_account_id" FOREIGN KEY ("debit_account_id")
+        REFERENCES "accounting"."practitioner_simple_accounts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "accounting"."practitioner_simple_transactions"
+        ADD CONSTRAINT "fk_practitioner_simple_transactions_credit_account_id" FOREIGN KEY ("credit_account_id")
+        REFERENCES "accounting"."practitioner_simple_accounts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;

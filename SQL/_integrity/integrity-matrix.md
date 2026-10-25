@@ -25,6 +25,14 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 
 ## Matriz por módulo dueño
 
+### Módulo 16 · `accounting`
+
+| Tabla | Estereotipo | Reglas declaradas |
+|-------|-------------|-------------------|
+| `accounting.practitioner_simple_accounts` | `REFERENCE_ONLY` | **CHECK_SQL** ck_practitioner_simple_accounts_class \| "account_class" IN ('ASSET', 'LIABILITY', 'EQUITY', 'INCOME', 'EXPENSE') |
+| `accounting.practitioner_simple_records` | `REFERENCE_ONLY` | **CHECK_SQL** ck_practitioner_simple_records_kind \| "kind" IN ('EXPENSE', 'ASSET', 'DEBT'); **CHECK_SQL** ck_practitioner_simple_records_amount \| "amount" > 0 |
+| `accounting.practitioner_simple_transactions` | `REFERENCE_ONLY` | **CHECK_SQL** ck_practitioner_simple_transactions_distinct \| "debit_account_id" <> "credit_account_id"; **CHECK_SQL** ck_practitioner_simple_transactions_amount \| "amount" > 0 |
+
 ### Módulo 10 · `audit`
 
 | Tabla | Estereotipo | Reglas declaradas |

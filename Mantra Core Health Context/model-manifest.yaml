@@ -173,12 +173,12 @@ model:
   inventory:
     modules_puml: 70
     schemas: 58
-    entity_declarations_total: 2909
-    table_like_elements: 1345
+    entity_declarations_total: 2920
+    table_like_elements: 1348
     view_elements: 81
-    index_sets: 1320
-    reference_only_stubs: 163
-    fk_references: 7212
+    index_sets: 1323
+    reference_only_stubs: 168
+    fk_references: 7224
     note: >-
       Cifras producidas por tools/model_inventory.py (fuente única reproducible:
       clasifica cada `entity` en una sola clase, suma == total). v4.0 base
@@ -201,9 +201,10 @@ model:
       52 schemas. Recontado el 2026-10-25 sobre los módulos 00–69 (incluye las
       promociones posteriores: 64–69 y las columnas/tablas de v4.0.11–v4.2.x,
       y la tanda v4.2.49 de los issues #54–#60 con 13 tablas nuevas,
-      más los servicios recibidos del paciente):
-      2909 entity / 1345 table_like / 81 vistas / 1320 idx /
-      7212 FK / 163 ref / 58 schemas; los conteos por módulo de
+      los servicios recibidos del paciente y la contabilidad simple del
+      doctor, P49):
+      2920 entity / 1348 table_like / 81 vistas / 1323 idx /
+      7224 FK / 168 ref / 58 schemas; los conteos por módulo de
       `modules` salen de la misma corrida.
   database: PostgreSQL canonical + governed specialized stores
   rules:
@@ -369,9 +370,9 @@ modules:
   code: accounting
   title: General Ledger and Accounting Subledgers
   file: modules/diagram_16_accounting.puml
-  table_like_elements: 42
+  table_like_elements: 45
   view_elements: 0
-  index_sets: 42
+  index_sets: 45
   status: active
 - number: 17
   code: billing

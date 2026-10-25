@@ -20,7 +20,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 13 | geo | 6 | 31 | 0 | 35 | 0 |
 | 14 | practice | 11 | 82 | 1 | 86 | 0 |
 | 15 | chart | 11 | 70 | 0 | 80 | 1 |
-| 16 | accounting | 42 | 304 | 1 | 356 | 13 |
+| 16 | accounting | 45 | 316 | 1 | 369 | 15 |
 | 17 | billing | 22 | 153 | 0 | 169 | 18 |
 | 18 | clinical_ext | 14 | 95 | 4 | 107 | 1 |
 | 19 | community | 41 | 254 | 4 | 268 | 9 |
@@ -37,7 +37,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 30 | read_models | 13 | 74 | 0 | 89 | 76 |
 | 31 | integration_contracts | 9 | 48 | 1 | 57 | 0 |
 | 32 | workflow | 8 | 49 | 0 | 55 | 9 |
-| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 40 |
+| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 43 |
 | 34 | portal_catalog _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
 | 35 | messaging | 22 | 142 | 0 | 150 | 0 |
 | 36 | qa_lab | 13 | 79 | 0 | 92 | 0 |
@@ -74,7 +74,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 67 | data_catalog | 13 | 43 | 23 | 24 | 0 |
 | 68 | qa_execution | 4 | 14 | 6 | 6 | 0 |
 | 69 | pharma_lab | 31 | 173 | 173 | 182 | 0 |
-| **Σ** | **70** | **1248** | | **392** | | **329** |
+| **Σ** | **70** | **1251** | | **392** | | **334** |
 
 ## Detalle de entidades saltadas y avisos
 
@@ -116,6 +116,8 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - `billing_bills` — stub de cruce (tabla real en su módulo dueño)
 - `payments_payment_transactions` — stub de cruce (tabla real en su módulo dueño)
 - `directory_branches` — stub de cruce (tabla real en su módulo dueño)
+- `practice_practices` — stub de cruce (tabla real en su módulo dueño)
+- `iam_users` — stub de cruce (tabla real en su módulo dueño)
 
 ### 17 · billing
 - `erp_business_partners` — stub de cruce (tabla real en su módulo dueño)
@@ -282,6 +284,9 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - `medical_groups_groups` — stub de cruce (tabla real en su módulo dueño)
 - `medical_groups_group_members` — stub de cruce (tabla real en su módulo dueño)
 - `system_ops_restore_test_runs` — stub de cruce (tabla real en su módulo dueño)
+- `accounting_practitioner_simple_accounts` — stub de cruce (tabla real en su módulo dueño)
+- `accounting_practitioner_simple_records` — stub de cruce (tabla real en su módulo dueño)
+- `accounting_practitioner_simple_transactions` — stub de cruce (tabla real en su módulo dueño)
 - `surveys_survey_templates` — stub de cruce (tabla real en su módulo dueño)
 - `surveys_survey_versions` — stub de cruce (tabla real en su módulo dueño)
 - `surveys_survey_invitations` — stub de cruce (tabla real en su módulo dueño)
