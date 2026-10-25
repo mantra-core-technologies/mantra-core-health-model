@@ -122,12 +122,50 @@ entity concept_relationships {
   * target_concept_id : uuid <<FK>>
   * relationship_type_concept_id : uuid <<FK>>
     ordinal : integer
+    strength_score : numeric
+    evidence_count : integer
+    best_evidence_tier_concept_id : uuid <<FK>>
+    frequency_concept_id : uuid <<FK>>
   * created_at : timestamptz
   * updated_at : timestamptz
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
 }
+entity concept_relationship_evidence {
+  * id : uuid <<PK>>
+  --
+  * concept_relationship_id : uuid <<FK>>
+  * terminology_source_id : uuid <<FK>>
+  * code_system_version_id : uuid <<FK>>
+  * evidence_tier_concept_id : uuid <<FK>>
+  * source_reference : varchar
+    citation_text : text
+    citation_locator : varchar
+    frequency_concept_id : uuid <<FK>>
+    frequency_numerator : integer
+    frequency_denominator : integer
+    statistic_value : numeric
+    sex_concept_id : uuid <<FK>>
+    age_min_days : integer
+    age_max_days : integer
+    pregnancy_applicability_concept_id : uuid <<FK>>
+    care_level_concept_id : uuid <<FK>>
+    line_of_therapy_concept_id : uuid <<FK>>
+  * valid_from : date
+    valid_to : date
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  * row_version : integer
+}
+note right of concept_relationship_evidence
+  TAREA-41 F1 (v4.2.50). One row per source statement that backs a
+  concept_relationships edge (1:N). The edge columns strength_score,
+  evidence_count, best_evidence_tier_concept_id and frequency_concept_id
+  are DERIVED from these rows by the bulk loader; the application never
+  writes them. valid_from/valid_to come from the source release, so a
+  clinical act is judged against the evidence in force on its date.
+end note
 entity value_sets {
   * id : uuid <<PK>>
   --
@@ -256,6 +294,9 @@ code_system_versions ||--o{ catalog_concepts
 catalog_concepts ||--o{ concept_designations
 catalog_concepts ||--o{ concept_properties
 catalog_concepts ||--o{ concept_relationships : source
+concept_relationship_evidence }o--|| concept_relationships : concept_relationship_id
+concept_relationship_evidence }o--|| terminology_sources : terminology_source_id
+concept_relationship_evidence }o--|| code_system_versions : code_system_version_id
 value_sets ||--o{ value_set_versions
 value_set_versions ||--o{ value_set_members
 catalog_concepts ||--o{ value_set_members
@@ -353,9 +394,30 @@ entity "INDEXES · concept_relationships" as idxset_concept_relationships <<INDE
   IX ix_concept_relationships_relationship_type_concept_id : (relationship_type_concept_id) BTREE
   IX ix_concept_relationships_created_by_user_id : (created_by_user_id) BTREE
   IX ix_concept_relationships_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_concept_relationships_best_evidence_tier_concept_id : (best_evidence_tier_concept_id) BTREE
+  IX ix_concept_relationships_frequency_concept_id : (frequency_concept_id) BTREE
+  UX ux_concept_relationships_natural_key : (source_concept_id, target_concept_id, relationship_type_concept_id) UNIQUE BTREE
+  IX ix_concept_relationships_source_type_strength : (source_concept_id, relationship_type_concept_id, strength_score DESC) BTREE
+  IX ix_concept_relationships_target_type_strength : (target_concept_id, relationship_type_concept_id, strength_score DESC) BTREE
 }
 
 concept_relationships .. idxset_concept_relationships : indexed by
+
+entity "INDEXES · concept_relationship_evidence" as idxset_concept_relationship_evidence <<INDEX_SET>> {
+  PK pk_concept_relationship_evidence : (id) UNIQUE BTREE
+  UX ux_concept_relationship_evidence_natural_key : (concept_relationship_id, terminology_source_id, source_reference) UNIQUE BTREE
+  IX ix_concept_relationship_evidence_concept_relationship_id : (concept_relationship_id) BTREE
+  IX ix_concept_relationship_evidence_terminology_source_id : (terminology_source_id) BTREE
+  IX ix_concept_relationship_evidence_code_system_version_id : (code_system_version_id) BTREE
+  IX ix_concept_relationship_evidence_evidence_tier_concept_id : (evidence_tier_concept_id) BTREE
+  IX ix_concept_relationship_evidence_frequency_concept_id : (frequency_concept_id) BTREE
+  IX ix_concept_relationship_evidence_sex_concept_id : (sex_concept_id) BTREE
+  IX ix_concept_relationship_evidence_pregnancy_applicability_concept_id : (pregnancy_applicability_concept_id) BTREE
+  IX ix_concept_relationship_evidence_care_level_concept_id : (care_level_concept_id) BTREE
+  IX ix_concept_relationship_evidence_line_of_therapy_concept_id : (line_of_therapy_concept_id) BTREE
+}
+
+concept_relationship_evidence .. idxset_concept_relationship_evidence : indexed by
 
 entity "INDEXES · value_sets" as idxset_value_sets <<INDEX_SET>> {
   PK pk_value_sets : (id) UNIQUE BTREE

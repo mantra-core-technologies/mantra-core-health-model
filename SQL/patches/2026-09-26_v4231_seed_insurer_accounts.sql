@@ -1,6 +1,29 @@
 -- SALUD v4.0.10 / ALOVIDA — patch 2026-09-26_v4231_seed_insurer_accounts.sql
 -- Seeder de cuentas de acceso para operadores de aseguradoras (PAYER)
 -- Idempotente: ON CONFLICT DO NOTHING / UPDATE
+--
+-- DEPENDE DEL CATÁLOGO DE TERMINOLOGÍA. Las cuentas apuntan por FK a ocho
+-- conceptos (estado de usuario, método y algoritmo de credencial, estado, rol
+-- global, rol de tenant, estado de membresía y alcance de acceso) que NO vienen
+-- en el DDL: los siembra la API (`api-migrate`) DESPUÉS de postgres-init. En una
+-- base nueva este archivo cortaba el init con
+-- `violates foreign key constraint "fk_users_status_concept_id"`.
+-- Con el catálogo ya sembrado (redespliegue sobre una base viva, o la corrida de
+-- postgres-init posterior a `api-migrate`) se aplica entero, como siempre; sin él,
+-- se omite nombrándose y no deja nada a medias. Requiere `psql` (\if/\gset).
+SELECT (SELECT count(*) = 8
+          FROM terminology.catalog_concepts
+         WHERE id IN (
+           '32dbed9f-cf1f-5c7a-9070-dfb937cf68a1',
+           '37da1281-cc62-5032-b598-1eb39dc46060',
+           '646c89e7-29d5-5450-a4c6-17817fe55aa9',
+           '38a1d301-f40d-5b17-a695-5e6d605f8b19',
+           '51f28f0b-95c2-57b1-a53b-2240c7e80731',
+           '43634daf-8ee6-5e37-891b-3cf44d7a52f9',
+           '13ca1b46-61d5-5c25-9d49-8247bcd7769c',
+           '297d044a-a1e9-51db-8f96-68f4de6b3d62'
+         )) AS catalogo_listo \gset
+\if :catalogo_listo
 
 BEGIN;
 
@@ -632,3 +655,8 @@ WHERE c.carrier_code = 'DEMO-07qj6'
 ON CONFLICT (id) DO NOTHING;
 
 COMMIT;
+
+\else
+\echo === 2026-09-26_v4231_seed_insurer_accounts: el catálogo de terminología aún no está sembrado - se omite.
+\echo === Se aplica sola en la corrida de postgres-init posterior a api-migrate.
+\endif

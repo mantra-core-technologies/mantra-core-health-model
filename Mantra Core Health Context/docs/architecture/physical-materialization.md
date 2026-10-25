@@ -49,6 +49,43 @@ comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_obje
 
 ## 3. Estado actual del build
 
+### v4.2.50 — Red de conocimiento con evidencia: `concept_relationship_evidence` (2026-10-25)
+
+**Cambio de esquema: +1 tabla, +4 columnas, +11 FK y +16 índices en `terminology` (módulo 03).**
+Parche: `SQL/patches/2026-10-25_v4250_terminology_relationship_evidence.sql` (idempotente, fuera de
+`apply_all.sql`; aborta si la base trae claves `(source, target, tipo)` duplicadas en vez de fusionarlas).
+
+- `concept_relationships`: clave natural única `ux_concept_relationships_natural_key` (medido antes:
+  **0 duplicados en 20 390 filas** de la base viva) + columnas derivadas `strength_score`,
+  `evidence_count`, `best_evidence_tier_concept_id`, `frequency_concept_id` (las recalcula el cargador
+  masivo de F1.3; la app no las escribe) + `ix_concept_relationships_{source,target}_type_strength`
+  con `strength_score DESC`.
+- Tabla nueva `concept_relationship_evidence` (1:N): fuente, versión, nivel de evidencia, cita literal,
+  frecuencia n/m, estadístico, sexo/edad/embarazo, nivel de atención, línea de tratamiento y vigencia.
+  Vacía a propósito en `gen_seeds.py` (la escribe el cargador).
+- Value sets en `gen_seeds.py` (`SEED_REVISION` `2.8.0-v4.2.50`): `vs_evidence_tier` (4),
+  `vs_relationship_frequency` (6, HPO HP:0040280–HP:0040285), `vs_care_level` (3),
+  `vs_line_of_therapy` (2). `vs_pregnancy_applicability` tiene nota pero **no se siembra**: la ficha
+  no enumera sus miembros.
+
+**Verificación (2026-10-25).**
+- Patch sobre la base viva, dos pasadas, ambas exit 0: tablas **1 258 → 1 259** · FKs **7 091 → 7 102**
+  · índices **9 585 → 9 601**; 2.ª pasada sin cambios.
+- `rebuild_stack.py --yes` (con `COMPOSE_PROFILES=local-db`): init postgres/mongo/opensearch **0/0/0**,
+  tablas **1 279 == SQL/ 1 279** (era 1 278), FKs con hash **61 == 61** (era 60), FKs de `terminology`
+  e índices de las dos tablas presentes (16 FK · 22 índices), 4 value sets sembrados con 15 miembros.
+  **VEREDICTO: FAIL por dos deudas preexistentes, ninguna de v4.2.50:** FKs BD **7 245** contra SQL/
+  **7 231** (+14 que crean patches de `medical_groups` sin declararlas en el `.puml`) y **48 huérfanos**
+  en hijos de `practice.healthcare_services` (`ux_healthcare_services_site_service` rechaza 10 filas del
+  paquete con 23505; pasa igual con el paquete de `dev`). Índices informativos: 9 774.
+- Dry-run de fidelidad de la API: `30 diferencias (tabla-ausente=9, columna-ausente=14,
+  obligatoriedad-divergente=7)`, **ninguna en `terminology`**. La línea base ya no es la de las 6
+  conocidas: el modelo no tiene patches que la copia `database/` de la API sí (v4232–v4246).
+
+Arreglos de pipeline del mismo cambio: `rebuild_stack.py` deriva de SQL/ las FKs con hash (era un 58
+cableado), `apply_all.sql` vuelve a incluir `16_accounting/05_constraints.sql`, el patch v4.2.8 no
+exige en base limpia el CHECK que v4.2.18 retiró, y v4.2.31 trae de la API su guarda `\if`.
+
 ### v4.2.49 — Servicios recibidos del paciente: intervenciones y vacunas como tipos de servicio (2026-10-25)
 
 **Cambio de esquema: +1 tabla en `clinical` (módulo 08) y +1 CHECK (módulo 33).**

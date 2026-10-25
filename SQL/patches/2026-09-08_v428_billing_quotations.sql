@@ -244,6 +244,16 @@ BEGIN
             'interest_calculation_method=ANYARRAY[''FRENCH'',''FLAT'']'
           );
 
+    -- v4.2.18 retiró `interest_calculation_method` del modelo: en una base
+    -- reconstruida desde SQL/ la columna ya no existe y su CHECK tampoco puede
+    -- existir. Sólo se exige el CHECK mientras la columna siga viva.
+    IF n_check = 0 AND NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+         WHERE table_schema = 'billing' AND table_name = 'quotations'
+           AND column_name = 'interest_calculation_method') THEN
+        n_check := 1;
+    END IF;
+
     IF n_tablas <> 2 OR n_fk <> 10 OR n_indices <> 10 OR n_check <> 1 THEN
         RAISE EXCEPTION
             'v4.2.8 incompleto: tablas=% (esperado 2), fk=% (esperado 10), indices=% (esperado 10), check=% (esperado 1)',

@@ -186,6 +186,8 @@
 \ir 16_accounting/03_fk_intra.sql
 \echo >>> 16_accounting/04_indexes.sql
 \ir 16_accounting/04_indexes.sql
+\echo >>> 16_accounting/05_constraints.sql
+\ir 16_accounting/05_constraints.sql
 
 -- ═══ módulo 17_billing ═══
 \echo >>> 17_billing/01_schema.sql

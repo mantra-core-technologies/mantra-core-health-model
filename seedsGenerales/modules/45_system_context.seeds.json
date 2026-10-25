@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "Provides versioned system context for agents, modules and workflows, and database-driven enumerations resolved from governed terminology value sets. Consumers receive reproducible context instead of ad-hoc JSON or hard-coded lists.",
-    "seed_revision": "2.7.0-v4.2.49"
+    "seed_revision": "2.8.0-v4.2.50"
   },
   "environment_policy": {
     "boot": {
@@ -49,7 +49,7 @@
       "dynamic_enum_options",
       "dynamic_enum_bindings"
     ],
-    "record_count": 781,
+    "record_count": 804,
     "records": {
       "system_contexts": [
         {
@@ -1506,6 +1506,82 @@
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1
+        },
+        {
+          "id": "d48e77b2-75f6-524d-a0a9-7abbea09942d",
+          "code": "VS_CARE_LEVEL",
+          "name": "Care Level",
+          "description": "Enum dinámico del value set vs_care_level (patch v4.2.50).",
+          "value_set_id": "2ed3edbb-986d-517c-a22a-7ed29fbd7914",
+          "scope_type_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "tenant_id": null,
+          "country_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
+          "selection_mode_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "allow_tenant_extension": false,
+          "allow_custom_value": false,
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-08-01T01:02:00Z",
+          "updated_at": "2026-08-01T01:22:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "b83ce761-9101-54f1-80db-d3634fab220c",
+          "code": "VS_EVIDENCE_TIER",
+          "name": "Evidence Tier",
+          "description": "Enum dinámico del value set vs_evidence_tier (patch v4.2.50).",
+          "value_set_id": "e0698f10-c71d-5721-9452-6acdbc5b988a",
+          "scope_type_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "tenant_id": null,
+          "country_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
+          "selection_mode_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "allow_tenant_extension": false,
+          "allow_custom_value": false,
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-10-15T13:41:00Z",
+          "updated_at": "2026-10-15T14:01:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "fbc9ec55-27e4-59ca-800f-f6983070d2b9",
+          "code": "VS_LINE_OF_THERAPY",
+          "name": "Line Of Therapy",
+          "description": "Enum dinámico del value set vs_line_of_therapy (patch v4.2.50).",
+          "value_set_id": "4f00b182-4a94-5d10-9816-3891850b2f5e",
+          "scope_type_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "tenant_id": null,
+          "country_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
+          "selection_mode_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "allow_tenant_extension": false,
+          "allow_custom_value": false,
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-10-20T02:28:00Z",
+          "updated_at": "2026-10-20T02:48:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "faa20554-6ee5-5d59-92b2-a2b57b780094",
+          "code": "VS_RELATIONSHIP_FREQUENCY",
+          "name": "Relationship Frequency",
+          "description": "Enum dinámico del value set vs_relationship_frequency (patch v4.2.50).",
+          "value_set_id": "f7bad850-6064-50ae-abfe-5e7b17a182b3",
+          "scope_type_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "tenant_id": null,
+          "country_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
+          "selection_mode_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "allow_tenant_extension": false,
+          "allow_custom_value": false,
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-08-18T19:14:00Z",
+          "updated_at": "2026-08-18T19:34:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
         }
       ],
       "dynamic_enum_versions": [
@@ -2157,6 +2233,58 @@
           "effective_to": null,
           "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
           "recorded_at": "2026-09-13T02:37:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "1abb73a5-9189-51cc-8478-3ec460ee2a9b",
+          "dynamic_enum_definition_id": "d48e77b2-75f6-524d-a0a9-7abbea09942d",
+          "version_number": 1,
+          "value_set_version_id": "4f975b7a-d8fb-58ae-8458-4a54724bd87d",
+          "schema_version": "1.0.0",
+          "cache_token": "ab76f4ca46d1391642c2242c194640a3",
+          "effective_from": "2026-08-01T01:02:00Z",
+          "effective_to": null,
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "recorded_at": "2026-08-01T01:02:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "538a63df-f58f-5fee-843e-99465cce0aa3",
+          "dynamic_enum_definition_id": "b83ce761-9101-54f1-80db-d3634fab220c",
+          "version_number": 1,
+          "value_set_version_id": "710ddc83-85b4-5c1b-a079-8983eb605443",
+          "schema_version": "1.0.0",
+          "cache_token": "10c3f9d7f8e7be2522e0290d4197fc67",
+          "effective_from": "2026-10-15T13:41:00Z",
+          "effective_to": null,
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "recorded_at": "2026-10-15T13:41:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "8cc56fda-0d0f-5e3d-b520-3b2ae35ee728",
+          "dynamic_enum_definition_id": "fbc9ec55-27e4-59ca-800f-f6983070d2b9",
+          "version_number": 1,
+          "value_set_version_id": "9a7ded96-52f7-5df6-8c05-e9a75e75c76c",
+          "schema_version": "1.0.0",
+          "cache_token": "71607594d263c71adb3ec506e1e66e06",
+          "effective_from": "2026-10-20T02:28:00Z",
+          "effective_to": null,
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "recorded_at": "2026-10-20T02:28:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "f7a1f310-5012-5b79-a901-675012ec3fa0",
+          "dynamic_enum_definition_id": "faa20554-6ee5-5d59-92b2-a2b57b780094",
+          "version_number": 1,
+          "value_set_version_id": "89353fa2-19a8-50a6-9401-8caeba7e3bd2",
+          "schema_version": "1.0.0",
+          "cache_token": "f8e2b45010391d64398d2f29d824cfa6",
+          "effective_from": "2026-08-18T19:14:00Z",
+          "effective_to": null,
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "recorded_at": "2026-08-18T19:14:00Z",
           "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
         }
       ],
@@ -11964,6 +12092,246 @@
           },
           "recorded_at": "2026-08-03T03:06:00Z",
           "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "2fa326f5-55da-5755-ae8f-81161ab376e9",
+          "dynamic_enum_version_id": "1abb73a5-9189-51cc-8478-3ec460ee2a9b",
+          "concept_id": "af857ca2-0ce1-534b-a6d3-fe6baceb03b9",
+          "code": "FIRST_LEVEL",
+          "display": "Primer nivel",
+          "ordinal": 1,
+          "is_default": true,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_care_level",
+            "patch": "v4.2.50"
+          },
+          "recorded_at": "2026-09-26T18:54:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "3d1ed6ae-9533-569b-86b8-d8e5c0510dba",
+          "dynamic_enum_version_id": "1abb73a5-9189-51cc-8478-3ec460ee2a9b",
+          "concept_id": "f1457cce-ee41-5ffc-a7b6-289405b6bd45",
+          "code": "SECOND_LEVEL",
+          "display": "Segundo nivel",
+          "ordinal": 2,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_care_level",
+            "patch": "v4.2.50"
+          },
+          "recorded_at": "2026-10-19T22:37:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "3df32854-a018-582b-885d-f8efc8c33d75",
+          "dynamic_enum_version_id": "1abb73a5-9189-51cc-8478-3ec460ee2a9b",
+          "concept_id": "4b0f74e7-ef5e-5e48-8e8c-d82c4db1bdc1",
+          "code": "THIRD_LEVEL",
+          "display": "Tercer nivel",
+          "ordinal": 3,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_care_level",
+            "patch": "v4.2.50"
+          },
+          "recorded_at": "2026-09-22T12:23:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "6edc125a-3f6c-5b1a-a65d-c0e3e51ce2ff",
+          "dynamic_enum_version_id": "538a63df-f58f-5fee-843e-99465cce0aa3",
+          "concept_id": "a5144e06-59fb-5e13-9d11-7136a60f2a01",
+          "code": "NATIONAL_STANDARD",
+          "display": "Norma nacional",
+          "ordinal": 1,
+          "is_default": true,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_evidence_tier",
+            "patch": "v4.2.50"
+          },
+          "recorded_at": "2026-08-01T18:54:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "672668c8-036f-58e0-a52c-12674216978e",
+          "dynamic_enum_version_id": "538a63df-f58f-5fee-843e-99465cce0aa3",
+          "concept_id": "961037e1-f068-5559-b5c6-7476eb544e43",
+          "code": "CURATED_REFERENCE",
+          "display": "Referencia curada",
+          "ordinal": 2,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_evidence_tier",
+            "patch": "v4.2.50"
+          },
+          "recorded_at": "2026-08-15T02:12:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "eadf6c39-7d92-5ed3-bd54-66df4d7f9175",
+          "dynamic_enum_version_id": "538a63df-f58f-5fee-843e-99465cce0aa3",
+          "concept_id": "73ebd2ce-e168-5afd-af75-653edaf3e378",
+          "code": "COLLABORATIVE_KNOWLEDGE",
+          "display": "Conocimiento colaborativo",
+          "ordinal": 3,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_evidence_tier",
+            "patch": "v4.2.50"
+          },
+          "recorded_at": "2026-10-16T10:57:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "c1f249c5-c37d-5d60-80e6-57532da25d89",
+          "dynamic_enum_version_id": "538a63df-f58f-5fee-843e-99465cce0aa3",
+          "concept_id": "8fb850b9-d61f-52f8-bc27-067bf0c2b8c8",
+          "code": "STATISTICAL_LITERATURE",
+          "display": "Literatura estadística",
+          "ordinal": 4,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_evidence_tier",
+            "patch": "v4.2.50"
+          },
+          "recorded_at": "2026-09-12T14:46:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "94988b8c-3134-5d98-8d53-0c06148d3bb7",
+          "dynamic_enum_version_id": "8cc56fda-0d0f-5e3d-b520-3b2ae35ee728",
+          "concept_id": "025b883e-f8ff-589f-b203-eeb823c859f6",
+          "code": "FIRST_LINE",
+          "display": "Primera línea",
+          "ordinal": 1,
+          "is_default": true,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_line_of_therapy",
+            "patch": "v4.2.50"
+          },
+          "recorded_at": "2026-08-29T18:50:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "30257903-62dd-5fba-a7e4-072db0138d89",
+          "dynamic_enum_version_id": "8cc56fda-0d0f-5e3d-b520-3b2ae35ee728",
+          "concept_id": "fd25dbd8-a105-5936-b7a6-9e0cb115cc73",
+          "code": "SECOND_LINE",
+          "display": "Segunda línea",
+          "ordinal": 2,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_line_of_therapy",
+            "patch": "v4.2.50"
+          },
+          "recorded_at": "2026-10-21T13:10:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "dfad4153-2014-5df3-94ff-97fd8b9fdb85",
+          "dynamic_enum_version_id": "f7a1f310-5012-5b79-a901-675012ec3fa0",
+          "concept_id": "3d3c1d02-5fb6-534e-bade-428091ab9d8c",
+          "code": "OBLIGATE",
+          "display": "Obligatoria",
+          "ordinal": 1,
+          "is_default": true,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_relationship_frequency",
+            "patch": "v4.2.50"
+          },
+          "recorded_at": "2026-10-04T23:23:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "e08387e0-f41d-5441-b075-1965d786d167",
+          "dynamic_enum_version_id": "f7a1f310-5012-5b79-a901-675012ec3fa0",
+          "concept_id": "96758159-f671-5ea6-9190-1cd13028a684",
+          "code": "VERY_FREQUENT",
+          "display": "Muy frecuente",
+          "ordinal": 2,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_relationship_frequency",
+            "patch": "v4.2.50"
+          },
+          "recorded_at": "2026-09-24T02:58:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "9a826d49-b793-5383-b2af-fd8dd1f33729",
+          "dynamic_enum_version_id": "f7a1f310-5012-5b79-a901-675012ec3fa0",
+          "concept_id": "f076084c-b496-5018-8b84-2323a6c4b42d",
+          "code": "FREQUENT",
+          "display": "Frecuente",
+          "ordinal": 3,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_relationship_frequency",
+            "patch": "v4.2.50"
+          },
+          "recorded_at": "2026-08-09T16:35:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "03650791-567b-53b4-a16d-b1386253779d",
+          "dynamic_enum_version_id": "f7a1f310-5012-5b79-a901-675012ec3fa0",
+          "concept_id": "7aabd9e7-0944-5cfa-8930-0816ec9cbf3e",
+          "code": "OCCASIONAL",
+          "display": "Ocasional",
+          "ordinal": 4,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_relationship_frequency",
+            "patch": "v4.2.50"
+          },
+          "recorded_at": "2026-10-05T18:54:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "32c82d31-e696-5bc0-a452-bf73d0f5d8d9",
+          "dynamic_enum_version_id": "f7a1f310-5012-5b79-a901-675012ec3fa0",
+          "concept_id": "35fa7de3-b1f8-5cdf-b526-9a19beae8616",
+          "code": "VERY_RARE",
+          "display": "Muy rara",
+          "ordinal": 5,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_relationship_frequency",
+            "patch": "v4.2.50"
+          },
+          "recorded_at": "2026-10-09T17:10:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "cb5b46a5-f072-50e2-a29b-1444fe4b16e8",
+          "dynamic_enum_version_id": "f7a1f310-5012-5b79-a901-675012ec3fa0",
+          "concept_id": "802d47df-ebcd-5090-a967-9e5befa59e81",
+          "code": "EXCLUDED",
+          "display": "Excluida",
+          "ordinal": 6,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_relationship_frequency",
+            "patch": "v4.2.50"
+          },
+          "recorded_at": "2026-10-19T15:35:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
         }
       ],
       "dynamic_enum_bindings": [
@@ -13001,7 +13369,7 @@
       }
     ],
     "summary": {
-      "record_count": 781,
+      "record_count": 804,
       "entity_count": 6,
       "populated_entity_count": 6,
       "scenario_count": null,

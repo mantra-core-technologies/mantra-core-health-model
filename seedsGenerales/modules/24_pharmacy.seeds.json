@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "A pharmacy is an independent data-owning organization even when physically located inside a hospital, office or nursing facility. It can operate through direct backend integration or manual data entry without sharing unrestricted access to the host organization's data.",
-    "seed_revision": "2.7.0-v4.2.49"
+    "seed_revision": "2.8.0-v4.2.50"
   },
   "environment_policy": {
     "boot": {

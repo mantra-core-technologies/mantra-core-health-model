@@ -112,12 +112,43 @@ CREATE TABLE IF NOT EXISTS "terminology"."concept_relationships" (
     "target_concept_id" uuid NOT NULL,
     "relationship_type_concept_id" uuid NOT NULL,
     "ordinal" integer,
+    "strength_score" numeric,
+    "evidence_count" integer,
+    "best_evidence_tier_concept_id" uuid,
+    "frequency_concept_id" uuid,
     "created_at" timestamptz NOT NULL,
     "updated_at" timestamptz NOT NULL,
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
     CONSTRAINT "pk_concept_relationships" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "terminology"."concept_relationship_evidence" (
+    "id" uuid NOT NULL,
+    "concept_relationship_id" uuid NOT NULL,
+    "terminology_source_id" uuid NOT NULL,
+    "code_system_version_id" uuid NOT NULL,
+    "evidence_tier_concept_id" uuid NOT NULL,
+    "source_reference" varchar NOT NULL,
+    "citation_text" text,
+    "citation_locator" varchar,
+    "frequency_concept_id" uuid,
+    "frequency_numerator" integer,
+    "frequency_denominator" integer,
+    "statistic_value" numeric,
+    "sex_concept_id" uuid,
+    "age_min_days" integer,
+    "age_max_days" integer,
+    "pregnancy_applicability_concept_id" uuid,
+    "care_level_concept_id" uuid,
+    "line_of_therapy_concept_id" uuid,
+    "valid_from" date NOT NULL,
+    "valid_to" date,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_concept_relationship_evidence" PRIMARY KEY ("id")
 );
 
 CREATE TABLE IF NOT EXISTS "terminology"."value_sets" (
