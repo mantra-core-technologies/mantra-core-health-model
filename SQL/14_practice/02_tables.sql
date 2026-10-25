@@ -122,6 +122,7 @@ CREATE TABLE IF NOT EXISTS "practice"."healthcare_services" (
     "referral_required" boolean,
     "appointment_required" boolean,
     "telehealth_available" boolean,
+    "service_catalog_id" uuid,
     "status_concept_id" uuid NOT NULL,
     "created_at" timestamptz NOT NULL,
     "updated_at" timestamptz NOT NULL,
