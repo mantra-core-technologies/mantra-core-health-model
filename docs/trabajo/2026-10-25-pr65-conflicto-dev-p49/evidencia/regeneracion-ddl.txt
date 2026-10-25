@@ -1,0 +1,4 @@
+# Regeneración (gen_ddl.py all + gen_integrity.py) comparada con el merge, ignorando EOL
+16_accounting y 08_clinical: 02_tables / 04_indexes / 05_constraints SIN drift; drift solo en 03_fk_intra y 90_fk_deferred.
+08_clinical (módulo que P49 no toca) también difiere => drift preexistente en dev, no del merge.
+113 archivos difieren en total; NO se commitearon (fuera de alcance). SQL/ restaurado desde el índice.
