@@ -2,7 +2,7 @@
   "package": "SALUD_v4.0_module_seeds_enhanced",
   "seed_revision": "2.8.0-v4.2.50",
   "module_count": 64,
-  "boot_record_count": 83602,
+  "boot_record_count": 83619,
   "mock_record_count": 19472,
   "validation_status": "PASS",
   "mock_production_policy": "hard-fail",
@@ -38,10 +38,10 @@
       "number": 3,
       "code": "terminology",
       "file": "modules/03_terminology.seeds.json",
-      "boot_records": 4521,
+      "boot_records": 4533,
       "mock_records": 180,
-      "line_count": 69595,
-      "sha256": "30fabd9101b64212cd388271d333f1d72cf36f7deacd54c304b0f8845bd451eb"
+      "line_count": 69768,
+      "sha256": "0cfed4002c7fed67c3d12f8835a8f719356da7ff01987ec1990051ca393950a4"
     },
     {
       "number": 4,
@@ -140,7 +140,7 @@
       "boot_records": 60,
       "mock_records": 176,
       "line_count": 4718,
-      "sha256": "1d1fb47826600d17df8aad82312bb2953c482870c39e5d8ea5838474ea0ec18a"
+      "sha256": "986590c835b9a9efb2ac1778fdbfa96c72f7ae67477bf19aec6a108351f5c58f"
     },
     {
       "number": 15,
@@ -416,10 +416,10 @@
       "number": 45,
       "code": "system_context",
       "file": "modules/45_system_context.seeds.json",
-      "boot_records": 804,
+      "boot_records": 809,
       "mock_records": 144,
-      "line_count": 16195,
-      "sha256": "c6c6f849fa5beb49f9059d0dcbe75e1c5a39d93f233dbf68185b1b4f41e542da"
+      "line_count": 16275,
+      "sha256": "41a9a905b6fdf2eceb05087d6e91273c80397f4d05ec12eacf77d31424ddc711"
     },
     {
       "number": 46,

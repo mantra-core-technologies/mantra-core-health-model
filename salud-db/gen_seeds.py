@@ -169,12 +169,13 @@ VS_OWNER = {
     "vs_bo_municipality": ("4.1.5", "02"),
     # v4.2.50 — red de conocimiento con evidencia (TAREA-41 F1). Dueño funcional: el
     # módulo 03, que declara `concept_relationship_evidence`. `vs_pregnancy_applicability`
-    # tiene nota en el vault pero NO entra acá: la ficha no enumera sus miembros y no se
-    # inventan (la nota lo deja como TODO).
+    # entró el 2026-10-25 por decisión del propietario: sus miembros son las subsecciones
+    # 8.1–8.3 de la Pregnancy and Lactation Labeling Rule de la FDA (fuente en la nota).
     "vs_evidence_tier": ("4.2.50", "03"),
     "vs_relationship_frequency": ("4.2.50", "03"),
     "vs_care_level": ("4.2.50", "03"),
     "vs_line_of_therapy": ("4.2.50", "03"),
+    "vs_pregnancy_applicability": ("4.2.50", "03"),
 }
 
 # --- display curado por value set -----------------------------------------
@@ -208,6 +209,12 @@ VS_DISPLAY = {
     "vs_line_of_therapy": {
         "first_line": "Primera línea",
         "second_line": "Segunda línea",
+    },
+    # v4.2.50 · subsecciones 8.1–8.3 de la Pregnancy and Lactation Labeling Rule (FDA).
+    "vs_pregnancy_applicability": {
+        "pregnancy": "Embarazo",
+        "lactation": "Lactancia",
+        "reproductive_potential": "Mujeres y hombres con capacidad reproductiva",
     },
     "vs_medical_specialty": {
         "medicina_general": "Medicina General",

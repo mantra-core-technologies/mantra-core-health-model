@@ -65,8 +65,8 @@ Parche: `SQL/patches/2026-10-25_v4250_terminology_relationship_evidence.sql` (id
   Vacía a propósito en `gen_seeds.py` (la escribe el cargador).
 - Value sets en `gen_seeds.py` (`SEED_REVISION` `2.8.0-v4.2.50`): `vs_evidence_tier` (4),
   `vs_relationship_frequency` (6, HPO HP:0040280–HP:0040285), `vs_care_level` (3),
-  `vs_line_of_therapy` (2). `vs_pregnancy_applicability` tiene nota pero **no se siembra**: la ficha
-  no enumera sus miembros.
+  `vs_line_of_therapy` (2), `vs_pregnancy_applicability` (3, las subsecciones 8.1–8.3 de la
+  Pregnancy and Lactation Labeling Rule de la FDA; decisión del propietario del 2026-10-25).
 
 **Verificación (2026-10-25).**
 - Patch sobre la base viva, dos pasadas, ambas exit 0: tablas **1 258 → 1 259** · FKs **7 091 → 7 102**
@@ -78,6 +78,14 @@ Parche: `SQL/patches/2026-10-25_v4250_terminology_relationship_evidence.sql` (id
   **7 231** (+14 que crean patches de `medical_groups` sin declararlas en el `.puml`) y **48 huérfanos**
   en hijos de `practice.healthcare_services` (`ux_healthcare_services_site_service` rechaza 10 filas del
   paquete con 23505; pasa igual con el paquete de `dev`). Índices informativos: 9 774.
+- **Las dos deudas, cerradas el mismo día (rebuild posterior: VEREDICTO: PASS).** (1) Las +14 FKs
+  no eran FKs nuevas: `SQL/patches/2026-09-04_v426_medical_groups.sql` creaba las MISMAS 14 que
+  `SQL/66_medical_groups/` con otro nombre (`fk_medical_groups_<tabla>_<columna>`) y su guarda
+  `duplicate_object` solo atrapa la colisión de nombre. El patch ahora usa los nombres de `gen_ddl.py` y
+  salta la FK si la columna ya tiene una hacia el mismo destino. (2) Los huérfanos eran un paquete de
+  seeds sin regenerar tras la UK: `gen_seeds.py` ya desambiguaba (9 `practice_site_id` mock
+  repuntados a sedes libres de la misma práctica). Resultado: FKs **7 231 == 7 231**, huérfanos **0**,
+  avisos de carga 8. En el mismo ciclo entró `vs_pregnancy_applicability` (3 miembros).
 - Dry-run de fidelidad de la API: `30 diferencias (tabla-ausente=9, columna-ausente=14,
   obligatoriedad-divergente=7)`, **ninguna en `terminology`**. La línea base ya no es la de las 6
   conocidas: el modelo no tiene patches que la copia `database/` de la API sí (v4232–v4246).

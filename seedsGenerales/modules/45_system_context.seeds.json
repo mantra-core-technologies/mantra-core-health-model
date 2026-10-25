@@ -49,7 +49,7 @@
       "dynamic_enum_options",
       "dynamic_enum_bindings"
     ],
-    "record_count": 804,
+    "record_count": 809,
     "records": {
       "system_contexts": [
         {
@@ -1582,6 +1582,25 @@
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1
+        },
+        {
+          "id": "b5d32398-2e99-550b-9e00-8bd9fcd42be9",
+          "code": "VS_PREGNANCY_APPLICABILITY",
+          "name": "Pregnancy Applicability",
+          "description": "Enum dinámico del value set vs_pregnancy_applicability (patch v4.2.50).",
+          "value_set_id": "fd60c051-a8c5-5c0f-8022-c97c681728c3",
+          "scope_type_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "tenant_id": null,
+          "country_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
+          "selection_mode_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "allow_tenant_extension": false,
+          "allow_custom_value": false,
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-09-22T05:48:00Z",
+          "updated_at": "2026-09-22T06:08:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
         }
       ],
       "dynamic_enum_versions": [
@@ -2285,6 +2304,19 @@
           "effective_to": null,
           "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
           "recorded_at": "2026-08-18T19:14:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "1b1664a7-9a27-5a00-910d-f9da69a76e7b",
+          "dynamic_enum_definition_id": "b5d32398-2e99-550b-9e00-8bd9fcd42be9",
+          "version_number": 1,
+          "value_set_version_id": "5ef31518-1fd6-599e-a7ae-f1966ad9ee05",
+          "schema_version": "1.0.0",
+          "cache_token": "8c74a888d87703f873c317479cdb2ba5",
+          "effective_from": "2026-09-22T05:48:00Z",
+          "effective_to": null,
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "recorded_at": "2026-09-22T05:48:00Z",
           "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
         }
       ],
@@ -12332,6 +12364,54 @@
           },
           "recorded_at": "2026-10-19T15:35:00Z",
           "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "08efaa88-1b4c-5dfb-8af1-c09c64ed5067",
+          "dynamic_enum_version_id": "1b1664a7-9a27-5a00-910d-f9da69a76e7b",
+          "concept_id": "af526f7b-8317-51c6-8e49-b843fe6010b0",
+          "code": "PREGNANCY",
+          "display": "Embarazo",
+          "ordinal": 1,
+          "is_default": true,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_pregnancy_applicability",
+            "patch": "v4.2.50"
+          },
+          "recorded_at": "2026-08-02T13:19:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "cb2543c7-0888-5970-90b1-b44e35489aed",
+          "dynamic_enum_version_id": "1b1664a7-9a27-5a00-910d-f9da69a76e7b",
+          "concept_id": "b1ce837d-0516-51e4-862b-ee27d4eaa055",
+          "code": "LACTATION",
+          "display": "Lactancia",
+          "ordinal": 2,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_pregnancy_applicability",
+            "patch": "v4.2.50"
+          },
+          "recorded_at": "2026-09-02T13:27:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "224c7e0e-808d-5060-946c-98205c87ae7f",
+          "dynamic_enum_version_id": "1b1664a7-9a27-5a00-910d-f9da69a76e7b",
+          "concept_id": "d5de8c15-df39-56d8-8855-27ecfcdfd44c",
+          "code": "REPRODUCTIVE_POTENTIAL",
+          "display": "Mujeres y hombres con capacidad reproductiva",
+          "ordinal": 3,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_pregnancy_applicability",
+            "patch": "v4.2.50"
+          },
+          "recorded_at": "2026-08-12T23:24:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
         }
       ],
       "dynamic_enum_bindings": [
@@ -13369,7 +13449,7 @@
       }
     ],
     "summary": {
-      "record_count": 804,
+      "record_count": 809,
       "entity_count": 6,
       "populated_entity_count": 6,
       "scenario_count": null,
