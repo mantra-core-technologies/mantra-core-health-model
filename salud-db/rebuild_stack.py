@@ -259,6 +259,10 @@ def run_load(con_mesh: bool = False) -> dict:
 
 # ----------------------------------------------------------------- verificación
 
+# Nombre de FK acortado por `pg_ident()` de gen_ddl.py: prefijo + `_` + sha1-8.
+HASHED_FK_RE = re.compile(r'ADD CONSTRAINT "fk_[a-z0-9_]*_[0-9a-f]{8}" FOREIGN KEY')
+
+
 def expected_from_sql() -> tuple:
     """Lo que SQL/ (y los stores PG de NoSQL/) declaran hoy — sin números fijos."""
     tables = sum(len(CREATE_RE.findall(f.read_text(encoding="utf-8"))) for f in ddl_files())
@@ -267,6 +271,21 @@ def expected_from_sql() -> tuple:
         for f in sorted((ROOT / "SQL").glob(pattern)):
             fks += len(FK_RE.findall(f.read_text(encoding="utf-8")))
     return tables, fks
+
+
+def expected_hashed_fks_from_sql() -> int:
+    """Cuántas FKs declara SQL/ con nombre acortado por `pg_ident()`.
+
+    Era un 58 cableado (las de v4.0.10). Cada módulo nuevo con un nombre de más de
+    63 bytes lo vuelve falso —en `dev` ya eran 60 antes de v4.2.50— y el veredicto
+    daba FAIL por un número viejo, no por la base. Se deriva de SQL/ como las
+    tablas y las FKs: lo que se verifica es la igualdad, no una cifra.
+    """
+    total = 0
+    for pattern in ("[0-9][0-9]_*/03_fk_intra.sql", "[0-9][0-9]_*/90_fk_deferred.sql"):
+        for f in sorted((ROOT / "SQL").glob(pattern)):
+            total += len(HASHED_FK_RE.findall(f.read_text(encoding="utf-8")))
+    return total
 
 
 def observed_from_db(conn) -> dict:
@@ -338,7 +357,8 @@ def observed_from_db(conn) -> dict:
     return obs
 
 
-def build_checks(expected_tables: int, expected_fks: int, obs: dict, load: dict) -> list:
+def build_checks(expected_tables: int, expected_fks: int, obs: dict, load: dict,
+                 expected_hashed: int) -> list:
     """(nombre, esperado, observado, ok) — la tabla del veredicto."""
     checks = [
         ("tablas BD == SQL/", expected_tables, obs["tablas"], obs["tablas"] == expected_tables),
@@ -350,8 +370,8 @@ def build_checks(expected_tables: int, expected_fks: int, obs: dict, load: dict)
          obs["ux_credentials_parcial"] == 1),
         ("uq_..._issue_idempotency_key es PARCIAL", 1, obs["uq_rx_idempotency_parcial"],
          obs["uq_rx_idempotency_parcial"] == 1),
-        ("FKs acortadas con hash (pg_ident)", 58, obs["fks_con_hash"],
-         obs["fks_con_hash"] == 58),
+        ("FKs acortadas con hash (pg_ident) == SQL/", expected_hashed, obs["fks_con_hash"],
+         obs["fks_con_hash"] == expected_hashed),
         ("triggers WORM de audit (v4.0.10)", 2, obs["worm_triggers"],
          obs["worm_triggers"] == 2),
         ("huérfanos de la carga", 0, load["huerfanos"], load["huerfanos"] == 0),
@@ -440,7 +460,7 @@ def main() -> None:
     finally:
         conn.close()
 
-    checks = build_checks(expected_tables, expected_fks, obs, load)
+    checks = build_checks(expected_tables, expected_fks, obs, load, expected_hashed_fks_from_sql())
     for service, code in exits.items():
         checks.append((f"init {service}", 0, code, code == 0))
     sys.exit(0 if print_verdict(checks, obs, load) else 1)
