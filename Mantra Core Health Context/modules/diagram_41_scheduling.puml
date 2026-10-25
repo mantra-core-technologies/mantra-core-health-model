@@ -206,6 +206,11 @@ entity booking_policies {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + v4.2.49 (DOC-POL-001, issue #58): el cargo por no presentarse ya no es solo un monto fijo
+  ' (no_show_fee_amount): tambien puede ser un porcentaje y/o retener el anticipo. Nullable
+  ' los dos; la precedencia entre monto y porcentaje es del servicio.
+    no_show_fee_percentage : numeric
+    no_show_retains_deposit : boolean <<DEFAULT_FALSE>>
 }
 entity appointment_bookings {
   * id : uuid <<PK>>
@@ -239,6 +244,9 @@ entity appointment_bookings {
   ' reserva. Ambas NULL ≡ consulta.
     practitioner_service_offering_id : uuid <<FK>>
     service_snapshot : jsonb
+  ' + v4.2.49 (PAC-CITA-011, issue #58): copia congelada de las instrucciones previas, con el mismo
+  ' criterio que cancellation_policy_snapshot y service_snapshot.
+    pre_visit_instructions_snapshot : text
 }
 
 ' + v4.2.40 — Oferta de servicio de un profesional: «cómo ofrece ESTE médico ESTE servicio».
@@ -266,6 +274,8 @@ entity practitioner_service_offerings {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + v4.2.49 (PAC-CITA-011, issue #58): que debe hacer o traer el paciente antes de la atencion.
+    pre_visit_instructions : text
 }
 
 entity "INDEXES · practitioner_service_offerings" as idxset_practitioner_service_offerings <<INDEX_SET>> {

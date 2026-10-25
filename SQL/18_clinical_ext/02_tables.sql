@@ -123,6 +123,20 @@ CREATE TABLE IF NOT EXISTS "clinical_ext"."cds_rules" (
     CONSTRAINT "pk_cds_rules" PRIMARY KEY ("id")
 );
 
+CREATE TABLE IF NOT EXISTS "clinical_ext"."cds_rule_versions" (
+    "id" uuid NOT NULL,
+    "cds_rule_id" uuid NOT NULL,
+    "version_number" integer NOT NULL,
+    "logic_json" jsonb,
+    "message_template" text,
+    "severity_concept_id" uuid NOT NULL,
+    "approved_by_user_id" uuid,
+    "approved_at" timestamptz,
+    "created_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    CONSTRAINT "pk_cds_rule_versions" PRIMARY KEY ("id")
+);
+
 CREATE TABLE IF NOT EXISTS "clinical_ext"."drug_interactions" (
     "id" uuid NOT NULL,
     "substance_a_concept_id" uuid NOT NULL,

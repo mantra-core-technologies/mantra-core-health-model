@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS "marketing"."segments" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "version_number" integer,
     CONSTRAINT "pk_segments" PRIMARY KEY ("id")
 );
 

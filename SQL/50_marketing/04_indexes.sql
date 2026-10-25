@@ -2,7 +2,7 @@
 -- Generado de diagram_50_marketing.puml — NO editar a mano.
 
 
-CREATE UNIQUE INDEX IF NOT EXISTS "uq_segments_code" ON "marketing"."segments" ("code");
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_segments_tenant_id_code" ON "marketing"."segments" ("tenant_id", "code");
 
 CREATE INDEX IF NOT EXISTS "ix_segments_tenant_id" ON "marketing"."segments" ("tenant_id");
 
@@ -30,7 +30,7 @@ CREATE INDEX IF NOT EXISTS "ix_segment_members_created_by_user_id" ON "marketing
 
 CREATE INDEX IF NOT EXISTS "ix_segment_members_updated_by_user_id" ON "marketing"."segment_members" ("updated_by_user_id");
 
-CREATE UNIQUE INDEX IF NOT EXISTS "uq_marketing_campaigns_code" ON "marketing"."marketing_campaigns" ("code");
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_marketing_campaigns_tenant_id_code" ON "marketing"."marketing_campaigns" ("tenant_id", "code");
 
 CREATE INDEX IF NOT EXISTS "ix_marketing_campaigns_tenant_id" ON "marketing"."marketing_campaigns" ("tenant_id");
 
@@ -88,7 +88,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS "uq_content_templates_messaging_template_id_ve
 
 CREATE INDEX IF NOT EXISTS "gin_content_templates_search" ON "marketing"."content_templates" USING gin (to_tsvector('simple', (coalesce(name, '') || ' ' || coalesce(code, ''))));
 
-CREATE UNIQUE INDEX IF NOT EXISTS "uq_journeys_code" ON "marketing"."journeys" ("code");
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_journeys_tenant_id_code" ON "marketing"."journeys" ("tenant_id", "code");
 
 CREATE INDEX IF NOT EXISTS "ix_journeys_tenant_id" ON "marketing"."journeys" ("tenant_id");
 

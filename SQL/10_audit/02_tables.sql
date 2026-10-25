@@ -13,6 +13,9 @@ CREATE TABLE IF NOT EXISTS "audit"."audit_log" (
     "outcome_concept_id" uuid NOT NULL,
     "ip" inet,
     "device_id" uuid,
+    "session_id" uuid,
+    "correlation_id" uuid,
+    "actor_role_snapshot" varchar,
     "previous_hash" varchar,
     "record_hash" varchar NOT NULL,
     "recorded_at" timestamptz NOT NULL,
@@ -1127,6 +1130,34 @@ CREATE TABLE IF NOT EXISTS "audit"."campaigns_history" (
     "change_reason_concept_id" uuid,
     "recorded_at" timestamptz NOT NULL,
     CONSTRAINT "pk_campaigns_history" PRIMARY KEY ("history_id")
+);
+
+CREATE TABLE IF NOT EXISTS "audit"."insurance_products_history" (
+    "history_id" uuid NOT NULL,
+    "insurance_product_id" uuid NOT NULL,
+    "revision_no" integer NOT NULL,
+    "operation_concept_id" uuid NOT NULL,
+    "valid_from" timestamptz NOT NULL,
+    "valid_to" timestamptz,
+    "data_snapshot" jsonb NOT NULL,
+    "changed_by_user_id" uuid,
+    "change_reason_concept_id" uuid,
+    "recorded_at" timestamptz NOT NULL,
+    CONSTRAINT "pk_insurance_products_history" PRIMARY KEY ("history_id")
+);
+
+CREATE TABLE IF NOT EXISTS "audit"."procedure_cases_history" (
+    "history_id" uuid NOT NULL,
+    "procedure_case_id" uuid NOT NULL,
+    "revision_no" integer NOT NULL,
+    "operation_concept_id" uuid NOT NULL,
+    "valid_from" timestamptz NOT NULL,
+    "valid_to" timestamptz,
+    "data_snapshot" jsonb NOT NULL,
+    "changed_by_user_id" uuid,
+    "change_reason_concept_id" uuid,
+    "recorded_at" timestamptz NOT NULL,
+    CONSTRAINT "pk_procedure_cases_history" PRIMARY KEY ("history_id")
 );
 
 CREATE TABLE IF NOT EXISTS "audit"."ad_sets_history" (

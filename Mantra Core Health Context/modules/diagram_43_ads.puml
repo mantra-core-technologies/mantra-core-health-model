@@ -124,6 +124,9 @@ entity campaigns {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + v4.2.49 (CAN-VERSION-001, issue #57): numero de version. Nullable: lo existente no lo tiene.
+  ' Sus revisiones viven en audit.campaigns_history.
+    version_number : integer
 }
 
 entity ad_sets {
@@ -266,6 +269,9 @@ entity custom_audiences {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + v4.2.49 (CAN-VERSION-001, issue #57): numero de version. Nullable: lo existente no lo tiene.
+  ' Sus revisiones viven en audit.custom_audiences_history.
+    version_number : integer
 }
 
 entity targeting_specs {
@@ -798,6 +804,8 @@ entity saved_audiences {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + v4.2.49 (CAN-VERSION-001, issue #57): numero de version del segmento guardado. Nullable.
+    version_number : integer
 }
 entity lookalike_specs {
   * id : uuid <<PK>>

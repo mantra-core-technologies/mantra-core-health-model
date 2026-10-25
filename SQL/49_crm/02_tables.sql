@@ -497,6 +497,7 @@ CREATE TABLE IF NOT EXISTS "crm"."crm_cases" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "insurance_claim_id" uuid,
     CONSTRAINT "pk_crm_cases" PRIMARY KEY ("id")
 );
 
@@ -532,6 +533,18 @@ CREATE TABLE IF NOT EXISTS "crm"."crm_case_status_history" (
     "reason_text" varchar,
     "created_at" timestamptz NOT NULL,
     CONSTRAINT "pk_crm_case_status_history" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "crm"."crm_case_owner_history" (
+    "id" uuid NOT NULL,
+    "crm_case_id" uuid NOT NULL,
+    "from_owner_user_id" uuid,
+    "to_owner_user_id" uuid,
+    "changed_at" timestamptz,
+    "changed_by_user_id" uuid,
+    "reason_text" varchar,
+    "created_at" timestamptz NOT NULL,
+    CONSTRAINT "pk_crm_case_owner_history" PRIMARY KEY ("id")
 );
 
 CREATE TABLE IF NOT EXISTS "crm"."crm_entitlements" (

@@ -82,6 +82,46 @@ entity broker_carrier_agreements {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + v4.2.49 (INS-BRK-003 / INS-BRK-004 / INS-BRK-009 / INS-BRK-012, issue #60): el vinculo del broker
+  ' con una aseguradora. representation_mode_concept_id dice si ofrece como independiente o
+  ' en representacion de la aseguradora; relationship_type_concept_id es el tipo de relacion
+  ' (dependiente, asociado, externo, comisionista, representante) y ya no se infiere de
+  ' commission_model_concept_id. sede, area comercial, supervisor y zona describen donde
+  ' opera. Nullable: los acuerdos existentes no los declaran.
+    representation_mode_concept_id : uuid <<FK>>
+    relationship_type_concept_id : uuid <<FK>>
+    branch_id : uuid <<FK>>
+    commercial_area : varchar
+    supervisor_user_id : uuid <<FK>>
+    assigned_zone : varchar
+}
+
+' + v4.2.49 (INS-TYC-001 / INS-TYC-003, issue #60): terminos y condiciones como registro propio.
+' Antes vivian solo como archivo (insurance_plans.policy_document_file_id, erp.contracts +
+' common.file_links) sin nada que los asociara a un servicio, plan, contrato, region o tipo de
+' cliente. Cada alcance es opcional y se combinan: una fila sin ninguno vale para toda la
+' aseguradora. La version y la vigencia permiten saber cuales regian en una fecha.
+entity insurance_terms_conditions {
+  * id : uuid <<PK>>
+  --
+  * insurance_carrier_id : uuid <<FK>>
+  * title : varchar
+  * version_number : integer
+  * document_file_id : uuid <<FK>>
+    insurance_product_id : uuid <<FK>>
+    insurance_plan_id : uuid <<FK>>
+    service_concept_id : uuid <<FK>>
+    contract_id : uuid <<FK>>
+    jurisdiction_concept_id : uuid <<FK>>
+    client_type_concept_id : uuid <<FK>>
+  * effective_from : date
+    effective_to : date
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
 }
 
 entity employer_groups {
@@ -114,6 +154,16 @@ entity insurance_products {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + v4.2.49 (INS-SRV-007 / INS-SRV-013 / INS-SRV-014, issues #57 y #60): version y vigencia del
+  ' producto (los planes ya tenian vigencia) y sus requisitos de contratacion: edad minima,
+  ' maxima y requisitos de elegibilidad. Todo nullable: el producto existente no los declara.
+  ' El historial de versiones vive en audit.insurance_products_history.
+    version_number : integer
+    effective_from : date
+    effective_to : date
+    min_age_years : integer
+    max_age_years : integer
+    eligibility_requirements : jsonb
 }
 
 entity insurance_plans {
@@ -308,6 +358,7 @@ insurance_carriers ||--o{ insurance_campaigns
 insurance_campaigns ||--o{ insurance_campaign_partners
 network_provider_memberships |o--o{ insurance_campaign_partners
 insurance_carriers ||--o{ broker_carrier_agreements
+insurance_carriers ||--o{ insurance_terms_conditions
 insurance_brokers ||--o{ broker_carrier_agreements
 insurance_plans ||--o{ patient_coverages
 patient_coverages ||--o{ coverage_dependents
@@ -722,9 +773,30 @@ entity "INDEXES · broker_carrier_agreements" as idxset_broker_carrier_agreement
   IX ix_broker_carrier_agreements_status_concept_id : (status_concept_id) BTREE
   IX ix_broker_carrier_agreements_created_by_user_id : (created_by_user_id) BTREE
   IX ix_broker_carrier_agreements_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_broker_carrier_agreements_representation_mode_concept_id : (representation_mode_concept_id) BTREE
+  IX ix_broker_carrier_agreements_relationship_type_concept_id : (relationship_type_concept_id) BTREE
+  IX ix_broker_carrier_agreements_branch_id : (branch_id) BTREE
+  IX ix_broker_carrier_agreements_supervisor_user_id : (supervisor_user_id) BTREE
 }
 
 broker_carrier_agreements .. idxset_broker_carrier_agreements : indexed by
+
+entity "INDEXES · insurance_terms_conditions" as idxset_insurance_terms_conditions <<INDEX_SET>> {
+  PK pk_insurance_terms_conditions : (id) UNIQUE BTREE
+  IX ix_insurance_terms_conditions_insurance_carrier_id : (insurance_carrier_id) BTREE
+  IX ix_insurance_terms_conditions_document_file_id : (document_file_id) BTREE
+  IX ix_insurance_terms_conditions_insurance_product_id : (insurance_product_id) BTREE
+  IX ix_insurance_terms_conditions_insurance_plan_id : (insurance_plan_id) BTREE
+  IX ix_insurance_terms_conditions_service_concept_id : (service_concept_id) BTREE
+  IX ix_insurance_terms_conditions_contract_id : (contract_id) BTREE
+  IX ix_insurance_terms_conditions_jurisdiction_concept_id : (jurisdiction_concept_id) BTREE
+  IX ix_insurance_terms_conditions_client_type_concept_id : (client_type_concept_id) BTREE
+  IX ix_insurance_terms_conditions_status_concept_id : (status_concept_id) BTREE
+  IX ix_insurance_terms_conditions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_insurance_terms_conditions_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+insurance_terms_conditions .. idxset_insurance_terms_conditions : indexed by
 
 entity "INDEXES · employer_groups" as idxset_employer_groups <<INDEX_SET>> {
   PK pk_employer_groups : (id) UNIQUE BTREE

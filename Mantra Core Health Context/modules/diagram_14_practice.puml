@@ -106,6 +106,8 @@ entity clinical_units {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + v4.2.49 (ORG-ARE-002, issue #58): responsable del area.
+    responsible_user_id : uuid <<FK>>
 }
 entity care_spaces {
   * id : uuid <<PK>>
@@ -124,6 +126,11 @@ entity care_spaces {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + v4.2.49 (ORG-QUI-002, issue #58): minutos de preparacion y de limpieza del espacio (quirofano
+  ' incluido); misma semantica que scheduling.practitioner_service_offerings. El caso
+  ' (procedure_cases) puede traer los suyos y gana sobre estos.
+    prep_minutes : integer
+    cleanup_minutes : integer
 }
 entity healthcare_services {
   * id : uuid <<PK>>
@@ -304,6 +311,7 @@ entity "INDEXES · clinical_units" as idxset_clinical_units <<INDEX_SET>> {
   IX ix_clinical_units_status_concept_id : (status_concept_id) BTREE
   IX ix_clinical_units_created_by_user_id : (created_by_user_id) BTREE
   IX ix_clinical_units_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_clinical_units_responsible_user_id : (responsible_user_id) BTREE
 }
 
 clinical_units .. idxset_clinical_units : indexed by

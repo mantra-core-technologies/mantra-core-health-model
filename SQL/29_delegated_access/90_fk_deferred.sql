@@ -184,6 +184,90 @@ DO $$ BEGIN
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."shared_access_links"
+        ADD CONSTRAINT "fk_shared_access_links_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: profiles.patient_profiles (requiere schema profiles)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."shared_access_links"
+        ADD CONSTRAINT "fk_shared_access_links_patient_profile_id" FOREIGN KEY ("patient_profile_id")
+        REFERENCES "profiles"."patient_profiles" ("profile_id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."shared_access_links"
+        ADD CONSTRAINT "fk_shared_access_links_resource_type_concept_id" FOREIGN KEY ("resource_type_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."shared_access_links"
+        ADD CONSTRAINT "fk_shared_access_links_scope_concept_id" FOREIGN KEY ("scope_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."shared_access_links"
+        ADD CONSTRAINT "fk_shared_access_links_recipient_kind_concept_id" FOREIGN KEY ("recipient_kind_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."shared_access_links"
+        ADD CONSTRAINT "fk_shared_access_links_purpose_of_use_concept_id" FOREIGN KEY ("purpose_of_use_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."shared_access_links"
+        ADD CONSTRAINT "fk_shared_access_links_revoked_by_user_id" FOREIGN KEY ("revoked_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."shared_access_links"
+        ADD CONSTRAINT "fk_shared_access_links_status_concept_id" FOREIGN KEY ("status_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."shared_access_links"
+        ADD CONSTRAINT "fk_shared_access_links_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."shared_access_links"
+        ADD CONSTRAINT "fk_shared_access_links_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."shared_access_link_uses"
+        ADD CONSTRAINT "fk_shared_access_link_uses_action_concept_id" FOREIGN KEY ("action_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."shared_access_link_uses"
+        ADD CONSTRAINT "fk_shared_access_link_uses_outcome_concept_id" FOREIGN KEY ("outcome_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "delegated_access"."delegated_access_grants"

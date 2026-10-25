@@ -4,6 +4,7 @@
 
 CREATE TABLE IF NOT EXISTS "integration_contracts"."integration_contracts" (
     "id" uuid NOT NULL,
+    "tenant_id" uuid,
     "external_provider_id" uuid NOT NULL,
     "contract_code" varchar NOT NULL,
     "capability_concept_id" uuid NOT NULL,

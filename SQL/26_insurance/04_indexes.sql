@@ -56,6 +56,36 @@ CREATE INDEX IF NOT EXISTS "ix_broker_carrier_agreements_created_by_user_id" ON 
 
 CREATE INDEX IF NOT EXISTS "ix_broker_carrier_agreements_updated_by_user_id" ON "insurance"."broker_carrier_agreements" ("updated_by_user_id");
 
+CREATE INDEX IF NOT EXISTS "ix_broker_carrier_agreements_representation_mode_concept_id" ON "insurance"."broker_carrier_agreements" ("representation_mode_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_broker_carrier_agreements_relationship_type_concept_id" ON "insurance"."broker_carrier_agreements" ("relationship_type_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_broker_carrier_agreements_branch_id" ON "insurance"."broker_carrier_agreements" ("branch_id");
+
+CREATE INDEX IF NOT EXISTS "ix_broker_carrier_agreements_supervisor_user_id" ON "insurance"."broker_carrier_agreements" ("supervisor_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insurance_terms_conditions_insurance_carrier_id" ON "insurance"."insurance_terms_conditions" ("insurance_carrier_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insurance_terms_conditions_document_file_id" ON "insurance"."insurance_terms_conditions" ("document_file_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insurance_terms_conditions_insurance_product_id" ON "insurance"."insurance_terms_conditions" ("insurance_product_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insurance_terms_conditions_insurance_plan_id" ON "insurance"."insurance_terms_conditions" ("insurance_plan_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insurance_terms_conditions_service_concept_id" ON "insurance"."insurance_terms_conditions" ("service_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insurance_terms_conditions_contract_id" ON "insurance"."insurance_terms_conditions" ("contract_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insurance_terms_conditions_jurisdiction_concept_id" ON "insurance"."insurance_terms_conditions" ("jurisdiction_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insurance_terms_conditions_client_type_concept_id" ON "insurance"."insurance_terms_conditions" ("client_type_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insurance_terms_conditions_status_concept_id" ON "insurance"."insurance_terms_conditions" ("status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insurance_terms_conditions_created_by_user_id" ON "insurance"."insurance_terms_conditions" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insurance_terms_conditions_updated_by_user_id" ON "insurance"."insurance_terms_conditions" ("updated_by_user_id");
+
 CREATE INDEX IF NOT EXISTS "ix_employer_groups_tenant_id" ON "insurance"."employer_groups" ("tenant_id");
 
 CREATE INDEX IF NOT EXISTS "ix_employer_groups_status_concept_id" ON "insurance"."employer_groups" ("status_concept_id");

@@ -326,6 +326,27 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
+    ALTER TABLE "clinical_ext"."cds_rule_versions"
+        ADD CONSTRAINT "fk_cds_rule_versions_severity_concept_id" FOREIGN KEY ("severity_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "clinical_ext"."cds_rule_versions"
+        ADD CONSTRAINT "fk_cds_rule_versions_approved_by_user_id" FOREIGN KEY ("approved_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "clinical_ext"."cds_rule_versions"
+        ADD CONSTRAINT "fk_cds_rule_versions_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
     ALTER TABLE "clinical_ext"."drug_interactions"
         ADD CONSTRAINT "fk_drug_interactions_substance_a_concept_id" FOREIGN KEY ("substance_a_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");

@@ -12,6 +12,10 @@ CREATE INDEX IF NOT EXISTS "ix_audit_log_outcome_concept_id" ON "audit"."audit_l
 
 CREATE INDEX IF NOT EXISTS "ix_audit_log_device_id" ON "audit"."audit_log" ("device_id");
 
+CREATE INDEX IF NOT EXISTS "ix_audit_log_session_id" ON "audit"."audit_log" ("session_id");
+
+CREATE INDEX IF NOT EXISTS "ix_audit_log_correlation_id" ON "audit"."audit_log" ("correlation_id") WHERE correlation_id IS NOT NULL;
+
 CREATE INDEX IF NOT EXISTS "ix_audit_log_recorded_by_user_id" ON "audit"."audit_log" ("recorded_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_audit_log_tenant_id_recorded_at" ON "audit"."audit_log" ("tenant_id", "recorded_at" DESC);
@@ -873,6 +877,26 @@ CREATE INDEX IF NOT EXISTS "ix_campaigns_history_changed_by_user_id" ON "audit".
 CREATE INDEX IF NOT EXISTS "ix_campaigns_history_change_reason_concept_id" ON "audit"."campaigns_history" ("change_reason_concept_id");
 
 CREATE INDEX IF NOT EXISTS "brin_campaigns_history_recorded_at" ON "audit"."campaigns_history" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_insurance_products_history_insurance_product_id" ON "audit"."insurance_products_history" ("insurance_product_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insurance_products_history_operation_concept_id" ON "audit"."insurance_products_history" ("operation_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insurance_products_history_changed_by_user_id" ON "audit"."insurance_products_history" ("changed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insurance_products_history_change_reason_concept_id" ON "audit"."insurance_products_history" ("change_reason_concept_id");
+
+CREATE INDEX IF NOT EXISTS "brin_insurance_products_history_recorded_at" ON "audit"."insurance_products_history" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_procedure_cases_history_procedure_case_id" ON "audit"."procedure_cases_history" ("procedure_case_id");
+
+CREATE INDEX IF NOT EXISTS "ix_procedure_cases_history_operation_concept_id" ON "audit"."procedure_cases_history" ("operation_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_procedure_cases_history_changed_by_user_id" ON "audit"."procedure_cases_history" ("changed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_procedure_cases_history_change_reason_concept_id" ON "audit"."procedure_cases_history" ("change_reason_concept_id");
+
+CREATE INDEX IF NOT EXISTS "brin_procedure_cases_history_recorded_at" ON "audit"."procedure_cases_history" USING brin ("recorded_at") WITH (pages_per_range=128);
 
 CREATE INDEX IF NOT EXISTS "ix_ad_sets_history_ad_set_id" ON "audit"."ad_sets_history" ("ad_set_id");
 

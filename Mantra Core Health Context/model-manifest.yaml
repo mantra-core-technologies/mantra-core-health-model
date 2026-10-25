@@ -173,12 +173,12 @@ model:
   inventory:
     modules_puml: 70
     schemas: 58
-    entity_declarations_total: 2855
-    table_like_elements: 1330
+    entity_declarations_total: 2896
+    table_like_elements: 1344
     view_elements: 81
-    index_sets: 1306
-    reference_only_stubs: 138
-    fk_references: 7092
+    index_sets: 1319
+    reference_only_stubs: 152
+    fk_references: 7191
     note: >-
       Cifras producidas por tools/model_inventory.py (fuente única reproducible:
       clasifica cada `entity` en una sola clase, suma == total). v4.0 base
@@ -198,10 +198,11 @@ model:
       clasifica en table_like por llevar IMMUTABLE/APPEND_ONLY además de
       REFERENCE_ONLY, igual que los 13 preexistentes de la matriz) => 2671
       entity / 1245 table_like / 81 vistas / 1225 idx / 6672 FK / 120 ref /
-      52 schemas. Recontado el 2026-10-24 sobre los módulos 00–69 (incluye las
-      promociones posteriores: 64–69 y las columnas/tablas de v4.0.11–v4.2.x):
-      2855 entity / 1330 table_like / 81 vistas / 1306 idx /
-      7092 FK / 138 ref / 58 schemas; los conteos por módulo de
+      52 schemas. Recontado el 2026-10-25 sobre los módulos 00–69 (incluye las
+      promociones posteriores: 64–69 y las columnas/tablas de v4.0.11–v4.2.x,
+      y la tanda v4.2.49 de los issues #54–#60 con 13 tablas nuevas):
+      2896 entity / 1344 table_like / 81 vistas / 1319 idx /
+      7191 FK / 152 ref / 58 schemas; los conteos por módulo de
       `modules` salen de la misma corrida.
   database: PostgreSQL canonical + governed specialized stores
   rules:
@@ -319,9 +320,9 @@ modules:
   code: audit
   title: Audit, Provenance and Version Histories
   file: modules/diagram_10_audit.puml
-  table_like_elements: 131
+  table_like_elements: 133
   view_elements: 0
-  index_sets: 131
+  index_sets: 133
   status: active
 - number: 11
   code: system_ops
@@ -383,9 +384,9 @@ modules:
   code: clinical_ext
   title: Care Coordination, Alerts and Decision Support
   file: modules/diagram_18_clinical_ext.puml
-  table_like_elements: 13
+  table_like_elements: 14
   view_elements: 1
-  index_sets: 13
+  index_sets: 14
   status: active
 - number: 19
   code: community
@@ -423,9 +424,9 @@ modules:
   code: diagnostic_units
   title: Diagnostic Units, Studies, Specialists and Prices
   file: modules/diagram_23_diagnostic_units.puml
-  table_like_elements: 10
+  table_like_elements: 15
   view_elements: 0
-  index_sets: 10
+  index_sets: 15
   status: active
 - number: 24
   code: pharmacy
@@ -447,9 +448,9 @@ modules:
   code: insurance
   title: Insurance Networks, Operations, Appeals and Reconciliation
   file: modules/diagram_26_insurance.puml
-  table_like_elements: 31
+  table_like_elements: 32
   view_elements: 0
-  index_sets: 31
+  index_sets: 32
   status: active
 - number: 27
   code: identity_assurance
@@ -471,9 +472,9 @@ modules:
   code: delegated_access
   title: Delegated Access and Scoped Infrastructure Users
   file: modules/diagram_29_delegated_access.puml
-  table_like_elements: 7
+  table_like_elements: 9
   view_elements: 0
-  index_sets: 7
+  index_sets: 9
   status: active
 - number: 30
   code: read_models
@@ -503,7 +504,7 @@ modules:
   code: integrity
   title: Concurrency, Constraints and Integrity Matrix
   file: modules/diagram_33_integrity.puml
-  table_like_elements: 13
+  table_like_elements: 14
   view_elements: 0
   index_sets: 0
   status: active
@@ -631,9 +632,9 @@ modules:
   code: crm
   title: Customer and Partner Relationship Management
   file: modules/diagram_49_crm.puml
-  table_like_elements: 34
+  table_like_elements: 35
   view_elements: 0
-  index_sets: 32
+  index_sets: 33
   status: active
 - number: 50
   code: marketing
@@ -761,9 +762,9 @@ modules:
   code: surveys
   title: Surveys (post-visit questionnaires)
   file: modules/diagram_65_surveys.puml
-  table_like_elements: 7
+  table_like_elements: 8
   view_elements: 0
-  index_sets: 7
+  index_sets: 8
   status: active
 
 - number: 66

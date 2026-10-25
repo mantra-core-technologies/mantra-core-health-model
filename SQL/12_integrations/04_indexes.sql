@@ -74,6 +74,8 @@ CREATE INDEX IF NOT EXISTS "ix_inbound_messages_created_by_user_id" ON "integrat
 
 CREATE INDEX IF NOT EXISTS "ix_inbound_messages_updated_by_user_id" ON "integrations"."inbound_messages" ("updated_by_user_id");
 
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_inbound_messages_connection_id_signature" ON "integrations"."inbound_messages" ("connection_id", "signature") WHERE signature IS NOT NULL;
+
 CREATE INDEX IF NOT EXISTS "ix_message_responses_outbound_message_id" ON "integrations"."message_responses" ("outbound_message_id");
 
 CREATE INDEX IF NOT EXISTS "ix_message_responses_created_by_user_id" ON "integrations"."message_responses" ("created_by_user_id");
