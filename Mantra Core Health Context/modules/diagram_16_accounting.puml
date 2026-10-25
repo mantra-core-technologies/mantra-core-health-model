@@ -25,6 +25,8 @@ entity "billing.invoices" as billing_invoices <<REFERENCE_ONLY>> { * id : uuid <
 entity "billing.bills" as billing_bills <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 entity "payments.payment_transactions" as payments_payment_transactions <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 entity "directory.branches" as directory_branches <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "practice.practices" as practice_practices <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "iam.users" as iam_users <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 
 entity exchange_rates {
   * id : uuid <<PK>>
@@ -863,6 +865,61 @@ entity accrual_postings {
   created_by_user_id : uuid <<FK>>
 }
 
+note as BIZ_diagram_16c_practitioner_simple
+  P49 — Contabilidad simple del doctor. La contabilidad llana del consultorio:
+  cuentas con su clase, gastos/activos/deudas (el tipo ES una cuenta de la clase
+  que corresponde) y transacciones debe/haber. NO genera asientos ni toca
+  accounting.journal_transactions: es un libro propio de la práctica. Las cuentas
+  generales se siembran por práctica desde la API, al primer acceso.
+end note
+
+entity practitioner_simple_accounts {
+  * id : uuid <<PK>>
+  --
+  * practice_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+  * account_class : varchar
+  * seeded : boolean <<DEFAULT_FALSE>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity practitioner_simple_records {
+  * id : uuid <<PK>>
+  --
+  * practice_id : uuid <<FK>>
+  * kind : varchar
+  * record_date : date
+  * account_id : uuid <<FK>>
+  * description : varchar
+  * amount : numeric
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity practitioner_simple_transactions {
+  * id : uuid <<PK>>
+  --
+  * practice_id : uuid <<FK>>
+  * transaction_date : date
+  * description : varchar
+  * debit_account_id : uuid <<FK>>
+  * credit_account_id : uuid <<FK>>
+  * amount : numeric
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
 
 ' v3.7 — KEY ASSOCIATIONS EXPLICITLY DRAWN
 accounts ||--o{ assets : asset reconciliation account
@@ -940,6 +997,18 @@ accrual_objects ||--o{ accrual_schedule_lines
 fiscal_periods ||--o{ accrual_schedule_lines
 accrual_schedule_lines ||--o{ accrual_postings
 ledger_entries ||--o{ accrual_postings
+practitioner_simple_accounts }o--|| practice_practices : practice_id
+practitioner_simple_records }o--|| practice_practices : practice_id
+practitioner_simple_transactions }o--|| practice_practices : practice_id
+practitioner_simple_records }o--|| practitioner_simple_accounts : account_id
+practitioner_simple_transactions }o--|| practitioner_simple_accounts : debit_account_id
+practitioner_simple_transactions }o--|| practitioner_simple_accounts : credit_account_id
+practitioner_simple_accounts }o--o| iam_users : created_by_user_id
+practitioner_simple_accounts }o--o| iam_users : updated_by_user_id
+practitioner_simple_records }o--o| iam_users : created_by_user_id
+practitioner_simple_records }o--o| iam_users : updated_by_user_id
+practitioner_simple_transactions }o--o| iam_users : created_by_user_id
+practitioner_simple_transactions }o--o| iam_users : updated_by_user_id
 
 note as SAP_UNIVERSAL_JOURNAL_ALIGNMENT
   SAP-ALIGNED ACCOUNT ASSIGNMENT PRINCIPLE
@@ -1560,6 +1629,37 @@ entity "INDEXES · employee_payments" as idxset_employee_payments <<INDEX_SET>> 
 }
 
 employee_payments .. idxset_employee_payments : indexed by
+
+entity "INDEXES · practitioner_simple_accounts" as idxset_practitioner_simple_accounts <<INDEX_SET>> {
+  PK pk_practitioner_simple_accounts : (id) UNIQUE BTREE
+  UK uq_practitioner_simple_accounts_practice_code : (practice_id, code) UNIQUE BTREE
+  IX ix_practitioner_simple_accounts_practice_id : (practice_id) BTREE
+  IX ix_practitioner_simple_accounts_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_practitioner_simple_accounts_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+practitioner_simple_accounts .. idxset_practitioner_simple_accounts : indexed by
+
+entity "INDEXES · practitioner_simple_records" as idxset_practitioner_simple_records <<INDEX_SET>> {
+  PK pk_practitioner_simple_records : (id) UNIQUE BTREE
+  IX ix_practitioner_simple_records_practice_id : (practice_id) BTREE
+  IX ix_practitioner_simple_records_account_id : (account_id) BTREE
+  IX ix_practitioner_simple_records_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_practitioner_simple_records_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+practitioner_simple_records .. idxset_practitioner_simple_records : indexed by
+
+entity "INDEXES · practitioner_simple_transactions" as idxset_practitioner_simple_transactions <<INDEX_SET>> {
+  PK pk_practitioner_simple_transactions : (id) UNIQUE BTREE
+  IX ix_practitioner_simple_transactions_practice_id : (practice_id) BTREE
+  IX ix_practitioner_simple_transactions_debit_account_id : (debit_account_id) BTREE
+  IX ix_practitioner_simple_transactions_credit_account_id : (credit_account_id) BTREE
+  IX ix_practitioner_simple_transactions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_practitioner_simple_transactions_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+practitioner_simple_transactions .. idxset_practitioner_simple_transactions : indexed by
 }
 
 

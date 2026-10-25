@@ -204,4 +204,15 @@ entity "system_ops.restore_test_runs" as system_ops_restore_test_runs <<REFERENC
   ' MCH-023 (promovido en v4.2.20): NOT_MEASURED nunca puede leerse como "cumple".
   CHECK_SQL : ck_system_ops_restore_test_runs_objective_status | "objective_status" IN ('PASSED', 'FAILED', 'NOT_MEASURED')
 }
+entity "accounting.practitioner_simple_accounts" as accounting_practitioner_simple_accounts <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_practitioner_simple_accounts_class | "account_class" IN ('ASSET', 'LIABILITY', 'EQUITY', 'INCOME', 'EXPENSE')
+}
+entity "accounting.practitioner_simple_records" as accounting_practitioner_simple_records <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_practitioner_simple_records_kind | "kind" IN ('EXPENSE', 'ASSET', 'DEBT')
+  CHECK_SQL : ck_practitioner_simple_records_amount | "amount" > 0
+}
+entity "accounting.practitioner_simple_transactions" as accounting_practitioner_simple_transactions <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_practitioner_simple_transactions_distinct | "debit_account_id" <> "credit_account_id"
+  CHECK_SQL : ck_practitioner_simple_transactions_amount | "amount" > 0
+}
 @enduml
