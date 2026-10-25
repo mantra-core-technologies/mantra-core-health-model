@@ -21,6 +21,12 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
+    ALTER TABLE "delegated_access"."shared_access_link_uses"
+        ADD CONSTRAINT "fk_shared_access_link_uses_shared_access_link_id" FOREIGN KEY ("shared_access_link_id")
+        REFERENCES "delegated_access"."shared_access_links" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+DO $$ BEGIN
     ALTER TABLE "delegated_access"."delegated_access_grants"
         ADD CONSTRAINT "fk_delegated_access_grants_practitioner_delegate_assignment_id" FOREIGN KEY ("practitioner_delegate_assignment_id")
         REFERENCES "delegated_access"."practitioner_delegate_assignments" ("id");

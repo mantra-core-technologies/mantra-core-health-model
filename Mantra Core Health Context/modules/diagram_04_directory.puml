@@ -73,6 +73,10 @@ entity tenant_memberships {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + v4.2.49 (ORG-PER-003 / INS-PER-003 / PHAR-PER-004, issue #58): jornada del integrante y
+  ' quien responde por el. Nullable: los vinculos existentes no los declaran.
+    workday_concept_id : uuid <<FK>>
+    responsible_user_id : uuid <<FK>>
 }
 entity branch_memberships {
   * id : uuid <<PK>>
@@ -86,6 +90,8 @@ entity branch_memberships {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+    workday_concept_id : uuid <<FK>>
+    responsible_user_id : uuid <<FK>>
 }
 
 tenants |o--o{ tenants : parent
@@ -152,6 +158,8 @@ entity "INDEXES · tenant_memberships" as idxset_tenant_memberships <<INDEX_SET>
   IX ix_tenant_memberships_created_by_user_id : (created_by_user_id) BTREE
   IX ix_tenant_memberships_updated_by_user_id : (updated_by_user_id) BTREE
   IX ix_tenant_memberships_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  IX ix_tenant_memberships_workday_concept_id : (workday_concept_id) BTREE
+  IX ix_tenant_memberships_responsible_user_id : (responsible_user_id) BTREE
 }
 
 tenant_memberships .. idxset_tenant_memberships : indexed by
@@ -164,6 +172,8 @@ entity "INDEXES · branch_memberships" as idxset_branch_memberships <<INDEX_SET>
   IX ix_branch_memberships_status_concept_id : (status_concept_id) BTREE
   IX ix_branch_memberships_created_by_user_id : (created_by_user_id) BTREE
   IX ix_branch_memberships_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_branch_memberships_workday_concept_id : (workday_concept_id) BTREE
+  IX ix_branch_memberships_responsible_user_id : (responsible_user_id) BTREE
 }
 
 branch_memberships .. idxset_branch_memberships : indexed by

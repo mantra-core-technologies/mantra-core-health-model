@@ -212,6 +212,13 @@ DO $$ BEGIN
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "practice"."clinical_units"
+        ADD CONSTRAINT "fk_clinical_units_responsible_user_id" FOREIGN KEY ("responsible_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "practice"."care_spaces"
@@ -259,6 +266,13 @@ DO $$ BEGIN
     ALTER TABLE "practice"."healthcare_services"
         ADD CONSTRAINT "fk_healthcare_services_specialty_concept_id" FOREIGN KEY ("specialty_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: billing.service_catalog (requiere schema billing)
+DO $$ BEGIN
+    ALTER TABLE "practice"."healthcare_services"
+        ADD CONSTRAINT "fk_healthcare_services_service_catalog_id" FOREIGN KEY ("service_catalog_id")
+        REFERENCES "billing"."service_catalog" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)

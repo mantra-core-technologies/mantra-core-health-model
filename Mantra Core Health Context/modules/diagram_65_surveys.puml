@@ -10,16 +10,20 @@ hide circle
 ' The seven entities landed in code on 2026-08-15 (carril 10) with no .puml and
 ' no line in SQL/, so the schema never existed in any database the pipeline
 ' builds and every endpoint of the module failed with
-' relation "surveys.*" does not exist. This diagram TRANSCRIBES what those
-' entities already declare — column, type and nullability — and adds nothing.
-' Same case as module 64 (audio_assets).
+' relation "surveys.*" does not exist. The first version of this diagram TRANSCRIBED
+' what those entities declared — column, type and nullability — and added nothing.
+' Same case as module 64 (audio_assets). Since v4.2.49 it also carries the rules the
+' module only had in the service (REC 65.3, 65.4) and the non-practitioner owners
+' (REC 65.6, 65.7); each addition is marked in its own note.
 ' ------------------------------------------------------------------------------
 note as BIZ_diagram_65_surveys
   BUSINESS PURPOSE
   The practitioner asks the patient how the visit went. A template is owned by
-  one professional and published as immutable versions; an assignment says which
-  attentions a version applies to; a completed booking issues one invitation to
-  one patient, with an expiry derived at issue time; the patient answers once.
+  one professional (or, since v4.2.49, by another kind of party: a medical
+  organization, an insurer, a broker or a medical laboratory) and published as
+  immutable versions; an assignment says which attentions a version applies to; a
+  completed booking issues one invitation to one patient, with an expiry derived
+  at issue time; the patient answers once.
   Answers are private by construction: this module has no visibility column and
   never feeds the public rating, which lives in community.service_reviews.
 end note
@@ -28,7 +32,9 @@ entity survey_templates {
   * id : uuid <<PK>>
   --
   * tenant_id : uuid <<FK>>
-  * owner_practitioner_id : uuid <<FK>>
+    owner_practitioner_id : uuid <<FK>>
+    owner_type_concept_id : uuid <<FK>>
+    owner_id : uuid
   * title : text
     description : text
   * status_concept_id : uuid <<FK>>
@@ -48,6 +54,7 @@ entity survey_versions {
     effective_from : timestamptz
     effective_to : timestamptz
   * response_window_days : integer
+    max_reminders : integer
     published_at : timestamptz
   * created_at : timestamptz
   * updated_at : timestamptz
@@ -96,7 +103,9 @@ entity survey_invitations {
   * survey_assignment_id : uuid <<FK>>
   * tenant_id : uuid <<FK>>
   * patient_profile_id : uuid <<FK>>
-  * appointment_booking_id : uuid <<FK>>
+    appointment_booking_id : uuid <<FK>>
+    subject_type_concept_id : uuid <<FK>>
+    subject_id : uuid
   * status_concept_id : uuid <<FK>>
   * issued_at : timestamptz
   * expires_at : timestamptz
@@ -106,6 +115,17 @@ entity survey_invitations {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+}
+
+entity survey_invitation_reminders {
+  * id : uuid <<PK>>
+  --
+  * survey_invitation_id : uuid <<FK>>
+  * reminder_number : integer
+  * sent_at : timestamptz
+    channel_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
 }
 
 entity survey_responses {
@@ -143,6 +163,7 @@ survey_templates ||--o{ survey_versions
 survey_versions ||--o{ survey_questions
 survey_versions ||--o{ survey_assignments
 survey_versions ||--o{ survey_invitations
+survey_invitations ||--o{ survey_invitation_reminders
 survey_assignments ||--o{ survey_invitations
 survey_invitations ||--o{ survey_responses
 survey_versions ||--o{ survey_responses
@@ -179,28 +200,28 @@ purpose, so a patient's own history can be read without joining invitations.
 end note
 
 note as REC_VALUE_SURVEYS_diagram_65_surveys
-  REC 65.3 — ONE value_* COLUMN PER ROW, ENFORCED BY THE SERVICE
+  REC 65.3 — ONE value_* COLUMN PER ROW, ENFORCED BY THE DATABASE
 survey_answers keeps value_text, value_number, value_boolean and value_choices
 all nullable, and exactly one of them is populated according to the question's
-answer_type_concept_id. The entity documents that the SERVICE enforces it while
-the module README claims a CHECK in the database — they contradict each other
-and the code has no CHECK. This diagram transcribes the code: four nullable
-columns, no constraint. Promoting the rule to a CHECK is a decision for the
-model owner, not something to infer from prose.
+answer_type_concept_id. The service picks the column from the type; since v4.2.49
+the database also refuses a row with none or with more than one populated column
+(ck_survey_answers_single_value, declared in module 33). Which column MUST hold
+the value for a given answer type stays a service rule: it depends on a concept.
 end note
 
 note as REC_IDEMPOTENCY_SURVEYS_diagram_65_surveys
-  REC 65.4 — ISSUE IDEMPOTENCY IS NOT BACKED BY A CONSTRAINT YET
-The module README states that issuing is idempotent, "unique per (booking,
-version), also held by an index in the database". No such index exists: not in
-the entities, not in the ORM catalogue, not in SQL. Today only
-InvitationsRepository.listByBooking holds it, which is a read-then-write and
-therefore loses a race. The unique index over survey_invitations
-(appointment_booking_id, survey_version_id) is NOT declared here because adding
-it would change behaviour — it would start rejecting rows that today are
-accepted — and that is a decision, not a transcription. Same for the implicit
-uniqueness of (survey_template_id, version_number) and of
-survey_responses.survey_invitation_id, both assumed by findOne calls.
+  REC 65.4 — ISSUE IDEMPOTENCY IS BACKED BY UNIQUE INDEXES
+Since v4.2.49 (API #806, SURV-02) the read-then-write checks of the service have a
+constraint behind them, so two concurrent requests cannot both win:
+  - survey_versions (survey_template_id, version_number)
+  - survey_assignments (survey_version_id, target_type_concept_id, target_id) while
+    active — an inactive assignment does not block a new one
+  - survey_invitations (appointment_booking_id, survey_version_id)
+  - survey_responses (survey_invitation_id)
+  - survey_answers (survey_response_id, survey_question_id)
+The service keeps its early checks for a friendly error; the violation is the
+guarantee. Rows that today break a rule must be resolved before the indexes can
+be created on a live database (see SQL/patches/2026-10-24_v4249_surveys_unicidad_y_propietarios.sql).
 end note
 
 note as REC_VERSION_SURVEYS_diagram_65_surveys
@@ -213,18 +234,44 @@ mutate — hence row_version. The transition is what has to be guarded, and toda
 that lives in the service.
 end note
 
+note as REC_OWNER_SURVEYS_diagram_65_surveys
+  REC 65.6 — THE OWNER OF A TEMPLATE IS A PROFESSIONAL OR A TYPED PARTY (CAN-SURVEY-001)
+owner_practitioner_id stays the owner of every template that exists today. Other
+owners (medical organization, insurer, broker, medical laboratory) are carried by
+the pair (owner_type_concept_id, owner_id), polymorphic on purpose and for the same
+reason as REC 65.1: four nullable foreign keys plus a check would say the same and
+make every read branch. Exactly one form is populated per row
+(ck_survey_templates_single_owner): the practitioner column alone, or both columns
+of the pair. The service must resolve owner_id against the table the type names.
+Alternative discarded: making owner_practitioner_id point at a generic party — it
+would rewrite the meaning of a column that every existing row and endpoint uses.
+end note
+
+note as REC_SUBJECT_SURVEYS_diagram_65_surveys
+  REC 65.7 — INVITATIONS CAN HANG FROM SOMETHING OTHER THAN A BOOKING (CAN-SURVEY-001)
+appointment_booking_id is nullable now. An invitation about an incident, an
+authorization, a reimbursement, a sample collection or a result delivery carries
+(subject_type_concept_id, subject_id) instead — polymorphic like REC 65.1. A row
+needs at least one anchor, and the pair is all-or-nothing
+(ck_survey_invitations_anchor). Reminders live in survey_invitation_reminders, one
+row per reminder sent, numbered per invitation; survey_versions.max_reminders is
+the cap (NULL means no reminders). The cap is a service rule: a check that compares
+a count against another table is not expressible as a CHECK.
+end note
+
 package "Physical Indexes" {
 entity "INDEXES · survey_templates" as idxset_survey_templates <<INDEX_SET>> {
   PK pk_survey_templates : (id) UNIQUE BTREE
   IX ix_survey_templates_owner : (owner_practitioner_id, created_at DESC) BTREE
   IX ix_survey_templates_tenant_id : (tenant_id) BTREE
+  IX ix_survey_templates_owner_party : (owner_type_concept_id, owner_id, created_at DESC) BTREE
 }
 
 survey_templates .. idxset_survey_templates : indexed by
 
 entity "INDEXES · survey_versions" as idxset_survey_versions <<INDEX_SET>> {
   PK pk_survey_versions : (id) UNIQUE BTREE
-  IX ix_survey_versions_template_number : (survey_template_id, version_number) BTREE
+  UK uq_survey_versions_template_number : (survey_template_id, version_number) UNIQUE BTREE
 }
 
 survey_versions .. idxset_survey_versions : indexed by
@@ -240,6 +287,7 @@ entity "INDEXES · survey_assignments" as idxset_survey_assignments <<INDEX_SET>
   PK pk_survey_assignments : (id) UNIQUE BTREE
   IX ix_survey_assignments_tenant_target : (tenant_id, target_id, active) BTREE
   IX ix_survey_assignments_version : (survey_version_id) BTREE
+  UK uq_survey_assignments_active_target : (survey_version_id, target_type_concept_id, target_id) UNIQUE BTREE WHERE active = true
 }
 
 survey_assignments .. idxset_survey_assignments : indexed by
@@ -251,13 +299,24 @@ entity "INDEXES · survey_invitations" as idxset_survey_invitations <<INDEX_SET>
   IX ix_survey_invitations_version : (survey_version_id) BTREE
   IX ix_survey_invitations_assignment : (survey_assignment_id) BTREE
   IX ix_survey_invitations_tenant_id : (tenant_id) BTREE
+  IX ix_survey_invitations_subject : (subject_type_concept_id, subject_id) BTREE
+  UK uq_survey_invitations_booking_version : (appointment_booking_id, survey_version_id) UNIQUE BTREE
 }
 
 survey_invitations .. idxset_survey_invitations : indexed by
 
+entity "INDEXES · survey_invitation_reminders" as idxset_survey_invitation_reminders <<INDEX_SET>> {
+  PK pk_survey_invitation_reminders : (id) UNIQUE BTREE
+  UK uq_survey_invitation_reminders_number : (survey_invitation_id, reminder_number) UNIQUE BTREE
+  IX ix_survey_invitation_reminders_channel_concept_id : (channel_concept_id) BTREE
+  IX ix_survey_invitation_reminders_created_by_user_id : (created_by_user_id) BTREE
+}
+
+survey_invitation_reminders .. idxset_survey_invitation_reminders : indexed by
+
 entity "INDEXES · survey_responses" as idxset_survey_responses <<INDEX_SET>> {
   PK pk_survey_responses : (id) UNIQUE BTREE
-  IX ix_survey_responses_invitation : (survey_invitation_id) BTREE
+  UK uq_survey_responses_invitation : (survey_invitation_id) UNIQUE BTREE
   IX ix_survey_responses_patient_submitted : (patient_profile_id, submitted_at DESC) BTREE
   IX ix_survey_responses_version : (survey_version_id) BTREE
   IX ix_survey_responses_tenant_id : (tenant_id) BTREE
@@ -269,6 +328,7 @@ entity "INDEXES · survey_answers" as idxset_survey_answers <<INDEX_SET>> {
   PK pk_survey_answers : (id) UNIQUE BTREE
   IX ix_survey_answers_response : (survey_response_id) BTREE
   IX ix_survey_answers_question : (survey_question_id) BTREE
+  UK uq_survey_answers_response_question : (survey_response_id, survey_question_id) UNIQUE BTREE
 }
 
 survey_answers .. idxset_survey_answers : indexed by

@@ -280,6 +280,7 @@ entity "INDEXES · inbound_messages" as idxset_inbound_messages <<INDEX_SET>> {
   IX ix_inbound_messages_status_concept_id : (status_concept_id) BTREE
   IX ix_inbound_messages_created_by_user_id : (created_by_user_id) BTREE
   IX ix_inbound_messages_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_inbound_messages_connection_id_signature : (connection_id, signature) UNIQUE BTREE WHERE signature IS NOT NULL
 }
 
 inbound_messages .. idxset_inbound_messages : indexed by

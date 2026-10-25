@@ -12,6 +12,7 @@ hide circle
 entity "erp.business_partners" as erp_business_partners <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 entity "erp.sales_orders" as erp_sales_orders <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 entity "billing.invoices" as billing_invoices <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "insurance.insurance_claims" as insurance_insurance_claims <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 
 note as BIZ_diagram_49_crm
   BUSINESS PURPOSE
@@ -586,6 +587,10 @@ entity crm_cases {
   created_by_user_id : uuid <<FK>>
   updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + v4.2.49 (INS-INC-001 / INS-INC-008, issue #60): une la gestion (el caso CRM) con la
+  ' adjudicacion (insurance.insurance_claims). Nullable: la mayoria de los casos no son un
+  ' siniestro. Un siniestro puede tener varios casos de gestion.
+    insurance_claim_id : uuid <<FK>>
 }
 
 entity crm_case_contacts {
@@ -616,6 +621,21 @@ entity crm_case_status_history {
   * crm_case_id : uuid <<FK>>
   from_status_concept_id : uuid <<FK>>
   * to_status_concept_id : uuid <<FK>>
+  changed_at : timestamptz
+  changed_by_user_id : uuid <<FK>>
+  reason_text : varchar
+  * created_at : timestamptz
+}
+
+' + v4.2.49 (INS-INC-010, issue #60): cambios de RESPONSABLE del caso. crm_case_status_history
+' solo registra cambios de estado; esto registra quien tenia el caso (owner_user_id) y quien
+' lo recibio.
+entity crm_case_owner_history <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * crm_case_id : uuid <<FK>>
+  from_owner_user_id : uuid <<FK>>
+  to_owner_user_id : uuid <<FK>>
   changed_at : timestamptz
   changed_by_user_id : uuid <<FK>>
   reason_text : varchar
@@ -702,6 +722,7 @@ crm_cases ||--o{ crm_case_contacts
 contacts ||--o{ crm_case_contacts
 crm_cases ||--o{ crm_case_comments
 crm_cases ||--o{ crm_case_status_history
+crm_cases ||--o{ crm_case_owner_history
 crm_accounts |o--o{ crm_entitlements
 contracts |o--o{ crm_entitlements
 erp_business_partners |o--o{ crm_entitlements
@@ -975,9 +996,11 @@ entity "INDEXES · crm_cases" as idxset_crm_cases <<INDEX_SET>> {
   IX ix_crm_cases_tenant_status_priority_updated : (tenant_id, status_concept_id, priority_concept_id, updated_at DESC) BTREE
   IX ix_crm_cases_owner_status_updated : (owner_user_id, status_concept_id, updated_at DESC) BTREE
   GIN gin_crm_cases_search : to_tsvector('simple', concat_ws(' ', case_number, subject)) GIN
+  IX ix_crm_cases_insurance_claim_id : (insurance_claim_id) BTREE
 }
 
 crm_cases .. idxset_crm_cases : indexed by
+crm_cases }o--o| insurance_insurance_claims : insurance_claim_id
 
 entity "INDEXES · crm_case_contacts" as idxset_crm_case_contacts <<INDEX_SET>> {
   PK pk_crm_case_contacts : (id) UNIQUE BTREE
@@ -1012,6 +1035,18 @@ entity "INDEXES · crm_case_status_history" as idxset_crm_case_status_history <<
 }
 
 crm_case_status_history .. idxset_crm_case_status_history : indexed by
+
+entity "INDEXES · crm_case_owner_history" as idxset_crm_case_owner_history <<INDEX_SET>> {
+  PK pk_crm_case_owner_history : (id) UNIQUE BTREE
+  IX ix_crm_case_owner_history_crm_case_id : (crm_case_id) BTREE
+  IX ix_crm_case_owner_history_from_owner_user_id : (from_owner_user_id) BTREE
+  IX ix_crm_case_owner_history_to_owner_user_id : (to_owner_user_id) BTREE
+  IX ix_crm_case_owner_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_crm_case_owner_history_case_changed : (crm_case_id, changed_at DESC) BTREE
+  BRIN brin_crm_case_owner_history_created_at : (created_at) BRIN pages_per_range=128
+}
+
+crm_case_owner_history .. idxset_crm_case_owner_history : indexed by
 
 entity "INDEXES · crm_entitlements" as idxset_crm_entitlements <<INDEX_SET>> {
   PK pk_crm_entitlements : (id) UNIQUE BTREE

@@ -1024,6 +1024,13 @@ DO $$ BEGIN
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- destino: insurance.insurance_claims (requiere schema insurance)
+DO $$ BEGIN
+    ALTER TABLE "crm"."crm_cases"
+        ADD CONSTRAINT "fk_crm_cases_insurance_claim_id" FOREIGN KEY ("insurance_claim_id")
+        REFERENCES "insurance"."insurance_claims" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "crm"."crm_case_contacts"
@@ -1072,6 +1079,27 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_crm_case_status_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "crm"."crm_case_owner_history"
+        ADD CONSTRAINT "fk_crm_case_owner_history_from_owner_user_id" FOREIGN KEY ("from_owner_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "crm"."crm_case_owner_history"
+        ADD CONSTRAINT "fk_crm_case_owner_history_to_owner_user_id" FOREIGN KEY ("to_owner_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "crm"."crm_case_owner_history"
+        ADD CONSTRAINT "fk_crm_case_owner_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 
 -- destino: directory.tenants (requiere schema directory)
 DO $$ BEGIN

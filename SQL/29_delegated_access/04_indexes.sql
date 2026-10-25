@@ -115,3 +115,37 @@ CREATE INDEX IF NOT EXISTS "ix_delegation_events_target_user_id" ON "delegated_a
 CREATE INDEX IF NOT EXISTS "ix_delegation_events_reason_concept_id" ON "delegated_access"."delegation_events" ("reason_concept_id");
 
 CREATE INDEX IF NOT EXISTS "brin_delegation_events_created_at" ON "delegated_access"."delegation_events" USING brin ("created_at") WITH (pages_per_range=128);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_shared_access_links_token_hash" ON "delegated_access"."shared_access_links" ("token_hash");
+
+CREATE INDEX IF NOT EXISTS "ix_shared_access_links_tenant_id" ON "delegated_access"."shared_access_links" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_shared_access_links_patient_profile_id" ON "delegated_access"."shared_access_links" ("patient_profile_id");
+
+CREATE INDEX IF NOT EXISTS "ix_shared_access_links_resource" ON "delegated_access"."shared_access_links" ("resource_type_concept_id", "resource_id");
+
+CREATE INDEX IF NOT EXISTS "ix_shared_access_links_scope_concept_id" ON "delegated_access"."shared_access_links" ("scope_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_shared_access_links_recipient_kind_concept_id" ON "delegated_access"."shared_access_links" ("recipient_kind_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_shared_access_links_purpose_of_use_concept_id" ON "delegated_access"."shared_access_links" ("purpose_of_use_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_shared_access_links_revoked_by_user_id" ON "delegated_access"."shared_access_links" ("revoked_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_shared_access_links_status_concept_id" ON "delegated_access"."shared_access_links" ("status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_shared_access_links_created_by_user_id" ON "delegated_access"."shared_access_links" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_shared_access_links_updated_by_user_id" ON "delegated_access"."shared_access_links" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_shared_access_links_live_expiry" ON "delegated_access"."shared_access_links" ("expires_at") WHERE revoked_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS "ix_shared_access_links_patient_profile_id_created_at" ON "delegated_access"."shared_access_links" ("patient_profile_id", "created_at" DESC);
+
+CREATE INDEX IF NOT EXISTS "ix_shared_access_link_uses_link_occurred" ON "delegated_access"."shared_access_link_uses" ("shared_access_link_id", "occurred_at" DESC);
+
+CREATE INDEX IF NOT EXISTS "ix_shared_access_link_uses_action_concept_id" ON "delegated_access"."shared_access_link_uses" ("action_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_shared_access_link_uses_outcome_concept_id" ON "delegated_access"."shared_access_link_uses" ("outcome_concept_id");
+
+CREATE INDEX IF NOT EXISTS "brin_shared_access_link_uses_occurred_at" ON "delegated_access"."shared_access_link_uses" USING brin ("occurred_at") WITH (pages_per_range=128);

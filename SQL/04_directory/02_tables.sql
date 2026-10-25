@@ -59,6 +59,8 @@ CREATE TABLE IF NOT EXISTS "directory"."tenant_memberships" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "workday_concept_id" uuid,
+    "responsible_user_id" uuid,
     CONSTRAINT "pk_tenant_memberships" PRIMARY KEY ("id")
 );
 
@@ -73,6 +75,8 @@ CREATE TABLE IF NOT EXISTS "directory"."branch_memberships" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "workday_concept_id" uuid,
+    "responsible_user_id" uuid,
     CONSTRAINT "pk_branch_memberships" PRIMARY KEY ("id")
 );
 

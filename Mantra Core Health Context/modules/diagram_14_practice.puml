@@ -106,6 +106,8 @@ entity clinical_units {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + v4.2.49 (ORG-ARE-002, issue #58): responsable del area.
+    responsible_user_id : uuid <<FK>>
 }
 entity care_spaces {
   * id : uuid <<PK>>
@@ -124,6 +126,11 @@ entity care_spaces {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + v4.2.49 (ORG-QUI-002, issue #58): minutos de preparacion y de limpieza del espacio (quirofano
+  ' incluido); misma semantica que scheduling.practitioner_service_offerings. El caso
+  ' (procedure_cases) puede traer los suyos y gana sobre estos.
+    prep_minutes : integer
+    cleanup_minutes : integer
 }
 entity healthcare_services {
   * id : uuid <<PK>>
@@ -136,6 +143,9 @@ entity healthcare_services {
     referral_required : boolean
     appointment_required : boolean
     telehealth_available : boolean
+    ' + centros medicos (M-04): item de billing.service_catalog que fija el precio de este
+    ' procedimiento en esta sede. NULL = la sede aun no publico precio (no aparece en la busqueda).
+    service_catalog_id : uuid <<FK>>
   * status_concept_id : uuid <<FK>>
   * created_at : timestamptz
   * updated_at : timestamptz
@@ -217,6 +227,12 @@ entity practice_settings {
 
 practices ||--o{ practice_sites
 practices ||--o{ healthcare_services
+
+' Destino canonico de la FK de precio (M-04), declarado en su modulo dueno.
+entity "billing.service_catalog" as billing_service_catalog <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+healthcare_services }o--o| billing_service_catalog : service_catalog_id
 practices ||--o{ practitioner_role_assignments
 practices ||--o{ practice_accreditations
 practices ||--o{ practice_settings
@@ -304,6 +320,7 @@ entity "INDEXES · clinical_units" as idxset_clinical_units <<INDEX_SET>> {
   IX ix_clinical_units_status_concept_id : (status_concept_id) BTREE
   IX ix_clinical_units_created_by_user_id : (created_by_user_id) BTREE
   IX ix_clinical_units_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_clinical_units_responsible_user_id : (responsible_user_id) BTREE
 }
 
 clinical_units .. idxset_clinical_units : indexed by
@@ -330,6 +347,8 @@ entity "INDEXES · healthcare_services" as idxset_healthcare_services <<INDEX_SE
   IX ix_healthcare_services_service_concept_id : (service_concept_id) BTREE
   IX ix_healthcare_services_specialty_concept_id : (specialty_concept_id) BTREE
   IX ix_healthcare_services_status_concept_id : (status_concept_id) BTREE
+  IX ix_healthcare_services_service_catalog_id : (service_catalog_id) BTREE
+  UX ux_healthcare_services_site_service : (practice_site_id, service_concept_id) UNIQUE BTREE
   IX ix_healthcare_services_created_by_user_id : (created_by_user_id) BTREE
   IX ix_healthcare_services_updated_by_user_id : (updated_by_user_id) BTREE
 }

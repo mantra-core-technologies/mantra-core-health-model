@@ -76,6 +76,8 @@ CREATE INDEX IF NOT EXISTS "ix_clinical_units_created_by_user_id" ON "practice".
 
 CREATE INDEX IF NOT EXISTS "ix_clinical_units_updated_by_user_id" ON "practice"."clinical_units" ("updated_by_user_id");
 
+CREATE INDEX IF NOT EXISTS "ix_clinical_units_responsible_user_id" ON "practice"."clinical_units" ("responsible_user_id");
+
 CREATE INDEX IF NOT EXISTS "ix_care_spaces_practice_site_id" ON "practice"."care_spaces" ("practice_site_id");
 
 CREATE INDEX IF NOT EXISTS "ix_care_spaces_clinical_unit_id" ON "practice"."care_spaces" ("clinical_unit_id");
@@ -103,6 +105,10 @@ CREATE INDEX IF NOT EXISTS "ix_healthcare_services_service_concept_id" ON "pract
 CREATE INDEX IF NOT EXISTS "ix_healthcare_services_specialty_concept_id" ON "practice"."healthcare_services" ("specialty_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_healthcare_services_status_concept_id" ON "practice"."healthcare_services" ("status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_healthcare_services_service_catalog_id" ON "practice"."healthcare_services" ("service_catalog_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_healthcare_services_site_service" ON "practice"."healthcare_services" ("practice_site_id", "service_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_healthcare_services_created_by_user_id" ON "practice"."healthcare_services" ("created_by_user_id");
 

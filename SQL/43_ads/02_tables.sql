@@ -110,6 +110,7 @@ CREATE TABLE IF NOT EXISTS "ads"."campaigns" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "version_number" integer,
     CONSTRAINT "pk_campaigns" PRIMARY KEY ("id")
 );
 
@@ -216,6 +217,7 @@ CREATE TABLE IF NOT EXISTS "ads"."custom_audiences" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "version_number" integer,
     CONSTRAINT "pk_custom_audiences" PRIMARY KEY ("id")
 );
 
@@ -610,6 +612,7 @@ CREATE TABLE IF NOT EXISTS "ads"."saved_audiences" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "version_number" integer,
     CONSTRAINT "pk_saved_audiences" PRIMARY KEY ("id")
 );
 

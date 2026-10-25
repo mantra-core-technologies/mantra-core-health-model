@@ -30,6 +30,9 @@ CREATE TABLE IF NOT EXISTS "procedures_perioperative"."procedure_cases" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "prep_minutes" integer,
+    "cleanup_minutes" integer,
+    "version_number" integer,
     CONSTRAINT "pk_procedure_cases" PRIMARY KEY ("id")
 );
 
@@ -59,6 +62,7 @@ CREATE TABLE IF NOT EXISTS "procedures_perioperative"."procedure_case_team_membe
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "accepted_version_number" integer,
     CONSTRAINT "pk_procedure_case_team_members" PRIMARY KEY ("id")
 );
 
