@@ -6,6 +6,13 @@
 --   integration_contracts.data_use_agreement_id
 
 
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "integration_contracts"."integration_contracts"
+        ADD CONSTRAINT "fk_integration_contracts_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
 -- destino: integrations.external_providers (requiere schema integrations)
 DO $$ BEGIN
     ALTER TABLE "integration_contracts"."integration_contracts"

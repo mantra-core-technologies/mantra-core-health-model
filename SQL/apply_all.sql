@@ -164,6 +164,8 @@
 \ir 14_practice/03_fk_intra.sql
 \echo >>> 14_practice/04_indexes.sql
 \ir 14_practice/04_indexes.sql
+\echo >>> 14_practice/05_constraints.sql
+\ir 14_practice/05_constraints.sql
 
 -- ═══ módulo 15_chart ═══
 \echo >>> 15_chart/01_schema.sql
@@ -206,6 +208,8 @@
 \ir 18_clinical_ext/03_fk_intra.sql
 \echo >>> 18_clinical_ext/04_indexes.sql
 \ir 18_clinical_ext/04_indexes.sql
+\echo >>> 18_clinical_ext/05_constraints.sql
+\ir 18_clinical_ext/05_constraints.sql
 
 -- ═══ módulo 19_community ═══
 \echo >>> 19_community/01_schema.sql
@@ -540,6 +544,8 @@
 \ir 53_procedures_perioperative/03_fk_intra.sql
 \echo >>> 53_procedures_perioperative/04_indexes.sql
 \ir 53_procedures_perioperative/04_indexes.sql
+\echo >>> 53_procedures_perioperative/05_constraints.sql
+\ir 53_procedures_perioperative/05_constraints.sql
 
 -- ═══ módulo 54_polyglot_storage ═══
 \echo >>> 54_polyglot_storage/01_schema.sql
@@ -610,6 +616,8 @@
 \ir 65_surveys/03_fk_intra.sql
 \echo >>> 65_surveys/04_indexes.sql
 \ir 65_surveys/04_indexes.sql
+\echo >>> 65_surveys/05_constraints.sql
+\ir 65_surveys/05_constraints.sql
 
 -- ═══ módulo 66_medical_groups ═══
 \echo >>> 66_medical_groups/01_schema.sql

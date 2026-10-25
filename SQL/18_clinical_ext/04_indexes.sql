@@ -60,6 +60,8 @@ CREATE INDEX IF NOT EXISTS "ix_referrals_updated_by_user_id" ON "clinical_ext"."
 
 CREATE INDEX IF NOT EXISTS "ix_referrals_patient_profile_id_updated_at" ON "clinical_ext"."referrals" ("patient_profile_id", "updated_at" DESC);
 
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_referrals_source_encounter_target_specialty" ON "clinical_ext"."referrals" ("source_encounter_id", "target_profile_id", "specialty_concept_id") WHERE source_encounter_id IS NOT NULL AND target_profile_id IS NOT NULL AND specialty_concept_id IS NOT NULL;
+
 CREATE INDEX IF NOT EXISTS "ix_clinical_alerts_patient_profile_id" ON "clinical_ext"."clinical_alerts" ("patient_profile_id");
 
 CREATE INDEX IF NOT EXISTS "ix_clinical_alerts_encounter_id" ON "clinical_ext"."clinical_alerts" ("encounter_id");
@@ -82,7 +84,7 @@ CREATE INDEX IF NOT EXISTS "ix_clinical_alerts_updated_by_user_id" ON "clinical_
 
 CREATE INDEX IF NOT EXISTS "ix_clinical_alerts_patient_profile_id_updated_at" ON "clinical_ext"."clinical_alerts" ("patient_profile_id", "updated_at" DESC);
 
-CREATE INDEX IF NOT EXISTS "ix_virtual_encounters_encounter_id" ON "clinical_ext"."virtual_encounters" ("encounter_id");
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_virtual_encounters_encounter_id" ON "clinical_ext"."virtual_encounters" ("encounter_id");
 
 CREATE INDEX IF NOT EXISTS "ix_virtual_encounters_platform_concept_id" ON "clinical_ext"."virtual_encounters" ("platform_concept_id");
 
@@ -109,6 +111,14 @@ CREATE INDEX IF NOT EXISTS "ix_cds_rules_created_by_user_id" ON "clinical_ext"."
 CREATE INDEX IF NOT EXISTS "ix_cds_rules_updated_by_user_id" ON "clinical_ext"."cds_rules" ("updated_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_cds_rules_tenant_id_status_concept_id" ON "clinical_ext"."cds_rules" ("tenant_id", "status_concept_id", "updated_at" DESC);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_cds_rule_versions_rule_version" ON "clinical_ext"."cds_rule_versions" ("cds_rule_id", "version_number");
+
+CREATE INDEX IF NOT EXISTS "ix_cds_rule_versions_severity_concept_id" ON "clinical_ext"."cds_rule_versions" ("severity_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_cds_rule_versions_approved_by_user_id" ON "clinical_ext"."cds_rule_versions" ("approved_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_cds_rule_versions_created_by_user_id" ON "clinical_ext"."cds_rule_versions" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_drug_interactions_substance_a_concept_id" ON "clinical_ext"."drug_interactions" ("substance_a_concept_id");
 
@@ -203,3 +213,5 @@ CREATE INDEX IF NOT EXISTS "ix_care_gaps_created_by_user_id" ON "clinical_ext"."
 CREATE INDEX IF NOT EXISTS "ix_care_gaps_updated_by_user_id" ON "clinical_ext"."care_gaps" ("updated_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_care_gaps_patient_profile_id_updated_at" ON "clinical_ext"."care_gaps" ("patient_profile_id", "updated_at" DESC);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_care_gaps_open_logical_key" ON "clinical_ext"."care_gaps" ("patient_profile_id", "gap_type_concept_id", COALESCE(measure_concept_id, '00000000-0000-0000-0000-000000000000'::uuid)) WHERE closed_at IS NULL;

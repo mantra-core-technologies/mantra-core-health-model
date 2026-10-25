@@ -2537,7 +2537,7 @@
         },
         {
           "id": "802ed5e6-d06c-510f-9419-4d3d382b8d72",
-          "encounter_id": "e9350b61-f607-5da4-8d49-ef9293c52d50",
+          "encounter_id": "e7ef5536-87d8-56a8-94cd-61205319c3f4",
           "platform_concept_id": "971dc88b-db9f-5333-83bf-77a59dceddb5",
           "meeting_url": "https://clinical_ext.mock.salud.example.invalid/virtual-encounters/2",
           "meeting_id": "mock_002_meeting_id",
@@ -2649,7 +2649,7 @@
         },
         {
           "id": "ffe24baa-181e-5dce-9b4b-5167972fb50a",
-          "encounter_id": "e9350b61-f607-5da4-8d49-ef9293c52d50",
+          "encounter_id": "424c7814-2236-56c9-a4e0-a6718f6cb46c",
           "platform_concept_id": "971dc88b-db9f-5333-83bf-77a59dceddb5",
           "meeting_url": "https://clinical_ext.mock.salud.example.invalid/virtual-encounters_008",
           "meeting_id": "mock_001_meeting_id",
@@ -2665,7 +2665,7 @@
         },
         {
           "id": "c8893f8f-9f2d-5f29-be30-f019b5cadef0",
-          "encounter_id": "e9350b61-f607-5da4-8d49-ef9293c52d50",
+          "encounter_id": "d0fe2fd7-7d35-5107-b0cc-9b063b459779",
           "platform_concept_id": "971dc88b-db9f-5333-83bf-77a59dceddb5",
           "meeting_url": "https://clinical_ext.mock.salud.example.invalid/virtual-encounters_009",
           "meeting_id": "mock_002_meeting_id",
@@ -2681,7 +2681,7 @@
         },
         {
           "id": "5b599289-f0bd-5f4d-af3b-a32a25ce73e5",
-          "encounter_id": "cbf59ea5-eda7-5dee-8bae-bc20c0c1890d",
+          "encounter_id": "85ee881f-0a1e-500b-8b4c-78740292bf3e",
           "platform_concept_id": "971dc88b-db9f-5333-83bf-77a59dceddb5",
           "meeting_url": "https://clinical_ext.mock.salud.example.invalid/virtual-encounters_010",
           "meeting_id": "mock_001_meeting_id",
@@ -2697,7 +2697,7 @@
         },
         {
           "id": "3b7c2560-da8c-5edf-b4cc-4dfb91186fef",
-          "encounter_id": "741f1bab-1e90-5816-9106-74b00bd0a621",
+          "encounter_id": "ac1c0049-d9b5-562d-b8cf-5618e99ef5b1",
           "platform_concept_id": "971dc88b-db9f-5333-83bf-77a59dceddb5",
           "meeting_url": "https://clinical_ext.mock.salud.example.invalid/virtual-encounters_011",
           "meeting_id": "mock_002_meeting_id",
@@ -2713,7 +2713,7 @@
         },
         {
           "id": "0a6dbf1f-43f6-511e-843a-bcdca727469f",
-          "encounter_id": "acc283a3-f772-5665-bad4-a078c9462c7e",
+          "encounter_id": "fa1d1acb-ee8b-53fc-978c-b48cf3b4d528",
           "platform_concept_id": "971dc88b-db9f-5333-83bf-77a59dceddb5",
           "meeting_url": "https://clinical_ext.mock.salud.example.invalid/virtual-encounters_012",
           "meeting_id": "mock_001_meeting_id",
@@ -2729,7 +2729,7 @@
         },
         {
           "id": "2f7ea559-8331-5dde-b0cc-13eec71745da",
-          "encounter_id": "9c15d393-3c4e-5ce6-a54b-4e433e9c43bd",
+          "encounter_id": "68629a9d-a28e-5db1-84bd-1981be042f58",
           "platform_concept_id": "971dc88b-db9f-5333-83bf-77a59dceddb5",
           "meeting_url": "https://clinical_ext.mock.salud.example.invalid/virtual-encounters_013",
           "meeting_id": "mock_002_meeting_id",
@@ -2745,7 +2745,7 @@
         },
         {
           "id": "787310f7-255c-5516-ab68-f0d55882e062",
-          "encounter_id": "0748f347-de9d-58f6-9192-4add3f1e37c4",
+          "encounter_id": "88c1c928-9a13-51a0-9e52-7a820d251e75",
           "platform_concept_id": "971dc88b-db9f-5333-83bf-77a59dceddb5",
           "meeting_url": "https://clinical_ext.mock.salud.example.invalid/virtual-encounters_014",
           "meeting_id": "mock_001_meeting_id",
@@ -2761,7 +2761,7 @@
         },
         {
           "id": "a4c266b4-c6ce-58e8-a921-70bd13c889d7",
-          "encounter_id": "99a1d54d-4d5e-5719-871c-fee1c68e4e9e",
+          "encounter_id": "eb0cd456-d6ea-53a6-8f7a-85b76974a47e",
           "platform_concept_id": "971dc88b-db9f-5333-83bf-77a59dceddb5",
           "meeting_url": "https://clinical_ext.mock.salud.example.invalid/virtual-encounters_015",
           "meeting_id": "mock_002_meeting_id",

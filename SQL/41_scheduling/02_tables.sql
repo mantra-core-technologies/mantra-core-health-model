@@ -169,6 +169,8 @@ CREATE TABLE IF NOT EXISTS "scheduling"."booking_policies" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "no_show_fee_percentage" numeric,
+    "no_show_retains_deposit" boolean DEFAULT false,
     CONSTRAINT "pk_booking_policies" PRIMARY KEY ("id")
 );
 
@@ -195,6 +197,7 @@ CREATE TABLE IF NOT EXISTS "scheduling"."appointment_bookings" (
     "cancellation_policy_snapshot" jsonb,
     "practitioner_service_offering_id" uuid,
     "service_snapshot" jsonb,
+    "pre_visit_instructions_snapshot" text,
     CONSTRAINT "pk_appointment_bookings" PRIMARY KEY ("id")
 );
 
@@ -215,6 +218,7 @@ CREATE TABLE IF NOT EXISTS "scheduling"."practitioner_service_offerings" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "pre_visit_instructions" text,
     CONSTRAINT "pk_practitioner_service_offerings" PRIMARY KEY ("id")
 );
 

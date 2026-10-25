@@ -71,6 +71,11 @@ entity procedure_cases {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + v4.2.49 (ORG-QUI-002 / DOC-MOD-002, issues #58 y #57): preparacion y limpieza del quirofano para
+  ' este caso (NULL = las del espacio, practice.care_spaces) y numero de version del caso.
+    prep_minutes : integer
+    cleanup_minutes : integer
+    version_number : integer
 }
 
 entity procedure_case_diagnoses {
@@ -100,6 +105,9 @@ entity procedure_case_team_members {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + v4.2.49 (DOC-MOD-002, issue #57): version del caso (procedure_cases.version_number) que
+  ' acepto el integrante. NULL = acepto antes de que el caso tuviera version.
+    accepted_version_number : integer
 }
 
 entity procedure_case_locations <<LOG>> {

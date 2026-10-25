@@ -158,6 +158,27 @@ entity cds_rules {
   * row_version : integer
 }
 
+' v4.2.49 (CE-03, API #782) — instantaneas inmutables de una regla CDS.
+' cds_rules guarda SOLO la version vigente: publicar sustituia logic_json y
+' message_template en la misma fila y el «rollback» no tenia a donde volver. Cada
+' publicacion escribe aqui la version que deja de ser vigente (o la que nace); la tabla
+' es de solo anadir (UPDATE prohibido en el modulo 33). Restaurar = leer una fila
+' anterior y registrar OTRA version con ese contenido, nunca editar una existente.
+' No hay retroactividad: las versiones previas ya sobrescritas no se pueden reconstruir.
+entity cds_rule_versions {
+  * id : uuid <<PK>>
+  --
+  * cds_rule_id : uuid <<FK>>
+  * version_number : integer
+    logic_json : jsonb
+    message_template : text
+  * severity_concept_id : uuid <<FK>>
+    approved_by_user_id : uuid <<FK>>
+    approved_at : timestamptz
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+
 entity drug_interactions {
   * id : uuid <<PK>>
   --
@@ -323,6 +344,7 @@ entity vital_signs_view <<VIEW>> {
 
 
 cds_rules ||--o{ clinical_alerts
+cds_rules ||--o{ cds_rule_versions
 order_sets ||--o{ order_set_items
 
 note as PHARMACY_BOUNDARY_diagram_18b_clinical_decision_support
@@ -381,6 +403,7 @@ entity "INDEXES · referrals" as idxset_referrals <<INDEX_SET>> {
   IX ix_referrals_created_by_user_id : (created_by_user_id) BTREE
   IX ix_referrals_updated_by_user_id : (updated_by_user_id) BTREE
   IX ix_referrals_patient_profile_id_updated_at : (patient_profile_id, updated_at DESC) BTREE
+  UK uq_referrals_source_encounter_target_specialty : (source_encounter_id, target_profile_id, specialty_concept_id) UNIQUE BTREE WHERE source_encounter_id IS NOT NULL AND target_profile_id IS NOT NULL AND specialty_concept_id IS NOT NULL
 }
 
 referrals .. idxset_referrals : indexed by
@@ -404,7 +427,7 @@ clinical_alerts .. idxset_clinical_alerts : indexed by
 
 entity "INDEXES · virtual_encounters" as idxset_virtual_encounters <<INDEX_SET>> {
   PK pk_virtual_encounters : (id) UNIQUE BTREE
-  IX ix_virtual_encounters_encounter_id : (encounter_id) BTREE
+  UK uq_virtual_encounters_encounter_id : (encounter_id) UNIQUE BTREE
   IX ix_virtual_encounters_platform_concept_id : (platform_concept_id) BTREE
   IX ix_virtual_encounters_recording_file_id : (recording_file_id) BTREE
   IX ix_virtual_encounters_status_concept_id : (status_concept_id) BTREE
@@ -427,6 +450,16 @@ entity "INDEXES · cds_rules" as idxset_cds_rules <<INDEX_SET>> {
 }
 
 cds_rules .. idxset_cds_rules : indexed by
+
+entity "INDEXES · cds_rule_versions" as idxset_cds_rule_versions <<INDEX_SET>> {
+  PK pk_cds_rule_versions : (id) UNIQUE BTREE
+  UK uq_cds_rule_versions_rule_version : (cds_rule_id, version_number) UNIQUE BTREE
+  IX ix_cds_rule_versions_severity_concept_id : (severity_concept_id) BTREE
+  IX ix_cds_rule_versions_approved_by_user_id : (approved_by_user_id) BTREE
+  IX ix_cds_rule_versions_created_by_user_id : (created_by_user_id) BTREE
+}
+
+cds_rule_versions .. idxset_cds_rule_versions : indexed by
 
 entity "INDEXES · drug_interactions" as idxset_drug_interactions <<INDEX_SET>> {
   PK pk_drug_interactions : (id) UNIQUE BTREE
@@ -513,6 +546,7 @@ entity "INDEXES · care_gaps" as idxset_care_gaps <<INDEX_SET>> {
   IX ix_care_gaps_created_by_user_id : (created_by_user_id) BTREE
   IX ix_care_gaps_updated_by_user_id : (updated_by_user_id) BTREE
   IX ix_care_gaps_patient_profile_id_updated_at : (patient_profile_id, updated_at DESC) BTREE
+  UK uq_care_gaps_open_logical_key : (patient_profile_id, gap_type_concept_id, COALESCE(measure_concept_id, '00000000-0000-0000-0000-000000000000'::uuid)) UNIQUE BTREE WHERE closed_at IS NULL
 }
 
 care_gaps .. idxset_care_gaps : indexed by

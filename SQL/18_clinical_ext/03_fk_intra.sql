@@ -15,6 +15,12 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
+    ALTER TABLE "clinical_ext"."cds_rule_versions"
+        ADD CONSTRAINT "fk_cds_rule_versions_cds_rule_id" FOREIGN KEY ("cds_rule_id")
+        REFERENCES "clinical_ext"."cds_rules" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+DO $$ BEGIN
     ALTER TABLE "clinical_ext"."order_set_items"
         ADD CONSTRAINT "fk_order_set_items_order_set_id" FOREIGN KEY ("order_set_id")
         REFERENCES "clinical_ext"."order_sets" ("id");

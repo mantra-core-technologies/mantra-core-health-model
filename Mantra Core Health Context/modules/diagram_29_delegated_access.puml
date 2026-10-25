@@ -87,6 +87,51 @@ entity practitioner_delegate_assignments {
   * row_version : integer
 }
 
+' + v4.2.49 (A-12 / PAC-DIAG-012 / DOC-RX-029, issue #59): compartir TEMPORALMENTE un estudio o una
+' receta con alguien sin cuenta (un profesional externo, la farmacia receptora). El acceso
+' es un secreto opaco: en la base solo vive su hash (token_hash), nunca el secreto, y el id de
+' la fila NO es el secreto. Tiene alcance (que recurso y que puede hacer quien lo presenta),
+' vence (expires_at) y se revoca (revoked_at) sin tocar el recurso. Cada presentacion del
+' token, aceptada o no, deja una fila en shared_access_link_uses.
+' resource_type_concept_id + resource_id es polimorfico a proposito (estudio, receta), igual
+' que file_links.owner_type_concept_id + owner_id: la API debe resolver resource_id contra la
+' tabla que el tipo nombra y comprobar que pertenece a patient_profile_id.
+entity shared_access_links {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+  * resource_type_concept_id : uuid <<FK>>
+  * resource_id : uuid
+  * token_hash : varchar <<UK>>
+  * scope_concept_id : uuid <<FK>>
+    recipient_kind_concept_id : uuid <<FK>>
+    recipient_label : varchar
+    purpose_of_use_concept_id : uuid <<FK>>
+  * expires_at : timestamptz
+    revoked_at : timestamptz
+    revoked_by_user_id : uuid <<FK>>
+    revoke_reason_text : text
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity shared_access_link_uses <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * shared_access_link_id : uuid <<FK>>
+  * action_concept_id : uuid <<FK>>
+  * outcome_concept_id : uuid <<FK>>
+    source_ip : inet
+    user_agent : varchar
+  * occurred_at : timestamptz
+  * created_at : timestamptz
+}
+
 entity delegated_access_grants {
   * id : uuid <<PK>>
   --
@@ -141,6 +186,7 @@ organization_user_assignments ||--o{ practitioner_delegate_assignments
 practitioner_delegate_assignments ||--o{ delegated_access_grants
 practitioner_delegate_assignments ||--o{ delegated_access_approval_requests
 practitioner_delegate_assignments ||--o{ delegation_events
+shared_access_links ||--o{ shared_access_link_uses
 delegated_permission_sets ||--o{ delegated_permission_set_items
 delegated_permission_sets ||--o{ practitioner_delegate_assignments
 
@@ -253,6 +299,35 @@ entity "INDEXES · delegation_events" as idxset_delegation_events <<INDEX_SET>> 
 }
 
 delegation_events .. idxset_delegation_events : indexed by
+
+entity "INDEXES · shared_access_links" as idxset_shared_access_links <<INDEX_SET>> {
+  PK pk_shared_access_links : (id) UNIQUE BTREE
+  UK uq_shared_access_links_token_hash : (token_hash) UNIQUE BTREE
+  IX ix_shared_access_links_tenant_id : (tenant_id) BTREE
+  IX ix_shared_access_links_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_shared_access_links_resource : (resource_type_concept_id, resource_id) BTREE
+  IX ix_shared_access_links_scope_concept_id : (scope_concept_id) BTREE
+  IX ix_shared_access_links_recipient_kind_concept_id : (recipient_kind_concept_id) BTREE
+  IX ix_shared_access_links_purpose_of_use_concept_id : (purpose_of_use_concept_id) BTREE
+  IX ix_shared_access_links_revoked_by_user_id : (revoked_by_user_id) BTREE
+  IX ix_shared_access_links_status_concept_id : (status_concept_id) BTREE
+  IX ix_shared_access_links_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_shared_access_links_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_shared_access_links_live_expiry : (expires_at) BTREE WHERE revoked_at IS NULL
+  IX ix_shared_access_links_patient_profile_id_created_at : (patient_profile_id, created_at DESC) BTREE
+}
+
+shared_access_links .. idxset_shared_access_links : indexed by
+
+entity "INDEXES · shared_access_link_uses" as idxset_shared_access_link_uses <<INDEX_SET>> {
+  PK pk_shared_access_link_uses : (id) UNIQUE BTREE
+  IX ix_shared_access_link_uses_link_occurred : (shared_access_link_id, occurred_at DESC) BTREE
+  IX ix_shared_access_link_uses_action_concept_id : (action_concept_id) BTREE
+  IX ix_shared_access_link_uses_outcome_concept_id : (outcome_concept_id) BTREE
+  BRIN brin_shared_access_link_uses_occurred_at : (occurred_at) BRIN pages_per_range=128
+}
+
+shared_access_link_uses .. idxset_shared_access_link_uses : indexed by
 }
 
 

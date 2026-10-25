@@ -67,3 +67,12 @@ CREATE TRIGGER trg_forbid_mutation BEFORE UPDATE OR DELETE ON "insurance"."claim
 -- ═══ coordination_of_benefits ═══
 --   UK: patient + determination version  (en prosa; el módulo 33 no declara su expresión SQL)
 --   EXCLUDE: overlapping active COB periods  (en prosa; el módulo 33 no declara su expresión SQL)
+
+-- ═══ insurance_products ═══
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "insurance"."insurance_products" DROP CONSTRAINT IF EXISTS "ck_insurance_products_age_range";
+ALTER TABLE "insurance"."insurance_products" ADD CONSTRAINT "ck_insurance_products_age_range" CHECK ((COALESCE("min_age_years", 0) >= 0 AND ("max_age_years" IS NULL OR "max_age_years" >= COALESCE("min_age_years", 0))));
+
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "insurance"."insurance_products" DROP CONSTRAINT IF EXISTS "ck_insurance_products_valid_period";
+ALTER TABLE "insurance"."insurance_products" ADD CONSTRAINT "ck_insurance_products_valid_period" CHECK (("effective_from" IS NULL OR "effective_to" IS NULL OR "effective_from" <= "effective_to"));

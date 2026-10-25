@@ -21,6 +21,9 @@ entity "clinical.encounters" as clinical_encounters <<REFERENCE_ONLY>> {
 entity "practice.practitioner_role_assignments" as practice_practitioner_role_assignments <<REFERENCE_ONLY>> {
   * id : uuid <<PK>>
 }
+entity "crm.crm_cases" as crm_crm_cases <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
 entity "terminology.catalog_concepts" as terminology_catalog_concepts <<REFERENCE_ONLY>> {
   * id : uuid <<PK>>
 }
@@ -113,6 +116,11 @@ entity service_reviews {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + v4.2.49 (INS-CAL-001..003 / INS-BRK-016, issue #60): ancla de verificacion de la atencion
+  ' COMERCIAL (un caso CRM) para calificar a quien no atiende clinicamente, p. ej. un
+  ' broker, cuya vitrina ya existe (insurance_brokers.public_profile_id). verified_encounter_id
+  ' sigue siendo el ancla de la atencion clinica; una resena usa una u otra.
+    verified_crm_case_id : uuid <<FK>>
 }
 entity review_dimension_scores {
   * id : uuid <<PK>>
@@ -934,9 +942,12 @@ entity "INDEXES · service_reviews" as idxset_service_reviews <<INDEX_SET>> {
   IX ix_service_reviews_updated_by_user_id : (updated_by_user_id) BTREE
   GIN gin_service_reviews_search : to_tsvector('simple', concat_ws(' ', review_text)) GIN
   UK uq_service_reviews_verified_encounter : (reviewer_patient_profile_id, target_public_profile_id, verified_encounter_id) UNIQUE BTREE WHERE verified_encounter_id IS NOT NULL
+  IX ix_service_reviews_verified_crm_case_id : (verified_crm_case_id) BTREE
+  UK uq_service_reviews_verified_crm_case : (reviewer_patient_profile_id, target_public_profile_id, verified_crm_case_id) UNIQUE BTREE WHERE verified_crm_case_id IS NOT NULL
 }
 
 service_reviews .. idxset_service_reviews : indexed by
+service_reviews }o--o| crm_crm_cases : verified_crm_case_id
 
 ' Una calificación por autor, calificado y respaldo: volver a calificar la misma
 ' atención (o el mismo vínculo) actualiza la fila, no crea otra. El coalesce

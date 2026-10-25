@@ -150,7 +150,7 @@ entity journal_transactions {
   * id : uuid <<PK>>
   --
   * practice_id : uuid <<FK>>
-  * transaction_number : varchar <<UK>>
+  * transaction_number : varchar
   * transaction_type_concept_id : uuid <<FK>>
   * transaction_date : date
     fiscal_period_id : uuid <<FK>>
@@ -1425,7 +1425,7 @@ cost_center_maps .. idxset_cost_center_maps : indexed by
 
 entity "INDEXES · journal_transactions" as idxset_journal_transactions <<INDEX_SET>> {
   PK pk_journal_transactions : (id) UNIQUE BTREE
-  UK uq_journal_transactions_transaction_number : (transaction_number) UNIQUE BTREE
+  UK uq_journal_transactions_practice_id_transaction_number : (practice_id, transaction_number) UNIQUE BTREE
   IX ix_journal_transactions_practice_id : (practice_id) BTREE
   IX ix_journal_transactions_transaction_type_concept_id : (transaction_type_concept_id) BTREE
   IX ix_journal_transactions_fiscal_period_id : (fiscal_period_id) BTREE

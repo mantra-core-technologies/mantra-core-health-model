@@ -76,6 +76,8 @@ CREATE INDEX IF NOT EXISTS "ix_clinical_units_created_by_user_id" ON "practice".
 
 CREATE INDEX IF NOT EXISTS "ix_clinical_units_updated_by_user_id" ON "practice"."clinical_units" ("updated_by_user_id");
 
+CREATE INDEX IF NOT EXISTS "ix_clinical_units_responsible_user_id" ON "practice"."clinical_units" ("responsible_user_id");
+
 CREATE INDEX IF NOT EXISTS "ix_care_spaces_practice_site_id" ON "practice"."care_spaces" ("practice_site_id");
 
 CREATE INDEX IF NOT EXISTS "ix_care_spaces_clinical_unit_id" ON "practice"."care_spaces" ("clinical_unit_id");

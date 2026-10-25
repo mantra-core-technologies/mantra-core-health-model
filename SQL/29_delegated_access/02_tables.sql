@@ -74,6 +74,42 @@ CREATE TABLE IF NOT EXISTS "delegated_access"."practitioner_delegate_assignments
     CONSTRAINT "pk_practitioner_delegate_assignments" PRIMARY KEY ("id")
 );
 
+CREATE TABLE IF NOT EXISTS "delegated_access"."shared_access_links" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "patient_profile_id" uuid NOT NULL,
+    "resource_type_concept_id" uuid NOT NULL,
+    "resource_id" uuid NOT NULL,
+    "token_hash" varchar NOT NULL,
+    "scope_concept_id" uuid NOT NULL,
+    "recipient_kind_concept_id" uuid,
+    "recipient_label" varchar,
+    "purpose_of_use_concept_id" uuid,
+    "expires_at" timestamptz NOT NULL,
+    "revoked_at" timestamptz,
+    "revoked_by_user_id" uuid,
+    "revoke_reason_text" text,
+    "status_concept_id" uuid NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_shared_access_links" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "delegated_access"."shared_access_link_uses" (
+    "id" uuid NOT NULL,
+    "shared_access_link_id" uuid NOT NULL,
+    "action_concept_id" uuid NOT NULL,
+    "outcome_concept_id" uuid NOT NULL,
+    "source_ip" inet,
+    "user_agent" varchar,
+    "occurred_at" timestamptz NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    CONSTRAINT "pk_shared_access_link_uses" PRIMARY KEY ("id")
+);
+
 CREATE TABLE IF NOT EXISTS "delegated_access"."delegated_access_grants" (
     "id" uuid NOT NULL,
     "practitioner_delegate_assignment_id" uuid NOT NULL,

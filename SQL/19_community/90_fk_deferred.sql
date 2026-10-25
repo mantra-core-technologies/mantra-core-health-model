@@ -191,6 +191,13 @@ DO $$ BEGIN
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- destino: crm.crm_cases (requiere schema crm)
+DO $$ BEGIN
+    ALTER TABLE "community"."service_reviews"
+        ADD CONSTRAINT "fk_service_reviews_verified_crm_case_id" FOREIGN KEY ("verified_crm_case_id")
+        REFERENCES "crm"."crm_cases" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "community"."review_dimension_scores"

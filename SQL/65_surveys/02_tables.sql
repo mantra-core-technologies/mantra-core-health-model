@@ -5,7 +5,9 @@
 CREATE TABLE IF NOT EXISTS "surveys"."survey_templates" (
     "id" uuid NOT NULL,
     "tenant_id" uuid NOT NULL,
-    "owner_practitioner_id" uuid NOT NULL,
+    "owner_practitioner_id" uuid,
+    "owner_type_concept_id" uuid,
+    "owner_id" uuid,
     "title" text NOT NULL,
     "description" text,
     "status_concept_id" uuid NOT NULL,
@@ -25,6 +27,7 @@ CREATE TABLE IF NOT EXISTS "surveys"."survey_versions" (
     "effective_from" timestamptz,
     "effective_to" timestamptz,
     "response_window_days" integer NOT NULL,
+    "max_reminders" integer,
     "published_at" timestamptz,
     "created_at" timestamptz NOT NULL,
     "updated_at" timestamptz NOT NULL,
@@ -73,7 +76,9 @@ CREATE TABLE IF NOT EXISTS "surveys"."survey_invitations" (
     "survey_assignment_id" uuid NOT NULL,
     "tenant_id" uuid NOT NULL,
     "patient_profile_id" uuid NOT NULL,
-    "appointment_booking_id" uuid NOT NULL,
+    "appointment_booking_id" uuid,
+    "subject_type_concept_id" uuid,
+    "subject_id" uuid,
     "status_concept_id" uuid NOT NULL,
     "issued_at" timestamptz NOT NULL,
     "expires_at" timestamptz NOT NULL,
@@ -84,6 +89,17 @@ CREATE TABLE IF NOT EXISTS "surveys"."survey_invitations" (
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
     CONSTRAINT "pk_survey_invitations" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "surveys"."survey_invitation_reminders" (
+    "id" uuid NOT NULL,
+    "survey_invitation_id" uuid NOT NULL,
+    "reminder_number" integer NOT NULL,
+    "sent_at" timestamptz NOT NULL,
+    "channel_concept_id" uuid,
+    "created_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    CONSTRAINT "pk_survey_invitation_reminders" PRIMARY KEY ("id")
 );
 
 CREATE TABLE IF NOT EXISTS "surveys"."survey_responses" (

@@ -76,6 +76,10 @@ CREATE INDEX IF NOT EXISTS "gin_service_reviews_search" ON "community"."service_
 
 CREATE UNIQUE INDEX IF NOT EXISTS "uq_service_reviews_verified_encounter" ON "community"."service_reviews" ("reviewer_patient_profile_id", "target_public_profile_id", "verified_encounter_id") WHERE verified_encounter_id IS NOT NULL;
 
+CREATE INDEX IF NOT EXISTS "ix_service_reviews_verified_crm_case_id" ON "community"."service_reviews" ("verified_crm_case_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_service_reviews_verified_crm_case" ON "community"."service_reviews" ("reviewer_patient_profile_id", "target_public_profile_id", "verified_crm_case_id") WHERE verified_crm_case_id IS NOT NULL;
+
 CREATE INDEX IF NOT EXISTS "ix_party_ratings_reviewer_patient_profile_id" ON "community"."party_ratings" ("reviewer_patient_profile_id");
 
 CREATE INDEX IF NOT EXISTS "ix_party_ratings_reviewer_practitioner_profile_id" ON "community"."party_ratings" ("reviewer_practitioner_profile_id");

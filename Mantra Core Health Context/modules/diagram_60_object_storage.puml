@@ -40,16 +40,27 @@ entity object_namespaces <<OBJECT_CATALOG>> {
   * state : varchar
 }
 
+' v4.2.49 (API #815, SCH-01) — OPTIONAL COLUMNS. Until now every column of this module was
+' declared obligatory (*), which the physical schema could not honour: a NON-clinical
+' object has no patient and no clinical retention policy; the manifest and its first
+' version reference each other, so current_version_id cannot exist at insert; and
+' verified_at / released_at are empty until the verification or the release happens
+' (with released_at obligatory, uq_object_retention_active, WHERE released_at IS NULL,
+' covered no row). The 17 columns that are optional by nature carry no `*` now:
+' object_manifests (patient_profile_id, current_version_id, retention_policy_code),
+' object_locations/object_checksums/archive_manifests.verified_at,
+' object_retention_locks/object_legal_holds.released_at and the DICOM metadata that is
+' filled in when the file is parsed.
 entity object_manifests <<OBJECT_CATALOG>> {
   * id : uuid <<PK>>
   * tenant_id : uuid
   * namespace_id : uuid
   * logical_object_id : uuid
   * object_type : varchar
-  * patient_profile_id : uuid
-  * current_version_id : uuid
+    patient_profile_id : uuid
+    current_version_id : uuid
   * lifecycle_state : varchar
-  * retention_policy_code : varchar
+    retention_policy_code : varchar
   * created_at : timestamptz
   * updated_at : timestamptz
 }
@@ -77,7 +88,7 @@ entity object_locations <<OBJECT_CATALOG>> {
   * provider_uri : varchar
   * storage_class : varchar
   * replication_state : varchar
-  * verified_at : timestamptz
+    verified_at : timestamptz
 }
 
 entity object_checksums <<OBJECT_CATALOG>> {
@@ -86,7 +97,7 @@ entity object_checksums <<OBJECT_CATALOG>> {
   * algorithm : varchar
   * checksum : varchar
   * source : varchar
-  * verified_at : timestamptz
+    verified_at : timestamptz
   * verification_status : varchar
 }
 
@@ -108,7 +119,7 @@ entity object_retention_locks <<OBJECT_CATALOG>> {
   * retain_until : timestamptz
   * policy_code : varchar
   * applied_at : timestamptz
-  * released_at : timestamptz
+    released_at : timestamptz
 }
 
 entity object_legal_holds <<OBJECT_CATALOG>> {
@@ -118,7 +129,7 @@ entity object_legal_holds <<OBJECT_CATALOG>> {
   * hold_state : varchar
   * placed_by_user_id : uuid
   * placed_at : timestamptz
-  * released_at : timestamptz
+    released_at : timestamptz
 }
 
 entity multipart_uploads <<OBJECT_CATALOG>> {
@@ -153,8 +164,8 @@ entity dicom_study_manifests <<OBJECT_CATALOG>> {
   * imaging_study_id : uuid
   * study_instance_uid : varchar
   * accession_number : varchar
-  * study_date : date
-  * modality_codes : varchar[]
+    study_date : date
+    modality_codes : varchar[]
   * series_count : integer
   * instance_count : integer
   * lifecycle_state : varchar
@@ -166,21 +177,21 @@ entity dicom_series_manifests <<OBJECT_CATALOG>> {
   * series_instance_uid : varchar
   * modality : varchar
   * series_number : integer
-  * body_part_examined : varchar
+    body_part_examined : varchar
   * instance_count : integer
-  * thumbnail_object_manifest_id : uuid
+    thumbnail_object_manifest_id : uuid
 }
 
 entity dicom_instance_manifests <<OBJECT_CATALOG>> {
   * id : uuid <<PK>>
   * dicom_series_manifest_id : uuid
   * sop_instance_uid : varchar
-  * sop_class_uid : varchar
-  * instance_number : integer
-  * transfer_syntax_uid : varchar
+    sop_class_uid : varchar
+    instance_number : integer
+    transfer_syntax_uid : varchar
   * object_manifest_id : uuid
-  * frame_count : integer
-  * metadata_json : jsonb
+    frame_count : integer
+    metadata_json : jsonb
 }
 
 entity dicomweb_access_logs <<OBJECT_CATALOG>> {
@@ -205,7 +216,7 @@ entity archive_manifests <<OBJECT_CATALOG>> {
   * record_count : bigint
   * manifest_hash : varchar
   * created_at : timestamptz
-  * verified_at : timestamptz
+    verified_at : timestamptz
 }
 
 entity object_integrity_checks <<OBJECT_CATALOG>> {

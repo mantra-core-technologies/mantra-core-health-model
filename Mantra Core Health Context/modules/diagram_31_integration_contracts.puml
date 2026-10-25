@@ -18,6 +18,7 @@ end note
 entity integration_contracts {
   * id : uuid <<PK>>
   --
+    tenant_id : uuid <<FK>>
   * external_provider_id : uuid <<FK>>
   * contract_code : varchar
   * capability_concept_id : uuid <<FK>>
@@ -188,7 +189,9 @@ end note
 package "Physical Indexes" {
 entity "INDEXES · integration_contracts" as idxset_integration_contracts <<INDEX_SET>> {
   PK pk_integration_contracts : (id) UNIQUE BTREE
+  IX ix_integration_contracts_tenant_id : (tenant_id) BTREE
   IX ix_integration_contracts_external_provider_id : (external_provider_id) BTREE
+  UK uq_integration_contracts_tenant_provider_code : (tenant_id, external_provider_id, contract_code) UNIQUE BTREE WHERE tenant_id IS NOT NULL
   IX ix_integration_contracts_capability_concept_id : (capability_concept_id) BTREE
   IX ix_integration_contracts_data_classification_concept_id : (data_classification_concept_id) BTREE
   IX ix_integration_contracts_legal_basis_concept_id : (legal_basis_concept_id) BTREE

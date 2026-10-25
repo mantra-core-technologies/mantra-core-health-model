@@ -22,7 +22,7 @@ entity segments {
   * id : uuid <<PK>>
   --
   * tenant_id : uuid <<FK>>
-  * code : varchar <<UK>>
+  * code : varchar
   * name : varchar
   * segment_type_concept_id : uuid <<FK>>
     definition_json : jsonb
@@ -35,6 +35,9 @@ entity segments {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + v4.2.49 (CAN-VERSION-001, issue #57): numero de version. Nullable: lo existente no lo tiene.
+  ' Sus revisiones viven en audit.segments_history.
+    version_number : integer
 }
 entity segment_members {
   * id : uuid <<PK>>
@@ -55,7 +58,7 @@ entity marketing_campaigns {
   * id : uuid <<PK>>
   --
   * tenant_id : uuid <<FK>>
-  * code : varchar <<UK>>
+  * code : varchar
   * name : varchar
   * campaign_type_concept_id : uuid <<FK>>
   * objective_concept_id : uuid <<FK>>
@@ -130,7 +133,7 @@ entity journeys {
   * id : uuid <<PK>>
   --
   * tenant_id : uuid <<FK>>
-  * code : varchar <<UK>>
+  * code : varchar
   * name : varchar
   * entry_trigger_concept_id : uuid <<FK>>
     entry_segment_id : uuid <<FK>>
@@ -414,7 +417,7 @@ campaign_dispatches ||--o{ campaign_dispatch_recipients
 package "Physical Indexes" {
 entity "INDEXES · segments" as idxset_segments <<INDEX_SET>> {
   PK pk_segments : (id) UNIQUE BTREE
-  UK uq_segments_code : (code) UNIQUE BTREE
+  UK uq_segments_tenant_id_code : (tenant_id, code) UNIQUE BTREE
   IX ix_segments_tenant_id : (tenant_id) BTREE
   IX ix_segments_segment_type_concept_id : (segment_type_concept_id) BTREE
   IX ix_segments_source_read_model_id : (source_read_model_id) BTREE
@@ -440,7 +443,7 @@ segment_members .. idxset_segment_members : indexed by
 
 entity "INDEXES · marketing_campaigns" as idxset_marketing_campaigns <<INDEX_SET>> {
   PK pk_marketing_campaigns : (id) UNIQUE BTREE
-  UK uq_marketing_campaigns_code : (code) UNIQUE BTREE
+  UK uq_marketing_campaigns_tenant_id_code : (tenant_id, code) UNIQUE BTREE
   IX ix_marketing_campaigns_tenant_id : (tenant_id) BTREE
   IX ix_marketing_campaigns_campaign_type_concept_id : (campaign_type_concept_id) BTREE
   IX ix_marketing_campaigns_objective_concept_id : (objective_concept_id) BTREE
@@ -487,7 +490,7 @@ content_templates .. idxset_content_templates : indexed by
 
 entity "INDEXES · journeys" as idxset_journeys <<INDEX_SET>> {
   PK pk_journeys : (id) UNIQUE BTREE
-  UK uq_journeys_code : (code) UNIQUE BTREE
+  UK uq_journeys_tenant_id_code : (tenant_id, code) UNIQUE BTREE
   IX ix_journeys_tenant_id : (tenant_id) BTREE
   IX ix_journeys_entry_trigger_concept_id : (entry_trigger_concept_id) BTREE
   IX ix_journeys_entry_segment_id : (entry_segment_id) BTREE

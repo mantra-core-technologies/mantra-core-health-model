@@ -52,6 +52,8 @@ CREATE INDEX IF NOT EXISTS "ix_identity_verification_policies_status_concept_id"
 
 CREATE INDEX IF NOT EXISTS "ix_identity_verification_policies_created_by_user_id" ON "identity_assurance"."identity_verification_policies" ("created_by_user_id");
 
+CREATE INDEX IF NOT EXISTS "ix_identity_verification_cases_tenant_id" ON "identity_assurance"."identity_verification_cases" ("tenant_id");
+
 CREATE INDEX IF NOT EXISTS "ix_identity_verification_cases_subject_type_concept_id" ON "identity_assurance"."identity_verification_cases" ("subject_type_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_identity_verification_cases_identity_verification_policy_id" ON "identity_assurance"."identity_verification_cases" ("identity_verification_policy_id");

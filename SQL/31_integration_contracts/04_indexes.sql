@@ -2,7 +2,11 @@
 -- Generado de diagram_31_integration_contracts.puml — NO editar a mano.
 
 
+CREATE INDEX IF NOT EXISTS "ix_integration_contracts_tenant_id" ON "integration_contracts"."integration_contracts" ("tenant_id");
+
 CREATE INDEX IF NOT EXISTS "ix_integration_contracts_external_provider_id" ON "integration_contracts"."integration_contracts" ("external_provider_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_integration_contracts_tenant_provider_code" ON "integration_contracts"."integration_contracts" ("tenant_id", "external_provider_id", "contract_code") WHERE tenant_id IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS "ix_integration_contracts_capability_concept_id" ON "integration_contracts"."integration_contracts" ("capability_concept_id");
 
