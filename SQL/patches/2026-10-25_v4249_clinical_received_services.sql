@@ -24,12 +24,14 @@
 -- vez cuando estén. Los ids de los conceptos son uuid5 deterministas (mismo
 -- namespace que la API); no dependen de la base.
 --
--- RLS: la política custodian_tenant_isolation la cubre el patch
--- 2026-09-26_v4226_custodian_tenant_rls.sql, que descubre las tablas con
--- custodian_tenant_id; volver a ejecutarlo después de este.
+-- RLS: la tabla guarda datos de salud de un paciente, así que este patch le pone la
+-- política custodian_tenant_isolation en la parte 3, con el texto exacto de
+-- 2026-09-26_v4226_custodian_tenant_rls.sql. Ese patch sigue descubriendo toda tabla
+-- con custodian_tenant_id y, si se vuelve a ejecutar, deja la misma política: no hay
+-- una ventana en la que la tabla exista con datos y sin aislamiento por tenant.
 --
 -- DELTAS ESPERADOS sobre la base viva:
---   tablas +1 · FKs +17 · índices +19 (18 declarados + PK) · CHECK +1
+--   tablas +1 · FKs +17 · índices +19 (18 declarados + PK) · CHECK +1 · política RLS +1
 --   filas: una por cada procedimiento completado, vacuna completada y caso M53
 --   completado que no tenga ya su fila; una segunda corrida inserta 0.
 -- ============================================================================
@@ -282,5 +284,22 @@ BEGIN
 
     RAISE NOTICE 'v4.2.49 backfill: % procedimientos, % vacunas, % casos M53', v_n_proc, v_n_imm, v_n_case;
 END $$;
+
+-- ─── Parte 3 · aislamiento por tenant ───────────────────────────────────────
+-- Después del backfill: con FORCE ROW LEVEL SECURITY el dueño de la tabla también
+-- pasaría por la política, y el INSERT de la parte 2 no fija app.current_tenant_id.
+
+ALTER TABLE clinical.received_services ENABLE ROW LEVEL SECURITY;
+ALTER TABLE clinical.received_services FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS custodian_tenant_isolation ON clinical.received_services;
+CREATE POLICY custodian_tenant_isolation ON clinical.received_services
+    USING (
+        custodian_tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+        OR current_setting('app.system_context', true) = 'true'
+    )
+    WITH CHECK (
+        custodian_tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+        OR current_setting('app.system_context', true) = 'true'
+    );
 
 COMMIT;

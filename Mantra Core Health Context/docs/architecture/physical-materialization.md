@@ -71,7 +71,8 @@ importe, y se llenan solo cuando el cargo del servicio es inequívoco.
 138 → 146 stubs · 7092 → 7109 FK. `SEED_REVISION` pasa a `2.7.0-v4.2.49`.
 
 **Verificado** con PostgreSQL 16: el DDL generado (`apply_all.sql` + `apply_deferred.sql`) aplica sin errores y
-deja 19 restricciones en la tabla (PK, 17 FK, CHECK). El parche corrió dos veces sobre filas de prueba: la primera
+deja 19 restricciones en la tabla (PK, 17 FK, CHECK). El parche trae la política
+`custodian_tenant_isolation` de la tabla (la misma de `v4226`). Corrió dos veces sobre filas de prueba: la primera
 insertó un procedimiento (con su caso y su cargo en una sola fila), una vacuna y un caso M53 sin procedimiento; la
 segunda insertó 0. No se aplicó contra una base con datos reales.
 
