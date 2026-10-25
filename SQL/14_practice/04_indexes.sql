@@ -106,6 +106,10 @@ CREATE INDEX IF NOT EXISTS "ix_healthcare_services_specialty_concept_id" ON "pra
 
 CREATE INDEX IF NOT EXISTS "ix_healthcare_services_status_concept_id" ON "practice"."healthcare_services" ("status_concept_id");
 
+CREATE INDEX IF NOT EXISTS "ix_healthcare_services_service_catalog_id" ON "practice"."healthcare_services" ("service_catalog_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_healthcare_services_site_service" ON "practice"."healthcare_services" ("practice_site_id", "service_concept_id");
+
 CREATE INDEX IF NOT EXISTS "ix_healthcare_services_created_by_user_id" ON "practice"."healthcare_services" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_healthcare_services_updated_by_user_id" ON "practice"."healthcare_services" ("updated_by_user_id");

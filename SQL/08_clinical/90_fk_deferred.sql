@@ -695,6 +695,27 @@ DO $$ BEGIN
         REFERENCES "directory"."tenants" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "clinical"."service_requests"
+        ADD CONSTRAINT "fk_service_requests_performer_selection_concept_id" FOREIGN KEY ("performer_selection_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: profiles.health_practitioner_profiles (requiere schema profiles)
+DO $$ BEGIN
+    ALTER TABLE "clinical"."service_requests"
+        ADD CONSTRAINT "fk_service_requests_performer_practitioner_profile_id" FOREIGN KEY ("performer_practitioner_profile_id")
+        REFERENCES "profiles"."health_practitioner_profiles" ("profile_id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: practice.practice_sites (requiere schema practice)
+DO $$ BEGIN
+    ALTER TABLE "clinical"."service_requests"
+        ADD CONSTRAINT "fk_service_requests_suggested_practice_site_id" FOREIGN KEY ("suggested_practice_site_id")
+        REFERENCES "practice"."practice_sites" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "clinical"."service_requests"

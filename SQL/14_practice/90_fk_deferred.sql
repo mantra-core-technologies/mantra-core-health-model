@@ -268,6 +268,13 @@ DO $$ BEGIN
         REFERENCES "terminology"."catalog_concepts" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- destino: billing.service_catalog (requiere schema billing)
+DO $$ BEGIN
+    ALTER TABLE "practice"."healthcare_services"
+        ADD CONSTRAINT "fk_healthcare_services_service_catalog_id" FOREIGN KEY ("service_catalog_id")
+        REFERENCES "billing"."service_catalog" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "practice"."healthcare_services"

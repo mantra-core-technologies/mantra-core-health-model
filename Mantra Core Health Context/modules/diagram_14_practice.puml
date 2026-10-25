@@ -143,6 +143,9 @@ entity healthcare_services {
     referral_required : boolean
     appointment_required : boolean
     telehealth_available : boolean
+    ' + centros medicos (M-04): item de billing.service_catalog que fija el precio de este
+    ' procedimiento en esta sede. NULL = la sede aun no publico precio (no aparece en la busqueda).
+    service_catalog_id : uuid <<FK>>
   * status_concept_id : uuid <<FK>>
   * created_at : timestamptz
   * updated_at : timestamptz
@@ -224,6 +227,12 @@ entity practice_settings {
 
 practices ||--o{ practice_sites
 practices ||--o{ healthcare_services
+
+' Destino canonico de la FK de precio (M-04), declarado en su modulo dueno.
+entity "billing.service_catalog" as billing_service_catalog <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+healthcare_services }o--o| billing_service_catalog : service_catalog_id
 practices ||--o{ practitioner_role_assignments
 practices ||--o{ practice_accreditations
 practices ||--o{ practice_settings
@@ -338,6 +347,8 @@ entity "INDEXES · healthcare_services" as idxset_healthcare_services <<INDEX_SE
   IX ix_healthcare_services_service_concept_id : (service_concept_id) BTREE
   IX ix_healthcare_services_specialty_concept_id : (specialty_concept_id) BTREE
   IX ix_healthcare_services_status_concept_id : (status_concept_id) BTREE
+  IX ix_healthcare_services_service_catalog_id : (service_catalog_id) BTREE
+  UX ux_healthcare_services_site_service : (practice_site_id, service_concept_id) UNIQUE BTREE
   IX ix_healthcare_services_created_by_user_id : (created_by_user_id) BTREE
   IX ix_healthcare_services_updated_by_user_id : (updated_by_user_id) BTREE
 }
