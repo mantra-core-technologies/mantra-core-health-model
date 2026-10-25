@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS "billing"."service_catalog" (
     "code" varchar NOT NULL,
     "name" varchar NOT NULL,
     "description_text" text,
+    "terms_text" text,
     "image_file_id" uuid,
     "service_concept_id" uuid,
     "default_price" numeric NOT NULL,
