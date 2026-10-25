@@ -13,6 +13,12 @@ ALTER TABLE "clinical"."service_requests" DROP CONSTRAINT IF EXISTS "ck_service_
 ALTER TABLE "clinical"."service_requests" ADD CONSTRAINT "ck_service_requests_override_reason_requires_previous_report" CHECK (("duplicate_override_reason" IS NULL OR "previous_diagnostic_report_id" IS NOT NULL));
 
 
+-- ═══ received_services ═══
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "clinical"."received_services" DROP CONSTRAINT IF EXISTS "ck_received_services_has_source";
+ALTER TABLE "clinical"."received_services" ADD CONSTRAINT "ck_received_services_has_source" CHECK (("source_procedure_id" IS NOT NULL OR "source_immunization_id" IS NOT NULL OR "procedure_case_id" IS NOT NULL));
+
+
 -- ═══ appointments ═══
 --   EXCLUDE: practitioner/location time overlap  (en prosa; el módulo 33 no declara su expresión SQL; ver EXCLUDE_SQL abajo)
 -- EXCLUDE concreto declarado por el modelo (EXCLUDE_SQL).

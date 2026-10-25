@@ -123,6 +123,24 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
+    ALTER TABLE "clinical"."received_services"
+        ADD CONSTRAINT "fk_received_services_encounter_id" FOREIGN KEY ("encounter_id")
+        REFERENCES "clinical"."encounters" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "clinical"."received_services"
+        ADD CONSTRAINT "fk_received_services_source_procedure_id" FOREIGN KEY ("source_procedure_id")
+        REFERENCES "clinical"."procedures" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "clinical"."received_services"
+        ADD CONSTRAINT "fk_received_services_source_immunization_id" FOREIGN KEY ("source_immunization_id")
+        REFERENCES "clinical"."immunizations" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
     ALTER TABLE "clinical"."encounter_participants"
         ADD CONSTRAINT "fk_encounter_participants_encounter_id" FOREIGN KEY ("encounter_id")
         REFERENCES "clinical"."encounters" ("id");

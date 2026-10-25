@@ -173,12 +173,12 @@ model:
   inventory:
     modules_puml: 70
     schemas: 58
-    entity_declarations_total: 2910
-    table_like_elements: 1347
+    entity_declarations_total: 2920
+    table_like_elements: 1348
     view_elements: 81
-    index_sets: 1322
-    reference_only_stubs: 160
-    fk_references: 7207
+    index_sets: 1323
+    reference_only_stubs: 168
+    fk_references: 7224
     note: >-
       Cifras producidas por tools/model_inventory.py (fuente única reproducible:
       clasifica cada `entity` en una sola clase, suma == total). v4.0 base
@@ -200,10 +200,11 @@ model:
       entity / 1245 table_like / 81 vistas / 1225 idx / 6672 FK / 120 ref /
       52 schemas. Recontado el 2026-10-25 sobre los módulos 00–69 (incluye las
       promociones posteriores: 64–69 y las columnas/tablas de v4.0.11–v4.2.x,
-      la tanda v4.2.49 de los issues #54–#60 con 13 tablas nuevas
-      y la contabilidad simple del doctor, P49):
-      2910 entity / 1347 table_like / 81 vistas / 1322 idx /
-      7207 FK / 160 ref / 58 schemas; los conteos por módulo de
+      y la tanda v4.2.49 de los issues #54–#60 con 13 tablas nuevas,
+      los servicios recibidos del paciente y la contabilidad simple del
+      doctor, P49):
+      2920 entity / 1348 table_like / 81 vistas / 1323 idx /
+      7224 FK / 168 ref / 58 schemas; los conteos por módulo de
       `modules` salen de la misma corrida.
   database: PostgreSQL canonical + governed specialized stores
   rules:
@@ -305,9 +306,9 @@ modules:
   code: clinical
   title: Core Clinical Record, Orders and Encounter Logistics
   file: modules/diagram_08_clinical.puml
-  table_like_elements: 22
+  table_like_elements: 23
   view_elements: 0
-  index_sets: 22
+  index_sets: 23
   status: active
 - number: 9
   code: forms

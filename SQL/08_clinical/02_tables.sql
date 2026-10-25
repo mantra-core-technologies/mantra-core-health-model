@@ -383,6 +383,33 @@ CREATE TABLE IF NOT EXISTS "clinical"."immunizations" (
     CONSTRAINT "pk_immunizations" PRIMARY KEY ("id")
 );
 
+CREATE TABLE IF NOT EXISTS "clinical"."received_services" (
+    "id" uuid NOT NULL,
+    "custodian_tenant_id" uuid NOT NULL,
+    "patient_profile_id" uuid NOT NULL,
+    "encounter_id" uuid,
+    "service_type_concept_id" uuid NOT NULL,
+    "service_concept_id" uuid NOT NULL,
+    "status_concept_id" uuid NOT NULL,
+    "source_procedure_id" uuid,
+    "source_immunization_id" uuid,
+    "procedure_case_id" uuid,
+    "service_catalog_id" uuid,
+    "invoice_line_id" uuid,
+    "insurance_claim_line_id" uuid,
+    "performer_profile_id" uuid,
+    "practice_site_id" uuid,
+    "performed_at" timestamptz NOT NULL,
+    "outcome_concept_id" uuid,
+    "result_text" text,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_received_services" PRIMARY KEY ("id")
+);
+
 CREATE TABLE IF NOT EXISTS "clinical"."appointments" (
     "id" uuid NOT NULL,
     "patient_profile_id" uuid NOT NULL,

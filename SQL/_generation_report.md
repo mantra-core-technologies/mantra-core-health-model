@@ -12,7 +12,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 05 | profiles | 19 | 130 | 5 | 139 | 0 |
 | 06 | authz | 15 | 100 | 15 | 90 | 0 |
 | 07 | consent | 10 | 81 | 0 | 101 | 0 |
-| 08 | clinical | 22 | 215 | 6 | 237 | 0 |
+| 08 | clinical | 23 | 232 | 13 | 255 | 7 |
 | 09 | forms | 16 | 103 | 0 | 113 | 1 |
 | 10 | audit | 133 | 554 | 40 | 705 | 1 |
 | 11 | system_ops | 29 | 169 | 0 | 178 | 0 |
