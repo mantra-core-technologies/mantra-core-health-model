@@ -111,6 +111,72 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
+    ALTER TABLE "terminology"."concept_relationships"
+        ADD CONSTRAINT "fk_concept_relationships_best_evidence_tier_concept_id" FOREIGN KEY ("best_evidence_tier_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "terminology"."concept_relationships"
+        ADD CONSTRAINT "fk_concept_relationships_frequency_concept_id" FOREIGN KEY ("frequency_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "terminology"."concept_relationship_evidence"
+        ADD CONSTRAINT "fk_concept_relationship_evidence_concept_relationship_id" FOREIGN KEY ("concept_relationship_id")
+        REFERENCES "terminology"."concept_relationships" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "terminology"."concept_relationship_evidence"
+        ADD CONSTRAINT "fk_concept_relationship_evidence_terminology_source_id" FOREIGN KEY ("terminology_source_id")
+        REFERENCES "terminology"."terminology_sources" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "terminology"."concept_relationship_evidence"
+        ADD CONSTRAINT "fk_concept_relationship_evidence_code_system_version_id" FOREIGN KEY ("code_system_version_id")
+        REFERENCES "terminology"."code_system_versions" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "terminology"."concept_relationship_evidence"
+        ADD CONSTRAINT "fk_concept_relationship_evidence_evidence_tier_concept_id" FOREIGN KEY ("evidence_tier_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "terminology"."concept_relationship_evidence"
+        ADD CONSTRAINT "fk_concept_relationship_evidence_frequency_concept_id" FOREIGN KEY ("frequency_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "terminology"."concept_relationship_evidence"
+        ADD CONSTRAINT "fk_concept_relationship_evidence_sex_concept_id" FOREIGN KEY ("sex_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "terminology"."concept_relationship_evidence"
+        ADD CONSTRAINT "fk_concept_relationship_evidence_pregnancy_applicabili_541e3040" FOREIGN KEY ("pregnancy_applicability_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "terminology"."concept_relationship_evidence"
+        ADD CONSTRAINT "fk_concept_relationship_evidence_care_level_concept_id" FOREIGN KEY ("care_level_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "terminology"."concept_relationship_evidence"
+        ADD CONSTRAINT "fk_concept_relationship_evidence_line_of_therapy_concept_id" FOREIGN KEY ("line_of_therapy_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
     ALTER TABLE "terminology"."value_sets"
         ADD CONSTRAINT "fk_value_sets_jurisdiction_concept_id" FOREIGN KEY ("jurisdiction_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");

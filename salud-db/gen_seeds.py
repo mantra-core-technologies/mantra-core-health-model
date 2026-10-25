@@ -70,7 +70,7 @@ VAULT = paths.VAULT
 MODEL_VERSION = "4.0.7"
 SOURCE_MODEL_VERSION = "4.0.9"
 RELEASE_LABEL = "4.0.9"
-SEED_REVISION = "2.7.0-v4.2.49"
+SEED_REVISION = "2.8.0-v4.2.50"
 # Namespace uuid5 por patch, misma regla que MODEL_VERSION: identifica las filas de las
 # 5 tablas ALOVIDA ya sembradas. v4.0.9 no añade uno propio porque no trae tablas que
 # sembrar — `iam.email_verifications` y `iam.password_resets` guardan tokens de runtime
@@ -167,6 +167,14 @@ VS_OWNER = {
     # `addresses`. Sus etiquetas NO están en VS_DISPLAY de más abajo: son 340 y
     # salen del padrón (ver `municipios_display`).
     "vs_bo_municipality": ("4.1.5", "02"),
+    # v4.2.50 — red de conocimiento con evidencia (TAREA-41 F1). Dueño funcional: el
+    # módulo 03, que declara `concept_relationship_evidence`. `vs_pregnancy_applicability`
+    # tiene nota en el vault pero NO entra acá: la ficha no enumera sus miembros y no se
+    # inventan (la nota lo deja como TODO).
+    "vs_evidence_tier": ("4.2.50", "03"),
+    "vs_relationship_frequency": ("4.2.50", "03"),
+    "vs_care_level": ("4.2.50", "03"),
+    "vs_line_of_therapy": ("4.2.50", "03"),
 }
 
 # --- display curado por value set -----------------------------------------
@@ -176,6 +184,31 @@ VS_OWNER = {
 # este texto. Acá se declara la forma correcta en castellano; lo no declarado
 # sigue saliendo por `titleize` y los otros 33 sets no cambian un byte.
 VS_DISPLAY = {
+    # v4.2.50 · TAREA-41 §3.1: los cuatro niveles de evidencia.
+    "vs_evidence_tier": {
+        "national_standard": "Norma nacional",
+        "curated_reference": "Referencia curada",
+        "collaborative_knowledge": "Conocimiento colaborativo",
+        "statistical_literature": "Literatura estadística",
+    },
+    # v4.2.50 · la subrama Frequency de HPO (HP:0040280–HP:0040285).
+    "vs_relationship_frequency": {
+        "obligate": "Obligatoria",
+        "very_frequent": "Muy frecuente",
+        "frequent": "Frecuente",
+        "occasional": "Ocasional",
+        "very_rare": "Muy rara",
+        "excluded": "Excluida",
+    },
+    "vs_care_level": {
+        "first_level": "Primer nivel",
+        "second_level": "Segundo nivel",
+        "third_level": "Tercer nivel",
+    },
+    "vs_line_of_therapy": {
+        "first_line": "Primera línea",
+        "second_line": "Segunda línea",
+    },
     "vs_medical_specialty": {
         "medicina_general": "Medicina General",
         "medicina_familiar": "Medicina Familiar",
@@ -3976,6 +4009,10 @@ INTENTIONALLY_EMPTY = {
     # registra el procedimiento o la vacuna que la origina: sembrarla daría servicios que
     # ningún paciente recibió.
     "clinical.received_services",
+    # v4.2.50 — la evidencia de cada arista del glosario la escribe el cargador masivo
+    # de la API (TAREA-41 F1.3) desde fuentes con procedencia: sembrarla sería afirmar
+    # que una fuente dijo algo que no dijo.
+    "terminology.concept_relationship_evidence",
     # v4.0.11 — módulo 64. El catálogo de plantillas lo siembra la propia app al
     # arrancar (`AudioAssetsSeedService`), así que sembrarlo también desde el paquete
     # daría dos dueños del mismo catálogo con ids distintos y la resolución dependería

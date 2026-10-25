@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "General physical and care-delivery infrastructure for a private office, clinic, medical center, hospital, nursing station, laboratory, imaging site, pharmacy counter, mobile unit or virtual service. Hospitals, diagnostic units and pharmacies receive explicit domain identities in specialized schemas. A site may host them without merging their tenants, credentials or data governance. The model implements Organization + Location + HealthcareService + PractitionerRole semantics without forcing every professional to own a room.",
-    "seed_revision": "2.7.0-v4.2.49"
+    "seed_revision": "2.8.0-v4.2.50"
   },
   "environment_policy": {
     "boot": {
@@ -838,7 +838,7 @@
         {
           "id": "4fffe538-796d-5599-b776-92a8781d0aec",
           "practice_id": "e0dcebb7-9277-55e5-9f71-5e82764f3822",
-          "practice_site_id": "528f1125-d80e-5f32-8798-e476c8f489fd",
+          "practice_site_id": "44019e81-dcf7-5557-b251-8a9de44cc354",
           "clinical_unit_id": "f8f74cbc-9312-5bb6-953b-b6837ba510dd",
           "service_concept_id": "c753a443-902d-510f-8bbd-3537b10e55b6",
           "specialty_concept_id": "1640a775-ea1d-5ba2-a6c4-aa283f3dcb3a",
@@ -957,7 +957,7 @@
         {
           "id": "c436540b-62d7-544a-928c-58a583672c38",
           "practice_id": "e0dcebb7-9277-55e5-9f71-5e82764f3822",
-          "practice_site_id": "528f1125-d80e-5f32-8798-e476c8f489fd",
+          "practice_site_id": "48b149b5-56dc-5812-8bbf-6241624716fc",
           "clinical_unit_id": "f8f74cbc-9312-5bb6-953b-b6837ba510dd",
           "service_concept_id": "c753a443-902d-510f-8bbd-3537b10e55b6",
           "specialty_concept_id": "1640a775-ea1d-5ba2-a6c4-aa283f3dcb3a",
@@ -974,7 +974,7 @@
         {
           "id": "6f71b592-be88-5854-a542-a23408ecd12b",
           "practice_id": "e0dcebb7-9277-55e5-9f71-5e82764f3822",
-          "practice_site_id": "528f1125-d80e-5f32-8798-e476c8f489fd",
+          "practice_site_id": "6dce77af-d24b-5a65-afd0-3f26b2f51c58",
           "clinical_unit_id": "f8f74cbc-9312-5bb6-953b-b6837ba510dd",
           "service_concept_id": "c753a443-902d-510f-8bbd-3537b10e55b6",
           "specialty_concept_id": "1640a775-ea1d-5ba2-a6c4-aa283f3dcb3a",
@@ -3200,7 +3200,7 @@
         {
           "id": "5693d159-a37b-5463-aaac-70b052a954aa",
           "practice_id": "8d74979f-c71b-5be4-ba3b-ea3841c055b9",
-          "practice_site_id": "00ddfdb5-7fdd-5ad4-8755-bedb8f5c45cb",
+          "practice_site_id": "528f1125-d80e-5f32-8798-e476c8f489fd",
           "clinical_unit_id": "7fb991b4-0573-576e-a097-858e1bdfdd2a",
           "service_concept_id": "c753a443-902d-510f-8bbd-3537b10e55b6",
           "specialty_concept_id": "1640a775-ea1d-5ba2-a6c4-aa283f3dcb3a",
@@ -3319,7 +3319,7 @@
         {
           "id": "13651e97-0e9f-5ad4-9fa8-edbcbda62769",
           "practice_id": "8d74979f-c71b-5be4-ba3b-ea3841c055b9",
-          "practice_site_id": "00ddfdb5-7fdd-5ad4-8755-bedb8f5c45cb",
+          "practice_site_id": "44019e81-dcf7-5557-b251-8a9de44cc354",
           "clinical_unit_id": "7fb991b4-0573-576e-a097-858e1bdfdd2a",
           "service_concept_id": "c753a443-902d-510f-8bbd-3537b10e55b6",
           "specialty_concept_id": "1640a775-ea1d-5ba2-a6c4-aa283f3dcb3a",
@@ -3336,7 +3336,7 @@
         {
           "id": "96c618f4-8330-5280-a1aa-fe2eec9ec6f2",
           "practice_id": "8d74979f-c71b-5be4-ba3b-ea3841c055b9",
-          "practice_site_id": "00ddfdb5-7fdd-5ad4-8755-bedb8f5c45cb",
+          "practice_site_id": "39f40d09-c129-538b-b2cb-6339389c01a6",
           "clinical_unit_id": "7fb991b4-0573-576e-a097-858e1bdfdd2a",
           "service_concept_id": "c753a443-902d-510f-8bbd-3537b10e55b6",
           "specialty_concept_id": "1640a775-ea1d-5ba2-a6c4-aa283f3dcb3a",
@@ -3353,7 +3353,7 @@
         {
           "id": "127185d1-4d5f-5f85-89b9-60bffc6696b3",
           "practice_id": "692e83c7-efe5-50e2-ace6-cbcf770ff507",
-          "practice_site_id": "aee07ad3-94a2-5496-be16-09a1ac1cf83d",
+          "practice_site_id": "454da612-6ecc-591b-a9a8-0e7fafbca032",
           "clinical_unit_id": "9c11a4a8-ffce-5f4a-8f5f-9e258ab76c2a",
           "service_concept_id": "c753a443-902d-510f-8bbd-3537b10e55b6",
           "specialty_concept_id": "1640a775-ea1d-5ba2-a6c4-aa283f3dcb3a",
@@ -3370,7 +3370,7 @@
         {
           "id": "f3c154e1-5d2f-5a46-89dd-8e6057d01a17",
           "practice_id": "75037a36-ee8c-519d-b202-0f3846b81a13",
-          "practice_site_id": "537a72f5-3701-546b-8ba7-6f9dcc90853e",
+          "practice_site_id": "57b2f317-326f-5ab7-b762-8277bb7fa160",
           "clinical_unit_id": "baab5f9f-0236-585e-a525-c5c207ac278d",
           "service_concept_id": "c753a443-902d-510f-8bbd-3537b10e55b6",
           "specialty_concept_id": "1640a775-ea1d-5ba2-a6c4-aa283f3dcb3a",
@@ -3387,7 +3387,7 @@
         {
           "id": "f8d598a6-99fd-5bf4-a165-44b84ba09546",
           "practice_id": "6d0374f2-8145-5c06-9478-848a5c1efcf8",
-          "practice_site_id": "1014f406-aa31-5906-8aef-33c9286b5d44",
+          "practice_site_id": "3e7fedaf-7dc1-59c2-a298-63bb14913968",
           "clinical_unit_id": "2ebf1338-278a-5624-989a-cfb703f48bde",
           "service_concept_id": "c753a443-902d-510f-8bbd-3537b10e55b6",
           "specialty_concept_id": "1640a775-ea1d-5ba2-a6c4-aa283f3dcb3a",
@@ -3404,7 +3404,7 @@
         {
           "id": "f797ef96-bba7-5831-8c9f-4ac82dc6a95e",
           "practice_id": "9b526024-683b-5dfa-920d-6cf135d07fa9",
-          "practice_site_id": "1304de49-f804-5825-ab0f-eecfb614103c",
+          "practice_site_id": "2569d91f-57e9-58ba-8d31-7248b931bbe3",
           "clinical_unit_id": "82c53a4e-a6e2-5bed-b429-bbd6684ec443",
           "service_concept_id": "c753a443-902d-510f-8bbd-3537b10e55b6",
           "specialty_concept_id": "1640a775-ea1d-5ba2-a6c4-aa283f3dcb3a",
@@ -3421,7 +3421,7 @@
         {
           "id": "a0586892-df48-5159-a95f-31066d949b18",
           "practice_id": "06faaf7d-80eb-56d9-8230-730816823d82",
-          "practice_site_id": "643faa43-9332-523c-a7ab-fce221be8372",
+          "practice_site_id": "959c6129-e5a8-5800-9b77-d37db41ac494",
           "clinical_unit_id": "eb5eac2e-d466-53e9-9f7d-30d8fbd59e53",
           "service_concept_id": "c753a443-902d-510f-8bbd-3537b10e55b6",
           "specialty_concept_id": "1640a775-ea1d-5ba2-a6c4-aa283f3dcb3a",
@@ -3438,7 +3438,7 @@
         {
           "id": "72ff92f7-24c0-5ae7-8ce8-1a2f434ffaf7",
           "practice_id": "4422be2f-ac71-5d91-be8e-23fc7d4de75e",
-          "practice_site_id": "1f0231e1-d948-5712-add9-9e9337a7bb3a",
+          "practice_site_id": "48b149b5-56dc-5812-8bbf-6241624716fc",
           "clinical_unit_id": "3aa06ed8-1cff-5c92-ab9b-2aa030b18a6f",
           "service_concept_id": "c753a443-902d-510f-8bbd-3537b10e55b6",
           "specialty_concept_id": "1640a775-ea1d-5ba2-a6c4-aa283f3dcb3a",

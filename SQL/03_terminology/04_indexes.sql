@@ -86,6 +86,36 @@ CREATE INDEX IF NOT EXISTS "ix_concept_relationships_created_by_user_id" ON "ter
 
 CREATE INDEX IF NOT EXISTS "ix_concept_relationships_updated_by_user_id" ON "terminology"."concept_relationships" ("updated_by_user_id");
 
+CREATE INDEX IF NOT EXISTS "ix_concept_relationships_best_evidence_tier_concept_id" ON "terminology"."concept_relationships" ("best_evidence_tier_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_concept_relationships_frequency_concept_id" ON "terminology"."concept_relationships" ("frequency_concept_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_concept_relationships_natural_key" ON "terminology"."concept_relationships" ("source_concept_id", "target_concept_id", "relationship_type_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_concept_relationships_source_type_strength" ON "terminology"."concept_relationships" ("source_concept_id", "relationship_type_concept_id", "strength_score" DESC);
+
+CREATE INDEX IF NOT EXISTS "ix_concept_relationships_target_type_strength" ON "terminology"."concept_relationships" ("target_concept_id", "relationship_type_concept_id", "strength_score" DESC);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_concept_relationship_evidence_natural_key" ON "terminology"."concept_relationship_evidence" ("concept_relationship_id", "terminology_source_id", "source_reference");
+
+CREATE INDEX IF NOT EXISTS "ix_concept_relationship_evidence_concept_relationship_id" ON "terminology"."concept_relationship_evidence" ("concept_relationship_id");
+
+CREATE INDEX IF NOT EXISTS "ix_concept_relationship_evidence_terminology_source_id" ON "terminology"."concept_relationship_evidence" ("terminology_source_id");
+
+CREATE INDEX IF NOT EXISTS "ix_concept_relationship_evidence_code_system_version_id" ON "terminology"."concept_relationship_evidence" ("code_system_version_id");
+
+CREATE INDEX IF NOT EXISTS "ix_concept_relationship_evidence_evidence_tier_concept_id" ON "terminology"."concept_relationship_evidence" ("evidence_tier_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_concept_relationship_evidence_frequency_concept_id" ON "terminology"."concept_relationship_evidence" ("frequency_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_concept_relationship_evidence_sex_concept_id" ON "terminology"."concept_relationship_evidence" ("sex_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_concept_relationship_evidence_pregnancy_applicabili_1eca2256" ON "terminology"."concept_relationship_evidence" ("pregnancy_applicability_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_concept_relationship_evidence_care_level_concept_id" ON "terminology"."concept_relationship_evidence" ("care_level_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_concept_relationship_evidence_line_of_therapy_concept_id" ON "terminology"."concept_relationship_evidence" ("line_of_therapy_concept_id");
+
 CREATE UNIQUE INDEX IF NOT EXISTS "uq_value_sets_internal_code" ON "terminology"."value_sets" ("internal_code");
 
 CREATE UNIQUE INDEX IF NOT EXISTS "uq_value_sets_canonical_url" ON "terminology"."value_sets" ("canonical_url");
