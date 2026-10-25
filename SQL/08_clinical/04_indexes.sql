@@ -402,6 +402,42 @@ CREATE INDEX IF NOT EXISTS "ix_immunizations_custodian_tenant_id_status_concept_
 
 CREATE INDEX IF NOT EXISTS "ix_immunizations_patient_profile_id_updated_at" ON "clinical"."immunizations" ("custodian_tenant_id", "patient_profile_id", "updated_at" DESC);
 
+CREATE INDEX IF NOT EXISTS "ix_received_services_custodian_tenant_id" ON "clinical"."received_services" ("custodian_tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_received_services_patient_profile_id" ON "clinical"."received_services" ("patient_profile_id");
+
+CREATE INDEX IF NOT EXISTS "ix_received_services_encounter_id" ON "clinical"."received_services" ("encounter_id");
+
+CREATE INDEX IF NOT EXISTS "ix_received_services_service_type_concept_id" ON "clinical"."received_services" ("service_type_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_received_services_service_concept_id" ON "clinical"."received_services" ("service_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_received_services_status_concept_id" ON "clinical"."received_services" ("status_concept_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_received_services_source_procedure_id" ON "clinical"."received_services" ("source_procedure_id") WHERE source_procedure_id IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_received_services_source_immunization_id" ON "clinical"."received_services" ("source_immunization_id") WHERE source_immunization_id IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_received_services_procedure_case_id" ON "clinical"."received_services" ("procedure_case_id") WHERE procedure_case_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS "ix_received_services_service_catalog_id" ON "clinical"."received_services" ("service_catalog_id");
+
+CREATE INDEX IF NOT EXISTS "ix_received_services_invoice_line_id" ON "clinical"."received_services" ("invoice_line_id");
+
+CREATE INDEX IF NOT EXISTS "ix_received_services_insurance_claim_line_id" ON "clinical"."received_services" ("insurance_claim_line_id");
+
+CREATE INDEX IF NOT EXISTS "ix_received_services_performer_profile_id" ON "clinical"."received_services" ("performer_profile_id");
+
+CREATE INDEX IF NOT EXISTS "ix_received_services_practice_site_id" ON "clinical"."received_services" ("practice_site_id");
+
+CREATE INDEX IF NOT EXISTS "ix_received_services_outcome_concept_id" ON "clinical"."received_services" ("outcome_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_received_services_created_by_user_id" ON "clinical"."received_services" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_received_services_updated_by_user_id" ON "clinical"."received_services" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_received_services_patient_performed_at" ON "clinical"."received_services" ("custodian_tenant_id", "patient_profile_id", "performed_at" DESC);
+
 CREATE INDEX IF NOT EXISTS "ix_appointments_patient_profile_id" ON "clinical"."appointments" ("patient_profile_id");
 
 CREATE INDEX IF NOT EXISTS "ix_appointments_practitioner_profile_id" ON "clinical"."appointments" ("practitioner_profile_id");

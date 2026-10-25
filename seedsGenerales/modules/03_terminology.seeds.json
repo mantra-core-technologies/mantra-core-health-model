@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "A governed engine for every coded value the platform uses (diagnoses, statuses, units, roles...) based on international standards (SNOMED, LOINC, ICD, ATC, UCUM) plus local catalogs. It makes the system multilingual, interoperable and future-proof: new values are added without software changes.",
-    "seed_revision": "2.6.0-v4.2.30"
+    "seed_revision": "2.7.0-v4.2.49"
   },
   "environment_policy": {
     "boot": {
@@ -53,7 +53,7 @@
       "value_set_members",
       "tenant_catalog_policies"
     ],
-    "record_count": 4458,
+    "record_count": 4464,
     "records": {
       "terminology_sources": [
         {
@@ -31698,6 +31698,28 @@
           "created_at": "2026-08-17T21:45:00Z",
           "updated_at": "2026-08-17T21:45:00Z",
           "row_version": 1
+        },
+        {
+          "id": "b64df7ce-0143-5707-85f8-30390e48ad77",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "clinical:RECEIVED_SERVICE_INTERVENTION",
+          "display": "Received service: medical intervention",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "c21d54c4-0c5e-5563-bd61-d4c1c6cb3bc3",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "clinical:RECEIVED_SERVICE_VACCINATION",
+          "display": "Received service: vaccination",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
         }
       ],
       "concept_designations": [
@@ -54069,6 +54091,20 @@
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1
+        },
+        {
+          "id": "d83562d8-f39a-5607-a096-fd4394e7d912",
+          "internal_code": "VS_RECEIVED_SERVICE_TYPE",
+          "name": "Tipo de servicio recibido",
+          "canonical_url": "https://salud.example.invalid/fhir/ValueSet/vs_received_service_type",
+          "description": "Qué clase de servicio recibió el paciente (`clinical.received_services.service_type_concept_id`): una intervención médica realizada o una vacuna aplicada. Un tipo nuevo se agrega al final de esta lista; el orden es el ordinal sembrado y no se reordena.",
+          "jurisdiction_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
+          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-09-13T02:37:00Z",
+          "updated_at": "2026-09-13T02:57:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
         }
       ],
       "value_set_versions": [
@@ -54768,6 +54804,20 @@
           "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
           "created_at": "2026-08-06T14:16:00Z",
           "updated_at": "2026-08-06T14:36:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "49014955-f8eb-503b-9245-160ada70098c",
+          "value_set_id": "d83562d8-f39a-5607-a096-fd4394e7d912",
+          "version": "1.0.0",
+          "valid_from": "2026-09-13T02:37:00Z",
+          "valid_to": null,
+          "is_default": true,
+          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-09-13T02:37:00Z",
+          "updated_at": "2026-09-13T02:57:00Z",
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1
@@ -65429,6 +65479,30 @@
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1
+        },
+        {
+          "id": "f3e19215-6687-5320-b530-e6f928d01c50",
+          "value_set_version_id": "49014955-f8eb-503b-9245-160ada70098c",
+          "concept_id": "b64df7ce-0143-5707-85f8-30390e48ad77",
+          "included": true,
+          "ordinal": 1,
+          "created_at": "2026-07-30T04:39:00Z",
+          "updated_at": "2026-07-30T04:59:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "12b35cb1-62e3-5546-ab4b-706b92e3313a",
+          "value_set_version_id": "49014955-f8eb-503b-9245-160ada70098c",
+          "concept_id": "c21d54c4-0c5e-5563-bd61-d4c1c6cb3bc3",
+          "included": true,
+          "ordinal": 2,
+          "created_at": "2026-08-03T03:06:00Z",
+          "updated_at": "2026-08-03T03:26:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
         }
       ],
       "value_set_rules": [],
@@ -65869,7 +65943,7 @@
       }
     ],
     "summary": {
-      "record_count": 4458,
+      "record_count": 4464,
       "entity_count": 10,
       "populated_entity_count": 10,
       "scenario_count": null,

@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "Provides versioned system context for agents, modules and workflows, and database-driven enumerations resolved from governed terminology value sets. Consumers receive reproducible context instead of ad-hoc JSON or hard-coded lists.",
-    "seed_revision": "2.6.0-v4.2.30"
+    "seed_revision": "2.7.0-v4.2.49"
   },
   "environment_policy": {
     "boot": {
@@ -49,7 +49,7 @@
       "dynamic_enum_options",
       "dynamic_enum_bindings"
     ],
-    "record_count": 776,
+    "record_count": 781,
     "records": {
       "system_contexts": [
         {
@@ -1487,6 +1487,25 @@
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1
+        },
+        {
+          "id": "35d47f80-ece8-5dc1-932b-56558d7d928c",
+          "code": "VS_RECEIVED_SERVICE_TYPE",
+          "name": "Tipo de servicio recibido",
+          "description": "Enum dinámico del value set vs_received_service_type (patch v4.2.29).",
+          "value_set_id": "d83562d8-f39a-5607-a096-fd4394e7d912",
+          "scope_type_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "tenant_id": null,
+          "country_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
+          "selection_mode_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "allow_tenant_extension": false,
+          "allow_custom_value": false,
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-09-13T02:37:00Z",
+          "updated_at": "2026-09-13T02:57:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
         }
       ],
       "dynamic_enum_versions": [
@@ -2125,6 +2144,19 @@
           "effective_to": null,
           "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
           "recorded_at": "2026-10-17T08:10:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "28ae2231-2833-5e81-9a7b-623aec6879ea",
+          "dynamic_enum_definition_id": "35d47f80-ece8-5dc1-932b-56558d7d928c",
+          "version_number": 1,
+          "value_set_version_id": "49014955-f8eb-503b-9245-160ada70098c",
+          "schema_version": "1.0.0",
+          "cache_token": "692785e64bbc5abf4bb867e28b130291",
+          "effective_from": "2026-09-13T02:37:00Z",
+          "effective_to": null,
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "recorded_at": "2026-09-13T02:37:00Z",
           "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
         }
       ],
@@ -11900,6 +11932,38 @@
           },
           "recorded_at": "2026-07-31T06:02:00Z",
           "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "a870afaf-9c1e-59bd-b02f-cb1b2a0f66e9",
+          "dynamic_enum_version_id": "28ae2231-2833-5e81-9a7b-623aec6879ea",
+          "concept_id": "b64df7ce-0143-5707-85f8-30390e48ad77",
+          "code": "clinical:RECEIVED_SERVICE_INTERVENTION",
+          "display": "Intervención médica",
+          "ordinal": 1,
+          "is_default": true,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_received_service_type",
+            "patch": "v4.2.29"
+          },
+          "recorded_at": "2026-07-30T04:39:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "bfec308b-d8ca-57e9-84b5-3c10971ef42d",
+          "dynamic_enum_version_id": "28ae2231-2833-5e81-9a7b-623aec6879ea",
+          "concept_id": "c21d54c4-0c5e-5563-bd61-d4c1c6cb3bc3",
+          "code": "clinical:RECEIVED_SERVICE_VACCINATION",
+          "display": "Vacunación",
+          "ordinal": 2,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_received_service_type",
+            "patch": "v4.2.29"
+          },
+          "recorded_at": "2026-08-03T03:06:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
         }
       ],
       "dynamic_enum_bindings": [
@@ -12718,6 +12782,23 @@
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1
+        },
+        {
+          "id": "35f6b5b7-6d15-545f-82c6-c918fdeed3b4",
+          "dynamic_enum_definition_id": "35d47f80-ece8-5dc1-932b-56558d7d928c",
+          "target_schema_name": "clinical",
+          "target_entity_name": "received_services",
+          "target_field_name": "service_type_concept_id",
+          "system_context_id": null,
+          "required": true,
+          "fallback_concept_id": null,
+          "validation_mode_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-09-13T02:37:00Z",
+          "updated_at": "2026-09-13T02:57:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
         }
       ]
     },
@@ -12920,7 +13001,7 @@
       }
     ],
     "summary": {
-      "record_count": 776,
+      "record_count": 781,
       "entity_count": 6,
       "populated_entity_count": 6,
       "scenario_count": null,

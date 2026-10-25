@@ -5,6 +5,29 @@ skinparam linetype ortho
 skinparam packageStyle rectangle
 hide circle
 
+' Canonical FK targets for clinical.received_services, declared in their owning modules.
+entity "directory.tenants" as directory_tenants <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity "profiles.health_practitioner_profiles" as profiles_health_practitioner_profiles <<REFERENCE_ONLY>> {
+  * profile_id : uuid <<PK>>
+}
+entity "practice.practice_sites" as practice_practice_sites <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity "procedures_perioperative.procedure_cases" as procedures_perioperative_procedure_cases <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity "billing.service_catalog" as billing_service_catalog <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity "billing.invoice_lines" as billing_invoice_lines <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity "insurance.insurance_claim_lines" as insurance_insurance_claim_lines <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
 ' ------------------------------------------------------------------------------
 ' SOURCE CONSOLIDATED: diagram_08_clinical.puml
 ' ------------------------------------------------------------------------------
@@ -487,6 +510,44 @@ entity immunizations {
   * row_version : integer
 }
 
+entity received_services {
+  * id : uuid <<PK>>
+  --
+  * custodian_tenant_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+    encounter_id : uuid <<FK>>
+  * service_type_concept_id : uuid <<FK>>
+  * service_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    source_procedure_id : uuid <<FK>>
+    source_immunization_id : uuid <<FK>>
+    procedure_case_id : uuid <<FK>>
+    service_catalog_id : uuid <<FK>>
+    invoice_line_id : uuid <<FK>>
+    insurance_claim_line_id : uuid <<FK>>
+    performer_profile_id : uuid <<FK>>
+    practice_site_id : uuid <<FK>>
+  * performed_at : timestamptz
+    outcome_concept_id : uuid <<FK>>
+    result_text : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+received_services }o--|| directory_tenants : custodian_tenant_id
+received_services }o--o| encounters : encounter_id
+received_services }o--o| procedures : source_procedure_id
+received_services }o--o| immunizations : source_immunization_id
+received_services }o--o| procedures_perioperative_procedure_cases : procedure_case_id
+received_services }o--o| billing_service_catalog : service_catalog_id
+received_services }o--o| billing_invoice_lines : invoice_line_id
+received_services }o--o| insurance_insurance_claim_lines : insurance_claim_line_id
+received_services }o--o| profiles_health_practitioner_profiles : performer_profile_id
+received_services }o--o| practice_practice_sites : practice_site_id
+
 entity appointments {
   * id : uuid <<PK>>
   --
@@ -913,6 +974,30 @@ entity "INDEXES · immunizations" as idxset_immunizations <<INDEX_SET>> {
 }
 
 immunizations .. idxset_immunizations : indexed by
+
+entity "INDEXES · received_services" as idxset_received_services <<INDEX_SET>> {
+  PK pk_received_services : (id) UNIQUE BTREE
+  IX ix_received_services_custodian_tenant_id : (custodian_tenant_id) BTREE
+  IX ix_received_services_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_received_services_encounter_id : (encounter_id) BTREE
+  IX ix_received_services_service_type_concept_id : (service_type_concept_id) BTREE
+  IX ix_received_services_service_concept_id : (service_concept_id) BTREE
+  IX ix_received_services_status_concept_id : (status_concept_id) BTREE
+  UK uq_received_services_source_procedure_id : (source_procedure_id) UNIQUE BTREE WHERE source_procedure_id IS NOT NULL
+  UK uq_received_services_source_immunization_id : (source_immunization_id) UNIQUE BTREE WHERE source_immunization_id IS NOT NULL
+  UK uq_received_services_procedure_case_id : (procedure_case_id) UNIQUE BTREE WHERE procedure_case_id IS NOT NULL
+  IX ix_received_services_service_catalog_id : (service_catalog_id) BTREE
+  IX ix_received_services_invoice_line_id : (invoice_line_id) BTREE
+  IX ix_received_services_insurance_claim_line_id : (insurance_claim_line_id) BTREE
+  IX ix_received_services_performer_profile_id : (performer_profile_id) BTREE
+  IX ix_received_services_practice_site_id : (practice_site_id) BTREE
+  IX ix_received_services_outcome_concept_id : (outcome_concept_id) BTREE
+  IX ix_received_services_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_received_services_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_received_services_patient_performed_at : (custodian_tenant_id, patient_profile_id, performed_at DESC) BTREE
+}
+
+received_services .. idxset_received_services : indexed by
 
 entity "INDEXES · appointments" as idxset_appointments <<INDEX_SET>> {
   PK pk_appointments : (id) UNIQUE BTREE
