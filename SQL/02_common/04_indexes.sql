@@ -50,6 +50,10 @@ CREATE INDEX IF NOT EXISTS "ix_addresses_updated_by_user_id" ON "common"."addres
 
 -- OMITIDO "gist_addresses_location" (geography_point) gist: columna(s) ['geography_point'] no existe(n) — requiere PostGIS/otro tipo.
 
+CREATE INDEX IF NOT EXISTS "ix_addresses_owner_current" ON "common"."addresses" ("owner_type_concept_id", "owner_id") WHERE valid_to IS NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_addresses_owner_preferred" ON "common"."addresses" ("owner_type_concept_id", "owner_id") WHERE is_preferred AND valid_to IS NULL;
+
 CREATE INDEX IF NOT EXISTS "ix_files_tenant_id" ON "common"."files" ("tenant_id");
 
 CREATE INDEX IF NOT EXISTS "ix_files_category_concept_id" ON "common"."files" ("category_concept_id");

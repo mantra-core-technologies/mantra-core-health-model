@@ -91,6 +91,13 @@ entity addresses {
   * country_concept_id : uuid <<FK>>
     latitude : numeric
     longitude : numeric
+  ' + v4.2.61 — libreta de direcciones del paciente (pedido del cliente del
+  ' 26/10/2026: «varias ubicaciones guardadas, como en una app de pedidos»).
+  ' `label` es el nombre que la persona le pone («Casa», «Oficina», «Casa de
+  ' mi mamá»); `is_preferred` marca la que se ofrece primero. Una sola
+  ' preferida vigente por (owner, use): índice único parcial, ver 04_indexes.
+    label : varchar
+  * is_preferred : boolean <<DEFAULT_FALSE>>
     valid_from : date
     valid_to : date
   * created_at : timestamptz
@@ -237,6 +244,8 @@ entity "INDEXES · addresses" as idxset_addresses <<INDEX_SET>> {
   IX ix_addresses_created_by_user_id : (created_by_user_id) BTREE
   IX ix_addresses_updated_by_user_id : (updated_by_user_id) BTREE
   GIST gist_addresses_location : geography_point GIST
+  IX ix_addresses_owner_current : (owner_type_concept_id, owner_id) BTREE WHERE valid_to IS NULL
+  UK uq_addresses_owner_preferred : (owner_type_concept_id, owner_id) UNIQUE BTREE WHERE is_preferred AND valid_to IS NULL
 }
 
 addresses .. idxset_addresses : indexed by
