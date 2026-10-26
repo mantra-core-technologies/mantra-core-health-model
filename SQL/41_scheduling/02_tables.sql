@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS "scheduling"."schedule_templates" (
     "valid_from" date,
     "valid_to" date,
     "slot_minutes" integer,
+    "flexible_hours" boolean NOT NULL DEFAULT false,
     "booking_policy_id" uuid,
     "status_concept_id" uuid NOT NULL,
     "created_at" timestamptz NOT NULL,
