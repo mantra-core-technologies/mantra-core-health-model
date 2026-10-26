@@ -13,6 +13,9 @@ hide circle
 ' policy as every other module). Lifecycle states are concept ids validated in the domain.
 ' Version histories of these entities live in module 10 (schema audit).
 
+entity "directory.tenants" as directory_tenants <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
 entity doctor_visit_blocks {
   * id : uuid <<PK>>
   * doctor_user_id : uuid <<FK>>
@@ -907,6 +910,18 @@ medical_visitors ||--o{ regulatory_documents
 medical_visitors ||--o{ visit_records
 medical_visitors ||--o{ visit_requests
 medical_visitors ||--o{ visit_surveys
+
+' Aristas etiquetadas de las 9 FK sin convención de nombre (antes dependían de
+' notas FK de la bóveda que nunca se versionaron; `gen_ddl.py 69` las perdía).
+informational_materials }o--o| pharma_lab_staff : approver_staff_id
+material_approvals }o--o| pharma_lab_staff : reviewer_staff_id
+medical_visitors }o--o| pharma_lab_staff : staff_id
+medical_visitors }o--o| pharma_lab_staff : supervisor_staff_id
+pharma_lab_link_events }o--o| pharma_lab_staff : staff_id
+regulatory_documents }o--o| pharma_lab_staff : owner_staff_id
+visit_requests }o--o| visit_requests : rescheduled_from_id
+pharmacovigilance_reports }o--o| directory_tenants : reporter_tenant_id
+visit_requests }o--o| directory_tenants : doctor_tenant_id
 medical_visitors ||--o{ visitor_post_submissions
 pharma_lab_staff ||--o{ informational_materials
 pharma_lab_staff ||--o{ material_approvals
