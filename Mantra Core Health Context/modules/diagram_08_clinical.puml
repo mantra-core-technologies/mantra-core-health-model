@@ -338,6 +338,25 @@ entity "practice.practice_sites" as practice_practice_sites <<REFERENCE_ONLY>> {
 service_requests }o--o| profiles_health_practitioner_profiles : performer_practitioner_profile_id
 service_requests }o--o| practice_practice_sites : suggested_practice_site_id
 service_requests }o--o| forms_form_instances : form_instance_id
+entity "chart.clinical_note_headers" as chart_clinical_note_headers <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity service_request_notes {
+  * id : uuid <<PK>>
+  --
+  ' + v4.2.52 (P40, carril C2): las notas medicas que motivan una orden de analisis
+  ' (FHIR ServiceRequest.basedOn / supportingInfo). Tabla puente append-only, como
+  ' observation_performers: se escribe con la orden y no se edita. La API valida
+  ' (422) que cada nota exista y sea del MISMO paciente y, si la orden tiene encuentro,
+  ' del MISMO encuentro. ordinal conserva el orden en que el medico las cito.
+  * service_request_id : uuid <<FK>>
+  * clinical_note_header_id : uuid <<FK>>
+  * ordinal : integer
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+service_requests ||--o{ service_request_notes
+service_request_notes }o--|| chart_clinical_note_headers : clinical_note_header_id
 medication_requests }o--o| forms_form_instances : form_instance_id
 diagnostic_reports |o--o{ service_requests : previous_diagnostic_report
 
@@ -1078,6 +1097,16 @@ entity "INDEXES · observation_performers" as idxset_observation_performers <<IN
 }
 
 observation_performers .. idxset_observation_performers : indexed by
+
+entity "INDEXES · service_request_notes" as idxset_service_request_notes <<INDEX_SET>> {
+  PK pk_service_request_notes : (id) UNIQUE BTREE
+  UX ux_service_request_notes_request_note : (service_request_id, clinical_note_header_id) UNIQUE BTREE
+  IX ix_service_request_notes_service_request_id : (service_request_id) BTREE
+  IX ix_service_request_notes_clinical_note_header_id : (clinical_note_header_id) BTREE
+  IX ix_service_request_notes_created_by_user_id : (created_by_user_id) BTREE
+}
+
+service_request_notes .. idxset_service_request_notes : indexed by
 
 entity "INDEXES · observation_reference_ranges" as idxset_observation_reference_ranges <<INDEX_SET>> {
   PK pk_observation_reference_ranges : (id) UNIQUE BTREE

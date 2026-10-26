@@ -262,6 +262,16 @@ CREATE TABLE IF NOT EXISTS "clinical"."diagnostic_reports" (
     CONSTRAINT "pk_diagnostic_reports" PRIMARY KEY ("id")
 );
 
+CREATE TABLE IF NOT EXISTS "clinical"."service_request_notes" (
+    "id" uuid NOT NULL,
+    "service_request_id" uuid NOT NULL,
+    "clinical_note_header_id" uuid NOT NULL,
+    "ordinal" integer NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    CONSTRAINT "pk_service_request_notes" PRIMARY KEY ("id")
+);
+
 CREATE TABLE IF NOT EXISTS "clinical"."medication_requests" (
     "id" uuid NOT NULL,
     "custodian_tenant_id" uuid NOT NULL,

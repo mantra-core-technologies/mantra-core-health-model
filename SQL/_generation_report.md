@@ -12,7 +12,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 05 | profiles | 19 | 130 | 5 | 139 | 0 |
 | 06 | authz | 15 | 100 | 15 | 90 | 0 |
 | 07 | consent | 10 | 81 | 0 | 101 | 0 |
-| 08 | clinical | 23 | 238 | 7 | 260 | 10 |
+| 08 | clinical | 24 | 241 | 9 | 264 | 11 |
 | 09 | forms | 16 | 103 | 0 | 113 | 1 |
 | 10 | audit | 133 | 554 | 40 | 705 | 1 |
 | 11 | system_ops | 29 | 169 | 0 | 178 | 0 |
@@ -74,7 +74,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 67 | data_catalog | 13 | 43 | 23 | 24 | 0 |
 | 68 | qa_execution | 4 | 14 | 6 | 6 | 0 |
 | 69 | pharma_lab | 31 | 182 | 173 | 182 | 1 |
-| **Σ** | **70** | **1255** | | **393** | | **355** |
+| **Σ** | **70** | **1256** | | **395** | | **356** |
 
 ## Detalle de entidades saltadas y avisos
 
@@ -98,6 +98,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - `forms_form_instances` — stub de cruce (tabla real en su módulo dueño)
 - `profiles_health_practitioner_profiles` — stub de cruce (tabla real en su módulo dueño)
 - `practice_practice_sites` — stub de cruce (tabla real en su módulo dueño)
+- `chart_clinical_note_headers` — stub de cruce (tabla real en su módulo dueño)
 - ⚠ índice 'gist_appointments_practitioner_time': predicado referencia función(es) placeholder del modelo → emitido COMENTADO (la función no existe en la base).
 
 ### 09 · forms
