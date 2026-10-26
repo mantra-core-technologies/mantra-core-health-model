@@ -13,6 +13,10 @@
 --   3. Tabla nueva `pharmacy.pharmacy_product_images` (hasta 3 por producto, la
 --      regla del tope vive en el servicio; orden y archivo únicos por producto).
 --   4. CHECK de existencias no negativas y del orden de imagen 1..3.
+--      La categoría del producto es FK COMPUESTA (pharmacy_id, categoría): la
+--      base no deja asignar la categoría de otra farmacia. El archivo de una
+--      imagen sólo se garantiza existente acá; que sea una imagen del tenant
+--      dueño lo exige el servicio (`common.files` no tiene farmacia).
 --   5. Las seis categorías de partida para las farmacias que ya existen.
 --      Procedencia: mockup del cliente `farmacia_ecommerce_mantra.html`
 --      (28/09/2026). Es catálogo INTERNO de cada farmacia, no un catálogo oficial:
@@ -28,7 +32,7 @@
 -- para bases ya aplicadas. Idempotente: IF NOT EXISTS, duplicate_object tolerado
 -- y ON CONFLICT DO NOTHING en los datos.
 --
--- DELTAS ESPERADOS: columnas +5 · tablas +2 · FKs +8 · índices +10 (+2 PK) ·
+-- DELTAS ESPERADOS: columnas +5 · tablas +2 · FKs +7 (una compuesta) · índices +11 (+2 PK) ·
 -- CHECK +4 · filas de categoría = 6 × farmacias existentes.
 -- ============================================================================
 BEGIN;
@@ -64,12 +68,6 @@ CREATE TABLE IF NOT EXISTS "pharmacy"."pharmacy_product_images" (
 );
 
 -- --- FKs (mismos nombres que SQL/24_pharmacy/03_fk_intra.sql y 90_fk_deferred.sql)
-DO $$ BEGIN
-    ALTER TABLE "pharmacy"."pharmacy_products"
-        ADD CONSTRAINT "fk_pharmacy_products_pharmacy_product_category_id" FOREIGN KEY ("pharmacy_product_category_id")
-        REFERENCES "pharmacy"."pharmacy_product_categories" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
 DO $$ BEGIN
     ALTER TABLE "pharmacy"."pharmacy_product_categories"
         ADD CONSTRAINT "fk_pharmacy_product_categories_pharmacy_id" FOREIGN KEY ("pharmacy_id")
@@ -110,6 +108,7 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 CREATE INDEX IF NOT EXISTS "ix_pharmacy_products_pharmacy_product_category_id" ON "pharmacy"."pharmacy_products" ("pharmacy_product_category_id");
 CREATE INDEX IF NOT EXISTS "ix_pharmacy_product_categories_pharmacy_id" ON "pharmacy"."pharmacy_product_categories" ("pharmacy_id");
 CREATE UNIQUE INDEX IF NOT EXISTS "uq_pharmacy_product_categories_pharmacy_id_name_key" ON "pharmacy"."pharmacy_product_categories" ("pharmacy_id", "name_key");
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_pharmacy_product_categories_pharmacy_id_id" ON "pharmacy"."pharmacy_product_categories" ("pharmacy_id", "id");
 CREATE INDEX IF NOT EXISTS "ix_pharmacy_product_categories_created_by_user_id" ON "pharmacy"."pharmacy_product_categories" ("created_by_user_id");
 CREATE INDEX IF NOT EXISTS "ix_pharmacy_product_categories_updated_by_user_id" ON "pharmacy"."pharmacy_product_categories" ("updated_by_user_id");
 CREATE INDEX IF NOT EXISTS "ix_pharmacy_product_images_pharmacy_product_id" ON "pharmacy"."pharmacy_product_images" ("pharmacy_product_id");
@@ -117,6 +116,27 @@ CREATE INDEX IF NOT EXISTS "ix_pharmacy_product_images_image_file_id" ON "pharma
 CREATE UNIQUE INDEX IF NOT EXISTS "uq_pharmacy_product_images_pharmacy_product_id_ordinal" ON "pharmacy"."pharmacy_product_images" ("pharmacy_product_id", "ordinal");
 CREATE UNIQUE INDEX IF NOT EXISTS "uq_pharmacy_product_images_pharmacy_product_id_image_file_id" ON "pharmacy"."pharmacy_product_images" ("pharmacy_product_id", "image_file_id");
 CREATE INDEX IF NOT EXISTS "ix_pharmacy_product_images_created_by_user_id" ON "pharmacy"."pharmacy_product_images" ("created_by_user_id");
+
+-- --- FK COMPUESTA (mismo nombre que SQL/24_pharmacy/90_fk_deferred.sql): un
+-- producto sólo lleva una categoría de SU farmacia. Necesita el UNIQUE
+-- (pharmacy_id, id) de arriba. Si una corrida previa de este patch dejó la FK
+-- simple (sólo la columna de la categoría), se reemplaza.
+DO $$ BEGIN
+    IF EXISTS (
+        SELECT 1 FROM pg_constraint
+         WHERE conname = 'fk_pharmacy_products_pharmacy_product_category_id'
+           AND conrelid = '"pharmacy"."pharmacy_products"'::regclass
+           AND array_length(conkey, 1) = 1) THEN
+        ALTER TABLE "pharmacy"."pharmacy_products"
+            DROP CONSTRAINT "fk_pharmacy_products_pharmacy_product_category_id";
+    END IF;
+END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "pharmacy"."pharmacy_products"
+        ADD CONSTRAINT "fk_pharmacy_products_pharmacy_product_category_id" FOREIGN KEY ("pharmacy_id", "pharmacy_product_category_id")
+        REFERENCES "pharmacy"."pharmacy_product_categories" ("pharmacy_id", "id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- --- CHECK: la base es el último lugar donde la invariante vale.
 DO $$ BEGIN

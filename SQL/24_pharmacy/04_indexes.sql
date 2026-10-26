@@ -92,6 +92,8 @@ CREATE INDEX IF NOT EXISTS "ix_pharmacy_product_categories_pharmacy_id" ON "phar
 
 CREATE UNIQUE INDEX IF NOT EXISTS "uq_pharmacy_product_categories_pharmacy_id_name_key" ON "pharmacy"."pharmacy_product_categories" ("pharmacy_id", "name_key");
 
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_pharmacy_product_categories_pharmacy_id_id" ON "pharmacy"."pharmacy_product_categories" ("pharmacy_id", "id");
+
 CREATE INDEX IF NOT EXISTS "ix_pharmacy_product_categories_created_by_user_id" ON "pharmacy"."pharmacy_product_categories" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_pharmacy_product_categories_updated_by_user_id" ON "pharmacy"."pharmacy_product_categories" ("updated_by_user_id");

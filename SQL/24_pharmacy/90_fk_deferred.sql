@@ -198,6 +198,13 @@ DO $$ BEGIN
         REFERENCES "terminology"."catalog_concepts" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 
+-- compuesta: pharmacy.pharmacy_products sólo apunta a pharmacy.pharmacy_product_categories del mismo pharmacy_id
+DO $$ BEGIN
+    ALTER TABLE "pharmacy"."pharmacy_products"
+        ADD CONSTRAINT "fk_pharmacy_products_pharmacy_product_category_id" FOREIGN KEY ("pharmacy_id", "pharmacy_product_category_id")
+        REFERENCES "pharmacy"."pharmacy_product_categories" ("pharmacy_id", "id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "pharmacy"."pharmacy_products"

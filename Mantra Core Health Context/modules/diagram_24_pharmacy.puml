@@ -93,7 +93,7 @@ entity pharmacy_products {
     cold_chain_required : boolean
     catalog_product_concept_id : uuid <<FK>>
     catalog_presentation_code : varchar
-    pharmacy_product_category_id : uuid <<FK>>
+    pharmacy_product_category_id : uuid <<FK, SCOPED_BY:pharmacy_id>>
     description_text : text
     stock_quantity : integer
     min_stock_quantity : integer
@@ -113,6 +113,10 @@ entity pharmacy_products {
 '   stock_quantity NULL = «sin conteo»; min_stock_quantity NULL = umbral por defecto del servicio.
 '   Disponible = NOT out_of_stock_declared AND (stock_quantity IS NULL OR stock_quantity > 0).
 '   CHECK (>= 0) en el patch v4.2.55.
+' - pharmacy_product_category_id es FK COMPUESTA (pharmacy_id, categoría): un producto sólo
+'   puede llevar una categoría de su propia farmacia.
+' - pharmacy_product_images.image_file_id: la base sólo garantiza que el archivo exista; que sea
+'   una imagen del tenant dueño lo exige el servicio (common.files no tiene pharmacy_id).
 ' - El precio NO vive acá: se versiona en pharmacy_product_prices de la lista pública CATALOGO.
 
 entity pharmacy_product_categories {
@@ -323,6 +327,7 @@ entity "INDEXES · pharmacy_product_categories" as idxset_pharmacy_product_categ
   PK pk_pharmacy_product_categories : (id) UNIQUE BTREE
   IX ix_pharmacy_product_categories_pharmacy_id : (pharmacy_id) BTREE
   UK uq_pharmacy_product_categories_pharmacy_id_name_key : (pharmacy_id, name_key) UNIQUE BTREE
+  UK uq_pharmacy_product_categories_pharmacy_id_id : (pharmacy_id, id) UNIQUE BTREE
   IX ix_pharmacy_product_categories_created_by_user_id : (created_by_user_id) BTREE
   IX ix_pharmacy_product_categories_updated_by_user_id : (updated_by_user_id) BTREE
 }

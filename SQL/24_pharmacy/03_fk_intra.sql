@@ -27,12 +27,6 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
-    ALTER TABLE "pharmacy"."pharmacy_products"
-        ADD CONSTRAINT "fk_pharmacy_products_pharmacy_product_category_id" FOREIGN KEY ("pharmacy_product_category_id")
-        REFERENCES "pharmacy"."pharmacy_product_categories" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
-DO $$ BEGIN
     ALTER TABLE "pharmacy"."pharmacy_product_categories"
         ADD CONSTRAINT "fk_pharmacy_product_categories_pharmacy_id" FOREIGN KEY ("pharmacy_id")
         REFERENCES "pharmacy"."pharmacies" ("id");
