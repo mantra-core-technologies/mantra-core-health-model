@@ -87,6 +87,7 @@ CREATE TABLE IF NOT EXISTS "scheduling"."schedule_rules" (
     "capacity_per_slot" integer,
     "gap_minutes" integer,
     "booking_mode_concept_id" uuid,
+    "telemedicine_enabled" boolean NOT NULL DEFAULT false,
     "valid_from" date,
     "valid_to" date,
     "created_at" timestamptz NOT NULL,

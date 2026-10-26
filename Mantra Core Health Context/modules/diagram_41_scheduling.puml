@@ -130,6 +130,14 @@ entity schedule_rules {
   ' así que ninguna fila existente cambia de significado. El valor es un concepto del
   ' value set `scheduling:rule-booking-mode` (CONSULTATIONS · SERVICES · MIXED), no un enum.
     booking_mode_concept_id : uuid <<FK>>
+  ' + v4.2.61 — la franja atiende también por telemedicina. Se habilita POR FRANJA
+  ' porque «los martes a la tarde atiendo por video, el resto en el consultorio» es
+  ' una propiedad del rato, no del horario entero. NOT NULL DEFAULT false, como
+  ' `flexible_hours` de la plantilla: toda franja existente queda «sólo presencial»,
+  ' que es lo que era, y la telemedicina está apagada hasta que el profesional la
+  ' activa. Una cita directa con modalidad TELECONSULTA sólo se acepta si su inicio
+  ' cae en una franja vigente con este valor en `true` (la API responde 422 si no).
+  * telemedicine_enabled : boolean <<DEFAULT_FALSE>>
     valid_from : date
     valid_to : date
   * created_at : timestamptz
