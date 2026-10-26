@@ -83,13 +83,20 @@ class TenantTypeCatalogTests(unittest.TestCase):
         concepts_ts = paths.API_DIR / "src" / "common" / "constants" / "concepts.ts"
         if not concepts_ts.exists():
             self.skipTest("la API no está clonada junto al modelo")
-        api = {key: (code, display)
-               for key, code, display in DEF_RE.findall(concepts_ts.read_text(encoding="utf-8"))}
+        source = concepts_ts.read_text(encoding="utf-8")
+        api = {key: (code, display) for key, code, display in DEF_RE.findall(source)}
+        # Si `DEF_RE` deja de reconocer el formato de `def(...)`, el diccionario sale vacío y la
+        # comparación de abajo pasaría en verde sin comparar nada.
+        self.assertIn("directory:tenant-type:hospital", api,
+                      "DEF_RE ya no reconoce las definiciones de concepts.ts")
         for key, code, display in INSTITUTIONAL_TENANT_TYPES:
             with self.subTest(key=key):
                 if key not in api:
-                    # La API todavía no lo declara (p. ej. una rama sin mergear): no hay contra
-                    # qué comparar, pero tampoco hay contradicción.
+                    # La API todavía no declara el tipo (p. ej. una rama sin mergear): no hay
+                    # contra qué comparar. Pero si declara la constante con otra clave, la clave
+                    # cambió y el id ya no coincide.
+                    self.assertFalse(f"TENANT_TYPE_{code}:" in source,
+                                     f"concepts.ts declara TENANT_TYPE_{code} con otra clave que {key}")
                     continue
                 self.assertEqual(api[key], (code, display))
 
