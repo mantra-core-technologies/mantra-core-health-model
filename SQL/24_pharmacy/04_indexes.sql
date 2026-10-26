@@ -48,6 +48,20 @@ CREATE INDEX IF NOT EXISTS "ix_pharmacy_sites_updated_by_user_id" ON "pharmacy".
 
 CREATE INDEX IF NOT EXISTS "gin_pharmacy_sites_search" ON "pharmacy"."pharmacy_sites" USING gin (to_tsvector('simple', (coalesce(name, '') || ' ' || coalesce(code, ''))));
 
+CREATE INDEX IF NOT EXISTS "ix_pharmacy_on_call_shifts_pharmacy_site_id" ON "pharmacy"."pharmacy_on_call_shifts" ("pharmacy_site_id");
+
+CREATE INDEX IF NOT EXISTS "ix_pharmacy_on_call_shifts_source_concept_id" ON "pharmacy"."pharmacy_on_call_shifts" ("source_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_pharmacy_on_call_shifts_status_concept_id" ON "pharmacy"."pharmacy_on_call_shifts" ("status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_pharmacy_on_call_shifts_created_by_user_id" ON "pharmacy"."pharmacy_on_call_shifts" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_pharmacy_on_call_shifts_updated_by_user_id" ON "pharmacy"."pharmacy_on_call_shifts" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_pharmacy_on_call_shifts_site_window" ON "pharmacy"."pharmacy_on_call_shifts" ("pharmacy_site_id", "ends_at" DESC, "starts_at");
+
+CREATE INDEX IF NOT EXISTS "gist_pharmacy_on_call_shifts_window" ON "pharmacy"."pharmacy_on_call_shifts" USING gist (tstzrange(starts_at, ends_at, '[)'));
+
 CREATE INDEX IF NOT EXISTS "ix_pharmacy_licenses_pharmacy_id" ON "pharmacy"."pharmacy_licenses" ("pharmacy_id");
 
 CREATE INDEX IF NOT EXISTS "ix_pharmacy_licenses_pharmacy_site_id" ON "pharmacy"."pharmacy_licenses" ("pharmacy_site_id");
@@ -84,9 +98,31 @@ CREATE UNIQUE INDEX IF NOT EXISTS "uq_pharmacy_products_catalog_no_presentation"
 
 CREATE INDEX IF NOT EXISTS "ix_pharmacy_products_status_concept_id" ON "pharmacy"."pharmacy_products" ("status_concept_id");
 
+CREATE INDEX IF NOT EXISTS "ix_pharmacy_products_pharmacy_product_category_id" ON "pharmacy"."pharmacy_products" ("pharmacy_product_category_id");
+
 CREATE INDEX IF NOT EXISTS "ix_pharmacy_products_created_by_user_id" ON "pharmacy"."pharmacy_products" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_pharmacy_products_updated_by_user_id" ON "pharmacy"."pharmacy_products" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_pharmacy_product_categories_pharmacy_id" ON "pharmacy"."pharmacy_product_categories" ("pharmacy_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_pharmacy_product_categories_pharmacy_id_name_key" ON "pharmacy"."pharmacy_product_categories" ("pharmacy_id", "name_key");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_pharmacy_product_categories_pharmacy_id_id" ON "pharmacy"."pharmacy_product_categories" ("pharmacy_id", "id");
+
+CREATE INDEX IF NOT EXISTS "ix_pharmacy_product_categories_created_by_user_id" ON "pharmacy"."pharmacy_product_categories" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_pharmacy_product_categories_updated_by_user_id" ON "pharmacy"."pharmacy_product_categories" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_pharmacy_product_images_pharmacy_product_id" ON "pharmacy"."pharmacy_product_images" ("pharmacy_product_id");
+
+CREATE INDEX IF NOT EXISTS "ix_pharmacy_product_images_image_file_id" ON "pharmacy"."pharmacy_product_images" ("image_file_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_pharmacy_product_images_pharmacy_product_id_ordinal" ON "pharmacy"."pharmacy_product_images" ("pharmacy_product_id", "ordinal");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_pharmacy_product_images_pharmacy_product_id_image_file_id" ON "pharmacy"."pharmacy_product_images" ("pharmacy_product_id", "image_file_id");
+
+CREATE INDEX IF NOT EXISTS "ix_pharmacy_product_images_created_by_user_id" ON "pharmacy"."pharmacy_product_images" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_pharmacy_product_identifiers_pharmacy_product_id" ON "pharmacy"."pharmacy_product_identifiers" ("pharmacy_product_id");
 

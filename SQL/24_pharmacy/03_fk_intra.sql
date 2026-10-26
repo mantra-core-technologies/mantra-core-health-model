@@ -9,6 +9,12 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
+    ALTER TABLE "pharmacy"."pharmacy_on_call_shifts"
+        ADD CONSTRAINT "fk_pharmacy_on_call_shifts_pharmacy_site_id" FOREIGN KEY ("pharmacy_site_id")
+        REFERENCES "pharmacy"."pharmacy_sites" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+DO $$ BEGIN
     ALTER TABLE "pharmacy"."pharmacy_licenses"
         ADD CONSTRAINT "fk_pharmacy_licenses_pharmacy_id" FOREIGN KEY ("pharmacy_id")
         REFERENCES "pharmacy"."pharmacies" ("id");
@@ -24,6 +30,18 @@ DO $$ BEGIN
     ALTER TABLE "pharmacy"."pharmacy_products"
         ADD CONSTRAINT "fk_pharmacy_products_pharmacy_id" FOREIGN KEY ("pharmacy_id")
         REFERENCES "pharmacy"."pharmacies" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "pharmacy"."pharmacy_product_categories"
+        ADD CONSTRAINT "fk_pharmacy_product_categories_pharmacy_id" FOREIGN KEY ("pharmacy_id")
+        REFERENCES "pharmacy"."pharmacies" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "pharmacy"."pharmacy_product_images"
+        ADD CONSTRAINT "fk_pharmacy_product_images_pharmacy_product_id" FOREIGN KEY ("pharmacy_product_id")
+        REFERENCES "pharmacy"."pharmacy_products" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN

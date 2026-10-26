@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS "chart"."clinical_note_versions" (
     "objective_text" text,
     "assessment_text" text,
     "plan_text" text,
+    "entries_json" jsonb,
     "supersedes_version_id" uuid,
     "amendment_reason_concept_id" uuid,
     "amendment_reason_text" text,

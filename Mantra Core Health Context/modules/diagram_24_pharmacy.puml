@@ -52,6 +52,35 @@ entity pharmacy_sites {
     controlled_substance_capability_concept_id : uuid <<FK>>
     home_delivery_available : boolean
     pickup_available : boolean
+    open_24h : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+note as OPEN_HOURS_diagram_24_pharmacy
+  OPEN 24 H AND ON-CALL (P34, v4.2.60)
+  open_24h is NULLABLE on purpose: NULL means "not declared", never
+  "closed at night". Only TRUE is published as open 24 h.
+  An on-call (guardia) shift belongs to ONE pharmacy site (the physical
+  store), not to a zone. It is published only while
+  starts_at <= now() < ends_at and status is active: an expired or
+  cancelled shift is never shown. A shift lasts at most 72 h and two
+  active shifts of the same site cannot overlap (module 33).
+  source_concept_id records who declared it (the pharmacy itself or the
+  platform on its behalf).
+end note
+
+entity pharmacy_on_call_shifts {
+  * id : uuid <<PK>>
+  --
+  * pharmacy_site_id : uuid <<FK>>
+  * starts_at : timestamptz
+  * ends_at : timestamptz
+  * source_concept_id : uuid <<FK>>
   * status_concept_id : uuid <<FK>>
   * created_at : timestamptz
   * updated_at : timestamptz
@@ -97,12 +126,53 @@ entity pharmacy_products {
     cold_chain_required : boolean
     catalog_product_concept_id : uuid <<FK>>
     catalog_presentation_code : varchar
+    pharmacy_product_category_id : uuid <<FK, SCOPED_BY:pharmacy_id>>
+    description_text : text
+    stock_quantity : integer
+    min_stock_quantity : integer
+  * out_of_stock_declared : boolean <<DEFAULT_FALSE>>
   * status_concept_id : uuid <<FK>>
   * created_at : timestamptz
   * updated_at : timestamptz
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+}
+
+' P47 (2026-10-26) · catálogo que administra la farmacia.
+' - status_concept_id: ACTIVE (publicado), DRAFT (borrador, sólo lo ve la farmacia), RETIRED.
+' - stock_quantity / min_stock_quantity / out_of_stock_declared son la DECLARACIÓN del catálogo
+'   (vitrina), no el ledger de existencias (pharmacy_inventory.inventory_stock_positions).
+'   stock_quantity NULL = «sin conteo»; min_stock_quantity NULL = umbral por defecto del servicio.
+'   Disponible = NOT out_of_stock_declared AND (stock_quantity IS NULL OR stock_quantity > 0).
+'   CHECK (>= 0) en el patch v4.2.55.
+' - pharmacy_product_category_id es FK COMPUESTA (pharmacy_id, categoría): un producto sólo
+'   puede llevar una categoría de su propia farmacia.
+' - pharmacy_product_images.image_file_id: la base sólo garantiza que el archivo exista; que sea
+'   una imagen del tenant dueño lo exige el servicio (common.files no tiene pharmacy_id).
+' - El precio NO vive acá: se versiona en pharmacy_product_prices de la lista pública CATALOGO.
+
+entity pharmacy_product_categories {
+  * id : uuid <<PK>>
+  --
+  * pharmacy_id : uuid <<FK>>
+  * name : varchar
+  * name_key : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity pharmacy_product_images {
+  * id : uuid <<PK>>
+  --
+  * pharmacy_product_id : uuid <<FK>>
+  * image_file_id : uuid <<FK>>
+  * ordinal : integer
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
 }
 
 entity pharmacy_product_identifiers {
@@ -195,6 +265,7 @@ entity pharmacy_external_product_mappings {
 }
 
 pharmacies ||--o{ pharmacy_sites
+pharmacy_sites ||--o{ pharmacy_on_call_shifts
 pharmacies ||--o{ pharmacy_licenses
 pharmacies ||--o{ pharmacy_products
 pharmacies ||--o{ pharmacy_price_lists
@@ -209,6 +280,11 @@ pharmacy_price_lists ||--o{ pharmacy_product_prices
 pharmacy_products ||--o{ pharmacy_product_prices
 pharmacy_integration_connections ||--o{ pharmacy_external_product_mappings
 pharmacy_products ||--o{ pharmacy_external_product_mappings
+pharmacies ||--o{ pharmacy_product_categories
+pharmacy_products }o--o| pharmacy_product_categories : pharmacy_product_category_id
+pharmacy_product_categories }o--|| pharmacies : pharmacy_id
+pharmacy_product_images }o--|| pharmacy_products : pharmacy_product_id
+pharmacy_products ||--o{ pharmacy_product_images
 
 note as ISOLATION_diagram_24_pharmacy_core
   DATA OWNERSHIP
@@ -254,6 +330,19 @@ entity "INDEXES · pharmacy_sites" as idxset_pharmacy_sites <<INDEX_SET>> {
 
 pharmacy_sites .. idxset_pharmacy_sites : indexed by
 
+entity "INDEXES · pharmacy_on_call_shifts" as idxset_pharmacy_on_call_shifts <<INDEX_SET>> {
+  PK pk_pharmacy_on_call_shifts : (id) UNIQUE BTREE
+  IX ix_pharmacy_on_call_shifts_pharmacy_site_id : (pharmacy_site_id) BTREE
+  IX ix_pharmacy_on_call_shifts_source_concept_id : (source_concept_id) BTREE
+  IX ix_pharmacy_on_call_shifts_status_concept_id : (status_concept_id) BTREE
+  IX ix_pharmacy_on_call_shifts_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_pharmacy_on_call_shifts_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_pharmacy_on_call_shifts_site_window : (pharmacy_site_id, ends_at DESC, starts_at) BTREE
+  GIST gist_pharmacy_on_call_shifts_window : tstzrange(starts_at, ends_at, '[)') GIST
+}
+
+pharmacy_on_call_shifts .. idxset_pharmacy_on_call_shifts : indexed by
+
 entity "INDEXES · pharmacy_licenses" as idxset_pharmacy_licenses <<INDEX_SET>> {
   PK pk_pharmacy_licenses : (id) UNIQUE BTREE
   IX ix_pharmacy_licenses_pharmacy_id : (pharmacy_id) BTREE
@@ -280,11 +369,34 @@ entity "INDEXES · pharmacy_products" as idxset_pharmacy_products <<INDEX_SET>> 
   UK uq_pharmacy_products_catalog_presentation : (pharmacy_id, catalog_product_concept_id, catalog_presentation_code) UNIQUE BTREE WHERE catalog_product_concept_id IS NOT NULL AND catalog_presentation_code IS NOT NULL
   UK uq_pharmacy_products_catalog_no_presentation : (pharmacy_id, catalog_product_concept_id) UNIQUE BTREE WHERE catalog_product_concept_id IS NOT NULL AND catalog_presentation_code IS NULL
   IX ix_pharmacy_products_status_concept_id : (status_concept_id) BTREE
+  IX ix_pharmacy_products_pharmacy_product_category_id : (pharmacy_product_category_id) BTREE
   IX ix_pharmacy_products_created_by_user_id : (created_by_user_id) BTREE
   IX ix_pharmacy_products_updated_by_user_id : (updated_by_user_id) BTREE
 }
 
 pharmacy_products .. idxset_pharmacy_products : indexed by
+
+entity "INDEXES · pharmacy_product_categories" as idxset_pharmacy_product_categories <<INDEX_SET>> {
+  PK pk_pharmacy_product_categories : (id) UNIQUE BTREE
+  IX ix_pharmacy_product_categories_pharmacy_id : (pharmacy_id) BTREE
+  UK uq_pharmacy_product_categories_pharmacy_id_name_key : (pharmacy_id, name_key) UNIQUE BTREE
+  UK uq_pharmacy_product_categories_pharmacy_id_id : (pharmacy_id, id) UNIQUE BTREE
+  IX ix_pharmacy_product_categories_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_pharmacy_product_categories_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+pharmacy_product_categories .. idxset_pharmacy_product_categories : indexed by
+
+entity "INDEXES · pharmacy_product_images" as idxset_pharmacy_product_images <<INDEX_SET>> {
+  PK pk_pharmacy_product_images : (id) UNIQUE BTREE
+  IX ix_pharmacy_product_images_pharmacy_product_id : (pharmacy_product_id) BTREE
+  IX ix_pharmacy_product_images_image_file_id : (image_file_id) BTREE
+  UK uq_pharmacy_product_images_pharmacy_product_id_ordinal : (pharmacy_product_id, ordinal) UNIQUE BTREE
+  UK uq_pharmacy_product_images_pharmacy_product_id_image_file_id : (pharmacy_product_id, image_file_id) UNIQUE BTREE
+  IX ix_pharmacy_product_images_created_by_user_id : (created_by_user_id) BTREE
+}
+
+pharmacy_product_images .. idxset_pharmacy_product_images : indexed by
 
 entity "INDEXES · pharmacy_product_identifiers" as idxset_pharmacy_product_identifiers <<INDEX_SET>> {
   PK pk_pharmacy_product_identifiers : (id) UNIQUE BTREE
