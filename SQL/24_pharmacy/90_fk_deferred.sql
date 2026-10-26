@@ -116,6 +116,34 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
+    ALTER TABLE "pharmacy"."pharmacy_on_call_shifts"
+        ADD CONSTRAINT "fk_pharmacy_on_call_shifts_source_concept_id" FOREIGN KEY ("source_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "pharmacy"."pharmacy_on_call_shifts"
+        ADD CONSTRAINT "fk_pharmacy_on_call_shifts_status_concept_id" FOREIGN KEY ("status_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "pharmacy"."pharmacy_on_call_shifts"
+        ADD CONSTRAINT "fk_pharmacy_on_call_shifts_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "pharmacy"."pharmacy_on_call_shifts"
+        ADD CONSTRAINT "fk_pharmacy_on_call_shifts_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
     ALTER TABLE "pharmacy"."pharmacy_licenses"
         ADD CONSTRAINT "fk_pharmacy_licenses_license_type_concept_id" FOREIGN KEY ("license_type_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");

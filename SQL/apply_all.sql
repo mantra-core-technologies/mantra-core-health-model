@@ -264,6 +264,8 @@
 \ir 24_pharmacy/03_fk_intra.sql
 \echo >>> 24_pharmacy/04_indexes.sql
 \ir 24_pharmacy/04_indexes.sql
+\echo >>> 24_pharmacy/05_constraints.sql
+\ir 24_pharmacy/05_constraints.sql
 
 -- ═══ módulo 25_pharmacy_inventory ═══
 \echo >>> 25_pharmacy_inventory/01_schema.sql
