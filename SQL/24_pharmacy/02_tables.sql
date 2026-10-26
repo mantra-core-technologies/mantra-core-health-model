@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS "pharmacy"."pharmacies" (
     "ownership_type_concept_id" uuid,
     "public_profile_id" uuid,
     "default_currency_concept_id" uuid,
+    "primary_practice_site_id" uuid,
     "verification_status_concept_id" uuid NOT NULL,
     "status_concept_id" uuid NOT NULL,
     "created_at" timestamptz NOT NULL,

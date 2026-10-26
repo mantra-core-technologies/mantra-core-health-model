@@ -16,6 +16,9 @@ note as BIZ_diagram_24_pharmacy_core
   access to the host organization's data.
 end note
 
+entity "practice.practice_sites" as practice_practice_sites <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
 entity pharmacies {
   * id : uuid <<PK>>
   --
@@ -27,6 +30,7 @@ entity pharmacies {
     ownership_type_concept_id : uuid <<FK>>
     public_profile_id : uuid <<FK>>
     default_currency_concept_id : uuid <<FK>>
+    primary_practice_site_id : uuid <<FK>>
   * verification_status_concept_id : uuid <<FK>>
   * status_concept_id : uuid <<FK>>
   * created_at : timestamptz
@@ -195,6 +199,11 @@ pharmacies ||--o{ pharmacy_licenses
 pharmacies ||--o{ pharmacy_products
 pharmacies ||--o{ pharmacy_price_lists
 pharmacies ||--o{ pharmacy_integration_connections
+
+' P50: la sede central de la farmacia. Arista etiquetada porque el nombre
+' (`primary_practice_site_id`) no resuelve por convención; mismo destino que
+' `diagnostic_units.primary_practice_site_id`.
+pharmacies }o--o| practice_practice_sites : primary_practice_site_id
 pharmacy_products ||--o{ pharmacy_product_identifiers
 pharmacy_price_lists ||--o{ pharmacy_product_prices
 pharmacy_products ||--o{ pharmacy_product_prices
@@ -219,6 +228,7 @@ entity "INDEXES · pharmacies" as idxset_pharmacies <<INDEX_SET>> {
   IX ix_pharmacies_ownership_type_concept_id : (ownership_type_concept_id) BTREE
   IX ix_pharmacies_public_profile_id : (public_profile_id) BTREE
   IX ix_pharmacies_default_currency_concept_id : (default_currency_concept_id) BTREE
+  IX ix_pharmacies_primary_practice_site_id : (primary_practice_site_id) BTREE
   IX ix_pharmacies_verification_status_concept_id : (verification_status_concept_id) BTREE
   IX ix_pharmacies_status_concept_id : (status_concept_id) BTREE
   IX ix_pharmacies_created_by_user_id : (created_by_user_id) BTREE

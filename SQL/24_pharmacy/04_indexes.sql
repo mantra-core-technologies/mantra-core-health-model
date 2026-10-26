@@ -16,6 +16,8 @@ CREATE INDEX IF NOT EXISTS "ix_pharmacies_public_profile_id" ON "pharmacy"."phar
 
 CREATE INDEX IF NOT EXISTS "ix_pharmacies_default_currency_concept_id" ON "pharmacy"."pharmacies" ("default_currency_concept_id");
 
+CREATE INDEX IF NOT EXISTS "ix_pharmacies_primary_practice_site_id" ON "pharmacy"."pharmacies" ("primary_practice_site_id");
+
 CREATE INDEX IF NOT EXISTS "ix_pharmacies_verification_status_concept_id" ON "pharmacy"."pharmacies" ("verification_status_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_pharmacies_status_concept_id" ON "pharmacy"."pharmacies" ("status_concept_id");

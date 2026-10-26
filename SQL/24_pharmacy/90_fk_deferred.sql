@@ -37,6 +37,13 @@ DO $$ BEGIN
         REFERENCES "terminology"."catalog_concepts" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- destino: practice.practice_sites (requiere schema practice)
+DO $$ BEGIN
+    ALTER TABLE "pharmacy"."pharmacies"
+        ADD CONSTRAINT "fk_pharmacies_primary_practice_site_id" FOREIGN KEY ("primary_practice_site_id")
+        REFERENCES "practice"."practice_sites" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "pharmacy"."pharmacies"
