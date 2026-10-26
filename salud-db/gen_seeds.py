@@ -70,7 +70,7 @@ VAULT = paths.VAULT
 MODEL_VERSION = "4.0.7"
 SOURCE_MODEL_VERSION = "4.0.9"
 RELEASE_LABEL = "4.0.9"
-SEED_REVISION = "2.8.0-v4.2.50"
+SEED_REVISION = "2.8.1-v4.2.50"
 # Namespace uuid5 por patch, misma regla que MODEL_VERSION: identifica las filas de las
 # 5 tablas ALOVIDA ya sembradas. v4.0.9 no añade uno propio porque no trae tablas que
 # sembrar — `iam.email_verifications` y `iam.password_resets` guardan tokens de runtime
@@ -695,6 +695,24 @@ INSURANCE_BACKEND_CONCEPTS = [
     ]
 ]
 BACKEND_CONCEPTS += INSURANCE_BACKEND_CONCEPTS
+
+# --- seeds 2.8.1 · tipos de organización médica (`directory.tenants.tenant_type_concept_id`) ---
+# El alta pública de una organización médica guarda uno de estos cinco tipos, y la FK
+# diferida a `catalog_concepts` rechaza el tenant si el concepto no existe. La API los
+# acuña en `CONCEPT_DEFS` (`TENANT_TYPE_HOSPITAL`, `…_CLINIC`, `…_MEDICAL_OFFICE`,
+# `…_NURSING`, `…_HEALTH_OTHER`): son centrales, así que el `code` almacenado es el
+# `def.code`, no la clave — igual que PROVIDER y PAYER arriba. Sin el espejo, una base
+# armada solo con el paquete (sin que la API haya arrancado) no admite ninguno.
+# CLINIC es contrato compartido con la API y el front: clínica, establecimiento privado
+# con internación y de menor escala que un hospital.
+TENANT_TYPE_BACKEND_CONCEPTS = [
+    ("directory:tenant-type:hospital", "HOSPITAL", "Hospital"),
+    ("directory:tenant-type:clinic", "CLINIC", "Clinic"),
+    ("directory:tenant-type:medical-office", "MEDICAL_OFFICE", "Medical office"),
+    ("directory:tenant-type:nursing", "NURSING", "Nursing facility"),
+    ("directory:tenant-type:health-other", "HEALTH_OTHER", "Other health institution"),
+]
+BACKEND_CONCEPTS += TENANT_TYPE_BACKEND_CONCEPTS
 
 # Anclas del catálogo del backend (SEED de concepts.ts) — mismos ids y literales.
 BACKEND_SEED = dict(
