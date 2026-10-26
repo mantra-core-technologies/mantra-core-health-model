@@ -1,0 +1,36 @@
+{
+  "label": "modeldev",
+  "fatal": null,
+  "seconds": 52,
+  "apply_all": {
+    "ok": true
+  },
+  "apply_deferred": {
+    "ok": true
+  },
+  "patches": {
+    "total": 62,
+    "ok": 58,
+    "omitidos": 1,
+    "fallidos": 3
+  },
+  "fallidos": [
+    {
+      "name": "2026-07-25_v407_nullable_embedding_model_versions.sql",
+      "error": "2026-07-25_v407_nullable_embedding_model_versions.sql:24 :: schema \"vector_rag\" does not exist"
+    },
+    {
+      "name": "2026-09-08_v428_billing_quotations.sql",
+      "error": "2026-09-08_v428_billing_quotations.sql:254 :: v4.2.8 incompleto: tablas=2 (esperado 2), fk=10 (esperado 10), indices=10 (esperado 10), check=0 (esperado 1)"
+    },
+    {
+      "name": "2026-09-26_v4231_seed_insurer_accounts.sql",
+      "error": "2026-09-26_v4231_seed_insurer_accounts.sql:10 :: insert or update on table \"users\" violates foreign key constraint \"fk_users_status_concept_id\""
+    }
+  ],
+  "counts": {
+    "tablas": 1230,
+    "fks": 7083,
+    "indices": 9497
+  }
+}

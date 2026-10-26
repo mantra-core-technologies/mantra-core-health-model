@@ -290,6 +290,16 @@ CREATE INDEX IF NOT EXISTS "ix_reimbursements_created_by_user_id" ON "billing"."
 
 CREATE INDEX IF NOT EXISTS "ix_reimbursements_updated_by_user_id" ON "billing"."reimbursements" ("updated_by_user_id");
 
+CREATE INDEX IF NOT EXISTS "ix_siat_simulated_invoices_invoice_id" ON "billing"."siat_simulated_invoices" ("invoice_id");
+
+CREATE INDEX IF NOT EXISTS "ix_siat_simulated_invoices_encounter_id" ON "billing"."siat_simulated_invoices" ("encounter_id");
+
+CREATE INDEX IF NOT EXISTS "ix_siat_simulated_invoices_patient_profile_id" ON "billing"."siat_simulated_invoices" ("patient_profile_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uk_siat_simulated_invoices_practice_number" ON "billing"."siat_simulated_invoices" ("practice_id", "invoice_number") WHERE "status" <> 'REJECTED';
+
+CREATE INDEX IF NOT EXISTS "ix_siat_simulated_outbox_siat_invoice_id" ON "billing"."siat_simulated_outbox" ("siat_invoice_id");
+
 CREATE INDEX IF NOT EXISTS "ix_tax_codes_practice_id" ON "billing"."tax_codes" ("practice_id");
 
 CREATE INDEX IF NOT EXISTS "ix_tax_codes_tax_type_concept_id" ON "billing"."tax_codes" ("tax_type_concept_id");

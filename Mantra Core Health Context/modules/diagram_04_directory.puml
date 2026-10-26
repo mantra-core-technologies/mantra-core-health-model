@@ -50,6 +50,12 @@ entity branches {
     time_zone : varchar
     latitude : numeric
     longitude : numeric
+  ' + v4.2.43 (P54 carga masiva de sucursales · P50 alta pública de farmacia): la
+  ' sucursal declarada en el alta o subida en lote trae un texto de descripción y el
+  ' enlace de mapa tal como se pegó. Ambas opcionales, sin backfill. Estaban en el
+  ' parche 2026-10-11_v4243 y en la copia de la API, pero no en el modelo.
+    description : text
+    location_url : varchar(2000)
   * created_at : timestamptz
   * updated_at : timestamptz
     created_by_user_id : uuid <<FK>>

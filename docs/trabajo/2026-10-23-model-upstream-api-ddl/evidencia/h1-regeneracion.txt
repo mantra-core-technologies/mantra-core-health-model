@@ -1,0 +1,102 @@
+﻿## gen_ddl.py all exit=0
+→ SQL/00_shared/00_types.sql (enum technical_data_type, 13 valores)
+[00/platform] 0 tablas PG (módulo especializado/no-SQL) · 0 entidades saltadas
+[01/iam] 14 tablas · 44 FK intra · 31 FK diferidas · 13 inferidas · 65 índices · 0 saltadas
+[02/common] 7 tablas · 5 FK intra · 43 FK diferidas · 0 inferidas · 52 índices · 0 saltadas · 1 avisos
+   ! índice 'gist_addresses_location' omitido: columna(s) inexistente(s) ['geography_point'] en addresses (¿tipo no-SQL descartado? requiere PostGIS)
+[03/terminology] 15 tablas · 37 FK intra · 32 FK diferidas · 0 inferidas · 88 índices · 0 saltadas
+[04/directory] 7 tablas · 10 FK intra · 45 FK diferidas · 0 inferidas · 51 índices · 0 saltadas · 1 avisos
+   ! índice 'gist_branches_location' omitido: columna(s) inexistente(s) ['geography_point'] en branches (¿tipo no-SQL descartado? requiere PostGIS)
+[05/profiles] 19 tablas · 24 FK intra · 106 FK diferidas · 5 inferidas · 139 índices · 0 saltadas · 1 avisos
+   ! índice 'uq_person_account_links_active_user': predicado referencia función(es) placeholder del modelo → emitido COMENTADO (definir función o reemplazar por IDs).
+[06/authz] 15 tablas · 9 FK intra · 91 FK diferidas · 15 inferidas · 90 índices · 0 saltadas
+[07/consent] 10 tablas · 6 FK intra · 75 FK diferidas · 0 inferidas · 101 índices · 0 saltadas
+[08/clinical] 22 tablas · 26 FK intra · 191 FK diferidas · 6 inferidas · 239 índices · 1 saltadas · 1 avisos
+   ! índice 'gist_appointments_practitioner_time': predicado referencia función(es) placeholder del modelo → emitido COMENTADO (definir función o reemplazar por IDs).
+[09/forms] 16 tablas · 23 FK intra · 80 FK diferidas · 0 inferidas · 113 índices · 1 saltadas
+[10/audit] 131 tablas · 0 FK intra · 545 FK diferidas · 32 inferidas · 693 índices · 0 saltadas
+[11/system_ops] 29 tablas · 28 FK intra · 141 FK diferidas · 0 inferidas · 178 índices · 0 saltadas
+[12/integrations] 10 tablas · 12 FK intra · 37 FK diferidas · 0 inferidas · 55 índices · 0 saltadas
+[13/geo] 6 tablas · 6 FK intra · 25 FK diferidas · 0 inferidas · 35 índices · 0 saltadas · 1 avisos
+   ! índice 'gist_location_pings_location' omitido: columna(s) inexistente(s) ['geography_point'] en location_pings (¿tipo no-SQL descartado? requiere PostGIS)
+[14/practice] 11 tablas · 19 FK intra · 62 FK diferidas · 0 inferidas · 85 índices · 0 saltadas
+[15/chart] 11 tablas · 10 FK intra · 61 FK diferidas · 0 inferidas · 81 índices · 2 saltadas
+[16/accounting] 42 tablas · 87 FK intra · 217 FK diferidas · 1 inferidas · 356 índices · 13 saltadas
+[17/billing] 24 tablas · 21 FK intra · 135 FK diferidas · 0 inferidas · 174 índices · 21 saltadas
+[18/clinical_ext] 13 tablas · 3 FK intra · 88 FK diferidas · 0 inferidas · 101 índices · 1 saltadas
+[19/community] 41 tablas · 57 FK intra · 196 FK diferidas · 4 inferidas · 266 índices · 8 saltadas
+[20/diagnostics] 36 tablas · 43 FK intra · 208 FK diferidas · 0 inferidas · 301 índices · 0 saltadas
+[21/deployment] 0 tablas PG (módulo especializado/no-SQL) · 0 entidades saltadas
+[22/organization_extensions] 5 tablas · 1 FK intra · 48 FK diferidas · 0 inferidas · 55 índices · 0 saltadas
+[23/diagnostic_units] 10 tablas · 15 FK intra · 54 FK diferidas · 0 inferidas · 77 índices · 0 saltadas
+[24/pharmacy] 9 tablas · 14 FK intra · 51 FK diferidas · 1 inferidas · 75 índices · 0 saltadas
+[25/pharmacy_inventory] 20 tablas · 29 FK intra · 113 FK diferidas · 0 inferidas · 154 índices · 6 saltadas · 1 avisos
+   ! índice 'uq_inventory_position_lot' omitido: columna(s) inexistente(s) ['pharmacy_site_id', 'product_id', 'lot_id'] en inventory_stock_positions (¿tipo no-SQL descartado? requiere PostGIS)
+[26/insurance] 31 tablas · 48 FK intra · 155 FK diferidas · 0 inferidas · 222 índices · 0 saltadas
+[27/identity_assurance] 11 tablas · 14 FK intra · 55 FK diferidas · 0 inferidas · 76 índices · 0 saltadas
+[28/telemetry] 14 tablas · 23 FK intra · 50 FK diferidas · 0 inferidas · 83 índices · 0 saltadas
+[29/delegated_access] 7 tablas · 6 FK intra · 45 FK diferidas · 0 inferidas · 57 índices · 0 saltadas
+[30/read_models] 13 tablas · 12 FK intra · 62 FK diferidas · 0 inferidas · 89 índices · 76 saltadas
+[31/integration_contracts] 9 tablas · 11 FK intra · 36 FK diferidas · 0 inferidas · 55 índices · 0 saltadas
+[32/workflow] 8 tablas · 7 FK intra · 42 FK diferidas · 0 inferidas · 55 índices · 9 saltadas
+[33/integrity] 0 tablas PG (módulo especializado/no-SQL) · 27 entidades saltadas
+[34/portal_catalog] 0 tablas PG (módulo especializado/no-SQL) · 0 entidades saltadas
+[35/messaging] 22 tablas · 34 FK intra · 108 FK diferidas · 0 inferidas · 150 índices · 0 saltadas · 1 avisos
+   ! índice 'uq_adapter_inbound_events_provider_id' omitido: columna(s) inexistente(s) ['received_time_bucket'] en adapter_inbound_events (¿tipo no-SQL descartado? requiere PostGIS)
+[36/qa_lab] 13 tablas · 20 FK intra · 59 FK diferidas · 0 inferidas · 92 índices · 0 saltadas
+[37/tracking] 8 tablas · 9 FK intra · 42 FK diferidas · 0 inferidas · 61 índices · 0 saltadas · 2 avisos
+   ! índice 'gist_tracking_events_location' omitido: columna(s) inexistente(s) ['geography_point'] en tracking_events (¿tipo no-SQL descartado? requiere PostGIS)
+   ! índice 'gist_delivery_proofs_location' omitido: columna(s) inexistente(s) ['geography_point'] en delivery_proofs (¿tipo no-SQL descartado? requiere PostGIS)
+[38/erp] 51 tablas · 110 FK intra · 319 FK diferidas · 0 inferidas · 494 índices · 14 saltadas
+[39/reporting] 12 tablas · 14 FK intra · 56 FK diferidas · 0 inferidas · 86 índices · 0 saltadas
+[40/auth_providers] 9 tablas · 8 FK intra · 42 FK diferidas · 0 inferidas · 58 índices · 1 saltadas
+[41/scheduling] 18 tablas · 24 FK intra · 102 FK diferidas · 19 inferidas · 129 índices · 3 saltadas
+[42/payments] 52 tablas · 89 FK intra · 260 FK diferidas · 0 inferidas · 404 índices · 6 saltadas · 1 avisos
+   ! índice 'uq_payment_provider_transaction' omitido: columna(s) inexistente(s) ['payment_gateway_id', 'provider_transaction_id'] en payment_transactions (¿tipo no-SQL descartado? requiere PostGIS)
+[43/ads] 73 tablas · 99 FK intra · 289 FK diferidas · 0 inferidas · 497 índices · 0 saltadas
+[44/health_context] 10 tablas · 9 FK intra · 44 FK diferidas · 0 inferidas · 62 índices · 0 saltadas
+[45/system_context] 9 tablas · 10 FK intra · 41 FK diferidas · 0 inferidas · 62 índices · 0 saltadas
+[46/platform_ops] 38 tablas · 56 FK intra · 158 FK diferidas · 0 inferidas · 265 índices · 0 saltadas
+[47/education] 15 tablas · 19 FK intra · 69 FK diferidas · 0 inferidas · 103 índices · 0 saltadas
+[48/automation] 16 tablas · 23 FK intra · 77 FK diferidas · 0 inferidas · 113 índices · 0 saltadas
+[49/crm] 32 tablas · 55 FK intra · 172 FK diferidas · 0 inferidas · 278 índices · 5 saltadas · 1 avisos
+   ! índice 'uq_contact_channel_endpoints_endpoint_type_concept_id' omitido: columna(s) inexistente(s) ['tenant_scope_normalizado'] en contact_channel_endpoints (¿tipo no-SQL descartado? requiere PostGIS)
+[50/marketing] 14 tablas · 24 FK intra · 97 FK diferidas · 0 inferidas · 130 índices · 0 saltadas
+[51/promotions] 11 tablas · 14 FK intra · 57 FK diferidas · 0 inferidas · 87 índices · 0 saltadas
+[52/health_data] 34 tablas · 41 FK intra · 137 FK diferidas · 0 inferidas · 255 índices · 9 saltadas
+[53/procedures_perioperative] 35 tablas · 36 FK intra · 184 FK diferidas · 0 inferidas · 262 índices · 8 saltadas
+[54/polyglot_storage] 20 tablas · 26 FK intra · 3 FK diferidas · 0 inferidas · 35 índices · 4 saltadas
+[55/document_store] 0 tablas PG (módulo especializado/no-SQL) · 18 entidades saltadas
+[56/redis_runtime] 0 tablas PG (módulo especializado/no-SQL) · 18 entidades saltadas
+[57/search_platform] 0 tablas PG (módulo especializado/no-SQL) · 17 entidades saltadas
+[58/time_series] 0 tablas PG (módulo especializado/no-SQL) · 16 entidades saltadas
+[59/vector_rag] 0 tablas PG (módulo especializado/no-SQL) · 18 entidades saltadas
+[60/object_storage] 17 tablas · 0 FK intra · 0 FK diferidas · 0 inferidas · 41 índices · 4 saltadas
+[61/graph_intelligence] 13 tablas · 0 FK intra · 0 FK diferidas · 0 inferidas · 29 índices · 5 saltadas
+[62/cross_store_consistency] 20 tablas · 0 FK intra · 0 FK diferidas · 0 inferidas · 43 índices · 4 saltadas
+[63/lakehouse] 18 tablas · 0 FK intra · 0 FK diferidas · 0 inferidas · 42 índices · 4 saltadas
+[64/audio_assets] 4 tablas · 0 FK intra · 1 FK diferidas · 0 inferidas · 10 índices · 0 saltadas
+[65/surveys] 7 tablas · 9 FK intra · 27 FK diferidas · 0 inferidas · 17 índices · 0 saltadas
+[66/medical_groups] 2 tablas · 1 FK intra · 13 FK diferidas · 0 inferidas · 10 índices · 0 saltadas
+[67/data_catalog] 8 tablas · 14 FK intra · 13 FK diferidas · 13 inferidas · 15 índices · 0 saltadas
+[68/qa_execution] 4 tablas · 3 FK intra · 11 FK diferidas · 6 inferidas · 6 índices · 0 saltadas
+[69/pharma_lab] 31 tablas · 50 FK intra · 123 FK diferidas · 173 inferidas · 182 índices · 0 saltadas
+
+→ 1232 tablas PG en total · reporte en SQL/_generation_report.md
+## gen_integrity.py exit=0
+[10_audit] 05_constraints.sql · 2 entidades
+[17_billing] 05_constraints.sql · 4 entidades
+[08_clinical] 05_constraints.sql · 2 entidades · btree_gist
+[29_delegated_access] 05_constraints.sql · 1 entidades · btree_gist
+[23_diagnostic_units] 05_constraints.sql · 1 entidades · btree_gist
+[27_identity_assurance] 05_constraints.sql · 1 entidades
+[26_insurance] 05_constraints.sql · 8 entidades · btree_gist
+[66_medical_groups] 05_constraints.sql · 2 entidades
+[25_pharmacy_inventory] 05_constraints.sql · 3 entidades · btree_gist
+[41_scheduling] 05_constraints.sql · 1 entidades
+[11_system_ops] 05_constraints.sql · 1 entidades
+[28_telemetry] 05_constraints.sql · 1 entidades
+→ integrity-matrix.md · 27 entidades · 4 relaciones
+## gen_apply.py exit=0
+SQL/apply_deferred.sql generado · 62 archivos 90_fk_deferred
+SQL/apply_all.sql generado · 62 módulos · 12 con 05_constraints · 90_fk_deferred omitidos

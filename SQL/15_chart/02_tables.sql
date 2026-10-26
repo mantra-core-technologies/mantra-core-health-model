@@ -91,6 +91,7 @@ CREATE TABLE IF NOT EXISTS "chart"."care_plans" (
     "start_date" date,
     "end_date" date,
     "author_profile_id" uuid,
+    "form_instance_id" uuid,
     "created_at" timestamptz NOT NULL,
     "updated_at" timestamptz NOT NULL,
     "created_by_user_id" uuid,

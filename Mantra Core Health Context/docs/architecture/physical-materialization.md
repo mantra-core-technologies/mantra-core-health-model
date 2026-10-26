@@ -49,6 +49,31 @@ comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_obje
 
 ## 3. Estado actual del build
 
+### Convergencia del DDL de la API con el modelo: se recupera el PR #51 (2026-10-25)
+
+**Sin tablas nuevas en el modelo más allá de las que el PR #51 ya declaraba.** El PR #51
+(`marcelo/model-upstream-api-ddl`, 23-10) se apiló sobre el #50 y se mergeó a la rama del #50
+ocho segundos después de que ésta entrara a `dev`: su contenido nunca llegó a `dev`. Pero la API
+vendió `database/SQL` desde esa rama, así que la copia desplegada declaraba ~33 archivos generados
+y 14 patches (v4232–v4246 y `allergy_intolerances_encounter_id`) que el modelo de `dev` no tenía,
+y el modelo tenía los 11 patches v4.2.49 que la API no.
+
+- Se fusiona `5ca3208` (autoría de Marcelo): `.puml` 04/08/09/15/17/33/41 (SIAT simulado,
+  `form_instance_id`, `follow_up_of_booking_id`, `allergy_intolerances.encounter_id`,
+  `branches.location_url`…) y los 14 patches. v4.2.8 queda en la versión de la API (guard
+  «reemplazado por v4.2.18»); v4.2.39 se copia literal de la API (autor sólo si existe en `iam.users`).
+- Tras regenerar no queda ningún objeto sólo en la API salvo 27 que el modelo reemplazó a propósito
+  (NOT NULL relajados por v4.2.49 en `object_storage`/`surveys`, únicos por práctica/tenant).
+- **Defecto previo, sin tocar:** `gen_ddl.py all` sobre `origin/dev` no reproduce
+  `SQL/69_pharma_lab/` (perdería 7 FKs: la bóveda no tiene sus notas de FK).
+
+**Verificación.** `rebuild_stack.py --yes`: **VEREDICTO: PASS** — tablas **1 281 == SQL/**,
+FKs **7 240 == SQL/**, FKs con hash 61 == 61, huérfanos 0, init 0/0/0, índices 9 787. Dry-run de
+fidelidad: **14 diferencias (tabla-ausente=7, obligatoriedad-divergente=7)**, eran 30; desaparecen
+las 14 `columna-ausente`. Bucle de patches de `init-postgres.sh` contra copias sólo-lectura de las
+bases test y dev del VPS: **98/98 OK** en las dos; el delta que agrega este cambio es el de v4.2.49
+(13 tablas, 118 índices, 13 CHECK, 2 triggers WORM) y **0 filas de datos**.
+
 ### v4.2.50 — Red de conocimiento con evidencia: `concept_relationship_evidence` (2026-10-25)
 
 **Cambio de esquema: +1 tabla, +4 columnas, +11 FK y +16 índices en `terminology` (módulo 03).**

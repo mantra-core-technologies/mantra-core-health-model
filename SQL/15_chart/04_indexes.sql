@@ -86,6 +86,8 @@ CREATE INDEX IF NOT EXISTS "ix_care_plans_intent_concept_id" ON "chart"."care_pl
 
 CREATE INDEX IF NOT EXISTS "ix_care_plans_author_profile_id" ON "chart"."care_plans" ("author_profile_id");
 
+CREATE INDEX IF NOT EXISTS "ix_care_plans_form_instance_id" ON "chart"."care_plans" ("form_instance_id");
+
 CREATE INDEX IF NOT EXISTS "ix_care_plans_created_by_user_id" ON "chart"."care_plans" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_care_plans_updated_by_user_id" ON "chart"."care_plans" ("updated_by_user_id");

@@ -51,6 +51,18 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
+    ALTER TABLE "billing"."siat_simulated_invoices"
+        ADD CONSTRAINT "fk_siat_simulated_invoices_invoice_id" FOREIGN KEY ("invoice_id")
+        REFERENCES "billing"."invoices" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "billing"."siat_simulated_outbox"
+        ADD CONSTRAINT "fk_siat_simulated_outbox_siat_invoice_id" FOREIGN KEY ("siat_invoice_id")
+        REFERENCES "billing"."siat_simulated_invoices" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
     ALTER TABLE "billing"."budget_lines"
         ADD CONSTRAINT "fk_budget_lines_budget_id" FOREIGN KEY ("budget_id")
         REFERENCES "billing"."budgets" ("id");

@@ -8,6 +8,8 @@ hide circle
 ' ------------------------------------------------------------------------------
 ' SOURCE CONSOLIDATED: diagram_15_chart.puml
 ' ------------------------------------------------------------------------------
+entity "forms.form_instances" as forms_form_instances <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+
 note as BIZ_diagram_15_chart
   BUSINESS PURPOSE
   A patient chart with immutable, signed clinical-note versions; explicit
@@ -113,6 +115,9 @@ entity care_plans {
     start_date : date
     end_date : date
     author_profile_id : uuid <<FK>>
+  ' + v4.2.32 (P43): el plan de cuidado puede salir de la respuesta CERRADA del
+  ' formulario médico de una consulta. Nullable y sin backfill. FK → forms.form_instances.
+    form_instance_id : uuid <<FK>>
   * created_at : timestamptz
   * updated_at : timestamptz
     created_by_user_id : uuid <<FK>>
@@ -201,6 +206,7 @@ clinical_note_versions ||--o{ clinical_note_signatures
 clinical_note_versions ||--o{ note_release_events
 clinical_note_versions ||--o{ physical_exam_findings
 care_plans ||--o{ care_plan_activities
+care_plans }o--o| forms_form_instances : form_instance_id
 document_records ||--o{ document_record_files
 specialty_chart_templates ||--o{ chart_template_assignments
 
@@ -288,6 +294,7 @@ entity "INDEXES · care_plans" as idxset_care_plans <<INDEX_SET>> {
   IX ix_care_plans_status_concept_id : (status_concept_id) BTREE
   IX ix_care_plans_intent_concept_id : (intent_concept_id) BTREE
   IX ix_care_plans_author_profile_id : (author_profile_id) BTREE
+  IX ix_care_plans_form_instance_id : (form_instance_id) BTREE
   IX ix_care_plans_created_by_user_id : (created_by_user_id) BTREE
   IX ix_care_plans_updated_by_user_id : (updated_by_user_id) BTREE
   IX ix_care_plans_patient_profile_id_updated_at : (patient_profile_id, updated_at DESC) BTREE

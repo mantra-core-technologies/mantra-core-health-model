@@ -517,6 +517,13 @@ DO $$ BEGIN
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- destino: practice.practices (requiere schema practice)
+DO $$ BEGIN
+    ALTER TABLE "billing"."siat_simulated_invoices"
+        ADD CONSTRAINT "fk_siat_simulated_invoices_practice_id" FOREIGN KEY ("practice_id")
+        REFERENCES "practice"."practices" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 -- destino: insurance.insurance_claims (requiere schema insurance)
 DO $$ BEGIN
     ALTER TABLE "billing"."reimbursements"
