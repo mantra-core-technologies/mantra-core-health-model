@@ -59,6 +59,7 @@ entity clinical_note_versions <<IMMUTABLE>> {
     objective_text : text
     assessment_text : text
     plan_text : text
+    entries_json : jsonb
     supersedes_version_id : uuid <<FK>>
     amendment_reason_concept_id : uuid <<FK>>
     amendment_reason_text : text
