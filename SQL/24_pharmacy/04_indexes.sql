@@ -46,6 +46,20 @@ CREATE INDEX IF NOT EXISTS "ix_pharmacy_sites_updated_by_user_id" ON "pharmacy".
 
 CREATE INDEX IF NOT EXISTS "gin_pharmacy_sites_search" ON "pharmacy"."pharmacy_sites" USING gin (to_tsvector('simple', (coalesce(name, '') || ' ' || coalesce(code, ''))));
 
+CREATE INDEX IF NOT EXISTS "ix_pharmacy_on_call_shifts_pharmacy_site_id" ON "pharmacy"."pharmacy_on_call_shifts" ("pharmacy_site_id");
+
+CREATE INDEX IF NOT EXISTS "ix_pharmacy_on_call_shifts_source_concept_id" ON "pharmacy"."pharmacy_on_call_shifts" ("source_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_pharmacy_on_call_shifts_status_concept_id" ON "pharmacy"."pharmacy_on_call_shifts" ("status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_pharmacy_on_call_shifts_created_by_user_id" ON "pharmacy"."pharmacy_on_call_shifts" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_pharmacy_on_call_shifts_updated_by_user_id" ON "pharmacy"."pharmacy_on_call_shifts" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_pharmacy_on_call_shifts_site_window" ON "pharmacy"."pharmacy_on_call_shifts" ("pharmacy_site_id", "ends_at" DESC, "starts_at");
+
+CREATE INDEX IF NOT EXISTS "gist_pharmacy_on_call_shifts_window" ON "pharmacy"."pharmacy_on_call_shifts" USING gist (tstzrange(starts_at, ends_at, '[)'));
+
 CREATE INDEX IF NOT EXISTS "ix_pharmacy_licenses_pharmacy_id" ON "pharmacy"."pharmacy_licenses" ("pharmacy_id");
 
 CREATE INDEX IF NOT EXISTS "ix_pharmacy_licenses_pharmacy_site_id" ON "pharmacy"."pharmacy_licenses" ("pharmacy_site_id");

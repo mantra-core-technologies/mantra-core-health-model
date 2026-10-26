@@ -112,6 +112,16 @@ entity appointments <<REFERENCE_ONLY>> {
   EXCLUDE_SQL : ex_appointments_practitioner_time | "practitioner_profile_id" WITH =, tstzrange("start_at", "end_at", '[)') WITH && | "practitioner_profile_id" IS NOT NULL AND "end_at" IS NOT NULL AND "status_concept_id" IN ('51530fd7-05b1-5c29-80c4-da740ede4d27', '37dded87-7a7a-5a24-86f6-0ef48cccb482')
   LOCK : reservation confirmation transaction
 }
+' + v4.2.60 (P34) — turnos de guardia de farmacia. Un turno vencido no se publica (lo
+' filtra la lectura); lo que la base garantiza es que el turno tenga sentido: fin
+' posterior al inicio, como mucho 72 h (un turno sin fin no caduca nunca), y que dos
+' turnos ACTIVOS de la misma sede no se solapen. El estado es el UUID determinista de
+' `pharmacy:ON_CALL_SHIFT_ACTIVE` (pharmacy.concepts.ts de la API); un cancelado no
+' bloquea volver a cargar el mismo horario.
+entity pharmacy_on_call_shifts <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_pharmacy_on_call_shifts_window | ("ends_at" > "starts_at" AND "ends_at" - "starts_at" <= interval '72 hours')
+  EXCLUDE_SQL : ex_pharmacy_on_call_shifts_site_overlap | "pharmacy_site_id" WITH =, tstzrange("starts_at", "ends_at", '[)') WITH && | "status_concept_id" = '14c92252-2ad8-576c-bc34-3ae2bbdb950d'
+}
 
 entity claim_appeal_decisions <<IMMUTABLE, REFERENCE_ONLY>> {
   UK : dispute + decision version

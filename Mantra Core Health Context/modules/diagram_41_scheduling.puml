@@ -94,6 +94,16 @@ entity schedule_templates {
     valid_from : date
     valid_to : date
     slot_minutes : integer
+  ' + v4.2.52 (P36) — horario flexible, sin turnos fijos. `true` ≡ la plantilla declara
+  ' CUÁNDO se atiende pero no lo corta en una grilla: el generador no materializa cupos
+  ' de consulta para sus franjas, y el paciente pide la hora que quiera dentro de la
+  ' franja. El cupo nace al retener (capacidad 1, ya tomado), igual que el de un
+  ' servicio, con la duración de `slot_minutes` —acá «cuánto dura cada consulta», no
+  ' «cada cuánto hay turno»—; la regla madre (`ex_appointments_practitioner_time`)
+  ' sigue impidiendo que dos citas se pisen. Es un sí/no de la plantilla y no un
+  ' catálogo: no hay un tercer modo a la vista, y si apareciera se migra a concepto.
+  ' NOT NULL con DEFAULT false: toda plantilla existente sigue siendo de turnos fijos.
+  * flexible_hours : boolean <<DEFAULT_FALSE>>
     booking_policy_id : uuid <<FK>>
   * status_concept_id : uuid <<FK>>
   * created_at : timestamptz

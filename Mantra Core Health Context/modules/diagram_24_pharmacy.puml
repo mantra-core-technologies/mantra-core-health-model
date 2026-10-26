@@ -48,6 +48,35 @@ entity pharmacy_sites {
     controlled_substance_capability_concept_id : uuid <<FK>>
     home_delivery_available : boolean
     pickup_available : boolean
+    open_24h : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+note as OPEN_HOURS_diagram_24_pharmacy
+  OPEN 24 H AND ON-CALL (P34, v4.2.60)
+  open_24h is NULLABLE on purpose: NULL means "not declared", never
+  "closed at night". Only TRUE is published as open 24 h.
+  An on-call (guardia) shift belongs to ONE pharmacy site (the physical
+  store), not to a zone. It is published only while
+  starts_at <= now() < ends_at and status is active: an expired or
+  cancelled shift is never shown. A shift lasts at most 72 h and two
+  active shifts of the same site cannot overlap (module 33).
+  source_concept_id records who declared it (the pharmacy itself or the
+  platform on its behalf).
+end note
+
+entity pharmacy_on_call_shifts {
+  * id : uuid <<PK>>
+  --
+  * pharmacy_site_id : uuid <<FK>>
+  * starts_at : timestamptz
+  * ends_at : timestamptz
+  * source_concept_id : uuid <<FK>>
   * status_concept_id : uuid <<FK>>
   * created_at : timestamptz
   * updated_at : timestamptz
@@ -232,6 +261,7 @@ entity pharmacy_external_product_mappings {
 }
 
 pharmacies ||--o{ pharmacy_sites
+pharmacy_sites ||--o{ pharmacy_on_call_shifts
 pharmacies ||--o{ pharmacy_licenses
 pharmacies ||--o{ pharmacy_products
 pharmacies ||--o{ pharmacy_price_lists
@@ -289,6 +319,19 @@ entity "INDEXES · pharmacy_sites" as idxset_pharmacy_sites <<INDEX_SET>> {
 }
 
 pharmacy_sites .. idxset_pharmacy_sites : indexed by
+
+entity "INDEXES · pharmacy_on_call_shifts" as idxset_pharmacy_on_call_shifts <<INDEX_SET>> {
+  PK pk_pharmacy_on_call_shifts : (id) UNIQUE BTREE
+  IX ix_pharmacy_on_call_shifts_pharmacy_site_id : (pharmacy_site_id) BTREE
+  IX ix_pharmacy_on_call_shifts_source_concept_id : (source_concept_id) BTREE
+  IX ix_pharmacy_on_call_shifts_status_concept_id : (status_concept_id) BTREE
+  IX ix_pharmacy_on_call_shifts_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_pharmacy_on_call_shifts_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_pharmacy_on_call_shifts_site_window : (pharmacy_site_id, ends_at DESC, starts_at) BTREE
+  GIST gist_pharmacy_on_call_shifts_window : tstzrange(starts_at, ends_at, '[)') GIST
+}
+
+pharmacy_on_call_shifts .. idxset_pharmacy_on_call_shifts : indexed by
 
 entity "INDEXES · pharmacy_licenses" as idxset_pharmacy_licenses <<INDEX_SET>> {
   PK pk_pharmacy_licenses : (id) UNIQUE BTREE

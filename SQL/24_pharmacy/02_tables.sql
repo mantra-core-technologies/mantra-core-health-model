@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS "pharmacy"."pharmacy_sites" (
     "controlled_substance_capability_concept_id" uuid,
     "home_delivery_available" boolean,
     "pickup_available" boolean,
+    "open_24h" boolean,
     "status_concept_id" uuid NOT NULL,
     "created_at" timestamptz NOT NULL,
     "updated_at" timestamptz NOT NULL,
@@ -40,6 +41,21 @@ CREATE TABLE IF NOT EXISTS "pharmacy"."pharmacy_sites" (
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
     CONSTRAINT "pk_pharmacy_sites" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "pharmacy"."pharmacy_on_call_shifts" (
+    "id" uuid NOT NULL,
+    "pharmacy_site_id" uuid NOT NULL,
+    "starts_at" timestamptz NOT NULL,
+    "ends_at" timestamptz NOT NULL,
+    "source_concept_id" uuid NOT NULL,
+    "status_concept_id" uuid NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_pharmacy_on_call_shifts" PRIMARY KEY ("id")
 );
 
 CREATE TABLE IF NOT EXISTS "pharmacy"."pharmacy_licenses" (
