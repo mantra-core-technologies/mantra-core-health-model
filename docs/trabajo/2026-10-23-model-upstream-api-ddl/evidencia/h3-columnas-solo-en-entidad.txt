@@ -1,0 +1,3 @@
+authz/entities/resource_scope_grants.entity.ts: quita - · agrega ['reasonText']
+
+TOTAL propiedades que solo tiene la entidad de la API: 0

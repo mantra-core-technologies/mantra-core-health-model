@@ -1,0 +1,32 @@
+{
+  "label": "modelnew",
+  "fatal": null,
+  "seconds": 59,
+  "apply_all": {
+    "ok": true
+  },
+  "apply_deferred": {
+    "ok": true
+  },
+  "patches": {
+    "total": 77,
+    "ok": 74,
+    "omitidos": 1,
+    "fallidos": 2
+  },
+  "fallidos": [
+    {
+      "name": "2026-07-25_v407_nullable_embedding_model_versions.sql",
+      "error": "2026-07-25_v407_nullable_embedding_model_versions.sql:24 :: schema \"vector_rag\" does not exist"
+    },
+    {
+      "name": "2026-09-26_v4231_seed_insurer_accounts.sql",
+      "error": "2026-09-26_v4231_seed_insurer_accounts.sql:10 :: insert or update on table \"users\" violates foreign key constraint \"fk_users_status_concept_id\""
+    }
+  ],
+  "counts": {
+    "tablas": 1232,
+    "fks": 7095,
+    "indices": 9512
+  }
+}

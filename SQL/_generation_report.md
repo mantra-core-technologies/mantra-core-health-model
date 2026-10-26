@@ -7,21 +7,21 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 00 | platform _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
 | 01 | iam | 14 | 75 | 13 | 65 | 0 |
 | 02 | common | 7 | 48 | 0 | 52 | 0 |
-| 03 | terminology | 15 | 69 | 0 | 88 | 0 |
+| 03 | terminology | 16 | 80 | 0 | 103 | 0 |
 | 04 | directory | 7 | 59 | 4 | 55 | 0 |
 | 05 | profiles | 19 | 130 | 5 | 139 | 0 |
 | 06 | authz | 15 | 100 | 15 | 90 | 0 |
 | 07 | consent | 10 | 81 | 0 | 101 | 0 |
-| 08 | clinical | 23 | 232 | 13 | 255 | 7 |
+| 08 | clinical | 23 | 238 | 7 | 260 | 10 |
 | 09 | forms | 16 | 103 | 0 | 113 | 1 |
 | 10 | audit | 133 | 554 | 40 | 705 | 1 |
 | 11 | system_ops | 29 | 169 | 0 | 178 | 0 |
 | 12 | integrations | 10 | 49 | 0 | 56 | 0 |
 | 13 | geo | 6 | 31 | 0 | 35 | 0 |
-| 14 | practice | 11 | 82 | 1 | 86 | 0 |
-| 15 | chart | 11 | 70 | 0 | 80 | 1 |
+| 14 | practice | 11 | 83 | 1 | 88 | 1 |
+| 15 | chart | 11 | 71 | 0 | 81 | 2 |
 | 16 | accounting | 45 | 316 | 1 | 369 | 15 |
-| 17 | billing | 22 | 153 | 0 | 169 | 18 |
+| 17 | billing | 24 | 156 | 0 | 174 | 21 |
 | 18 | clinical_ext | 14 | 95 | 4 | 107 | 1 |
 | 19 | community | 41 | 254 | 4 | 268 | 9 |
 | 20 | diagnostics | 36 | 251 | 0 | 301 | 0 |
@@ -37,7 +37,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 30 | read_models | 13 | 74 | 0 | 89 | 76 |
 | 31 | integration_contracts | 9 | 48 | 1 | 57 | 0 |
 | 32 | workflow | 8 | 49 | 0 | 55 | 9 |
-| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 43 |
+| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 46 |
 | 34 | portal_catalog _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
 | 35 | messaging | 22 | 142 | 0 | 150 | 0 |
 | 36 | qa_lab | 13 | 79 | 0 | 92 | 0 |
@@ -45,7 +45,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 38 | erp | 51 | 429 | 0 | 494 | 14 |
 | 39 | reporting | 12 | 70 | 0 | 86 | 0 |
 | 40 | auth_providers | 9 | 50 | 0 | 58 | 1 |
-| 41 | scheduling | 18 | 124 | 19 | 127 | 1 |
+| 41 | scheduling | 18 | 126 | 19 | 129 | 3 |
 | 42 | payments | 52 | 349 | 0 | 404 | 6 |
 | 43 | ads | 73 | 388 | 0 | 497 | 0 |
 | 44 | health_context | 10 | 53 | 0 | 62 | 0 |
@@ -74,7 +74,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 67 | data_catalog | 13 | 43 | 23 | 24 | 0 |
 | 68 | qa_execution | 4 | 14 | 6 | 6 | 0 |
 | 69 | pharma_lab | 31 | 173 | 173 | 182 | 0 |
-| **Σ** | **70** | **1251** | | **392** | | **334** |
+| **Σ** | **70** | **1255** | | **393** | | **354** |
 
 ## Detalle de entidades saltadas y avisos
 
@@ -88,6 +88,16 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - ⚠ índice 'uq_person_account_links_active_user': predicado referencia función(es) placeholder del modelo → emitido COMENTADO (la función no existe en la base).
 
 ### 08 · clinical
+- `directory_tenants` — stub de cruce (tabla real en su módulo dueño)
+- `profiles_health_practitioner_profiles` — stub de cruce (tabla real en su módulo dueño)
+- `practice_practice_sites` — stub de cruce (tabla real en su módulo dueño)
+- `procedures_perioperative_procedure_cases` — stub de cruce (tabla real en su módulo dueño)
+- `billing_service_catalog` — stub de cruce (tabla real en su módulo dueño)
+- `billing_invoice_lines` — stub de cruce (tabla real en su módulo dueño)
+- `insurance_insurance_claim_lines` — stub de cruce (tabla real en su módulo dueño)
+- `forms_form_instances` — stub de cruce (tabla real en su módulo dueño)
+- `profiles_health_practitioner_profiles` — stub de cruce (tabla real en su módulo dueño)
+- `practice_practice_sites` — stub de cruce (tabla real en su módulo dueño)
 - ⚠ índice 'gist_appointments_practitioner_time': predicado referencia función(es) placeholder del modelo → emitido COMENTADO (la función no existe en la base).
 
 ### 09 · forms
@@ -99,7 +109,11 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 ### 13 · geo
 - ⚠ índice 'gist_location_pings_location' omitido: columna(s) inexistente(s) ['geography_point'] en location_pings (¿tipo no-SQL descartado? requiere PostGIS)
 
+### 14 · practice
+- `billing_service_catalog` — stub de cruce (tabla real en su módulo dueño)
+
 ### 15 · chart
+- `forms_form_instances` — stub de cruce (tabla real en su módulo dueño)
 - `patient_timeline_view` — vista (sin SELECT en el .puml)
 
 ### 16 · accounting
@@ -137,6 +151,9 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - `payments_payment_transactions` — stub de cruce (tabla real en su módulo dueño)
 - `insurance_insurance_claims` — stub de cruce (tabla real en su módulo dueño)
 - `insurance_insurance_claim_lines` — stub de cruce (tabla real en su módulo dueño)
+- `practice_practices` — stub de cruce (tabla real en su módulo dueño)
+- `billing_invoices` — stub de cruce (tabla real en su módulo dueño)
+- `billing_siat_simulated_invoices` — stub de cruce (tabla real en su módulo dueño)
 - `receivables_aging_view` — vista (sin SELECT en el .puml)
 
 ### 18 · clinical_ext
@@ -264,8 +281,11 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - `insurance_claims` — stub de cruce (tabla real en su módulo dueño)
 - `prior_authorization_requests` — stub de cruce (tabla real en su módulo dueño)
 - `service_requests` — stub de cruce (tabla real en su módulo dueño)
+- `received_services` — stub de cruce (tabla real en su módulo dueño)
 - `insurance_campaigns` — stub de cruce (tabla real en su módulo dueño)
 - `practitioner_service_offerings` — stub de cruce (tabla real en su módulo dueño)
+- `siat_simulated_invoices` — stub de cruce (tabla real en su módulo dueño)
+- `siat_simulated_outbox` — stub de cruce (tabla real en su módulo dueño)
 - `identity_verification_attempts` — stub de cruce (tabla real en su módulo dueño)
 - `user_activity_events` — stub de cruce (tabla real en su módulo dueño)
 - `practitioner_delegate_assignments` — stub de cruce (tabla real en su módulo dueño)
@@ -326,6 +346,8 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - `iam_users` — entidad externa
 
 ### 41 · scheduling
+- `forms_form_instances` — stub de cruce (tabla real en su módulo dueño)
+- `scheduling_appointment_bookings` — stub de cruce (tabla real en su módulo dueño)
 - `appointments` — entidad externa
 
 ### 42 · payments

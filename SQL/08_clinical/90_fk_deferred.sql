@@ -700,7 +700,7 @@ DO $$ BEGIN
     ALTER TABLE "clinical"."service_requests"
         ADD CONSTRAINT "fk_service_requests_performer_selection_concept_id" FOREIGN KEY ("performer_selection_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: profiles.health_practitioner_profiles (requiere schema profiles)
 DO $$ BEGIN
@@ -714,6 +714,13 @@ DO $$ BEGIN
     ALTER TABLE "clinical"."service_requests"
         ADD CONSTRAINT "fk_service_requests_suggested_practice_site_id" FOREIGN KEY ("suggested_practice_site_id")
         REFERENCES "practice"."practice_sites" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: forms.form_instances (requiere schema forms)
+DO $$ BEGIN
+    ALTER TABLE "clinical"."service_requests"
+        ADD CONSTRAINT "fk_service_requests_form_instance_id" FOREIGN KEY ("form_instance_id")
+        REFERENCES "forms"."form_instances" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
@@ -861,6 +868,13 @@ DO $$ BEGIN
     ALTER TABLE "clinical"."medication_requests"
         ADD CONSTRAINT "fk_medication_requests_unit_concept_id" FOREIGN KEY ("unit_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: forms.form_instances (requiere schema forms)
+DO $$ BEGIN
+    ALTER TABLE "clinical"."medication_requests"
+        ADD CONSTRAINT "fk_medication_requests_form_instance_id" FOREIGN KEY ("form_instance_id")
+        REFERENCES "forms"."form_instances" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
@@ -1155,28 +1169,28 @@ DO $$ BEGIN
     ALTER TABLE "clinical"."received_services"
         ADD CONSTRAINT "fk_received_services_patient_profile_id" FOREIGN KEY ("patient_profile_id")
         REFERENCES "profiles"."patient_profiles" ("profile_id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "clinical"."received_services"
         ADD CONSTRAINT "fk_received_services_service_type_concept_id" FOREIGN KEY ("service_type_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "clinical"."received_services"
         ADD CONSTRAINT "fk_received_services_service_concept_id" FOREIGN KEY ("service_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "clinical"."received_services"
         ADD CONSTRAINT "fk_received_services_status_concept_id" FOREIGN KEY ("status_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: procedures_perioperative.procedure_cases (requiere schema procedures_perioperative)
 DO $$ BEGIN
@@ -1225,21 +1239,21 @@ DO $$ BEGIN
     ALTER TABLE "clinical"."received_services"
         ADD CONSTRAINT "fk_received_services_outcome_concept_id" FOREIGN KEY ("outcome_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "clinical"."received_services"
         ADD CONSTRAINT "fk_received_services_created_by_user_id" FOREIGN KEY ("created_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "clinical"."received_services"
         ADD CONSTRAINT "fk_received_services_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: profiles.patient_profiles (requiere schema profiles)
 DO $$ BEGIN

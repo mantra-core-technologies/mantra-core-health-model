@@ -35,6 +35,8 @@ CREATE TABLE IF NOT EXISTS "directory"."branches" (
     "time_zone" varchar,
     "latitude" numeric,
     "longitude" numeric,
+    "description" text,
+    "location_url" varchar(2000),
     "created_at" timestamptz NOT NULL,
     "updated_at" timestamptz NOT NULL,
     "created_by_user_id" uuid,

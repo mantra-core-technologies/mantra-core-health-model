@@ -214,6 +214,8 @@ CREATE INDEX IF NOT EXISTS "ix_allergy_intolerances_verification_status_concept_
 
 CREATE INDEX IF NOT EXISTS "ix_allergy_intolerances_recorded_by_user_id" ON "clinical"."allergy_intolerances" ("recorded_by_user_id");
 
+CREATE INDEX IF NOT EXISTS "ix_allergy_intolerances_encounter_id" ON "clinical"."allergy_intolerances" ("encounter_id");
+
 CREATE INDEX IF NOT EXISTS "ix_allergy_intolerances_created_by_user_id" ON "clinical"."allergy_intolerances" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_allergy_intolerances_updated_by_user_id" ON "clinical"."allergy_intolerances" ("updated_by_user_id");
@@ -259,6 +261,8 @@ CREATE INDEX IF NOT EXISTS "ix_service_requests_performer_practitioner_profile_i
 CREATE INDEX IF NOT EXISTS "ix_service_requests_suggested_practice_site_id" ON "clinical"."service_requests" ("suggested_practice_site_id");
 
 CREATE INDEX IF NOT EXISTS "ix_service_requests_previous_diagnostic_report_id" ON "clinical"."service_requests" ("previous_diagnostic_report_id");
+
+CREATE INDEX IF NOT EXISTS "ix_service_requests_form_instance_id" ON "clinical"."service_requests" ("form_instance_id");
 
 CREATE INDEX IF NOT EXISTS "ix_service_requests_created_by_user_id" ON "clinical"."service_requests" ("created_by_user_id");
 
@@ -317,6 +321,8 @@ CREATE INDEX IF NOT EXISTS "ix_medication_requests_route_concept_id" ON "clinica
 CREATE INDEX IF NOT EXISTS "ix_medication_requests_unit_concept_id" ON "clinical"."medication_requests" ("unit_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_medication_requests_indication_condition_id" ON "clinical"."medication_requests" ("indication_condition_id");
+
+CREATE INDEX IF NOT EXISTS "ix_medication_requests_form_instance_id" ON "clinical"."medication_requests" ("form_instance_id");
 
 CREATE INDEX IF NOT EXISTS "ix_medication_requests_created_by_user_id" ON "clinical"."medication_requests" ("created_by_user_id");
 

@@ -8,6 +8,11 @@ hide circle
 ' ------------------------------------------------------------------------------
 ' SOURCE CONSOLIDATED: diagram_41_scheduling.puml
 ' ------------------------------------------------------------------------------
+entity "forms.form_instances" as forms_form_instances <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+' Stub propio para declarar la FK autorreferente follow_up_of_booking_id (la convención
+' por nombre no la resuelve: no existe una tabla `follow_up_of_bookings`).
+entity "scheduling.appointment_bookings" as scheduling_appointment_bookings <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+
 entity practitioner_schedules {
   * id : uuid <<PK>>
   --
@@ -247,6 +252,16 @@ entity appointment_bookings {
   ' + v4.2.49 (PAC-CITA-011, issue #58): copia congelada de las instrucciones previas, con el mismo
   ' criterio que cancellation_policy_snapshot y service_snapshot.
     pre_visit_instructions_snapshot : text
+  ' + v4.2.37 (P42 reconsulta): la reconsulta apunta a la consulta de la que salió. El vínculo
+  ' va en UN solo lado; el inverso (`followUpBookingId`) lo deriva la API al leer. Nullable y
+  ' sin backfill: casi ninguna cita es una reconsulta y las anteriores no declararon origen.
+  ' «Una reconsulta por venir por consulta» NO es índice único («por venir» depende de now()
+  ' y no es inmutable): la API lo garantiza con SELECT … FOR UPDATE sobre la cita de origen.
+    follow_up_of_booking_id : uuid <<FK>>
+  ' + v4.2.32 (P43): la reserva puede salir de la respuesta CERRADA del formulario médico
+  ' (dentro de `followUpOf`, junto a follow_up_of_booking_id). Nullable y sin backfill.
+  ' FK → forms.form_instances.
+    form_instance_id : uuid <<FK>>
 }
 
 ' + v4.2.40 — Oferta de servicio de un profesional: «cómo ofrece ESTE médico ESTE servicio».
@@ -402,6 +417,8 @@ bookable_slots ||--o{ appointment_bookings
 appointments |o--o{ appointment_bookings
 appointment_bookings ||--o{ booking_reschedules
 appointment_bookings ||--o{ booking_cancellations
+appointment_bookings }o--o| scheduling_appointment_bookings : follow_up_of_booking_id
+appointment_bookings }o--o| forms_form_instances : form_instance_id
 schedulable_resources ||--o{ waitlist_entries
 appointment_bookings ||--o{ appointment_reminders
 practitioner_schedules ||--o{ availability_slots
@@ -555,6 +572,8 @@ entity "INDEXES · appointment_bookings" as idxset_appointment_bookings <<INDEX_
   IX ix_appointment_bookings_status_concept_id : (status_concept_id) BTREE
   IX ix_appointment_bookings_booking_policy_id : (booking_policy_id) BTREE
   IX ix_appointment_bookings_practitioner_service_offering_id : (practitioner_service_offering_id) BTREE
+  IX ix_appointment_bookings_follow_up_of_booking_id : (follow_up_of_booking_id) BTREE
+  IX ix_appointment_bookings_form_instance_id : (form_instance_id) BTREE
   IX ix_appointment_bookings_created_by_user_id : (created_by_user_id) BTREE
   IX ix_appointment_bookings_updated_by_user_id : (updated_by_user_id) BTREE
   IX ix_appointment_bookings_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE

@@ -1,0 +1,8 @@
+$ python check_ddl_sources.py   (equivale a `yarn ddl:sources`)
+Fuentes de DDL OK: `SQL/` y `NoSQL/` de la raíz son las únicas.
+exit=0
+
+$ bash scripts/db/vendor-ddl.sh --check   (equivale a `yarn db:vendor:check`)
+=== database/SQL al día
+=== database/NoSQL al día
+exit=0

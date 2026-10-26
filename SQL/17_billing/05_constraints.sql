@@ -5,6 +5,22 @@
 -- CHECK_SQL y EXCLUDE_SQL sí se materializan con la expresión del modelo.
 
 
+-- ═══ siat_simulated_invoices ═══
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "billing"."siat_simulated_invoices" DROP CONSTRAINT IF EXISTS "ck_siat_simulated_invoices_simulated";
+ALTER TABLE "billing"."siat_simulated_invoices" ADD CONSTRAINT "ck_siat_simulated_invoices_simulated" CHECK ("simulated" = true);
+
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "billing"."siat_simulated_invoices" DROP CONSTRAINT IF EXISTS "ck_siat_simulated_invoices_status";
+ALTER TABLE "billing"."siat_simulated_invoices" ADD CONSTRAINT "ck_siat_simulated_invoices_status" CHECK ("status" IN ('VALIDATED','OBSERVED','REJECTED','ANNULLED'));
+
+
+-- ═══ siat_simulated_outbox ═══
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "billing"."siat_simulated_outbox" DROP CONSTRAINT IF EXISTS "ck_siat_simulated_outbox_status";
+ALTER TABLE "billing"."siat_simulated_outbox" ADD CONSTRAINT "ck_siat_simulated_outbox_status" CHECK ("status" = 'NOT_SENT_SIMULATED');
+
+
 -- ═══ quotations ═══
 -- CHECK concreto declarado por el modelo (CHECK_SQL).
 ALTER TABLE "billing"."quotations" DROP CONSTRAINT IF EXISTS "chk_quotations_payment_frequency";

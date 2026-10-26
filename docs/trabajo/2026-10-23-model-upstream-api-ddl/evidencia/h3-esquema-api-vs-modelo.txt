@@ -1,0 +1,29 @@
+
+## columns: solo apidev 9 · solo modelnew 10 · comunes 16894
+   - [apidev] billing.siat_simulated_invoices.created_at | timestamptz | null=NO | default=now()
+   - [apidev] billing.siat_simulated_invoices.events | jsonb | null=NO | default='[]'::jsonb
+   - [apidev] billing.siat_simulated_invoices.id | uuid | null=NO | default=gen_random_uuid()
+   - [apidev] billing.siat_simulated_invoices.updated_at | timestamptz | null=NO | default=now()
+   - [apidev] billing.siat_simulated_outbox.attachments | jsonb | null=NO | default='[]'::jsonb
+   - [apidev] billing.siat_simulated_outbox.id | uuid | null=NO | default=gen_random_uuid()
+   - [apidev] billing.siat_simulated_outbox.queued_at | timestamptz | null=NO | default=now()
+   - [apidev] billing.siat_simulated_outbox.status | varchar(24) | null=NO | default='NOT_SENT_SIMULATED'::character varying
+   - [apidev] system_ops.restore_test_runs.objective_status | varchar | null=NO | default='NOT_MEASURED'::character varying
+   + [modelnew] billing.siat_simulated_invoices.created_at | timestamptz | null=NO | default=
+   + [modelnew] billing.siat_simulated_invoices.events | jsonb | null=NO | default=
+   + [modelnew] billing.siat_simulated_invoices.id | uuid | null=NO | default=
+   + [modelnew] billing.siat_simulated_invoices.updated_at | timestamptz | null=NO | default=
+   + [modelnew] billing.siat_simulated_outbox.attachments | jsonb | null=NO | default=
+   + [modelnew] billing.siat_simulated_outbox.id | uuid | null=NO | default=
+   + [modelnew] billing.siat_simulated_outbox.queued_at | timestamptz | null=NO | default=
+   + [modelnew] billing.siat_simulated_outbox.status | varchar(24) | null=NO | default=
+   + [modelnew] clinical.allergy_intolerances.encounter_id | uuid | null=YES | default=
+   + [modelnew] system_ops.restore_test_runs.objective_status | varchar | null=NO | default=
+
+## constraints: solo apidev 0 · solo modelnew 1 · comunes 17907
+   + [modelnew] clinical.allergy_intolerances.fk_allergy_intolerances_encounter_id | f | FOREIGN KEY (encounter_id) REFERENCES clinical.encounters(id)
+
+## indexes: solo apidev 0 · solo modelnew 1 · comunes 9511
+   + [modelnew] clinical.ix_allergy_intolerances_encounter_id | CREATE INDEX ix_allergy_intolerances_encounter_id ON clinical.allergy_intolerances USING btree (encounter_id)
+
+TOTAL diferencias: 21

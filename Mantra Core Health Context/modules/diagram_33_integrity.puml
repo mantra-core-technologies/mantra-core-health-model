@@ -62,6 +62,16 @@ entity practitioner_service_offerings <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_practitioner_service_offerings_duration_range | ("min_duration_minutes" > 0 AND "min_duration_minutes" <= "max_duration_minutes" AND "max_duration_minutes" <= 720)
   CHECK_SQL : ck_practitioner_service_offerings_buffers | (COALESCE("prep_minutes", 0) >= 0 AND COALESCE("cleanup_minutes", 0) >= 0)
 }
+' + v4.2.44 — facturación SIAT SIMULADA: ninguna fila puede dejar de declararse simulada, el
+' estado es de un conjunto cerrado y la bandeja de salida nunca envía nada de verdad.
+' Mismos nombres que el parche 2026-10-11_v4244 (las bases ya pobladas los tienen).
+entity siat_simulated_invoices <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_siat_simulated_invoices_simulated | "simulated" = true
+  CHECK_SQL : ck_siat_simulated_invoices_status | "status" IN ('VALIDATED','OBSERVED','REJECTED','ANNULLED')
+}
+entity siat_simulated_outbox <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_siat_simulated_outbox_status | "status" = 'NOT_SENT_SIMULATED'
+}
 entity identity_verification_attempts <<REFERENCE_ONLY>> {
   UK : case + endpoint + attempt number
   UK : endpoint + idempotency key
