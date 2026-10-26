@@ -78,6 +78,11 @@ CREATE TABLE IF NOT EXISTS "pharmacy"."pharmacy_products" (
     "cold_chain_required" boolean,
     "catalog_product_concept_id" uuid,
     "catalog_presentation_code" varchar,
+    "pharmacy_product_category_id" uuid,
+    "description_text" text,
+    "stock_quantity" integer,
+    "min_stock_quantity" integer,
+    "out_of_stock_declared" boolean NOT NULL DEFAULT false,
     "status_concept_id" uuid NOT NULL,
     "created_at" timestamptz NOT NULL,
     "updated_at" timestamptz NOT NULL,
@@ -85,6 +90,29 @@ CREATE TABLE IF NOT EXISTS "pharmacy"."pharmacy_products" (
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
     CONSTRAINT "pk_pharmacy_products" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "pharmacy"."pharmacy_product_categories" (
+    "id" uuid NOT NULL,
+    "pharmacy_id" uuid NOT NULL,
+    "name" varchar NOT NULL,
+    "name_key" varchar NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_pharmacy_product_categories" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "pharmacy"."pharmacy_product_images" (
+    "id" uuid NOT NULL,
+    "pharmacy_product_id" uuid NOT NULL,
+    "image_file_id" uuid NOT NULL,
+    "ordinal" integer NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    CONSTRAINT "pk_pharmacy_product_images" PRIMARY KEY ("id")
 );
 
 CREATE TABLE IF NOT EXISTS "pharmacy"."pharmacy_product_identifiers" (
