@@ -14,11 +14,19 @@ ALTER TABLE "billing"."siat_simulated_invoices" ADD CONSTRAINT "ck_siat_simulate
 ALTER TABLE "billing"."siat_simulated_invoices" DROP CONSTRAINT IF EXISTS "ck_siat_simulated_invoices_status";
 ALTER TABLE "billing"."siat_simulated_invoices" ADD CONSTRAINT "ck_siat_simulated_invoices_status" CHECK ("status" IN ('VALIDATED','OBSERVED','REJECTED','ANNULLED'));
 
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "billing"."siat_simulated_invoices" DROP CONSTRAINT IF EXISTS "ck_siat_simulated_invoices_siat_mode";
+ALTER TABLE "billing"."siat_simulated_invoices" ADD CONSTRAINT "ck_siat_simulated_invoices_siat_mode" CHECK ("siat_mode" IN ('simulated','real'));
+
 
 -- ═══ siat_simulated_outbox ═══
 -- CHECK concreto declarado por el modelo (CHECK_SQL).
 ALTER TABLE "billing"."siat_simulated_outbox" DROP CONSTRAINT IF EXISTS "ck_siat_simulated_outbox_status";
 ALTER TABLE "billing"."siat_simulated_outbox" ADD CONSTRAINT "ck_siat_simulated_outbox_status" CHECK ("status" = 'NOT_SENT_SIMULATED');
+
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "billing"."siat_simulated_outbox" DROP CONSTRAINT IF EXISTS "ck_siat_simulated_outbox_siat_mode";
+ALTER TABLE "billing"."siat_simulated_outbox" ADD CONSTRAINT "ck_siat_simulated_outbox_siat_mode" CHECK ("siat_mode" IN ('simulated','real'));
 
 
 -- ═══ quotations ═══
