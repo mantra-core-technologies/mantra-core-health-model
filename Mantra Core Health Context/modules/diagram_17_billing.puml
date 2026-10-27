@@ -272,10 +272,15 @@ end note
 ' auditoría son uuid SIN FK (la API nunca los declaró; agregarlas endurecería una base
 ' nueva respecto de las ya desplegadas).
 '
-' Defaults: el modelo no emite now() ni gen_random_uuid() ni literales (sólo row_version
-' y los booleanos DEFAULT_TRUE/FALSE). El servicio fija id, created_at, updated_at y
+' Defaults: el modelo no emite now() ni gen_random_uuid() ni literales no declarados (sólo
+' row_version, los booleanos DEFAULT_TRUE/FALSE y los textos DEFAULT_TEXT). El servicio fija id, created_at, updated_at y
 ' events/attachments de forma explícita; la base ya poblada conserva los defaults del parche.
 ' Clase de dato: to_email (outbox) es PII; la bandeja es simulada y no se envía.
+'
+' + v4.2.62 (2026-10-27) — siat_mode distingue la factura emitida contra el SIN real de la
+' simulada, en la factura y en su bandeja de salida. NOT NULL DEFAULT 'simulated'
+' (<<DEFAULT_TEXT:simulated>>): toda fila existente sigue siendo simulada. Los valores
+' admitidos los fija el CHECK del módulo 33. Mismo contrato que el parche 2026-10-27_v4262.
 entity siat_simulated_invoices {
   * id : uuid <<PK>>
   --
@@ -298,6 +303,7 @@ entity siat_simulated_invoices {
   * siat_response : jsonb
   * events : jsonb
   * simulated : boolean <<DEFAULT_TRUE>>
+  * siat_mode : varchar(12) <<DEFAULT_TEXT:simulated>>
   * created_at : timestamptz
   * updated_at : timestamptz
     created_by_user_id : uuid
@@ -312,6 +318,7 @@ entity siat_simulated_outbox {
   * to_email : varchar(320)
   * attachments : jsonb
   * status : varchar(24)
+  * siat_mode : varchar(12) <<DEFAULT_TEXT:simulated>>
   * queued_at : timestamptz
     created_by_user_id : uuid
 }
