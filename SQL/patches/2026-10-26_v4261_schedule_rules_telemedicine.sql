@@ -1,0 +1,21 @@
+-- v4.2.61 · scheduling.schedule_rules.telemedicine_enabled (2026-10-26)
+--
+-- Cada franja del horario de atención puede habilitar la telemedicina
+-- («los martes a la tarde atiendo por video, el resto en el consultorio»). Se
+-- declara por franja porque es una propiedad del rato, no del horario entero.
+--
+-- NOT NULL DEFAULT false: por defecto la telemedicina está apagada. Toda franja
+-- existente queda «sólo presencial», que es lo que era, y ninguna fila cambia de
+-- significado. `ADD COLUMN … DEFAULT <constante>` no reescribe la tabla en PG 11+.
+--
+-- La API exige que una cita directa con modalidad TELECONSULTA empiece dentro de
+-- una franja vigente con `telemedicine_enabled = true` (422
+-- TELEMEDICINE_NOT_ENABLED si no).
+--
+-- Canónico: `Mantra Core Health Context/modules/diagram_41_scheduling.puml`
+-- Generado: `SQL/41_scheduling/02_tables.sql` por `gen_ddl.py`
+--
+-- Idempotente. Reversible:
+--   ALTER TABLE "scheduling"."schedule_rules" DROP COLUMN IF EXISTS "telemedicine_enabled";
+ALTER TABLE "scheduling"."schedule_rules"
+    ADD COLUMN IF NOT EXISTS "telemedicine_enabled" boolean NOT NULL DEFAULT false;
