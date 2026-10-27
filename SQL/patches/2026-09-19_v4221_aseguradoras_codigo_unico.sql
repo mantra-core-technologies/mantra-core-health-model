@@ -164,9 +164,16 @@ BEGIN
   SELECT count(*) INTO v_viejas FROM insurance.insurance_carriers
    WHERE carrier_code IN (SELECT viejo FROM _v4221_mapa);
 
-  IF v_canonicas <> 17 THEN
-    RAISE EXCEPTION 'v4.2.21: se esperaban 17 aseguradoras canónicas y hay %', v_canonicas;
-  END IF;
+  -- Corregido 2026-10-27: acá se exigía que hubiera EXACTAMENTE 17 canónicas
+  -- (`BO_ASEG_*`). Pero el listado de aseguradoras lo mantiene el sembrador de
+  -- la API y crece con el negocio: el 2026-10-26 el catálogo ampliado dio de
+  -- alta `BO_ASEG_SEGUROS_PROVIDA_S_A`, hubo 18 y este patch, que se re-aplica
+  -- en cada despliegue, cortó con salida 3 todos los de la API en dev y test.
+  -- Cuántas canónicas hay no es asunto de este patch: se informa y no se
+  -- juzga. Si faltara la gemela canónica de una vieja, la vieja no se borra en
+  -- la sección B y la aserción de abajo revienta igual.
+  RAISE NOTICE 'v4.2.21: % aseguradoras canónicas (BO_ASEG_*)', v_canonicas;
+
   -- Lo que este patch promete es que no sobreviva NINGUNA de las nueve
   -- aseguradoras viejas del paquete (el duplicado real). Se verifica eso y
   -- nada más.
@@ -202,7 +209,7 @@ BEGIN
     RAISE EXCEPTION 'v4.2.21: % referencias a aseguradoras inexistentes', v_huerfanas;
   END IF;
 
-  RAISE NOTICE 'v4.2.21 OK · aseguradoras: % (canónicas 17, resto %)', v_total, v_total - 17;
+  RAISE NOTICE 'v4.2.21 OK · aseguradoras: % (canónicas %, resto %)', v_total, v_canonicas, v_total - v_canonicas;
 END $$;
 
 COMMIT;
