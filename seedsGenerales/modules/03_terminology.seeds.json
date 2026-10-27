@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "A governed engine for every coded value the platform uses (diagnoses, statuses, units, roles...) based on international standards (SNOMED, LOINC, ICD, ATC, UCUM) plus local catalogs. It makes the system multilingual, interoperable and future-proof: new values are added without software changes.",
-    "seed_revision": "2.8.0-v4.2.50"
+    "seed_revision": "2.8.1-v4.2.50"
   },
   "environment_policy": {
     "boot": {
@@ -53,7 +53,7 @@
       "value_set_members",
       "tenant_catalog_policies"
     ],
-    "record_count": 4533,
+    "record_count": 4538,
     "records": {
       "terminology_sources": [
         {
@@ -32123,6 +32123,61 @@
           "updated_at": "2026-08-12T23:44:00Z",
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "2f68ad79-452a-5cba-aa7f-96f8fa2610ab",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "HOSPITAL",
+          "display": "Hospital",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "420eddfc-a569-5b2e-b720-7d7de91cb874",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "CLINIC",
+          "display": "Clinic",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "1b191a91-244e-5965-8bc5-e6e07f1d0cb6",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "MEDICAL_OFFICE",
+          "display": "Medical office",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "11fbdf9e-2b4f-59af-8e6e-b05be58a33b3",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "NURSING",
+          "display": "Nursing facility",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "51966f39-c661-5926-914d-d30683f583ef",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "HEALTH_OTHER",
+          "display": "Other health institution",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
           "row_version": 1
         }
       ],
@@ -66937,7 +66992,7 @@
       }
     ],
     "summary": {
-      "record_count": 4533,
+      "record_count": 4538,
       "entity_count": 10,
       "populated_entity_count": 10,
       "scenario_count": null,

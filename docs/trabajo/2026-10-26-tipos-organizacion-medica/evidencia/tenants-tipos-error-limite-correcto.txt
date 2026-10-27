@@ -1,0 +1,114 @@
+BEGIN
+CREATE FUNCTION
+
+=== 0 · Catálogo: los cinco tipos institucionales existen con el id de la API ===
+                  id                  |      code      |         display          
+--------------------------------------+----------------+--------------------------
+ 420eddfc-a569-5b2e-b720-7d7de91cb874 | CLINIC         | Clinic
+ 51966f39-c661-5926-914d-d30683f583ef | HEALTH_OTHER   | Other health institution
+ 2f68ad79-452a-5cba-aa7f-96f8fa2610ab | HOSPITAL       | Hospital
+ 1b191a91-244e-5965-8bc5-e6e07f1d0cb6 | MEDICAL_OFFICE | Medical office
+ 11fbdf9e-2b4f-59af-8e6e-b05be58a33b3 | NURSING        | Nursing facility
+
+
+=== 1 · ERROR ===
+--- 1a · tenant_type_concept_id que no existe en el catálogo -> FK
+SAVEPOINT
+psql:tenants-tipos-error-limite-correcto.sql:37: ERROR:  insert or update on table "tenants" violates foreign key constraint "fk_tenants_tenant_type_concept_id"
+DETAIL:  Key (tenant_type_concept_id)=(00000000-0000-5000-8000-000000000000) is not present in table "catalog_concepts".
+ROLLBACK
+--- 1b · tenant_type_concept_id NULL -> NOT NULL
+SAVEPOINT
+psql:tenants-tipos-error-limite-correcto.sql:45: ERROR:  null value in column "tenant_type_concept_id" of relation "tenants" violates not-null constraint
+DETAIL:  Failing row contains (7878ec03-51a9-433d-b91c-3db4b3bdefc6, EVID_ERR_NULL_TYPE, null, Sin tipo, null, f13fb5a6-e3b9-5d5d-bf90-f551a17b40c0, 4d38ec64-227a-599d-8924-21424d9a8986, a6eb3028-c24e-5144-8565-3c70d03bfead, null, null, null, null, null, null, 2026-10-26 04:44:37.255703+00, 2026-10-26 04:44:37.255703+00, null, null, 1).
+ROLLBACK
+--- 1c · code NULL -> NOT NULL
+SAVEPOINT
+psql:tenants-tipos-error-limite-correcto.sql:53: ERROR:  null value in column "code" of relation "tenants" violates not-null constraint
+DETAIL:  Failing row contains (6a8adef1-b38b-460c-a409-25ece34ca481, null, 420eddfc-a569-5b2e-b720-7d7de91cb874, Sin código, null, f13fb5a6-e3b9-5d5d-bf90-f551a17b40c0, 4d38ec64-227a-599d-8924-21424d9a8986, a6eb3028-c24e-5144-8565-3c70d03bfead, null, null, null, null, null, null, 2026-10-26 04:44:37.255703+00, 2026-10-26 04:44:37.255703+00, null, null, 1).
+ROLLBACK
+--- 1d · legal_name NULL -> NOT NULL
+SAVEPOINT
+psql:tenants-tipos-error-limite-correcto.sql:61: ERROR:  null value in column "legal_name" of relation "tenants" violates not-null constraint
+DETAIL:  Failing row contains (cfde50f8-d27e-47da-b39f-3927ab190f3c, EVID_ERR_NULL_NAME, 420eddfc-a569-5b2e-b720-7d7de91cb874, null, null, f13fb5a6-e3b9-5d5d-bf90-f551a17b40c0, 4d38ec64-227a-599d-8924-21424d9a8986, a6eb3028-c24e-5144-8565-3c70d03bfead, null, null, null, null, null, null, 2026-10-26 04:44:37.255703+00, 2026-10-26 04:44:37.255703+00, null, null, 1).
+ROLLBACK
+--- 1e · un concepto que EXISTE pero no es tipo de tenant (state:active) -> la base lo ACEPTA (solo hay FK, no CHECK ni value set)
+SAVEPOINT
+        code        |        tenant_type_concept_id        
+--------------------+--------------------------------------
+ EVID_ERR_WRONG_SET | 38a1d301-f40d-5b17-a695-5e6d605f8b19
+
+INSERT 0 1
+ROLLBACK
+
+=== 2 · LÍMITE ===
+--- 2a · el .puml declara code y legal_name como varchar SIN largo: el tope de code lo pone el índice único btree (2704 B por entrada)
+ max_len | column_name 
+---------+-------------
+         | code
+         | legal_name
+         | trade_name
+
+--- 2b · code de 2692 caracteres (tope exacto) -> aceptado
+SAVEPOINT
+psql:tenants-tipos-error-limite-correcto.sql:87: NOTICE:  word is too long to be indexed
+DETAIL:  Words longer than 2047 characters are ignored.
+ code_len | code_bytes 
+----------+------------
+     2692 |       2692
+
+INSERT 0 1
+ROLLBACK
+--- 2c · code de 2693 caracteres (+1) -> rechazado por uq_tenants_code
+SAVEPOINT
+psql:tenants-tipos-error-limite-correcto.sql:95: ERROR:  index row size 2712 exceeds btree version 4 maximum 2704 for index "uq_tenants_code"
+DETAIL:  Index row references tuple (96,26) in relation "tenants".
+HINT:  Values larger than 1/3 of a buffer page cannot be indexed.
+Consider a function index of an MD5 hash of the value, or use full text indexing.
+ROLLBACK
+--- 2d · legal_name de 10000 caracteres -> aceptado (sin índice ni largo declarado)
+SAVEPOINT
+     code      | legal_name_len 
+---------------+----------------
+ EVID_LIM_NAME |          10000
+
+INSERT 0 1
+ROLLBACK
+--- 2e · code y legal_name vacíos ('') -> aceptados (no hay CHECK de longitud mínima)
+SAVEPOINT
+ code | legal_name 
+------+------------
+ ''   | ''
+
+INSERT 0 1
+ROLLBACK
+--- 2f · unicidad de code: el segundo EVID_DUP -> 23505; EVID_DUP vs evid_dup conviven (la unicidad distingue mayúsculas)
+SAVEPOINT
+   code   
+----------
+ EVID_DUP
+ evid_dup
+
+INSERT 0 2
+SAVEPOINT
+psql:tenants-tipos-error-limite-correcto.sql:126: ERROR:  duplicate key value violates unique constraint "uq_tenants_code"
+DETAIL:  Key (code)=(EVID_DUP) already exists.
+ROLLBACK
+
+=== 3 · CORRECTO · un tenant por cada tipo institucional, leído con el join al concepto ===
+INSERT 0 5
+      tenant_code       |      trade_name       |   type_code    |       type_display       |           type_concept_id            
+------------------------+-----------------------+----------------+--------------------------+--------------------------------------
+ EVID_OK_CLINIC         | Clínica Evidencia     | CLINIC         | Clinic                   | 420eddfc-a569-5b2e-b720-7d7de91cb874
+ EVID_OK_HEALTH_OTHER   | Otra Evidencia        | HEALTH_OTHER   | Other health institution | 51966f39-c661-5926-914d-d30683f583ef
+ EVID_OK_HOSPITAL       | Hospital Evidencia    | HOSPITAL       | Hospital                 | 2f68ad79-452a-5cba-aa7f-96f8fa2610ab
+ EVID_OK_MEDICAL_OFFICE | Consultorio Evidencia | MEDICAL_OFFICE | Medical office           | 1b191a91-244e-5965-8bc5-e6e07f1d0cb6
+ EVID_OK_NURSING        | Enfermería Evidencia  | NURSING        | Nursing facility         | 11fbdf9e-2b4f-59af-8e6e-b05be58a33b3
+
+ROLLBACK
+
+=== Después del ROLLBACK: no quedó nada ===
+ evid_rows_left 
+----------------
+              0
+

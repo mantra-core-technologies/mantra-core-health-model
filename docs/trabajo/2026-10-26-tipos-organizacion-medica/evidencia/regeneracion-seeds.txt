@@ -1,0 +1,14 @@
+[1] value sets  · 0 value sets · 0 conceptos · 0 miembros · 0 enums dinámicos · 0 bindings
+[1c] catálogos M7 · 5 value sets · 0 miembros · 0 enums · 0 bindings · 0 países ISO 3166-1
+[1b] puente backend · 5 filas espejadas (5 conceptos)
+[1b] canales/proveedores legacy · 0 fila(s) retiradas · 0 referencias repuntadas al id del backend
+[1b] roles del paquete · 0 estados alineados al ACTIVE del backend
+[2] tablas nuevas · 11 entidades pobladas · 104 filas
+      system_ops.data_classifications                     9
+      diagnostic_units.diagnostic_units                   6
+...
+[5] metadatos · source_model_version=4.0.9 · seed_revision=2.8.1-v4.2.50
+
+escrito: 64 módulos · boot 83624 · mock 19472 · checksums 65
+--- segunda pasada (idempotencia) ---
+[1b] puente backend · 0 filas espejadas (0 conceptos)
