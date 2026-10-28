@@ -6,7 +6,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 |-----|--------|-----------|----|-------------|---------|----------|
 | 00 | platform _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
 | 01 | iam | 14 | 75 | 13 | 65 | 0 |
-| 02 | common | 7 | 48 | 0 | 54 | 0 |
+| 02 | common | 7 | 49 | 0 | 55 | 0 |
 | 03 | terminology | 16 | 80 | 0 | 103 | 0 |
 | 04 | directory | 7 | 59 | 4 | 55 | 0 |
 | 05 | profiles | 19 | 130 | 5 | 139 | 0 |
