@@ -1,4 +1,4 @@
--- 2026-10-28 · v4267 · Consentimiento informado dirigido y derivación a servicios específicos.
+-- 2026-10-28 · v4266 · Consentimiento informado dirigido y derivación a servicios específicos.
 --
 -- consent.treatment_informed_consents deja de estar atado sólo a encounter_id +
 -- procedure_code_concept_id: se DIRIGE a un objeto clínico (target_type/target_id/target_label:
@@ -10,14 +10,16 @@
 -- idioma de la información, la constancia del derecho a revocar, las excepciones legales (y
 -- cuándo se informó a posteriori tras una urgencia) y el motivo de revocación.
 --
--- clinical_ext.referrals suma el tipo de derivación, el destino específico (sede de la
+-- clinical_ext.referrals suma el destino específico (sede de la
 -- plataforma → directory.branches, o doctor/organización externa), el servicio pedido, el
 -- contenido mínimo de la hoja de referencia, el consentimiento que la cubre
 -- (→ consent.treatment_informed_consents) y el cierre del circuito (rechazo, contrarreferencia).
 --
 -- Todas las columnas son NULLABLE: las filas existentes siguen siendo válidas. Las
 -- enumeraciones son varchar + CHECK (un NULL pasa el CHECK). Mismos nombres que el modelo
--- (diagram_07, diagram_18 y diagram_33 v4.2.67). Idempotente: se puede aplicar N veces.
+-- (diagram_07, diagram_18 y diagram_33 v4.2.63), salvo el tipo de derivación de referrals: va en
+-- referral_type_concept_id (patch v4265), no en una columna varchar aparte. Idempotente: se puede
+-- aplicar N veces.
 
 -- ─── consent.treatment_informed_consents ────────────────────────────────────────────────
 
@@ -84,7 +86,6 @@ CREATE INDEX IF NOT EXISTS "ix_treatment_informed_consents_patient_target"
 -- ─── clinical_ext.referrals ─────────────────────────────────────────────────────────────
 
 ALTER TABLE "clinical_ext"."referrals"
-    ADD COLUMN IF NOT EXISTS "referral_type" varchar(24),
     ADD COLUMN IF NOT EXISTS "target_branch_id" uuid,
     ADD COLUMN IF NOT EXISTS "target_external_name" varchar(200),
     ADD COLUMN IF NOT EXISTS "target_external_contact" varchar(200),
@@ -97,12 +98,6 @@ ALTER TABLE "clinical_ext"."referrals"
     ADD COLUMN IF NOT EXISTS "reject_reason" text,
     ADD COLUMN IF NOT EXISTS "counter_referral_text" text,
     ADD COLUMN IF NOT EXISTS "counter_referral_at" timestamptz;
-
-DO $$ BEGIN
-    ALTER TABLE "clinical_ext"."referrals"
-        ADD CONSTRAINT "ck_referrals_referral_type"
-        CHECK ("referral_type" IN ('CONSULTATION','TREATMENT','PROCEDURE','DIAGNOSTIC','THERAPY','HOSPITALIZATION','OTHER'));
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "clinical_ext"."referrals"
@@ -121,9 +116,6 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_referrals_informed_consent_id" FOREIGN KEY ("informed_consent_id")
         REFERENCES "consent"."treatment_informed_consents" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
-CREATE INDEX IF NOT EXISTS "ix_referrals_patient_type"
-    ON "clinical_ext"."referrals" ("patient_profile_id", "referral_type");
 
 CREATE INDEX IF NOT EXISTS "ix_referrals_target_branch"
     ON "clinical_ext"."referrals" ("target_branch_id");

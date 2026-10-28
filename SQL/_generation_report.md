@@ -22,7 +22,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 15 | chart | 11 | 71 | 0 | 81 | 2 |
 | 16 | accounting | 45 | 316 | 1 | 369 | 15 |
 | 17 | billing | 24 | 156 | 0 | 174 | 21 |
-| 18 | clinical_ext | 14 | 98 | 5 | 111 | 3 |
+| 18 | clinical_ext | 14 | 100 | 6 | 112 | 4 |
 | 19 | community | 41 | 254 | 4 | 268 | 9 |
 | 20 | diagnostics | 36 | 251 | 0 | 301 | 0 |
 | 21 | deployment _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
@@ -37,7 +37,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 30 | read_models | 13 | 74 | 0 | 89 | 76 |
 | 31 | integration_contracts | 9 | 48 | 1 | 57 | 0 |
 | 32 | workflow | 8 | 49 | 0 | 55 | 9 |
-| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 49 |
+| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 48 |
 | 34 | portal_catalog _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
 | 35 | messaging | 22 | 142 | 0 | 150 | 0 |
 | 36 | qa_lab | 13 | 79 | 0 | 92 | 0 |
@@ -74,7 +74,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 67 | data_catalog | 13 | 43 | 23 | 24 | 0 |
 | 68 | qa_execution | 4 | 14 | 6 | 6 | 0 |
 | 69 | pharma_lab | 31 | 182 | 173 | 182 | 1 |
-| **Σ** | **70** | **1260** | | **414** | | **362** |
+| **Σ** | **70** | **1260** | | **415** | | **362** |
 
 ## Detalle de entidades saltadas y avisos
 
@@ -161,6 +161,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - `directory_branches` — stub de cruce (tabla real en su módulo dueño)
 - `consent_treatment_informed_consents` — stub de cruce (tabla real en su módulo dueño)
 - `vital_signs_view` — vista (sin SELECT en el .puml)
+- `billing_service_catalog` — stub de cruce (tabla real en su módulo dueño)
 
 ### 19 · community
 - `profiles_patient_profiles` — stub de cruce (tabla real en su módulo dueño)
@@ -325,7 +326,6 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - `scheduling_booking_policies` — stub de cruce (tabla real en su módulo dueño)
 - `insurance_insurance_products` — stub de cruce (tabla real en su módulo dueño)
 - `consent_treatment_informed_consents` — stub de cruce (tabla real en su módulo dueño)
-- `clinical_ext_referrals` — stub de cruce (tabla real en su módulo dueño)
 - `delegated_access_shared_access_link_uses` — stub de cruce (tabla real en su módulo dueño)
 
 ### 35 · messaging

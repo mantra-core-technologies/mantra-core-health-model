@@ -117,7 +117,7 @@ entity hipaa_authorizations <<VERSIONED>> {
   * row_version : integer
 }
 
-' + v4.2.67 (2026-10-28) — consentimiento informado DIRIGIDO. Se consiente a un objeto
+' + v4.2.66 (2026-10-28) — consentimiento informado DIRIGIDO. Se consiente a un objeto
 ' clínico concreto: receta (MEDICATION_REQUEST), orden de estudio/servicio (SERVICE_REQUEST),
 ' derivación (REFERRAL), procedimiento (PROCEDURE) o plan de cuidados (CARE_PLAN).
 ' target_type/target_id es polimórfico y SIN FK (como subject_type/subject_id): lo valida la API
@@ -137,7 +137,7 @@ entity hipaa_authorizations <<VERSIONED>> {
 ' el derecho a revocar; post_emergency_informed_at fecha la información a posteriori tras una
 ' excepción EMERGENCY. Los booleanos NO llevan default: NULL significa «no registrado».
 ' Los valores admitidos los fijan los CHECK del módulo 33. Mismo contrato que el parche
-' 2026-10-28_v4267.
+' 2026-10-28_v4266.
 entity treatment_informed_consents <<VERSIONED>> {
   * id : uuid <<PK>>
   --

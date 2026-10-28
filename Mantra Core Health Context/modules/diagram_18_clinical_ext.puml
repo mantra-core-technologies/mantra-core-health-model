@@ -49,17 +49,16 @@ entity care_team_members {
   * row_version : integer
 }
 
-' + v4.2.67 (2026-10-28) — derivación a un SERVICIO ESPECÍFICO. referral_type clasifica la
-' derivación (consulta/atención, tratamiento, procedimiento, orden diagnóstica, terapia,
-' internación, otro). El destino puede ser un profesional (target_profile_id), una organización
+' + v4.2.66 (2026-10-28) — derivación a un SERVICIO ESPECÍFICO. El tipo de derivación va en
+' referral_type_concept_id (v4.2.65), no en una columna varchar aparte. El destino puede ser un profesional (target_profile_id), una organización
 ' de la plataforma (target_tenant_id), una sede concreta (target_branch_id → directory.branches) o
 ' un doctor/organización FUERA de la plataforma (target_external_name/_contact). Al menos uno lo
 ' exige la API, no un CHECK: las filas legadas no lo cumplen. requested_service_* nombra el
 ' servicio pedido; diagnosis_text, clinical_summary y treatment_given_text son el contenido mínimo
 ' de la hoja de referencia; informed_consent_id → consent.treatment_informed_consents enlaza el
 ' consentimiento dirigido a esta derivación; reject_reason y counter_referral_* cierran el
-' circuito referencia/contrarreferencia. Todas NULLABLE. Los valores de referral_type los fija
-' el CHECK del módulo 33. Mismo contrato que el parche 2026-10-28_v4267.
+' circuito referencia/contrarreferencia. Todas NULLABLE. Mismo contrato que el parche
+' 2026-10-28_v4266.
 entity referrals {
   * id : uuid <<PK>>
   --
@@ -74,9 +73,10 @@ entity referrals {
     reason_text : text
     priority_concept_id : uuid <<FK>>
   * status_concept_id : uuid <<FK>>
+    referral_type_concept_id : uuid <<FK>>
+    target_service_catalog_id : uuid <<FK>>
     valid_until : date
     responded_at : timestamptz
-    referral_type : varchar(24)
     target_branch_id : uuid <<FK>>
     target_external_name : varchar(200)
     target_external_contact : varchar(200)
@@ -96,7 +96,7 @@ entity referrals {
   * row_version : integer
 }
 
-' Destinos canónicos de las FK de derivación agregadas en v4.2.67, declarados en su módulo dueño.
+' Destinos canónicos de las FK de derivación agregadas en v4.2.66, declarados en su módulo dueño.
 entity "directory.branches" as directory_branches <<REFERENCE_ONLY>> {
   * id : uuid <<PK>>
 }
@@ -377,6 +377,11 @@ entity vital_signs_view <<VIEW>> {
 
 
 
+entity "billing.service_catalog" as billing_service_catalog <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+referrals }o--o| billing_service_catalog : target_service_catalog_id
 cds_rules ||--o{ clinical_alerts
 cds_rules ||--o{ cds_rule_versions
 order_sets ||--o{ order_set_items
@@ -434,10 +439,11 @@ entity "INDEXES · referrals" as idxset_referrals <<INDEX_SET>> {
   IX ix_referrals_reason_concept_id : (reason_concept_id) BTREE
   IX ix_referrals_priority_concept_id : (priority_concept_id) BTREE
   IX ix_referrals_status_concept_id : (status_concept_id) BTREE
+  IX ix_referrals_referral_type_concept_id : (referral_type_concept_id) BTREE
+  IX ix_referrals_target_service_catalog_id : (target_service_catalog_id) BTREE
   IX ix_referrals_created_by_user_id : (created_by_user_id) BTREE
   IX ix_referrals_updated_by_user_id : (updated_by_user_id) BTREE
   IX ix_referrals_patient_profile_id_updated_at : (patient_profile_id, updated_at DESC) BTREE
-  IX ix_referrals_patient_type : (patient_profile_id, referral_type) BTREE
   IX ix_referrals_target_branch : (target_branch_id) BTREE
   IX ix_referrals_requested_service_concept_id : (requested_service_concept_id) BTREE
   IX ix_referrals_informed_consent_id : (informed_consent_id) BTREE

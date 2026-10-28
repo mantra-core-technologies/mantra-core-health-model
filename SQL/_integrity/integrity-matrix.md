@@ -62,7 +62,6 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 | Tabla | Estereotipo | Reglas declaradas |
 |-------|-------------|-------------------|
 | `clinical_ext.cds_rule_versions` | `REFERENCE_ONLY` | **UPDATE** forbidden; **CHECK_SQL** ck_cds_rule_versions_number \| "version_number" >= 1 |
-| `clinical_ext.referrals` | `REFERENCE_ONLY` | **CHECK_SQL** ck_referrals_referral_type \| "referral_type" IN ('CONSULTATION','TREATMENT','PROCEDURE','DIAGNOSTIC','THERAPY','HOSPITALIZATION','OTHER') |
 
 ### Módulo 07 · `consent`
 

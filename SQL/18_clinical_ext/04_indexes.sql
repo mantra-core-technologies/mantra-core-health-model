@@ -54,13 +54,16 @@ CREATE INDEX IF NOT EXISTS "ix_referrals_priority_concept_id" ON "clinical_ext".
 
 CREATE INDEX IF NOT EXISTS "ix_referrals_status_concept_id" ON "clinical_ext"."referrals" ("status_concept_id");
 
+CREATE INDEX IF NOT EXISTS "ix_referrals_referral_type_concept_id" ON "clinical_ext"."referrals" ("referral_type_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_referrals_target_service_catalog_id" ON "clinical_ext"."referrals" ("target_service_catalog_id");
+
 CREATE INDEX IF NOT EXISTS "ix_referrals_created_by_user_id" ON "clinical_ext"."referrals" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_referrals_updated_by_user_id" ON "clinical_ext"."referrals" ("updated_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_referrals_patient_profile_id_updated_at" ON "clinical_ext"."referrals" ("patient_profile_id", "updated_at" DESC);
 
-CREATE INDEX IF NOT EXISTS "ix_referrals_patient_type" ON "clinical_ext"."referrals" ("patient_profile_id", "referral_type");
 
 CREATE INDEX IF NOT EXISTS "ix_referrals_target_branch" ON "clinical_ext"."referrals" ("target_branch_id");
 

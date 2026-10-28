@@ -16,9 +16,3 @@ REVOKE UPDATE ON "clinical_ext"."cds_rule_versions" FROM PUBLIC;
 DROP TRIGGER IF EXISTS trg_forbid_update ON "clinical_ext"."cds_rule_versions";
 CREATE TRIGGER trg_forbid_update BEFORE UPDATE ON "clinical_ext"."cds_rule_versions"
     FOR EACH ROW EXECUTE FUNCTION "integrity"."forbid_mutation"();
-
-
--- ═══ referrals ═══
--- CHECK concreto declarado por el modelo (CHECK_SQL).
-ALTER TABLE "clinical_ext"."referrals" DROP CONSTRAINT IF EXISTS "ck_referrals_referral_type";
-ALTER TABLE "clinical_ext"."referrals" ADD CONSTRAINT "ck_referrals_referral_type" CHECK ("referral_type" IN ('CONSULTATION','TREATMENT','PROCEDURE','DIAGNOSTIC','THERAPY','HOSPITALIZATION','OTHER'));

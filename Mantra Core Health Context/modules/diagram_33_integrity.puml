@@ -288,17 +288,14 @@ entity "insurance.insurance_products" as insurance_insurance_products <<REFERENC
   CHECK_SQL : ck_insurance_products_age_range | (COALESCE("min_age_years", 0) >= 0 AND ("max_age_years" IS NULL OR "max_age_years" >= COALESCE("min_age_years", 0)))
   CHECK_SQL : ck_insurance_products_valid_period | ("effective_from" IS NULL OR "effective_to" IS NULL OR "effective_from" <= "effective_to")
 }
-' + v4.2.67 — consentimiento informado dirigido y derivación a servicios específicos: las
-' enumeraciones son varchar + CHECK (como siat_mode). Un NULL pasa el CHECK: filas legadas
-' válidas. Mismos nombres que el parche 2026-10-28_v4267.
+' + v4.2.66 — consentimiento informado dirigido: las enumeraciones son varchar + CHECK
+' (como siat_mode). Un NULL pasa el CHECK: filas legadas
+' válidas. Mismos nombres que el parche 2026-10-28_v4266.
 entity "consent.treatment_informed_consents" as consent_treatment_informed_consents <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_treatment_informed_consents_target_type | "target_type" IN ('MEDICATION_REQUEST','SERVICE_REQUEST','REFERRAL','PROCEDURE','CARE_PLAN')
   CHECK_SQL : ck_treatment_informed_consents_granted_by | "granted_by" IN ('PATIENT','LEGAL_REPRESENTATIVE','GUARDIAN','SUBSTITUTE_RELATIVE')
   CHECK_SQL : ck_treatment_informed_consents_channel | "channel" IN ('IN_PERSON','TELEHEALTH')
   CHECK_SQL : ck_treatment_informed_consents_exception_type | "exception_type" IN ('EMERGENCY','PUBLIC_HEALTH_RISK','PATIENT_WAIVER')
-}
-entity "clinical_ext.referrals" as clinical_ext_referrals <<REFERENCE_ONLY>> {
-  CHECK_SQL : ck_referrals_referral_type | "referral_type" IN ('CONSULTATION','TREATMENT','PROCEDURE','DIAGNOSTIC','THERAPY','HOSPITALIZATION','OTHER')
 }
 entity "delegated_access.shared_access_link_uses" as delegated_access_shared_access_link_uses <<LOG, REFERENCE_ONLY>> {
   ' A-12: el rastro de uso de un token compartido no se reescribe (UPDATE prohibido, DELETE libre para la retencion).
