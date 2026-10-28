@@ -337,7 +337,7 @@ entity patient_portal_proxies {
 }
 
 note as PRIMARY_PRACTITIONER_diagram_05_profiles
-  PRIMARY PRACTITIONER (medico de cabecera, v4.2.64)
+  PRIMARY PRACTITIONER (medico de cabecera, v4.2.65)
   The patient chooses, by themselves, ONE practitioner as their primary
   (personal) physician. A choice is a period: valid_from opens it, valid_to
   closes it when the patient changes or removes it. Nothing is deleted, so
@@ -432,7 +432,7 @@ patient_profiles ||--o{ patient_merge_events : survivor
 patient_profiles ||--o{ related_persons
 persons ||--o{ related_persons
 patient_profiles ||--o{ patient_portal_proxies
-' v4.2.64: medico de cabecera. Aristas etiquetadas para que las dos FK no
+' v4.2.65: medico de cabecera. Aristas etiquetadas para que las dos FK no
 ' dependan de la convencion de nombres (`practitioner_profile_id` no resuelve
 ' sola en este modulo).
 patient_primary_practitioners }o--|| patient_profiles : patient_profile_id

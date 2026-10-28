@@ -1,12 +1,12 @@
 -- ============================================================================
--- SALUD · patch v4.2.64 (profiles · médico de cabecera) sobre BD viva
+-- SALUD · patch v4.2.65 (profiles · médico de cabecera) sobre BD viva
 -- Fecha: 2026-10-28
 -- Idempotente (CREATE TABLE / INDEX IF NOT EXISTS, FKs con duplicate_object).
 -- UNA sola pasada. Sin backfill — ver más abajo.
 --
 -- Contexto: gen_ddl.py ya emite esta tabla, sus FKs y sus índices en
 -- SQL/05_profiles/ desde que el .puml la declara (diagram_05_profiles.puml,
--- v4.2.64), así que en un rebuild desde cero este patch NO hace falta. Existe
+-- v4.2.65), así que en un rebuild desde cero este patch NO hace falta. Existe
 -- para una base ya aplicada y poblada. gen_apply.py no escanea SQL/patches/.
 --
 -- QUÉ AGREGA. Pedido del 28/10/2026: el paciente elige, con un botón, a UN
