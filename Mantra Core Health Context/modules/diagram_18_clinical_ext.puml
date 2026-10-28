@@ -63,6 +63,8 @@ entity referrals {
     reason_text : text
     priority_concept_id : uuid <<FK>>
   * status_concept_id : uuid <<FK>>
+    referral_type_concept_id : uuid <<FK>>
+    target_service_catalog_id : uuid <<FK>>
     valid_until : date
     responded_at : timestamptz
   * created_at : timestamptz
@@ -343,6 +345,11 @@ entity vital_signs_view <<VIEW>> {
 
 
 
+entity "billing.service_catalog" as billing_service_catalog <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+referrals }o--o| billing_service_catalog : target_service_catalog_id
 cds_rules ||--o{ clinical_alerts
 cds_rules ||--o{ cds_rule_versions
 order_sets ||--o{ order_set_items
@@ -400,6 +407,8 @@ entity "INDEXES · referrals" as idxset_referrals <<INDEX_SET>> {
   IX ix_referrals_reason_concept_id : (reason_concept_id) BTREE
   IX ix_referrals_priority_concept_id : (priority_concept_id) BTREE
   IX ix_referrals_status_concept_id : (status_concept_id) BTREE
+  IX ix_referrals_referral_type_concept_id : (referral_type_concept_id) BTREE
+  IX ix_referrals_target_service_catalog_id : (target_service_catalog_id) BTREE
   IX ix_referrals_created_by_user_id : (created_by_user_id) BTREE
   IX ix_referrals_updated_by_user_id : (updated_by_user_id) BTREE
   IX ix_referrals_patient_profile_id_updated_at : (patient_profile_id, updated_at DESC) BTREE

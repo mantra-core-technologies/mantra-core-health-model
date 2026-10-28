@@ -163,6 +163,20 @@ DO $$ BEGIN
         REFERENCES "terminology"."catalog_concepts" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "clinical_ext"."referrals"
+        ADD CONSTRAINT "fk_referrals_referral_type_concept_id" FOREIGN KEY ("referral_type_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: billing.service_catalog (requiere schema billing)
+DO $$ BEGIN
+    ALTER TABLE "clinical_ext"."referrals"
+        ADD CONSTRAINT "fk_referrals_target_service_catalog_id" FOREIGN KEY ("target_service_catalog_id")
+        REFERENCES "billing"."service_catalog" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "clinical_ext"."referrals"
