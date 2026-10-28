@@ -252,6 +252,11 @@ entity "PAY EXTRAS · pay_ledger" as pay_extras_pay_ledger <<PAY_EXTRAS>> {
   CHECK_SQL ledger_statement_lines : ledger_statement_lines_mode_check | mode IN ('test', 'live')
   CHECK_SQL ledger_statement_lines : ledger_statement_lines_direction_check | direction IN ('debit', 'credit')
   CHECK_SQL ledger_statement_lines : ledger_statement_lines_amount_minor_check | amount_minor > 0
+  ' Las dos cuentas de una retención deben existir en ledger_accounts, como las de una pata (revisión de seguridad 2026-10-28). Compatible con el
+  ' servicio: hold.service.ts#createHold llama a AccountRegistry.register(client, mode, [debit, credit]) DENTRO de la misma transacción y ANTES de
+  ' cualquiera de los dos INSERT INTO ledger_holds (el aceptado y el rechazado); ningún otro código escribe en ledger_holds.
+  FK_SQL ledger_holds : ledger_holds_debit_account_fkey | (mode, debit_account) -> ledger_accounts (mode, account)
+  FK_SQL ledger_holds : ledger_holds_credit_account_fkey | (mode, credit_account) -> ledger_accounts (mode, account)
   FK_SQL ledger_statement_lines : ledger_statement_lines_account_fkey | (mode, account) -> ledger_accounts (mode, account)
   DEFAULT ledger_holds.created_at : now()
   CHECK_SQL ledger_holds : ledger_holds_mode_check | mode IN ('test', 'live')

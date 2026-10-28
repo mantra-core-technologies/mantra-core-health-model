@@ -88,6 +88,21 @@ DO $$ BEGIN
         REFERENCES "ledger_accounts" ("mode", "account");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- Las dos cuentas de una retención deben existir en ledger_accounts, como las de una pata (revisión de seguridad 2026-10-28). Compatible con el
+-- servicio: hold.service.ts#createHold llama a AccountRegistry.register(client, mode, [debit, credit]) DENTRO de la misma transacción y ANTES de
+-- cualquiera de los dos INSERT INTO ledger_holds (el aceptado y el rechazado); ningún otro código escribe en ledger_holds.
+DO $$ BEGIN
+    ALTER TABLE "ledger_holds"
+        ADD CONSTRAINT "ledger_holds_debit_account_fkey" FOREIGN KEY ("mode", "debit_account")
+        REFERENCES "ledger_accounts" ("mode", "account");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "ledger_holds"
+        ADD CONSTRAINT "ledger_holds_credit_account_fkey" FOREIGN KEY ("mode", "credit_account")
+        REFERENCES "ledger_accounts" ("mode", "account");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 DO $$ BEGIN
     ALTER TABLE "ledger_statement_lines"
         ADD CONSTRAINT "ledger_statement_lines_account_fkey" FOREIGN KEY ("mode", "account")

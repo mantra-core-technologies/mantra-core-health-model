@@ -414,6 +414,32 @@ entity "PAY EXTRAS · pay_connectors" as pay_extras_pay_connectors <<PAY_EXTRAS>
   |   RETURN NEW;
   | END;
   | $$ LANGUAGE plpgsql
+  ' connector_charges (revisión de seguridad 2026-10-28): `send_claims` solo crece (charges.service.ts lo incrementa y nada lo baja), así que se
+  ' protege igual que en transfers/refunds. Esta tabla NO tiene `may_have_reached_provider`: su equivalente es `ambiguous`, y `ambiguous` true -> false
+  ' es una transición LEGÍTIMA y NO se restringe: lo baja un callback o una consulta autoritativa que resuelve el cobro (apply.ts: `ambiguous = false`
+  ' al aplicar un estado confirmado por el proveedor) o un `Unavailable` cuando NADIE reclamó después (charges.service.ts: `SET ambiguous = false ...
+  ' WHERE send_claims = mine`). Hacerlo monótono dejaría todo cobro ambiguo ambiguo para siempre y bloquearía su resolución.
+  FUNCTION connector_charges_send_claims_monotone
+  | CREATE OR REPLACE FUNCTION connector_charges_send_claims_monotone() RETURNS trigger AS $$
+  | BEGIN
+  |   IF NEW.send_claims < OLD.send_claims THEN
+  |     RAISE EXCEPTION 'send_claims es monotono: no puede disminuir' USING ERRCODE = 'check_violation';
+  |   END IF;
+  |   RETURN NEW;
+  | END;
+  | $$ LANGUAGE plpgsql
+  ' TRUNCATE: los tres registros de dinero (cobros, reembolsos, transferencias) son de solo-agregar (CLAUDE.md regla 11); un TRUNCATE no pasa por los
+  ' triggers de fila. No existía ningún guardián de TRUNCATE en pay_connectors.
+  FUNCTION forbid_mutation
+  | CREATE OR REPLACE FUNCTION forbid_mutation() RETURNS trigger LANGUAGE plpgsql AS $$
+  | BEGIN
+  |   RAISE EXCEPTION 'la tabla % es inmutable (%)', TG_TABLE_NAME, TG_OP USING ERRCODE = 'integrity_constraint_violation';
+  | END;
+  | $$
+  TRIGGER connector_charges_monotone_trg : BEFORE UPDATE ON connector_charges FOR EACH ROW EXECUTE FUNCTION connector_charges_send_claims_monotone()
+  TRIGGER connector_charges_no_truncate : BEFORE TRUNCATE ON connector_charges FOR EACH STATEMENT EXECUTE FUNCTION forbid_mutation()
+  TRIGGER connector_transfers_no_truncate : BEFORE TRUNCATE ON connector_transfers FOR EACH STATEMENT EXECUTE FUNCTION forbid_mutation()
+  TRIGGER connector_refunds_no_truncate : BEFORE TRUNCATE ON connector_refunds FOR EACH STATEMENT EXECUTE FUNCTION forbid_mutation()
   TRIGGER connector_transfers_monotone_trg : BEFORE UPDATE ON connector_transfers FOR EACH ROW EXECUTE FUNCTION connector_money_flags_monotone()
   TRIGGER connector_refunds_monotone_trg : BEFORE UPDATE ON connector_refunds FOR EACH ROW EXECUTE FUNCTION connector_money_flags_monotone()
 }

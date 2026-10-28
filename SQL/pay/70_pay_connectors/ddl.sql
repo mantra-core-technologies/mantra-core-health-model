@@ -267,6 +267,28 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- connector_charges (revisión de seguridad 2026-10-28): `send_claims` solo crece (charges.service.ts lo incrementa y nada lo baja), así que se
+-- protege igual que en transfers/refunds. Esta tabla NO tiene `may_have_reached_provider`: su equivalente es `ambiguous`, y `ambiguous` true -> false
+-- es una transición LEGÍTIMA y NO se restringe: lo baja un callback o una consulta autoritativa que resuelve el cobro (apply.ts: `ambiguous = false`
+-- al aplicar un estado confirmado por el proveedor) o un `Unavailable` cuando NADIE reclamó después (charges.service.ts: `SET ambiguous = false ...
+-- WHERE send_claims = mine`). Hacerlo monótono dejaría todo cobro ambiguo ambiguo para siempre y bloquearía su resolución.
+CREATE OR REPLACE FUNCTION connector_charges_send_claims_monotone() RETURNS trigger AS $$
+BEGIN
+  IF NEW.send_claims < OLD.send_claims THEN
+    RAISE EXCEPTION 'send_claims es monotono: no puede disminuir' USING ERRCODE = 'check_violation';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- TRUNCATE: los tres registros de dinero (cobros, reembolsos, transferencias) son de solo-agregar (CLAUDE.md regla 11); un TRUNCATE no pasa por los
+-- triggers de fila. No existía ningún guardián de TRUNCATE en pay_connectors.
+CREATE OR REPLACE FUNCTION forbid_mutation() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  RAISE EXCEPTION 'la tabla % es inmutable (%)', TG_TABLE_NAME, TG_OP USING ERRCODE = 'integrity_constraint_violation';
+END;
+$$;
+
 ALTER TABLE "connector_charges" DROP CONSTRAINT IF EXISTS "connector_charges_id_check";
 ALTER TABLE "connector_charges" ADD CONSTRAINT "connector_charges_id_check" CHECK (id ~ '^ch_[a-z0-9]{10,40}$');
 
@@ -403,6 +425,18 @@ ALTER TABLE "connector_transfers" ADD CONSTRAINT "connector_transfers_mode_match
 
 ALTER TABLE "idempotency_keys" DROP CONSTRAINT IF EXISTS "idempotency_keys_state_check";
 ALTER TABLE "idempotency_keys" ADD CONSTRAINT "idempotency_keys_state_check" CHECK (state IN ('started', 'completed'));
+
+DROP TRIGGER IF EXISTS "connector_charges_monotone_trg" ON "connector_charges";
+CREATE TRIGGER connector_charges_monotone_trg BEFORE UPDATE ON connector_charges FOR EACH ROW EXECUTE FUNCTION connector_charges_send_claims_monotone();
+
+DROP TRIGGER IF EXISTS "connector_charges_no_truncate" ON "connector_charges";
+CREATE TRIGGER connector_charges_no_truncate BEFORE TRUNCATE ON connector_charges FOR EACH STATEMENT EXECUTE FUNCTION forbid_mutation();
+
+DROP TRIGGER IF EXISTS "connector_transfers_no_truncate" ON "connector_transfers";
+CREATE TRIGGER connector_transfers_no_truncate BEFORE TRUNCATE ON connector_transfers FOR EACH STATEMENT EXECUTE FUNCTION forbid_mutation();
+
+DROP TRIGGER IF EXISTS "connector_refunds_no_truncate" ON "connector_refunds";
+CREATE TRIGGER connector_refunds_no_truncate BEFORE TRUNCATE ON connector_refunds FOR EACH STATEMENT EXECUTE FUNCTION forbid_mutation();
 
 DROP TRIGGER IF EXISTS "connector_transfers_monotone_trg" ON "connector_transfers";
 CREATE TRIGGER connector_transfers_monotone_trg BEFORE UPDATE ON connector_transfers FOR EACH ROW EXECUTE FUNCTION connector_money_flags_monotone();
