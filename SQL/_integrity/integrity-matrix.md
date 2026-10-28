@@ -151,7 +151,7 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 |-------|-------------|-------------------|
 | `surveys.survey_templates` | `REFERENCE_ONLY` | **CHECK_SQL** ck_survey_templates_single_owner \| ("owner_practitioner_id" IS NOT NULL AND "owner_type_concept_id" IS NULL AND "owner_id" IS NULL) OR ("owner_practitioner_id" IS NULL AND "owner_type_concept_id" IS NOT NULL AND "owner_id" IS NOT NULL) |
 | `surveys.survey_versions` | `REFERENCE_ONLY` | **CHECK_SQL** ck_survey_versions_max_reminders \| ("max_reminders" IS NULL OR "max_reminders" >= 0) |
-| `surveys.survey_invitations` | `REFERENCE_ONLY` | **CHECK_SQL** ck_survey_invitations_anchor \| ("appointment_booking_id" IS NOT NULL OR "subject_id" IS NOT NULL) AND (("subject_type_concept_id" IS NULL) = ("subject_id" IS NULL)) |
+| `surveys.survey_invitations` | `REFERENCE_ONLY` | **CHECK_SQL** ck_survey_invitations_anchor \| ("appointment_booking_id" IS NOT NULL OR "subject_id" IS NOT NULL) AND (("subject_type_concept_id" IS NULL) = ("subject_id" IS NULL)); **CHECK_SQL** ck_survey_invitations_extension_distinct \| "extension_survey_version_id" IS NULL OR "extension_survey_version_id" <> "survey_version_id" |
 | `surveys.survey_invitation_reminders` | `REFERENCE_ONLY` | **CHECK_SQL** ck_survey_invitation_reminders_number \| "reminder_number" >= 1 |
 | `surveys.survey_answers` | `REFERENCE_ONLY` | **CHECK_SQL** ck_survey_answers_single_value \| num_nonnulls("value_text", "value_number", "value_boolean", "value_choices") = 1 |
 
