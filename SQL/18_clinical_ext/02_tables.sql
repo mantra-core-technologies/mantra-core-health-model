@@ -51,6 +51,8 @@ CREATE TABLE IF NOT EXISTS "clinical_ext"."referrals" (
     "reason_text" text,
     "priority_concept_id" uuid,
     "status_concept_id" uuid NOT NULL,
+    "referral_type_concept_id" uuid,
+    "target_service_catalog_id" uuid,
     "valid_until" date,
     "responded_at" timestamptz,
     "created_at" timestamptz NOT NULL,
