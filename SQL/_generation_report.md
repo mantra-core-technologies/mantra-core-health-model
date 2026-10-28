@@ -8,7 +8,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 01 | iam | 14 | 75 | 13 | 65 | 0 |
 | 02 | common | 7 | 48 | 0 | 54 | 0 |
 | 03 | terminology | 16 | 80 | 0 | 103 | 0 |
-| 04 | directory | 9 | 66 | 10 | 66 | 0 |
+| 04 | directory | 9 | 66 | 4 | 66 | 0 |
 | 05 | profiles | 19 | 130 | 5 | 139 | 0 |
 | 06 | authz | 15 | 100 | 15 | 90 | 0 |
 | 07 | consent | 10 | 81 | 0 | 101 | 0 |

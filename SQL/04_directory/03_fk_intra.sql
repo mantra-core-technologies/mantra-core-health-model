@@ -66,13 +66,13 @@ DO $$ BEGIN
     ALTER TABLE "directory"."tenant_medical_facilities"
         ADD CONSTRAINT "fk_tenant_medical_facilities_tenant_id" FOREIGN KEY ("tenant_id")
         REFERENCES "directory"."tenants" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "directory"."tenant_medical_facility_sites"
         ADD CONSTRAINT "fk_tenant_medical_facility_sites_tenant_id" FOREIGN KEY ("tenant_id")
         REFERENCES "directory"."tenants" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "directory"."tenant_medical_facility_sites"
