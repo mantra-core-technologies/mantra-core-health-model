@@ -1,5 +1,5 @@
 -- ============================================================================
--- SALUD · patch v4.2.65 (clinical_ext · derivación con tipo y servicio de destino) sobre BD viva
+-- SALUD · patch v4.2.66 (clinical_ext · derivación con tipo y servicio de destino) sobre BD viva
 -- Fecha: 2026-10-28 · pedido: derivar a un servicio específico de otro doctor u
 -- organización médica, indicando el tipo de derivación (tratamiento, consulta, …).
 -- Idempotente (ADD COLUMN IF NOT EXISTS / IF NOT EXISTS / duplicate_object). Sin backfill.
