@@ -58,6 +58,8 @@
 \ir 04_directory/03_fk_intra.sql
 \echo >>> 04_directory/04_indexes.sql
 \ir 04_directory/04_indexes.sql
+\echo >>> 04_directory/05_constraints.sql
+\ir 04_directory/05_constraints.sql
 
 -- ═══ módulo 05_profiles ═══
 \echo >>> 05_profiles/01_schema.sql

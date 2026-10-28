@@ -150,5 +150,22 @@ class ExplicitColumnTests(unittest.TestCase):
             gen_ddl.scoped_by({'SCOPED_BY:A', 'SCOPED_BY:B'})
 
 
+class ApplyAllCoversEveryPhaseFileTests(unittest.TestCase):
+    """`SQL/apply_all.sql` es un artefacto generado: un `05_constraints.sql` nuevo que
+    no se regenera deja sus CHECK sin aplicar en una base creada solo desde el runner."""
+
+    def test_apply_all_includes_every_existing_phase_file(self):
+        import gen_apply
+        sql_dir = gen_ddl.REPO / 'SQL'
+        runner = (sql_dir / 'apply_all.sql').read_text(encoding='utf-8')
+        listed = {line[len('\\ir '):].strip() for line in runner.splitlines() if line.startswith('\\ir ')}
+        missing = sorted(f'{module.name}/{phase}'
+                         for module in sql_dir.iterdir()
+                         if module.is_dir() and module.name[:2].isdigit() and module.name != '00_shared'
+                         for phase in gen_apply.PHASES
+                         if (module / phase).exists() and f'{module.name}/{phase}' not in listed)
+        self.assertEqual(missing, [], 'regenerá con: python salud-db/gen_apply.py')
+
+
 if __name__ == '__main__':
     unittest.main()
