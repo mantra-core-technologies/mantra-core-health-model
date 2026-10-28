@@ -88,6 +88,8 @@
 \ir 07_consent/03_fk_intra.sql
 \echo >>> 07_consent/04_indexes.sql
 \ir 07_consent/04_indexes.sql
+\echo >>> 07_consent/05_constraints.sql
+\ir 07_consent/05_constraints.sql
 
 -- ═══ módulo 08_clinical ═══
 \echo >>> 08_clinical/01_schema.sql
