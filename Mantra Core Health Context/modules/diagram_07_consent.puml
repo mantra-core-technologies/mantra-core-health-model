@@ -117,6 +117,27 @@ entity hipaa_authorizations <<VERSIONED>> {
   * row_version : integer
 }
 
+' + v4.2.63 (2026-10-28) — consentimiento informado DIRIGIDO. Se consiente a un objeto
+' clínico concreto: receta (MEDICATION_REQUEST), orden de estudio/servicio (SERVICE_REQUEST),
+' derivación (REFERRAL), procedimiento (PROCEDURE) o plan de cuidados (CARE_PLAN).
+' target_type/target_id es polimórfico y SIN FK (como subject_type/subject_id): lo valida la API
+' contra el tipo declarado. target_label congela lo consentido en lenguaje legible.
+' Los *_text recogen los elementos de la información debida (naturaleza y objetivo, beneficios,
+' riesgos frecuentes/graves y personalizados, alternativas, consecuencias de no aceptar,
+' preguntas del paciente). granted_by + representative_* cubren el consentimiento por
+' representación (menor, incapacidad). informed_by_profile_id es FK LÓGICA al profesional que
+' informa (sin constraint). exception_type + exception_justification registran las excepciones
+' legales (urgencia, riesgo para la salud pública, renuncia del paciente). withdrawal_reason
+' acompaña a withdrawn_at (revocación). Todas NULLABLE: las filas legadas siguen siendo válidas.
+' witness_name/witness_document registran un testigo que NO es usuario de la plataforma (p. ej.
+' un familiar); witness_user_id sigue cubriendo al testigo usuario. information_language es el
+' idioma en que se brindó la información (la API asume 'es' si no viene; sin default en la base).
+' assent_obtained/assent_notes recogen el asentimiento del menor o de la persona con discapacidad
+' cuando consiente un representante; revocation_right_informed deja constancia de que se informó
+' el derecho a revocar; post_emergency_informed_at fecha la información a posteriori tras una
+' excepción EMERGENCY. Los booleanos NO llevan default: NULL significa «no registrado».
+' Los valores admitidos los fijan los CHECK del módulo 33. Mismo contrato que el parche
+' 2026-10-28_v4263.
 entity treatment_informed_consents <<VERSIONED>> {
   * id : uuid <<PK>>
   --
@@ -131,6 +152,34 @@ entity treatment_informed_consents <<VERSIONED>> {
   * status_concept_id : uuid <<FK>>
     signed_at : timestamptz
     withdrawn_at : timestamptz
+    target_type : varchar(24)
+    target_id : uuid
+    target_label : varchar(300)
+    diagnosis_text : text
+    purpose_text : text
+    benefits_text : text
+    risks_text : text
+    personalized_risks_text : text
+    alternatives_text : text
+    refusal_consequences_text : text
+    patient_questions_text : text
+    granted_by : varchar(24)
+    representative_name : varchar(200)
+    representative_document : varchar(60)
+    representative_relationship : varchar(80)
+    incapacity_reason : text
+    informed_by_profile_id : uuid
+    channel : varchar(16)
+    exception_type : varchar(32)
+    exception_justification : text
+    withdrawal_reason : text
+    witness_name : varchar(200)
+    witness_document : varchar(60)
+    information_language : varchar(40)
+    assent_obtained : boolean
+    assent_notes : text
+    revocation_right_informed : boolean
+    post_emergency_informed_at : timestamptz
   * created_at : timestamptz
   * updated_at : timestamptz
     created_by_user_id : uuid <<FK>>
@@ -331,6 +380,8 @@ entity "INDEXES · treatment_informed_consents" as idxset_treatment_informed_con
   IX ix_treatment_informed_consents_updated_by_user_id : (updated_by_user_id) BTREE
   IX ix_treatment_informed_consents_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
   IX ix_treatment_informed_consents_patient_profile_id_updated_at : (tenant_id, patient_profile_id, updated_at DESC) BTREE
+  IX ix_treatment_informed_consents_target : (target_type, target_id) BTREE
+  IX ix_treatment_informed_consents_patient_target : (patient_profile_id, target_type) BTREE
 }
 
 treatment_informed_consents .. idxset_treatment_informed_consents : indexed by

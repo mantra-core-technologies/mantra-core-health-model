@@ -60,6 +60,14 @@ CREATE INDEX IF NOT EXISTS "ix_referrals_updated_by_user_id" ON "clinical_ext"."
 
 CREATE INDEX IF NOT EXISTS "ix_referrals_patient_profile_id_updated_at" ON "clinical_ext"."referrals" ("patient_profile_id", "updated_at" DESC);
 
+CREATE INDEX IF NOT EXISTS "ix_referrals_patient_type" ON "clinical_ext"."referrals" ("patient_profile_id", "referral_type");
+
+CREATE INDEX IF NOT EXISTS "ix_referrals_target_branch" ON "clinical_ext"."referrals" ("target_branch_id");
+
+CREATE INDEX IF NOT EXISTS "ix_referrals_requested_service_concept_id" ON "clinical_ext"."referrals" ("requested_service_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_referrals_informed_consent_id" ON "clinical_ext"."referrals" ("informed_consent_id");
+
 CREATE UNIQUE INDEX IF NOT EXISTS "uq_referrals_source_encounter_target_specialty" ON "clinical_ext"."referrals" ("source_encounter_id", "target_profile_id", "specialty_concept_id") WHERE source_encounter_id IS NOT NULL AND target_profile_id IS NOT NULL AND specialty_concept_id IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS "ix_clinical_alerts_patient_profile_id" ON "clinical_ext"."clinical_alerts" ("patient_profile_id");

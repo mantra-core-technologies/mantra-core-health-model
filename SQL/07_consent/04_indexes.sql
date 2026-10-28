@@ -134,6 +134,10 @@ CREATE INDEX IF NOT EXISTS "ix_treatment_informed_consents_tenant_id_status_conc
 
 CREATE INDEX IF NOT EXISTS "ix_treatment_informed_consents_patient_profile_id_updated_at" ON "consent"."treatment_informed_consents" ("tenant_id", "patient_profile_id", "updated_at" DESC);
 
+CREATE INDEX IF NOT EXISTS "ix_treatment_informed_consents_target" ON "consent"."treatment_informed_consents" ("target_type", "target_id");
+
+CREATE INDEX IF NOT EXISTS "ix_treatment_informed_consents_patient_target" ON "consent"."treatment_informed_consents" ("patient_profile_id", "target_type");
+
 CREATE INDEX IF NOT EXISTS "ix_privacy_restrictions_patient_profile_id" ON "consent"."privacy_restrictions" ("patient_profile_id");
 
 CREATE INDEX IF NOT EXISTS "ix_privacy_restrictions_tenant_id" ON "consent"."privacy_restrictions" ("tenant_id");

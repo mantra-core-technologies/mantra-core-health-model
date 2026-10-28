@@ -76,8 +76,8 @@
       "file": "modules/07_consent.seeds.json",
       "boot_records": 20,
       "mock_records": 160,
-      "line_count": 3469,
-      "sha256": "7b1a5d8bcb7fbbdafcca892c3959b3157cf8d68dbac522d0a0749a851250c177"
+      "line_count": 3917,
+      "sha256": "7630bd8116d1cb9362327609ba948b628c364d9e7200f02692eea37740a8534f"
     },
     {
       "number": 8,
@@ -175,8 +175,8 @@
       "file": "modules/18_clinical_ext.seeds.json",
       "boot_records": 50,
       "mock_records": 192,
-      "line_count": 4880,
-      "sha256": "84efc0b3ac5802c8287fb0d2b56ad1cd90e0198d5c2ac24d1decd0164fb17eca"
+      "line_count": 5088,
+      "sha256": "bd7157b8c041a4d3b1929a567e93dc1465c252aab2c5a3de4b09cdc05034ff3a"
     },
     {
       "number": 19,
