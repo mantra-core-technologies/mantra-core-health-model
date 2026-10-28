@@ -273,7 +273,8 @@ entity network_provider_memberships {
 '   - nace PENDIENTE; sólo la aseguradora (miembro de su tenant) la aprueba o la
 '     rechaza; el médico puede retirarla mientras está pendiente;
 '   - decision_reason_text sólo con rechazo, y lo lee el médico;
-'   - una sola fila por médico y aseguradora: volver a pedir reabre la misma.
+'   - una sola fila viva por médico y aseguradora; volver a pedir crea otra y
+'     la rechazada o retirada queda como historia.
 entity practitioner_insurer_requests {
   * id : uuid <<PK>>
   --
@@ -916,7 +917,9 @@ entity "INDEXES · network_provider_memberships" as idxset_network_provider_memb
 
 network_provider_memberships .. idxset_network_provider_memberships : indexed by
 
-' Una solicitud por médico y aseguradora: volver a pedir reabre la fila.
+' Una sola solicitud VIVA (pendiente o aprobada) por médico y aseguradora.
+' Volver a pedir tras un rechazo o un retiro crea otra fila: la anterior queda
+' como historia y el médico sigue leyendo por qué se rechazó.
 entity "INDEXES · practitioner_insurer_requests" as idxset_practitioner_insurer_requests <<INDEX_SET>> {
   PK pk_practitioner_insurer_requests : (id) UNIQUE BTREE
   IX ix_practitioner_insurer_requests_practitioner_profile_id : (practitioner_profile_id) BTREE
@@ -925,7 +928,7 @@ entity "INDEXES · practitioner_insurer_requests" as idxset_practitioner_insurer
   IX ix_practitioner_insurer_requests_decided_by_user_id : (decided_by_user_id) BTREE
   IX ix_practitioner_insurer_requests_created_by_user_id : (created_by_user_id) BTREE
   IX ix_practitioner_insurer_requests_updated_by_user_id : (updated_by_user_id) BTREE
-  UK uq_practitioner_insurer_requests_pair : (practitioner_profile_id, insurance_carrier_id) UNIQUE BTREE
+  UK uq_practitioner_insurer_requests_live_pair : (practitioner_profile_id, insurance_carrier_id) UNIQUE BTREE WHERE status_concept_id IN ('bc4f121c-f0cf-54b9-a1b8-f9a62a1cde8c', 'dfb1912e-d1ad-5566-8f9b-1d7a09f9da8f')
 }
 
 practitioner_insurer_requests .. idxset_practitioner_insurer_requests : indexed by

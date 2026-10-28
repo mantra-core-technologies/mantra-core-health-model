@@ -43,7 +43,12 @@ CREATE INDEX IF NOT EXISTS "ix_practitioner_insurer_requests_status_concept_id" 
 CREATE INDEX IF NOT EXISTS "ix_practitioner_insurer_requests_decided_by_user_id" ON "insurance"."practitioner_insurer_requests" ("decided_by_user_id");
 CREATE INDEX IF NOT EXISTS "ix_practitioner_insurer_requests_created_by_user_id" ON "insurance"."practitioner_insurer_requests" ("created_by_user_id");
 CREATE INDEX IF NOT EXISTS "ix_practitioner_insurer_requests_updated_by_user_id" ON "insurance"."practitioner_insurer_requests" ("updated_by_user_id");
-CREATE UNIQUE INDEX IF NOT EXISTS "uq_practitioner_insurer_requests_pair" ON "insurance"."practitioner_insurer_requests" ("practitioner_profile_id", "insurance_carrier_id");
+-- Única sólo entre las vivas (pendiente, aprobada): volver a pedir tras un
+-- rechazo o un retiro crea otra fila y la anterior queda como historia. El
+-- DROP cubre una base donde se aplicó el borrador de este patch con el índice
+-- único por par; en una base nueva no hace nada.
+DROP INDEX IF EXISTS "insurance"."uq_practitioner_insurer_requests_pair";
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_practitioner_insurer_requests_live_pair" ON "insurance"."practitioner_insurer_requests" ("practitioner_profile_id", "insurance_carrier_id") WHERE status_concept_id IN ('bc4f121c-f0cf-54b9-a1b8-f9a62a1cde8c', 'dfb1912e-d1ad-5566-8f9b-1d7a09f9da8f');
 
 DO $$ BEGIN
     ALTER TABLE "insurance"."practitioner_insurer_requests"
