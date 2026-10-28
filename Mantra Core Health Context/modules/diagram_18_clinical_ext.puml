@@ -49,7 +49,7 @@ entity care_team_members {
   * row_version : integer
 }
 
-' + v4.2.63 (2026-10-28) — derivación a un SERVICIO ESPECÍFICO. referral_type clasifica la
+' + v4.2.67 (2026-10-28) — derivación a un SERVICIO ESPECÍFICO. referral_type clasifica la
 ' derivación (consulta/atención, tratamiento, procedimiento, orden diagnóstica, terapia,
 ' internación, otro). El destino puede ser un profesional (target_profile_id), una organización
 ' de la plataforma (target_tenant_id), una sede concreta (target_branch_id → directory.branches) o
@@ -59,7 +59,7 @@ entity care_team_members {
 ' de la hoja de referencia; informed_consent_id → consent.treatment_informed_consents enlaza el
 ' consentimiento dirigido a esta derivación; reject_reason y counter_referral_* cierran el
 ' circuito referencia/contrarreferencia. Todas NULLABLE. Los valores de referral_type los fija
-' el CHECK del módulo 33. Mismo contrato que el parche 2026-10-28_v4263.
+' el CHECK del módulo 33. Mismo contrato que el parche 2026-10-28_v4267.
 entity referrals {
   * id : uuid <<PK>>
   --
@@ -96,7 +96,7 @@ entity referrals {
   * row_version : integer
 }
 
-' Destinos canónicos de las FK de derivación agregadas en v4.2.63, declarados en su módulo dueño.
+' Destinos canónicos de las FK de derivación agregadas en v4.2.67, declarados en su módulo dueño.
 entity "directory.branches" as directory_branches <<REFERENCE_ONLY>> {
   * id : uuid <<PK>>
 }

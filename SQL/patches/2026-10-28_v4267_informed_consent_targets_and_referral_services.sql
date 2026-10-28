@@ -1,4 +1,4 @@
--- 2026-10-28 · v4263 · Consentimiento informado dirigido y derivación a servicios específicos.
+-- 2026-10-28 · v4267 · Consentimiento informado dirigido y derivación a servicios específicos.
 --
 -- consent.treatment_informed_consents deja de estar atado sólo a encounter_id +
 -- procedure_code_concept_id: se DIRIGE a un objeto clínico (target_type/target_id/target_label:
@@ -17,7 +17,7 @@
 --
 -- Todas las columnas son NULLABLE: las filas existentes siguen siendo válidas. Las
 -- enumeraciones son varchar + CHECK (un NULL pasa el CHECK). Mismos nombres que el modelo
--- (diagram_07, diagram_18 y diagram_33 v4.2.63). Idempotente: se puede aplicar N veces.
+-- (diagram_07, diagram_18 y diagram_33 v4.2.67). Idempotente: se puede aplicar N veces.
 
 -- ─── consent.treatment_informed_consents ────────────────────────────────────────────────
 

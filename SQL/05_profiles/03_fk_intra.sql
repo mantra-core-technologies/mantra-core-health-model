@@ -117,6 +117,18 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
+    ALTER TABLE "profiles"."patient_primary_practitioners"
+        ADD CONSTRAINT "fk_patient_primary_practitioners_patient_profile_id" FOREIGN KEY ("patient_profile_id")
+        REFERENCES "profiles"."patient_profiles" ("profile_id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "profiles"."patient_primary_practitioners"
+        ADD CONSTRAINT "fk_patient_primary_practitioners_practitioner_profile_id" FOREIGN KEY ("practitioner_profile_id")
+        REFERENCES "profiles"."health_practitioner_profiles" ("profile_id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
     ALTER TABLE "profiles"."insurance_representative_profiles"
         ADD CONSTRAINT "fk_insurance_representative_profiles_profile_id" FOREIGN KEY ("profile_id")
         REFERENCES "profiles"."persons" ("id");

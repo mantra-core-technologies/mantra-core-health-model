@@ -288,9 +288,9 @@ entity "insurance.insurance_products" as insurance_insurance_products <<REFERENC
   CHECK_SQL : ck_insurance_products_age_range | (COALESCE("min_age_years", 0) >= 0 AND ("max_age_years" IS NULL OR "max_age_years" >= COALESCE("min_age_years", 0)))
   CHECK_SQL : ck_insurance_products_valid_period | ("effective_from" IS NULL OR "effective_to" IS NULL OR "effective_from" <= "effective_to")
 }
-' + v4.2.63 — consentimiento informado dirigido y derivación a servicios específicos: las
+' + v4.2.67 — consentimiento informado dirigido y derivación a servicios específicos: las
 ' enumeraciones son varchar + CHECK (como siat_mode). Un NULL pasa el CHECK: filas legadas
-' válidas. Mismos nombres que el parche 2026-10-28_v4263.
+' válidas. Mismos nombres que el parche 2026-10-28_v4267.
 entity "consent.treatment_informed_consents" as consent_treatment_informed_consents <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_treatment_informed_consents_target_type | "target_type" IN ('MEDICATION_REQUEST','SERVICE_REQUEST','REFERRAL','PROCEDURE','CARE_PLAN')
   CHECK_SQL : ck_treatment_informed_consents_granted_by | "granted_by" IN ('PATIENT','LEGAL_REPRESENTATIVE','GUARDIAN','SUBSTITUTE_RELATIVE')

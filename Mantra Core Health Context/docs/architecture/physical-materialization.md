@@ -49,6 +49,36 @@ comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_obje
 
 ## 3. Estado actual del build
 
+### v4.2.64 — Comprobantes de pago, logo de la sede y horario flexible por franja (2026-10-27)
+
+**Cambio de esquema: +1 tabla, +2 columnas, +9 FK y +11 índices en `practice` (14) y `scheduling` (41).**
+Parche: `SQL/patches/2026-10-27_v4264_comprobantes_logo_flexible.sql` (idempotente, fuera de
+`apply_all.sql`). Es v4.2.64 y no v4.2.63 porque la copia `database/` de la API ya trae un
+`2026-10-27_v4263_addresses_nivel2_y_distrito.sql` (ADR-0028) que todavía no llegó a este repositorio.
+
+- `practice.practice_sites.logo_file_id` → `common.files`, nullable, con `ix_practice_sites_logo_file_id`.
+  Mismo camino que `bank_qr_file_id` (v4.2.15); la FK sale del sufijo `_file_id`.
+- `scheduling.schedule_rules.flexible_hours`, NOT NULL DEFAULT false: el horario flexible pasa a
+  declararse también por franja. `true` en la plantilla sigue implicando `true` en todas sus franjas.
+  **Solo para `dev`**: `test` no tiene el horario flexible (P36), así que en `test` se omite la sección B
+  del parche.
+- Tabla nueva `scheduling.appointment_payment_receipts` (1:N con `appointment_bookings`): el comprobante
+  que sube el paciente y revisa el médico. Estado de revisión por concepto de la API
+  (`PENDING`, `CONFIRMED`, `REJECTED`), sin value set del modelo. Vacía a propósito en `gen_seeds.py`.
+  El parche le pone la política `tenant_isolation` con el texto exacto de `2026-08-05_tenant_rls.sql`.
+  Sus 8 FKs se resuelven por convención (la bóveda no tiene todavía sus notas), igual que las de
+  `appointment_payment_states`.
+
+**Verificación (2026-10-27), contra un PostgreSQL 16 local propio.**
+- `gen_ddl.py all` toca solo `14_practice/`, `41_scheduling/` y `_generation_report.md`; una segunda
+  corrida (con `gen_integrity.py`) no cambia nada. `gen_seeds.py --dry`: sin altas.
+- Parche sobre una base construida con el `SQL/` de `origin/dev`, dos pasadas, ambas exit 0: tablas
+  **1 259 → 1 260** · FKs **7 256 → 7 265** · índices **9 741 → 9 752**; la 2.ª pasada sin cambios; la verificación final del parche (2 columnas, tabla con RLS forzada,
+  9 FKs validadas) pasa en las dos.
+- Base limpia con `apply_all.sql` + `apply_deferred.sql` de esta versión: **1 260 · 7 265 · 9 752**, y
+  su `pg_dump -s` coincide con el de la base parcheada salvo el orden de las dos columnas nuevas.
+- `rebuild_stack.py --yes` **no se corrió** (necesita el stack completo de contenedores): BLOCKED.
+
 ### Convergencia del DDL de la API con el modelo: se recupera el PR #51 (2026-10-25)
 
 **Sin tablas nuevas en el modelo más allá de las que el PR #51 ya declaraba.** El PR #51

@@ -4030,6 +4030,9 @@ INTENTIONALLY_EMPTY = {
     "medical_groups.groups",
     "medical_groups.group_members",
     "scheduling.appointment_payment_states",
+    # v4.2.64 — el comprobante lo sube el paciente y lo revisa el médico: sembrarlo daría
+    # pagos que nadie hizo, igual que el estado de pago de arriba.
+    "scheduling.appointment_payment_receipts",
     # v4.2.49 — cada fila la escribe el proyector de la API en la misma transacción que
     # registra el procedimiento o la vacuna que la origina: sembrarla daría servicios que
     # ningún paciente recibió.
@@ -4666,18 +4669,18 @@ def phase_iso_countries(doc03: dict) -> int:
     return upsert_rows(doc03, "boot", "value_set_members", members)
 
 
-# ============================================================ fase 2e · v4.2.63 consentimiento dirigido
+# ============================================================ fase 2e · v4.2.67 consentimiento dirigido
 
-PATCH_V4263 = "4.2.63"
+PATCH_V4267 = "4.2.67"
 
 # Orden de preferencia de los objetos a los que se dirige un consentimiento. Cada fila arranca
 # en una posición distinta (índice % 5) para que el mock cubra los cinco tipos.
-V4263_TARGET_ORDER = ["MEDICATION_REQUEST", "SERVICE_REQUEST", "REFERRAL", "PROCEDURE", "CARE_PLAN"]
+V4267_TARGET_ORDER = ["MEDICATION_REQUEST", "SERVICE_REQUEST", "REFERRAL", "PROCEDURE", "CARE_PLAN"]
 
-V4263_REFERRAL_TYPES = ["CONSULTATION", "TREATMENT", "DIAGNOSTIC", "THERAPY", "PROCEDURE",
+V4267_REFERRAL_TYPES = ["CONSULTATION", "TREATMENT", "DIAGNOSTIC", "THERAPY", "PROCEDURE",
                         "HOSPITALIZATION", "CONSULTATION", "OTHER"]
 
-V4263_REFERRAL_SERVICE = {
+V4267_REFERRAL_SERVICE = {
     "CONSULTATION": "Valoración por especialista y conducta terapéutica",
     "TREATMENT": "Tratamiento de fisioterapia de rodilla, 10 sesiones",
     "DIAGNOSTIC": "Ecografía abdominal y perfil hepático completo",
@@ -4687,7 +4690,7 @@ V4263_REFERRAL_SERVICE = {
     "OTHER": "Evaluación nutricional y plan de alimentación",
 }
 
-V4263_CONSENT_TEXT = {
+V4267_CONSENT_TEXT = {
     "MEDICATION_REQUEST": ("tratamiento farmacológico recetado",
                            "Controlar la enfermedad de base con el fármaco y la pauta indicados.",
                            "Alivio de síntomas y prevención de complicaciones.",
@@ -4711,8 +4714,8 @@ V4263_CONSENT_TEXT = {
 }
 
 
-def phase_v4263_consent_targets(docs) -> dict:
-    """v4.2.63 — el consentimiento informado se DIRIGE a un objeto clínico y la derivación
+def phase_v4267_consent_targets(docs) -> dict:
+    """v4.2.67 — el consentimiento informado se DIRIGE a un objeto clínico y la derivación
     nombra el servicio específico y su destino. Completa las columnas nuevas (todas NULLABLE)
     de las filas mock existentes de consent.treatment_informed_consents y
     clinical_ext.referrals con valores coherentes con el resto del paquete: el objetivo de cada
@@ -4738,8 +4741,8 @@ def phase_v4263_consent_targets(docs) -> dict:
     # Derivaciones primero: el rótulo del consentimiento a una derivación nombra su servicio.
     referral_service = {}
     for i, r in enumerate(refs):
-        rtype = V4263_REFERRAL_TYPES[i % len(V4263_REFERRAL_TYPES)]
-        service = V4263_REFERRAL_SERVICE[rtype]
+        rtype = V4267_REFERRAL_TYPES[i % len(V4267_REFERRAL_TYPES)]
+        service = V4267_REFERRAL_SERVICE[rtype]
         external = i % 4 == 3            # una de cada cuatro va FUERA de la plataforma
         branch = branches[i % len(branches)] if branches and not external else None
         r.update({
@@ -4775,14 +4778,14 @@ def phase_v4263_consent_targets(docs) -> dict:
 
     for i, c in enumerate(tic):
         patient = c.get("patient_profile_id")
-        order = V4263_TARGET_ORDER[i % 5:] + V4263_TARGET_ORDER[:i % 5]
+        order = V4267_TARGET_ORDER[i % 5:] + V4267_TARGET_ORDER[:i % 5]
         ttype = target = None
         for cand in order:
             hit = next((x for x in pools[cand] if x.get("patient_profile_id") == patient), None)
             if hit:
                 ttype, target = cand, hit
                 break
-        kind, purpose, benefits, risks = V4263_CONSENT_TEXT[ttype or "PROCEDURE"]
+        kind, purpose, benefits, risks = V4267_CONSENT_TEXT[ttype or "PROCEDURE"]
         representative = i % 6 == 4
         emergency = i % 8 == 7
         c.update({
@@ -4890,8 +4893,8 @@ def main() -> None:
         for t in sin_declarar:
             print("      SIN DECLARAR {:<50}".format(t))
     if run("targets"):
-        s = phase_v4263_consent_targets(docs)
-        print("[2e] v4.2.63 · {} consentimientos dirigidos · {} derivaciones con servicio y "
+        s = phase_v4267_consent_targets(docs)
+        print("[2e] v4.2.67 · {} consentimientos dirigidos · {} derivaciones con servicio y "
               "destino · {} derivaciones enlazadas a su consentimiento".format(
                   s["consentimientos"], s["derivaciones"], s["enlaces"]))
     if run("notnull"):
