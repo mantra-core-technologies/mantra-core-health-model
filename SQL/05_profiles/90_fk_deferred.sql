@@ -611,6 +611,20 @@ DO $$ BEGIN
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "profiles"."patient_primary_practitioners"
+        ADD CONSTRAINT "fk_patient_primary_practitioners_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "profiles"."patient_primary_practitioners"
+        ADD CONSTRAINT "fk_patient_primary_practitioners_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "profiles"."insurance_representative_profiles"

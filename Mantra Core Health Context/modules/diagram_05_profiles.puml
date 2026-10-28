@@ -336,6 +336,33 @@ entity patient_portal_proxies {
   * row_version : integer
 }
 
+note as PRIMARY_PRACTITIONER_diagram_05_profiles
+  PRIMARY PRACTITIONER (medico de cabecera, v4.2.64)
+  The patient chooses, by themselves, ONE practitioner as their primary
+  (personal) physician. A choice is a period: valid_from opens it, valid_to
+  closes it when the patient changes or removes it. Nothing is deleted, so
+  "who was my physician on that date" stays answerable.
+  At most ONE current choice per patient, guaranteed by the partial unique
+  index uq_patient_primary_practitioners_current (WHERE valid_to IS NULL),
+  not by a previous SELECT in the service.
+  The practitioner reads the list of patients who chose them; the choice
+  grants NO clinical access by itself (access stays with consent and authz).
+end note
+
+entity patient_primary_practitioners {
+  * id : uuid <<PK>>
+  --
+  * patient_profile_id : uuid <<FK>>
+  * practitioner_profile_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
 entity insurance_representative_profiles {
   * profile_id : uuid <<PK,FK>>
   --
@@ -405,6 +432,11 @@ patient_profiles ||--o{ patient_merge_events : survivor
 patient_profiles ||--o{ related_persons
 persons ||--o{ related_persons
 patient_profiles ||--o{ patient_portal_proxies
+' v4.2.64: medico de cabecera. Aristas etiquetadas para que las dos FK no
+' dependan de la convencion de nombres (`practitioner_profile_id` no resuelve
+' sola en este modulo).
+patient_primary_practitioners }o--|| patient_profiles : patient_profile_id
+patient_primary_practitioners }o--|| health_practitioner_profiles : practitioner_profile_id
 health_practitioner_profiles ||--o{ professional_credentials
 health_practitioner_profiles ||--o{ practitioner_specialties
 health_practitioner_profiles ||--o{ practitioner_languages
@@ -663,6 +695,18 @@ entity "INDEXES · patient_portal_proxies" as idxset_patient_portal_proxies <<IN
 }
 
 patient_portal_proxies .. idxset_patient_portal_proxies : indexed by
+
+entity "INDEXES · patient_primary_practitioners" as idxset_patient_primary_practitioners <<INDEX_SET>> {
+  PK pk_patient_primary_practitioners : (id) UNIQUE BTREE
+  IX ix_patient_primary_practitioners_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_patient_primary_practitioners_practitioner_profile_id : (practitioner_profile_id) BTREE
+  IX ix_patient_primary_practitioners_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_patient_primary_practitioners_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_patient_primary_practitioners_current : (patient_profile_id) UNIQUE BTREE WHERE valid_to IS NULL
+  IX ix_patient_primary_practitioners_practitioner_current : (practitioner_profile_id, valid_from DESC) BTREE WHERE valid_to IS NULL
+}
+
+patient_primary_practitioners .. idxset_patient_primary_practitioners : indexed by
 
 entity "INDEXES · insurance_representative_profiles" as idxset_insurance_representative_profiles <<INDEX_SET>> {
   PK pk_insurance_representative_profiles : (profile_id) UNIQUE BTREE
