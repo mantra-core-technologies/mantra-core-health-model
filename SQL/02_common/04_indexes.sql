@@ -40,6 +40,8 @@ CREATE INDEX IF NOT EXISTS "ix_addresses_type_concept_id" ON "common"."addresses
 
 CREATE INDEX IF NOT EXISTS "ix_addresses_administrative_area_concept_id" ON "common"."addresses" ("administrative_area_concept_id");
 
+CREATE INDEX IF NOT EXISTS "ix_addresses_administrative_area_2_concept_id" ON "common"."addresses" ("administrative_area_2_concept_id");
+
 CREATE INDEX IF NOT EXISTS "ix_addresses_municipality_concept_id" ON "common"."addresses" ("municipality_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_addresses_country_concept_id" ON "common"."addresses" ("country_concept_id");

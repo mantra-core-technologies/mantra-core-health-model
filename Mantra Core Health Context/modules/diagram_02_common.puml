@@ -83,10 +83,18 @@ entity addresses {
     lines : varchar
     city : varchar
     administrative_area_concept_id : uuid <<FK>>
+  ' + v4.2.63 — ADR-0028 (direcciones multipaís): el nivel 2 —provincia,
+  ' condado— de cualquier país. Concepto del catálogo de divisiones
+  ' administrativas (VS_ADMIN_DIVISION, nivel 2), hijo del nivel 1 de arriba.
+    administrative_area_2_concept_id : uuid <<FK>>
   ' + v4.1.5 — municipio. `administrative_area_concept_id` sigue siendo el
   ' departamento; éste es el nivel de detalle que `city` (texto libre) no puede
   ' garantizar consistente. Value set: vs_bo_municipality (340 municipios).
     municipality_concept_id : uuid <<FK>>
+  ' + v4.2.63 — ADR-0028: distrito o zona como texto. Ningún catálogo oficial
+  ' cubre los distritos de todos los países y no se inventa uno; antes viajaba
+  ' pegado a `lines`.
+    district_text : varchar
     postal_code : varchar
   * country_concept_id : uuid <<FK>>
     latitude : numeric
@@ -239,6 +247,7 @@ entity "INDEXES · addresses" as idxset_addresses <<INDEX_SET>> {
   IX ix_addresses_use_concept_id : (use_concept_id) BTREE
   IX ix_addresses_type_concept_id : (type_concept_id) BTREE
   IX ix_addresses_administrative_area_concept_id : (administrative_area_concept_id) BTREE
+  IX ix_addresses_administrative_area_2_concept_id : (administrative_area_2_concept_id) BTREE
   IX ix_addresses_municipality_concept_id : (municipality_concept_id) BTREE
   IX ix_addresses_country_concept_id : (country_concept_id) BTREE
   IX ix_addresses_created_by_user_id : (created_by_user_id) BTREE
