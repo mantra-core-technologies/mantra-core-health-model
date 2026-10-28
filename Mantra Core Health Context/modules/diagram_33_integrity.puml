@@ -65,12 +65,15 @@ entity practitioner_service_offerings <<REFERENCE_ONLY>> {
 ' + v4.2.44 — facturación SIAT SIMULADA: ninguna fila puede dejar de declararse simulada, el
 ' estado es de un conjunto cerrado y la bandeja de salida nunca envía nada de verdad.
 ' Mismos nombres que el parche 2026-10-11_v4244 (las bases ya pobladas los tienen).
+' + v4.2.62 — siat_mode solo admite 'simulated' o 'real' (mismos nombres que el parche 2026-10-27_v4262).
 entity siat_simulated_invoices <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_siat_simulated_invoices_simulated | "simulated" = true
   CHECK_SQL : ck_siat_simulated_invoices_status | "status" IN ('VALIDATED','OBSERVED','REJECTED','ANNULLED')
+  CHECK_SQL : ck_siat_simulated_invoices_siat_mode | "siat_mode" IN ('simulated','real')
 }
 entity siat_simulated_outbox <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_siat_simulated_outbox_status | "status" = 'NOT_SENT_SIMULATED'
+  CHECK_SQL : ck_siat_simulated_outbox_siat_mode | "siat_mode" IN ('simulated','real')
 }
 entity identity_verification_attempts <<REFERENCE_ONLY>> {
   UK : case + endpoint + attempt number

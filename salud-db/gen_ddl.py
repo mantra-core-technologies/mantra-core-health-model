@@ -117,8 +117,9 @@ def scoped_by(markers: set[str]) -> str | None:
     return found[0] if found else None
 
 
-# Default estructural de versión. Los defaults booleanos de negocio sólo se
-# emiten cuando el .puml declara DEFAULT_TRUE/DEFAULT_FALSE explícitamente.
+# Default estructural de versión. Los defaults de negocio sólo se emiten cuando el
+# .puml los declara explícitamente: DEFAULT_TRUE/DEFAULT_FALSE (boolean) o
+# DEFAULT_TEXT:<valor> (texto).
 #
 # No se infieren defaults de negocio: sólo se conservan los que el modelo declara.
 # `row_version` sigue siendo el default estructural porque es el contador de bloqueo optimista,
@@ -149,6 +150,41 @@ def boolean_default(dtype: str, markers: set[str]) -> str | None:
     if len(selected) != 1 or dtype != "boolean":
         raise ValueError("DEFAULT_TRUE/DEFAULT_FALSE requiere una columna boolean y un solo valor")
     return "true" if "DEFAULT_TRUE" in selected else "false"
+
+
+# `DEFAULT_TEXT:<valor>` declara un default literal para una columna de texto. Se lee
+# del estereotipo crudo porque `stereotypes()` pasa todo a mayúsculas y el valor debe
+# conservarse tal cual. Solo admite identificadores en minúscula: así el literal no
+# necesita escaparse y no se cuela SQL arbitrario desde el diagrama.
+_TEXT_DEFAULT_RE = re.compile(r"^DEFAULT_TEXT:([a-z0-9_]+)$")
+_TEXT_TYPES = ("varchar", "text")
+
+
+def text_default(dtype: str, raw: str | None) -> str | None:
+    """Default literal de texto declarado con `DEFAULT_TEXT:<valor>`, sin inferir valores."""
+    if not raw:
+        return None
+    declared = [s.strip() for s in raw.strip("<>").split(",")
+                if s.strip().upper().startswith("DEFAULT_TEXT")]
+    if not declared:
+        return None
+    if len(declared) != 1:
+        raise ValueError("DEFAULT_TEXT admite un solo valor")
+    match = _TEXT_DEFAULT_RE.match(declared[0])
+    if not match:
+        raise ValueError(f"DEFAULT_TEXT inválido: {declared[0]!r} (se espera DEFAULT_TEXT:<minúsculas_0-9_>)")
+    if not dtype.startswith(_TEXT_TYPES):
+        raise ValueError("DEFAULT_TEXT requiere una columna varchar o text")
+    return f"'{match.group(1)}'"
+
+
+def declared_default(dtype: str, raw: str | None) -> str | None:
+    """Único default de negocio que declara la columna (booleano o de texto)."""
+    boolean = boolean_default(dtype, stereotypes(raw))
+    text = text_default(dtype, raw)
+    if boolean is not None and text is not None:
+        raise ValueError("una columna no puede declarar DEFAULT_TRUE/FALSE y DEFAULT_TEXT a la vez")
+    return boolean if boolean is not None else text
 
 
 # --- identificadores > 63 bytes --------------------------------------------------
@@ -493,7 +529,7 @@ def parse_module(puml_path: Path):
                             continue
                         dtype = base_mapped + suffix
                         st = stereotypes(cm.group(4))
-                        default = boolean_default(dtype, st)
+                        default = declared_default(dtype, cm.group(4))
                         if "ON_DELETE_CASCADE" in st and "FK" not in st:
                             raise ValueError(f"ON_DELETE_CASCADE requiere FK: {schema}.{name}.{cm.group(2)}")
                         scope = scoped_by(st)

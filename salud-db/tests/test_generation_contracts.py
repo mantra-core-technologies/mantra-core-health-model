@@ -86,6 +86,23 @@ class ExplicitColumnTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 gen_ddl.boolean_default(dtype, markers)
 
+    def test_text_defaults_are_declared_and_preserved_in_orm(self):
+        self.assertIsNone(gen_ddl.declared_default('varchar(12)', None))
+        self.assertIsNone(gen_ddl.declared_default('varchar(12)', '<<FK>>'))
+        default = gen_ddl.declared_default('varchar(12)', '<<DEFAULT_TEXT:simulated>>')
+        self.assertEqual(default, "'simulated'")
+        column = gen_ddl.Column('siat_mode', 'varchar(12)', True, False, False, False, default)
+        self.assertEqual(gen_ddl.column_default(column), " DEFAULT 'simulated'")
+        self.assertIn("default: 'simulated'",
+                      '\n'.join(gen_entities.emit_property('billing', 'siat_simulated_outbox', column, {})))
+        for dtype, raw in [('integer', '<<DEFAULT_TEXT:simulated>>'),
+                           ('varchar(12)', '<<DEFAULT_TEXT:Simulated>>'),
+                           ('varchar(12)', "<<DEFAULT_TEXT:x'; DROP>>"),
+                           ('varchar(12)', '<<DEFAULT_TEXT:a, DEFAULT_TEXT:b>>'),
+                           ('boolean', '<<DEFAULT_TRUE, DEFAULT_TEXT:simulated>>')]:
+            with self.subTest(dtype=dtype, raw=raw), self.assertRaises(ValueError):
+                gen_ddl.declared_default(dtype, raw)
+
     def test_model_parser_generates_cascade_and_defaults_without_inference(self):
         source = '@startuml SALUD_Module_65_generation_fixture\ntitle Module 65 Fixture\\n(schema: generation_fixture)\nentity parents {\n  * id : uuid <<PK>>\n}\nentity children {\n  * id : uuid <<PK>>\n  * parent_id : uuid <<FK, ON_DELETE_CASCADE>>\n  * is_favorite : boolean <<DEFAULT_FALSE>>\n}\n@enduml\n'
         with TemporaryDirectory() as directory:
