@@ -103,6 +103,8 @@ entity schedule_templates {
   ' sigue impidiendo que dos citas se pisen. Es un sí/no de la plantilla y no un
   ' catálogo: no hay un tercer modo a la vista, y si apareciera se migra a concepto.
   ' NOT NULL con DEFAULT false: toda plantilla existente sigue siendo de turnos fijos.
+  ' v4.2.63 — la franja también lo declara (`schedule_rules.flexible_hours`). `true` en
+  ' la plantilla implica `true` en todas sus franjas; con `false`, cada franja dice el suyo.
   * flexible_hours : boolean <<DEFAULT_FALSE>>
     booking_policy_id : uuid <<FK>>
   * status_concept_id : uuid <<FK>>
@@ -148,6 +150,13 @@ entity schedule_rules {
   ' activa. Una cita directa con modalidad TELECONSULTA sólo se acepta si su inicio
   ' cae en una franja vigente con este valor en `true` (la API responde 422 si no).
   * telemedicine_enabled : boolean <<DEFAULT_FALSE>>
+  ' + v4.2.63 — horario flexible POR FRANJA: «el lunes doy turnos de 30, el martes
+  ' atiendo a la hora que me pidan». Misma semántica que `flexible_hours` de la
+  ' plantilla, acotada al rato: el generador no materializa cupos para esta franja y la
+  ' cita nace al retener, con la duración de `schedule_templates.slot_minutes`. La
+  ' plantilla sigue declarando el suyo, y `true` en la plantilla implica `true` en
+  ' todas sus franjas. NOT NULL DEFAULT false: toda franja existente sigue de turnos fijos.
+  * flexible_hours : boolean <<DEFAULT_FALSE>>
     valid_from : date
     valid_to : date
   * created_at : timestamptz
@@ -778,5 +787,67 @@ appointment_payment_states .. idxset_appointment_payment_states : indexed by
 ' Uno a lo sumo uno: el índice único sobre `appointment_booking_id` es lo que lo
 ' hace cierto en la base, no esta flecha.
 appointment_bookings ||--o| appointment_payment_states
+
+' ===== v4.2.63 (comprobantes de pago que sube el paciente) =====
+
+' El paciente sube el comprobante de lo que pagó (una foto de la transferencia,
+' el PDF del banco) y el médico de la agenda lo revisa: lo confirma o lo
+' rechaza con un motivo. Confirmar UNO basta para que la cita quede pagada.
+'
+' Tabla propia y no columnas en `appointment_payment_states`: una cita puede
+' recibir varios comprobantes (uno rechazado y el bueno después, o dos pagos
+' parciales), y cada uno tiene su propia revisión. El estado de pago sigue
+' siendo uno por cita.
+'
+' No es `<<LOG>>` porque la revisión cambia la fila. El rastro de la marca de
+' pago queda en `audit.appointment_bookings_history`, igual que el resto del
+' estado de pago.
+entity appointment_payment_receipts {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * appointment_booking_id : uuid <<FK>>
+  ' El archivo vive en `common.files`, con su escaneo y su tipo real deducido de
+  ' los bytes; acá queda solo el id.
+  * file_id : uuid <<FK>>
+  ' Lo que el paciente declara. Opcional: el comprobante ya lo dice, y el médico
+  ' lo lee en la imagen. No se suma ni se compara contra el precio de la cita.
+    amount : numeric(12,2)
+    paid_at : timestamptz
+    note : varchar(500)
+  * uploaded_by_user_id : uuid <<FK>>
+  * uploaded_at : timestamptz
+  ' Pendiente · confirmado · rechazado. Concepto que declara la API, igual que el
+  ' estado de pago: es un estado cerrado, nunca un enum ni un booleano.
+  * review_status_concept_id : uuid <<FK>>
+    reviewed_by_user_id : uuid <<FK>>
+    reviewed_at : timestamptz
+    rejection_reason : varchar(500)
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' ===== v4.2.63 (comprobantes de pago que sube el paciente) ===== (index sets)
+
+entity "INDEXES · appointment_payment_receipts" as idxset_appointment_payment_receipts <<INDEX_SET>> {
+  PK pk_appointment_payment_receipts : (id) UNIQUE BTREE
+  IX ix_appointment_payment_receipts_tenant_id : (tenant_id) BTREE
+  IX ix_appointment_payment_receipts_appointment_booking_id : (appointment_booking_id) BTREE
+  IX ix_appointment_payment_receipts_file_id : (file_id) BTREE
+  IX ix_appointment_payment_receipts_uploaded_by_user_id : (uploaded_by_user_id) BTREE
+  IX ix_appointment_payment_receipts_review_status_concept_id : (review_status_concept_id) BTREE
+  IX ix_appointment_payment_receipts_reviewed_by_user_id : (reviewed_by_user_id) BTREE
+  IX ix_appointment_payment_receipts_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_appointment_payment_receipts_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_appointment_payment_receipts_booking_uploaded : (appointment_booking_id, uploaded_at) BTREE
+}
+appointment_payment_receipts .. idxset_appointment_payment_receipts : indexed by
+
+' ===== v4.2.63 (comprobantes de pago que sube el paciente) ===== (relaciones)
+
+appointment_bookings ||--o{ appointment_payment_receipts
 
 @enduml
