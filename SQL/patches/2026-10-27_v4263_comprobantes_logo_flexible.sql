@@ -37,6 +37,7 @@
 --   tablas                                +1  (scheduling.appointment_payment_receipts)
 --   FKs                                   +9  (1 de la sede, 8 del comprobante)
 --   índices                              +11  (1 de la sede, PK + 9 del comprobante)
+--   políticas RLS                         +1  (tenant_isolation del comprobante)
 --
 -- Reversible:
 --   DROP TABLE IF EXISTS "scheduling"."appointment_payment_receipts";
@@ -149,5 +150,60 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_appointment_payment_receipts_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- RLS: la tabla tiene `tenant_id`, así que lleva la política `tenant_isolation` con
+-- el texto exacto de 2026-08-05_tenant_rls.sql. Ese patch descubre toda tabla con
+-- `tenant_id` y, si se vuelve a ejecutar, deja la misma política: no hay ventana en
+-- la que la tabla exista sin aislamiento por tenant.
+ALTER TABLE "scheduling"."appointment_payment_receipts" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "scheduling"."appointment_payment_receipts" FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS tenant_isolation ON "scheduling"."appointment_payment_receipts";
+CREATE POLICY tenant_isolation ON "scheduling"."appointment_payment_receipts"
+    USING (
+        tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+        OR current_setting('app.system_context', true) = 'true'
+    )
+    WITH CHECK (
+        tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+        OR current_setting('app.system_context', true) = 'true'
+    );
+
+-- ------------------------------------------------------------- D. verificación
+DO $$
+DECLARE
+    n_columnas integer;
+    n_tabla    integer;
+    n_fk       integer;
+    n_rls      integer;
+BEGIN
+    SELECT count(*) INTO n_columnas
+    FROM information_schema.columns
+    WHERE (table_schema, table_name, column_name) IN (
+        ('practice', 'practice_sites', 'logo_file_id'),
+        ('scheduling', 'schedule_rules', 'flexible_hours'));
+
+    SELECT count(*) INTO n_tabla
+    FROM information_schema.tables
+    WHERE table_schema = 'scheduling' AND table_name = 'appointment_payment_receipts';
+
+    SELECT count(*) INTO n_fk
+    FROM pg_constraint
+    WHERE (conname LIKE 'fk\_appointment\_payment\_receipts\_%'
+           OR conname = 'fk_practice_sites_logo_file_id')
+      AND convalidated;
+
+    SELECT count(*) INTO n_rls
+    FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'scheduling' AND c.relname = 'appointment_payment_receipts'
+      AND c.relrowsecurity AND c.relforcerowsecurity;
+
+    IF n_columnas <> 2 OR n_tabla <> 1 OR n_fk <> 9 OR n_rls <> 1 THEN
+        RAISE EXCEPTION
+            'v4.2.63 incompleto: columnas=% (2), tabla=% (1), fk=% (9), rls=% (1)',
+            n_columnas, n_tabla, n_fk, n_rls;
+    END IF;
+
+    RAISE NOTICE 'v4.2.63 aplicado: 2 columnas, 1 tabla con RLS, 9 FKs validadas.';
+END $$;
 
 COMMIT;

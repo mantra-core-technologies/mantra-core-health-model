@@ -64,6 +64,7 @@ Parche: `SQL/patches/2026-10-27_v4263_comprobantes_logo_flexible.sql` (idempoten
 - Tabla nueva `scheduling.appointment_payment_receipts` (1:N con `appointment_bookings`): el comprobante
   que sube el paciente y revisa el médico. Estado de revisión por concepto de la API
   (`PENDING`, `CONFIRMED`, `REJECTED`), sin value set del modelo. Vacía a propósito en `gen_seeds.py`.
+  El parche le pone la política `tenant_isolation` con el texto exacto de `2026-08-05_tenant_rls.sql`.
   Sus 8 FKs se resuelven por convención (la bóveda no tiene todavía sus notas), igual que las de
   `appointment_payment_states`.
 
@@ -71,7 +72,8 @@ Parche: `SQL/patches/2026-10-27_v4263_comprobantes_logo_flexible.sql` (idempoten
 - `gen_ddl.py all` toca solo `14_practice/`, `41_scheduling/` y `_generation_report.md`; una segunda
   corrida (con `gen_integrity.py`) no cambia nada. `gen_seeds.py --dry`: sin altas.
 - Parche sobre una base construida con el `SQL/` de `origin/dev`, dos pasadas, ambas exit 0: tablas
-  **1 259 → 1 260** · FKs **7 256 → 7 265** · índices **9 741 → 9 752**; la 2.ª pasada sin cambios.
+  **1 259 → 1 260** · FKs **7 256 → 7 265** · índices **9 741 → 9 752**; la 2.ª pasada sin cambios; la verificación final del parche (2 columnas, tabla con RLS forzada,
+  9 FKs validadas) pasa en las dos.
 - Base limpia con `apply_all.sql` + `apply_deferred.sql` de esta versión: **1 260 · 7 265 · 9 752**, y
   su `pg_dump -s` coincide con el de la base parcheada salvo el orden de las dos columnas nuevas.
 - `rebuild_stack.py --yes` **no se corrió** (necesita el stack completo de contenedores): BLOCKED.
