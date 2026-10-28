@@ -4030,7 +4030,7 @@ INTENTIONALLY_EMPTY = {
     "medical_groups.groups",
     "medical_groups.group_members",
     "scheduling.appointment_payment_states",
-    # v4.2.63 — el comprobante lo sube el paciente y lo revisa el médico: sembrarlo daría
+    # v4.2.64 — el comprobante lo sube el paciente y lo revisa el médico: sembrarlo daría
     # pagos que nadie hizo, igual que el estado de pago de arriba.
     "scheduling.appointment_payment_receipts",
     # v4.2.49 — cada fila la escribe el proyector de la API en la misma transacción que

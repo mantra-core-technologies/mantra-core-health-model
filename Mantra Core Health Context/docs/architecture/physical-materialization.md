@@ -49,11 +49,12 @@ comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_obje
 
 ## 3. Estado actual del build
 
-### v4.2.63 — Comprobantes de pago, logo de la sede y horario flexible por franja (2026-10-27)
+### v4.2.64 — Comprobantes de pago, logo de la sede y horario flexible por franja (2026-10-27)
 
 **Cambio de esquema: +1 tabla, +2 columnas, +9 FK y +11 índices en `practice` (14) y `scheduling` (41).**
-Parche: `SQL/patches/2026-10-27_v4263_comprobantes_logo_flexible.sql` (idempotente, fuera de
-`apply_all.sql`).
+Parche: `SQL/patches/2026-10-27_v4264_comprobantes_logo_flexible.sql` (idempotente, fuera de
+`apply_all.sql`). Es v4.2.64 y no v4.2.63 porque la copia `database/` de la API ya trae un
+`2026-10-27_v4263_addresses_nivel2_y_distrito.sql` (ADR-0028) que todavía no llegó a este repositorio.
 
 - `practice.practice_sites.logo_file_id` → `common.files`, nullable, con `ix_practice_sites_logo_file_id`.
   Mismo camino que `bank_qr_file_id` (v4.2.15); la FK sale del sufijo `_file_id`.

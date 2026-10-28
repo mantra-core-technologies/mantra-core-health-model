@@ -1,5 +1,5 @@
 -- ============================================================================
--- SALUD · patch v4.2.63 (comprobantes de pago, logo de la sede y horario
+-- SALUD · patch v4.2.64 (comprobantes de pago, logo de la sede y horario
 -- flexible por franja) sobre BD viva
 -- Fecha: 2026-10-27
 -- Idempotente (ADD COLUMN IF NOT EXISTS / CREATE … IF NOT EXISTS / constraints
@@ -199,11 +199,11 @@ BEGIN
 
     IF n_columnas <> 2 OR n_tabla <> 1 OR n_fk <> 9 OR n_rls <> 1 THEN
         RAISE EXCEPTION
-            'v4.2.63 incompleto: columnas=% (2), tabla=% (1), fk=% (9), rls=% (1)',
+            'v4.2.64 incompleto: columnas=% (2), tabla=% (1), fk=% (9), rls=% (1)',
             n_columnas, n_tabla, n_fk, n_rls;
     END IF;
 
-    RAISE NOTICE 'v4.2.63 aplicado: 2 columnas, 1 tabla con RLS, 9 FKs validadas.';
+    RAISE NOTICE 'v4.2.64 aplicado: 2 columnas, 1 tabla con RLS, 9 FKs validadas.';
 END $$;
 
 COMMIT;
