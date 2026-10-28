@@ -9,7 +9,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 02 | common | 7 | 48 | 0 | 54 | 0 |
 | 03 | terminology | 16 | 80 | 0 | 103 | 0 |
 | 04 | directory | 7 | 59 | 4 | 55 | 0 |
-| 05 | profiles | 19 | 130 | 5 | 139 | 0 |
+| 05 | profiles | 20 | 134 | 7 | 145 | 0 |
 | 06 | authz | 15 | 100 | 15 | 90 | 0 |
 | 07 | consent | 10 | 81 | 0 | 101 | 0 |
 | 08 | clinical | 24 | 241 | 9 | 264 | 11 |
