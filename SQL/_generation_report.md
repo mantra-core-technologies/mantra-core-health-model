@@ -8,7 +8,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 01 | iam | 14 | 75 | 13 | 65 | 0 |
 | 02 | common | 7 | 48 | 0 | 54 | 0 |
 | 03 | terminology | 16 | 80 | 0 | 103 | 0 |
-| 04 | directory | 7 | 59 | 4 | 55 | 0 |
+| 04 | directory | 9 | 66 | 10 | 66 | 0 |
 | 05 | profiles | 19 | 130 | 5 | 139 | 0 |
 | 06 | authz | 15 | 100 | 15 | 90 | 0 |
 | 07 | consent | 10 | 81 | 0 | 101 | 0 |
@@ -37,7 +37,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 30 | read_models | 13 | 74 | 0 | 89 | 76 |
 | 31 | integration_contracts | 9 | 48 | 1 | 57 | 0 |
 | 32 | workflow | 8 | 49 | 0 | 55 | 9 |
-| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 47 |
+| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 49 |
 | 34 | portal_catalog _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
 | 35 | messaging | 22 | 142 | 0 | 150 | 0 |
 | 36 | qa_lab | 13 | 79 | 0 | 92 | 0 |
@@ -323,6 +323,8 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - `scheduling_booking_policies` — stub de cruce (tabla real en su módulo dueño)
 - `insurance_insurance_products` — stub de cruce (tabla real en su módulo dueño)
 - `delegated_access_shared_access_link_uses` — stub de cruce (tabla real en su módulo dueño)
+- `directory_tenant_medical_facilities` — stub de cruce (tabla real en su módulo dueño)
+- `directory_tenant_medical_facility_sites` — stub de cruce (tabla real en su módulo dueño)
 
 ### 35 · messaging
 - ⚠ índice 'uq_adapter_inbound_events_provider_id' omitido: columna(s) inexistente(s) ['received_time_bucket'] en adapter_inbound_events (¿tipo no-SQL descartado? requiere PostGIS)

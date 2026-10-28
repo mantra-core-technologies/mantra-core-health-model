@@ -49,6 +49,47 @@ comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_obje
 
 ## 3. Estado actual del build
 
+### v4.2.63 — Alta de organización médica: bloque `medicalFacility` (2026-10-28)
+
+Dos tablas nuevas en `directory`, sin tocar ninguna existente. Es un registro **declarado** por el
+titular y **pendiente de verificación**: no crea práctica ni sede operativa (eso sigue siendo
+`medical-center-setup` tras la verificación).
+
+| Tabla | Qué guarda | Claves |
+|---|---|---|
+| `directory.tenant_medical_facilities` | NIT declarado, número de registro/habilitación ante la autoridad sanitaria (SEDES en Bolivia) y director médico (nombre en partes, matrícula profesional, correo, teléfono) | 1 fila por tenant: `uk_tenant_medical_facilities_tenant` |
+| `directory.tenant_medical_facility_sites` | Casa central (`ordinal` 0) y 0..50 sucursales declaradas, con líneas de dirección y coordenadas opcionales | `(medical_facility_id, ordinal)` único; una sola casa central |
+
+Decisiones que conviene no revertir sin leer el porqué (están comentadas en `diagram_04_directory.puml`):
+
+- **Ni el NIT ni el número de habilitación son UNIQUE.** Son datos sin verificar: un UNIQUE deja que el
+  primero que los tipea, aunque sean falsos, bloquee al titular real. Llevan índice para detectar
+  duplicados en la bandeja de verificación. Una UNIQUE parcial sobre filas verificadas queda para
+  cuando exista la verificación del número. País y jurisdicción son los del tenant.
+- **El director médico no es una `persons`.** `profiles.persons` es identidad maestra (merge,
+  anonimización) y no se crea una con datos sin verificar; la matrícula tampoco cabe en
+  `professional_credentials`, que exige un `health_practitioner_profile`. No es una cuenta de la
+  plataforma. El representante legal y las gerencias siguen en `persons` + `tenant_legal_representatives`.
+- **Las sedes declaradas no son `directory.branches`.** Aquellas son operativas; estas pre-llenan el
+  `medical-center-setup` y las revisa el equipo de verificación.
+- **El tope de 50 sucursales lo impone la base**: `ck_tenant_medical_facility_sites_kind_ordinal`
+  admite sólo `headquarters` con `ordinal = 0` y `branch` con `ordinal` 1..50. Las coordenadas van
+  ambas o ninguna (`ck_tenant_medical_facility_sites_geo`).
+- Ambas tablas llevan `tenant_id`, así que `SQL/patches/2026-08-05_tenant_rls.sql` (genérico) les
+  aplica RLS; volver a correrlo en una base viva.
+
+**Verificación (2026-10-28, PostgreSQL 16 desechable):**
+- `SQL/patches/2026-10-28_v4263_medical_facility.sql` aplicado dos veces sobre una base que sólo
+  tenía `directory.tenants` e `iam.users`: 0 errores; deltas +2 tablas, +30 columnas, +7 FK, +11
+  índices, +6 CHECK.
+- Esa base y otra construida con `SQL/04_directory/01..05` tienen las dos tablas con las mismas
+  columnas y CHECK; las 7 FK del archivo generado se crean en cuanto existen los schemas destino.
+- Probados 17 casos de borde: NIT con letras, número de habilitación con espacio, matrícula corta,
+  segunda casa central, sucursal 0 y 51, solo latitud, latitud fuera de rango, dirección vacía,
+  `site_kind` desconocido, segundo bloque del mismo tenant (rechazadas) y 50 sucursales, mismo NIT
+  en dos tenants y casa central con coordenadas (aceptadas).
+- Sin seeds: son datos que declara el titular, no catálogo.
+
 ### Convergencia del DDL de la API con el modelo: se recupera el PR #51 (2026-10-25)
 
 **Sin tablas nuevas en el modelo más allá de las que el PR #51 ya declaraba.** El PR #51

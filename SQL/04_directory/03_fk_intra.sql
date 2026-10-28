@@ -61,3 +61,21 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_tenant_web_configs_tenant_id" FOREIGN KEY ("tenant_id")
         REFERENCES "directory"."tenants" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "directory"."tenant_medical_facilities"
+        ADD CONSTRAINT "fk_tenant_medical_facilities_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+DO $$ BEGIN
+    ALTER TABLE "directory"."tenant_medical_facility_sites"
+        ADD CONSTRAINT "fk_tenant_medical_facility_sites_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+DO $$ BEGIN
+    ALTER TABLE "directory"."tenant_medical_facility_sites"
+        ADD CONSTRAINT "fk_tenant_medical_facility_sites_medical_facility_id" FOREIGN KEY ("medical_facility_id")
+        REFERENCES "directory"."tenant_medical_facilities" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;

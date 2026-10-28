@@ -113,3 +113,25 @@ CREATE UNIQUE INDEX IF NOT EXISTS "uk_tenant_web_configs_domain" ON "directory".
 CREATE INDEX IF NOT EXISTS "ix_tenant_web_configs_tenant_id" ON "directory"."tenant_web_configs" ("tenant_id");
 
 CREATE INDEX IF NOT EXISTS "ix_tenant_web_configs_primary_language_concept_id" ON "directory"."tenant_web_configs" ("primary_language_concept_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uk_tenant_medical_facilities_tenant" ON "directory"."tenant_medical_facilities" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_tenant_medical_facilities_registration_number" ON "directory"."tenant_medical_facilities" ("health_facility_registration_number");
+
+CREATE INDEX IF NOT EXISTS "ix_tenant_medical_facilities_tax_identifier_number" ON "directory"."tenant_medical_facilities" ("tax_identifier_number");
+
+CREATE INDEX IF NOT EXISTS "ix_tenant_medical_facilities_created_by_user_id" ON "directory"."tenant_medical_facilities" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_tenant_medical_facilities_updated_by_user_id" ON "directory"."tenant_medical_facilities" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_tenant_medical_facility_sites_tenant_id" ON "directory"."tenant_medical_facility_sites" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_tenant_medical_facility_sites_medical_facility_id" ON "directory"."tenant_medical_facility_sites" ("medical_facility_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_tenant_medical_facility_sites_facility_ordinal" ON "directory"."tenant_medical_facility_sites" ("medical_facility_id", "ordinal");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_tenant_medical_facility_sites_one_headquarters" ON "directory"."tenant_medical_facility_sites" ("medical_facility_id") WHERE site_kind = 'headquarters';
+
+CREATE INDEX IF NOT EXISTS "ix_tenant_medical_facility_sites_created_by_user_id" ON "directory"."tenant_medical_facility_sites" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_tenant_medical_facility_sites_updated_by_user_id" ON "directory"."tenant_medical_facility_sites" ("updated_by_user_id");

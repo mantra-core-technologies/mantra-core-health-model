@@ -315,4 +315,98 @@ tenants ||--o{ tenant_legal_representatives
 
 tenants ||--o{ tenant_web_configs
 
+' ===== v4.2.63 (alta de organización médica: bloque medicalFacility) =====
+
+' + v4.2.63 — el alta pública de organización médica (HOSPITAL, CLINIC, MEDICAL_OFFICE,
+' NURSING, HEALTH_OTHER) pide lo mismo que el centro de imagenología MÁS dos datos propios de
+' un establecimiento de salud: el NÚMERO de habilitación ante la autoridad sanitaria (SEDES en
+' Bolivia) y el director médico. Hasta ahora sólo se subía el PDF del certificado: sin el número
+' la plataforma no podía verificarlo ni cruzarlo con el registro oficial.
+'
+' Es un registro DECLARADO por el titular, PENDIENTE de verificación (la verificación del tenant
+' sigue en `tenants.verification_status_concept_id`). No crea práctica ni sede operativa: eso
+' sigue siendo `medical-center-setup` tras la verificación. Una fila por tenant.
+'
+' Decisiones de modelo:
+'  - El NIT también vive como `tenant_affiliation_documents.document_number` (TAX_IDENTIFIER_DOC)
+'    cuando se sube el PDF. Acá queda el número DECLARADO aunque el documento falte, para que
+'    verificación cruce ambos. Sin UNIQUE: es un dato sin verificar, y un UNIQUE dejaría que el
+'    primero que lo tipea —aunque sea falso— bloquee al titular real.
+'  - El número de habilitación tampoco es UNIQUE, por lo mismo; lleva índice para detectar
+'    duplicados en la bandeja de verificación. País y jurisdicción son los del tenant
+'    (`tenants.country_concept_id`, `tenants.jurisdiction_concept_id`): no se copian.
+'  - El director médico va en columnas de esta tabla y NO en `profiles.persons`: `persons` es
+'    identidad maestra (merge, anonimización) y no se crea una persona maestra con datos sin
+'    verificar. La matrícula tampoco tiene dónde vivir en `professional_credentials`, que exige
+'    un `health_practitioner_profile`. No es una cuenta de la plataforma.
+'  - Las gerencias y el representante legal siguen en `persons` + `tenant_legal_representatives`.
+entity tenant_medical_facilities {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK,UK>>
+  * tax_identifier_number : varchar(20)
+  * health_facility_registration_number : varchar(50)
+  * medical_director_name : varchar
+    medical_director_middle_name : varchar
+  * medical_director_last_name : varchar
+    medical_director_mother_last_name : varchar
+  * medical_director_license_number : varchar(50)
+  * medical_director_email : varchar
+    medical_director_phone : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' + v4.2.63 — casa central y sucursales DECLARADAS en el alta (0..50 sucursales). No son
+' `directory.branches` ni `practice.practice_sites`: esas son sedes operativas y el alta no las
+' crea. Estas filas pre-llenan `medical-center-setup` y las revisa el equipo de verificación.
+' `ordinal` 0 es la casa central y 1..50 las sucursales en el orden del formulario: el CHECK
+' `ck_tenant_medical_facility_sites_kind_ordinal` hace que la base imponga el tope de 50 y una
+' sola casa central. `tenant_id` se repite aquí (ya está en la cabecera) para que RLS filtre sin join.
+entity tenant_medical_facility_sites {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * medical_facility_id : uuid <<FK>>
+  * site_kind : varchar
+  * ordinal : integer
+  * name : varchar(200)
+  * address_lines : varchar[]
+    latitude : numeric
+    longitude : numeric
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity "INDEXES · tenant_medical_facilities" as idxset_tenant_medical_facilities <<INDEX_SET>> {
+  PK pk_tenant_medical_facilities : (id) UNIQUE BTREE
+  UK uk_tenant_medical_facilities_tenant : (tenant_id) UNIQUE BTREE
+  IX ix_tenant_medical_facilities_registration_number : (health_facility_registration_number) BTREE
+  IX ix_tenant_medical_facilities_tax_identifier_number : (tax_identifier_number) BTREE
+  IX ix_tenant_medical_facilities_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_tenant_medical_facilities_updated_by_user_id : (updated_by_user_id) BTREE
+}
+tenant_medical_facilities .. idxset_tenant_medical_facilities : indexed by
+
+entity "INDEXES · tenant_medical_facility_sites" as idxset_tenant_medical_facility_sites <<INDEX_SET>> {
+  PK pk_tenant_medical_facility_sites : (id) UNIQUE BTREE
+  IX ix_tenant_medical_facility_sites_tenant_id : (tenant_id) BTREE
+  IX ix_tenant_medical_facility_sites_medical_facility_id : (medical_facility_id) BTREE
+  UX ux_tenant_medical_facility_sites_facility_ordinal : (medical_facility_id, ordinal) UNIQUE BTREE
+  UX ux_tenant_medical_facility_sites_one_headquarters : (medical_facility_id) UNIQUE BTREE WHERE site_kind = 'headquarters'
+  IX ix_tenant_medical_facility_sites_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_tenant_medical_facility_sites_updated_by_user_id : (updated_by_user_id) BTREE
+}
+tenant_medical_facility_sites .. idxset_tenant_medical_facility_sites : indexed by
+
+tenants ||--o| tenant_medical_facilities
+tenants ||--o{ tenant_medical_facility_sites
+tenant_medical_facility_sites }o--|| tenant_medical_facilities : medical_facility_id
+
 @enduml

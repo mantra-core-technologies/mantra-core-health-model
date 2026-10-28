@@ -85,6 +85,13 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 |-------|-------------|-------------------|
 | `diagnostic_study_prices` | `VERSIONED, REFERENCE_ONLY` | **UK** schedule + offering + version; **EXCLUDE** no overlapping active effective periods; **CHECK** amounts >= 0 |
 
+### Módulo 04 · `directory`
+
+| Tabla | Estereotipo | Reglas declaradas |
+|-------|-------------|-------------------|
+| `directory.tenant_medical_facilities` | `REFERENCE_ONLY` | **CHECK_SQL** ck_tenant_medical_facilities_tax_identifier_format \| "tax_identifier_number" ~ '^[0-9][0-9-]{3,19}$'; **CHECK_SQL** ck_tenant_medical_facilities_registration_format \| "health_facility_registration_number" ~ '^[A-Za-z0-9./-]{3,50}$'; **CHECK_SQL** ck_tenant_medical_facilities_director_license \| char_length(btrim("medical_director_license_number")) BETWEEN 3 AND 50 |
+| `directory.tenant_medical_facility_sites` | `REFERENCE_ONLY` | **CHECK_SQL** ck_tenant_medical_facility_sites_kind_ordinal \| ("site_kind" = 'headquarters' AND "ordinal" = 0) OR ("site_kind" = 'branch' AND "ordinal" BETWEEN 1 AND 50); **CHECK_SQL** ck_tenant_medical_facility_sites_address_lines \| cardinality("address_lines") >= 1; **CHECK_SQL** ck_tenant_medical_facility_sites_geo \| (("latitude" IS NULL) = ("longitude" IS NULL)) AND ("latitude" IS NULL OR ("latitude" BETWEEN -90 AND 90 AND "longitude" BETWEEN -180 AND 180)) |
+
 ### Módulo 27 · `identity_assurance`
 
 | Tabla | Estereotipo | Reglas declaradas |

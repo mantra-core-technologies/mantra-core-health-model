@@ -150,3 +150,41 @@ CREATE TABLE IF NOT EXISTS "directory"."tenant_web_configs" (
     "row_version" integer NOT NULL DEFAULT 1,
     CONSTRAINT "pk_tenant_web_configs" PRIMARY KEY ("id")
 );
+
+CREATE TABLE IF NOT EXISTS "directory"."tenant_medical_facilities" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "tax_identifier_number" varchar(20) NOT NULL,
+    "health_facility_registration_number" varchar(50) NOT NULL,
+    "medical_director_name" varchar NOT NULL,
+    "medical_director_middle_name" varchar,
+    "medical_director_last_name" varchar NOT NULL,
+    "medical_director_mother_last_name" varchar,
+    "medical_director_license_number" varchar(50) NOT NULL,
+    "medical_director_email" varchar NOT NULL,
+    "medical_director_phone" varchar,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_tenant_medical_facilities" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "directory"."tenant_medical_facility_sites" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "medical_facility_id" uuid NOT NULL,
+    "site_kind" varchar NOT NULL,
+    "ordinal" integer NOT NULL,
+    "name" varchar(200) NOT NULL,
+    "address_lines" varchar[] NOT NULL,
+    "latitude" numeric,
+    "longitude" numeric,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_tenant_medical_facility_sites" PRIMARY KEY ("id")
+);
