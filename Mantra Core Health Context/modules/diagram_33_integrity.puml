@@ -320,4 +320,53 @@ entity "delegated_access.shared_access_link_uses" as delegated_access_shared_acc
   ' A-12: el rastro de uso de un token compartido no se reescribe (UPDATE prohibido, DELETE libre para la retencion).
   UPDATE : forbidden
 }
+' + infraestructura hospitalaria F5e (facturación día-cama y quirófano, 2026-10-29) — CONTRATO-F2-F5 §F5e.
+' UUID literales (el predicado de un EXCLUDE/índice parcial debe ser IMMUTABLE), todos
+' deterministicId('billing:<NOMBRE>') de la API (common/constants/concepts.ts). Los conceptos los
+' define billing.concepts.ts con ESAS claves; si la API usa otras, estos literales y los del patch
+' …_f5_billing.sql cambian juntos:
+'   1ae01bf6-a061-52ed-aa26-590705cb2202 = billing:TARIFF_BED_DAY     25eb53f6-8006-5959-bee9-65b16117bc9b = billing:TARIFF_OR_TIME
+'   5f84ea44-b0d3-582c-86c1-32c81e422d30 = billing:CHG_SRC_BED_DAY   a79361f6-8787-56a5-9a90-a9436d02e217 = billing:CHG_SRC_OR_TIME
+'   17def99a-0cb5-586c-a440-59d809709c0d = billing:CHG_PENDING       9af061be-6a80-51ed-bcbd-52533037c272 = billing:CHG_INVOICED
+'   f2f59654-d912-5eeb-b619-814e50a3c4d0 = billing:CHG_VOIDED
+entity "practice.care_space_category_periods" as practice_care_space_category_periods <<REFERENCE_ONLY>> {
+  ' Rango [valid_from, valid_to) bien formado y SIN solape por cama: en una medianoche dada la cama
+  ' tiene una sola categoría. valid_to NULL = período abierto (dos abiertos se solapan).
+  CHECK_SQL : ck_care_space_category_periods_range | "valid_to" IS NULL OR "valid_to" > "valid_from"
+  EXCLUDE : bed category periods cannot overlap per care space
+  EXCLUDE_SQL : ex_care_space_category_periods_validity | "care_space_id" WITH =, tstzrange("valid_from", "valid_to", '[)') WITH &&
+}
+entity "billing.space_tariffs" as billing_space_tariffs <<REFERENCE_ONLY>> {
+  ' Sin dos tarifas vigentes a la vez para la misma clase (práctica, tipo, categoría, sala): los NULL se
+  ' normalizan con el UUID cero para que «sin categoría» / «sin sala» también choquen entre sí.
+  EXCLUDE : space tariffs cannot overlap per practice, kind, category and care space
+  EXCLUDE_SQL : ex_space_tariffs_validity | "practice_id" WITH =, "tariff_kind_concept_id" WITH =, (COALESCE("bed_category_concept_id", '00000000-0000-0000-0000-000000000000'::uuid)) WITH =, (COALESCE("care_space_id", '00000000-0000-0000-0000-000000000000'::uuid)) WITH =, daterange("valid_from", "valid_to", '[)') WITH &&
+  CHECK_SQL : ck_space_tariffs_kind | "tariff_kind_concept_id" IN ('1ae01bf6-a061-52ed-aa26-590705cb2202', '25eb53f6-8006-5959-bee9-65b16117bc9b')
+  CHECK_SQL : ck_space_tariffs_period | "valid_to" IS NULL OR "valid_to" > "valid_from"
+  CHECK_SQL : ck_space_tariffs_price | "unit_price" >= 0
+  ' Quirófano por tiempo: la unidad de cobro (15/30/60 min) es obligatoria (contrato F5e).
+  CHECK_SQL : ck_space_tariffs_or_time_unit | "tariff_kind_concept_id" <> '25eb53f6-8006-5959-bee9-65b16117bc9b' OR ("unit_minutes" IS NOT NULL AND "unit_minutes" > 0)
+  ' Día-cama: jamás fracciones de día (anti-patrón de los «0,5 días»): sin unidad de minutos ni mínimo.
+  CHECK_SQL : ck_space_tariffs_bed_day_whole_days | "tariff_kind_concept_id" <> '1ae01bf6-a061-52ed-aa26-590705cb2202' OR ("unit_minutes" IS NULL AND "minimum_units" IS NULL)
+  CHECK_SQL : ck_space_tariffs_minimum_units | "minimum_units" IS NULL OR "minimum_units" >= 1
+  ' Día-cama: por categoría o por sala (sin tarifa «por defecto»: categoría desconocida = error de
+  ' configuración, proceso 11). Quirófano: la tarifa es general o de una sala; no lleva categoría de cama.
+  CHECK_SQL : ck_space_tariffs_scope | ("tariff_kind_concept_id" <> '1ae01bf6-a061-52ed-aa26-590705cb2202' OR "bed_category_concept_id" IS NOT NULL OR "care_space_id" IS NOT NULL) AND ("tariff_kind_concept_id" <> '25eb53f6-8006-5959-bee9-65b16117bc9b' OR "bed_category_concept_id" IS NULL)
+}
+entity "billing.charge_captures" as billing_charge_captures <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_charge_captures_source_kind | "source_kind_concept_id" IN ('5f84ea44-b0d3-582c-86c1-32c81e422d30', 'a79361f6-8787-56a5-9a90-a9436d02e217')
+  CHECK_SQL : ck_charge_captures_status | "status_concept_id" IN ('17def99a-0cb5-586c-a440-59d809709c0d', '9af061be-6a80-51ed-bcbd-52533037c272', 'f2f59654-d912-5eeb-b619-814e50a3c4d0')
+  CHECK_SQL : ck_charge_captures_quantity | "quantity" > 0
+  ' Un día-cama es UN día en UNA cama; nunca 0,5 días.
+  CHECK_SQL : ck_charge_captures_bed_day_whole | "source_kind_concept_id" <> '5f84ea44-b0d3-582c-86c1-32c81e422d30' OR ("quantity" = 1 AND "care_space_id" IS NOT NULL)
+  CHECK_SQL : ck_charge_captures_minimum_stay | "minimum_stay_charge" = false OR "source_kind_concept_id" = '5f84ea44-b0d3-582c-86c1-32c81e422d30'
+  CHECK_SQL : ck_charge_captures_idempotency_key | btrim("idempotency_key") <> ''
+  ' Anulado exige motivo; el motivo sólo existe en un cargo anulado.
+  CHECK_SQL : ck_charge_captures_void | ("status_concept_id" = 'f2f59654-d912-5eeb-b619-814e50a3c4d0' AND "void_reason" IS NOT NULL AND btrim("void_reason") <> '') OR ("status_concept_id" <> 'f2f59654-d912-5eeb-b619-814e50a3c4d0' AND "void_reason" IS NULL)
+  ' Pendiente no tiene línea de factura; facturado sí. Un anulado puede conservar la que tuvo (nota de crédito).
+  CHECK_SQL : ck_charge_captures_invoice_link | ("status_concept_id" <> '17def99a-0cb5-586c-a440-59d809709c0d' OR "invoice_line_id" IS NULL) AND ("status_concept_id" <> '9af061be-6a80-51ed-bcbd-52533037c272' OR "invoice_line_id" IS NOT NULL)
+  ' Con precio, el cargo trae la foto completa de la tarifa; sin tarifa vigente queda sin precio (no se inventa).
+  CHECK_SQL : ck_charge_captures_price_photo | "unit_price" IS NULL OR ("unit_price" >= 0 AND "space_tariff_id" IS NOT NULL AND "service_catalog_id" IS NOT NULL AND "currency_concept_id" IS NOT NULL)
+  CHECK_SQL : ck_charge_captures_invoiced_priced | "status_concept_id" <> '9af061be-6a80-51ed-bcbd-52533037c272' OR "unit_price" IS NOT NULL
+}
 @enduml

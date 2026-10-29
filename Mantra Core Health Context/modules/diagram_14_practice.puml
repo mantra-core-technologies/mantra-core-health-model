@@ -348,6 +348,30 @@ entity practice_settings {
   * row_version : integer
 }
 
+' + infraestructura hospitalaria F5e (2026-10-29): vigencias de la CATEGORÍA de una cama. La regla
+' de medianoche (D7) cobra la categoría que la cama tenía EN esa medianoche, no la de hoy; el
+' atributo care_spaces.bed_category_concept_id sólo dice cuál es la de ahora. Rango [valid_from,
+' valid_to): valid_to NULL = período abierto. Sin solape por cama (EXCLUDE en diagram_33). Los
+' períodos son hechos de facturación: no se borran y sólo se cierra valid_to una vez (trigger del
+' patch …_f5_practice). Cambiar la categoría = cerrar el período vigente y abrir otro en la misma
+' transacción (lo hace PATCH /care-spaces/:id). (tenant_id, care_space_id) es FK compuesta: el
+' período sólo apunta a una cama de su propio tenant.
+entity care_space_category_periods {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * care_space_id : uuid <<FK, SCOPED_BY:tenant_id>>
+  * bed_category_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+care_spaces ||--o{ care_space_category_periods
+
 practices ||--o{ practice_sites
 practices ||--o{ healthcare_services
 
@@ -602,6 +626,17 @@ entity "INDEXES · practice_settings" as idxset_practice_settings <<INDEX_SET>> 
 }
 
 practice_settings .. idxset_practice_settings : indexed by
+
+entity "INDEXES · care_space_category_periods" as idxset_care_space_category_periods <<INDEX_SET>> {
+  PK pk_care_space_category_periods : (id) UNIQUE BTREE
+  IX ix_care_space_category_periods_tenant_id : (tenant_id) BTREE
+  IX ix_care_space_category_periods_care_space_id : (care_space_id, valid_from DESC) BTREE
+  IX ix_care_space_category_periods_bed_category_concept_id : (bed_category_concept_id) BTREE
+  IX ix_care_space_category_periods_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_care_space_category_periods_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+care_space_category_periods .. idxset_care_space_category_periods : indexed by
 }
 
 
