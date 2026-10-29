@@ -260,6 +260,8 @@ CREATE INDEX IF NOT EXISTS "ix_appointment_payment_states_status_concept_id" ON 
 
 CREATE INDEX IF NOT EXISTS "ix_appointment_payment_states_marked_by_user_id" ON "scheduling"."appointment_payment_states" ("marked_by_user_id");
 
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_appointment_payment_states_invoice" ON "scheduling"."appointment_payment_states" ("invoice_id") WHERE invoice_id IS NOT NULL;
+
 CREATE INDEX IF NOT EXISTS "ix_appointment_payment_receipts_tenant_id" ON "scheduling"."appointment_payment_receipts" ("tenant_id");
 
 CREATE INDEX IF NOT EXISTS "ix_appointment_payment_receipts_appointment_booking_id" ON "scheduling"."appointment_payment_receipts" ("appointment_booking_id");
