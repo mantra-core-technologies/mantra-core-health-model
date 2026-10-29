@@ -196,7 +196,32 @@ class StaticContractTests(unittest.TestCase):
                 self.assertTrue(contains(name, model))
                 self.assertIsNotNone(re.search(r'CREATE UNIQUE INDEX IF NOT EXISTS "%s"' % name, patch_text))
         # «única por cama + noche»: el día mínimo de un ingreso/egreso el mismo día queda afuera.
-        self.assertIsNotNone(re.search(r'"ux_charge_captures_bed_night" ON "billing"."charge_captures" \("care_space_id", "service_date"\) WHERE [^;]*minimum_stay_charge = false', patch_text))
+        self.assertIsNotNone(re.search(r'"ux_charge_captures_bed_night" ON "billing"."charge_captures" \("tenant_id", "care_space_id", "service_date"\) WHERE [^;]*minimum_stay_charge = false', patch_text))
+        # Hallazgo 1: ningún único de cargos es global; todos llevan tenant_id por delante.
+        for name in ("ux_charge_captures_bed_night", "ux_charge_captures_encounter_bed_day", "ux_charge_captures_or_case"):
+            with self.subTest(scope=name):
+                self.assertIsNotNone(re.search(r'UX %s : \(tenant_id, ' % name, model))
+                self.assertIsNotNone(re.search(r'"%s" ON "billing"."charge_captures" \("tenant_id", ' % name, patch_text))
+
+    def test_security_findings_are_closed_in_the_patches(self):
+        billing = PATCH_BILLING.read_text(encoding="utf-8")
+        accounting = PATCH_ACCOUNTING.read_text(encoding="utf-8")
+        # Hallazgo 1: el origen de un cargo de quirófano es un caso del mismo tenant y práctica.
+        self.assertTrue(contains('CREATE OR REPLACE FUNCTION "billing"."charge_source_case_ok"', billing))
+        self.assertTrue(contains('"billing"."charge_source_case_ok"(NEW."tenant_id", NEW."practice_id", NEW."source_ref_id")', billing))
+        # Hallazgo 2: triggers sobre las tablas padre, en las dos direcciones.
+        for trigger, table in (("trg_care_spaces_billing_dependents", "care_spaces"), ("trg_practice_sites_billing_dependents", "practice_sites")):
+            self.assertTrue(contains(f'CREATE TRIGGER "{trigger}"', billing), trigger)
+            self.assertTrue(contains(f'ON "practice"."{table}"', billing), trigger)
+        for trigger in ("trg_care_spaces_accounting_dependents", "trg_clinical_units_accounting_dependents",
+                        "trg_practice_sites_accounting_dependents"):
+            self.assertTrue(contains(f'CREATE TRIGGER "{trigger}"', accounting), trigger)
+        # La lectura de dependientes se hace con contexto de sistema (a nivel de función).
+        self.assertGreaterEqual(billing.count("SET app.system_context = 'true'"), 2)
+        self.assertGreaterEqual(accounting.count("SET app.system_context = 'true'"), 3)
+        # Las mutaciones existen y cada una apunta a un arreglo distinto.
+        for name in ("global_unique", "no_case_check", "no_parent_triggers"):
+            self.assertTrue((SQL_TESTS / "mutations" / f"{name}.sql").exists(), name)
 
     def test_backfill_in_the_sql_test_is_the_one_in_the_patch(self):
         patch_text = PATCH_PRACTICE.read_text(encoding="utf-8")
@@ -277,13 +302,23 @@ class StaticContractTests(unittest.TestCase):
 
 
 # --------------------------------------------------------------------------------------------
+SCOPE_CASES = 29
+
+
 @unittest.skipUnless(os.environ.get("SALUD_TEST_PGDATABASE") and shutil.which("psql"),
                      "define SALUD_TEST_PGDATABASE (una base descartable, p. ej. CREATE DATABASE m_f5fin TEMPLATE alovida) "
                      "y las variables PG* de libpq; hace falta el cliente psql")
 class LiveDatabaseTests(unittest.TestCase):
+    # Hallazgos de seguridad: cada mutación quita UN arreglo y la prueba tiene que fallar en su caso.
+    MUTATIONS = {
+        "global_unique": "otro tenant con el MISMO source_ref_id de quirófano no choca",
+        "no_case_check": "B cita el caso quirúrgico de A",
+        "no_parent_triggers": "mover una cama CON activo contable a una sede de OTRA práctica",
+    }
+
     # «CASO OK» por script: si un caso se saltara en silencio, el conteo no cerraría.
     EXPECTED_CASES = {"f5_fin_10_practice_test.sql": 19, "f5_fin_20_accounting_test.sql": 17,
-                      "f5_fin_30_billing_test.sql": 129}
+                      "f5_fin_30_billing_test.sql": 129, "f5_fin_40_scope_test.sql": SCOPE_CASES}
 
     @classmethod
     def setUpClass(cls):
@@ -361,6 +396,23 @@ class LiveDatabaseTests(unittest.TestCase):
         self.scenario("ALTER INDEX accounting.ux_cost_centers_practice_id_id RENAME TO ux_renombrado;",
                       PATCH_BILLING, r"falta accounting\.ux_cost_centers_practice_id_id")
 
+        self.scenario("ALTER TABLE billing.space_tariffs DISABLE TRIGGER trg_space_tariffs_guard;\n"
+                      + tariff % (a1, "'2026-01-01'") + "\n"
+                      "UPDATE billing.space_tariffs SET care_space_id = 'a2300000-0000-4000-8000-000000000004', bed_category_concept_id = NULL;",
+                      PATCH_BILLING, r"tarifas con sala de otra práctica=1")
+
+        capture = ("INSERT INTO billing.charge_captures (id, tenant_id, practice_id, patient_profile_id, encounter_id, source_kind_concept_id, source_ref_id, "
+                   "service_date, care_space_id, minimum_stay_charge, quantity, status_concept_id, idempotency_key, created_at, updated_at, row_version) "
+                   "VALUES (gen_random_uuid(), 'a0000000-0000-4000-8000-000000000001', 'a1000000-0000-4000-8000-000000000001', "
+                   "'a4000000-0000-4000-8000-000000000001', 'a5000000-0000-4000-8000-000000000001', %s, gen_random_uuid(), '2026-12-01', %s, false, %s, "
+                   "'17def99a-0cb5-586c-a440-59d809709c0d', 'k-' || gen_random_uuid()::text, now(), now(), 1);")
+        self.scenario("ALTER TABLE billing.charge_captures DISABLE TRIGGER trg_charge_captures_guard;\n"
+                      + capture % ("'5f84ea44-b0d3-582c-86c1-32c81e422d30'", "'a2300000-0000-4000-8000-000000000004'", "1"),
+                      PATCH_BILLING, r"cargos con cama de otra práctica=1")
+        self.scenario("ALTER TABLE billing.charge_captures DISABLE TRIGGER trg_charge_captures_guard;\n"
+                      + capture % ("'a79361f6-8787-56a5-9a90-a9436d02e217'", "NULL", "2"),
+                      PATCH_BILLING, r"cargos de quirófano cuyo origen no es un caso del mismo tenant y práctica=1")
+
         self.scenario("DROP INDEX accounting.ux_cost_centers_unit_active;\nALTER TABLE accounting.cost_centers DISABLE TRIGGER trg_cost_centers_unit_practice;\n"
                       "UPDATE accounting.cost_centers SET clinical_unit_id = 'a1200000-0000-4000-8000-000000000001' WHERE id = 'a7000000-0000-4000-8000-000000000001';\n"
                       "INSERT INTO accounting.cost_centers (id, practice_id, code, name, status_concept_id, clinical_unit_id, created_at, updated_at) "
@@ -379,6 +431,21 @@ class LiveDatabaseTests(unittest.TestCase):
                       PATCH_ACCOUNTING, r"activos con espacio de otra práctica=1")
         # Nada de lo anterior dejó rastro (cada escenario es una transacción que no llegó a COMMIT).
         self.assertEqual(self.fingerprint(), before)
+
+
+    def test_4_mutations_remove_one_fix_each_and_the_scope_test_fails(self):
+        script = SQL_TESTS / "f5_fin_40_scope_test.sql"
+        base = self.psql(sql_file=script)
+        self.assertNotIn("CASO FALLIDO", base.stderr)
+        for mutation, label in self.MUTATIONS.items():
+            with self.subTest(mutation=mutation):
+                result = self.psql("-v", f"mutacion={mutation}", sql_file=script, check=False)
+                self.assertNotEqual(result.returncode, 0, "sin el arreglo la prueba debía fallar")
+                self.assertIn("CASO FALLIDO", result.stderr)
+                self.assertIn(label, result.stderr)
+        # y las mutaciones no dejan nada (ROLLBACK): el script sin mutar sigue pasando.
+        again = self.psql(sql_file=script)
+        self.assertEqual(again.stderr.count("CASO OK"), SCOPE_CASES)
 
 
 if __name__ == "__main__":
