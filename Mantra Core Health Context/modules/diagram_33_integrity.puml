@@ -316,6 +316,48 @@ entity "delegated_access.organization_user_assignments" as delegated_access_orga
   ' F5g (regla B.5-29): un solo jefe de unidad vigente por unidad clínica.
   EXCLUDE_SQL : ex_org_user_assignments_unit_head | "clinical_unit_id" WITH =, tstzrange("valid_from", "valid_to", '[)') WITH && | "assignment_role_concept_id" = 'ce54425b-5479-57f1-8bb2-274a8617723c' AND "status_concept_id" = '38a1d301-f40d-5b17-a695-5e6d605f8b19'
 }
+' + infraestructura hospitalaria F3 (internación / ADT, 2026-10-29) — CONTRATO-F2-F5 F3.1.
+' UUID literales (el predicado de un EXCLUDE debe ser IMMUTABLE), derivados con deterministicId()
+' de la API (common/constants/concepts.ts, namespace 3f2b6c14-9d5e-5a41-b7c2-0a1e9f4d8b60):
+'   809db700-0627-5fe3-8278-4f038f4475b3 = clinical:LOCATION_ACTIVE
+'   8cf00069-81ca-56e1-8e71-9e16333a1f6c = clinical:LOCATION_COMPLETED
+'   cdd86257-4297-5941-8ae8-b95e11439a48 = clinical:LOCATION_RESERVED (concepto nuevo de F3)
+' Mismos nombres que el patch 2026-10-29_infraestructura_f3_clinical.sql. LIMITACIÓN conocida: el
+' contrato pide los dos EXCLUDE de ocupación DEFERRABLE INITIALLY IMMEDIATE (intercambio A17), y
+' EXCLUDE_SQL no tiene dónde declararlo (gen_integrity.exclude_concreto): el 05_constraints
+' generado los crea NO diferibles y el patch los recrea diferibles al aplicarse (ver DESVIOS-M-F3).
+entity "clinical.encounter_locations" as clinical_encounter_locations <<REFERENCE_ONLY>> {
+  ' F3 · una fila marcada como cama exige espacio e inicio del período.
+  CHECK_SQL : ck_encounter_locations_bed_period | NOT "is_bed_assignment" OR ("period_start" IS NOT NULL AND "care_space_id" IS NOT NULL)
+  ' F3 · el período de una cama no termina antes de empezar (error claro 23514 en vez de 22000 del tstzrange).
+  CHECK_SQL : ck_encounter_locations_bed_period_order | NOT "is_bed_assignment" OR "period_end" IS NULL OR "period_end" >= "period_start"
+  ' F3 · INV-30: una cama, un paciente a la vez (historial y reservas incluidos).
+  EXCLUDE_SQL : ex_encounter_locations_bed_occupancy | "care_space_id" WITH =, tstzrange("period_start", "period_end", '[)') WITH && | "is_bed_assignment" AND "location_status_concept_id" IN ('809db700-0627-5fe3-8278-4f038f4475b3', 'cdd86257-4297-5941-8ae8-b95e11439a48', '8cf00069-81ca-56e1-8e71-9e16333a1f6c')
+  ' F3 · INV-31: un encuentro, una cama a la vez (la reserva de traslado puede convivir).
+  EXCLUDE_SQL : ex_encounter_locations_encounter_single_bed | "encounter_id" WITH =, tstzrange("period_start", "period_end", '[)') WITH && | "is_bed_assignment" AND "location_status_concept_id" IN ('809db700-0627-5fe3-8278-4f038f4475b3', '8cf00069-81ca-56e1-8e71-9e16333a1f6c')
+  ' F3 · un encuentro tiene a lo sumo UNA ubicación de cama ACTIVA (el traslado deja un solo registro activo).
+  EXCLUDE_SQL : ex_encounter_locations_encounter_one_active_bed | "encounter_id" WITH = | "is_bed_assignment" AND "location_status_concept_id" = '809db700-0627-5fe3-8278-4f038f4475b3'
+}
+entity "clinical.placement_incidents" as clinical_placement_incidents <<REFERENCE_ONLY>> {
+  ' F3 · forzar la compatibilidad exige una justificación de al menos 20 caracteres (sin contar espacios de borde).
+  CHECK_SQL : ck_placement_incidents_justification_length | length(btrim("justification_text")) >= 20
+  CHECK_SQL : ck_placement_incidents_violations_array | jsonb_typeof("violations_json") = 'array'
+}
+entity "clinical.inpatient_census_days" as clinical_inpatient_census_days <<REFERENCE_ONLY>> {
+  ' F3 · el día cerrado (closed_at) no se modifica ni se borra: trigger del patch (gen_integrity no lo expresa).
+  CHECK_SQL : ck_inpatient_census_days_counts | "beds_censable" >= 0 AND "beds_available" >= 0 AND "beds_blocked" >= 0 AND "patients_at_cutoff" >= 0 AND "admissions" >= 0 AND "discharges" >= 0 AND "deaths" >= 0 AND "transfers_in" >= 0 AND "transfers_out" >= 0 AND "same_day_stays" >= 0 AND "patient_days" >= 0 AND "discharge_stay_days" >= 0 AND "beds_available" + "beds_blocked" = "beds_censable"
+  CHECK_SQL : ck_inpatient_census_days_closed_has_hash | "closed_at" IS NULL OR "content_hash" IS NOT NULL
+}
+' F3 · INV-35: el rastro del censo no se reescribe (UPDATE y DELETE prohibidos).
+entity "clinical.inpatient_census_entries" as clinical_inpatient_census_entries <<IMMUTABLE, REFERENCE_ONLY>> {
+  UPDATE_DELETE : forbidden
+}
+entity "clinical.inpatient_census_adjustments" as clinical_inpatient_census_adjustments <<IMMUTABLE, REFERENCE_ONLY>> {
+  UPDATE_DELETE : forbidden
+  ' F3 · sólo las columnas numéricas del snapshot se ajustan; el motivo es obligatorio y no vacío.
+  CHECK_SQL : ck_inpatient_census_adjustments_field_code | "field_code" IN ('beds_censable', 'beds_available', 'beds_blocked', 'patients_at_cutoff', 'admissions', 'discharges', 'deaths', 'transfers_in', 'transfers_out', 'same_day_stays', 'patient_days', 'discharge_stay_days')
+  CHECK_SQL : ck_inpatient_census_adjustments_reason | btrim("reason_text") <> '' AND "new_value" >= 0
+}
 entity "delegated_access.shared_access_link_uses" as delegated_access_shared_access_link_uses <<LOG, REFERENCE_ONLY>> {
   ' A-12: el rastro de uso de un token compartido no se reescribe (UPDATE prohibido, DELETE libre para la retencion).
   UPDATE : forbidden
