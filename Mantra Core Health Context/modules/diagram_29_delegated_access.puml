@@ -15,6 +15,14 @@ note as BIZ_diagram_29_delegated_access
   secretaries, assistants, nurses or billing staff without sharing credentials.
 end note
 
+' + infraestructura hospitalaria F5g (2026-10-29): acceso delegado por ESPACIO. Sin columnas
+' nuevas: `care_space_id` ya existía y ahora la usa el alcance DA_SCOPE_SPACE. Reglas:
+' el alcance exige su objetivo (SCOPE_UNIT → clinical_unit_id, SCOPE_SPACE → care_space_id,
+' SCOPE_SITE → practice_site_id: ck_org_user_assignments_scope_target) y hay un solo jefe de
+' unidad (DA_ASSIGN_UNIT_HEAD) ACTIVO y vigente por unidad (ex_org_user_assignments_unit_head,
+' regla B.5-29). Ambas se declaran en diagram_33 (CHECK_SQL / EXCLUDE_SQL). Que sede, unidad y
+' espacio sean del MISMO tenant que la membresía lo garantiza el trigger del patch
+' 2026-10-29_infraestructura_f5_operaciones.sql.
 entity organization_user_assignments {
   * id : uuid <<PK>>
   --

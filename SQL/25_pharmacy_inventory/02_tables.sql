@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS "pharmacy_inventory"."inventory_locations" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "care_space_id" uuid,
+    "clinical_unit_id" uuid,
     CONSTRAINT "pk_inventory_locations" PRIMARY KEY ("id")
 );
 
