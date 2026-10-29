@@ -63,6 +63,12 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 |-------|-------------|-------------------|
 | `clinical_ext.cds_rule_versions` | `REFERENCE_ONLY` | **UPDATE** forbidden; **CHECK_SQL** ck_cds_rule_versions_number \| "version_number" >= 1 |
 
+### Módulo 07 · `consent`
+
+| Tabla | Estereotipo | Reglas declaradas |
+|-------|-------------|-------------------|
+| `consent.treatment_informed_consents` | `REFERENCE_ONLY` | **CHECK_SQL** ck_treatment_informed_consents_target_type \| "target_type" IN ('MEDICATION_REQUEST','SERVICE_REQUEST','REFERRAL','PROCEDURE','CARE_PLAN'); **CHECK_SQL** ck_treatment_informed_consents_granted_by \| "granted_by" IN ('PATIENT','LEGAL_REPRESENTATIVE','GUARDIAN','SUBSTITUTE_RELATIVE'); **CHECK_SQL** ck_treatment_informed_consents_channel \| "channel" IN ('IN_PERSON','TELEHEALTH'); **CHECK_SQL** ck_treatment_informed_consents_exception_type \| "exception_type" IN ('EMERGENCY','PUBLIC_HEALTH_RISK','PATIENT_WAIVER') |
+
 ### Módulo 67 · `data_catalog`
 
 | Tabla | Estereotipo | Reglas declaradas |
