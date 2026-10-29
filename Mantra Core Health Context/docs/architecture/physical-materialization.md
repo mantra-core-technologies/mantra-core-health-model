@@ -2433,3 +2433,13 @@ y la cascada de miembros se declaran explícitamente en PUML; no se infieren por
 
 Despliegue: patch de modelo → API → frontend. Retirar una versión de aplicación conserva las
 columnas aditivas, las versiones adjudicadas y sus reversiones financieras.
+
+## v4.2.31 — Cuentas de acceso de aseguradoras: de patch SQL a seed de demostración de la API
+
+El patch `2026-09-26_v4231_seed_insurer_accounts.sql` sembraba 33 cuentas `acceso@<dominio>` con una
+misma clave conocida y la reponía en cada despliegue. Como `postgres-init` aplica todo `SQL/patches/`
+en cualquier entorno, un entorno de producción nuevo las habría recibido. Se retiran el patch y su
+generador (`salud-db/seed_insurer_accounts.py`): las cuentas pasan a un seed de demostración opt-in de
+la API (`SEED_DEMO_PASSWORD`; se niega en producción sin `SEED_DEMO_ALLOW_PRODUCTION=true`), que solo
+crea las que faltan y nunca repone la clave de una existente. No se borra ninguna fila de ninguna base.
+Esto resuelve además el patch que fallaba en base limpia por depender del catálogo.
