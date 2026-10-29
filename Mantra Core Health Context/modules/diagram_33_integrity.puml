@@ -284,6 +284,13 @@ entity "practice.care_spaces" as practice_care_spaces <<REFERENCE_ONLY>> {
 entity "scheduling.booking_policies" as scheduling_booking_policies <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_booking_policies_no_show_fee_percentage | ("no_show_fee_percentage" IS NULL OR ("no_show_fee_percentage" >= 0 AND "no_show_fee_percentage" <= 100))
 }
+' + infraestructura hospitalaria F5d — una referencia de origen (`source_ref_id`: el espacio o el
+' equipo que originó la excepción) no puede existir sin su origen (`source_kind_concept_id`).
+' (ex_appointments_care_space_time, la otra mitad de F5d, la declara el bloque `appointments` de
+' M-F5-clin: una sola declaración.)
+entity "scheduling.availability_exceptions" as scheduling_availability_exceptions <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_availability_exceptions_source_ref_needs_kind | ("source_ref_id" IS NULL OR "source_kind_concept_id" IS NOT NULL)
+}
 entity "insurance.insurance_products" as insurance_insurance_products <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_insurance_products_age_range | (COALESCE("min_age_years", 0) >= 0 AND ("max_age_years" IS NULL OR "max_age_years" >= COALESCE("min_age_years", 0)))
   CHECK_SQL : ck_insurance_products_valid_period | ("effective_from" IS NULL OR "effective_to" IS NULL OR "effective_from" <= "effective_to")
