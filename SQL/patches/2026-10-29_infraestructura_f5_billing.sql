@@ -29,13 +29,17 @@
 --     ocupación (un día-cama por cada medianoche) o desde el caso quirúrgico; unit_price es la
 --     foto de la tarifa vigente. Doble cobro imposible en la base:
 --       ux_charge_captures_idempotency_key  (tenant_id, idempotency_key)
---       ux_charge_captures_encounter_bed_day (encounter_id, service_date)  — un día-cama por
---                                            encuentro y noche mientras no esté anulado
---       ux_charge_captures_bed_night        (care_space_id, service_date)  — una cama no se cobra
---                                            dos veces la misma noche (el mínimo de «ingreso y
+--       ux_charge_captures_encounter_bed_day (tenant_id, encounter_id, service_date)  — un
+--                                            día-cama por encuentro y noche mientras no esté anulado
+--       ux_charge_captures_bed_night        (tenant_id, care_space_id, service_date)  — una cama no
+--                                            se cobra dos veces la misma noche (el mínimo de «ingreso y
 --                                            egreso el mismo día», minimum_stay_charge, no es una
 --                                            noche y queda fuera)
---       ux_charge_captures_or_case          (source_ref_id) — un cargo de quirófano por caso
+--       ux_charge_captures_or_case          (tenant_id, source_ref_id) — un cargo de quirófano por caso
+--     Los tres llevan tenant_id por delante: con un único global, un tenant que registrara un
+--     cargo con el id de un caso (o encuentro) de otro bloquearía u delataría su cobro. Además
+--     charge_source_case_ok() exige que el source_ref_id de un cargo de quirófano sea un caso del
+--     mismo tenant y práctica (falla cerrado si no existe).
 --   audit.space_tariffs_history y audit.charge_captures_history: mismo molde endurecido que
 --     care_spaces_history (F1b): tenant_id NOT NULL con RLS, FK compuesta al origen, trigger que
 --     completa el tenant, solo inserción más cierre de valid_to.
@@ -45,6 +49,11 @@
 --     edita (sólo se anula con motivo); el cargo trae la foto exacta de su tarifa, vigente en
 --     service_date; encuentro, paciente, cama y línea de factura son del mismo tenant/práctica.
 --   RLS tenant_isolation (texto exacto de 2026-08-05_tenant_rls.sql) y GRANT sin DELETE.
+--   Invariante «misma práctica» en las DOS direcciones: además de comprobarse al escribir la
+--     tarifa o el cargo, los triggers trg_care_spaces_billing_dependents y
+--     trg_practice_sites_billing_dependents impiden que un espacio pase a una sede de otra práctica,
+--     o que una sede pase a otra práctica, mientras existan tarifas o cargos que dependan de ella
+--     (lectura con contexto de sistema; el mensaje no revela datos de otro tenant).
 --
 -- UUID literales (el predicado de un índice parcial / CHECK debe ser IMMUTABLE), todos
 -- `deterministicId('billing:<NOMBRE>')` de la API (common/constants/concepts.ts), verificados con
@@ -70,13 +79,17 @@
 --   - No toca billing.invoices ni invoice_lines (sólo las referencia).
 --
 -- PRECONDICIONES (abortan sin tocar nada; el BEGIN hace rollback de todo):
---   - falta ux_cost_centers_practice_id_id (aplicar antes …_f5_accounting.sql) o las funciones
---     audit.structure_history_fill_tenant / structure_history_close_only (aplicar antes F1b);
---   - tarifas existentes que se solapan en la misma clase.
+--   - falta ux_cost_centers_practice_id_id (aplicar antes …_f5_accounting.sql), las funciones
+--     audit.structure_history_fill_tenant / structure_history_close_only (aplicar antes F1b) o
+--     procedures_perioperative.procedure_cases;
+--   - tarifas existentes que se solapan en la misma clase;
+--   - tarifas o cargos cuya sala es de una sede de OTRA práctica;
+--   - cargos de quirófano cuyo source_ref_id no es un caso del mismo tenant y práctica.
 --
 -- DELTAS ESPERADOS sobre la base viva (antes de este patch):
 --   tablas +4 (2 de negocio, 2 de historia) · FK +35 (10 compuestas) · CHECK +17 · EXCLUDE +1
---   índices únicos parciales +3 · triggers +6 · políticas RLS +4
+--   índices únicos parciales +3 · triggers +8 (2 de guarda, 4 de historia, 2 sobre sedes/espacios)
+--   funciones +3 de F5e-seguridad (charge_source_case_ok y las 2 de los triggers padre) · políticas RLS +4
 -- ============================================================================
 
 BEGIN;
@@ -93,6 +106,10 @@ BEGIN
                     AND indexname = 'ux_cost_centers_practice_id_id') THEN
         RAISE EXCEPTION 'F5e facturación: falta accounting.ux_cost_centers_practice_id_id; aplicar antes 2026-10-29_infraestructura_f5_accounting.sql'
             USING ERRCODE = 'undefined_object';
+    END IF;
+    IF to_regclass('procedures_perioperative.procedure_cases') IS NULL THEN
+        RAISE EXCEPTION 'F5e facturación: falta procedures_perioperative.procedure_cases (módulo 53)'
+            USING ERRCODE = 'undefined_table';
     END IF;
     IF to_regprocedure('audit.structure_history_fill_tenant()') IS NULL
        OR to_regprocedure('audit.structure_history_close_only()') IS NULL THEN
@@ -191,6 +208,60 @@ CREATE TABLE IF NOT EXISTS "audit"."charge_captures_history" (
     CONSTRAINT "pk_charge_captures_history" PRIMARY KEY ("history_id")
 );
 
+-- ------------------------------------------------------------- 2b. caso quirúrgico del mismo tenant y práctica
+-- ¿existe el caso `p_case` con custodio `p_tenant` y en una sede de `p_practice` (por su sede o, si
+-- no la tiene, por la sala de operaciones)? Falla cerrado: caso inexistente, de otro tenant, de otra
+-- práctica o sin sede/sala resuelven false. La lectura se hace con contexto de sistema para que el
+-- RLS de practice_sites / care_spaces no oculte el caso a una sesión sin tenant (job SYSTEM); pero
+-- sólo se eleva si la sesión es SYSTEM o `p_tenant` es el tenant de la sesión: un tenant NO puede
+-- preguntar por casos de otro (no es un oráculo). Se restaura el valor anterior del GUC al salir.
+CREATE OR REPLACE FUNCTION "billing"."charge_source_case_ok"(p_tenant uuid, p_practice uuid, p_case uuid)
+RETURNS boolean
+LANGUAGE plpgsql
+SET search_path = pg_catalog, pg_temp
+AS $fn$
+DECLARE
+    v_sys text := coalesce(current_setting('app.system_context', true), '');
+    v_ten text := coalesce(current_setting('app.current_tenant_id', true), '');
+    r     boolean;
+BEGIN
+    IF p_tenant IS NULL OR p_practice IS NULL OR p_case IS NULL THEN
+        RETURN false;
+    END IF;
+    IF v_sys <> 'true' AND (v_ten = '' OR v_ten <> p_tenant::text) THEN
+        RETURN false;
+    END IF;
+    PERFORM set_config('app.system_context', 'true', true);
+    SELECT EXISTS (
+        SELECT 1
+          FROM "procedures_perioperative"."procedure_cases" pc
+          LEFT JOIN "practice"."practice_sites" ps  ON ps."id" = pc."practice_site_id"
+          LEFT JOIN "practice"."care_spaces" orr    ON orr."id" = pc."operating_room_id"
+          LEFT JOIN "practice"."practice_sites" ps2 ON ps2."id" = orr."practice_site_id"
+         WHERE pc."id" = p_case
+           AND pc."custodian_tenant_id" = p_tenant
+           AND COALESCE(ps."practice_id", ps2."practice_id") = p_practice
+           AND COALESCE(ps."tenant_id", ps2."tenant_id") = p_tenant
+    ) INTO r;
+    PERFORM set_config('app.system_context', v_sys, true);
+    RETURN r;
+END $fn$;
+
+-- Los únicos de la versión anterior de este patch no llevaban tenant_id: se reemplazan (el
+-- CREATE … IF NOT EXISTS de abajo no cambiaría uno que ya existe con el mismo nombre). El de
+-- ahora es más débil que el viejo, así que ninguna fila existente puede violarlo.
+DO $$
+DECLARE
+    i text;
+BEGIN
+    FOREACH i IN ARRAY ARRAY['ux_charge_captures_bed_night', 'ux_charge_captures_encounter_bed_day', 'ux_charge_captures_or_case'] LOOP
+        IF EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'billing' AND indexname = i
+                    AND indexdef NOT LIKE '%(tenant_id, %') THEN
+            EXECUTE format('DROP INDEX "billing".%I', i);
+        END IF;
+    END LOOP;
+END $$;
+
 -- ------------------------------------------------------------- 3. índices
 -- (de SQL/17_billing/04_indexes.sql y SQL/10_audit/04_indexes.sql)
 CREATE INDEX IF NOT EXISTS "ix_space_tariffs_tenant_id" ON "billing"."space_tariffs" ("tenant_id");
@@ -255,11 +326,11 @@ CREATE UNIQUE INDEX IF NOT EXISTS "ux_charge_captures_tenant_id_id" ON "billing"
 
 CREATE UNIQUE INDEX IF NOT EXISTS "ux_charge_captures_idempotency_key" ON "billing"."charge_captures" ("tenant_id", "idempotency_key");
 
-CREATE UNIQUE INDEX IF NOT EXISTS "ux_charge_captures_bed_night" ON "billing"."charge_captures" ("care_space_id", "service_date") WHERE source_kind_concept_id = '5f84ea44-b0d3-582c-86c1-32c81e422d30' AND minimum_stay_charge = false AND status_concept_id <> 'f2f59654-d912-5eeb-b619-814e50a3c4d0';
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_charge_captures_bed_night" ON "billing"."charge_captures" ("tenant_id", "care_space_id", "service_date") WHERE source_kind_concept_id = '5f84ea44-b0d3-582c-86c1-32c81e422d30' AND minimum_stay_charge = false AND status_concept_id <> 'f2f59654-d912-5eeb-b619-814e50a3c4d0';
 
-CREATE UNIQUE INDEX IF NOT EXISTS "ux_charge_captures_encounter_bed_day" ON "billing"."charge_captures" ("encounter_id", "service_date") WHERE source_kind_concept_id = '5f84ea44-b0d3-582c-86c1-32c81e422d30' AND status_concept_id <> 'f2f59654-d912-5eeb-b619-814e50a3c4d0';
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_charge_captures_encounter_bed_day" ON "billing"."charge_captures" ("tenant_id", "encounter_id", "service_date") WHERE source_kind_concept_id = '5f84ea44-b0d3-582c-86c1-32c81e422d30' AND status_concept_id <> 'f2f59654-d912-5eeb-b619-814e50a3c4d0';
 
-CREATE UNIQUE INDEX IF NOT EXISTS "ux_charge_captures_or_case" ON "billing"."charge_captures" ("source_ref_id") WHERE source_kind_concept_id = 'a79361f6-8787-56a5-9a90-a9436d02e217' AND status_concept_id <> 'f2f59654-d912-5eeb-b619-814e50a3c4d0';
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_charge_captures_or_case" ON "billing"."charge_captures" ("tenant_id", "source_ref_id") WHERE source_kind_concept_id = 'a79361f6-8787-56a5-9a90-a9436d02e217' AND status_concept_id <> 'f2f59654-d912-5eeb-b619-814e50a3c4d0';
 
 CREATE INDEX IF NOT EXISTS "ix_space_tariffs_history_space_tariff_id" ON "audit"."space_tariffs_history" ("space_tariff_id");
 
@@ -554,6 +625,34 @@ BEGIN
     END IF;
 END $$;
 
+-- Datos que ya violan el invariante «misma práctica» o el origen del cargo de quirófano: se aborta
+-- (decidir cuál de las dos prácticas / qué caso es el correcto no le toca al patch).
+DO $$
+DECLARE
+    n_trf integer;
+    n_cap integer;
+    n_or  integer;
+BEGIN
+    SELECT count(*) INTO n_trf
+      FROM "billing"."space_tariffs" t
+      JOIN "practice"."care_spaces" cs ON cs."id" = t."care_space_id"
+      JOIN "practice"."practice_sites" ps ON ps."id" = cs."practice_site_id"
+     WHERE ps."practice_id" <> t."practice_id";
+    SELECT count(*) INTO n_cap
+      FROM "billing"."charge_captures" c
+      JOIN "practice"."care_spaces" cs ON cs."id" = c."care_space_id"
+      JOIN "practice"."practice_sites" ps ON ps."id" = cs."practice_site_id"
+     WHERE ps."practice_id" <> c."practice_id";
+    SELECT count(*) INTO n_or
+      FROM "billing"."charge_captures" c
+     WHERE c."source_kind_concept_id" = 'a79361f6-8787-56a5-9a90-a9436d02e217'
+       AND NOT "billing"."charge_source_case_ok"(c."tenant_id", c."practice_id", c."source_ref_id");
+    IF n_trf > 0 OR n_cap > 0 OR n_or > 0 THEN
+        RAISE EXCEPTION 'F5e facturación: datos que violan las reglas nuevas — tarifas con sala de otra práctica=%, cargos con cama de otra práctica=%, cargos de quirófano cuyo origen no es un caso del mismo tenant y práctica=%. No se toca ningún dato; corregirlos a mano y volver a aplicar.',
+            n_trf, n_cap, n_or;
+    END IF;
+END $$;
+
 -- (de SQL/17_billing/05_constraints.sql) Sólo se agregan si faltan: reaplicar no reconstruye el gist.
 DO $$
 BEGIN
@@ -817,6 +916,17 @@ BEGIN
         END IF;
     END IF;
 
+    IF TG_OP = 'INSERT' THEN
+        -- Mismo rechazo que la política WITH CHECK del RLS, pero ANTES de mirar nada más: sin esto la
+        -- diferencia entre 23503 y 42501 delataría si un caso/encuentro de otro tenant existe.
+        IF coalesce(current_setting('app.system_context', true), '') <> 'true'
+           AND NEW."tenant_id" IS DISTINCT FROM NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+           AND NOT coalesce((SELECT r.rolsuper OR r.rolbypassrls FROM pg_roles r WHERE r.rolname = current_user), false) THEN
+            RAISE EXCEPTION 'billing.charge_captures: el cargo no es del tenant de la sesión'
+                USING ERRCODE = 'insufficient_privilege';
+        END IF;
+    END IF;
+
     -- Referencias que la FK compuesta no alcanza (el encuentro y la línea de factura no tienen
     -- UNIQUE (tenant_id, id) / (practice_id, id), y la sede de la cama no tiene practice_id propio).
     IF TG_OP = 'INSERT' THEN
@@ -837,6 +947,13 @@ BEGIN
                 RAISE EXCEPTION 'charge_captures.care_space_id: la cama no existe en la práctica del cargo'
                     USING ERRCODE = 'foreign_key_violation';
             END IF;
+        END IF;
+
+        -- El origen de un cargo de quirófano es un caso quirúrgico del MISMO tenant y práctica.
+        IF NEW."source_kind_concept_id" = k_src_or
+           AND NOT "billing"."charge_source_case_ok"(NEW."tenant_id", NEW."practice_id", NEW."source_ref_id") THEN
+            RAISE EXCEPTION 'charge_captures.source_ref_id: el caso quirúrgico no existe en el tenant y la práctica del cargo'
+                USING ERRCODE = 'foreign_key_violation';
         END IF;
     END IF;
 
@@ -904,6 +1021,73 @@ CREATE TRIGGER "trg_charge_captures_guard"
     BEFORE INSERT OR UPDATE OR DELETE
     ON "billing"."charge_captures"
     FOR EACH ROW EXECUTE FUNCTION "billing"."charge_captures_guard"();
+
+-- ------------------------------------------------------------- 7b. el invariante «misma práctica», en la otra dirección
+-- Las comprobaciones de las tarifas y los cargos corren al escribir la fila hija. Si después se
+-- mueve la sala a una sede de otra práctica, o la sede a otra práctica, quedarían filas que cruzan
+-- práctica. Mientras existan tarifas o cargos que dependan de la sala / sede, ese cambio se rechaza.
+-- Mover entre sedes de la MISMA práctica, o mover un espacio sin tarifas ni cargos, sigue permitido
+-- (flujo de F1). Lectura con contexto de sistema (el RLS no debe esconder dependientes); el mensaje
+-- no incluye ids ni datos. SECURITY INVOKER; el GUC se restaura solo al salir de la función.
+CREATE OR REPLACE FUNCTION "billing"."care_spaces_guard_billing_practice"()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = pg_catalog, pg_temp
+SET app.system_context = 'true'
+AS $fn$
+DECLARE
+    p_old uuid;
+    p_new uuid;
+BEGIN
+    IF NEW."practice_site_id" IS NOT DISTINCT FROM OLD."practice_site_id" THEN
+        RETURN NEW;
+    END IF;
+    SELECT "practice_id" INTO p_old FROM "practice"."practice_sites" WHERE "id" = OLD."practice_site_id";
+    SELECT "practice_id" INTO p_new FROM "practice"."practice_sites" WHERE "id" = NEW."practice_site_id";
+    IF p_new IS NOT DISTINCT FROM p_old THEN
+        RETURN NEW;
+    END IF;
+    IF EXISTS (SELECT 1 FROM "billing"."space_tariffs" WHERE "care_space_id" = OLD."id")
+       OR EXISTS (SELECT 1 FROM "billing"."charge_captures" WHERE "care_space_id" = OLD."id") THEN
+        RAISE EXCEPTION 'practice.care_spaces: el espacio tiene tarifas o cargos de facturación y no puede pasar a una sede de otra práctica'
+            USING ERRCODE = 'restrict_violation';
+    END IF;
+    RETURN NEW;
+END $fn$;
+
+DROP TRIGGER IF EXISTS "trg_care_spaces_billing_dependents" ON "practice"."care_spaces";
+CREATE TRIGGER "trg_care_spaces_billing_dependents"
+    BEFORE UPDATE OF "practice_site_id"
+    ON "practice"."care_spaces"
+    FOR EACH ROW EXECUTE FUNCTION "billing"."care_spaces_guard_billing_practice"();
+
+CREATE OR REPLACE FUNCTION "billing"."practice_sites_guard_billing_practice"()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = pg_catalog, pg_temp
+SET app.system_context = 'true'
+AS $fn$
+BEGIN
+    IF NEW."practice_id" IS NOT DISTINCT FROM OLD."practice_id" THEN
+        RETURN NEW;
+    END IF;
+    IF EXISTS (SELECT 1 FROM "billing"."space_tariffs" t
+                 JOIN "practice"."care_spaces" cs ON cs."id" = t."care_space_id"
+                WHERE cs."practice_site_id" = OLD."id")
+       OR EXISTS (SELECT 1 FROM "billing"."charge_captures" c
+                    JOIN "practice"."care_spaces" cs ON cs."id" = c."care_space_id"
+                   WHERE cs."practice_site_id" = OLD."id") THEN
+        RAISE EXCEPTION 'practice.practice_sites: la sede tiene espacios con tarifas o cargos de facturación y no puede pasar a otra práctica'
+            USING ERRCODE = 'restrict_violation';
+    END IF;
+    RETURN NEW;
+END $fn$;
+
+DROP TRIGGER IF EXISTS "trg_practice_sites_billing_dependents" ON "practice"."practice_sites";
+CREATE TRIGGER "trg_practice_sites_billing_dependents"
+    BEFORE UPDATE OF "practice_id"
+    ON "practice"."practice_sites"
+    FOR EACH ROW EXECUTE FUNCTION "billing"."practice_sites_guard_billing_practice"();
 
 -- ------------------------------------------------------------- 8. triggers de la historia
 -- Las funciones son las de F1b: tenant por defecto desde el origen y «sólo inserción + cierre de
@@ -987,6 +1171,8 @@ DECLARE
     n_trg    integer;
     n_rls    integer;
     n_priv   integer;
+    n_scope  integer;
+    n_fn     integer;
 BEGIN
     SELECT count(*) INTO n_tablas FROM unnest(ARRAY['billing.space_tariffs', 'billing.charge_captures',
             'audit.space_tariffs_history', 'audit.charge_captures_history']) t
@@ -1024,7 +1210,18 @@ BEGIN
        AND ((tgname = 'trg_space_tariffs_guard' AND tgrelid = 'billing.space_tariffs'::regclass)
          OR (tgname = 'trg_charge_captures_guard' AND tgrelid = 'billing.charge_captures'::regclass)
          OR (tgname IN ('trg_fill_tenant', 'trg_close_only')
-             AND tgrelid IN ('audit.space_tariffs_history'::regclass, 'audit.charge_captures_history'::regclass)));
+             AND tgrelid IN ('audit.space_tariffs_history'::regclass, 'audit.charge_captures_history'::regclass))
+         OR (tgname = 'trg_care_spaces_billing_dependents' AND tgrelid = 'practice.care_spaces'::regclass)
+         OR (tgname = 'trg_practice_sites_billing_dependents' AND tgrelid = 'practice.practice_sites'::regclass));
+
+    SELECT count(*) INTO n_scope FROM pg_indexes
+     WHERE schemaname = 'billing'
+       AND indexname IN ('ux_charge_captures_bed_night', 'ux_charge_captures_encounter_bed_day', 'ux_charge_captures_or_case')
+       AND indexdef LIKE '%(tenant_id, %';
+
+    SELECT count(*) INTO n_fn FROM unnest(ARRAY['billing.charge_source_case_ok(uuid,uuid,uuid)',
+            'billing.care_spaces_guard_billing_practice()', 'billing.practice_sites_guard_billing_practice()']) f
+     WHERE to_regprocedure(f) IS NOT NULL;
 
     SELECT count(*) INTO n_rls
       FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
@@ -1042,9 +1239,9 @@ BEGIN
     END IF;
 
     IF n_tablas <> 4 OR n_fk <> 35 OR n_fkc <> 10 OR n_ck <> 17 OR n_ex <> 1
-       OR n_ux <> 8 OR n_trg <> 6 OR n_rls <> 4 OR n_priv <> 0 THEN
-        RAISE EXCEPTION 'F5e facturación incompleto: tablas=% (4), FK=% (35), FK compuestas=% (10), CHECK=% (17), EXCLUDE=% (1), únicos=% (8), triggers=% (6), RLS=% (4), privilegios de DELETE/UPDATE de más para mantra_app=% (0)',
-            n_tablas, n_fk, n_fkc, n_ck, n_ex, n_ux, n_trg, n_rls, n_priv;
+       OR n_ux <> 8 OR n_trg <> 8 OR n_rls <> 4 OR n_priv <> 0 OR n_scope <> 3 OR n_fn <> 3 THEN
+        RAISE EXCEPTION 'F5e facturación incompleto: tablas=% (4), FK=% (35), FK compuestas=% (10), CHECK=% (17), EXCLUDE=% (1), únicos=% (8), triggers=% (8), RLS=% (4), privilegios de DELETE/UPDATE de más para mantra_app=% (0), únicos de cargos con tenant_id=% (3), funciones=% (3)',
+            n_tablas, n_fk, n_fkc, n_ck, n_ex, n_ux, n_trg, n_rls, n_priv, n_scope, n_fn;
     END IF;
 
     RAISE NOTICE 'F5e facturación aplicado: space_tariffs y charge_captures (+ historias) con FK compuestas por tenant/práctica, EXCLUDE de vigencias, únicos anti doble cobro (clave, encuentro+noche, cama+noche, caso), guardas, RLS.';

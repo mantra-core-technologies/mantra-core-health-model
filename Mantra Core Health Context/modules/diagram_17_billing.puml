@@ -624,8 +624,11 @@ entity space_tariffs {
 ' vigente: cambiar la tarifa después no altera cargos pasados. Sin tarifa vigente el cargo queda
 ' CHG_PENDING con unit_price NULL (no se inventa precio). Un día-cama por (encuentro, noche) y por
 ' (cama, noche) mientras no esté anulado; el cargo mínimo de «ingreso y egreso el mismo día»
-' (minimum_stay_charge) no es una noche y queda fuera del único por cama. Un cargo emitido no se
-' edita: sólo se anula (CHG_VOIDED) con motivo. Historia: audit.charge_captures_history.
+' (minimum_stay_charge) no es una noche y queda fuera del único por cama. Los tres únicos llevan
+' tenant_id por delante: un tenant no puede bloquear ni sondear el cobro de otro. El source_ref_id
+' de un cargo de quirófano tiene que ser un caso del mismo tenant y práctica
+' (billing.charge_source_case_ok, patch …_f5_billing). Un cargo emitido no se edita: sólo se anula
+' (CHG_VOIDED) con motivo. Historia: audit.charge_captures_history.
 entity charge_captures {
   * id : uuid <<PK>>
   --
@@ -1068,9 +1071,9 @@ entity "INDEXES · charge_captures" as idxset_charge_captures <<INDEX_SET>> {
   IX ix_charge_captures_updated_by_user_id : (updated_by_user_id) BTREE
   UX ux_charge_captures_tenant_id_id : (tenant_id, id) UNIQUE BTREE
   UX ux_charge_captures_idempotency_key : (tenant_id, idempotency_key) UNIQUE BTREE
-  UX ux_charge_captures_bed_night : (care_space_id, service_date) UNIQUE BTREE WHERE source_kind_concept_id = '5f84ea44-b0d3-582c-86c1-32c81e422d30' AND minimum_stay_charge = false AND status_concept_id <> 'f2f59654-d912-5eeb-b619-814e50a3c4d0'
-  UX ux_charge_captures_encounter_bed_day : (encounter_id, service_date) UNIQUE BTREE WHERE source_kind_concept_id = '5f84ea44-b0d3-582c-86c1-32c81e422d30' AND status_concept_id <> 'f2f59654-d912-5eeb-b619-814e50a3c4d0'
-  UX ux_charge_captures_or_case : (source_ref_id) UNIQUE BTREE WHERE source_kind_concept_id = 'a79361f6-8787-56a5-9a90-a9436d02e217' AND status_concept_id <> 'f2f59654-d912-5eeb-b619-814e50a3c4d0'
+  UX ux_charge_captures_bed_night : (tenant_id, care_space_id, service_date) UNIQUE BTREE WHERE source_kind_concept_id = '5f84ea44-b0d3-582c-86c1-32c81e422d30' AND minimum_stay_charge = false AND status_concept_id <> 'f2f59654-d912-5eeb-b619-814e50a3c4d0'
+  UX ux_charge_captures_encounter_bed_day : (tenant_id, encounter_id, service_date) UNIQUE BTREE WHERE source_kind_concept_id = '5f84ea44-b0d3-582c-86c1-32c81e422d30' AND status_concept_id <> 'f2f59654-d912-5eeb-b619-814e50a3c4d0'
+  UX ux_charge_captures_or_case : (tenant_id, source_ref_id) UNIQUE BTREE WHERE source_kind_concept_id = 'a79361f6-8787-56a5-9a90-a9436d02e217' AND status_concept_id <> 'f2f59654-d912-5eeb-b619-814e50a3c4d0'
 }
 
 charge_captures .. idxset_charge_captures : indexed by
