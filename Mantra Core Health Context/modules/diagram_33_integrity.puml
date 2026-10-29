@@ -320,4 +320,30 @@ entity "delegated_access.shared_access_link_uses" as delegated_access_shared_acc
   ' A-12: el rastro de uso de un token compartido no se reescribe (UPDATE prohibido, DELETE libre para la retencion).
   UPDATE : forbidden
 }
+' + infraestructura hospitalaria F2 (operación, 2026-10-29) — CONTRATO-F2-F5 F2.1.
+' UUID literales (el predicado de un EXCLUDE/CHECK debe ser IMMUTABLE), derivados con
+' deterministicId() de la API:
+'   b0516b50-47c6-5fdb-b1e7-6ae060fbb4c0 = practice:BLOCK_MAINTENANCE
+' (los de CLN_PENDING / CLN_IN_PROGRESS / CLN_DONE están en el índice único parcial
+' ux_cleaning_orders_one_open_per_space de diagram_14). Mismos nombres que el patch
+' 2026-10-29_infraestructura_f2_practice.sql.
+' A20: el rastro de cambios de estado de un espacio no se reescribe ni se borra.
+entity care_space_status_events <<IMMUTABLE, REFERENCE_ONLY>> {
+  UPDATE_DELETE : forbidden
+}
+entity "practice.care_space_status_events" as practice_care_space_status_events <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_care_space_status_events_v2_code | "v2_0116_code" IN ('C','H','I','K','O','U','R')
+}
+entity "practice.care_space_blocks" as practice_care_space_blocks <<REFERENCE_ONLY>> {
+  ' Un solo bloqueo no cancelado a la vez por espacio (ended_at NULL = abierto).
+  EXCLUDE : overlapping non-cancelled blocks of the same care space
+  EXCLUDE_SQL : ex_care_space_blocks_time | "care_space_id" WITH =, tstzrange("starts_at", "ended_at", '[)') WITH && | "cancelled_at" IS NULL
+  ' El mantenimiento exige fecha estimada de fin (INV-25).
+  CHECK_SQL : ck_care_space_blocks_maintenance_eta | ("kind_concept_id" <> 'b0516b50-47c6-5fdb-b1e7-6ae060fbb4c0' OR "expected_end_at" IS NOT NULL)
+  CHECK_SQL : ck_care_space_blocks_end_after_start | (("ended_at" IS NULL OR "ended_at" >= "starts_at") AND ("expected_end_at" IS NULL OR "expected_end_at" >= "starts_at"))
+}
+entity "practice.cleaning_orders" as practice_cleaning_orders <<REFERENCE_ONLY>> {
+  ' Quien inspecciona no es quien terminó la limpieza (INV-27/28; criterio de aceptación 4).
+  CHECK_SQL : ck_cleaning_orders_inspector_differs | ("inspected_by_user_id" IS NULL OR "inspected_by_user_id" <> "finished_by_user_id")
+}
 @enduml
