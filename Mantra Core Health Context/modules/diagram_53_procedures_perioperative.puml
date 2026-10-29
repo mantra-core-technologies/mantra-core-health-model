@@ -650,7 +650,7 @@ entity operating_room_utilization_events <<LOG>> {
   * created_at : timestamptz
   ' + infraestructura hospitalaria F4 (2026-10-29): tenant_id (backfill desde care_spaces.tenant_id; lo
   ' completa un trigger BEFORE INSERT desde la sala si el cliente no lo manda; RLS tenant_isolation;
-  ' FK compuesta a sala, caso y bloque del MISMO tenant en el patch …_f4_periop) y el bloque al que
+  ' FK compuesta a sala, caso y bloque del MISMO tenant en el patch …_f4z_periop) y el bloque al que
   ' pertenece el evento (liberaciones y utilización por bloque).
   * tenant_id : uuid <<FK>>
     operating_room_block_id : uuid <<FK>>

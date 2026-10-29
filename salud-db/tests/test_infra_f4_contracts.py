@@ -32,7 +32,7 @@ MODEL_ROOT = Path(__file__).resolve().parents[2]
 MODULES = MODEL_ROOT / "Mantra Core Health Context" / "modules"
 PATCHES = MODEL_ROOT / "SQL" / "patches"
 SCHEDULING = (PATCHES / "2026-10-29_infraestructura_f4_scheduling.sql").read_text(encoding="utf-8")
-PERIOP = (PATCHES / "2026-10-29_infraestructura_f4_periop.sql").read_text(encoding="utf-8")
+PERIOP = (PATCHES / "2026-10-29_infraestructura_f4z_periop.sql").read_text(encoding="utf-8")
 
 # HEALTH_UUID_NAMESPACE de mantra-core-health-api/src/common/constants/concepts.ts
 NAMESPACE = uuid.UUID("3f2b6c14-9d5e-5a41-b7c2-0a1e9f4d8b60")

@@ -2,7 +2,7 @@
 """Infraestructura F4 (quirófanos) contra un Postgres REAL: los dos patches y lo que garantizan.
 
 Se saltan enteras sin SALUD_TEST_PGDATABASE (ver `_f4_pg.py`) o si esa base todavía no tiene aplicados
-los patches `…_f4_scheduling.sql` y `…_f4_periop.sql`. Todo corre en UN psql por escenario con
+los patches `…_f4_scheduling.sql` y `…_f4z_periop.sql`. Todo corre en UN psql por escenario con
 `BEGIN; … ROLLBACK;`: la base queda como estaba, incluso las pruebas que vuelven a correr los patches.
 
 Los datos que los patches DEBEN rechazar (solape por recambio, referencias entre tenants, check-lists

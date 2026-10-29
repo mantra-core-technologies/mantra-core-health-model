@@ -288,7 +288,7 @@ entity specimen_collection_events <<LOG>> {
     ' + infraestructura hospitalaria F5b (2026-10-29): el PUNTO DE TOMA donde se extrajo la muestra
     ' (practice.care_spaces, funcion SAMPLE_COLLECTION). Se conserva collection_site_id (la sede).
     ' Con ambos presentes, el espacio debe pertenecer a esa sede (trigger del patch
-    ' 2026-10-29_infraestructura_f5_diagnostics.sql). La funcion y el estado del espacio los
+    ' 2026-10-29_infraestructura_f5z_diagnostics.sql). La funcion y el estado del espacio los
     ' valida la API.
     collection_care_space_id : uuid <<FK>>
     body_site_concept_id : uuid <<FK>>
@@ -529,7 +529,7 @@ entity imaging_procedure_steps {
     ' Modality Worklist. El equipo agendado (diagnostic_units.diagnostic_equipment), la SALA donde
     ' esta (SPS Location 0040,0011 = care_spaces.code) y el inicio programado (0040,0002/0003).
     ' Con equipo y sala presentes, la sala debe ser la del equipo (trigger del patch
-    ' 2026-10-29_infraestructura_f5_diagnostics.sql). started_at/ended_at siguen siendo lo REALIZADO.
+    ' 2026-10-29_infraestructura_f5z_diagnostics.sql). started_at/ended_at siguen siendo lo REALIZADO.
     scheduled_equipment_id : uuid <<FK>>
     scheduled_care_space_id : uuid <<FK>>
     scheduled_start_at : timestamptz

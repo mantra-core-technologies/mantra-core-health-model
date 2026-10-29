@@ -61,19 +61,19 @@ BEGIN
     FOREACH i IN ARRAY ARRAY['ux_care_spaces_tenant_id_id', 'ux_practice_sites_tenant_id_id',
                              'ux_clinical_units_tenant_id_id', 'ux_schedulable_resources_tenant_id_id'] LOOP
         IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = i) THEN
-            faltan := faltan || ('índice ' || i);
+            faltan := array_append(faltan, 'índice ' || i);
         END IF;
     END LOOP;
     IF to_regprocedure('audit.structure_history_fill_tenant()') IS NULL THEN
-        faltan := faltan || 'función audit.structure_history_fill_tenant()';
+        faltan := array_append(faltan, 'función audit.structure_history_fill_tenant()');
     END IF;
     IF to_regprocedure('audit.structure_history_close_only()') IS NULL THEN
-        faltan := faltan || 'función audit.structure_history_close_only()';
+        faltan := array_append(faltan, 'función audit.structure_history_close_only()');
     END IF;
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns
                     WHERE table_schema = 'scheduling' AND table_name = 'schedulable_resources'
                       AND column_name = 'care_space_id') THEN
-        faltan := faltan || 'columna scheduling.schedulable_resources.care_space_id';
+        faltan := array_append(faltan, 'columna scheduling.schedulable_resources.care_space_id');
     END IF;
     IF cardinality(faltan) > 0 THEN
         RAISE EXCEPTION 'F4 periop: faltan % . Aplicar antes 2026-10-29_infraestructura_f1.sql, …_f1b_seguridad.sql y …_f4_scheduling.sql.',

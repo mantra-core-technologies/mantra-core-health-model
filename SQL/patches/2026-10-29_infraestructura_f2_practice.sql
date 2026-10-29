@@ -101,19 +101,19 @@ DECLARE
     faltan text[] := ARRAY[]::text[];
 BEGIN
     IF to_regclass('practice.space_unit_assignments') IS NULL THEN
-        faltan := faltan || 'F1 (practice.space_unit_assignments)';
+        faltan := array_append(faltan, 'F1 (practice.space_unit_assignments)');
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'practice' AND indexname = 'ux_care_spaces_tenant_id_id')
        OR NOT EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'practice' AND indexname = 'ux_practice_sites_tenant_id_id')
        OR NOT EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'practice' AND indexname = 'ux_clinical_units_tenant_id_id') THEN
-        faltan := faltan || 'F1b (UNIQUE (tenant_id, id) en sedes, unidades y espacios)';
+        faltan := array_append(faltan, 'F1b (UNIQUE (tenant_id, id) en sedes, unidades y espacios)');
     END IF;
     IF to_regprocedure('audit.structure_history_fill_tenant()') IS NULL
        OR to_regprocedure('audit.structure_history_close_only()') IS NULL THEN
-        faltan := faltan || 'F1b (funciones audit.structure_history_*)';
+        faltan := array_append(faltan, 'F1b (funciones audit.structure_history_*)');
     END IF;
     IF to_regprocedure('integrity.forbid_mutation()') IS NULL THEN
-        faltan := faltan || 'SQL/_integrity/00_integrity_functions.sql (integrity.forbid_mutation)';
+        faltan := array_append(faltan, 'SQL/_integrity/00_integrity_functions.sql (integrity.forbid_mutation)');
     END IF;
     IF cardinality(faltan) > 0 THEN
         RAISE EXCEPTION 'F2 practice: faltan prerrequisitos que se aplican antes: %. No se toca nada.', array_to_string(faltan, '; ')

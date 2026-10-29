@@ -294,7 +294,7 @@ entity "clinical_ext.cds_rule_versions" as clinical_ext_cds_rule_versions <<REFE
 entity "procedures_perioperative.procedure_cases" as procedures_perioperative_procedure_cases <<REFERENCE_ONLY>> {
   ' ORG-QUI-005 / INV-38 (F4, 2026-10-29): la sala no admite dos casos cuya VENTANA RESERVADA se solape.
   ' Ventana reservada = [inicio − preparación, fin + limpieza), materializada en reserved_start_at /
-  ' reserved_end_at por el trigger trg_procedure_cases_reserved_window del patch …_f4_periop (sumar un
+  ' reserved_end_at por el trigger trg_procedure_cases_reserved_window del patch …_f4z_periop (sumar un
   ' intervalo a un timestamptz es STABLE y un índice no lo admite). REEMPLAZA a
   ' ex_procedure_cases_operating_room_time (ventana programada, sin recambio). Estados que ocupan el
   ' quirófano (CASE_SCHEDULED, CASE_READY, SURG_CASE_IN_PROGRESS) como UUID literales: el predicado de
@@ -433,7 +433,7 @@ entity "practice.cleaning_orders" as practice_cleaning_orders <<REFERENCE_ONLY>>
 '   48a989b7-6300-516d-9982-8f741aaf0758 = procedures_perioperative:ORB_OWNER_SURGEON
 ' Los conceptos ORB_* los declara la API en procedures_perioperative.concepts.ts con
 ' defineModuleConcepts('procedures_perioperative', …): si cambia el prefijo cambian los UUID.
-' Mismos nombres que 2026-10-29_infraestructura_f4_scheduling.sql y …_f4_periop.sql.
+' Mismos nombres que 2026-10-29_infraestructura_f4_scheduling.sql y …_f4z_periop.sql.
 entity "scheduling.schedulable_resources" as scheduling_schedulable_resources <<REFERENCE_ONLY>> {
   ' R0 / INV-40: care_space_id existe si y sólo si el recurso apunta a la tabla care_spaces, y entonces
   ' ES su resource_ref_id. (El contrato lo escribe `ref_type <> 'care_spaces' OR care_space_id =

@@ -312,7 +312,7 @@ entity cleaning_orders_history <<HISTORY>> {
 }
 ' + infraestructura hospitalaria F4 (2026-10-29): historia de los bloques de quirófano. Con tenant_id
 ' NOT NULL desde el origen, RLS tenant_isolation y SOLO INSERCIÓN (+ cierre de valid_to), igual que
-' las historias de estructura de F1b; ver el patch 2026-10-29_infraestructura_f4_periop.sql.
+' las historias de estructura de F1b; ver el patch 2026-10-29_infraestructura_f4z_periop.sql.
 entity operating_room_block_series_history <<HISTORY>> {
   * history_id : uuid <<PK>>
   --

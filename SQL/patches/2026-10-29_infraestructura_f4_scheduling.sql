@@ -3,7 +3,7 @@
 -- Fecha: 2026-10-29 · Contrato: SALUD/Arquitectura/infraestructura-hospitalaria/
 --   CONTRATO-F2-F5.md §F4.1 «R0 — recurso agendable ligado a espacio» (repositorio de documentación)
 -- Se aplica DESPUÉS de 2026-10-29_infraestructura_f1.sql y …_f1b_seguridad.sql, y ANTES de
--- 2026-10-29_infraestructura_f4_periop.sql (que referencia lo que se crea acá). Idempotente
+-- 2026-10-29_infraestructura_f4z_periop.sql (que referencia lo que se crea acá). Idempotente
 -- (ADD COLUMN IF NOT EXISTS / CREATE … IF NOT EXISTS / FK con `duplicate_object`): se puede aplicar
 -- N veces; la segunda pasada no cambia nada.
 --
@@ -28,7 +28,7 @@
 --      (incumplen el CHECK por no tener care_space_id) el CHECK se crea NOT VALID —rige para toda
 --      fila nueva o modificada— y se avisa; sin ellas se valida.
 --   5. ux_schedulable_resources_tenant_id_id: destino de la FK compuesta (tenant_id,
---      schedulable_resource_id) de procedure_cases (patch …_f4_periop).
+--      schedulable_resource_id) de procedure_cases (patch …_f4z_periop).
 --
 -- PRECONDICIONES (abortan sin tocar nada; el BEGIN hace rollback de todo):
 --   - practice.care_spaces sin tenant_id / sin ux_care_spaces_tenant_id_id (falta aplicar F1 y F1b).

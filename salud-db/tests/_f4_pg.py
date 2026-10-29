@@ -23,7 +23,7 @@ from pathlib import Path
 MODEL_ROOT = Path(__file__).resolve().parents[2]
 PATCHES = MODEL_ROOT / "SQL" / "patches"
 PATCH_SCHEDULING = PATCHES / "2026-10-29_infraestructura_f4_scheduling.sql"
-PATCH_PERIOP = PATCHES / "2026-10-29_infraestructura_f4_periop.sql"
+PATCH_PERIOP = PATCHES / "2026-10-29_infraestructura_f4z_periop.sql"
 
 # --- UUID de conceptos (deterministicId de la API; verificados contra el algoritmo en
 # test_infra_f4_contracts.py) -------------------------------------------------------------------
