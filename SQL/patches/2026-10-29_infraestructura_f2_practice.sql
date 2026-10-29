@@ -47,6 +47,8 @@
 -- ya publicado de F5):
 --   7ce5a926-1c46-56d4-8ca8-679e7429fa1d  practice:SPACE_OP_AVAILABLE   (existe)
 --   7874b037-177f-5cac-adad-e7ba679d9ad3  practice:HYG_CLEAN            (nuevo, F2.2)
+--   29482974-499d-5b09-92a8-95fcfa0e521e  practice:HYG_INSPECTED         (nuevo, F2.2; backfill de los espacios ACTIVE)
+--   9c27f70c-9472-5bee-92e7-78e209d581c7  practice:SPACE_ACTIVE           (existe; ciclo de vida ACTIVE)
 --   f2ead1d9-06f7-59a3-b26f-a3642a164f47  practice:ISO_NONE             (nuevo, F2.2)
 --   b0516b50-47c6-5fdb-b1e7-6ae060fbb4c0  practice:BLOCK_MAINTENANCE     (nuevo, F2.1)
 --   c0c5918f-cf97-51e1-9ede-72d856e61c93  practice:CLN_PENDING           (nuevo, F2.1)
@@ -57,11 +59,18 @@
 --
 -- LO QUE ESTE PATCH NO HACE.
 --   - No siembra conceptos: sus ids los deriva la API (como F1). Por eso el backfill de los
---     ejes (NULL → SPACE_OP_AVAILABLE / HYG_CLEAN / ISO_NONE) es CONDICIONAL: solo escribe un
---     valor si ese concepto ya existe en terminology.catalog_concepts (la FK lo exige). En una
---     base donde la API todavía no sembró HYG_CLEAN / ISO_NONE los ejes quedan NULL (la API debe
---     leerlos como el valor por defecto) y volver a aplicar este patch después del seed
---     completa el backfill. SPACE_OP_AVAILABLE ya existe en cualquier base sembrada.
+--     ejes (NULL → SPACE_OP_AVAILABLE / HYG_INSPECTED|HYG_CLEAN / ISO_NONE) es CONDICIONAL: solo
+--     escribe un valor si ese concepto ya existe en terminology.catalog_concepts (la FK lo
+--     exige). En una base donde la API todavía no sembró HYG_INSPECTED / HYG_CLEAN / ISO_NONE
+--     los ejes quedan NULL (la API debe leerlos como el valor por defecto) y volver a aplicar
+--     este patch después del seed completa el backfill. SPACE_OP_AVAILABLE ya existe en
+--     cualquier base sembrada.
+--   - Higiene del backfill: un espacio con ciclo de vida ACTIVE nace HYG_INSPECTED y el resto
+--     (planificado, suspendido, clausurado) HYG_CLEAN. Con el ajuste por omisión
+--     `infra.inspection_required=true`, HYG_CLEAN NO es asignable (CONTRATO-F2-F5 F2.2): sin esto
+--     todas las camas existentes quedarían inasignables hasta limpiarse e inspeccionarse. El
+--     contrato trata como no operable todo ciclo de vida ≠ ACTIVE (v2-0116 «C»), SUSPENDED
+--     incluido, así que SUSPENDED recibe HYG_CLEAN y la API fija la higiene al reactivarlo.
 --   - No incrementa ops_version ni row_version: es de la API (como row_version hoy). El
 --     backfill de los ejes tampoco toca row_version/updated_at (no debe provocar 412 a
 --     quien edita estructura).
@@ -937,14 +946,24 @@ END $$;
 -- ------------------------------------------------------------- 10. backfill de los ejes
 -- NULL → valor por defecto del eje (CONTRATO-F2-F5 F2.1), SOLO si ese concepto ya existe en
 -- terminology.catalog_concepts (la FK lo exige; el patch no siembra conceptos, ver arriba).
--- Reaplicar el patch después de que la API sembró HYG_CLEAN / ISO_NONE completa el backfill.
+-- Reaplicar el patch después de que la API sembró HYG_INSPECTED / HYG_CLEAN / ISO_NONE completa el backfill.
 -- No toca row_version ni updated_at ni los *_changed_at (se desconoce desde cuándo).
 UPDATE "practice"."care_spaces" SET "operational_status_concept_id" = '7ce5a926-1c46-56d4-8ca8-679e7429fa1d'
  WHERE "operational_status_concept_id" IS NULL
    AND EXISTS (SELECT 1 FROM "terminology"."catalog_concepts" WHERE "id" = '7ce5a926-1c46-56d4-8ca8-679e7429fa1d');
 
+-- Higiene: ACTIVE → HYG_INSPECTED; el resto → HYG_CLEAN. Solo donde la higiene es NULL (no pisa
+-- lo operado). El segundo UPDATE excluye ACTIVE a propósito: si HYG_INSPECTED todavía no existe
+-- pero HYG_CLEAN sí, un espacio ACTIVE debe esperar (NULL) en lugar de quedar con HYG_CLEAN, que
+-- una reaplicación posterior ya no corregiría.
+UPDATE "practice"."care_spaces" SET "hygiene_status_concept_id" = '29482974-499d-5b09-92a8-95fcfa0e521e'
+ WHERE "hygiene_status_concept_id" IS NULL
+   AND "status_concept_id" = '9c27f70c-9472-5bee-92e7-78e209d581c7'
+   AND EXISTS (SELECT 1 FROM "terminology"."catalog_concepts" WHERE "id" = '29482974-499d-5b09-92a8-95fcfa0e521e');
+
 UPDATE "practice"."care_spaces" SET "hygiene_status_concept_id" = '7874b037-177f-5cac-adad-e7ba679d9ad3'
  WHERE "hygiene_status_concept_id" IS NULL
+   AND "status_concept_id" IS DISTINCT FROM '9c27f70c-9472-5bee-92e7-78e209d581c7'
    AND EXISTS (SELECT 1 FROM "terminology"."catalog_concepts" WHERE "id" = '7874b037-177f-5cac-adad-e7ba679d9ad3');
 
 UPDATE "practice"."care_spaces" SET "isolation_concept_id" = 'f2ead1d9-06f7-59a3-b26f-a3642a164f47'

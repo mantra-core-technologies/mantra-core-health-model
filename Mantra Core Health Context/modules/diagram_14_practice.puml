@@ -194,8 +194,9 @@ entity care_spaces {
   ' aislamiento y solo la inspección PASS de un supervisor la apaga. `ops_version` es la
   ' versión OPERATIVA, separada de `row_version`: limpieza y enfermería no chocan con las
   ' ediciones de estructura (cabecera If-Match-Ops). Los NULL de los ejes se interpretan como
-  ' el valor por defecto (SPACE_OP_AVAILABLE / HYG_CLEAN / ISO_NONE) hasta que el backfill del
-  ' patch 2026-10-29_infraestructura_f2_practice.sql los complete (ver el patch).
+  ' el valor por defecto (SPACE_OP_AVAILABLE / ISO_NONE y, de la higiene, HYG_INSPECTED si el
+  ' espacio es ACTIVE o HYG_CLEAN si no) hasta que el backfill del patch
+  ' 2026-10-29_infraestructura_f2_practice.sql los complete (ver el patch).
     availability_reason_concept_id : uuid <<FK>>
     availability_expected_until : timestamptz
     availability_changed_at : timestamptz

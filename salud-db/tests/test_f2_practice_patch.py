@@ -45,6 +45,8 @@ def cid(name: str) -> str:
 LITERALS = {
     "SPACE_OP_AVAILABLE": "7ce5a926-1c46-56d4-8ca8-679e7429fa1d",
     "HYG_CLEAN": "7874b037-177f-5cac-adad-e7ba679d9ad3",
+    "HYG_INSPECTED": "29482974-499d-5b09-92a8-95fcfa0e521e",
+    "SPACE_ACTIVE": "9c27f70c-9472-5bee-92e7-78e209d581c7",
     "ISO_NONE": "f2ead1d9-06f7-59a3-b26f-a3642a164f47",
     "BLOCK_MAINTENANCE": "b0516b50-47c6-5fdb-b1e7-6ae060fbb4c0",
     "CLN_PENDING": "c0c5918f-cf97-51e1-9ede-72d856e61c93",
@@ -91,7 +93,7 @@ class TestStaticContract:
         for name in ("CLN_PENDING", "CLN_IN_PROGRESS", "CLN_DONE"):
             assert LITERALS[name] in d14 and LITERALS[name] in self.code
         assert LITERALS["BLOCK_MAINTENANCE"] in d33 and LITERALS["BLOCK_MAINTENANCE"] in self.code
-        for name in ("HYG_CLEAN", "ISO_NONE", "SPACE_OP_AVAILABLE"):
+        for name in ("HYG_CLEAN", "HYG_INSPECTED", "SPACE_ACTIVE", "ISO_NONE", "SPACE_OP_AVAILABLE"):
             assert LITERALS[name] in self.code
 
     def test_the_puml_declares_every_column_the_patch_adds(self) -> None:
@@ -266,9 +268,10 @@ REASON = _db_unavailable_reason()
 needs_pg = pytest.mark.skipif(REASON is not None, reason=REASON or "")
 
 
-def patch_body() -> str:
-    """El patch sin su BEGIN/COMMIT: lo que corre dentro de la transacción del escenario."""
-    lines = PATCH.read_text(encoding="utf-8").splitlines()
+def patch_body(text: str | None = None) -> str:
+    """El patch sin su BEGIN/COMMIT: lo que corre dentro de la transacción del escenario.
+    `text` permite correr una copia mutada (pruebas de mutación)."""
+    lines = (PATCH.read_text(encoding="utf-8") if text is None else text).splitlines()
     kept = [l for l in lines if l.strip() not in ("BEGIN;", "COMMIT;")]
     assert len(lines) - len(kept) == 2
     return "\n".join(kept)
@@ -330,9 +333,11 @@ CONCEPT_NAMES = [
     "BLOCK_RSN_STAFF_SHORTAGE", "CLN_INSPECTED", "CLN_REJECTED", "CLN_CANCELLED", "CLEAN_ROUTINE",
     "CLEAN_TERMINAL", "CLN_TRG_MANUAL", "CLN_PRIO_ROUTINE", "AXIS_AVAILABILITY", "AXIS_HYGIENE",
     "SPACE_OP_BLOCKED_CLINICAL", "SRC_MANUAL", "SPACE_OP_CLOSED",
+    # ciclo de vida y una higiene «operada» para el escenario del backfill de higiene
+    "SPACE_ACTIVE", "SPACE_PLANNED", "SPACE_SUSPENDED", "HYG_DIRTY",
 ]
 ALWAYS_CONCEPTS = CONCEPT_NAMES + ["BLOCK_MAINTENANCE", "CLN_PENDING", "CLN_IN_PROGRESS", "CLN_DONE"]
-BACKFILL_CONCEPTS = ["SPACE_OP_AVAILABLE", "HYG_CLEAN", "ISO_NONE"]
+BACKFILL_CONCEPTS = ["SPACE_OP_AVAILABLE", "HYG_CLEAN", "HYG_INSPECTED", "ISO_NONE"]
 
 
 def c(name: str) -> str:
@@ -830,14 +835,30 @@ class TestCareSpaceColumns:
 
 
 # ═════════════════════════════════════ escenario B · idempotencia y backfill de los ejes
-def _lifecycle() -> dict[str, Probe]:
+# ciclo de vida de los 4 espacios de la fixture y la higiene que el backfill debe darles
+LIFECYCLE_OF = {SP_A1: "SPACE_ACTIVE", SP_A2: "SPACE_PLANNED", SP_A3: "SPACE_ACTIVE", SP_B1: "SPACE_SUSPENDED"}
+STATUS_UPDATES = "".join(
+    f"UPDATE practice.care_spaces SET status_concept_id = '{c(life)}' WHERE id = '{sid}';\n"
+    for sid, life in LIFECYCLE_OF.items())
+# A3 ya estaba OPERADO (higiene escrita por la API): el backfill no la pisa
+HYGIENE_AFTER_FIRST_PASS = "UPDATE practice.care_spaces SET hygiene_status_concept_id = '" + cid("HYG_DIRTY") + f"' WHERE id = '{SP_A3}';\n"
+HYG_BY_CODE = "A1:HYG_INSPECTED,A2:HYG_CLEAN,A3:HYG_DIRTY,B1:HYG_CLEAN"
+HYG_REPORT_SQL = (
+    "SELECT '@@RES {name}|' || string_agg(s.code || ':' || coalesce(k.code, 'NULL'), ',' ORDER BY s.code) "
+    "FROM practice.care_spaces s LEFT JOIN terminology.catalog_concepts k ON k.id = s.hygiene_status_concept_id;"
+)
+
+
+def _lifecycle(patch_text: str | None = None) -> dict[str, Probe]:
     """Espacios previos al patch (ejes NULL) → 1.ª pasada sin los conceptos → se siembran
-    SPACE_OP_AVAILABLE / HYG_CLEAN / ISO_NONE → 2.ª y 3.ª pasada. Todo en UN caso porque el
-    SAVEPOINT de run_script revierte cada caso."""
+    SPACE_OP_AVAILABLE / HYG_CLEAN / HYG_INSPECTED / ISO_NONE → 2.ª y 3.ª pasada. Todo en UN caso
+    porque el SAVEPOINT de run_script revierte cada caso."""
     closed = c("SPACE_OP_CLOSED")
+    pb = lambda: patch_body(patch_text)
     setup = (
         fixtures(concepts=ALWAYS_CONCEPTS)
         + RESET
+        + STATUS_UPDATES
         # un espacio ya «cerrado» a propósito: el backfill NO debe pisarlo
         + f"UPDATE practice.care_spaces SET operational_status_concept_id = '{closed}' WHERE id = '{SP_A3}';\n"
         + "SELECT '@@RES before|' || sum(row_version) || '/' || max(updated_at)::text FROM practice.care_spaces;\n"
@@ -855,15 +876,18 @@ def _lifecycle() -> dict[str, Probe]:
         )
 
     sequence = (
-        patch_body() + "\n" + snapshot("snap1") + "\n" + FINGERPRINT.format(name="fp1") + "\n"
+        pb() + "\n" + snapshot("snap1") + "\n" + FINGERPRINT.format(name="fp1") + "\n"
+        + HYGIENE_AFTER_FIRST_PASS
         + "SET LOCAL session_replication_role = replica;\n" + concept_rows(BACKFILL_CONCEPTS)
         + "SET LOCAL session_replication_role = origin;\n"
-        + patch_body() + "\n" + snapshot("snap2") + "\n" + FINGERPRINT.format(name="fp2") + "\n"
-        + patch_body() + "\n" + snapshot("snap3") + "\n" + FINGERPRINT.format(name="fp3")
+        + pb() + "\n" + snapshot("snap2") + "\n" + FINGERPRINT.format(name="fp2") + "\n"
+        + HYG_REPORT_SQL.format(name="hyg2") + "\n"
+        + pb() + "\n" + snapshot("snap3") + "\n" + FINGERPRINT.format(name="fp3") + "\n"
+        + HYG_REPORT_SQL.format(name="hyg3")
         # una base armada con el DDL generado trae ops_version SIN default: el patch lo repone
         + "\nALTER TABLE practice.care_spaces ALTER COLUMN ops_version DROP DEFAULT;"
         + "\nALTER TABLE practice.care_spaces ALTER COLUMN terminal_cleaning_required DROP DEFAULT;\n"
-        + patch_body() + "\n" + FINGERPRINT.format(name="fp4")
+        + pb() + "\n" + FINGERPRINT.format(name="fp4")
         + "\nWITH r AS (INSERT INTO practice.care_spaces (id, practice_site_id, code, name, space_type_concept_id, status_concept_id, created_at, updated_at, tenant_id) "
           f"VALUES ('{u('sp-def')}','{SITE_A1}','DEF','DEF','{c('GEN_TYPE')}','{c('GEN_STATUS')}',now(),now(),'{TA}') "
           "RETURNING ops_version, terminal_cleaning_required) "
@@ -910,6 +934,89 @@ class TestIdempotenceAndBackfill:
         before = lifecycle["before"].results[0]
         for snap in ("snap1", "snap2", "snap3"):
             assert lifecycle[snap].results[0].split("/", 6)[6] == before, snap
+
+
+# ═════════════ escenario B2 · backfill de higiene según el ciclo de vida (HYG_INSPECTED / HYG_CLEAN)
+def _hygiene_order(patch_text: str | None = None) -> dict[str, Probe]:
+    """Se siembra HYG_CLEAN ANTES que HYG_INSPECTED: el espacio ACTIVE debe esperar (NULL) y no
+    quedar con HYG_CLEAN; al sembrar HYG_INSPECTED y reaplicar, lo recibe sin tocar al resto."""
+    pb = lambda: patch_body(patch_text)
+    early = ["SPACE_OP_AVAILABLE", "HYG_CLEAN", "ISO_NONE"]
+    setup = fixtures(concepts=ALWAYS_CONCEPTS) + RESET + STATUS_UPDATES
+    sequence = (
+        pb() + "\n" + HYGIENE_AFTER_FIRST_PASS
+        + "SET LOCAL session_replication_role = replica;\n" + concept_rows(early) + "SET LOCAL session_replication_role = origin;\n"
+        + pb() + "\n" + HYG_REPORT_SQL.format(name="early") + "\n" + FINGERPRINT.format(name="fp_early") + "\n"
+        + "SET LOCAL session_replication_role = replica;\n" + concept_rows(["HYG_INSPECTED"]) + "SET LOCAL session_replication_role = origin;\n"
+        + pb() + "\n" + HYG_REPORT_SQL.format(name="late") + "\n" + FINGERPRINT.format(name="fp_late") + "\n"
+        + pb() + "\n" + HYG_REPORT_SQL.format(name="again") + "\n" + FINGERPRINT.format(name="fp_again")
+    )
+    return run_script(setup, [("sequence", sequence)])
+
+
+@pytest.fixture(scope="module")
+def hygiene_order() -> dict[str, Probe]:
+    return _hygiene_order()
+
+
+def hygiene_problems(lifecycle: dict[str, Probe], order: dict[str, Probe]) -> list[str]:
+    """Qué incumple el backfill de higiene; vacío = correcto. La comparten la prueba y su mutación."""
+    problems = []
+    for k in ("hyg2", "hyg3"):
+        if lifecycle[k].results[0] != HYG_BY_CODE:
+            problems.append(f"{k}={lifecycle[k].results[0]}")
+    if order["early"].results[0] != "A1:NULL,A2:HYG_CLEAN,A3:HYG_DIRTY,B1:HYG_CLEAN":
+        problems.append(f"early={order['early'].results[0]}")
+    for k in ("late", "again"):
+        if order[k].results[0] != HYG_BY_CODE:
+            problems.append(f"{k}={order[k].results[0]}")
+    return problems
+
+
+@needs_pg
+class TestHygieneBackfillByLifecycle:
+    def test_active_space_without_hygiene_becomes_inspected(self, lifecycle):
+        assert "A1:HYG_INSPECTED" in lifecycle["hyg2"].results[0].split(",")
+
+    def test_planned_and_suspended_spaces_become_clean(self, lifecycle):
+        got = lifecycle["hyg2"].results[0].split(",")
+        assert "A2:HYG_CLEAN" in got and "B1:HYG_CLEAN" in got
+
+    def test_an_already_operated_space_is_left_alone(self, lifecycle):
+        # A3 es ACTIVE y traía HYG_DIRTY escrita por la API: ni INSPECTED ni CLEAN
+        assert "A3:HYG_DIRTY" in lifecycle["hyg2"].results[0].split(",")
+        assert lifecycle["hyg2"].results[0] == lifecycle["hyg3"].results[0]
+
+    def test_inspected_missing_keeps_active_spaces_waiting_then_completes(self, hygiene_order):
+        ok(hygiene_order["sequence"])
+        assert hygiene_order["early"].results[0] == "A1:NULL,A2:HYG_CLEAN,A3:HYG_DIRTY,B1:HYG_CLEAN"
+        assert hygiene_order["late"].results[0] == HYG_BY_CODE
+
+    def test_applying_twice_gives_the_same_catalog(self, hygiene_order):
+        fp = [hygiene_order[k].results[0] for k in ("fp_early", "fp_late", "fp_again")]
+        assert fp[0] == fp[1] == fp[2], fp
+        assert hygiene_order["late"].results[0] == hygiene_order["again"].results[0]
+
+    def test_no_problem_with_the_real_patch(self, lifecycle, hygiene_order):
+        assert hygiene_problems(lifecycle, hygiene_order) == []
+
+    @pytest.mark.parametrize("mutation", ["old_behaviour_clean_for_all", "inspected_without_lifecycle_filter",
+                                          "clean_also_for_active", "overwrites_operated_hygiene"])
+    def test_mutations_are_detected(self, mutation):
+        text = PATCH.read_text(encoding="utf-8")
+        inspected = "'29482974-499d-5b09-92a8-95fcfa0e521e'"
+        active = "'9c27f70c-9472-5bee-92e7-78e209d581c7'"
+        if mutation == "old_behaviour_clean_for_all":       # el backfill de antes: HYG_CLEAN a todos
+            text = text.replace(inspected, "'7874b037-177f-5cac-adad-e7ba679d9ad3'")
+        elif mutation == "inspected_without_lifecycle_filter":   # INSPECTED también a los no ACTIVE
+            text = text.replace(f' AND "status_concept_id" = {active}\n', "\n", 1)
+        elif mutation == "clean_also_for_active":           # el segundo UPDATE ya no excluye ACTIVE
+            text = text.replace(f' AND "status_concept_id" IS DISTINCT FROM {active}\n', "\n", 1)
+        else:                                               # pisa la higiene ya escrita
+            text = text.replace('WHERE "hygiene_status_concept_id" IS NULL\n   AND "status_concept_id" = ' + active,
+                                'WHERE true\n   AND "status_concept_id" = ' + active, 1)
+        assert text != PATCH.read_text(encoding="utf-8"), "la mutación no se aplicó"
+        assert hygiene_problems(_lifecycle(text), _hygiene_order(text)), f"la mutación {mutation} pasó inadvertida"
 
 
 # ═══════════════════════════════════════ escenario C · precondiciones que abortan
