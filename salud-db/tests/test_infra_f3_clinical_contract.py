@@ -154,6 +154,26 @@ class PatchShapeTests(unittest.TestCase):
         self.assertIn('OLD."closed_at" IS NOT NULL', guard)
         self.assertNotRegex(guard, r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
 
+    def test_bed_flag_is_derived_by_a_trigger_that_reads_the_space_past_rls_and_fails_closed(self) -> None:
+        fn = re.search(r'FUNCTION "clinical"\."encounter_locations_derive_bed".*?END \$fn\$;', self.sql, re.S).group(0)
+        self.assertIn("SET app.system_context = 'true'", fn)          # la política de care_spaces no puede ocultar el espacio
+        self.assertIn("SET search_path = pg_catalog, pg_temp", fn)
+        self.assertNotIn("SECURITY DEFINER", fn)
+        self.assertIn("foreign_key_violation", fn)                    # espacio inexistente => error
+        self.assertIn(deterministic_id("practice:LOC_FORM_BED"), fn)
+        self.assertIn('BEFORE INSERT OR UPDATE ON "clinical"."encounter_locations"', self.sql)
+        # corre DESPUÉS del que completa tenant_id: los triggers BEFORE se ordenan por nombre
+        self.assertLess("trg_encounter_locations_fill_tenant", "trg_encounter_locations_set_bed_flag")
+
+    def test_census_entries_cannot_be_inserted_into_a_closed_day_and_fail_closed(self) -> None:
+        fn = re.search(r'FUNCTION "clinical"\."inpatient_census_entries_require_open_day".*?END \$fn\$;', self.sql, re.S).group(0)
+        self.assertIn("SET app.system_context = 'true'", fn)
+        self.assertIn('d."tenant_id" = NEW."tenant_id"', fn)           # no revela el estado de un día ajeno
+        self.assertIn("FOR SHARE", fn)                                 # serializa contra el UPDATE que cierra el día
+        self.assertIn("v_found IS NOT TRUE", fn)                       # día inexistente => error, no pasa
+        self.assertIn("restrict_violation", fn)
+        self.assertIn('BEFORE INSERT ON "clinical"."inpatient_census_entries"', self.sql)
+
     def test_does_not_touch_the_integrators_files(self) -> None:
         # El patch sólo lee/crea objetos de base; las rutas del integrador no aparecen como destino.
         for hot in ("apply_all.sql", "SHA256SUMS", "model-manifest", "_generation_report"):

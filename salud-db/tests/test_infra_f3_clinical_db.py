@@ -471,10 +471,9 @@ class TestDBedOccupancy:
                 with world.conn.transaction():
                     world.loc(world.conn, ENC[3], BED[3], "ACTIVE", None)
             assert ei.value.diag.constraint_name == "ck_encounter_locations_bed_period"
-            with pytest.raises(pgerr.CheckViolation) as ei:
-                with world.conn.transaction():
-                    world.loc(world.conn, ENC[3], None, "ACTIVE", day(10))
-            assert ei.value.diag.constraint_name == "ck_encounter_locations_bed_period"
+            # sin espacio, la bandera se deriva a false (ya no es cama): el CHECK queda como defensa en profundidad
+            nb = world.loc(world.conn, ENC[3], None, "ACTIVE", day(10))
+            assert world.one("SELECT is_bed_assignment FROM clinical.encounter_locations WHERE id = %s", (nb,)) is False
             with pytest.raises(pgerr.CheckViolation) as ei:
                 with world.conn.transaction():
                     world.loc(world.conn, ENC[3], BED[3], "COMPLETED", day(10), day(9))
@@ -943,7 +942,7 @@ class TestHCensus:
             with pytest.raises(pgerr.ForeignKeyViolation) as ei:
                 with w.conn.transaction():
                     _entry(w, d, tenant=T2, enc=ENC[9], patient=PAT[9], space=BX)   # entrada del tenant 2 en el censo del 1
-            assert ei.value.diag.constraint_name == "fk_inpatient_census_entries_tenant_day"
+            assert "no existe para este tenant" in str(ei.value)       # el trigger va antes que la FK compuesta y no revela el día ajeno
             w.conn.execute("UPDATE clinical.inpatient_census_days SET closed_at = now(), content_hash = 'h' WHERE id = %s", (d,))
             with pytest.raises(pgerr.ForeignKeyViolation) as ei:
                 with w.conn.transaction():
@@ -1039,3 +1038,220 @@ class TestJEncountersColumns:
             with pytest.raises(pgerr.ForeignKeyViolation):                       # son FK a catalog_concepts
                 with w.conn.transaction():
                     w.conn.execute("UPDATE clinical.encounters SET level_of_care_concept_id = %s WHERE id = %s", (str(uuid.uuid4()), ENC[3]))
+
+
+# ============================================================================ K. cierres de seguridad: fallar cerrado
+def _owner_conn_cleanup(w: World, sql: str, params=()) -> None:
+    """Borra filas que una prueba CONFIRMÓ (autocommit) saltando los triggers WORM; sólo superusuario de prueba."""
+    w.conn.execute("SET session_replication_role = replica")
+    try:
+        w.conn.execute(sql, params)
+    finally:
+        w.conn.execute("SET session_replication_role = origin")
+
+
+class TestKBedFlagIsDerived:
+    """Hallazgo 1: is_bed_assignment no se le confía a quien llama (el predicado de los EXCLUDE depende de ella)."""
+
+    def test_100_a_false_flag_on_a_real_bed_is_overridden_and_still_excluded(self, world: World, patched: World) -> None:
+        w = world
+        with w.conn.transaction(force_rollback=True):
+            first = w.loc(w.conn, ENC[3], BED[3], "ACTIVE", day(90), bed=True)
+            spoof = w.loc(w.conn, ENC[3], BED[4], "RESERVED", day(90), bed=False)        # false sobre una cama real
+            assert w.one("SELECT is_bed_assignment FROM clinical.encounter_locations WHERE id = %s", (spoof,)) is True
+            with pytest.raises(pgerr.ExclusionViolation) as ei:                           # el bypass de «dos pacientes, una cama»
+                with w.conn.transaction():
+                    w.loc(w.conn, ENC[4], BED[3], "ACTIVE", day(91), bed=False)
+            assert ei.value.diag.constraint_name == "ex_encounter_locations_bed_occupancy"
+            assert first
+
+    def test_101_a_true_flag_on_a_room_or_without_space_is_overridden_to_false(self, world: World, patched: World) -> None:
+        w = world
+        with w.conn.transaction(force_rollback=True):
+            room = w.loc(w.conn, ENC[3], R1, "ACTIVE", day(90), bed=True)
+            nospace = w.loc(w.conn, ENC[4], None, "ACTIVE", None, bed=True)
+            for rid in (room, nospace):
+                assert w.one("SELECT is_bed_assignment FROM clinical.encounter_locations WHERE id = %s", (rid,)) is False
+            # un local (no cama) no entra en los EXCLUDE: dos encuentros en el mismo local siguen siendo válidos
+            w.loc(w.conn, ENC[5], R1, "ACTIVE", day(90), bed=True)
+
+    def test_102_the_flag_is_rederived_on_update_when_the_space_or_the_flag_change(self, world: World, patched: World) -> None:
+        w = world
+        with w.conn.transaction(force_rollback=True):
+            lid = w.loc(w.conn, ENC[3], BED[3], "ACTIVE", day(90))
+            flag = lambda: w.one("SELECT is_bed_assignment FROM clinical.encounter_locations WHERE id = %s", (lid,))
+            assert flag() is True
+            w.conn.execute("UPDATE clinical.encounter_locations SET is_bed_assignment = false WHERE id = %s", (lid,))
+            assert flag() is True                                                          # no se puede apagar a mano
+            w.conn.execute("UPDATE clinical.encounter_locations SET care_space_id = %s WHERE id = %s", (R1, lid))
+            assert flag() is False                                                         # cambió de espacio: se re-deriva
+            w.conn.execute("UPDATE clinical.encounter_locations SET care_space_id = %s, is_bed_assignment = false WHERE id = %s", (BED[4], lid))
+            assert flag() is True
+            # mover a una cama ocupada por otro paciente se rechaza aunque la bandera viaje en false
+            w.loc(w.conn, ENC[4], BED[5], "ACTIVE", day(90))
+            with pytest.raises(pgerr.ExclusionViolation):
+                with w.conn.transaction():
+                    w.conn.execute("UPDATE clinical.encounter_locations SET care_space_id = %s, is_bed_assignment = false WHERE id = %s", (BED[5], lid))
+
+    def test_103_closing_a_stay_does_not_reclassify_it(self, world: World, patched: World) -> None:
+        w = world
+        with w.conn.transaction(force_rollback=True):
+            lid = w.loc(w.conn, ENC[3], BED[3], "ACTIVE", day(90))
+            w.conn.execute("SET LOCAL session_replication_role = replica")                # simula: el espacio dejó de ser cama después
+            w.conn.execute("UPDATE practice.care_spaces SET form_concept_id = %s WHERE id = %s", (C["FORM_ROOM"], BED[3]))
+            w.conn.execute("SET LOCAL session_replication_role = origin")
+            w.conn.execute("UPDATE clinical.encounter_locations SET period_end = %s, location_status_concept_id = %s WHERE id = %s",
+                           (day(95), C["COMPLETED"], lid))
+            assert w.one("SELECT is_bed_assignment FROM clinical.encounter_locations WHERE id = %s", (lid,)) is True
+
+    def test_104_a_nonexistent_space_fails_closed(self, world: World, patched: World) -> None:
+        w = world
+        with w.conn.transaction(force_rollback=True):
+            for flag in (True, False):
+                with pytest.raises(pgerr.ForeignKeyViolation) as ei:
+                    with w.conn.transaction():
+                        w.loc(w.conn, ENC[3], str(uuid.uuid4()), "ACTIVE", day(90), bed=flag)
+                assert "no se puede derivar si es una cama" in str(ei.value)             # lo dice el trigger, no una FK posterior
+
+    def test_105_it_works_under_rls_as_the_app_role_and_other_tenants_spaces_still_fail(self, world: World, patched: World, as_app) -> None:
+        w = world
+        with w.conn.transaction(force_rollback=True):
+            as_app(T1)
+            assert w.count("practice.care_spaces") >= 7                                   # sanity: el rol ve sus espacios
+            lid = w.loc(w.conn, ENC[3], BED[3], "ACTIVE", day(90), bed=False)             # sin tenant_id ni bandera: los pone la base
+            assert w.one("SELECT is_bed_assignment FROM clinical.encounter_locations WHERE id = %s", (lid,)) is True
+            assert w.one("SELECT tenant_id FROM clinical.encounter_locations WHERE id = %s", (lid,)) == uuid.UUID(T1)
+            # el espacio del tenant 2 no se ve con RLS, pero la derivación no falla por eso: lo rechaza la FK compuesta
+            with pytest.raises(pgerr.ForeignKeyViolation) as ei:
+                with w.conn.transaction():
+                    w.loc(w.conn, ENC[3], BX, "ACTIVE", day(95), bed=False)
+            assert ei.value.diag.constraint_name == "fk_encounter_locations_tenant_space"
+
+    def test_106_trigger_order_fills_the_tenant_before_deriving(self, world: World, patched: World) -> None:
+        names = [r[0] for r in world.all("SELECT tgname FROM pg_trigger WHERE tgrelid = 'clinical.encounter_locations'::regclass "
+                                         "AND NOT tgisinternal AND (tgtype & 4) = 4 AND (tgtype & 2) = 2 ORDER BY tgname")]
+        assert names.index("trg_encounter_locations_fill_tenant") < names.index("trg_encounter_locations_set_bed_flag"), names
+
+    def test_107_reapplying_the_patch_repairs_legacy_false_flags_or_aborts_on_overlap(self, world: World, patched: World) -> None:
+        w = world
+        trg = "trg_encounter_locations_set_bed_flag"
+        w.conn.execute(f"ALTER TABLE clinical.encounter_locations DISABLE TRIGGER {trg}")
+        try:
+            a = w.loc(w.conn, ENC[3], BED[6], "ACTIVE", day(100), bed=False)             # filas que un escritor antiguo/bypass dejó en false
+            assert w.one("SELECT is_bed_assignment FROM clinical.encounter_locations WHERE id = %s", (a,)) is False
+            res = w.apply_patch()
+            assert res.returncode == 0, res.stderr
+            assert w.one("SELECT is_bed_assignment FROM clinical.encounter_locations WHERE id = %s", (a,)) is True   # corregida a true
+            assert w.one("SELECT tgenabled FROM pg_trigger WHERE tgname = %s", (trg,)) == "O"                       # y el trigger vuelve a estar activo
+            w.conn.execute(f"ALTER TABLE clinical.encounter_locations DISABLE TRIGGER {trg}")
+            w.loc(w.conn, ENC[4], BED[6], "ACTIVE", day(101), bed=False)                 # dos pacientes en la misma cama, ambos en false
+            res = w.apply_patch()
+            assert res.returncode != 0                                                    # al corregir la bandera chocan: aborta, sin dejar nada
+            assert "ex_encounter_locations_bed_occupancy" in res.stderr
+            assert w.count("clinical.encounter_locations", "care_space_id = %s AND NOT is_bed_assignment", (BED[6],)) == 1
+        finally:
+            w.conn.execute("DELETE FROM clinical.encounter_locations WHERE care_space_id = %s", (BED[6],))
+            w.conn.execute(f"ALTER TABLE clinical.encounter_locations ENABLE TRIGGER {trg}")
+
+
+class TestLClosedCensusRejectsInserts:
+    """Hallazgo 2: INSERT de entradas en un día cerrado reescribe el censo «inmutable»."""
+
+    def _closed_day(self, w: World, date: dt.date = dt.date(2026, 11, 3), **kw) -> str:
+        d = _census_day(w, date=date, **kw)
+        w.conn.execute("UPDATE clinical.inpatient_census_days SET closed_at = now(), content_hash = 'sha256:abc', status_concept_id = %s WHERE id = %s",
+                       (C["CENSUS_CLOSED"], d))
+        return d
+
+    def test_110_an_entry_cannot_be_inserted_into_a_closed_day(self, world: World, patched: World) -> None:
+        w = world
+        with w.conn.transaction(force_rollback=True):
+            d = _census_day(w, date=dt.date(2026, 11, 3))
+            _entry(w, d)                                                                  # abierto: se admite
+            w.conn.execute("UPDATE clinical.inpatient_census_days SET closed_at = now(), content_hash = 'h', status_concept_id = %s WHERE id = %s",
+                           (C["CENSUS_CLOSED"], d))
+            before = w.count("clinical.inpatient_census_entries", "census_day_id = %s", (d,))
+            with pytest.raises(pgerr.RestrictViolation) as ei:
+                with w.conn.transaction():
+                    _entry(w, d, enc=ENC[4], patient=PAT[4])
+            assert "cerrado y es inmutable" in str(ei.value)
+            assert w.count("clinical.inpatient_census_entries", "census_day_id = %s", (d,)) == before
+
+    def test_111_the_same_holds_for_the_app_role(self, world: World, patched: World, as_app) -> None:
+        w = world
+        with w.conn.transaction(force_rollback=True):
+            d = _census_day(w, date=dt.date(2026, 11, 4))
+            w.conn.execute("UPDATE clinical.inpatient_census_days SET closed_at = now(), content_hash = 'h' WHERE id = %s", (d,))
+            as_app(T1)
+            with pytest.raises(pgerr.RestrictViolation):
+                with w.conn.transaction():
+                    _entry(w, d)
+            _adjust(w, d)                                                                 # el ajuste sigue siendo la vía sobre un día cerrado
+
+    def test_112_a_missing_or_foreign_day_fails_closed_without_leaking_its_state(self, world: World, patched: World, as_app) -> None:
+        w = world
+        with w.conn.transaction(force_rollback=True):
+            with pytest.raises(pgerr.ForeignKeyViolation) as ei:
+                with w.conn.transaction():
+                    _entry(w, str(uuid.uuid4()))                                          # día inexistente
+            assert "no existe para este tenant" in str(ei.value)
+            closed_t2 = self._closed_day(w, date=dt.date(2026, 11, 5), tenant=T2, site=S2, unit=UN2)
+            as_app(T1)
+            with pytest.raises(pgerr.ForeignKeyViolation) as ei:                          # día CERRADO de otro tenant: igual que inexistente
+                with w.conn.transaction():
+                    _entry(w, closed_t2)
+            assert "no existe para este tenant" in str(ei.value)
+            assert not isinstance(ei.value, pgerr.RestrictViolation)
+
+    def test_113_the_trigger_is_not_hidden_by_rls_and_not_bypassable_with_a_null_tenant(self, world: World, patched: World, as_app) -> None:
+        w = world
+        with w.conn.transaction(force_rollback=True):
+            d = _census_day(w, date=dt.date(2026, 11, 6))
+            as_app(T2)                                                                    # contexto de otro tenant: ni siquiera ve el día
+            assert w.count("clinical.inpatient_census_days") == 0
+            with pytest.raises((pgerr.ForeignKeyViolation, pgerr.InsufficientPrivilege)):
+                with w.conn.transaction():
+                    _entry(w, d)
+
+    def test_114_closing_waits_for_an_in_flight_entry_and_the_entry_wins_the_race_or_is_rejected(self, world: World, patched: World) -> None:
+        w = world
+        date = dt.date(2026, 11, 20)
+        d = _census_day(w, date=date)
+        a = psycopg.connect(_dsn(w.db), autocommit=False)
+        out: dict = {}
+
+        def closer() -> None:
+            b = psycopg.connect(_dsn(w.db), autocommit=False)
+            try:
+                out["pid"] = b.info.backend_pid
+                b.execute("UPDATE clinical.inpatient_census_days SET closed_at = now(), content_hash = 'h', status_concept_id = %s WHERE id = %s",
+                          (C["CENSUS_CLOSED"], d))
+                b.commit()
+                out["closed"] = True
+            finally:
+                b.close()
+
+        try:
+            eid = str(uuid.uuid4())
+            a.execute("INSERT INTO clinical.inpatient_census_entries (id, tenant_id, census_day_id, encounter_id, patient_profile_id, care_space_id, "
+                      "bed_category_concept_id, movement_concept_id, occurred_at) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, now())",
+                      (eid, T1, d, ENC[3], PAT[3], BED[3], C["BED_CAT_ICU"], C["CEN_PRESENT"]))          # A: entrada sin confirmar
+            th = threading.Thread(target=closer)
+            th.start()
+            deadline = time.time() + 10
+            waiting = False
+            while time.time() < deadline and not waiting:
+                time.sleep(0.2)
+                if "pid" in out:
+                    waiting = bool(w.one("SELECT count(*) FROM pg_stat_activity WHERE pid = %s AND wait_event_type = 'Lock'", (out["pid"],)))
+            assert waiting, "el cierre no esperó a la entrada en vuelo"
+            a.commit()
+            th.join(10)
+            assert out.get("closed")
+            assert w.count("clinical.inpatient_census_entries", "id = %s", (eid,)) == 1
+            with pytest.raises(pgerr.RestrictViolation):                                          # y ahora, ya cerrado, no entra otra
+                _entry(w, d, enc=ENC[4], patient=PAT[4])
+        finally:
+            a.close()
+            _owner_conn_cleanup(w, "DELETE FROM clinical.inpatient_census_entries WHERE census_day_id = %s", (d,))
+            _owner_conn_cleanup(w, "DELETE FROM clinical.inpatient_census_days WHERE id = %s", (d,))

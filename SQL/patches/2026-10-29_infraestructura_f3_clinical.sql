@@ -27,6 +27,10 @@
 --      · INV-31  un encuentro, una cama a la vez  → ex_encounter_locations_encounter_single_bed
 --      · un solo registro ACTIVO por encuentro    → ex_encounter_locations_encounter_one_active_bed
 --      · una fila de cama exige espacio y período → ck_encounter_locations_bed_period(_order)
+--      `is_bed_assignment` NO se confía al cliente: un trigger BEFORE INSERT OR UPDATE la DERIVA
+--      de la forma del espacio (LOC_FORM_BED ⇒ true, cualquier otra o sin espacio ⇒ false) y
+--      falla cerrado si el espacio no existe. Sin eso, mandar false sobre una cama real saltaba
+--      los tres EXCLUDE, cuyo predicado depende de la bandera.
 --      Los tres EXCLUDE son DEFERRABLE INITIALLY IMMEDIATE: el intercambio A17 hace
 --      `SET CONSTRAINTS … DEFERRED` y cierra/abre las cuatro filas en cualquier orden.
 --   B. clinical.encounters: nivel de cuidado, fuente de ingreso, tipo de egreso, precaución de
@@ -37,7 +41,9 @@
 --      audit.placement_incidents_history.
 --   D. INV-35 censo inmutable: un día con closed_at no se modifica ni se borra (trigger);
 --      entradas y ajustes son WORM (integrity.forbid_mutation); un ajuste sólo cabe sobre un
---      día cerrado y, si cita una entrada, de ese mismo día.
+--      día cerrado y, si cita una entrada, de ese mismo día. Una entrada NO se puede insertar en
+--      un día cerrado (trigger BEFORE INSERT; falla cerrado si el día no existe): los ajustes
+--      son la única vía de corrección sobre un día cerrado.
 --   E. Aislamiento por tenant en la base: FK compuestas (tenant_id, x_id) → padre
 --      (tenant_id, id), RLS `tenant_isolation` (texto exacto de 2026-08-05_tenant_rls.sql) en
 --      las siete tablas con tenant_id, e historias con SELECT + INSERT + UPDATE de valid_to
@@ -52,10 +58,11 @@
 --     es NULL (la API fija closed_at, content_hash y el estado CLOSED en el mismo UPDATE).
 --   - No borra ni renombra nada.
 --
--- SUPUESTO (anotado también en DESVIOS-M-F3.md). El backfill de is_bed_assignment toma como
--- cama a todo espacio cuya forma sea ⟨practice:LOC_FORM_BED⟩ = 63ef5a86-740b-5fc6-8b93-3010ed5067a8.
--- El contrato nombra el concepto LOC_FORM_BED pero la clave exacta la fija practice.concepts.ts
--- de la API; si difiere, el backfill no marca nada (inocuo: antes de F1 no existían camas).
+-- SUPUESTO (anotado también en DESVIOS-M-F3.md). Una cama es todo espacio cuya forma sea
+-- ⟨practice:LOC_FORM_BED⟩ = 63ef5a86-740b-5fc6-8b93-3010ed5067a8, tanto en el backfill como en el
+-- trigger que deriva is_bed_assignment. El contrato nombra el concepto LOC_FORM_BED pero la clave
+-- exacta la fija practice.concepts.ts de la API; si difiere, ninguna fila se marcaría como cama y
+-- los EXCLUDE no protegerían nada: verificar la clave antes de desplegar.
 --
 -- PRECONDICIONES (abortan sin tocar nada; el BEGIN hace rollback de todo):
 --   - F1 y F1b sin aplicar (falta alguno de sus UNIQUE (tenant_id, id) o sus funciones).
@@ -73,7 +80,7 @@
 -- DELTAS ESPERADOS sobre una base con F1/F1b/F5 (antes de este patch):
 --   columnas +13 (encounters 6 · encounter_locations 7) · tablas +6 (4 clinical, 2 audit)
 --   FKs simples +48 · FKs compuestas +18 · índices +56 · CHECK +8 · EXCLUDE +3
---   triggers +9 · políticas RLS +7
+--   triggers +11 · políticas RLS +7
 -- ============================================================================
 
 BEGIN;
@@ -274,14 +281,18 @@ UPDATE "clinical"."encounter_locations" el
  WHERE e."id" = el."encounter_id"
    AND el."tenant_id" IS NULL;
 
--- is_bed_assignment = true para toda ubicación cuyo espacio sea una CAMA.
+-- is_bed_assignment := «el espacio es una CAMA», en las dos direcciones (es el invariante que
+-- después impone el trigger 10a): una fila marcada false sobre una cama real se corrige a true
+-- ANTES de las precondiciones de solape, así el hueco no queda en datos heredados.
 -- 63ef5a86-740b-5fc6-8b93-3010ed5067a8 = deterministicId('practice:LOC_FORM_BED').
 UPDATE "clinical"."encounter_locations" el
-   SET "is_bed_assignment" = true
+   SET "is_bed_assignment" = (cs."form_concept_id" IS NOT DISTINCT FROM '63ef5a86-740b-5fc6-8b93-3010ed5067a8'::uuid)
   FROM "practice"."care_spaces" cs
  WHERE cs."id" = el."care_space_id"
-   AND cs."form_concept_id" = '63ef5a86-740b-5fc6-8b93-3010ed5067a8'
-   AND NOT el."is_bed_assignment";
+   AND el."is_bed_assignment" IS DISTINCT FROM (cs."form_concept_id" IS NOT DISTINCT FROM '63ef5a86-740b-5fc6-8b93-3010ed5067a8'::uuid);
+UPDATE "clinical"."encounter_locations"
+   SET "is_bed_assignment" = false
+ WHERE "care_space_id" IS NULL AND "is_bed_assignment";
 
 -- ------------------------------------------------------------- 4. precondiciones
 DO $$
@@ -990,6 +1001,49 @@ CREATE TRIGGER "trg_encounter_locations_fill_tenant"
     BEFORE INSERT ON "clinical"."encounter_locations"
     FOR EACH ROW EXECUTE FUNCTION "clinical"."encounter_locations_fill_tenant"();
 
+-- 10a2. is_bed_assignment se DERIVA de la forma del espacio; el valor que manda el cliente se
+-- ignora. Sin espacio ⇒ false. Espacio inexistente ⇒ error (falla cerrado, 23503). El espacio se
+-- lee con contexto SYSTEM fijado en la propia función (SET app.system_context): la política
+-- tenant_isolation de care_spaces no puede ocultarlo, sin depender de quién sea el dueño ni de
+-- SECURITY DEFINER. Sólo se lee la forma de UN espacio por id; si es de otro tenant, la FK compuesta
+-- (tenant_id, care_space_id) rechaza la fila igualmente. En UPDATE se re-deriva sólo si cambió el
+-- espacio o la bandera: cerrar una estancia vieja no la reclasifica si el espacio cambió de forma.
+-- Orden: los triggers BEFORE de una tabla corren por nombre; «…_fill_tenant» < «…_set_bed_flag».
+CREATE OR REPLACE FUNCTION "clinical"."encounter_locations_derive_bed"()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = pg_catalog, pg_temp
+SET app.system_context = 'true'
+AS $fn$
+DECLARE
+    v_form   uuid;
+    v_found  boolean;
+BEGIN
+    IF TG_OP = 'UPDATE'
+       AND NEW."care_space_id" IS NOT DISTINCT FROM OLD."care_space_id"
+       AND NEW."is_bed_assignment" IS NOT DISTINCT FROM OLD."is_bed_assignment" THEN
+        RETURN NEW;
+    END IF;
+    IF NEW."care_space_id" IS NULL THEN
+        NEW."is_bed_assignment" := false;
+        RETURN NEW;
+    END IF;
+    SELECT cs."form_concept_id", true INTO v_form, v_found
+      FROM "practice"."care_spaces" cs
+     WHERE cs."id" = NEW."care_space_id";
+    IF v_found IS NOT TRUE THEN
+        RAISE EXCEPTION 'encounter_locations: el espacio % no existe; no se puede derivar si es una cama', NEW."care_space_id"
+            USING ERRCODE = 'foreign_key_violation';
+    END IF;
+    NEW."is_bed_assignment" := (v_form IS NOT DISTINCT FROM '63ef5a86-740b-5fc6-8b93-3010ed5067a8'::uuid);
+    RETURN NEW;
+END $fn$;
+
+DROP TRIGGER IF EXISTS "trg_encounter_locations_set_bed_flag" ON "clinical"."encounter_locations";
+CREATE TRIGGER "trg_encounter_locations_set_bed_flag"
+    BEFORE INSERT OR UPDATE ON "clinical"."encounter_locations"
+    FOR EACH ROW EXECUTE FUNCTION "clinical"."encounter_locations_derive_bed"();
+
 -- 10b. INV-35: un censo cerrado (closed_at) no se modifica ni se borra. Los días abiertos sí
 -- (se cierran con un UPDATE que fija closed_at; la vista previa de un día abierto no se persiste).
 CREATE OR REPLACE FUNCTION "clinical"."inpatient_census_days_guard_closed"()
@@ -1050,6 +1104,43 @@ DROP TRIGGER IF EXISTS "trg_inpatient_census_adjustments_require_closed" ON "cli
 CREATE TRIGGER "trg_inpatient_census_adjustments_require_closed"
     BEFORE INSERT ON "clinical"."inpatient_census_adjustments"
     FOR EACH ROW EXECUTE FUNCTION "clinical"."inpatient_census_adjustments_require_closed"();
+
+-- 10c2. Una entrada no se inserta en un día cerrado (INV-35): el INSERT también reescribiría el
+-- censo «inmutable». Se lee el día padre con contexto SYSTEM (la política tenant_isolation no lo
+-- oculta) PERO acotado al tenant de la entrada, para no revelar el estado de un día ajeno: día
+-- inexistente o de otro tenant ⇒ error (falla cerrado, 23503). FOR SHARE serializa contra el
+-- UPDATE que cierra el día: si el cierre confirma primero, esta inserción lo ve; si la inserción
+-- va primero, el cierre espera a que termine.
+CREATE OR REPLACE FUNCTION "clinical"."inpatient_census_entries_require_open_day"()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = pg_catalog, pg_temp
+SET app.system_context = 'true'
+AS $fn$
+DECLARE
+    v_closed_at timestamptz;
+    v_found     boolean;
+BEGIN
+    SELECT d."closed_at", true INTO v_closed_at, v_found
+      FROM "clinical"."inpatient_census_days" d
+     WHERE d."id" = NEW."census_day_id"
+       AND d."tenant_id" = NEW."tenant_id"
+       FOR SHARE;
+    IF v_found IS NOT TRUE THEN
+        RAISE EXCEPTION 'inpatient_census_entries: el censo % no existe para este tenant', NEW."census_day_id"
+            USING ERRCODE = 'foreign_key_violation';
+    END IF;
+    IF v_closed_at IS NOT NULL THEN
+        RAISE EXCEPTION 'inpatient_census_entries: el censo % está cerrado y es inmutable; corregirlo con un ajuste en inpatient_census_adjustments (INSERT no permitido)', NEW."census_day_id"
+            USING ERRCODE = 'restrict_violation';
+    END IF;
+    RETURN NEW;
+END $fn$;
+
+DROP TRIGGER IF EXISTS "trg_inpatient_census_entries_open_day" ON "clinical"."inpatient_census_entries";
+CREATE TRIGGER "trg_inpatient_census_entries_open_day"
+    BEFORE INSERT ON "clinical"."inpatient_census_entries"
+    FOR EACH ROW EXECUTE FUNCTION "clinical"."inpatient_census_entries_require_open_day"();
 
 -- 10d. WORM de entradas y ajustes del censo: misma función y mismo nombre de trigger que emite
 -- gen_integrity.py para `UPDATE_DELETE : forbidden` (diagram_33), así que ambos caminos coinciden.
@@ -1327,6 +1418,8 @@ BEGIN
       JOIN pg_class r ON r.oid = t.tgrelid JOIN pg_namespace n ON n.oid = r.relnamespace
      WHERE NOT t.tgisinternal
        AND ((n.nspname = 'clinical' AND r.relname = 'encounter_locations' AND t.tgname = 'trg_encounter_locations_fill_tenant')
+         OR (n.nspname = 'clinical' AND r.relname = 'encounter_locations' AND t.tgname = 'trg_encounter_locations_set_bed_flag')
+         OR (n.nspname = 'clinical' AND r.relname = 'inpatient_census_entries' AND t.tgname = 'trg_inpatient_census_entries_open_day')
          OR (n.nspname = 'clinical' AND r.relname = 'inpatient_census_days' AND t.tgname = 'trg_inpatient_census_days_closed_guard')
          OR (n.nspname = 'clinical' AND r.relname = 'inpatient_census_adjustments' AND t.tgname = 'trg_inpatient_census_adjustments_require_closed')
          OR (n.nspname = 'clinical' AND r.relname IN ('inpatient_census_entries', 'inpatient_census_adjustments') AND t.tgname = 'trg_forbid_mutation')
@@ -1350,9 +1443,9 @@ BEGIN
     END IF;
 
     IF n_cols <> 13 OR n_nn <> 8 OR n_tab <> 6 OR n_fks <> 48 OR n_fkc <> 18 OR n_fkbad <> 0 OR n_ux <> 6
-       OR n_idx <> 56 OR n_ck <> 8 OR n_ex <> 3 OR n_exdef <> 3 OR n_trg <> 9 OR n_rls <> 7 OR n_priv <> 0 THEN
+       OR n_idx <> 56 OR n_ck <> 8 OR n_ex <> 3 OR n_exdef <> 3 OR n_trg <> 11 OR n_rls <> 7 OR n_priv <> 0 THEN
         RAISE EXCEPTION
-            'infraestructura F3 incompleta: columnas=% (13), NOT NULL=% (8), tablas=% (6), FK simples=% (48), FK compuestas=% (18), FK sin validar=% (0), únicos=% (6), índices=% (56), CHECK=% (8), EXCLUDE diferibles=% (3), con la definición del contrato=% (3), triggers=% (9), RLS=% (7), tablas WORM/historia con UPDATE o DELETE para mantra_app=% (0)',
+            'infraestructura F3 incompleta: columnas=% (13), NOT NULL=% (8), tablas=% (6), FK simples=% (48), FK compuestas=% (18), FK sin validar=% (0), únicos=% (6), índices=% (56), CHECK=% (8), EXCLUDE diferibles=% (3), con la definición del contrato=% (3), triggers=% (11), RLS=% (7), tablas WORM/historia con UPDATE o DELETE para mantra_app=% (0)',
             n_cols, n_nn, n_tab, n_fks, n_fkc, n_fkbad, n_ux, n_idx, n_ck, n_ex, n_exdef, n_trg, n_rls, n_priv;
     END IF;
 

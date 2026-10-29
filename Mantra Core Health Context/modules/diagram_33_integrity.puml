@@ -327,6 +327,8 @@ entity "delegated_access.organization_user_assignments" as delegated_access_orga
 ' EXCLUDE_SQL no tiene dónde declararlo (gen_integrity.exclude_concreto): el 05_constraints
 ' generado los crea NO diferibles y el patch los recrea diferibles al aplicarse (ver DESVIOS-M-F3).
 entity "clinical.encounter_locations" as clinical_encounter_locations <<REFERENCE_ONLY>> {
+  ' F3 · is_bed_assignment la DERIVA el trigger trg_encounter_locations_set_bed_flag de la forma del espacio
+  ' (el predicado de los EXCLUDE depende de ella; no puede confiarse al cliente). Vive en el patch.
   ' F3 · una fila marcada como cama exige espacio e inicio del período.
   CHECK_SQL : ck_encounter_locations_bed_period | NOT "is_bed_assignment" OR ("period_start" IS NOT NULL AND "care_space_id" IS NOT NULL)
   ' F3 · el período de una cama no termina antes de empezar (error claro 23514 en vez de 22000 del tstzrange).
@@ -348,7 +350,8 @@ entity "clinical.inpatient_census_days" as clinical_inpatient_census_days <<REFE
   CHECK_SQL : ck_inpatient_census_days_counts | "beds_censable" >= 0 AND "beds_available" >= 0 AND "beds_blocked" >= 0 AND "patients_at_cutoff" >= 0 AND "admissions" >= 0 AND "discharges" >= 0 AND "deaths" >= 0 AND "transfers_in" >= 0 AND "transfers_out" >= 0 AND "same_day_stays" >= 0 AND "patient_days" >= 0 AND "discharge_stay_days" >= 0 AND "beds_available" + "beds_blocked" = "beds_censable"
   CHECK_SQL : ck_inpatient_census_days_closed_has_hash | "closed_at" IS NULL OR "content_hash" IS NOT NULL
 }
-' F3 · INV-35: el rastro del censo no se reescribe (UPDATE y DELETE prohibidos).
+' F3 · INV-35: el rastro del censo no se reescribe (UPDATE y DELETE prohibidos). Además, el trigger
+' trg_inpatient_census_entries_open_day del patch rechaza INSERT de una entrada en un día cerrado.
 entity "clinical.inpatient_census_entries" as clinical_inpatient_census_entries <<IMMUTABLE, REFERENCE_ONLY>> {
   UPDATE_DELETE : forbidden
 }

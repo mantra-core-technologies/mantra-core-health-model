@@ -655,8 +655,9 @@ entity encounter_locations {
   ' el historial de estancias (= FHIR Encounter.location). `tenant_id` se copia del encuentro
   ' (NOT NULL; lo completa un trigger si el escritor no lo manda) y todo vínculo se referencia con
   ' FK compuesta (tenant_id, x_id) en el patch 2026-10-29_infraestructura_f3_clinical.sql.
-  ' `is_bed_assignment` la pone la API en true cuando el espacio es una CAMA (forma LOC_FORM_BED):
-  ' sólo esas filas entran en las EXCLUDE de ocupación (una cama, un paciente a la vez; un
+  ' `is_bed_assignment` NO la decide quien escribe: un trigger BEFORE INSERT OR UPDATE la DERIVA de la
+  ' forma del espacio (LOC_FORM_BED ⇒ true; otra forma o sin espacio ⇒ false; espacio inexistente ⇒
+  ' error). Sólo esas filas entran en las EXCLUDE de ocupación (una cama, un paciente a la vez; un
   ' encuentro, una cama a la vez). `previous_encounter_location_id` es PV1-6 (ubicación previa).
   * tenant_id : uuid <<FK>>
   * is_bed_assignment : boolean <<DEFAULT_FALSE>>
@@ -696,7 +697,8 @@ entity placement_incidents {
 
 ' + infraestructura hospitalaria F3 (2026-10-29): censo diario por unidad. Se persiste ya
 ' cerrado (el día abierto es una vista previa calculada). Cerrado = `closed_at IS NOT NULL`:
-' desde ahí un trigger rechaza UPDATE y DELETE; las correcciones son ajustes aparte.
+' desde ahí un trigger rechaza UPDATE y DELETE del día, y otro rechaza INSERT de entradas en él;
+' las correcciones son ajustes aparte.
 entity inpatient_census_days {
   * id : uuid <<PK>>
   --

@@ -9,6 +9,6 @@ items AS (
  UNION ALL SELECT 'rls '||o.name||' '||o.relrowsecurity||o.relforcerowsecurity FROM oids o
  UNION ALL SELECT 'acl '||o.name||' '||coalesce(cl.relacl::text,'') FROM oids o JOIN pg_class cl ON cl.oid=o.oid
  UNION ALL SELECT 'acl-col '||o.name||' '||a.attname||' '||a.attacl::text FROM oids o JOIN pg_attribute a ON a.attrelid=o.oid AND a.attacl IS NOT NULL
- UNION ALL SELECT 'fn '||n.nspname||'.'||p.proname||' '||md5(pg_get_functiondef(p.oid)) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE (n.nspname='clinical' AND p.proname IN ('encounter_locations_fill_tenant','inpatient_census_days_guard_closed','inpatient_census_adjustments_require_closed')) OR (n.nspname='integrity' AND p.proname='forbid_mutation')
+ UNION ALL SELECT 'fn '||n.nspname||'.'||p.proname||' '||md5(pg_get_functiondef(p.oid) || coalesce(p.proconfig::text,'')) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE (n.nspname='clinical' AND p.proname IN ('encounter_locations_fill_tenant','inpatient_census_days_guard_closed','inpatient_census_adjustments_require_closed','encounter_locations_derive_bed','inpatient_census_entries_require_open_day')) OR (n.nspname='integrity' AND p.proname='forbid_mutation')
 )
 SELECT count(*) AS items, md5(string_agg(x, E'\n' ORDER BY x)) AS fingerprint FROM items;

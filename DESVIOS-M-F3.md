@@ -38,7 +38,8 @@ regenerar `SQL/08_clinical`, `SQL/10_audit`, `_integrity` y `docs/data-catalog` 
    `beds_available + beds_blocked = beds_censable`, que es la definición del contrato «beds_blocked = la diferencia»);
    `ck_inpatient_census_days_closed_has_hash`; `ck_inpatient_census_adjustments_field_code` (las 12 columnas
    numéricas) y `_reason` (motivo no vacío, `new_value >= 0`).
-4. **Triggers extra**: completar `tenant_id` desde el encuentro (S-4); un ajuste sólo cabe sobre un censo **cerrado**
+4. **Triggers extra**: completar `tenant_id` desde el encuentro (S-4); **derivar `is_bed_assignment`** de la forma del
+   espacio y **rechazar entradas de censo en un día cerrado** (ver §6, cierre de seguridad); un ajuste sólo cabe sobre un censo **cerrado**
    (mensaje `CENSUS_NOT_CLOSED`, 23514) y, si cita una entrada, de ese mismo día; historias con
    «sólo inserción + cierre de `valid_to`» (funciones de F1b). Los triggers de historia se llaman `trg_f3_fill_tenant`
    y `trg_f3_close_only` a propósito: la verificación final de F1b cuenta `trg_fill_tenant`/`trg_close_only` por
@@ -79,6 +80,35 @@ regenerar `SQL/08_clinical`, `SQL/10_audit`, `_integrity` y `docs/data-catalog` 
 - Mock seeds de `08_clinical.seeds.json` (16 `encounter_locations`, ninguna cama): se comprobó estáticamente que no
   cruzan tenants contra los espacios/sedes/unidades de `14_practice.seeds.json`; no se corrió `load_seeds`.
 
+## 3b. Cierre de seguridad (segunda ronda, revisión del coordinador)
+
+1. **Bypass del EXCLUDE por la bandera.** El predicado de los tres EXCLUDE depende de `is_bed_assignment`, que mandaba
+   el cliente: `false` sobre una cama real saltaba «una cama, un paciente». Ahora `trg_encounter_locations_set_bed_flag`
+   (BEFORE INSERT OR UPDATE) la **deriva** de `care_spaces.form_concept_id` e ignora lo que se mande: cama ⇒ `true`;
+   otra forma, forma nula o sin espacio ⇒ `false`; **espacio inexistente ⇒ error 23503 (falla cerrado)**.
+   - Lectura sin RLS: la función lleva `SET app.system_context = 'true'` y `SET search_path = pg_catalog, pg_temp`
+     (no `SECURITY DEFINER`: no depende de quién sea el dueño ni de BYPASSRLS). Sólo lee la forma de un espacio por id;
+     si es de otro tenant, la FK compuesta `(tenant_id, care_space_id)` rechaza la fila igual (probado con `mantra_app`).
+   - Orden: corre después de `trg_encounter_locations_fill_tenant` (los BEFORE se ordenan por nombre).
+   - En UPDATE se re-deriva sólo si cambió el espacio o la bandera: cerrar una estancia vieja no la reclasifica si el
+     espacio cambió de forma después (no puede provocar un choque retroactivo).
+   - Backfill ahora en las dos direcciones, antes de las precondiciones de solape: una fila heredada con `false` sobre
+     una cama real se corrige a `true` y, si choca con otra, el patch aborta (probado reaplicándolo).
+   - Efecto colateral buscado: una fila sin `care_space_id` nunca es cama, así que `ck_encounter_locations_bed_period`
+     sólo puede disparar por período vacío; la rama «sin espacio» queda como defensa en profundidad.
+   - **S-2 pasa a ser crítico**: si la clave `practice:LOC_FORM_BED` de la API difiere, ninguna fila sería cama y los
+     EXCLUDE no protegerían nada. Confirmar la clave antes de desplegar.
+2. **INSERT en un censo cerrado.** `trg_inpatient_census_entries_open_day` (BEFORE INSERT) rechaza con
+   `restrict_violation` (23001) la entrada de un día con `closed_at` no nulo; día inexistente **o de otro tenant** ⇒ 23503
+   (la búsqueda va acotada al tenant de la entrada, así no revela si un día ajeno existe o está cerrado). Lee con contexto
+   SYSTEM de función, y con `FOR SHARE` para serializar contra el UPDATE que cierra el día: si el cierre confirma primero,
+   la inserción lo ve; si la inserción va primero, el cierre espera. Los ajustes siguen siendo la única vía sobre un día
+   cerrado. Aviso para la API: insertar **todas** las entradas antes del UPDATE de cierre, en la misma transacción o antes.
+   Un `mantra_app` en el contexto de otro tenant recibe 23503 (antes lo frenaba la FK compuesta; ahora lo frena primero el
+   trigger, con el mensaje «no existe para este tenant»).
+3. `diagram_33` documenta ambos triggers en comentarios (gen_integrity no los expresa; viven sólo en el patch).
+   `diagram_08` aclara que la bandera se deriva.
+
 ## 4. Qué NO cubre la base (queda en la API)
 
 Un solo `ENC_IMP` en curso por paciente (`PATIENT_ALREADY_ADMITTED`); compatibilidad sexo/edad/cohorte/nivel de
@@ -91,6 +121,8 @@ cerrado: la huella `content_hash` lo delataría); que `cutoff_at` sea la mediano
 
 `salud-db/tests/test_infra_f3_clinical_contract.py` (estático + generadores en directorio temporal) y
 `test_infra_f3_clinical_db.py` (Postgres real: clona `alovida` en `m_f3_pytest`, aplica el patch, lo borra al final).
-`F3_PATCH=<copia rota>` ejecuta la suite contra un patch mutado: las seis mutaciones probadas (sin guarda de censo, la
-reserva no bloquea, EXCLUDE inmediatos, sin RLS en ubicaciones, sin FK compuestas, sin el EXCLUDE de «una activa») hacen
-fallar la suite.
+`F3_PATCH=<copia rota>` ejecuta la suite contra un patch mutado. Trece mutaciones probadas, todas hacen fallar la suite:
+sin guarda de censo, la reserva no bloquea, EXCLUDE inmediatos, sin RLS en ubicaciones, sin FK compuestas, sin el EXCLUDE de
+«una activa» y, del cierre de seguridad: sin trigger de derivación, derivación que confía en el cliente, derivación sin
+contexto SYSTEM, derivación que no falla cerrado, sin trigger de entradas, entradas que dejan pasar si el día no existe y
+entradas sin acotar al tenant.
