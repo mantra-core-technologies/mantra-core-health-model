@@ -827,6 +827,11 @@ class LiveSeedTests(unittest.TestCase):
         self.assertEqual(self.q(f"SELECT string_agg(DISTINCT vertical_link_code || '=' || n, ',' ORDER BY vertical_link_code || '=' || n) FROM ("
                                 f"SELECT e.vertical_link_code, count(*) n FROM practice.plan_elements e JOIN practice.floor_plans fp ON fp.id=e.floor_plan_id "
                                 f"WHERE fp.practice_site_id='{self.site}' AND e.vertical_link_code IS NOT NULL GROUP BY 1) q"), "ASC-1=2,ESC-A=2")
+        # una unidad (Cirugía) ocupa DOS pisos: el foco por zona del plano devuelve una pestaña por piso
+        self.assertEqual(self.q(f"SELECT string_agg(DISTINCT fp.code, ',' ORDER BY fp.code) FROM practice.space_placements sp "
+                                f"JOIN practice.floor_plans fp ON fp.id=sp.floor_plan_id JOIN practice.care_spaces cs ON cs.id=sp.care_space_id "
+                                f"JOIN practice.clinical_units cu ON cu.id=cs.clinical_unit_id WHERE fp.practice_site_id='{self.site}' AND cu.code='PLANO-CIR'"),
+                         "PLANO-P1,PLANO-PB")
         # layout_version coherente: una subida por la carga de cada lienzo
         self.assertEqual(self.q(f"SELECT string_agg(code || '=' || layout_version, ',' ORDER BY code) FROM practice.floor_plans WHERE practice_site_id='{self.site}'"),
                          "PLANO-CP=2,PLANO-P1=2,PLANO-PB=2")

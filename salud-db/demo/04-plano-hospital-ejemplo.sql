@@ -84,7 +84,7 @@ INSERT INTO _sp (key, parent, form, fn, canvas, x, y, w, d, name, unit, decl) VA
  -- PB · franja sur
  ('PB-EOB', 'PB', 'AREA', 'AREA_GENERIC', 'PB',  2, 13.5, 20, 8.5, 'Observación y procedimientos', 'EME', NULL),
  ('PB-OBS', 'PB-EOB', 'ROOM', 'OBSERVATION',    'PB',  2, 13.5, 12, 8.5, 'Observación (4 camas)', 'EME', NULL),
- ('PB-YES', 'PB-EOB', 'ROOM', 'PROCEDURE_ROOM', 'PB', 14, 13.5,  8, 8.5, 'Procedimientos y yeso', 'EME', NULL),
+ ('PB-YES', 'PB-EOB', 'ROOM', 'PROCEDURE_ROOM', 'PB', 14, 13.5,  8, 8.5, 'Procedimientos y yeso', 'CIR', NULL),
  ('PB-LAB', 'PB', 'AREA', 'AREA_GENERIC', 'PB', 22, 13.5, 16, 8.5, 'Laboratorio', 'LAB', NULL),
  ('PB-TOM', 'PB-LAB', 'ROOM', 'SAMPLE_COLLECTION', 'PB', 22, 13.5, 6, 8.5, 'Toma de muestras', 'LAB', NULL),
  ('PB-REC', 'PB-LAB', 'ROOM', 'LAB_AREA', 'PB', 28, 13.5, 4, 8.5, 'Recepción de muestras', 'LAB', NULL),
