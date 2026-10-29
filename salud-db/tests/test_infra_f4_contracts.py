@@ -68,7 +68,10 @@ UUID_RE = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 def f4_block_of_diagram_33() -> str:
     text = (MODULES / "diagram_33_integrity.puml").read_text(encoding="utf-8")
     start = text.index("infraestructura hospitalaria F4 (quirófanos")
-    return text[start:]
+    # tras el merge del modelo otros bloques (F5e…) siguen al de F4 en el archivo: se corta en el
+    # primer rótulo "infraestructura hospitalaria F<otra>" que venga después.
+    nxt = re.search(r"infraestructura hospitalaria F(?!4)\w+", text[start + 10 :])
+    return text[start : start + 10 + nxt.start()] if nxt else text[start:]
 
 
 def norm(sql: str) -> str:
