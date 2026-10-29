@@ -281,6 +281,14 @@ entity service_requests {
     performer_selection_concept_id : uuid <<FK>>
     performer_practitioner_profile_id : uuid <<FK>>
     suggested_practice_site_id : uuid <<FK>>
+    ' + infraestructura hospitalaria F5b (2026-10-29): refina la sede sugerida al PUNTO DE TOMA
+    ' (practice.care_spaces con funcion SAMPLE_COLLECTION). Igual que la sede, es una
+    ' RECOMENDACION que no concede acceso; la sede sugerida puede ser de otro tenant (centro
+    ' ejecutor), asi que no hay FK compuesta por tenant: el espacio debe ser de ESA sede
+    ' (trigger del patch 2026-10-29_infraestructura_f5_clinical.sql) y exige la sede
+    ' (ck_service_requests_suggested_care_space_requires_site, diagram_33). La funcion
+    ' SAMPLE_COLLECTION y su estado activo los valida la API (422 COLLECTION_POINT_INVALID).
+    suggested_care_space_id : uuid <<FK>>
     ' + v4.2.17 (subtarea 3.2): antiduplicacion de estudios. El informe liberado o
     ' final del MISMO estudio (code_concept_id) que el motor encontro dentro de la
     ' ventana al pedir. Con duplicate_override_reason NULL la orden nace
@@ -337,6 +345,12 @@ entity "practice.practice_sites" as practice_practice_sites <<REFERENCE_ONLY>> {
 }
 service_requests }o--o| profiles_health_practitioner_profiles : performer_practitioner_profile_id
 service_requests }o--o| practice_practice_sites : suggested_practice_site_id
+' + infraestructura hospitalaria F5b (2026-10-29): el punto de toma de muestras sugerido es un ESPACIO
+' (funcion SAMPLE_COLLECTION) de la sede sugerida. Destino del FK nuevo; stub de cruce.
+entity "practice.care_spaces" as practice_care_spaces <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+service_requests }o--o| practice_care_spaces : suggested_care_space_id
 service_requests }o--o| forms_form_instances : form_instance_id
 entity "chart.clinical_note_headers" as chart_clinical_note_headers <<REFERENCE_ONLY>> {
   * id : uuid <<PK>>
@@ -601,6 +615,12 @@ entity appointments {
   * start_at : timestamptz
     end_at : timestamptz
     reason_text : text
+    ' + infraestructura hospitalaria F5d (2026-10-29): el consultorio/sala donde se atiende la cita
+    ' (practice.care_spaces). Nullable y sin backfill. Mismo tenant que la cita (FK compuesta
+    ' (tenant_id, care_space_id) en el patch 2026-10-29_infraestructura_f5_clinical.sql) y solape
+    ' imposible por espacio (ex_appointments_care_space_time, diagram_33). Los espacios con perfil
+    ' allowOverlap (sala de espera) no reciben care_space_id: lo decide la API, no la base.
+    care_space_id : uuid <<FK>>
   * created_at : timestamptz
   * updated_at : timestamptz
     created_by_user_id : uuid <<FK>>
@@ -647,6 +667,7 @@ entity encounter_locations {
 
 
 appointments |o--o{ encounters
+appointments }o--o| practice_care_spaces : care_space_id
 encounters ||--o{ encounter_participants
 encounters ||--o{ encounter_locations
 encounters ||--o{ medication_requests
@@ -910,6 +931,7 @@ entity "INDEXES · service_requests" as idxset_service_requests <<INDEX_SET>> {
   IX ix_service_requests_performer_tenant_id : (performer_tenant_id) BTREE
   IX ix_service_requests_performer_practitioner_profile_id : (performer_practitioner_profile_id) BTREE
   IX ix_service_requests_suggested_practice_site_id : (suggested_practice_site_id) BTREE
+  IX ix_service_requests_suggested_care_space_id : (suggested_care_space_id) BTREE
   IX ix_service_requests_previous_diagnostic_report_id : (previous_diagnostic_report_id) BTREE
   IX ix_service_requests_form_instance_id : (form_instance_id) BTREE
   IX ix_service_requests_created_by_user_id : (created_by_user_id) BTREE
@@ -1048,6 +1070,7 @@ entity "INDEXES · appointments" as idxset_appointments <<INDEX_SET>> {
   IX ix_appointments_practitioner_profile_id : (practitioner_profile_id) BTREE
   IX ix_appointments_tenant_id : (tenant_id) BTREE
   IX ix_appointments_branch_id : (branch_id) BTREE
+  IX ix_appointments_care_space_id : (care_space_id) BTREE
   IX ix_appointments_type_concept_id : (type_concept_id) BTREE
   IX ix_appointments_status_concept_id : (status_concept_id) BTREE
   IX ix_appointments_channel_concept_id : (channel_concept_id) BTREE

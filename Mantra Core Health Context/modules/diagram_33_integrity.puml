@@ -47,6 +47,9 @@ entity prior_authorization_requests <<REFERENCE_ONLY>> {
 }
 entity service_requests <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_service_requests_override_reason_requires_previous_report | ("duplicate_override_reason" IS NULL OR "previous_diagnostic_report_id" IS NOT NULL)
+  ' + infraestructura hospitalaria F5b (2026-10-29): el punto de toma sugerido es un espacio DE la sede
+  ' sugerida; sin sede no hay a que sede pertenezca (la pertenencia la garantiza el trigger del patch).
+  CHECK_SQL : ck_service_requests_suggested_care_space_requires_site | "suggested_care_space_id" IS NULL OR "suggested_practice_site_id" IS NOT NULL
 }
 entity received_services <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_received_services_has_source | ("source_procedure_id" IS NOT NULL OR "source_immunization_id" IS NOT NULL OR "procedure_case_id" IS NOT NULL)
@@ -113,6 +116,16 @@ entity practitioner_delegate_assignments <<REFERENCE_ONLY>> {
 entity appointments <<REFERENCE_ONLY>> {
   EXCLUDE : practitioner/location time overlap
   EXCLUDE_SQL : ex_appointments_practitioner_time | "practitioner_profile_id" WITH =, tstzrange("start_at", "end_at", '[)') WITH && | "practitioner_profile_id" IS NOT NULL AND "end_at" IS NOT NULL AND "status_concept_id" IN ('51530fd7-05b1-5c29-80c4-da740ede4d27', '37dded87-7a7a-5a24-86f6-0ef48cccb482')
+  ' + infraestructura hospitalaria F5d (2026-10-29) — CONTRATO-F2-F5 F5d: la mitad «location» de
+  ' «practitioner/location time overlap» que v4.2.3 dejo en prosa. Un consultorio no atiende dos
+  ' citas confirmadas a la vez, aunque sean de agendas y medicos distintos. Mismos dos estados que
+  ' ex_appointments_practitioner_time (UUID literales, el predicado debe ser IMMUTABLE):
+  '   51530fd7-05b1-5c29-80c4-da740ede4d27 = clinical:APPOINTMENT_BOOKED
+  '   37dded87-7a7a-5a24-86f6-0ef48cccb482 = clinical:APPOINTMENT_CHECKED_IN
+  ' care_space_id es columna nueva sin backfill: nadie la tiene escrita el primer dia. Los espacios con
+  ' perfil allowOverlap (sala de espera, gimnasio) no reciben care_space_id (lo decide la API), asi que
+  ' esta restriccion no toca los recursos con capacidad > 1.
+  EXCLUDE_SQL : ex_appointments_care_space_time | "care_space_id" WITH =, tstzrange("start_at", "end_at", '[)') WITH && | "care_space_id" IS NOT NULL AND "end_at" IS NOT NULL AND "status_concept_id" IN ('51530fd7-05b1-5c29-80c4-da740ede4d27', '37dded87-7a7a-5a24-86f6-0ef48cccb482')
   LOCK : reservation confirmation transaction
 }
 ' + v4.2.60 (P34) — turnos de guardia de farmacia. Un turno vencido no se publica (lo
