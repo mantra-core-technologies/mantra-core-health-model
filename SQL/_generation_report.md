@@ -6,7 +6,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 |-----|--------|-----------|----|-------------|---------|----------|
 | 00 | platform _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
 | 01 | iam | 14 | 75 | 13 | 65 | 0 |
-| 02 | common | 7 | 49 | 0 | 56 | 0 |
+| 02 | common | 7 | 49 | 0 | 57 | 0 |
 | 03 | terminology | 16 | 80 | 0 | 103 | 0 |
 | 04 | directory | 7 | 59 | 4 | 55 | 0 |
 | 05 | profiles | 20 | 134 | 7 | 145 | 0 |
@@ -18,7 +18,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 11 | system_ops | 29 | 169 | 0 | 178 | 0 |
 | 12 | integrations | 10 | 49 | 0 | 56 | 0 |
 | 13 | geo | 6 | 31 | 0 | 35 | 0 |
-| 14 | practice | 22 | 175 | 82 | 203 | 1 |
+| 14 | practice | 22 | 175 | 82 | 204 | 1 |
 | 15 | chart | 11 | 71 | 0 | 81 | 2 |
 | 16 | accounting | 45 | 318 | 3 | 373 | 17 |
 | 17 | billing | 26 | 181 | 16 | 209 | 23 |

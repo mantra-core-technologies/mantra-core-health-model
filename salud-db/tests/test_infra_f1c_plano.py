@@ -30,6 +30,7 @@ REPO = Path(__file__).resolve().parents[2]
 PATCH = REPO / "SQL" / "patches" / "2026-10-29_infraestructura_f1c_plano.sql"
 PUML14 = REPO / "Mantra Core Health Context" / "modules" / "diagram_14_practice.puml"
 PUML10 = REPO / "Mantra Core Health Context" / "modules" / "diagram_10_audit.puml"
+PUML02 = REPO / "Mantra Core Health Context" / "modules" / "diagram_02_common.puml"
 SEED = REPO / "salud-db" / "demo" / "04-plano-hospital-ejemplo.sql"
 
 DSN = os.environ.get("PLANO_TEST_DSN", "host=localhost port=5433 user=mantra dbname=m_plano")
@@ -73,6 +74,21 @@ class StaticContractTests(unittest.TestCase):
         self.assertIn('CREATE UNIQUE INDEX IF NOT EXISTS "ux_files_tenant_id_id" ON "common"."files" ("tenant_id", "id")', self.sql)
         self.assertIn("'fk_floor_plans_tenant_background',  'background_file_id',  'common.files'", self.sql)
         self.assertIn("lienzo(s) con background_file_id de otro tenant o inexistente", self.sql)
+
+    def test_background_version_is_pinned_by_the_database(self) -> None:
+        # v4.2.70: columna idempotente, FK compuesta a la versión DE ese archivo, CHECK y precondición
+        self.assertIn('ADD COLUMN IF NOT EXISTS "background_file_version_id" uuid', self.sql)
+        self.assertIn('CREATE UNIQUE INDEX IF NOT EXISTS "ux_file_versions_file_id_id" ON "common"."file_versions" ("file_id", "id")', self.sql)
+        self.assertIn('FOREIGN KEY ("background_file_id", "background_file_version_id")', self.sql)
+        self.assertIn('REFERENCES "common"."file_versions" ("file_id", "id")', self.sql)
+        self.assertIn("'ck_floor_plans_background_version'", self.sql)
+        self.assertIn("background_file_version_id IS NULL OR background_file_id IS NOT NULL", self.sql)
+        self.assertIn("lienzo(s) con background_file_version_id sin archivo, inexistente o de otro archivo", self.sql)
+        # cambiar la versión es cambiar el lienzo: sube layout_version
+        self.assertIn("NEW.background_file_version_id IS DISTINCT FROM OLD.background_file_version_id", self.sql)
+        self.assertRegex(self.puml14, r"background_file_version_id : uuid <<FK>>")
+        self.assertIn("ix_floor_plans_background_file_version_id", self.puml14)
+        self.assertIn("UX ux_file_versions_file_id_id : (file_id, id) UNIQUE BTREE", PUML02.read_text(encoding="utf-8"))
 
     def test_overlap_is_a_database_constraint_not_an_api_promise(self) -> None:
         self.assertIn("ex_space_placements_no_overlap", self.sql)
@@ -200,6 +216,7 @@ class LivePlanoTests(unittest.TestCase):
                 cls.fx[f"{tag}_{k}"] = v
             c = u()  # concepto placeholder (las FK a conceptos se saltan con replica)
             cls.fx[f"{tag}_file"] = fid = u()
+            cls.fx[f"{tag}_file_v1"], cls.fx[f"{tag}_file_v2"] = u(), u()
             lines += [
                 f"INSERT INTO directory.tenants (id, code, tenant_type_concept_id, legal_name, legal_entity_type_concept_id, "
                 f"status_concept_id, verification_status_concept_id, created_at, updated_at) VALUES "
@@ -210,6 +227,12 @@ class LivePlanoTests(unittest.TestCase):
             lines.append(
                 f"INSERT INTO common.files (id, tenant_id, category_concept_id, sensitivity_concept_id, lifecycle_status_concept_id, "
                 f"original_name, created_at, updated_at) VALUES ('{fid}', '{t}', '{c}', '{c}', '{c}', 'plano-{tag}.png', now(), now());")
+            for n in (1, 2):   # dos versiones del archivo: la vigente cambia con un reemplazo
+                lines.append(
+                    f"INSERT INTO common.file_versions (id, file_id, version_number, storage_provider_concept_id, storage_region_concept_id, "
+                    f"storage_uri, mime_type, size_bytes, checksum_algorithm_concept_id, content_hash, encryption_status_concept_id, "
+                    f"malware_scan_status_concept_id, recorded_at) VALUES ('{cls.fx[f'{tag}_file_v{n}']}', '{fid}', {n}, '{c}', '{c}', "
+                    f"'mem://plano-{tag}-v{n}', 'image/png', 10, '{c}', 'h{n}-{tag}-{fid[:8]}', '{c}', '{c}', now());")
             for s in ("site", "site2"):
                 lines.append(
                     f"INSERT INTO practice.practice_sites (id, practice_id, code, name, site_type_concept_id, status_concept_id, created_at, updated_at, tenant_id) "
@@ -653,6 +676,66 @@ class LivePlanoTests(unittest.TestCase):
         self.assertIn("cruzó:true", out)
         self.assertEqual(self.ok("SELECT count(*) FROM pg_constraint WHERE conname = 'fk_floor_plans_tenant_background'", system=True), "1")
         self.ok(f"UPDATE practice.floor_plans SET background_file_id = NULL, background_scale_m_per_px = NULL WHERE id='{p}';", system=True)
+
+    def test_24c_background_version_must_be_a_version_of_that_file(self) -> None:
+        p = self.f("plan")
+        file_a, va1, va2, vb1 = self.f("file"), self.f("file_v1"), self.f("file_v2"), self.f("file_v1", "b")
+        calib = "background_scale_m_per_px = 0.02"
+        self.ok(f"UPDATE practice.floor_plans SET background_file_id = NULL, background_file_version_id = NULL, "
+                f"background_scale_m_per_px = NULL WHERE id='{p}';", system=True)
+        # sin versión fijada (sigue la vigente): bien
+        self.ok(f"UPDATE practice.floor_plans SET background_file_id = '{file_a}', {calib} WHERE id='{p}';", system=True)
+        lv0 = int(self.ok(f"SELECT layout_version FROM practice.floor_plans WHERE id='{p}'", system=True))
+        # fijar una versión DE ese archivo: bien, y cuenta como cambio del lienzo (+1 layout_version)
+        self.ok(f"UPDATE practice.floor_plans SET background_file_version_id = '{va1}' WHERE id='{p}';", system=True)
+        self.assertEqual(int(self.ok(f"SELECT layout_version FROM practice.floor_plans WHERE id='{p}'", system=True)), lv0 + 1)
+        self.ok(f"UPDATE practice.floor_plans SET background_file_version_id = '{va2}' WHERE id='{p}';", system=True)
+        # la versión de OTRO archivo (aquí, de otro tenant): la FK compuesta lo rechaza
+        err = self.fails(f"UPDATE practice.floor_plans SET background_file_version_id = '{vb1}' WHERE id='{p}';",
+                         "fk_floor_plans_background_version", system=True)
+        self.assertIn("violates foreign key constraint", err)
+        # una versión inexistente tampoco
+        self.fails(f"UPDATE practice.floor_plans SET background_file_version_id = gen_random_uuid() WHERE id='{p}';",
+                   "fk_floor_plans_background_version", system=True)
+        # versión SIN archivo: la FK compuesta (MATCH SIMPLE) no lo ve, lo rechaza el CHECK
+        self.fails(f"UPDATE practice.floor_plans SET background_file_id = NULL, background_scale_m_per_px = NULL WHERE id='{p}';",
+                   "ck_floor_plans_background_version", system=True)
+        # al insertar un lienzo nuevo
+        self.fails(f"INSERT INTO practice.floor_plans (id, tenant_id, practice_site_id, anchor_space_id, code, name, width_m, height_m, "
+                   f"background_file_version_id, created_at, updated_at) VALUES (gen_random_uuid(), '{self.ta}', "
+                   f"'{self.f('site')}', '{self.f('ward')}', 'BG-V', 'x', 10, 10, '{va1}', now(), now());",
+                   "ck_floor_plans_background_version", system=True)
+        # quitar la fijación vuelve a seguir la versión vigente
+        self.ok(f"UPDATE practice.floor_plans SET background_file_version_id = NULL WHERE id='{p}';", system=True)
+        # MUTACIONES (transacción deshecha): sin la FK compuesta pasa la versión ajena; sin el CHECK, la versión sin archivo
+        out = self.ok("SET app.system_context='true';\nBEGIN;\n"
+                      "ALTER TABLE practice.floor_plans DROP CONSTRAINT fk_floor_plans_background_version;\n"
+                      f"UPDATE practice.floor_plans SET background_file_version_id = '{vb1}' WHERE id='{p}';\n"
+                      f"SELECT 'cruzó:' || (background_file_version_id = '{vb1}')::text FROM practice.floor_plans WHERE id='{p}';\nROLLBACK;")
+        self.assertIn("cruzó:true", out)
+        out = self.ok("SET app.system_context='true';\nBEGIN;\n"
+                      "ALTER TABLE practice.floor_plans DROP CONSTRAINT ck_floor_plans_background_version;\n"
+                      f"UPDATE practice.floor_plans SET background_file_id = NULL, background_scale_m_per_px = NULL, background_file_version_id = '{va1}' WHERE id='{p}';\n"
+                      f"SELECT 'sin-archivo:' || (background_file_version_id IS NOT NULL)::text FROM practice.floor_plans WHERE id='{p}';\nROLLBACK;")
+        self.assertIn("sin-archivo:true", out)
+        self.assertEqual(self.ok("SELECT count(*) FROM pg_constraint WHERE conname IN ('fk_floor_plans_background_version', "
+                                 "'ck_floor_plans_background_version')", system=True), "2")
+        self.ok(f"UPDATE practice.floor_plans SET background_file_id = NULL, background_file_version_id = NULL, "
+                f"background_scale_m_per_px = NULL WHERE id='{p}';", system=True)
+
+    def test_24d_the_patch_precondition_aborts_on_incompatible_data(self) -> None:
+        p, vb1 = self.f("plan"), self.f("file_v1", "b")
+        block = re.search(r"-- v4\.2\.70, precondición.*?\nEND \$\$;", PATCH.read_text(encoding="utf-8"), re.S)
+        self.assertIsNotNone(block)
+        # datos que solo existen con las restricciones apagadas (todo en una transacción que se deshace)
+        dirty = ("SET app.system_context='true';\nBEGIN;\n"
+                 "ALTER TABLE practice.floor_plans DROP CONSTRAINT fk_floor_plans_background_version;\n"
+                 "ALTER TABLE practice.floor_plans DROP CONSTRAINT ck_floor_plans_background_version;\n"
+                 f"UPDATE practice.floor_plans SET background_file_version_id = '{vb1}' WHERE id='{p}';\n")
+        err = self.fails(dirty + block.group(0) + "\nROLLBACK;", "lienzo(s) con background_file_version_id sin archivo, inexistente o de otro archivo", system=True)
+        self.assertIn(p, err)               # el mensaje da un ejemplo
+        # con datos compatibles la precondición pasa
+        self.ok("SET app.system_context='true';\nBEGIN;\n" + block.group(0) + "\nROLLBACK;")
 
     def test_25_contact_tolerance_is_data_and_recomputes_the_outline(self) -> None:
         self.clean_plan()

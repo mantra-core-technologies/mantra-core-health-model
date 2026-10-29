@@ -5095,7 +5095,7 @@ common,file_links,10,updated_at,timestamptz,NO,,,,,,SQL/02_common/02_tables.sql
 common,file_links,11,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/02_common/02_tables.sql
 common,file_links,12,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/02_common/02_tables.sql
 common,file_links,13,row_version,integer,NO,1,,,,,SQL/02_common/02_tables.sql
-common,file_versions,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/02_common/02_tables.sql
+common,file_versions,1,id,uuid,NO,,PRIMARY KEY; UNIQUE,,,,SQL/02_common/02_tables.sql
 common,file_versions,2,file_id,uuid,NO,,FOREIGN KEY; UNIQUE,common,files,id,SQL/02_common/02_tables.sql
 common,file_versions,3,version_number,integer,NO,,UNIQUE,,,,SQL/02_common/02_tables.sql
 common,file_versions,4,storage_provider_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/02_common/02_tables.sql
@@ -14530,21 +14530,22 @@ practice,floor_plans,11,grid_size_m,"numeric(6,3)",NO,,,,,,SQL/14_practice/02_ta
 practice,floor_plans,12,snap_to_grid,boolean,NO,true,,,,,SQL/14_practice/02_tables.sql
 practice,floor_plans,13,contact_tolerance_m,"numeric(5,3)",NO,,,,,,SQL/14_practice/02_tables.sql
 practice,floor_plans,14,background_file_id,uuid,YES,,FOREIGN KEY,common,files,id,SQL/14_practice/02_tables.sql
-practice,floor_plans,15,background_scale_m_per_px,"numeric(12,6)",YES,,,,,,SQL/14_practice/02_tables.sql
-practice,floor_plans,16,background_offset_x_m,"numeric(10,3)",NO,,,,,,SQL/14_practice/02_tables.sql
-practice,floor_plans,17,background_offset_y_m,"numeric(10,3)",NO,,,,,,SQL/14_practice/02_tables.sql
-practice,floor_plans,18,background_rotation_deg,"numeric(6,3)",NO,,,,,,SQL/14_practice/02_tables.sql
-practice,floor_plans,19,background_opacity,"numeric(3,2)",NO,,,,,,SQL/14_practice/02_tables.sql
-practice,floor_plans,20,layout_version,integer,NO,,,,,,SQL/14_practice/02_tables.sql
-practice,floor_plans,21,layout_version_txid,bigint,YES,,,,,,SQL/14_practice/02_tables.sql
-practice,floor_plans,22,layout_changed_at,timestamptz,YES,,,,,,SQL/14_practice/02_tables.sql
-practice,floor_plans,23,valid_from,timestamptz,NO,,,,,,SQL/14_practice/02_tables.sql
-practice,floor_plans,24,valid_to,timestamptz,YES,,,,,,SQL/14_practice/02_tables.sql
-practice,floor_plans,25,created_at,timestamptz,NO,,,,,,SQL/14_practice/02_tables.sql
-practice,floor_plans,26,updated_at,timestamptz,NO,,,,,,SQL/14_practice/02_tables.sql
-practice,floor_plans,27,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
-practice,floor_plans,28,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
-practice,floor_plans,29,row_version,integer,NO,1,,,,,SQL/14_practice/02_tables.sql
+practice,floor_plans,15,background_file_version_id,uuid,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,floor_plans,16,background_scale_m_per_px,"numeric(12,6)",YES,,,,,,SQL/14_practice/02_tables.sql
+practice,floor_plans,17,background_offset_x_m,"numeric(10,3)",NO,,,,,,SQL/14_practice/02_tables.sql
+practice,floor_plans,18,background_offset_y_m,"numeric(10,3)",NO,,,,,,SQL/14_practice/02_tables.sql
+practice,floor_plans,19,background_rotation_deg,"numeric(6,3)",NO,,,,,,SQL/14_practice/02_tables.sql
+practice,floor_plans,20,background_opacity,"numeric(3,2)",NO,,,,,,SQL/14_practice/02_tables.sql
+practice,floor_plans,21,layout_version,integer,NO,,,,,,SQL/14_practice/02_tables.sql
+practice,floor_plans,22,layout_version_txid,bigint,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,floor_plans,23,layout_changed_at,timestamptz,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,floor_plans,24,valid_from,timestamptz,NO,,,,,,SQL/14_practice/02_tables.sql
+practice,floor_plans,25,valid_to,timestamptz,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,floor_plans,26,created_at,timestamptz,NO,,,,,,SQL/14_practice/02_tables.sql
+practice,floor_plans,27,updated_at,timestamptz,NO,,,,,,SQL/14_practice/02_tables.sql
+practice,floor_plans,28,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
+practice,floor_plans,29,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
+practice,floor_plans,30,row_version,integer,NO,1,,,,,SQL/14_practice/02_tables.sql
 practice,healthcare_services,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/14_practice/02_tables.sql
 practice,healthcare_services,2,practice_id,uuid,NO,,FOREIGN KEY,practice,practices,id,SQL/14_practice/02_tables.sql
 practice,healthcare_services,3,practice_site_id,uuid,YES,,FOREIGN KEY; UNIQUE,practice,practice_sites,id,SQL/14_practice/02_tables.sql

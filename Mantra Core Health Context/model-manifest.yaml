@@ -178,7 +178,7 @@ model:
     view_elements: 81
     index_sets: 1363
     reference_only_stubs: 219
-    fk_references: 7516
+    fk_references: 7517
     note: >-
       Cifras producidas por tools/model_inventory.py (fuente única reproducible:
       clasifica cada `entity` en una sola clase, suma == total). v4.0 base

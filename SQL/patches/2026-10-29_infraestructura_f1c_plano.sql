@@ -1,5 +1,6 @@
 -- ============================================================================
 -- SALUD · patch v4.2.68 (infraestructura hospitalaria F1c · PLANO de planta)
+-- + v4.2.70: practice.floor_plans.background_file_version_id (versión exacta del fondo)
 -- Fecha: 2026-10-29 · Contrato: SALUD/Arquitectura/infraestructura-hospitalaria/
 --   CONTRATO-PLANO.md (repositorio de documentación) §1 y §2
 -- Se aplica DESPUÉS de 2026-10-29_infraestructura_f1.sql y de ..._f1b_seguridad.sql
@@ -27,6 +28,13 @@
 -- LO QUE LA BASE GARANTIZA (aunque la API tenga un bug o haya dos transacciones):
 --   · Tenant: FK compuestas (tenant_id, x_id) → el padre es del MISMO tenant (también la
 --     imagen de fondo: common.files gana UNIQUE (tenant_id, id)); RLS tenant_isolation en las 6 tablas.
+--   · Versión del fondo (v4.2.70): floor_plans.background_file_version_id fija la versión EXACTA
+--     de common.file_versions (inmutable) que se dibuja, para que un reemplazo del archivo no
+--     cambie el plano en silencio. NULL = sigue la versión vigente del archivo. La base exige
+--     que la versión sea DE ESE archivo (FK compuesta (background_file_id,
+--     background_file_version_id) → file_versions (file_id, id); file_versions no tiene
+--     tenant_id: el tenant lo fija la FK compuesta (tenant_id, background_file_id) → files) y
+--     que no haya versión sin archivo (CHECK; con MATCH SIMPLE la FK compuesta no lo vería).
 --   · Geometría válida: 3..64 vértices finitos, polígono SIMPLE (sin cruces ni giros sobre
 --     sí mismo, área > 0), rectángulos con ancho/fondo > 0 y rotación en [0,360).
 --   · Dentro del lienzo (con la tolerancia de contacto del lienzo).
@@ -306,6 +314,7 @@ CREATE TABLE IF NOT EXISTS "practice"."floor_plans" (
     "snap_to_grid" boolean NOT NULL DEFAULT true,
     "contact_tolerance_m" numeric(5,3) NOT NULL DEFAULT 0.010,
     "background_file_id" uuid,
+    "background_file_version_id" uuid,
     "background_scale_m_per_px" numeric(12,6),
     "background_offset_x_m" numeric(10,3) NOT NULL DEFAULT 0,
     "background_offset_y_m" numeric(10,3) NOT NULL DEFAULT 0,
@@ -380,6 +389,9 @@ ALTER TABLE "practice"."space_placements" ADD COLUMN IF NOT EXISTS "outline" pol
 ALTER TABLE "practice"."space_placements" ADD COLUMN IF NOT EXISTS "overlap_outline" polygon;
 ALTER TABLE "practice"."space_placements" ADD COLUMN IF NOT EXISTS "bbox" box;
 ALTER TABLE "practice"."plan_elements" ADD COLUMN IF NOT EXISTS "bbox" box;
+
+-- v4.2.70: en una base donde floor_plans ya existía (v4.2.68), la columna se agrega acá.
+ALTER TABLE "practice"."floor_plans" ADD COLUMN IF NOT EXISTS "background_file_version_id" uuid;
 
 -- DEFAULTs que gen_ddl.py no sabe expresar (sólo emite row_version, booleanos y texto): si el
 -- generador creó las tablas primero, sin esto quedarían sin ellos. SET DEFAULT es idempotente.
@@ -471,6 +483,7 @@ CREATE INDEX IF NOT EXISTS "ix_floor_plans_tenant_id" ON "practice"."floor_plans
 CREATE INDEX IF NOT EXISTS "ix_floor_plans_practice_site_id" ON "practice"."floor_plans" ("practice_site_id");
 CREATE INDEX IF NOT EXISTS "ix_floor_plans_anchor_space_id" ON "practice"."floor_plans" ("anchor_space_id");
 CREATE INDEX IF NOT EXISTS "ix_floor_plans_background_file_id" ON "practice"."floor_plans" ("background_file_id");
+CREATE INDEX IF NOT EXISTS "ix_floor_plans_background_file_version_id" ON "practice"."floor_plans" ("background_file_version_id");
 CREATE INDEX IF NOT EXISTS "ix_floor_plans_created_by_user_id" ON "practice"."floor_plans" ("created_by_user_id");
 CREATE INDEX IF NOT EXISTS "ix_floor_plans_updated_by_user_id" ON "practice"."floor_plans" ("updated_by_user_id");
 
@@ -522,6 +535,9 @@ CREATE INDEX IF NOT EXISTS "ix_plan_elements_history_tenant_id" ON "audit"."plan
 -- tenant_id NOT NULL; sólo le falta el UNIQUE (tenant_id, id) que exige la FK compuesta. Es un
 -- índice único sobre una columna que ya es única (id): no puede fallar ni cambia datos.
 CREATE UNIQUE INDEX IF NOT EXISTS "ux_files_tenant_id_id" ON "common"."files" ("tenant_id", "id");
+-- v4.2.70: destino de la FK compuesta hacia la versión (la versión es DE ese archivo). Único
+-- sobre una columna que ya es única (id): no puede fallar ni cambia datos.
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_file_versions_file_id_id" ON "common"."file_versions" ("file_id", "id");
 
 -- Precondición: ningún lienzo existente puede apuntar a un archivo de otro tenant (o inexistente).
 -- Un patch no decide cuál de los dos tenants es el correcto: lista y aborta.
@@ -535,6 +551,26 @@ BEGIN
        AND NOT EXISTS (SELECT 1 FROM common.files f WHERE f.id = fp.background_file_id AND f.tenant_id = fp.tenant_id);
     IF n_cruce > 0 THEN
         RAISE EXCEPTION 'F1c: % lienzo(s) con background_file_id de otro tenant o inexistente; corregirlos a mano y volver a aplicar.', n_cruce
+            USING ERRCODE = 'foreign_key_violation';
+    END IF;
+END $$;
+
+-- v4.2.70, precondición: la versión fijada debe ser de ESE archivo (y no haber versión sin
+-- archivo). La columna es nueva, así que esto solo puede fallar al reaplicar sobre datos que
+-- alguien escribió con las restricciones apagadas; no se decide cuál de los dos está mal.
+DO $$
+DECLARE
+    n_mal bigint;
+    ejemplo text;
+BEGIN
+    SELECT count(*), min(fp.id::text) INTO n_mal, ejemplo
+      FROM practice.floor_plans fp
+     WHERE fp.background_file_version_id IS NOT NULL
+       AND (fp.background_file_id IS NULL
+            OR NOT EXISTS (SELECT 1 FROM common.file_versions v
+                            WHERE v.id = fp.background_file_version_id AND v.file_id = fp.background_file_id));
+    IF n_mal > 0 THEN
+        RAISE EXCEPTION 'F1c: % lienzo(s) con background_file_version_id sin archivo, inexistente o de otro archivo (p. ej. %); corregirlos a mano y volver a aplicar.', n_mal, ejemplo
             USING ERRCODE = 'foreign_key_violation';
     END IF;
 END $$;
@@ -565,6 +601,14 @@ BEGIN
         END;
     END LOOP;
 END $$;
+
+-- v4.2.70: la versión es DE ese archivo. MATCH SIMPLE: con la versión NULL (sigue la vigente)
+-- no se exige nada; la versión sin archivo la rechaza ck_floor_plans_background_version.
+DO $$ BEGIN
+    ALTER TABLE "practice"."floor_plans" ADD CONSTRAINT "fk_floor_plans_background_version"
+        FOREIGN KEY ("background_file_id", "background_file_version_id")
+        REFERENCES "common"."file_versions" ("file_id", "id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- Simples (las que genera gen_ddl.py).
 DO $$
@@ -631,6 +675,8 @@ BEGIN
              'contact_tolerance_m >= 0 AND contact_tolerance_m <= 0.100'),
             ('practice.floor_plans', 'ck_floor_plans_background',
              'background_file_id IS NULL OR (background_scale_m_per_px IS NOT NULL AND background_scale_m_per_px > 0)'),
+            ('practice.floor_plans', 'ck_floor_plans_background_version',
+             'background_file_version_id IS NULL OR background_file_id IS NOT NULL'),
             ('practice.floor_plans', 'ck_floor_plans_background_opacity',
              'background_opacity BETWEEN 0 AND 1 AND background_rotation_deg >= 0 AND background_rotation_deg < 360'),
             ('practice.floor_plans', 'ck_floor_plans_validity',
@@ -1054,6 +1100,7 @@ BEGIN
         OR NEW.grid_size_m IS DISTINCT FROM OLD.grid_size_m OR NEW.snap_to_grid IS DISTINCT FROM OLD.snap_to_grid
         OR NEW.contact_tolerance_m IS DISTINCT FROM OLD.contact_tolerance_m
         OR NEW.background_file_id IS DISTINCT FROM OLD.background_file_id
+        OR NEW.background_file_version_id IS DISTINCT FROM OLD.background_file_version_id
         OR NEW.background_scale_m_per_px IS DISTINCT FROM OLD.background_scale_m_per_px
         OR NEW.background_offset_x_m IS DISTINCT FROM OLD.background_offset_x_m
         OR NEW.background_offset_y_m IS DISTINCT FROM OLD.background_offset_y_m
@@ -1356,7 +1403,7 @@ BEGIN
 
     SELECT count(*) INTO n_fkc FROM pg_constraint
      WHERE contype = 'f' AND convalidated AND array_length(conkey, 1) = 2
-       AND conname IN ('fk_floor_plans_tenant_site', 'fk_floor_plans_tenant_anchor', 'fk_floor_plans_tenant_background', 'fk_space_placements_tenant_plan',
+       AND conname IN ('fk_floor_plans_tenant_site', 'fk_floor_plans_tenant_anchor', 'fk_floor_plans_tenant_background', 'fk_floor_plans_background_version', 'fk_space_placements_tenant_plan',
             'fk_space_placements_tenant_space', 'fk_plan_elements_tenant_plan', 'fk_plan_elements_tenant_host',
             'fk_plan_elements_tenant_space_a', 'fk_plan_elements_tenant_space_b');
 
@@ -1399,13 +1446,13 @@ BEGIN
         END IF;
     END IF;
 
-    IF n_tab <> 6 OR n_geo <> 4 OR n_fkc <> 9 OR n_ck <> 23 OR n_ex <> 1 OR n_trg <> 20 OR n_rls <> 6 OR n_fn <> 10 OR n_upd <> 0 THEN
+    IF n_tab <> 6 OR n_geo <> 4 OR n_fkc <> 10 OR n_ck <> 24 OR n_ex <> 1 OR n_trg <> 20 OR n_rls <> 6 OR n_fn <> 10 OR n_upd <> 0 THEN
         RAISE EXCEPTION
-            'v4.2.68 incompleto: tablas=% (6), columnas geométricas=% (4), FK compuestas=% (9), CHECK=% (23), EXCLUDE=% (1), triggers=% (20), RLS=% (6), funciones=% (10), privilegios de más=% (0)',
+            'v4.2.68 incompleto: tablas=% (6), columnas geométricas=% (4), FK compuestas=% (10), CHECK=% (24), EXCLUDE=% (1), triggers=% (20), RLS=% (6), funciones=% (10), privilegios de más=% (0)',
             n_tab, n_geo, n_fkc, n_ck, n_ex, n_trg, n_rls, n_fn, n_upd;
     END IF;
 
-    RAISE NOTICE 'v4.2.68 aplicado: 3 tablas de plano + 3 historias, 9 FK compuestas por tenant, EXCLUDE de hermanos sin solape, % CHECK de geometría, RLS en 6 tablas.', n_ck;
+    RAISE NOTICE 'v4.2.68 aplicado: 3 tablas de plano + 3 historias, 10 FK compuestas (9 por tenant + versión del fondo), EXCLUDE de hermanos sin solape, % CHECK de geometría, RLS en 6 tablas.', n_ck;
 END $$;
 
 COMMIT;

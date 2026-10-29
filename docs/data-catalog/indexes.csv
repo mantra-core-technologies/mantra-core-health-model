@@ -108,6 +108,7 @@ common,file_versions,ix_file_versions_malware_scan_status_concept_id,NO,"""malwa
 common,file_versions,ix_file_versions_integrity_status_concept_id,NO,"""integrity_status_concept_id""",,SQL/02_common/04_indexes.sql
 common,file_versions,ix_file_versions_recorded_by_user_id,NO,"""recorded_by_user_id""",,SQL/02_common/04_indexes.sql
 common,file_versions,uq_file_versions_file_id_version_number,YES,"""file_id"", ""version_number""",,SQL/02_common/04_indexes.sql
+common,file_versions,ux_file_versions_file_id_id,YES,"""file_id"", ""id""",,SQL/02_common/04_indexes.sql
 common,file_links,ix_file_links_file_id,NO,"""file_id""",,SQL/02_common/04_indexes.sql
 common,file_links,ix_file_links_owner_type_concept_id,NO,"""owner_type_concept_id""",,SQL/02_common/04_indexes.sql
 common,file_links,ix_file_links_link_role_concept_id,NO,"""link_role_concept_id""",,SQL/02_common/04_indexes.sql
@@ -1996,6 +1997,7 @@ practice,floor_plans,ix_floor_plans_tenant_id,NO,"""tenant_id""",,SQL/14_practic
 practice,floor_plans,ix_floor_plans_practice_site_id,NO,"""practice_site_id""",,SQL/14_practice/04_indexes.sql
 practice,floor_plans,ix_floor_plans_anchor_space_id,NO,"""anchor_space_id""",,SQL/14_practice/04_indexes.sql
 practice,floor_plans,ix_floor_plans_background_file_id,NO,"""background_file_id""",,SQL/14_practice/04_indexes.sql
+practice,floor_plans,ix_floor_plans_background_file_version_id,NO,"""background_file_version_id""",,SQL/14_practice/04_indexes.sql
 practice,floor_plans,ix_floor_plans_created_by_user_id,NO,"""created_by_user_id""",,SQL/14_practice/04_indexes.sql
 practice,floor_plans,ix_floor_plans_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/14_practice/04_indexes.sql
 practice,space_placements,ux_space_placements_tenant_id_id,YES,"""tenant_id"", ""id""",,SQL/14_practice/04_indexes.sql

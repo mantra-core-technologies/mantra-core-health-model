@@ -94,6 +94,8 @@ CREATE INDEX IF NOT EXISTS "ix_file_versions_recorded_by_user_id" ON "common"."f
 
 CREATE UNIQUE INDEX IF NOT EXISTS "uq_file_versions_file_id_version_number" ON "common"."file_versions" ("file_id", "version_number");
 
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_file_versions_file_id_id" ON "common"."file_versions" ("file_id", "id");
+
 CREATE INDEX IF NOT EXISTS "brin_file_versions_recorded_at" ON "common"."file_versions" USING brin ("recorded_at") WITH (pages_per_range=128);
 
 CREATE INDEX IF NOT EXISTS "ix_file_links_file_id" ON "common"."file_links" ("file_id");

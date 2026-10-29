@@ -228,6 +228,7 @@ CREATE TABLE IF NOT EXISTS "practice"."floor_plans" (
     "snap_to_grid" boolean NOT NULL DEFAULT true,
     "contact_tolerance_m" numeric(5,3) NOT NULL,
     "background_file_id" uuid,
+    "background_file_version_id" uuid,
     "background_scale_m_per_px" numeric(12,6),
     "background_offset_x_m" numeric(10,3) NOT NULL,
     "background_offset_y_m" numeric(10,3) NOT NULL,

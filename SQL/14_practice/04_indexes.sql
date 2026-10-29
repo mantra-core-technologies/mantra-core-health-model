@@ -202,6 +202,8 @@ CREATE INDEX IF NOT EXISTS "ix_floor_plans_anchor_space_id" ON "practice"."floor
 
 CREATE INDEX IF NOT EXISTS "ix_floor_plans_background_file_id" ON "practice"."floor_plans" ("background_file_id");
 
+CREATE INDEX IF NOT EXISTS "ix_floor_plans_background_file_version_id" ON "practice"."floor_plans" ("background_file_version_id");
+
 CREATE INDEX IF NOT EXISTS "ix_floor_plans_created_by_user_id" ON "practice"."floor_plans" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_floor_plans_updated_by_user_id" ON "practice"."floor_plans" ("updated_by_user_id");

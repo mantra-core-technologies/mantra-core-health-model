@@ -310,6 +310,12 @@ entity floor_plans {
   * snap_to_grid : boolean <<DEFAULT_TRUE>>
   * contact_tolerance_m : numeric(5,3)
     background_file_id : uuid <<FK>>
+    ' + v4.2.70: la VERSIÓN exacta del archivo de fondo (common.file_versions), para que el lienzo
+    ' no siga a la versión vigente del archivo (TOCTOU). NULL = sigue la versión vigente. Solo con
+    ' background_file_id (CHECK) y de ESE archivo (FK compuesta (background_file_id,
+    ' background_file_version_id) → file_versions (file_id, id)); el tenant lo fija la FK compuesta
+    ' (tenant_id, background_file_id) → files. Ver 2026-10-29_infraestructura_f1c_plano.sql.
+    background_file_version_id : uuid <<FK>>
     background_scale_m_per_px : numeric(12,6)
   * background_offset_x_m : numeric(10,3)
   * background_offset_y_m : numeric(10,3)
@@ -819,6 +825,7 @@ entity "INDEXES · floor_plans" as idxset_floor_plans <<INDEX_SET>> {
   IX ix_floor_plans_practice_site_id : (practice_site_id) BTREE
   IX ix_floor_plans_anchor_space_id : (anchor_space_id) BTREE
   IX ix_floor_plans_background_file_id : (background_file_id) BTREE
+  IX ix_floor_plans_background_file_version_id : (background_file_version_id) BTREE
   IX ix_floor_plans_created_by_user_id : (created_by_user_id) BTREE
   IX ix_floor_plans_updated_by_user_id : (updated_by_user_id) BTREE
 }

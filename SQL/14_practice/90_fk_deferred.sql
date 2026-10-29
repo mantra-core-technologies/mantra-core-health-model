@@ -3,6 +3,7 @@
 
 
 -- FK sin destino canónico (no forzadas, temperatura-0):
+--   floor_plans.background_file_version_id
 --   plan_elements.host_element_id
 
 

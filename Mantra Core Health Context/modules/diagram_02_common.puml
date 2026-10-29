@@ -287,6 +287,8 @@ entity "INDEXES · file_versions" as idxset_file_versions <<INDEX_SET>> {
   IX ix_file_versions_integrity_status_concept_id : (integrity_status_concept_id) BTREE
   IX ix_file_versions_recorded_by_user_id : (recorded_by_user_id) BTREE
   UK uq_file_versions_file_id_version_number : (file_id, version_number) UNIQUE BTREE
+  ' + v4.2.70 (F1c · plano): destino de la FK compuesta floor_plans (background_file_id, background_file_version_id) → file_versions.
+  UX ux_file_versions_file_id_id : (file_id, id) UNIQUE BTREE
   BRIN brin_file_versions_recorded_at : (recorded_at) BRIN pages_per_range=128
 }
 

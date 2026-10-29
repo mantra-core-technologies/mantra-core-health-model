@@ -2768,6 +2768,7 @@ common,file_versions,fk_file_versions_malware_scan_status_concept_id,FOREIGN KEY
 common,file_versions,fk_file_versions_integrity_status_concept_id,FOREIGN KEY,integrity_status_concept_id,FOREIGN KEY (integrity_status_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/02_common/90_fk_deferred.sql
 common,file_versions,fk_file_versions_recorded_by_user_id,FOREIGN KEY,recorded_by_user_id,FOREIGN KEY (recorded_by_user_id) REFERENCES iam.users (id),SQL/02_common/90_fk_deferred.sql
 common,file_versions,uq_file_versions_file_id_version_number,UNIQUE INDEX,"""file_id"", ""version_number""","UNIQUE INDEX (""file_id"", ""version_number"")",SQL/02_common/04_indexes.sql
+common,file_versions,ux_file_versions_file_id_id,UNIQUE INDEX,"""file_id"", ""id""","UNIQUE INDEX (""file_id"", ""id"")",SQL/02_common/04_indexes.sql
 common,files,pk_files,PRIMARY KEY,id,PRIMARY KEY (id),SQL/02_common/02_tables.sql
 common,files,fk_files_current_version_id,FOREIGN KEY,current_version_id,FOREIGN KEY (current_version_id) REFERENCES common.file_versions (id),SQL/02_common/03_fk_intra.sql
 common,files,fk_files_tenant_id,FOREIGN KEY,tenant_id,FOREIGN KEY (tenant_id) REFERENCES directory.tenants (id),SQL/02_common/90_fk_deferred.sql
