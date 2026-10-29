@@ -353,16 +353,20 @@ class LiveDatabaseTests(unittest.TestCase):
         self.assertEqual(set(first), {"acl", "col", "con", "fn", "idx", "pol", "rls", "tabla", "trg"})
 
     def test_2_sql_cases(self):
+        count_sql = ("SELECT (SELECT count(*) FROM billing.charge_captures) + "
+                     "(SELECT count(*) FROM billing.space_tariffs) + "
+                     "(SELECT count(*) FROM practice.care_spaces)")
+        # La base puede traer filas ajenas (otra suite que comita datos, p. ej. el plano de ejemplo):
+        # lo que se exige es que ESTAS pruebas no dejen ninguna, no que la base esté vacía.
+        before = self.psql("-At", command=count_sql).stdout.strip()
         for script, expected in self.EXPECTED_CASES.items():
             with self.subTest(script=script):
                 result = self.psql(sql_file=SQL_TESTS / script)
                 self.assertNotIn("CASO FALLIDO", result.stderr)
                 self.assertEqual(result.stderr.count("CASO OK"), expected, result.stderr[-1500:])
         # Las pruebas terminan en ROLLBACK: no dejan filas.
-        left = self.psql("-At", command="SELECT (SELECT count(*) FROM billing.charge_captures) + "
-                                        "(SELECT count(*) FROM billing.space_tariffs) + "
-                                        "(SELECT count(*) FROM practice.care_spaces)").stdout.strip()
-        self.assertEqual(left, "0")
+        left = self.psql("-At", command=count_sql).stdout.strip()
+        self.assertEqual(left, before)
 
     def scenario(self, setup_sql, patch_file, message):
         """Datos incompatibles + el patch: aborta con `message` y la transacción entera se deshace."""

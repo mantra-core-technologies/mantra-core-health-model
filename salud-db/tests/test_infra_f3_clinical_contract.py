@@ -334,12 +334,13 @@ class GeneratorCoherenceTests(unittest.TestCase):
             self.assertIn(f'"{name}"', cons + self._gen("08_clinical", "05_constraints.sql"), name)
             self.assertIn(f'"{name}"', self.patch, name)
         for name in EXCLUDES:
+            # tras el cierre de la integración, EXCLUDE_SQL expresa DEFERRABLE (cuarta parte): el SQL
+            # generado y el patch coinciden sentencia por sentencia, incluida la diferibilidad
             gen = re.search(r'ADD CONSTRAINT "%s"\n\s+(EXCLUDE USING gist .*?);' % name, cons, re.S).group(1)
-            patch = re.search(r'ADD CONSTRAINT "%s"\s+(EXCLUDE USING gist .*?)\s+DEFERRABLE INITIALLY IMMEDIATE;' % name,
+            patch = re.search(r'ADD CONSTRAINT "%s"\s+(EXCLUDE USING gist .*?DEFERRABLE INITIALLY IMMEDIATE);' % name,
                               self.patch, re.S).group(1)
             self.assertEqual(" ".join(gen.split()), " ".join(patch.split()), name)
-        # lo que el generador NO sabe expresar (DEFERRABLE) lo impone el patch
-        self.assertNotIn("DEFERRABLE", cons)
+            self.assertTrue(gen.endswith("DEFERRABLE INITIALLY IMMEDIATE"), name)
         self.assertIn("trg_forbid_mutation", cons)
         for t in ("inpatient_census_entries", "inpatient_census_adjustments"):
             self.assertIn(f'CREATE TRIGGER trg_forbid_mutation BEFORE UPDATE OR DELETE ON "clinical"."{t}"', cons)

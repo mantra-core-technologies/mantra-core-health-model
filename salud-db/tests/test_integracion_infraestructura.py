@@ -215,6 +215,13 @@ class IntegratedDatabaseTests(unittest.TestCase):
         self.assertNotIn("CASO FALLIDO", r.stderr + r.stdout)
         self.assertGreaterEqual(len(ok), 35)
 
+    def test_f5_clinical_and_diagnostic_coherence(self) -> None:
+        # M-F5-clin no dejó pruebas de comportamiento versionadas: estas son las de la integración
+        r = _psql("integ_30_f5clin.sql")
+        self.assertEqual(r.returncode, 0, (r.stdout + r.stderr)[-3000:])
+        self.assertNotIn("CASO FALLIDO", r.stderr + r.stdout)
+        self.assertGreaterEqual(len(re.findall(r"CASO OK \[", r.stderr + r.stdout)), 7)
+
 
 if __name__ == "__main__":
     unittest.main()

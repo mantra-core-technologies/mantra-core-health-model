@@ -117,5 +117,29 @@ entidades saltadas por módulo) en [`_generation_report.md`](_generation_report.
      verificados. El catálogo de terminología real (~460k conceptos) lo cargan los importadores
      de `mantra-core-health-api/tools/terminology-import/` desde APIs oficiales.
 
+### Orden de los patches de infraestructura hospitalaria (2026-10-29)
+
+`postgres-init` aplica **todos** los patches, en cada arranque, en el orden del nombre de archivo
+**por bytes** (el contenedor corre con `C.UTF-8`). El orden de la serie tiene que cumplir sus
+dependencias sin depender de nada más, y por eso los nombres llevan una letra donde hizo falta:
+
+```text
+f1 → f1b_seguridad → f1c_plano → f2_practice → f3_clinical → f4_scheduling → f4z_periop →
+f5_accounting → f5_billing → f5_clinical → f5_operaciones → f5_practice → f5_scheduling → f5z_diagnostics
+```
+
+- `f4z_periop` va después de `f4_scheduling` (usa su `ux_schedulable_resources_tenant_id_id` y
+  `care_space_id`); `f5z_diagnostics` va después de `f5_operaciones` (lee `diagnostic_equipment.care_space_id`).
+- Un solo dueño por objeto: `appointments.care_space_id` y `ex_appointments_care_space_time` son de
+  `f5_clinical`; `ux_schedulable_resources_tenant_id_id`, de `f4_scheduling`.
+- Todos son idempotentes **y reaplicables sobre la base integrada**: los patches anteriores no
+  deshacen a los nuevos (`v4249_organizacion_medica` no devuelve el EXCLUDE viejo del quirófano) ni
+  cuentan objetos de toda la base (`f1b` solo cuenta los triggers de sus tres historias).
+- Una base nueva (`apply_all.sql` + `apply_deferred.sql` + NoSQL 58/59 + patches) y una base
+  actualizada con los patches dan **el mismo catálogo** (columnas, restricciones, índices,
+  triggers, políticas, funciones y privilegios); lo comprueba `salud-db/tests/test_integracion_infraestructura.py`.
+- Los EXCLUDE de `encounter_locations` son `DEFERRABLE INITIALLY IMMEDIATE` en el SQL generado
+  (cuarta parte opcional de `EXCLUDE_SQL`); ya no importa si `05_constraints` corre antes o después de los patches.
+
 Los seeds canónicos **no viven acá**: están en `seedsProd/` y `seedsGenerales/` como
 `*.seeds.json`, y los carga `python salud-db/load_seeds.py`.

@@ -49,6 +49,39 @@ comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_obje
 
 ## 3. Estado actual del build
 
+### v4.2.69 — Infraestructura hospitalaria: integración de F1c, F2, F3, F4 y F5 (2026-10-29)
+
+**Qué se integró (siete ramas del modelo sobre v4.2.67b).** F1c plano (v4.2.68: lienzos,
+ubicaciones y elementos), F2 operación de espacios (eventos de estado, bloqueos, limpieza), F3
+internación/ADT (ubicaciones con una cama = un paciente, incidentes de asignación, censo
+inmutable), F4 quirófanos (recurso ligado al espacio, bloques y series, ventana reservada con
+recambio, check-list único), F5 clínico/diagnóstico/agenda (consultorio en la cita, punto de toma,
+sala y equipo del estudio, horario por espacio) y F5e/F5f (categoría de cama con vigencia,
+tarifas, cargos devengados sin doble cobro, activo en espacio y centro de costo por unidad).
+
+**Efecto en el DDL generado.** `gen_ddl.py all` + `gen_integrity.py` + `gen_apply.py`: 1 291
+tablas (+26), 21 módulos con `05_constraints.sql` (`20_diagnostics` gana el suyo). `EXCLUDE_SQL`
+admite una cuarta parte opcional `DEFERRABLE …`; los tres EXCLUDE de `encounter_locations` la
+usan. Lo que el generador sigue sin expresar (triggers, RLS, privilegios, tipos `polygon`/`box`,
+`DEFAULT` numéricos del plano) vive solo en los patches.
+
+**Un solo dueño por objeto.** `appointments.care_space_id` y `ex_appointments_care_space_time`:
+`f5_clinical`. `ux_schedulable_resources_tenant_id_id`: `f4_scheduling`. El patch de agenda
+(`f5_scheduling`) ya no los repite.
+
+**Orden de patches.** `postgres-init` los aplica por orden de bytes del nombre; `f4_periop` pasó a
+`f4z_periop` y `f5_diagnostics` a `f5z_diagnostics` para que sigan a `f4_scheduling` y
+`f5_operaciones`. Los patches viejos que contaban o recreaban objetos de toda la base se
+corrigieron (v4.2.16, v4.2.49 organización médica, F1b). Detalle y orden en `SQL/README.md`.
+
+**Seeds.** Fase `[3e]` de `gen_seeds.py`: el tenant de las hijas sale del padre; el caso con sala
+de otro tenant se repunta; el único `(caso, tipo)` del check-list se respeta. `load_seeds.py` usa
+`ON CONFLICT (pk)` en tablas con restricciones diferibles (55000).
+
+**Evidencia.** Ver `docs/trabajo/2026-10-29-infraestructura-integracion-modelo/REPORTE.md`:
+base nueva construida como `postgres-init` + patches ×2 con huella de catálogo idéntica; mismo
+catálogo que la ruta de actualización; barrido de RLS/FK compuestas; invariantes cruzadas.
+
 ### v4.2.67b — Infraestructura F1b: endurecimiento de seguridad (2026-10-29)
 
 **Cambio de esquema sobre v4.2.67, antes de mergear.** Parche: `SQL/patches/2026-10-29_infraestructura_f1b_seguridad.sql`
