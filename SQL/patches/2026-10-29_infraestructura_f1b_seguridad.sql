@@ -613,9 +613,17 @@ BEGIN
      WHERE schemaname = 'practice' AND indexname = 'ux_practice_sites_snis_code'
        AND indexdef LIKE '%snis_verified_at IS NOT NULL%';
 
-    SELECT count(*) INTO n_trg FROM pg_trigger
-     WHERE NOT tgisinternal AND tgname IN ('trg_facility_licenses_service_tenant',
-            'trg_practice_sites_snis_verification', 'trg_fill_tenant', 'trg_close_only');
+    -- Los trg_fill_tenant / trg_close_only se cuentan SOLO en las tres historias de F1b: las
+    -- historias que F1c, F2, F4 y F5 agregan después llevan triggers con los mismos nombres, y
+    -- contarlos en toda la base hacía fallar este patch al reaplicarlo (postgres-init lo hace en
+    -- cada arranque).
+    SELECT count(*) INTO n_trg FROM pg_trigger t
+      JOIN pg_class c ON c.oid = t.tgrelid JOIN pg_namespace n ON n.oid = c.relnamespace
+     WHERE NOT t.tgisinternal
+       AND ((t.tgname IN ('trg_facility_licenses_service_tenant', 'trg_practice_sites_snis_verification'))
+         OR (n.nspname = 'audit'
+             AND c.relname IN ('practice_sites_history', 'clinical_units_history', 'care_spaces_history')
+             AND t.tgname IN ('trg_fill_tenant', 'trg_close_only')));
 
     SELECT count(*) INTO n_rls
       FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace

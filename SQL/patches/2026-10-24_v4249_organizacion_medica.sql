@@ -151,9 +151,22 @@ ALTER TABLE "procedures_perioperative"."procedure_cases" ADD CONSTRAINT "ck_proc
 -- ═══ procedure_cases ═══
 --   EXCLUDE: operating room time overlap  (en prosa; el módulo 33 no declara su expresión SQL; ver EXCLUDE_SQL abajo)
 -- EXCLUDE concreto declarado por el modelo (EXCLUDE_SQL).
-ALTER TABLE "procedures_perioperative"."procedure_cases" DROP CONSTRAINT IF EXISTS "ex_procedure_cases_operating_room_time";
-ALTER TABLE "procedures_perioperative"."procedure_cases" ADD CONSTRAINT "ex_procedure_cases_operating_room_time"
-    EXCLUDE USING gist ("operating_room_id" WITH =, tstzrange("scheduled_start_at", "scheduled_end_at", '[)') WITH &&) WHERE ("operating_room_id" IS NOT NULL AND "scheduled_start_at" IS NOT NULL AND "scheduled_end_at" IS NOT NULL AND "status_concept_id" IN ('6fe38139-ad1d-5214-84c1-8c184e4e58fb', 'f6985cd5-f867-5d76-b70c-1138667fd2ab', 'fdc78cc9-eda6-5625-9a26-1bdcec4dc203'));
+-- Superado por F4 (2026-10-29_infraestructura_f4z_periop.sql): ex_procedure_cases_operating_room_time
+-- (ventana programada) se reemplaza por ex_procedure_cases_operating_room_reserved_time (ventana
+-- reservada con preparación y limpieza). Una vez que existe el nuevo, reaplicar este patch ya no
+-- devuelve el viejo (postgres-init reaplica todos los patches en cada arranque).
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_constraint
+                WHERE conname = 'ex_procedure_cases_operating_room_reserved_time'
+                  AND conrelid = 'procedures_perioperative.procedure_cases'::regclass) THEN
+        RAISE NOTICE 'ex_procedure_cases_operating_room_time: superado por ex_procedure_cases_operating_room_reserved_time (F4); se omite';
+    ELSE
+        EXECUTE $q$ALTER TABLE "procedures_perioperative"."procedure_cases" DROP CONSTRAINT IF EXISTS "ex_procedure_cases_operating_room_time"$q$;
+        EXECUTE $q$ALTER TABLE "procedures_perioperative"."procedure_cases" ADD CONSTRAINT "ex_procedure_cases_operating_room_time"
+    EXCLUDE USING gist ("operating_room_id" WITH =, tstzrange("scheduled_start_at", "scheduled_end_at", '[)') WITH &&) WHERE ("operating_room_id" IS NOT NULL AND "scheduled_start_at" IS NOT NULL AND "scheduled_end_at" IS NOT NULL AND "status_concept_id" IN ('6fe38139-ad1d-5214-84c1-8c184e4e58fb', 'f6985cd5-f867-5d76-b70c-1138667fd2ab', 'fdc78cc9-eda6-5625-9a26-1bdcec4dc203'))$q$;
+    END IF;
+END $$;
 
 -- ═══ booking_policies ═══
 -- CHECK concreto declarado por el modelo (CHECK_SQL).
