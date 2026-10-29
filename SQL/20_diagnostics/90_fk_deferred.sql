@@ -636,6 +636,13 @@ DO $$ BEGIN
         REFERENCES "practice"."practice_sites" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- destino: practice.care_spaces (requiere schema practice)
+DO $$ BEGIN
+    ALTER TABLE "diagnostics"."specimen_collection_events"
+        ADD CONSTRAINT "fk_specimen_collection_events_collection_care_space_id" FOREIGN KEY ("collection_care_space_id")
+        REFERENCES "practice"."care_spaces" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "diagnostics"."specimen_collection_events"
@@ -1208,6 +1215,20 @@ DO $$ BEGIN
     ALTER TABLE "diagnostics"."imaging_procedure_steps"
         ADD CONSTRAINT "fk_imaging_procedure_steps_status_concept_id" FOREIGN KEY ("status_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: diagnostic_units.diagnostic_equipment (requiere schema diagnostic_units)
+DO $$ BEGIN
+    ALTER TABLE "diagnostics"."imaging_procedure_steps"
+        ADD CONSTRAINT "fk_imaging_procedure_steps_scheduled_equipment_id" FOREIGN KEY ("scheduled_equipment_id")
+        REFERENCES "diagnostic_units"."diagnostic_equipment" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: practice.care_spaces (requiere schema practice)
+DO $$ BEGIN
+    ALTER TABLE "diagnostics"."imaging_procedure_steps"
+        ADD CONSTRAINT "fk_imaging_procedure_steps_scheduled_care_space_id" FOREIGN KEY ("scheduled_care_space_id")
+        REFERENCES "practice"."care_spaces" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)

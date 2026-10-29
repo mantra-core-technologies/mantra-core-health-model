@@ -74,6 +74,8 @@ CREATE INDEX IF NOT EXISTS "ix_files_updated_by_user_id" ON "common"."files" ("u
 
 CREATE INDEX IF NOT EXISTS "ix_files_tenant_id_lifecycle_status_concept_id" ON "common"."files" ("tenant_id", "lifecycle_status_concept_id", "updated_at" DESC);
 
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_files_tenant_id_id" ON "common"."files" ("tenant_id", "id");
+
 CREATE INDEX IF NOT EXISTS "ix_file_versions_file_id" ON "common"."file_versions" ("file_id");
 
 CREATE INDEX IF NOT EXISTS "ix_file_versions_storage_provider_concept_id" ON "common"."file_versions" ("storage_provider_concept_id");

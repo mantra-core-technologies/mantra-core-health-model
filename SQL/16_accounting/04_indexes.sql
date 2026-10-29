@@ -560,6 +560,12 @@ CREATE INDEX IF NOT EXISTS "ix_cost_centers_created_by_user_id" ON "accounting".
 
 CREATE INDEX IF NOT EXISTS "ix_cost_centers_updated_by_user_id" ON "accounting"."cost_centers" ("updated_by_user_id");
 
+CREATE INDEX IF NOT EXISTS "ix_cost_centers_clinical_unit_id" ON "accounting"."cost_centers" ("clinical_unit_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_cost_centers_practice_id_id" ON "accounting"."cost_centers" ("practice_id", "id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_cost_centers_unit_active" ON "accounting"."cost_centers" ("clinical_unit_id") WHERE clinical_unit_id IS NOT NULL AND status_concept_id = '38a1d301-f40d-5b17-a695-5e6d605f8b19';
+
 CREATE INDEX IF NOT EXISTS "ix_cost_center_maps_practice_id" ON "accounting"."cost_center_maps" ("practice_id");
 
 CREATE INDEX IF NOT EXISTS "ix_cost_center_maps_source_type_concept_id" ON "accounting"."cost_center_maps" ("source_type_concept_id");
@@ -701,6 +707,8 @@ CREATE INDEX IF NOT EXISTS "ix_infrastructure_items_status_concept_id" ON "accou
 CREATE INDEX IF NOT EXISTS "ix_infrastructure_items_created_by_user_id" ON "accounting"."infrastructure_items" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_infrastructure_items_updated_by_user_id" ON "accounting"."infrastructure_items" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_infrastructure_items_care_space_id" ON "accounting"."infrastructure_items" ("care_space_id");
 
 CREATE INDEX IF NOT EXISTS "ix_employee_payments_employee_id" ON "accounting"."employee_payments" ("employee_id");
 

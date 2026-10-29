@@ -144,6 +144,16 @@ CREATE TABLE IF NOT EXISTS "practice"."care_spaces" (
     "gln" varchar(13),
     "valid_from" timestamptz,
     "valid_to" timestamptz,
+    "availability_reason_concept_id" uuid,
+    "availability_expected_until" timestamptz,
+    "availability_changed_at" timestamptz,
+    "hygiene_status_concept_id" uuid,
+    "hygiene_changed_at" timestamptz,
+    "terminal_cleaning_required" boolean NOT NULL DEFAULT false,
+    "isolation_concept_id" uuid,
+    "isolation_organism_text" varchar,
+    "isolation_changed_at" timestamptz,
+    "ops_version" integer NOT NULL,
     CONSTRAINT "pk_care_spaces" PRIMARY KEY ("id")
 );
 
@@ -201,6 +211,88 @@ CREATE TABLE IF NOT EXISTS "practice"."facility_typology_rules" (
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
     CONSTRAINT "pk_facility_typology_rules" PRIMARY KEY ("typology_concept_id", "space_function_concept_id")
+);
+
+CREATE TABLE IF NOT EXISTS "practice"."floor_plans" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "practice_site_id" uuid NOT NULL,
+    "anchor_space_id" uuid,
+    "code" varchar NOT NULL,
+    "name" varchar NOT NULL,
+    "width_m" numeric(10,3) NOT NULL,
+    "height_m" numeric(10,3) NOT NULL,
+    "elevation_m" numeric(8,3),
+    "north_bearing_deg" numeric(6,3) NOT NULL,
+    "grid_size_m" numeric(6,3) NOT NULL,
+    "snap_to_grid" boolean NOT NULL DEFAULT true,
+    "contact_tolerance_m" numeric(5,3) NOT NULL,
+    "background_file_id" uuid,
+    "background_scale_m_per_px" numeric(12,6),
+    "background_offset_x_m" numeric(10,3) NOT NULL,
+    "background_offset_y_m" numeric(10,3) NOT NULL,
+    "background_rotation_deg" numeric(6,3) NOT NULL,
+    "background_opacity" numeric(3,2) NOT NULL,
+    "layout_version" integer NOT NULL,
+    "layout_version_txid" bigint,
+    "layout_changed_at" timestamptz,
+    "valid_from" timestamptz NOT NULL,
+    "valid_to" timestamptz,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_floor_plans" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "practice"."space_placements" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "floor_plan_id" uuid NOT NULL,
+    "care_space_id" uuid NOT NULL,
+    "sibling_group_id" uuid,
+    "shape_kind" varchar(8) NOT NULL,
+    "center_x_m" numeric(10,3),
+    "center_y_m" numeric(10,3),
+    "width_m" numeric(10,3),
+    "depth_m" numeric(10,3),
+    "rotation_deg" numeric(6,3),
+    "vertices" jsonb NOT NULL,
+    "area_calc_m2" numeric(12,3),
+    "z_order" integer NOT NULL,
+    "locked" boolean NOT NULL DEFAULT false,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_space_placements" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "practice"."plan_elements" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "floor_plan_id" uuid NOT NULL,
+    "kind" varchar(12) NOT NULL,
+    "vertices" jsonb,
+    "thickness_m" numeric(6,3),
+    "host_element_id" uuid,
+    "offset_m" numeric(8,3),
+    "width_m" numeric(6,3),
+    "swing" varchar(8),
+    "swing_side" varchar(5),
+    "label" varchar(120),
+    "vertical_link_code" varchar(40),
+    "connects_space_a_id" uuid,
+    "connects_space_b_id" uuid,
+    "z_order" integer NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_plan_elements" PRIMARY KEY ("id")
 );
 
 CREATE TABLE IF NOT EXISTS "practice"."healthcare_services" (
@@ -296,4 +388,95 @@ CREATE TABLE IF NOT EXISTS "practice"."practice_settings" (
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
     CONSTRAINT "pk_practice_settings" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "practice"."care_space_status_events" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "practice_site_id" uuid NOT NULL,
+    "care_space_id" uuid NOT NULL,
+    "axis_concept_id" uuid NOT NULL,
+    "from_concept_id" uuid,
+    "to_concept_id" uuid NOT NULL,
+    "reason_concept_id" uuid,
+    "reason_text" varchar,
+    "expected_until" timestamptz,
+    "v2_0116_code" char(1) NOT NULL,
+    "source_concept_id" uuid NOT NULL,
+    "source_ref_id" uuid,
+    "occurred_at" timestamptz NOT NULL,
+    "recorded_by_user_id" uuid,
+    "request_id" varchar,
+    "created_at" timestamptz NOT NULL,
+    CONSTRAINT "pk_care_space_status_events" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "practice"."care_space_blocks" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "care_space_id" uuid NOT NULL,
+    "kind_concept_id" uuid NOT NULL,
+    "reason_concept_id" uuid NOT NULL,
+    "reason_text" varchar,
+    "starts_at" timestamptz NOT NULL,
+    "expected_end_at" timestamptz,
+    "ended_at" timestamptz,
+    "ended_by_user_id" uuid,
+    "end_note" varchar,
+    "cancelled_at" timestamptz,
+    "cancel_reason" varchar,
+    "work_order_ref" varchar,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_care_space_blocks" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "practice"."cleaning_orders" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "practice_site_id" uuid NOT NULL,
+    "care_space_id" uuid NOT NULL,
+    "clinical_unit_id" uuid,
+    "cleaning_type_concept_id" uuid NOT NULL,
+    "trigger_concept_id" uuid NOT NULL,
+    "source_ref_id" uuid,
+    "previous_order_id" uuid,
+    "priority_concept_id" uuid NOT NULL,
+    "status_concept_id" uuid NOT NULL,
+    "requested_at" timestamptz NOT NULL,
+    "due_at" timestamptz,
+    "assigned_user_id" uuid,
+    "started_at" timestamptz,
+    "started_by_user_id" uuid,
+    "finished_at" timestamptz,
+    "finished_by_user_id" uuid,
+    "inspected_at" timestamptz,
+    "inspected_by_user_id" uuid,
+    "inspection_result_concept_id" uuid,
+    "rejection_reason" varchar,
+    "cancel_reason" varchar,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_cleaning_orders" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "practice"."care_space_category_periods" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "care_space_id" uuid NOT NULL,
+    "bed_category_concept_id" uuid NOT NULL,
+    "valid_from" timestamptz NOT NULL,
+    "valid_to" timestamptz,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_care_space_category_periods" PRIMARY KEY ("id")
 );

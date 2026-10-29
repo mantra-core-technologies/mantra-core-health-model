@@ -19,3 +19,15 @@ ALTER TABLE "scheduling"."practitioner_service_offerings" ADD CONSTRAINT "ck_pra
 -- CHECK concreto declarado por el modelo (CHECK_SQL).
 ALTER TABLE "scheduling"."booking_policies" DROP CONSTRAINT IF EXISTS "ck_booking_policies_no_show_fee_percentage";
 ALTER TABLE "scheduling"."booking_policies" ADD CONSTRAINT "ck_booking_policies_no_show_fee_percentage" CHECK (("no_show_fee_percentage" IS NULL OR ("no_show_fee_percentage" >= 0 AND "no_show_fee_percentage" <= 100)));
+
+
+-- ═══ availability_exceptions ═══
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "scheduling"."availability_exceptions" DROP CONSTRAINT IF EXISTS "ck_availability_exceptions_source_ref_needs_kind";
+ALTER TABLE "scheduling"."availability_exceptions" ADD CONSTRAINT "ck_availability_exceptions_source_ref_needs_kind" CHECK (("source_ref_id" IS NULL OR "source_kind_concept_id" IS NOT NULL));
+
+
+-- ═══ schedulable_resources ═══
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "scheduling"."schedulable_resources" DROP CONSTRAINT IF EXISTS "ck_schedulable_resources_care_space_ref";
+ALTER TABLE "scheduling"."schedulable_resources" ADD CONSTRAINT "ck_schedulable_resources_care_space_ref" CHECK (("resource_ref_type" = 'care_spaces') = ("care_space_id" IS NOT NULL) AND ("care_space_id" IS NULL OR "care_space_id" = "resource_ref_id"));

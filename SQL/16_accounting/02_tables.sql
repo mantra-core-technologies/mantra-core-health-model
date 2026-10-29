@@ -99,6 +99,7 @@ CREATE TABLE IF NOT EXISTS "accounting"."cost_centers" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "clinical_unit_id" uuid,
     CONSTRAINT "pk_cost_centers" PRIMARY KEY ("id")
 );
 
@@ -308,6 +309,7 @@ CREATE TABLE IF NOT EXISTS "accounting"."infrastructure_items" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "care_space_id" uuid,
     CONSTRAINT "pk_infrastructure_items" PRIMARY KEY ("id")
 );
 

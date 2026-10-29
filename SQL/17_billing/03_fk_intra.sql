@@ -127,3 +127,9 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_quotation_installments_quotation_id" FOREIGN KEY ("quotation_id")
         REFERENCES "billing"."quotations" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "billing"."charge_captures"
+        ADD CONSTRAINT "fk_charge_captures_invoice_line_id" FOREIGN KEY ("invoice_line_id")
+        REFERENCES "billing"."invoice_lines" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;

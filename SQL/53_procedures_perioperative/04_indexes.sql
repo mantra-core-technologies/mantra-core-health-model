@@ -43,6 +43,14 @@ CREATE UNIQUE INDEX IF NOT EXISTS "uk_procedure_cases_tenant_number" ON "procedu
 
 CREATE INDEX IF NOT EXISTS "ix_procedure_cases_room_schedule" ON "procedures_perioperative"."procedure_cases" ("operating_room_id", "scheduled_start_at", "scheduled_end_at");
 
+CREATE INDEX IF NOT EXISTS "ix_procedure_cases_schedulable_resource_id" ON "procedures_perioperative"."procedure_cases" ("schedulable_resource_id");
+
+CREATE INDEX IF NOT EXISTS "ix_procedure_cases_operating_room_block_id" ON "procedures_perioperative"."procedure_cases" ("operating_room_block_id");
+
+CREATE INDEX IF NOT EXISTS "ix_procedure_cases_room_reserved" ON "procedures_perioperative"."procedure_cases" ("operating_room_id", "reserved_start_at", "reserved_end_at");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_procedure_cases_custodian_tenant_id_id" ON "procedures_perioperative"."procedure_cases" ("custodian_tenant_id", "id");
+
 CREATE INDEX IF NOT EXISTS "ix_procedure_cases_patient_time" ON "procedures_perioperative"."procedure_cases" ("custodian_tenant_id", "patient_profile_id", "scheduled_start_at" DESC);
 
 CREATE INDEX IF NOT EXISTS "ix_procedure_case_diagnoses_procedure_case_id" ON "procedures_perioperative"."procedure_case_diagnoses" ("procedure_case_id");
@@ -164,6 +172,8 @@ CREATE INDEX IF NOT EXISTS "ix_surgical_safety_checklists_status_concept_id" ON 
 CREATE INDEX IF NOT EXISTS "ix_surgical_safety_checklists_coordinator_profile_id" ON "procedures_perioperative"."surgical_safety_checklists" ("coordinator_profile_id");
 
 CREATE UNIQUE INDEX IF NOT EXISTS "uk_surgical_safety_checklists_case_type_version" ON "procedures_perioperative"."surgical_safety_checklists" ("procedure_case_id", "checklist_type_concept_id", "checklist_version");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_surgical_safety_checklists_case_type" ON "procedures_perioperative"."surgical_safety_checklists" ("procedure_case_id", "checklist_type_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_surgical_safety_items_checklist_type_concept_id" ON "procedures_perioperative"."surgical_safety_items" ("checklist_type_concept_id");
 
@@ -514,6 +524,60 @@ CREATE INDEX IF NOT EXISTS "ix_operating_room_utilization_events_recorded_by_use
 CREATE INDEX IF NOT EXISTS "brin_operating_room_utilization_events_occurred_at" ON "procedures_perioperative"."operating_room_utilization_events" USING brin ("occurred_at") WITH (pages_per_range=128);
 
 CREATE INDEX IF NOT EXISTS "ix_or_utilization_room_time" ON "procedures_perioperative"."operating_room_utilization_events" ("operating_room_id", "occurred_at" DESC);
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_utilization_events_tenant_id" ON "procedures_perioperative"."operating_room_utilization_events" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_utilization_events_operating_room_block_id" ON "procedures_perioperative"."operating_room_utilization_events" ("operating_room_block_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_block_series_tenant_id" ON "procedures_perioperative"."operating_room_block_series" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_block_series_practice_site_id" ON "procedures_perioperative"."operating_room_block_series" ("practice_site_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_block_series_operating_room_id" ON "procedures_perioperative"."operating_room_block_series" ("operating_room_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_block_series_owner_kind_concept_id" ON "procedures_perioperative"."operating_room_block_series" ("owner_kind_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_block_series_clinical_unit_id" ON "procedures_perioperative"."operating_room_block_series" ("clinical_unit_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_block_series_surgical_specialty_concept_id" ON "procedures_perioperative"."operating_room_block_series" ("surgical_specialty_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_block_series_surgeon_profile_id" ON "procedures_perioperative"."operating_room_block_series" ("surgeon_profile_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_block_series_status_concept_id" ON "procedures_perioperative"."operating_room_block_series" ("status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_block_series_created_by_user_id" ON "procedures_perioperative"."operating_room_block_series" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_block_series_updated_by_user_id" ON "procedures_perioperative"."operating_room_block_series" ("updated_by_user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_operating_room_block_series_tenant_id_id" ON "procedures_perioperative"."operating_room_block_series" ("tenant_id", "id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_blocks_tenant_id" ON "procedures_perioperative"."operating_room_blocks" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_blocks_series_id" ON "procedures_perioperative"."operating_room_blocks" ("series_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_blocks_operating_room_id" ON "procedures_perioperative"."operating_room_blocks" ("operating_room_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_blocks_owner_kind_concept_id" ON "procedures_perioperative"."operating_room_blocks" ("owner_kind_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_blocks_clinical_unit_id" ON "procedures_perioperative"."operating_room_blocks" ("clinical_unit_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_blocks_surgical_specialty_concept_id" ON "procedures_perioperative"."operating_room_blocks" ("surgical_specialty_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_blocks_surgeon_profile_id" ON "procedures_perioperative"."operating_room_blocks" ("surgeon_profile_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_blocks_status_concept_id" ON "procedures_perioperative"."operating_room_blocks" ("status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_blocks_released_by_user_id" ON "procedures_perioperative"."operating_room_blocks" ("released_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_blocks_created_by_user_id" ON "procedures_perioperative"."operating_room_blocks" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_blocks_updated_by_user_id" ON "procedures_perioperative"."operating_room_blocks" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_blocks_room_starts_at" ON "procedures_perioperative"."operating_room_blocks" ("operating_room_id", "starts_at");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_blocks_release_due" ON "procedures_perioperative"."operating_room_blocks" ("release_at") WHERE status_concept_id = '762dc30b-3e3c-5e1e-8504-5c511fd1d4a8';
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_operating_room_blocks_tenant_id_id" ON "procedures_perioperative"."operating_room_blocks" ("tenant_id", "id");
 
 CREATE INDEX IF NOT EXISTS "ix_sterility_verification_checks_procedure_case_id" ON "procedures_perioperative"."sterility_verification_checks" ("procedure_case_id");
 

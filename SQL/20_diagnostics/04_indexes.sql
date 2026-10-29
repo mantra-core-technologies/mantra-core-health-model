@@ -240,6 +240,8 @@ CREATE INDEX IF NOT EXISTS "ix_specimen_collection_events_collector_profile_id" 
 
 CREATE INDEX IF NOT EXISTS "ix_specimen_collection_events_collection_site_id" ON "diagnostics"."specimen_collection_events" ("collection_site_id");
 
+CREATE INDEX IF NOT EXISTS "ix_specimen_collection_events_collection_care_space_id" ON "diagnostics"."specimen_collection_events" ("collection_care_space_id");
+
 CREATE INDEX IF NOT EXISTS "ix_specimen_collection_events_body_site_concept_id" ON "diagnostics"."specimen_collection_events" ("body_site_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_specimen_collection_events_method_concept_id" ON "diagnostics"."specimen_collection_events" ("method_concept_id");
@@ -479,6 +481,10 @@ CREATE INDEX IF NOT EXISTS "ix_imaging_procedure_steps_modality_concept_id" ON "
 CREATE INDEX IF NOT EXISTS "ix_imaging_procedure_steps_body_site_concept_id" ON "diagnostics"."imaging_procedure_steps" ("body_site_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_imaging_procedure_steps_performed_by_profile_id" ON "diagnostics"."imaging_procedure_steps" ("performed_by_profile_id");
+
+CREATE INDEX IF NOT EXISTS "ix_imaging_procedure_steps_scheduled_equipment_id" ON "diagnostics"."imaging_procedure_steps" ("scheduled_equipment_id");
+
+CREATE INDEX IF NOT EXISTS "ix_imaging_procedure_steps_scheduled_care_space_id" ON "diagnostics"."imaging_procedure_steps" ("scheduled_care_space_id");
 
 CREATE INDEX IF NOT EXISTS "ix_imaging_procedure_steps_status_concept_id" ON "diagnostics"."imaging_procedure_steps" ("status_concept_id");
 

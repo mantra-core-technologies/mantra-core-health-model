@@ -950,3 +950,171 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_quotations_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "billing"."space_tariffs"
+        ADD CONSTRAINT "fk_space_tariffs_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- compuesta: billing.space_tariffs sólo apunta a practice.practices del mismo tenant_id
+DO $$ BEGIN
+    ALTER TABLE "billing"."space_tariffs"
+        ADD CONSTRAINT "fk_space_tariffs_practice_id" FOREIGN KEY ("tenant_id", "practice_id")
+        REFERENCES "practice"."practices" ("tenant_id", "id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "billing"."space_tariffs"
+        ADD CONSTRAINT "fk_space_tariffs_tariff_kind_concept_id" FOREIGN KEY ("tariff_kind_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "billing"."space_tariffs"
+        ADD CONSTRAINT "fk_space_tariffs_bed_category_concept_id" FOREIGN KEY ("bed_category_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- compuesta: billing.space_tariffs sólo apunta a practice.care_spaces del mismo tenant_id
+DO $$ BEGIN
+    ALTER TABLE "billing"."space_tariffs"
+        ADD CONSTRAINT "fk_space_tariffs_care_space_id" FOREIGN KEY ("tenant_id", "care_space_id")
+        REFERENCES "practice"."care_spaces" ("tenant_id", "id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- compuesta: billing.space_tariffs sólo apunta a billing.service_catalog del mismo practice_id
+DO $$ BEGIN
+    ALTER TABLE "billing"."space_tariffs"
+        ADD CONSTRAINT "fk_space_tariffs_service_catalog_id" FOREIGN KEY ("practice_id", "service_catalog_id")
+        REFERENCES "billing"."service_catalog" ("practice_id", "id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "billing"."space_tariffs"
+        ADD CONSTRAINT "fk_space_tariffs_currency_concept_id" FOREIGN KEY ("currency_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "billing"."space_tariffs"
+        ADD CONSTRAINT "fk_space_tariffs_status_concept_id" FOREIGN KEY ("status_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "billing"."space_tariffs"
+        ADD CONSTRAINT "fk_space_tariffs_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "billing"."space_tariffs"
+        ADD CONSTRAINT "fk_space_tariffs_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "billing"."charge_captures"
+        ADD CONSTRAINT "fk_charge_captures_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- compuesta: billing.charge_captures sólo apunta a practice.practices del mismo tenant_id
+DO $$ BEGIN
+    ALTER TABLE "billing"."charge_captures"
+        ADD CONSTRAINT "fk_charge_captures_practice_id" FOREIGN KEY ("tenant_id", "practice_id")
+        REFERENCES "practice"."practices" ("tenant_id", "id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: profiles.patient_profiles (requiere schema profiles)
+DO $$ BEGIN
+    ALTER TABLE "billing"."charge_captures"
+        ADD CONSTRAINT "fk_charge_captures_patient_profile_id" FOREIGN KEY ("patient_profile_id")
+        REFERENCES "profiles"."patient_profiles" ("profile_id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: clinical.encounters (requiere schema clinical)
+DO $$ BEGIN
+    ALTER TABLE "billing"."charge_captures"
+        ADD CONSTRAINT "fk_charge_captures_encounter_id" FOREIGN KEY ("encounter_id")
+        REFERENCES "clinical"."encounters" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "billing"."charge_captures"
+        ADD CONSTRAINT "fk_charge_captures_source_kind_concept_id" FOREIGN KEY ("source_kind_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- compuesta: billing.charge_captures sólo apunta a practice.care_spaces del mismo tenant_id
+DO $$ BEGIN
+    ALTER TABLE "billing"."charge_captures"
+        ADD CONSTRAINT "fk_charge_captures_care_space_id" FOREIGN KEY ("tenant_id", "care_space_id")
+        REFERENCES "practice"."care_spaces" ("tenant_id", "id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "billing"."charge_captures"
+        ADD CONSTRAINT "fk_charge_captures_bed_category_concept_id" FOREIGN KEY ("bed_category_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- compuesta: billing.charge_captures sólo apunta a billing.space_tariffs del mismo practice_id
+DO $$ BEGIN
+    ALTER TABLE "billing"."charge_captures"
+        ADD CONSTRAINT "fk_charge_captures_space_tariff_id" FOREIGN KEY ("practice_id", "space_tariff_id")
+        REFERENCES "billing"."space_tariffs" ("practice_id", "id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- compuesta: billing.charge_captures sólo apunta a billing.service_catalog del mismo practice_id
+DO $$ BEGIN
+    ALTER TABLE "billing"."charge_captures"
+        ADD CONSTRAINT "fk_charge_captures_service_catalog_id" FOREIGN KEY ("practice_id", "service_catalog_id")
+        REFERENCES "billing"."service_catalog" ("practice_id", "id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "billing"."charge_captures"
+        ADD CONSTRAINT "fk_charge_captures_currency_concept_id" FOREIGN KEY ("currency_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- compuesta: billing.charge_captures sólo apunta a accounting.cost_centers del mismo practice_id
+DO $$ BEGIN
+    ALTER TABLE "billing"."charge_captures"
+        ADD CONSTRAINT "fk_charge_captures_cost_center_id" FOREIGN KEY ("practice_id", "cost_center_id")
+        REFERENCES "accounting"."cost_centers" ("practice_id", "id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "billing"."charge_captures"
+        ADD CONSTRAINT "fk_charge_captures_status_concept_id" FOREIGN KEY ("status_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "billing"."charge_captures"
+        ADD CONSTRAINT "fk_charge_captures_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "billing"."charge_captures"
+        ADD CONSTRAINT "fk_charge_captures_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)

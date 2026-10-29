@@ -122,6 +122,8 @@ CREATE INDEX IF NOT EXISTS "ix_service_catalog_created_by_user_id" ON "billing".
 
 CREATE INDEX IF NOT EXISTS "ix_service_catalog_updated_by_user_id" ON "billing"."service_catalog" ("updated_by_user_id");
 
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_service_catalog_practice_id_id" ON "billing"."service_catalog" ("practice_id", "id");
+
 CREATE UNIQUE INDEX IF NOT EXISTS "uq_invoices_invoice_number" ON "billing"."invoices" ("invoice_number");
 
 CREATE INDEX IF NOT EXISTS "ix_invoices_practice_id" ON "billing"."invoices" ("practice_id");
@@ -349,3 +351,71 @@ CREATE INDEX IF NOT EXISTS "ix_financial_kpi_snapshots_fiscal_period_id" ON "bil
 CREATE INDEX IF NOT EXISTS "ix_financial_kpi_snapshots_recorded_by_user_id" ON "billing"."financial_kpi_snapshots" ("recorded_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "brin_financial_kpi_snapshots_recorded_at" ON "billing"."financial_kpi_snapshots" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_space_tariffs_tenant_id" ON "billing"."space_tariffs" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_space_tariffs_practice_id" ON "billing"."space_tariffs" ("practice_id");
+
+CREATE INDEX IF NOT EXISTS "ix_space_tariffs_tariff_kind_concept_id" ON "billing"."space_tariffs" ("tariff_kind_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_space_tariffs_bed_category_concept_id" ON "billing"."space_tariffs" ("bed_category_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_space_tariffs_care_space_id" ON "billing"."space_tariffs" ("care_space_id");
+
+CREATE INDEX IF NOT EXISTS "ix_space_tariffs_service_catalog_id" ON "billing"."space_tariffs" ("service_catalog_id");
+
+CREATE INDEX IF NOT EXISTS "ix_space_tariffs_currency_concept_id" ON "billing"."space_tariffs" ("currency_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_space_tariffs_status_concept_id" ON "billing"."space_tariffs" ("status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_space_tariffs_created_by_user_id" ON "billing"."space_tariffs" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_space_tariffs_updated_by_user_id" ON "billing"."space_tariffs" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_space_tariffs_lookup" ON "billing"."space_tariffs" ("practice_id", "tariff_kind_concept_id", "valid_from" DESC);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_space_tariffs_practice_id_id" ON "billing"."space_tariffs" ("practice_id", "id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_space_tariffs_tenant_id_id" ON "billing"."space_tariffs" ("tenant_id", "id");
+
+CREATE INDEX IF NOT EXISTS "ix_charge_captures_tenant_id" ON "billing"."charge_captures" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_charge_captures_practice_id" ON "billing"."charge_captures" ("practice_id");
+
+CREATE INDEX IF NOT EXISTS "ix_charge_captures_patient_profile_id" ON "billing"."charge_captures" ("patient_profile_id");
+
+CREATE INDEX IF NOT EXISTS "ix_charge_captures_encounter_status" ON "billing"."charge_captures" ("encounter_id", "status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_charge_captures_source_kind_concept_id" ON "billing"."charge_captures" ("source_kind_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_charge_captures_source_ref_id" ON "billing"."charge_captures" ("source_ref_id");
+
+CREATE INDEX IF NOT EXISTS "ix_charge_captures_care_space_id" ON "billing"."charge_captures" ("care_space_id", "service_date");
+
+CREATE INDEX IF NOT EXISTS "ix_charge_captures_bed_category_concept_id" ON "billing"."charge_captures" ("bed_category_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_charge_captures_space_tariff_id" ON "billing"."charge_captures" ("space_tariff_id");
+
+CREATE INDEX IF NOT EXISTS "ix_charge_captures_service_catalog_id" ON "billing"."charge_captures" ("service_catalog_id");
+
+CREATE INDEX IF NOT EXISTS "ix_charge_captures_currency_concept_id" ON "billing"."charge_captures" ("currency_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_charge_captures_cost_center_id" ON "billing"."charge_captures" ("cost_center_id");
+
+CREATE INDEX IF NOT EXISTS "ix_charge_captures_status_concept_id" ON "billing"."charge_captures" ("status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_charge_captures_invoice_line_id" ON "billing"."charge_captures" ("invoice_line_id");
+
+CREATE INDEX IF NOT EXISTS "ix_charge_captures_created_by_user_id" ON "billing"."charge_captures" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_charge_captures_updated_by_user_id" ON "billing"."charge_captures" ("updated_by_user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_charge_captures_tenant_id_id" ON "billing"."charge_captures" ("tenant_id", "id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_charge_captures_idempotency_key" ON "billing"."charge_captures" ("tenant_id", "idempotency_key");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_charge_captures_bed_night" ON "billing"."charge_captures" ("tenant_id", "care_space_id", "service_date") WHERE source_kind_concept_id = '5f84ea44-b0d3-582c-86c1-32c81e422d30' AND minimum_stay_charge = false AND status_concept_id <> 'f2f59654-d912-5eeb-b619-814e50a3c4d0';
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_charge_captures_encounter_bed_day" ON "billing"."charge_captures" ("tenant_id", "encounter_id", "service_date") WHERE source_kind_concept_id = '5f84ea44-b0d3-582c-86c1-32c81e422d30' AND status_concept_id <> 'f2f59654-d912-5eeb-b619-814e50a3c4d0';
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_charge_captures_or_case" ON "billing"."charge_captures" ("tenant_id", "source_ref_id") WHERE source_kind_concept_id = 'a79361f6-8787-56a5-9a90-a9436d02e217' AND status_concept_id <> 'f2f59654-d912-5eeb-b619-814e50a3c4d0';

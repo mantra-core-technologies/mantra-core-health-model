@@ -69,6 +69,48 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
+    ALTER TABLE "practice"."floor_plans"
+        ADD CONSTRAINT "fk_floor_plans_practice_site_id" FOREIGN KEY ("practice_site_id")
+        REFERENCES "practice"."practice_sites" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "practice"."floor_plans"
+        ADD CONSTRAINT "fk_floor_plans_anchor_space_id" FOREIGN KEY ("anchor_space_id")
+        REFERENCES "practice"."care_spaces" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "practice"."space_placements"
+        ADD CONSTRAINT "fk_space_placements_floor_plan_id" FOREIGN KEY ("floor_plan_id")
+        REFERENCES "practice"."floor_plans" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "practice"."space_placements"
+        ADD CONSTRAINT "fk_space_placements_care_space_id" FOREIGN KEY ("care_space_id")
+        REFERENCES "practice"."care_spaces" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "practice"."plan_elements"
+        ADD CONSTRAINT "fk_plan_elements_floor_plan_id" FOREIGN KEY ("floor_plan_id")
+        REFERENCES "practice"."floor_plans" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "practice"."plan_elements"
+        ADD CONSTRAINT "fk_plan_elements_connects_space_a_id" FOREIGN KEY ("connects_space_a_id")
+        REFERENCES "practice"."care_spaces" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "practice"."plan_elements"
+        ADD CONSTRAINT "fk_plan_elements_connects_space_b_id" FOREIGN KEY ("connects_space_b_id")
+        REFERENCES "practice"."care_spaces" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
     ALTER TABLE "practice"."healthcare_services"
         ADD CONSTRAINT "fk_healthcare_services_practice_id" FOREIGN KEY ("practice_id")
         REFERENCES "practice"."practices" ("id");
@@ -132,4 +174,46 @@ DO $$ BEGIN
     ALTER TABLE "practice"."practice_settings"
         ADD CONSTRAINT "fk_practice_settings_practice_id" FOREIGN KEY ("practice_id")
         REFERENCES "practice"."practices" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "practice"."care_space_status_events"
+        ADD CONSTRAINT "fk_care_space_status_events_practice_site_id" FOREIGN KEY ("practice_site_id")
+        REFERENCES "practice"."practice_sites" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+DO $$ BEGIN
+    ALTER TABLE "practice"."care_space_status_events"
+        ADD CONSTRAINT "fk_care_space_status_events_care_space_id" FOREIGN KEY ("care_space_id")
+        REFERENCES "practice"."care_spaces" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+DO $$ BEGIN
+    ALTER TABLE "practice"."care_space_blocks"
+        ADD CONSTRAINT "fk_care_space_blocks_care_space_id" FOREIGN KEY ("care_space_id")
+        REFERENCES "practice"."care_spaces" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+DO $$ BEGIN
+    ALTER TABLE "practice"."cleaning_orders"
+        ADD CONSTRAINT "fk_cleaning_orders_practice_site_id" FOREIGN KEY ("practice_site_id")
+        REFERENCES "practice"."practice_sites" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+DO $$ BEGIN
+    ALTER TABLE "practice"."cleaning_orders"
+        ADD CONSTRAINT "fk_cleaning_orders_care_space_id" FOREIGN KEY ("care_space_id")
+        REFERENCES "practice"."care_spaces" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+DO $$ BEGIN
+    ALTER TABLE "practice"."cleaning_orders"
+        ADD CONSTRAINT "fk_cleaning_orders_clinical_unit_id" FOREIGN KEY ("clinical_unit_id")
+        REFERENCES "practice"."clinical_units" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+DO $$ BEGIN
+    ALTER TABLE "practice"."cleaning_orders"
+        ADD CONSTRAINT "fk_cleaning_orders_previous_order_id" FOREIGN KEY ("previous_order_id")
+        REFERENCES "practice"."cleaning_orders" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;

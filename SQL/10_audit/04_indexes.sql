@@ -190,6 +190,114 @@ CREATE INDEX IF NOT EXISTS "brin_care_spaces_history_recorded_at" ON "audit"."ca
 
 CREATE INDEX IF NOT EXISTS "ix_care_spaces_history_tenant_id" ON "audit"."care_spaces_history" ("tenant_id");
 
+CREATE INDEX IF NOT EXISTS "ix_care_space_blocks_history_care_space_block_id" ON "audit"."care_space_blocks_history" ("care_space_block_id");
+
+CREATE INDEX IF NOT EXISTS "ix_care_space_blocks_history_operation_concept_id" ON "audit"."care_space_blocks_history" ("operation_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_care_space_blocks_history_changed_by_user_id" ON "audit"."care_space_blocks_history" ("changed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_care_space_blocks_history_change_reason_concept_id" ON "audit"."care_space_blocks_history" ("change_reason_concept_id");
+
+CREATE INDEX IF NOT EXISTS "brin_care_space_blocks_history_recorded_at" ON "audit"."care_space_blocks_history" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_care_space_blocks_history_tenant_id" ON "audit"."care_space_blocks_history" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_cleaning_orders_history_cleaning_order_id" ON "audit"."cleaning_orders_history" ("cleaning_order_id");
+
+CREATE INDEX IF NOT EXISTS "ix_cleaning_orders_history_operation_concept_id" ON "audit"."cleaning_orders_history" ("operation_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_cleaning_orders_history_changed_by_user_id" ON "audit"."cleaning_orders_history" ("changed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_cleaning_orders_history_change_reason_concept_id" ON "audit"."cleaning_orders_history" ("change_reason_concept_id");
+
+CREATE INDEX IF NOT EXISTS "brin_cleaning_orders_history_recorded_at" ON "audit"."cleaning_orders_history" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_cleaning_orders_history_tenant_id" ON "audit"."cleaning_orders_history" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_encounter_locations_history_encounter_location_id" ON "audit"."encounter_locations_history" ("encounter_location_id");
+
+CREATE INDEX IF NOT EXISTS "ix_encounter_locations_history_operation_concept_id" ON "audit"."encounter_locations_history" ("operation_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_encounter_locations_history_changed_by_user_id" ON "audit"."encounter_locations_history" ("changed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_encounter_locations_history_change_reason_concept_id" ON "audit"."encounter_locations_history" ("change_reason_concept_id");
+
+CREATE INDEX IF NOT EXISTS "brin_encounter_locations_history_recorded_at" ON "audit"."encounter_locations_history" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_encounter_locations_history_tenant_id" ON "audit"."encounter_locations_history" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_placement_incidents_history_placement_incident_id" ON "audit"."placement_incidents_history" ("placement_incident_id");
+
+CREATE INDEX IF NOT EXISTS "ix_placement_incidents_history_operation_concept_id" ON "audit"."placement_incidents_history" ("operation_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_placement_incidents_history_changed_by_user_id" ON "audit"."placement_incidents_history" ("changed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_placement_incidents_history_change_reason_concept_id" ON "audit"."placement_incidents_history" ("change_reason_concept_id");
+
+CREATE INDEX IF NOT EXISTS "brin_placement_incidents_history_recorded_at" ON "audit"."placement_incidents_history" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_placement_incidents_history_tenant_id" ON "audit"."placement_incidents_history" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_block_series_history_operating_room__bd611718" ON "audit"."operating_room_block_series_history" ("operating_room_block_series_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_block_series_history_operation_concept_id" ON "audit"."operating_room_block_series_history" ("operation_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_block_series_history_changed_by_user_id" ON "audit"."operating_room_block_series_history" ("changed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_block_series_history_change_reason_concept_id" ON "audit"."operating_room_block_series_history" ("change_reason_concept_id");
+
+CREATE INDEX IF NOT EXISTS "brin_operating_room_block_series_history_recorded_at" ON "audit"."operating_room_block_series_history" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_block_series_history_tenant_id" ON "audit"."operating_room_block_series_history" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_blocks_history_operating_room_block_id" ON "audit"."operating_room_blocks_history" ("operating_room_block_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_blocks_history_operation_concept_id" ON "audit"."operating_room_blocks_history" ("operation_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_blocks_history_changed_by_user_id" ON "audit"."operating_room_blocks_history" ("changed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_blocks_history_change_reason_concept_id" ON "audit"."operating_room_blocks_history" ("change_reason_concept_id");
+
+CREATE INDEX IF NOT EXISTS "brin_operating_room_blocks_history_recorded_at" ON "audit"."operating_room_blocks_history" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_blocks_history_tenant_id" ON "audit"."operating_room_blocks_history" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_floor_plans_history_floor_plan_id" ON "audit"."floor_plans_history" ("floor_plan_id");
+
+CREATE INDEX IF NOT EXISTS "ix_floor_plans_history_operation_concept_id" ON "audit"."floor_plans_history" ("operation_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_floor_plans_history_changed_by_user_id" ON "audit"."floor_plans_history" ("changed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_floor_plans_history_change_reason_concept_id" ON "audit"."floor_plans_history" ("change_reason_concept_id");
+
+CREATE INDEX IF NOT EXISTS "brin_floor_plans_history_recorded_at" ON "audit"."floor_plans_history" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_floor_plans_history_tenant_id" ON "audit"."floor_plans_history" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_space_placements_history_space_placement_id" ON "audit"."space_placements_history" ("space_placement_id");
+
+CREATE INDEX IF NOT EXISTS "ix_space_placements_history_operation_concept_id" ON "audit"."space_placements_history" ("operation_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_space_placements_history_changed_by_user_id" ON "audit"."space_placements_history" ("changed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_space_placements_history_change_reason_concept_id" ON "audit"."space_placements_history" ("change_reason_concept_id");
+
+CREATE INDEX IF NOT EXISTS "brin_space_placements_history_recorded_at" ON "audit"."space_placements_history" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_space_placements_history_tenant_id" ON "audit"."space_placements_history" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_plan_elements_history_plan_element_id" ON "audit"."plan_elements_history" ("plan_element_id");
+
+CREATE INDEX IF NOT EXISTS "ix_plan_elements_history_operation_concept_id" ON "audit"."plan_elements_history" ("operation_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_plan_elements_history_changed_by_user_id" ON "audit"."plan_elements_history" ("changed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_plan_elements_history_change_reason_concept_id" ON "audit"."plan_elements_history" ("change_reason_concept_id");
+
+CREATE INDEX IF NOT EXISTS "brin_plan_elements_history_recorded_at" ON "audit"."plan_elements_history" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_plan_elements_history_tenant_id" ON "audit"."plan_elements_history" ("tenant_id");
+
 CREATE INDEX IF NOT EXISTS "ix_diagnostic_reports_history_diagnostic_report_id" ON "audit"."diagnostic_reports_history" ("diagnostic_report_id");
 
 CREATE INDEX IF NOT EXISTS "ix_diagnostic_reports_history_operation_concept_id" ON "audit"."diagnostic_reports_history" ("operation_concept_id");
@@ -1417,3 +1525,27 @@ CREATE INDEX IF NOT EXISTS "ix_visit_requests_history_changed_by_user_id" ON "au
 CREATE INDEX IF NOT EXISTS "ix_visit_requests_history_change_reason_concept_id" ON "audit"."visit_requests_history" ("change_reason_concept_id");
 
 CREATE INDEX IF NOT EXISTS "brin_visit_requests_history_recorded_at" ON "audit"."visit_requests_history" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_space_tariffs_history_space_tariff_id" ON "audit"."space_tariffs_history" ("space_tariff_id");
+
+CREATE INDEX IF NOT EXISTS "ix_space_tariffs_history_operation_concept_id" ON "audit"."space_tariffs_history" ("operation_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_space_tariffs_history_changed_by_user_id" ON "audit"."space_tariffs_history" ("changed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_space_tariffs_history_change_reason_concept_id" ON "audit"."space_tariffs_history" ("change_reason_concept_id");
+
+CREATE INDEX IF NOT EXISTS "brin_space_tariffs_history_recorded_at" ON "audit"."space_tariffs_history" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_space_tariffs_history_tenant_id" ON "audit"."space_tariffs_history" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_charge_captures_history_charge_capture_id" ON "audit"."charge_captures_history" ("charge_capture_id");
+
+CREATE INDEX IF NOT EXISTS "ix_charge_captures_history_operation_concept_id" ON "audit"."charge_captures_history" ("operation_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_charge_captures_history_changed_by_user_id" ON "audit"."charge_captures_history" ("changed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_charge_captures_history_change_reason_concept_id" ON "audit"."charge_captures_history" ("change_reason_concept_id");
+
+CREATE INDEX IF NOT EXISTS "brin_charge_captures_history_recorded_at" ON "audit"."charge_captures_history" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_charge_captures_history_tenant_id" ON "audit"."charge_captures_history" ("tenant_id");

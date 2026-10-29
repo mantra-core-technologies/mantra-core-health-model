@@ -33,6 +33,10 @@ CREATE TABLE IF NOT EXISTS "procedures_perioperative"."procedure_cases" (
     "prep_minutes" integer,
     "cleanup_minutes" integer,
     "version_number" integer,
+    "schedulable_resource_id" uuid,
+    "operating_room_block_id" uuid,
+    "reserved_start_at" timestamptz,
+    "reserved_end_at" timestamptz,
     CONSTRAINT "pk_procedure_cases" PRIMARY KEY ("id")
 );
 
@@ -573,7 +577,58 @@ CREATE TABLE IF NOT EXISTS "procedures_perioperative"."operating_room_utilizatio
     "recorded_by_user_id" uuid,
     "details_json" jsonb,
     "created_at" timestamptz NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "operating_room_block_id" uuid,
     CONSTRAINT "pk_operating_room_utilization_events" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "procedures_perioperative"."operating_room_block_series" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "practice_site_id" uuid NOT NULL,
+    "operating_room_id" uuid NOT NULL,
+    "owner_kind_concept_id" uuid NOT NULL,
+    "clinical_unit_id" uuid,
+    "surgical_specialty_concept_id" uuid,
+    "surgeon_profile_id" uuid,
+    "weekdays" smallint[] NOT NULL,
+    "start_time" time NOT NULL,
+    "end_time" time NOT NULL,
+    "valid_from" date NOT NULL,
+    "valid_to" date,
+    "release_hours" integer NOT NULL,
+    "status_concept_id" uuid NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_operating_room_block_series" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "procedures_perioperative"."operating_room_blocks" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "series_id" uuid,
+    "operating_room_id" uuid NOT NULL,
+    "owner_kind_concept_id" uuid NOT NULL,
+    "clinical_unit_id" uuid,
+    "surgical_specialty_concept_id" uuid,
+    "surgeon_profile_id" uuid,
+    "starts_at" timestamptz NOT NULL,
+    "ends_at" timestamptz NOT NULL,
+    "release_at" timestamptz NOT NULL,
+    "status_concept_id" uuid NOT NULL,
+    "released_at" timestamptz,
+    "released_by_user_id" uuid,
+    "release_reason" text,
+    "released_minutes" integer,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_operating_room_blocks" PRIMARY KEY ("id")
 );
 
 CREATE TABLE IF NOT EXISTS "procedures_perioperative"."sterility_verification_checks" (

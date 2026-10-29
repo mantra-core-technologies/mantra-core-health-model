@@ -450,3 +450,56 @@ CREATE TABLE IF NOT EXISTS "billing"."quotation_installments" (
     "row_version" integer NOT NULL DEFAULT 1,
     CONSTRAINT "pk_quotation_installments" PRIMARY KEY ("id")
 );
+
+CREATE TABLE IF NOT EXISTS "billing"."space_tariffs" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "practice_id" uuid NOT NULL,
+    "tariff_kind_concept_id" uuid NOT NULL,
+    "bed_category_concept_id" uuid,
+    "care_space_id" uuid,
+    "service_catalog_id" uuid NOT NULL,
+    "unit_minutes" integer,
+    "minimum_units" integer,
+    "unit_price" numeric(20,6) NOT NULL,
+    "currency_concept_id" uuid NOT NULL,
+    "valid_from" date NOT NULL,
+    "valid_to" date,
+    "status_concept_id" uuid NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_space_tariffs" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "billing"."charge_captures" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "practice_id" uuid NOT NULL,
+    "patient_profile_id" uuid NOT NULL,
+    "encounter_id" uuid NOT NULL,
+    "source_kind_concept_id" uuid NOT NULL,
+    "source_ref_id" uuid NOT NULL,
+    "service_date" date NOT NULL,
+    "care_space_id" uuid,
+    "bed_category_concept_id" uuid,
+    "space_tariff_id" uuid,
+    "service_catalog_id" uuid,
+    "minimum_stay_charge" boolean NOT NULL,
+    "quantity" numeric NOT NULL,
+    "unit_price" numeric(20,6),
+    "currency_concept_id" uuid,
+    "cost_center_id" uuid,
+    "status_concept_id" uuid NOT NULL,
+    "invoice_line_id" uuid,
+    "void_reason" varchar,
+    "idempotency_key" varchar NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_charge_captures" PRIMARY KEY ("id")
+);

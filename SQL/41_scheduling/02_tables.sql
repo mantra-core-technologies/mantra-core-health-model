@@ -55,12 +55,15 @@ CREATE TABLE IF NOT EXISTS "scheduling"."schedulable_resources" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "care_space_id" uuid,
     CONSTRAINT "pk_schedulable_resources" PRIMARY KEY ("id")
 );
 
 CREATE TABLE IF NOT EXISTS "scheduling"."schedule_templates" (
     "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
     "resource_id" uuid NOT NULL,
+    "care_space_id" uuid,
     "practitioner_schedule_id" uuid,
     "name" varchar NOT NULL,
     "service_concept_id" uuid,
@@ -102,12 +105,15 @@ CREATE TABLE IF NOT EXISTS "scheduling"."schedule_rules" (
 
 CREATE TABLE IF NOT EXISTS "scheduling"."availability_exceptions" (
     "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
     "resource_id" uuid NOT NULL,
     "exception_type_concept_id" uuid NOT NULL,
     "start_at" timestamptz NOT NULL,
     "end_at" timestamptz NOT NULL,
     "reason" varchar,
     "is_available" boolean,
+    "source_kind_concept_id" uuid,
+    "source_ref_id" uuid,
     "created_at" timestamptz NOT NULL,
     "updated_at" timestamptz NOT NULL,
     "created_by_user_id" uuid,

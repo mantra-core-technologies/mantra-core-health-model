@@ -234,6 +234,8 @@
 \ir 20_diagnostics/03_fk_intra.sql
 \echo >>> 20_diagnostics/04_indexes.sql
 \ir 20_diagnostics/04_indexes.sql
+\echo >>> 20_diagnostics/05_constraints.sql
+\ir 20_diagnostics/05_constraints.sql
 
 -- ═══ módulo 22_organization_extensions ═══
 \echo >>> 22_organization_extensions/01_schema.sql
