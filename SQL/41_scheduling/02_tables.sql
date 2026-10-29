@@ -349,6 +349,7 @@ CREATE TABLE IF NOT EXISTS "scheduling"."appointment_payment_states" (
     "appointment_booking_id" uuid NOT NULL,
     "status_concept_id" uuid NOT NULL,
     "insurance_used" boolean NOT NULL,
+    "invoice_id" uuid,
     "marked_by_user_id" uuid NOT NULL,
     "marked_at" timestamptz NOT NULL,
     "created_at" timestamptz NOT NULL,
