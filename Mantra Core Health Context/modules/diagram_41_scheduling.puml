@@ -96,7 +96,21 @@ entity schedulable_resources {
 entity schedule_templates {
   * id : uuid <<PK>>
   --
+  ' + infraestructura hospitalaria F5d — la plantilla lleva el tenant (lo hereda del recurso
+  ' agendable: el patch lo rellena y un trigger lo completa si el INSERT no lo manda) para que
+  ' la base lo aísle con RLS y para poder exigir, con FK compuestas (tenant_id, x_id), que el
+  ' recurso y el espacio sean del MISMO tenant. Antes el aislamiento sólo era transitivo.
+  * tenant_id : uuid <<FK>>
   * resource_id : uuid <<FK>>
+  ' + infraestructura hospitalaria F5d — horario por ESPACIO: el consultorio / sala donde se
+  ' atiende bajo esta plantilla. NULL ≡ la plantilla no reserva un espacio (lo que toda
+  ' plantilla era). FK real a practice.care_spaces, más FK compuesta (tenant_id, care_space_id)
+  ' en el patch. Que el espacio sea de la misma sede/práctica que el recurso y que su función
+  ' sea agendable (CONSULTING_ROOM / PROCEDURE_ROOM / IMAGING_ROOM, perfil `schedulable`) lo
+  ' valida la API (422 TEMPLATE_CARE_SPACE_SITE_MISMATCH / …_INVALID_FUNCTION). El solape
+  ' de dos plantillas sobre el mismo espacio y hora lo impide la API (422
+  ' TEMPLATE_RULE_OVERLAP_CARE_SPACE); la red en la base es ex_appointments_care_space_time.
+    care_space_id : uuid <<FK>>
     practitioner_schedule_id : uuid <<FK>>
   * name : varchar
     service_concept_id : uuid <<FK>>
@@ -177,12 +191,23 @@ entity schedule_rules {
 entity availability_exceptions {
   * id : uuid <<PK>>
   --
+  ' + infraestructura hospitalaria F5d — tenant de la excepción (hereda el del recurso; ver
+  ' schedule_templates.tenant_id). FK compuesta (tenant_id, resource_id) en el patch.
+  * tenant_id : uuid <<FK>>
   * resource_id : uuid <<FK>>
   * exception_type_concept_id : uuid <<FK>>
   * start_at : timestamptz
   * end_at : timestamptz
     reason : varchar
     is_available : boolean
+  ' + infraestructura hospitalaria F5d — origen de la excepción: EXC_SRC_MANUAL (la cargó una
+  ' persona), CARE_SPACE_BLOCK (la creó el bloqueo de un espacio, F2) o EQUIPMENT_STATUS (la
+  ' creó el estado operativo de un equipo, F5a). NULL ≡ manual (toda fila anterior). Los
+  ' conceptos los siembra la API. `source_ref_id` apunta al espacio o al equipo según el
+  ' origen: referencia polimórfica, SIN FK (la API valida que sea del tenant); no puede haber
+  ' referencia sin origen (ck_availability_exceptions_source_ref_needs_kind).
+    source_kind_concept_id : uuid <<FK>>
+    source_ref_id : uuid
   * created_at : timestamptz
   * updated_at : timestamptz
     created_by_user_id : uuid <<FK>>
@@ -536,6 +561,8 @@ entity "INDEXES · schedule_templates" as idxset_schedule_templates <<INDEX_SET>
   IX ix_schedule_templates_status_concept_id : (status_concept_id) BTREE
   IX ix_schedule_templates_created_by_user_id : (created_by_user_id) BTREE
   IX ix_schedule_templates_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_schedule_templates_tenant_id : (tenant_id) BTREE
+  IX ix_schedule_templates_care_space_id : (care_space_id) BTREE
   GIST gist_schedule_templates_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
 }
 
@@ -558,6 +585,9 @@ entity "INDEXES · availability_exceptions" as idxset_availability_exceptions <<
   IX ix_availability_exceptions_exception_type_concept_id : (exception_type_concept_id) BTREE
   IX ix_availability_exceptions_created_by_user_id : (created_by_user_id) BTREE
   IX ix_availability_exceptions_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_availability_exceptions_tenant_id : (tenant_id) BTREE
+  IX ix_availability_exceptions_source_kind_concept_id : (source_kind_concept_id) BTREE
+  IX ix_availability_exceptions_source_ref_id : (source_ref_id) BTREE WHERE source_ref_id IS NOT NULL
   GIST gist_availability_exceptions_effective_period : tstzrange(start_at, end_at, '[)') GIST
 }
 
