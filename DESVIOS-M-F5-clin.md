@@ -11,11 +11,11 @@ Contrato: `SALUD/Arquitectura/infraestructura-hospitalaria/CONTRATO-F2-F5.md` §
 |---|---|---|
 | F5d | `clinical.appointments` | `care_space_id` → `practice.care_spaces` (nullable, sin backfill); FK compuesta `(tenant_id, care_space_id)`; `ex_appointments_care_space_time` (EXCLUDE gist) |
 | F5b | `clinical.service_requests` | `suggested_care_space_id` → `practice.care_spaces`; CHECK «sin sede no hay punto»; trigger «el punto es de la sede sugerida» |
-| F5b | `diagnostics.specimen_collection_events` | `collection_care_space_id` → `practice.care_spaces`; trigger «el espacio es de la sede de la toma» |
-| F5a | `diagnostics.imaging_procedure_steps` | `scheduled_equipment_id`, `scheduled_care_space_id`, `scheduled_start_at`; trigger «la sala es la del equipo» |
+| F5b | `diagnostics.specimen_collection_events` | `collection_care_space_id` → `practice.care_spaces`; CHECK «el espacio exige la sede»; trigger «el espacio es de la sede de la toma» |
+| F5a | `diagnostics.imaging_procedure_steps` | `scheduled_equipment_id`, `scheduled_care_space_id`, `scheduled_start_at`; CHECK «la sala exige el equipo»; trigger «la sala es la del equipo» |
 
 Archivos: `diagram_08_clinical.puml`, `diagram_20_diagnostics.puml`, `diagram_33_integrity.puml` (solo el
-bloque de `appointments` y `service_requests`), `SQL/patches/2026-10-29_infraestructura_f5_clinical.sql`,
+bloques de `appointments`, `service_requests`, `specimen_collection_events` e `imaging_procedure_steps`), `SQL/patches/2026-10-29_infraestructura_f5_clinical.sql`,
 `SQL/patches/2026-10-29_infraestructura_f5_diagnostics.sql`. No se tocó nada de `SQL/NN_*`,
 `_generation_report.md`, `SHA256SUMS.txt`, `model-manifest.yaml` ni `apply_all.sql`.
 
@@ -51,10 +51,8 @@ bloque de `appointments` y `service_requests`), `SQL/patches/2026-10-29_infraest
 8. **Triggers de coherencia de sede/sala** (solo en el patch; `gen_ddl` no los expresa; patrón de F1b/F5-ops,
    `ERRCODE` 23503 / 23514):
    - `trg_service_requests_suggested_space_site`: el espacio sugerido es de la sede sugerida.
-   - `trg_specimen_collection_events_space_site`: con sede y espacio presentes, el espacio es de esa sede.
-     **No se exige la sede cuando hay espacio** (el contrato conserva `collection_site_id` como campo propio y no
-     dice que sea obligatorio con el espacio). Si el integrador lo quiere, es un CHECK de una línea.
-   - `trg_imaging_procedure_steps_scheduled_room`: con equipo y sala presentes, la sala es la del equipo; si el
+   - `trg_specimen_collection_events_space_site`: el espacio es de la sede de la toma.
+   - `trg_imaging_procedure_steps_scheduled_room`: la sala es la del equipo; si el
      equipo no está ubicado, la sala es del tenant de su unidad diagnóstica. **Es un supuesto mío**: el contrato
      dice que el estudio lleva `scheduled_care_space_id` «para MWL» y que el equipo está en una sala, pero no
      dice que deban coincidir en la base. Se disparan solo al escribir las columnas `scheduled_*`: si el equipo
@@ -64,6 +62,35 @@ bloque de `appointments` y `service_requests`), `SQL/patches/2026-10-29_infraest
    orden («en este centro», M-01..M-03) y la sede donde se toma/realiza pueden ser de **otro tenant** que el
    que escribe; con RLS el trigger no vería el espacio y rechazaría un caso legítimo. Probado con `mantra_app`
    (R08, R10). Distinto de F5-ops, que usó INVOKER sin elevar porque sus tablas sí tienen dueño de tenant.
+
+## Corrección de seguridad (hallazgo del coordinador): fuga entre tenants por pareja NULL
+
+**Defecto de la primera versión.** Los triggers de toma e imagen devolvían `NEW` cuando faltaba la columna
+pareja (`collection_site_id` / `scheduled_equipment_id`). Quien escribía solo el espacio, y dejaba la pareja en
+NULL, guardaba el espacio de **otro tenant** sin que nada lo comparara con nada. Esas tablas no tienen
+`tenant_id`, así que no había otra guarda.
+
+**Opción elegida: exigir la pareja con CHECK (falla cerrado).**
+- `ck_specimen_collection_events_care_space_requires_site`: `collection_care_space_id IS NULL OR collection_site_id IS NOT NULL`.
+- `ck_imaging_procedure_steps_scheduled_space_requires_equipment`: `scheduled_care_space_id IS NULL OR scheduled_equipment_id IS NOT NULL`.
+- Declarados como `CHECK_SQL` en `diagram_33` (entidades `specimen_collection_events` e
+  `imaging_procedure_steps`, `REFERENCE_ONLY`); `gen_integrity` emite exactamente las mismas sentencias.
+- El patch gana una precondición que aborta si hay filas con espacio y sin pareja (`tomas con espacio y sin
+  sede`, `pasos con sala y sin equipo`) antes de crear los CHECK, y la verificación final cuenta 2 CHECK más.
+
+**Por qué esta y no «validar el tenant del espacio contra el custodio/ejecutor».** La fila de toma y el paso de
+imagen no guardan quién ejecuta: `custodian_tenant_id` es del dueño del dato y el centro ejecutor puede ser de
+otro tenant (M-01..M-03). Validar contra el custodio rechazaría el flujo «en este centro»; validar contra el
+ejecutor exigiría una columna que no existe. La pareja sí es una referencia que la base puede comprobar con el
+trigger, y exigirla elimina el camino sin comparación. Con el cambio, `collection_site_id` pasa a ser
+obligatorio cuando hay espacio, y `scheduled_equipment_id` cuando hay sala (afecta a la API: no se puede
+programar una sala sin equipo ni registrar un punto de toma sin sede).
+
+**Límite que queda.** La pareja (sede o equipo) puede ser de otro tenant, y con ella su espacio: es el flujo
+legítimo «en este centro». La base garantiza la coherencia espacio–pareja; que el actor pueda usar esa sede o ese
+equipo lo decide la API (404 ante un id ajeno). `service_requests` ya tenía el CHECK equivalente
+(`ck_service_requests_suggested_care_space_requires_site`), por eso no se tocó. `appointments` no tiene el
+problema: lleva `tenant_id` y FK compuesta.
 
 ## Lo que NO se hizo, y por qué
 
@@ -110,8 +137,8 @@ Base: `m_f5clin` (copia de `alovida`, PG 18.6 con TimescaleDB, localhost:5433) y
 | Aplicado 1.ª vez, `ON_ERROR_STOP=1` | clínico exit 0, diagnóstico exit 0 (en ambas bases) |
 | Aplicado 2.ª vez | exit 0; catálogo (columnas, restricciones, índices, triggers, funciones) **idéntico** a la 1.ª pasada |
 | Con datos preexistentes | 5 citas (3 solapadas a la misma hora, sin espacio), 2 órdenes, 2 tomas, 2 pasos: patch aplicado sin tocar filas; columnas nuevas en NULL; catálogo igual al de la base limpia |
-| Precondiciones | con guardas quitadas y 1 violador por regla: ambos patches abortan con los conteos exactos (1/1/1/1 y 1/1/1), sin dejar ningún objeto; al borrar los violadores, el patch aplica y el catálogo vuelve a ser idéntico. Falta de F1b / de f5_operaciones: aborta con mensaje |
-| Pruebas de comportamiento | **72 casos** (SQL, en transacción con `ROLLBACK`): 72 pasan, 0 fallan. Incluyen RLS entre tenants como `mantra_app`, fail-closed sin contexto, doble reserva, bordes `[)`, estados fuera del predicado, UPDATE hacia solape, centro ejecutor de otro tenant, relocalización de equipo |
+| Precondiciones | con guardas quitadas y 1 violador por regla: ambos patches abortan con los conteos exactos, sin dejar ningún objeto (diagnóstico, tras la corrección: tomas con espacio y sin sede=1, pasos con sala y sin equipo=1, con espacio de otro tenant y pareja NULL); al borrar los violadores, el patch aplica y el catálogo vuelve a ser idéntico. Falta de F1b / de f5_operaciones: aborta con mensaje |
+| Pruebas de comportamiento | **81 casos** (SQL, en transacción con `ROLLBACK`): 81 pasan, 0 fallan; 10 de ellos demuestran el fallo cerrado de la fuga (espacio propio o de otro tenant con pareja NULL, por INSERT, por UPDATE y bajo RLS como `mantra_app`). Incluyen RLS entre tenants como `mantra_app`, fail-closed sin contexto, doble reserva, bordes `[)`, estados fuera del predicado, UPDATE hacia solape, centro ejecutor de otro tenant, relocalización de equipo |
 | `gen_ddl 08/20` y `gen_integrity` en **copia temporal fuera del repo** | el SQL generado coincide sentencia por sentencia con lo escrito en los patches (columnas, FK simples, índices, CHECK y EXCLUDE). No se escribió nada en `SQL/` del worktree |
 | `pytest salud-db` | 43 passed (`salud-db/tests` solo: 28 passed) |
 

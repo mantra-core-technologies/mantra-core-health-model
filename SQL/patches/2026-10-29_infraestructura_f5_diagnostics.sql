@@ -11,24 +11,37 @@
 -- la segunda pasada no cambia nada.
 --
 -- Contexto: columnas, FKs e índices los emite gen_ddl.py en SQL/20_diagnostics desde que
--- diagram_20 los declara. Esas sentencias se escribieron aquí a mano con la MISMA forma que
--- emite el generador (el integrador regenera SQL/NN_*). Lo escrito sólo aquí: las
--- precondiciones, los dos triggers de coherencia y la verificación final. No hay CHECK ni
--- EXCLUDE nuevos en este módulo. gen_apply.py no escanea SQL/patches/: no entra en
+-- diagram_20 los declara; los dos CHECK de pareja los emite gen_integrity.py desde diagram_33.
+-- Esas sentencias se escribieron aquí a mano con la MISMA forma que emiten los generadores (el
+-- integrador regenera SQL/NN_*). Lo escrito sólo aquí: las precondiciones, los dos triggers de
+-- coherencia y la verificación final. No hay EXCLUDE nuevos en este módulo. gen_apply.py no escanea SQL/patches/: no entra en
 -- apply_all.sql.
 --
 -- QUÉ CIERRA.
 --   F5b. diagnostics.specimen_collection_events.collection_care_space_id → practice.care_spaces:
 --        el punto de toma donde se extrajo la muestra. Se conserva collection_site_id.
---        trg_specimen_collection_events_space_site: con sede y espacio presentes, el espacio
---        debe ser de esa sede.
+--        ck_specimen_collection_events_care_space_requires_site: el espacio exige la sede.
+--        trg_specimen_collection_events_space_site: el espacio debe ser de esa sede.
 --   F5a. diagnostics.imaging_procedure_steps: Scheduled Procedure Step de la DICOM Modality
 --        Worklist. scheduled_equipment_id → diagnostic_units.diagnostic_equipment,
 --        scheduled_care_space_id → practice.care_spaces (SPS Location = care_spaces.code) y
 --        scheduled_start_at. started_at / ended_at siguen siendo lo REALIZADO.
---        trg_imaging_procedure_steps_scheduled_room: con equipo y sala presentes, (1) si el
---        equipo está ubicado en una sala, esa es la sala del paso; (2) si no está ubicado, la
---        sala debe ser del tenant de la unidad diagnóstica dueña del equipo.
+--        ck_imaging_procedure_steps_scheduled_space_requires_equipment: la sala exige el equipo.
+--        trg_imaging_procedure_steps_scheduled_room: (1) si el equipo está ubicado en una sala,
+--        esa es la sala del paso; (2) si no está ubicado, la sala debe ser del tenant de la
+--        unidad diagnóstica dueña del equipo.
+--
+-- POR QUÉ LOS DOS CHECK DE PAREJA (hallazgo de seguridad, falla cerrado).
+--   Los triggers comparan el espacio contra su pareja (sede de la toma / equipo del paso). Si
+--   la pareja es NULL no hay contra qué comparar, y la primera versión de este patch dejaba
+--   pasar la fila: se podía guardar el espacio de OTRO tenant poniendo sólo el espacio. Estas
+--   dos tablas no tienen `tenant_id`, así que la base no puede validar el espacio contra el
+--   tenant directamente; lo que sí puede es exigir que el espacio vaya con su pareja, y la
+--   pareja es lo que el trigger valida. Se descartó la alternativa (no exigir la pareja y
+--   validar el tenant del espacio contra el custodio/ejecutor): el centro ejecutor puede ser de
+--   otro tenant (M-01..M-03) y no hay columna de ejecutor en estas filas.
+--   Sigue siendo posible una pareja de otro tenant (sede o equipo de otro centro): es el flujo
+--   legítimo «en este centro»; esa autorización es de la API (404 ante un id ajeno).
 --
 -- POR QUÉ NO HAY tenant_id NI RLS NUEVOS EN ESTAS DOS TABLAS.
 --   Ninguna de las dos tiene `tenant_id`: cuelgan de specimens / imaging_studies, que llevan
@@ -48,8 +61,6 @@
 -- LO QUE ESTE PATCH NO HACE.
 --   - No valida la función del espacio (SAMPLE_COLLECTION, IMAGING_ROOM), su estado ni su
 --     disponibilidad: perfil de función y estados son de la API (422).
---   - No exige collection_site_id cuando hay collection_care_space_id (el contrato conserva la
---     sede como campo propio y no dice que sea obligatoria con el espacio).
 --   - No impide reservar dos pasos en el mismo equipo/sala a la hora: la capacidad del equipo
 --     vive en el cupo de scheduling (F5a) y la de la sala en ex_appointments_care_space_time
 --     (patch f5_clinical); un EXCLUDE sobre estos pasos sería una regla nueva.
@@ -59,15 +70,15 @@
 --
 -- PRECONDICIONES (abortan sin tocar nada; el BEGIN hace rollback de todo):
 --   - f5_operaciones sin aplicar (falta diagnostic_equipment.care_space_id);
---   - tomas cuyo espacio no es de su sede;
---   - pasos cuya sala no es la de su equipo o es de otro tenant que el equipo.
---   En el primer despliegue las tres son imposibles (columnas nuevas NULL).
+--   - tomas con espacio y sin sede, o cuyo espacio no es de su sede;
+--   - pasos con sala y sin equipo, cuya sala no es la de su equipo o es de otro tenant que el equipo.
+--   En el primer despliegue todas son imposibles (columnas nuevas NULL).
 --
 -- DELTAS ESPERADOS sobre la base viva (antes de este patch):
 --   columnas   +4  (specimen_collection_events 1 · imaging_procedure_steps 3)
 --   FKs        +3
 --   índices    +3
---   triggers   +2 · funciones +2
+--   CHECK      +2 · triggers +2 · funciones +2
 -- ============================================================================
 
 BEGIN;
@@ -136,7 +147,18 @@ DECLARE
     n_toma    integer;
     n_sala    integer;
     n_tenant  integer;
+    n_toma_sin_sede integer;
+    n_paso_sin_equipo integer;
 BEGIN
+    -- 4-. Espacio sin su pareja (lo rechazan los CHECK de la sección 5).
+    SELECT count(*) INTO n_toma_sin_sede
+      FROM "diagnostics"."specimen_collection_events"
+     WHERE "collection_care_space_id" IS NOT NULL AND "collection_site_id" IS NULL;
+
+    SELECT count(*) INTO n_paso_sin_equipo
+      FROM "diagnostics"."imaging_procedure_steps"
+     WHERE "scheduled_care_space_id" IS NOT NULL AND "scheduled_equipment_id" IS NULL;
+
     -- 4a. Toma con un espacio que no es de la sede de la toma.
     SELECT count(*) INTO n_toma
       FROM "diagnostics"."specimen_collection_events" e
@@ -162,18 +184,28 @@ BEGIN
      WHERE q."care_space_id" IS NULL
        AND cs."tenant_id" IS DISTINCT FROM du."tenant_id";
 
-    IF n_toma > 0 OR n_sala > 0 OR n_tenant > 0 THEN
-        RAISE EXCEPTION 'F5 diagnóstico: datos que violan las reglas nuevas — tomas con espacio de otra sede=%, pasos con sala distinta de la del equipo=%, pasos con sala de otro tenant que el equipo=%. No se toca ningún dato; corregirlos a mano y volver a aplicar.',
-            n_toma, n_sala, n_tenant;
+    IF n_toma > 0 OR n_sala > 0 OR n_tenant > 0 OR n_toma_sin_sede > 0 OR n_paso_sin_equipo > 0 THEN
+        RAISE EXCEPTION 'F5 diagnóstico: datos que violan las reglas nuevas — tomas con espacio y sin sede=%, pasos con sala y sin equipo=%, tomas con espacio de otra sede=%, pasos con sala distinta de la del equipo=%, pasos con sala de otro tenant que el equipo=%. No se toca ningún dato; corregirlos a mano y volver a aplicar.',
+            n_toma_sin_sede, n_paso_sin_equipo, n_toma, n_sala, n_tenant;
     END IF;
 END $$;
 
--- ------------------------------------------------------------- 5. triggers de coherencia
--- ERRCODE foreign_key_violation (23503) para sede/tenant, check_violation (23514) para «no es
+-- ------------------------------------------------------------- 5. CHECK de pareja (falla cerrado)
+-- (de SQL/20_diagnostics/05_constraints.sql, CHECK_SQL de diagram_33). Sin la pareja, el trigger
+-- de la sección 6 no tiene contra qué comparar el espacio (ver cabecera).
+ALTER TABLE "diagnostics"."specimen_collection_events" DROP CONSTRAINT IF EXISTS "ck_specimen_collection_events_care_space_requires_site";
+ALTER TABLE "diagnostics"."specimen_collection_events" ADD CONSTRAINT "ck_specimen_collection_events_care_space_requires_site" CHECK ("collection_care_space_id" IS NULL OR "collection_site_id" IS NOT NULL);
+
+ALTER TABLE "diagnostics"."imaging_procedure_steps" DROP CONSTRAINT IF EXISTS "ck_imaging_procedure_steps_scheduled_space_requires_equipment";
+ALTER TABLE "diagnostics"."imaging_procedure_steps" ADD CONSTRAINT "ck_imaging_procedure_steps_scheduled_space_requires_equipment" CHECK ("scheduled_care_space_id" IS NULL OR "scheduled_equipment_id" IS NOT NULL);
+
+-- ------------------------------------------------------------- 6. triggers de coherencia
+-- Con los CHECK de la sección 5 la pareja nunca falta cuando hay espacio; los RETURN NEW por NULL
+-- de abajo son sólo el camino «sin espacio». ERRCODE foreign_key_violation (23503) para sede/tenant, check_violation (23514) para «no es
 -- la sala del equipo». La API pre-valida; la base es la red. SECURITY INVOKER; la cláusula SET
 -- sólo sube app.system_context mientras corre la función (ver cabecera).
 
--- 5a. specimen_collection_events: el espacio de la toma es de la sede de la toma.
+-- 6a. specimen_collection_events: el espacio de la toma es de la sede de la toma.
 CREATE OR REPLACE FUNCTION "diagnostics"."specimen_collection_events_assert_space_site"()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -202,7 +234,7 @@ CREATE TRIGGER "trg_specimen_collection_events_space_site"
     ON "diagnostics"."specimen_collection_events"
     FOR EACH ROW EXECUTE FUNCTION "diagnostics"."specimen_collection_events_assert_space_site"();
 
--- 5b. imaging_procedure_steps: la sala del paso es la del equipo (o, si el equipo no está
+-- 6b. imaging_procedure_steps: la sala del paso es la del equipo (o, si el equipo no está
 --     ubicado, del tenant del equipo).
 CREATE OR REPLACE FUNCTION "diagnostics"."imaging_procedure_steps_assert_scheduled_room"()
 RETURNS trigger
@@ -246,12 +278,13 @@ CREATE TRIGGER "trg_imaging_procedure_steps_scheduled_room"
     ON "diagnostics"."imaging_procedure_steps"
     FOR EACH ROW EXECUTE FUNCTION "diagnostics"."imaging_procedure_steps_assert_scheduled_room"();
 
--- ------------------------------------------------------------- 6. verificación
+-- ------------------------------------------------------------- 7. verificación
 DO $$
 DECLARE
     n_columnas integer;
     n_fk       integer;
     n_idx      integer;
+    n_ck       integer;
     n_tg       integer;
     n_fn       integer;
 BEGIN
@@ -277,6 +310,12 @@ BEGIN
             ('diagnostics', 'ix_imaging_procedure_steps_scheduled_equipment_id'),
             ('diagnostics', 'ix_imaging_procedure_steps_scheduled_care_space_id'));
 
+    SELECT count(*) INTO n_ck
+      FROM pg_constraint
+     WHERE contype = 'c' AND convalidated
+       AND conname IN ('ck_specimen_collection_events_care_space_requires_site',
+                       'ck_imaging_procedure_steps_scheduled_space_requires_equipment');
+
     SELECT count(*) INTO n_tg
       FROM pg_trigger
      WHERE NOT tgisinternal
@@ -287,12 +326,12 @@ BEGIN
      WHERE n.nspname = 'diagnostics'
        AND p.proname IN ('specimen_collection_events_assert_space_site', 'imaging_procedure_steps_assert_scheduled_room');
 
-    IF n_columnas <> 4 OR n_fk <> 3 OR n_idx <> 3 OR n_tg <> 2 OR n_fn <> 2 THEN
-        RAISE EXCEPTION 'F5 diagnóstico incompleto: columnas=% (4), fk=% (3), índices=% (3), triggers=% (2), funciones=% (2)',
-            n_columnas, n_fk, n_idx, n_tg, n_fn;
+    IF n_columnas <> 4 OR n_fk <> 3 OR n_idx <> 3 OR n_ck <> 2 OR n_tg <> 2 OR n_fn <> 2 THEN
+        RAISE EXCEPTION 'F5 diagnóstico incompleto: columnas=% (4), fk=% (3), índices=% (3), check=% (2), triggers=% (2), funciones=% (2)',
+            n_columnas, n_fk, n_idx, n_ck, n_tg, n_fn;
     END IF;
 
-    RAISE NOTICE 'F5 diagnóstico aplicado: 4 columnas, 3 FKs validadas, 3 índices, 2 triggers de coherencia.';
+    RAISE NOTICE 'F5 diagnóstico aplicado: 4 columnas, 3 FKs validadas, 3 índices, 2 CHECK de pareja, 2 triggers de coherencia.';
 END $$;
 
 COMMIT;

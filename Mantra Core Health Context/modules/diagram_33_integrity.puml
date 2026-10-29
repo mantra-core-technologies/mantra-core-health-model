@@ -51,6 +51,16 @@ entity service_requests <<REFERENCE_ONLY>> {
   ' sugerida; sin sede no hay a que sede pertenezca (la pertenencia la garantiza el trigger del patch).
   CHECK_SQL : ck_service_requests_suggested_care_space_requires_site | "suggested_care_space_id" IS NULL OR "suggested_practice_site_id" IS NOT NULL
 }
+' + infraestructura hospitalaria F5 (2026-10-29) — hallazgo de seguridad: los triggers de coherencia
+' de estas dos tablas comparan el espacio contra su pareja (sede / equipo). Si la pareja falta, el
+' trigger no tiene contra que comparar y dejaria guardar un espacio de OTRO tenant. Falla cerrado:
+' el espacio exige su pareja. Ninguna de las dos tablas tiene tenant_id para validarlo directo.
+entity specimen_collection_events <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_specimen_collection_events_care_space_requires_site | "collection_care_space_id" IS NULL OR "collection_site_id" IS NOT NULL
+}
+entity imaging_procedure_steps <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_imaging_procedure_steps_scheduled_space_requires_equipment | "scheduled_care_space_id" IS NULL OR "scheduled_equipment_id" IS NOT NULL
+}
 entity received_services <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_received_services_has_source | ("source_procedure_id" IS NOT NULL OR "source_immunization_id" IS NOT NULL OR "procedure_case_id" IS NOT NULL)
 }
