@@ -25,8 +25,8 @@
 --                             igual que F1b.
 --
 -- LO QUE LA BASE GARANTIZA (aunque la API tenga un bug o haya dos transacciones):
---   · Tenant: FK compuestas (tenant_id, x_id) → el padre es del MISMO tenant; RLS
---     tenant_isolation en las 6 tablas.
+--   · Tenant: FK compuestas (tenant_id, x_id) → el padre es del MISMO tenant (también la
+--     imagen de fondo: common.files gana UNIQUE (tenant_id, id)); RLS tenant_isolation en las 6 tablas.
 --   · Geometría válida: 3..64 vértices finitos, polígono SIMPLE (sin cruces ni giros sobre
 --     sí mismo, área > 0), rectángulos con ancho/fondo > 0 y rotación en [0,360).
 --   · Dentro del lienzo (con la tolerancia de contacto del lienzo).
@@ -517,6 +517,28 @@ CREATE INDEX IF NOT EXISTS "brin_plan_elements_history_recorded_at" ON "audit"."
 CREATE INDEX IF NOT EXISTS "ix_plan_elements_history_tenant_id" ON "audit"."plan_elements_history" ("tenant_id");
 
 -- ------------------------------------------------------------- 4. FK simples y compuestas
+-- La imagen de fondo es un archivo de common.files. Una FK simple se verifica SIN RLS: un lienzo
+-- podría apuntar al archivo de OTRO tenant y exponerlo en el visor (IDOR). common.files ya trae
+-- tenant_id NOT NULL; sólo le falta el UNIQUE (tenant_id, id) que exige la FK compuesta. Es un
+-- índice único sobre una columna que ya es única (id): no puede fallar ni cambia datos.
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_files_tenant_id_id" ON "common"."files" ("tenant_id", "id");
+
+-- Precondición: ningún lienzo existente puede apuntar a un archivo de otro tenant (o inexistente).
+-- Un patch no decide cuál de los dos tenants es el correcto: lista y aborta.
+DO $$
+DECLARE
+    n_cruce bigint;
+BEGIN
+    SELECT count(*) INTO n_cruce
+      FROM practice.floor_plans fp
+     WHERE fp.background_file_id IS NOT NULL
+       AND NOT EXISTS (SELECT 1 FROM common.files f WHERE f.id = fp.background_file_id AND f.tenant_id = fp.tenant_id);
+    IF n_cruce > 0 THEN
+        RAISE EXCEPTION 'F1c: % lienzo(s) con background_file_id de otro tenant o inexistente; corregirlos a mano y volver a aplicar.', n_cruce
+            USING ERRCODE = 'foreign_key_violation';
+    END IF;
+END $$;
+
 -- Compuestas (tenant_id, x_id) → padre (tenant_id, id): el padre es del MISMO tenant.
 -- MATCH SIMPLE: con x_id NULL no se exige nada (ancla opcional, host opcional…).
 DO $$
@@ -527,6 +549,7 @@ BEGIN
         SELECT * FROM (VALUES
             ('practice.floor_plans',      'fk_floor_plans_tenant_site',        'practice_site_id',    'practice.practice_sites'),
             ('practice.floor_plans',      'fk_floor_plans_tenant_anchor',      'anchor_space_id',     'practice.care_spaces'),
+            ('practice.floor_plans',      'fk_floor_plans_tenant_background',  'background_file_id',  'common.files'),
             ('practice.space_placements', 'fk_space_placements_tenant_plan',   'floor_plan_id',       'practice.floor_plans'),
             ('practice.space_placements', 'fk_space_placements_tenant_space',  'care_space_id',       'practice.care_spaces'),
             ('practice.plan_elements',    'fk_plan_elements_tenant_plan',      'floor_plan_id',       'practice.floor_plans'),
@@ -1333,7 +1356,7 @@ BEGIN
 
     SELECT count(*) INTO n_fkc FROM pg_constraint
      WHERE contype = 'f' AND convalidated AND array_length(conkey, 1) = 2
-       AND conname IN ('fk_floor_plans_tenant_site', 'fk_floor_plans_tenant_anchor', 'fk_space_placements_tenant_plan',
+       AND conname IN ('fk_floor_plans_tenant_site', 'fk_floor_plans_tenant_anchor', 'fk_floor_plans_tenant_background', 'fk_space_placements_tenant_plan',
             'fk_space_placements_tenant_space', 'fk_plan_elements_tenant_plan', 'fk_plan_elements_tenant_host',
             'fk_plan_elements_tenant_space_a', 'fk_plan_elements_tenant_space_b');
 
@@ -1376,13 +1399,13 @@ BEGIN
         END IF;
     END IF;
 
-    IF n_tab <> 6 OR n_geo <> 4 OR n_fkc <> 8 OR n_ck <> 23 OR n_ex <> 1 OR n_trg <> 20 OR n_rls <> 6 OR n_fn <> 10 OR n_upd <> 0 THEN
+    IF n_tab <> 6 OR n_geo <> 4 OR n_fkc <> 9 OR n_ck <> 23 OR n_ex <> 1 OR n_trg <> 20 OR n_rls <> 6 OR n_fn <> 10 OR n_upd <> 0 THEN
         RAISE EXCEPTION
-            'v4.2.68 incompleto: tablas=% (6), columnas geométricas=% (4), FK compuestas=% (8), CHECK=% (23), EXCLUDE=% (1), triggers=% (20), RLS=% (6), funciones=% (10), privilegios de más=% (0)',
+            'v4.2.68 incompleto: tablas=% (6), columnas geométricas=% (4), FK compuestas=% (9), CHECK=% (23), EXCLUDE=% (1), triggers=% (20), RLS=% (6), funciones=% (10), privilegios de más=% (0)',
             n_tab, n_geo, n_fkc, n_ck, n_ex, n_trg, n_rls, n_fn, n_upd;
     END IF;
 
-    RAISE NOTICE 'v4.2.68 aplicado: 3 tablas de plano + 3 historias, 8 FK compuestas por tenant, EXCLUDE de hermanos sin solape, % CHECK de geometría, RLS en 6 tablas.', n_ck;
+    RAISE NOTICE 'v4.2.68 aplicado: 3 tablas de plano + 3 historias, 9 FK compuestas por tenant, EXCLUDE de hermanos sin solape, % CHECK de geometría, RLS en 6 tablas.', n_ck;
 END $$;
 
 COMMIT;

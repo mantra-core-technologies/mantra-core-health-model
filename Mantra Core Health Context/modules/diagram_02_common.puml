@@ -270,6 +270,8 @@ entity "INDEXES · files" as idxset_files <<INDEX_SET>> {
   IX ix_files_created_by_user_id : (created_by_user_id) BTREE
   IX ix_files_updated_by_user_id : (updated_by_user_id) BTREE
   IX ix_files_tenant_id_lifecycle_status_concept_id : (tenant_id, lifecycle_status_concept_id, updated_at DESC) BTREE
+  ' + v4.2.68 (F1c · plano): necesario para la FK compuesta floor_plans (tenant_id, background_file_id) → files.
+  UX ux_files_tenant_id_id : (tenant_id, id) UNIQUE BTREE
 }
 
 files .. idxset_files : indexed by

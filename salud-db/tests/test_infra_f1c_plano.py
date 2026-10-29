@@ -63,12 +63,16 @@ class StaticContractTests(unittest.TestCase):
             self.assertIn(needle, self.sql)
 
     def test_cross_tenant_references_use_composite_fks(self) -> None:
-        for name in ("fk_floor_plans_tenant_site", "fk_floor_plans_tenant_anchor",
+        for name in ("fk_floor_plans_tenant_site", "fk_floor_plans_tenant_anchor", "fk_floor_plans_tenant_background",
                      "fk_space_placements_tenant_plan", "fk_space_placements_tenant_space",
                      "fk_plan_elements_tenant_plan", "fk_plan_elements_tenant_host",
                      "fk_plan_elements_tenant_space_a", "fk_plan_elements_tenant_space_b"):
             self.assertIn(f"'{name}'", self.sql)
         self.assertIn('FOREIGN KEY ("tenant_id", %I) REFERENCES %s ("tenant_id", "id")', self.sql)
+        # la imagen de fondo apunta a common.files: necesita su UNIQUE (tenant_id, id) y no una FK simple a secas
+        self.assertIn('CREATE UNIQUE INDEX IF NOT EXISTS "ux_files_tenant_id_id" ON "common"."files" ("tenant_id", "id")', self.sql)
+        self.assertIn("'fk_floor_plans_tenant_background',  'background_file_id',  'common.files'", self.sql)
+        self.assertIn("lienzo(s) con background_file_id de otro tenant o inexistente", self.sql)
 
     def test_overlap_is_a_database_constraint_not_an_api_promise(self) -> None:
         self.assertIn("ex_space_placements_no_overlap", self.sql)
@@ -195,6 +199,7 @@ class LivePlanoTests(unittest.TestCase):
             for k, v in ids.items():
                 cls.fx[f"{tag}_{k}"] = v
             c = u()  # concepto placeholder (las FK a conceptos se saltan con replica)
+            cls.fx[f"{tag}_file"] = fid = u()
             lines += [
                 f"INSERT INTO directory.tenants (id, code, tenant_type_concept_id, legal_name, legal_entity_type_concept_id, "
                 f"status_concept_id, verification_status_concept_id, created_at, updated_at) VALUES "
@@ -202,6 +207,9 @@ class LivePlanoTests(unittest.TestCase):
                 f"INSERT INTO practice.practices (id, tenant_id, code, name, type_concept_id, admin_user_id, status_concept_id, created_at, updated_at) "
                 f"VALUES ('{ids['practice']}', '{t}', 'P-{ids['practice'][:8]}', 'Práctica {tag}', '{c}', '{u()}', '{c}', now(), now());",
             ]
+            lines.append(
+                f"INSERT INTO common.files (id, tenant_id, category_concept_id, sensitivity_concept_id, lifecycle_status_concept_id, "
+                f"original_name, created_at, updated_at) VALUES ('{fid}', '{t}', '{c}', '{c}', '{c}', 'plano-{tag}.png', now(), now());")
             for s in ("site", "site2"):
                 lines.append(
                     f"INSERT INTO practice.practice_sites (id, practice_id, code, name, site_type_concept_id, status_concept_id, created_at, updated_at, tenant_id) "
@@ -267,7 +275,7 @@ class LivePlanoTests(unittest.TestCase):
                  AND table_name IN ('floor_plans','space_placements','plan_elements','floor_plans_history','space_placements_history','plan_elements_history')
               UNION ALL SELECT 'con:' || conrelid::regclass || ':' || conname || ':' || pg_get_constraintdef(oid) FROM pg_constraint
                  WHERE conrelid::regclass::text ~ '(floor_plans|space_placements|plan_elements)'
-              UNION ALL SELECT 'idx:' || indexdef FROM pg_indexes WHERE tablename ~ '(floor_plans|space_placements|plan_elements)'
+              UNION ALL SELECT 'idx:' || indexdef FROM pg_indexes WHERE tablename ~ '(floor_plans|space_placements|plan_elements)' OR indexname = 'ux_files_tenant_id_id'
               UNION ALL SELECT 'trg:' || pg_get_triggerdef(t.oid) FROM pg_trigger t WHERE NOT tgisinternal
                  AND (tgrelid::regclass::text ~ '(floor_plans|space_placements|plan_elements)' OR tgname = 'trg_care_spaces_revalidate_placements')
               UNION ALL SELECT 'pol:' || tablename || ':' || policyname || ':' || coalesce(qual,'') || coalesce(with_check,'') FROM pg_policies
@@ -617,6 +625,34 @@ class LivePlanoTests(unittest.TestCase):
         self.fails(self.tx(f"INSERT INTO practice.floor_plans (id, tenant_id, practice_site_id, anchor_space_id, code, name, width_m, height_m, created_at, updated_at) "
                            f"SELECT gen_random_uuid(), tenant_id, practice_site_id, '{self.f('ward')}', code, 'otro', 10, 10, now(), now() FROM practice.floor_plans WHERE id='{p}';"),
                    "ux_floor_plans_site_code")
+
+    def test_24b_background_image_must_belong_to_the_same_tenant(self) -> None:
+        p, pb = self.f("plan"), self.f("plan", "b")
+        file_a, file_b = self.f("file"), self.f("file", "b")
+        calib = "background_scale_m_per_px = 0.02"
+        # de su propio tenant: bien
+        self.ok(f"UPDATE practice.floor_plans SET background_file_id = '{file_a}', {calib} WHERE id='{p}';", system=True)
+        # del OTRO tenant: la base lo rechaza con 23503 (fk_floor_plans_tenant_background), aunque la FK simple se cumpla
+        err = self.fails(f"UPDATE practice.floor_plans SET background_file_id = '{file_b}', {calib} WHERE id='{p}';",
+                         "fk_floor_plans_tenant_background", system=True)
+        self.assertIn("violates foreign key constraint", err)
+        self.assertEqual(self.ok(f"SELECT coalesce(background_file_id::text, '-') FROM practice.floor_plans WHERE id='{p}'", system=True), file_a)
+        # y al insertar un lienzo nuevo
+        self.fails(f"INSERT INTO practice.floor_plans (id, tenant_id, practice_site_id, anchor_space_id, code, name, width_m, height_m, "
+                   f"background_file_id, background_scale_m_per_px, created_at, updated_at) VALUES (gen_random_uuid(), '{self.ta}', "
+                   f"'{self.f('site')}', '{self.f('ward')}', 'BG-X', 'x', 10, 10, '{file_b}', 0.02, now(), now());",
+                   "fk_floor_plans_tenant_background", system=True)
+        # un archivo inexistente tampoco
+        self.fails(f"UPDATE practice.floor_plans SET background_file_id = gen_random_uuid(), {calib} WHERE id='{p}';",
+                   "violates foreign key constraint", system=True)
+        # MUTACIÓN: sin la FK compuesta el mismo UPDATE pasa (la transacción se deshace). Demuestra que la prueba depende de la FK.
+        out = self.ok("SET app.system_context='true';\nBEGIN;\n"
+                      "ALTER TABLE practice.floor_plans DROP CONSTRAINT fk_floor_plans_tenant_background;\n"
+                      f"UPDATE practice.floor_plans SET background_file_id = '{file_b}', {calib} WHERE id='{p}';\n"
+                      f"SELECT 'cruzó:' || (background_file_id = '{file_b}')::text FROM practice.floor_plans WHERE id='{p}';\nROLLBACK;")
+        self.assertIn("cruzó:true", out)
+        self.assertEqual(self.ok("SELECT count(*) FROM pg_constraint WHERE conname = 'fk_floor_plans_tenant_background'", system=True), "1")
+        self.ok(f"UPDATE practice.floor_plans SET background_file_id = NULL, background_scale_m_per_px = NULL WHERE id='{p}';", system=True)
 
     def test_25_contact_tolerance_is_data_and_recomputes_the_outline(self) -> None:
         self.clean_plan()
