@@ -478,6 +478,34 @@ DO $$ BEGIN
         REFERENCES "terminology"."catalog_concepts" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- destino: practice.site_licenses (requiere schema practice)
+DO $$ BEGIN
+    ALTER TABLE "audit"."site_licenses_history"
+        ADD CONSTRAINT "fk_site_licenses_history_site_license_id" FOREIGN KEY ("site_license_id")
+        REFERENCES "practice"."site_licenses" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "audit"."site_licenses_history"
+        ADD CONSTRAINT "fk_site_licenses_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "audit"."site_licenses_history"
+        ADD CONSTRAINT "fk_site_licenses_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "audit"."site_licenses_history"
+        ADD CONSTRAINT "fk_site_licenses_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
 -- destino: clinical.diagnostic_reports (requiere schema clinical)
 DO $$ BEGIN
     ALTER TABLE "audit"."diagnostic_reports_history"

@@ -261,6 +261,21 @@ entity care_spaces_history <<HISTORY>> {
     change_reason_concept_id : uuid <<FK>>
   * recorded_at : timestamptz
 }
+' + v4.2.67 (infraestructura F1): historia de las habilitaciones del establecimiento,
+' mismo patrón que practice_sites_history.
+entity site_licenses_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * site_license_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
 entity diagnostic_reports_history <<HISTORY>> {
   * history_id : uuid <<PK>>
   --
@@ -2049,6 +2064,17 @@ entity "INDEXES · care_spaces_history" as idxset_care_spaces_history <<INDEX_SE
 }
 
 care_spaces_history .. idxset_care_spaces_history : indexed by
+
+entity "INDEXES · site_licenses_history" as idxset_site_licenses_history <<INDEX_SET>> {
+  PK pk_site_licenses_history : (history_id) UNIQUE BTREE
+  IX ix_site_licenses_history_site_license_id : (site_license_id) BTREE
+  IX ix_site_licenses_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_site_licenses_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_site_licenses_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_site_licenses_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+}
+
+site_licenses_history .. idxset_site_licenses_history : indexed by
 
 entity "INDEXES · diagnostic_reports_history" as idxset_diagnostic_reports_history <<INDEX_SET>> {
   PK pk_diagnostic_reports_history : (history_id) UNIQUE BTREE

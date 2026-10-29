@@ -93,6 +93,19 @@ entity practice_sites {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + v4.2.67 (infraestructura hospitalaria F1): la sede es el ESTABLECIMIENTO regulado
+  ' (Organization + Location "facility" de IHE mCSD). `tenant_id` se copia de
+  ' practices.tenant_id para que el RLS la cubra. Datos regulatorios de Bolivia: código
+  ' SNIS/SUIS, subsector, nivel de atención, tipología, ente gestor, red y SEDES.
+  * tenant_id : uuid <<FK>>
+    snis_code : varchar
+    subsector_concept_id : uuid <<FK>>
+    care_level_concept_id : uuid <<FK>>
+    facility_typology_concept_id : uuid <<FK>>
+    managing_entity_name : varchar
+    health_network_name : varchar
+    sedes_department_concept_id : uuid <<FK>>
+    municipality_name : varchar
 }
 entity clinical_units {
   * id : uuid <<PK>>
@@ -112,6 +125,12 @@ entity clinical_units {
   * row_version : integer
   ' + v4.2.49 (ORG-ARE-002, issue #58): responsable del area.
     responsible_user_id : uuid <<FK>>
+  ' + v4.2.67 (infraestructura F1): árbol ORGANIZATIVO (servicio/departamento). `tenant_id`
+  ' se copia de la sede para el RLS; vigencia de la unidad.
+    tenant_id : uuid <<FK>>
+    description : varchar
+    valid_from : timestamptz
+    valid_to : timestamptz
 }
 entity care_spaces {
   * id : uuid <<PK>>
@@ -135,6 +154,117 @@ entity care_spaces {
   ' (procedure_cases) puede traer los suyos y gana sobre estos.
     prep_minutes : integer
     cleanup_minutes : integer
+  ' + v4.2.67 (infraestructura F1): árbol FÍSICO = FHIR Location. `form_concept_id` es la
+  ' FORMA (LOC_FORM_*: si/bu/wi/lvl/wa/area/co/ro/bd/vi) y `space_type_concept_id` pasa a
+  ' significar la FUNCIÓN (SPACE_FN_*). La forma queda NULL en las filas viejas: la API las
+  ' completa con LOC_FORM_ROOM, porque el id del concepto lo deriva la API. Atributos
+  ' técnicos (asepsia, presión, renovaciones/h, validación HVAC), restricciones de sexo y
+  ' edad, categoría de cama, si es censable y el GLN (GS1, 13 dígitos).
+    tenant_id : uuid <<FK>>
+    form_concept_id : uuid <<FK>>
+    description : varchar
+    floor_number : integer
+    area_m2 : numeric(10,2)
+    asepsis_concept_id : uuid <<FK>>
+    pressure_concept_id : uuid <<FK>>
+    air_changes_per_hour : numeric(6,2)
+    hvac_validated_on : date
+    sex_restriction_concept_id : uuid <<FK>>
+    age_group_concept_id : uuid <<FK>>
+    bed_category_concept_id : uuid <<FK>>
+    censable : boolean
+    gln : varchar(13)
+    valid_from : timestamptz
+    valid_to : timestamptz
+}
+
+' + v4.2.67 (infraestructura F1): vínculo espacio físico ↔ unidad organizativa, con
+' vigencia y rol (SPACE_UNIT_ROLE_OWNER | SHARED | LOAN). Un solo vínculo vigente por par.
+entity space_unit_assignments {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * care_space_id : uuid <<FK>>
+  * clinical_unit_id : uuid <<FK>>
+  * role_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' + v4.2.67 (infraestructura F1): habilitación del establecimiento por la autoridad
+' sanitaria (SEDES/Ministerio). Alcance opcional a una unidad o a un servicio. El estado
+' (LIC_*) lo fija la API; «vencida» se calcula al leer cuando expires_on < hoy.
+entity site_licenses {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * practice_site_id : uuid <<FK>>
+  * authority_name : varchar
+    resolution_number : varchar
+    issued_on : date
+    expires_on : date
+  * status_concept_id : uuid <<FK>>
+    clinical_unit_id : uuid <<FK>>
+    healthcare_service_id : uuid <<FK>>
+    document_file_id : uuid <<FK>>
+    notes : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' + v4.2.67 (infraestructura F1): capacidad DECLARADA (la de la habilitación), por tipo
+' (CAP_*). La capacidad real se deriva contando espacios; nunca se escribe a mano.
+entity site_declared_capacities {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * practice_site_id : uuid <<FK>>
+  * capacity_kind_concept_id : uuid <<FK>>
+  * quantity : integer
+  * as_of : date
+    resolution_number : varchar
+    valid_to : date
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' + v4.2.67 (infraestructura F1): reglas padre→hijo entre FORMAS de espacio (catálogo
+' global, sin tenant). Las siembra la API: los ids de los conceptos LOC_FORM_* son suyos.
+entity space_form_parent_rules {
+  * parent_form_concept_id : uuid <<PK, FK>>
+  * child_form_concept_id : uuid <<PK, FK>>
+  --
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' + v4.2.67 (infraestructura F1): qué FUNCIONES de espacio admite o exige cada TIPOLOGÍA de
+' establecimiento (TYPO_ALLOWED | TYPO_REQUIRED). Catálogo global que siembra la API, con la
+' norma de origen en el display del concepto: los umbrales son datos, no código.
+entity facility_typology_rules {
+  * typology_concept_id : uuid <<PK, FK>>
+  * space_function_concept_id : uuid <<PK, FK>>
+  --
+  * rule_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
 }
 entity healthcare_services {
   * id : uuid <<PK>>
@@ -245,6 +375,12 @@ practice_sites ||--o{ care_spaces
 clinical_units |o--o{ clinical_units : parent
 clinical_units ||--o{ care_spaces
 care_spaces |o--o{ care_spaces : parent
+space_unit_assignments }o--|| care_spaces : care_space_id
+space_unit_assignments }o--|| clinical_units : clinical_unit_id
+site_licenses }o--|| practice_sites : practice_site_id
+site_licenses }o--o| clinical_units : clinical_unit_id
+site_licenses }o--o| healthcare_services : healthcare_service_id
+site_declared_capacities }o--|| practice_sites : practice_site_id
 healthcare_services |o--o{ practitioner_role_assignments
 practitioner_role_assignments ||--o{ practitioner_support_assignments
 inventory_items ||--o{ inventory_movements
@@ -311,6 +447,12 @@ entity "INDEXES · practice_sites" as idxset_practice_sites <<INDEX_SET>> {
   IX ix_practice_sites_updated_by_user_id : (updated_by_user_id) BTREE
   IX ix_practice_sites_bank_qr_file_id : (bank_qr_file_id) BTREE
   IX ix_practice_sites_logo_file_id : (logo_file_id) BTREE
+  IX ix_practice_sites_tenant_id : (tenant_id) BTREE
+  IX ix_practice_sites_subsector_concept_id : (subsector_concept_id) BTREE
+  IX ix_practice_sites_care_level_concept_id : (care_level_concept_id) BTREE
+  IX ix_practice_sites_facility_typology_concept_id : (facility_typology_concept_id) BTREE
+  IX ix_practice_sites_sedes_department_concept_id : (sedes_department_concept_id) BTREE
+  UX ux_practice_sites_snis_code : (snis_code) UNIQUE BTREE WHERE snis_code IS NOT NULL
 }
 
 practice_sites .. idxset_practice_sites : indexed by
@@ -326,6 +468,7 @@ entity "INDEXES · clinical_units" as idxset_clinical_units <<INDEX_SET>> {
   IX ix_clinical_units_created_by_user_id : (created_by_user_id) BTREE
   IX ix_clinical_units_updated_by_user_id : (updated_by_user_id) BTREE
   IX ix_clinical_units_responsible_user_id : (responsible_user_id) BTREE
+  IX ix_clinical_units_tenant_id : (tenant_id) BTREE
 }
 
 clinical_units .. idxset_clinical_units : indexed by
@@ -340,9 +483,76 @@ entity "INDEXES · care_spaces" as idxset_care_spaces <<INDEX_SET>> {
   IX ix_care_spaces_status_concept_id : (status_concept_id) BTREE
   IX ix_care_spaces_created_by_user_id : (created_by_user_id) BTREE
   IX ix_care_spaces_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_care_spaces_tenant_id : (tenant_id) BTREE
+  IX ix_care_spaces_form_concept_id : (form_concept_id) BTREE
+  IX ix_care_spaces_asepsis_concept_id : (asepsis_concept_id) BTREE
+  IX ix_care_spaces_pressure_concept_id : (pressure_concept_id) BTREE
+  IX ix_care_spaces_sex_restriction_concept_id : (sex_restriction_concept_id) BTREE
+  IX ix_care_spaces_age_group_concept_id : (age_group_concept_id) BTREE
+  IX ix_care_spaces_bed_category_concept_id : (bed_category_concept_id) BTREE
+  UX ux_care_spaces_site_code : (practice_site_id, code) UNIQUE BTREE
 }
 
 care_spaces .. idxset_care_spaces : indexed by
+
+entity "INDEXES · space_unit_assignments" as idxset_space_unit_assignments <<INDEX_SET>> {
+  PK pk_space_unit_assignments : (id) UNIQUE BTREE
+  IX ix_space_unit_assignments_tenant_id : (tenant_id) BTREE
+  IX ix_space_unit_assignments_care_space_id : (care_space_id) BTREE
+  IX ix_space_unit_assignments_clinical_unit_id : (clinical_unit_id) BTREE
+  IX ix_space_unit_assignments_role_concept_id : (role_concept_id) BTREE
+  IX ix_space_unit_assignments_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_space_unit_assignments_updated_by_user_id : (updated_by_user_id) BTREE
+  UX ux_space_unit_assignments_current : (care_space_id, clinical_unit_id) UNIQUE BTREE WHERE valid_to IS NULL
+}
+
+space_unit_assignments .. idxset_space_unit_assignments : indexed by
+
+entity "INDEXES · site_licenses" as idxset_site_licenses <<INDEX_SET>> {
+  PK pk_site_licenses : (id) UNIQUE BTREE
+  IX ix_site_licenses_tenant_id : (tenant_id) BTREE
+  IX ix_site_licenses_practice_site_id : (practice_site_id) BTREE
+  IX ix_site_licenses_status_concept_id : (status_concept_id) BTREE
+  IX ix_site_licenses_clinical_unit_id : (clinical_unit_id) BTREE
+  IX ix_site_licenses_healthcare_service_id : (healthcare_service_id) BTREE
+  IX ix_site_licenses_document_file_id : (document_file_id) BTREE
+  IX ix_site_licenses_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_site_licenses_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_site_licenses_practice_site_id_expires_on : (practice_site_id, expires_on) BTREE
+}
+
+site_licenses .. idxset_site_licenses : indexed by
+
+entity "INDEXES · site_declared_capacities" as idxset_site_declared_capacities <<INDEX_SET>> {
+  PK pk_site_declared_capacities : (id) UNIQUE BTREE
+  IX ix_site_declared_capacities_tenant_id : (tenant_id) BTREE
+  IX ix_site_declared_capacities_practice_site_id : (practice_site_id) BTREE
+  IX ix_site_declared_capacities_capacity_kind_concept_id : (capacity_kind_concept_id) BTREE
+  IX ix_site_declared_capacities_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_site_declared_capacities_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_site_declared_capacities_site_kind_as_of : (practice_site_id, capacity_kind_concept_id, as_of DESC) BTREE
+}
+
+site_declared_capacities .. idxset_site_declared_capacities : indexed by
+
+entity "INDEXES · space_form_parent_rules" as idxset_space_form_parent_rules <<INDEX_SET>> {
+  PK pk_space_form_parent_rules : (parent_form_concept_id, child_form_concept_id) UNIQUE BTREE
+  IX ix_space_form_parent_rules_child_form_concept_id : (child_form_concept_id) BTREE
+  IX ix_space_form_parent_rules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_space_form_parent_rules_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+space_form_parent_rules .. idxset_space_form_parent_rules : indexed by
+
+entity "INDEXES · facility_typology_rules" as idxset_facility_typology_rules <<INDEX_SET>> {
+  PK pk_facility_typology_rules : (typology_concept_id, space_function_concept_id) UNIQUE BTREE
+  IX ix_facility_typology_rules_space_function_concept_id : (space_function_concept_id) BTREE
+  IX ix_facility_typology_rules_rule_concept_id : (rule_concept_id) BTREE
+  IX ix_facility_typology_rules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_facility_typology_rules_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+facility_typology_rules .. idxset_facility_typology_rules : indexed by
 
 entity "INDEXES · healthcare_services" as idxset_healthcare_services <<INDEX_SET>> {
   PK pk_healthcare_services : (id) UNIQUE BTREE

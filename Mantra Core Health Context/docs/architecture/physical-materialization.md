@@ -49,6 +49,47 @@ comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_obje
 
 ## 3. Estado actual del build
 
+### v4.2.67 — Infraestructura hospitalaria F1: establecimiento, árbol físico y habilitaciones (2026-10-29)
+
+**Cambio de esquema: +29 columnas, +6 tablas, +45 FK, +55 índices (2 únicos sobre tablas existentes) y
++6 políticas RLS en `practice` (14) y `audit` (10).** Parche: `SQL/patches/2026-10-29_infraestructura_f1.sql`
+(idempotente, fuera de `apply_all.sql`). Contrato: `SALUD/Arquitectura/infraestructura-hospitalaria/CONTRATO-F0-F1.md` §1
+en el repositorio de documentación.
+
+- `practice.practice_sites` pasa a ser el **establecimiento** regulado: `tenant_id` (NOT NULL, copiado de
+  `practices.tenant_id`) y datos de Bolivia — `snis_code` (único cuando existe), subsector, nivel de atención,
+  tipología, ente gestor, red, SEDES y municipio.
+- `practice.clinical_units` (árbol organizativo): `tenant_id`, `description`, `valid_from`, `valid_to`.
+- `practice.care_spaces` (árbol físico = FHIR Location): `tenant_id`, `form_concept_id` (la FORMA; el
+  `space_type_concept_id` existente pasa a ser la FUNCIÓN), atributos técnicos (piso, m², asepsia, presión,
+  renovaciones/h, validación HVAC), restricción de sexo y edad, categoría de cama, `censable`, `gln` y vigencia.
+  `UNIQUE (practice_site_id, code)`: el código es inmutable y no se reutiliza.
+- Tablas nuevas: `space_unit_assignments` (espacio ↔ unidad con rol y vigencia; un vínculo vigente por par),
+  `site_licenses` (habilitaciones), `site_declared_capacities` (capacidad declarada, la real se deriva),
+  `space_form_parent_rules` y `facility_typology_rules` (catálogos globales de reglas, PK compuesta, sin tenant)
+  y `audit.site_licenses_history`.
+- Todas las `*_concept_id` → `terminology.catalog_concepts` por convención. Las FK intra-módulo de las tablas
+  nuevas salen de aristas etiquetadas del `.puml` (`space_unit_assignments }o--|| care_spaces : care_space_id`…).
+- `clinical_units.tenant_id` y `care_spaces.tenant_id` son NULLables (el contrato sólo exige NOT NULL en la
+  sede); el patch las completa desde la sede. `care_spaces.form_concept_id` queda NULL en las filas existentes:
+  la API la completa con `LOC_FORM_ROOM`, porque el id del concepto es suyo. El patch no siembra conceptos ni
+  reglas.
+- El patch aborta, sin tocar datos, si hay dos espacios con el mismo código en la misma sede o una unidad/espacio
+  con tenant distinto al de su sede.
+- `seedsGenerales/modules/14_practice.seeds.json`: las 26 sedes, 26 unidades y 26 espacios del paquete llevan
+  ahora `tenant_id` (el de su práctica), para que `load_seeds.py` no salte las sedes por el NOT NULL nuevo.
+  Manifest y checksums actualizados.
+
+**Verificado (2026-10-29)** con PostgreSQL 16 en una base descartable (puerto 5499, sin TimescaleDB ni pgvector,
+así que se omitieron los stores 58/59 y el patch `2026-07-25_v407_nullable_embedding_model_versions.sql`):
+`apply_all.sql` + `apply_deferred.sql` + patches de `HEAD`, con 2 tenants, 2 sedes, 2 unidades y 3 espacios; el
+parche dos veces, ambas exit 0: tablas **1 261 → 1 267** · FKs **7 275 → 7 320** · índices **9 767 → 9 822** ·
+políticas `tenant_isolation` **277 → 283**; la 2.ª pasada sin cambios. Base limpia con el `SQL/` nuevo + todos los
+patches: los mismos totales, y columnas, constraints, índices y políticas de `practice` y `audit` idénticos a los
+de la base parcheada. Con un código duplicado en la misma sede el parche aborta (exit 3) y la base queda como
+estaba. Como `mantra_app` con el tenant A fijado se ve 1 de 3 espacios y se rechaza escribir una habilitación del
+tenant B. No se aplicó contra una base con datos reales, ni se cargó el paquete de seeds.
+
 ### v4.2.65 — Derivación con tipo y servicio de destino (2026-10-28)
 
 **Cambio de esquema: +2 columnas en `clinical_ext.referrals` (módulo 18).**

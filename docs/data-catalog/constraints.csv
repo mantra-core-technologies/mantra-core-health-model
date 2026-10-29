@@ -1503,6 +1503,11 @@ audit,shipments_history,fk_shipments_history_shipment_id,FOREIGN KEY,shipment_id
 audit,shipments_history,fk_shipments_history_operation_concept_id,FOREIGN KEY,operation_concept_id,FOREIGN KEY (operation_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/10_audit/90_fk_deferred.sql
 audit,shipments_history,fk_shipments_history_changed_by_user_id,FOREIGN KEY,changed_by_user_id,FOREIGN KEY (changed_by_user_id) REFERENCES iam.users (id),SQL/10_audit/90_fk_deferred.sql
 audit,shipments_history,fk_shipments_history_change_reason_concept_id,FOREIGN KEY,change_reason_concept_id,FOREIGN KEY (change_reason_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/10_audit/90_fk_deferred.sql
+audit,site_licenses_history,pk_site_licenses_history,PRIMARY KEY,history_id,PRIMARY KEY (history_id),SQL/10_audit/02_tables.sql
+audit,site_licenses_history,fk_site_licenses_history_site_license_id,FOREIGN KEY,site_license_id,FOREIGN KEY (site_license_id) REFERENCES practice.site_licenses (id),SQL/10_audit/90_fk_deferred.sql
+audit,site_licenses_history,fk_site_licenses_history_operation_concept_id,FOREIGN KEY,operation_concept_id,FOREIGN KEY (operation_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/10_audit/90_fk_deferred.sql
+audit,site_licenses_history,fk_site_licenses_history_changed_by_user_id,FOREIGN KEY,changed_by_user_id,FOREIGN KEY (changed_by_user_id) REFERENCES iam.users (id),SQL/10_audit/90_fk_deferred.sql
+audit,site_licenses_history,fk_site_licenses_history_change_reason_concept_id,FOREIGN KEY,change_reason_concept_id,FOREIGN KEY (change_reason_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/10_audit/90_fk_deferred.sql
 audit,social_posts_history,pk_social_posts_history,PRIMARY KEY,history_id,PRIMARY KEY (history_id),SQL/10_audit/02_tables.sql
 audit,social_posts_history,fk_social_posts_history_social_post_id,FOREIGN KEY,social_post_id,FOREIGN KEY (social_post_id) REFERENCES community.social_posts (id),SQL/10_audit/90_fk_deferred.sql
 audit,social_posts_history,fk_social_posts_history_operation_concept_id,FOREIGN KEY,operation_concept_id,FOREIGN KEY (operation_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/10_audit/90_fk_deferred.sql
@@ -7334,6 +7339,14 @@ practice,care_spaces,fk_care_spaces_operational_status_concept_id,FOREIGN KEY,op
 practice,care_spaces,fk_care_spaces_status_concept_id,FOREIGN KEY,status_concept_id,FOREIGN KEY (status_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/14_practice/90_fk_deferred.sql
 practice,care_spaces,fk_care_spaces_created_by_user_id,FOREIGN KEY,created_by_user_id,FOREIGN KEY (created_by_user_id) REFERENCES iam.users (id),SQL/14_practice/90_fk_deferred.sql
 practice,care_spaces,fk_care_spaces_updated_by_user_id,FOREIGN KEY,updated_by_user_id,FOREIGN KEY (updated_by_user_id) REFERENCES iam.users (id),SQL/14_practice/90_fk_deferred.sql
+practice,care_spaces,fk_care_spaces_tenant_id,FOREIGN KEY,tenant_id,FOREIGN KEY (tenant_id) REFERENCES directory.tenants (id),SQL/14_practice/90_fk_deferred.sql
+practice,care_spaces,fk_care_spaces_form_concept_id,FOREIGN KEY,form_concept_id,FOREIGN KEY (form_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/14_practice/90_fk_deferred.sql
+practice,care_spaces,fk_care_spaces_asepsis_concept_id,FOREIGN KEY,asepsis_concept_id,FOREIGN KEY (asepsis_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/14_practice/90_fk_deferred.sql
+practice,care_spaces,fk_care_spaces_pressure_concept_id,FOREIGN KEY,pressure_concept_id,FOREIGN KEY (pressure_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/14_practice/90_fk_deferred.sql
+practice,care_spaces,fk_care_spaces_sex_restriction_concept_id,FOREIGN KEY,sex_restriction_concept_id,FOREIGN KEY (sex_restriction_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/14_practice/90_fk_deferred.sql
+practice,care_spaces,fk_care_spaces_age_group_concept_id,FOREIGN KEY,age_group_concept_id,FOREIGN KEY (age_group_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/14_practice/90_fk_deferred.sql
+practice,care_spaces,fk_care_spaces_bed_category_concept_id,FOREIGN KEY,bed_category_concept_id,FOREIGN KEY (bed_category_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/14_practice/90_fk_deferred.sql
+practice,care_spaces,ux_care_spaces_site_code,UNIQUE INDEX,"""practice_site_id"", ""code""","UNIQUE INDEX (""practice_site_id"", ""code"")",SQL/14_practice/04_indexes.sql
 practice,care_spaces,ck_care_spaces_buffers,CHECK,,"CHECK ((COALESCE(""prep_minutes"", 0) >= 0 AND COALESCE(""cleanup_minutes"", 0) >= 0))",SQL/14_practice/05_constraints.sql
 practice,clinical_units,pk_clinical_units,PRIMARY KEY,id,PRIMARY KEY (id),SQL/14_practice/02_tables.sql
 practice,clinical_units,fk_clinical_units_practice_site_id,FOREIGN KEY,practice_site_id,FOREIGN KEY (practice_site_id) REFERENCES practice.practice_sites (id),SQL/14_practice/03_fk_intra.sql
@@ -7345,6 +7358,13 @@ practice,clinical_units,fk_clinical_units_status_concept_id,FOREIGN KEY,status_c
 practice,clinical_units,fk_clinical_units_created_by_user_id,FOREIGN KEY,created_by_user_id,FOREIGN KEY (created_by_user_id) REFERENCES iam.users (id),SQL/14_practice/90_fk_deferred.sql
 practice,clinical_units,fk_clinical_units_updated_by_user_id,FOREIGN KEY,updated_by_user_id,FOREIGN KEY (updated_by_user_id) REFERENCES iam.users (id),SQL/14_practice/90_fk_deferred.sql
 practice,clinical_units,fk_clinical_units_responsible_user_id,FOREIGN KEY,responsible_user_id,FOREIGN KEY (responsible_user_id) REFERENCES iam.users (id),SQL/14_practice/90_fk_deferred.sql
+practice,clinical_units,fk_clinical_units_tenant_id,FOREIGN KEY,tenant_id,FOREIGN KEY (tenant_id) REFERENCES directory.tenants (id),SQL/14_practice/90_fk_deferred.sql
+practice,facility_typology_rules,pk_facility_typology_rules,PRIMARY KEY,"typology_concept_id,space_function_concept_id","PRIMARY KEY (typology_concept_id, space_function_concept_id)",SQL/14_practice/02_tables.sql
+practice,facility_typology_rules,fk_facility_typology_rules_typology_concept_id,FOREIGN KEY,typology_concept_id,FOREIGN KEY (typology_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/14_practice/90_fk_deferred.sql
+practice,facility_typology_rules,fk_facility_typology_rules_space_function_concept_id,FOREIGN KEY,space_function_concept_id,FOREIGN KEY (space_function_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/14_practice/90_fk_deferred.sql
+practice,facility_typology_rules,fk_facility_typology_rules_rule_concept_id,FOREIGN KEY,rule_concept_id,FOREIGN KEY (rule_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/14_practice/90_fk_deferred.sql
+practice,facility_typology_rules,fk_facility_typology_rules_created_by_user_id,FOREIGN KEY,created_by_user_id,FOREIGN KEY (created_by_user_id) REFERENCES iam.users (id),SQL/14_practice/90_fk_deferred.sql
+practice,facility_typology_rules,fk_facility_typology_rules_updated_by_user_id,FOREIGN KEY,updated_by_user_id,FOREIGN KEY (updated_by_user_id) REFERENCES iam.users (id),SQL/14_practice/90_fk_deferred.sql
 practice,healthcare_services,pk_healthcare_services,PRIMARY KEY,id,PRIMARY KEY (id),SQL/14_practice/02_tables.sql
 practice,healthcare_services,fk_healthcare_services_practice_id,FOREIGN KEY,practice_id,FOREIGN KEY (practice_id) REFERENCES practice.practices (id),SQL/14_practice/03_fk_intra.sql
 practice,healthcare_services,fk_healthcare_services_practice_site_id,FOREIGN KEY,practice_site_id,FOREIGN KEY (practice_site_id) REFERENCES practice.practice_sites (id),SQL/14_practice/03_fk_intra.sql
@@ -7394,6 +7414,12 @@ practice,practice_sites,fk_practice_sites_logo_file_id,FOREIGN KEY,logo_file_id,
 practice,practice_sites,fk_practice_sites_status_concept_id,FOREIGN KEY,status_concept_id,FOREIGN KEY (status_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/14_practice/90_fk_deferred.sql
 practice,practice_sites,fk_practice_sites_created_by_user_id,FOREIGN KEY,created_by_user_id,FOREIGN KEY (created_by_user_id) REFERENCES iam.users (id),SQL/14_practice/90_fk_deferred.sql
 practice,practice_sites,fk_practice_sites_updated_by_user_id,FOREIGN KEY,updated_by_user_id,FOREIGN KEY (updated_by_user_id) REFERENCES iam.users (id),SQL/14_practice/90_fk_deferred.sql
+practice,practice_sites,fk_practice_sites_tenant_id,FOREIGN KEY,tenant_id,FOREIGN KEY (tenant_id) REFERENCES directory.tenants (id),SQL/14_practice/90_fk_deferred.sql
+practice,practice_sites,fk_practice_sites_subsector_concept_id,FOREIGN KEY,subsector_concept_id,FOREIGN KEY (subsector_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/14_practice/90_fk_deferred.sql
+practice,practice_sites,fk_practice_sites_care_level_concept_id,FOREIGN KEY,care_level_concept_id,FOREIGN KEY (care_level_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/14_practice/90_fk_deferred.sql
+practice,practice_sites,fk_practice_sites_facility_typology_concept_id,FOREIGN KEY,facility_typology_concept_id,FOREIGN KEY (facility_typology_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/14_practice/90_fk_deferred.sql
+practice,practice_sites,fk_practice_sites_sedes_department_concept_id,FOREIGN KEY,sedes_department_concept_id,FOREIGN KEY (sedes_department_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/14_practice/90_fk_deferred.sql
+practice,practice_sites,ux_practice_sites_snis_code,UNIQUE INDEX,"""snis_code""","UNIQUE INDEX (""snis_code"") WHERE snis_code IS NOT NULL",SQL/14_practice/04_indexes.sql
 practice,practices,pk_practices,PRIMARY KEY,id,PRIMARY KEY (id),SQL/14_practice/02_tables.sql
 practice,practices,fk_practices_tenant_id,FOREIGN KEY,tenant_id,FOREIGN KEY (tenant_id) REFERENCES directory.tenants (id),SQL/14_practice/90_fk_deferred.sql
 practice,practices,fk_practices_type_concept_id,FOREIGN KEY,type_concept_id,FOREIGN KEY (type_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/14_practice/90_fk_deferred.sql
@@ -7422,6 +7448,34 @@ practice,practitioner_support_assignments,fk_practitioner_support_assignments_sc
 practice,practitioner_support_assignments,fk_practitioner_support_assignments_status_concept_id,FOREIGN KEY,status_concept_id,FOREIGN KEY (status_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/14_practice/90_fk_deferred.sql
 practice,practitioner_support_assignments,fk_practitioner_support_assignments_created_by_user_id,FOREIGN KEY,created_by_user_id,FOREIGN KEY (created_by_user_id) REFERENCES iam.users (id),SQL/14_practice/90_fk_deferred.sql
 practice,practitioner_support_assignments,fk_practitioner_support_assignments_updated_by_user_id,FOREIGN KEY,updated_by_user_id,FOREIGN KEY (updated_by_user_id) REFERENCES iam.users (id),SQL/14_practice/90_fk_deferred.sql
+practice,site_declared_capacities,pk_site_declared_capacities,PRIMARY KEY,id,PRIMARY KEY (id),SQL/14_practice/02_tables.sql
+practice,site_declared_capacities,fk_site_declared_capacities_practice_site_id,FOREIGN KEY,practice_site_id,FOREIGN KEY (practice_site_id) REFERENCES practice.practice_sites (id),SQL/14_practice/03_fk_intra.sql
+practice,site_declared_capacities,fk_site_declared_capacities_tenant_id,FOREIGN KEY,tenant_id,FOREIGN KEY (tenant_id) REFERENCES directory.tenants (id),SQL/14_practice/90_fk_deferred.sql
+practice,site_declared_capacities,fk_site_declared_capacities_capacity_kind_concept_id,FOREIGN KEY,capacity_kind_concept_id,FOREIGN KEY (capacity_kind_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/14_practice/90_fk_deferred.sql
+practice,site_declared_capacities,fk_site_declared_capacities_created_by_user_id,FOREIGN KEY,created_by_user_id,FOREIGN KEY (created_by_user_id) REFERENCES iam.users (id),SQL/14_practice/90_fk_deferred.sql
+practice,site_declared_capacities,fk_site_declared_capacities_updated_by_user_id,FOREIGN KEY,updated_by_user_id,FOREIGN KEY (updated_by_user_id) REFERENCES iam.users (id),SQL/14_practice/90_fk_deferred.sql
+practice,site_licenses,pk_site_licenses,PRIMARY KEY,id,PRIMARY KEY (id),SQL/14_practice/02_tables.sql
+practice,site_licenses,fk_site_licenses_practice_site_id,FOREIGN KEY,practice_site_id,FOREIGN KEY (practice_site_id) REFERENCES practice.practice_sites (id),SQL/14_practice/03_fk_intra.sql
+practice,site_licenses,fk_site_licenses_clinical_unit_id,FOREIGN KEY,clinical_unit_id,FOREIGN KEY (clinical_unit_id) REFERENCES practice.clinical_units (id),SQL/14_practice/03_fk_intra.sql
+practice,site_licenses,fk_site_licenses_healthcare_service_id,FOREIGN KEY,healthcare_service_id,FOREIGN KEY (healthcare_service_id) REFERENCES practice.healthcare_services (id),SQL/14_practice/03_fk_intra.sql
+practice,site_licenses,fk_site_licenses_tenant_id,FOREIGN KEY,tenant_id,FOREIGN KEY (tenant_id) REFERENCES directory.tenants (id),SQL/14_practice/90_fk_deferred.sql
+practice,site_licenses,fk_site_licenses_status_concept_id,FOREIGN KEY,status_concept_id,FOREIGN KEY (status_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/14_practice/90_fk_deferred.sql
+practice,site_licenses,fk_site_licenses_document_file_id,FOREIGN KEY,document_file_id,FOREIGN KEY (document_file_id) REFERENCES common.files (id),SQL/14_practice/90_fk_deferred.sql
+practice,site_licenses,fk_site_licenses_created_by_user_id,FOREIGN KEY,created_by_user_id,FOREIGN KEY (created_by_user_id) REFERENCES iam.users (id),SQL/14_practice/90_fk_deferred.sql
+practice,site_licenses,fk_site_licenses_updated_by_user_id,FOREIGN KEY,updated_by_user_id,FOREIGN KEY (updated_by_user_id) REFERENCES iam.users (id),SQL/14_practice/90_fk_deferred.sql
+practice,space_form_parent_rules,pk_space_form_parent_rules,PRIMARY KEY,"parent_form_concept_id,child_form_concept_id","PRIMARY KEY (parent_form_concept_id, child_form_concept_id)",SQL/14_practice/02_tables.sql
+practice,space_form_parent_rules,fk_space_form_parent_rules_parent_form_concept_id,FOREIGN KEY,parent_form_concept_id,FOREIGN KEY (parent_form_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/14_practice/90_fk_deferred.sql
+practice,space_form_parent_rules,fk_space_form_parent_rules_child_form_concept_id,FOREIGN KEY,child_form_concept_id,FOREIGN KEY (child_form_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/14_practice/90_fk_deferred.sql
+practice,space_form_parent_rules,fk_space_form_parent_rules_created_by_user_id,FOREIGN KEY,created_by_user_id,FOREIGN KEY (created_by_user_id) REFERENCES iam.users (id),SQL/14_practice/90_fk_deferred.sql
+practice,space_form_parent_rules,fk_space_form_parent_rules_updated_by_user_id,FOREIGN KEY,updated_by_user_id,FOREIGN KEY (updated_by_user_id) REFERENCES iam.users (id),SQL/14_practice/90_fk_deferred.sql
+practice,space_unit_assignments,pk_space_unit_assignments,PRIMARY KEY,id,PRIMARY KEY (id),SQL/14_practice/02_tables.sql
+practice,space_unit_assignments,fk_space_unit_assignments_care_space_id,FOREIGN KEY,care_space_id,FOREIGN KEY (care_space_id) REFERENCES practice.care_spaces (id),SQL/14_practice/03_fk_intra.sql
+practice,space_unit_assignments,fk_space_unit_assignments_clinical_unit_id,FOREIGN KEY,clinical_unit_id,FOREIGN KEY (clinical_unit_id) REFERENCES practice.clinical_units (id),SQL/14_practice/03_fk_intra.sql
+practice,space_unit_assignments,fk_space_unit_assignments_tenant_id,FOREIGN KEY,tenant_id,FOREIGN KEY (tenant_id) REFERENCES directory.tenants (id),SQL/14_practice/90_fk_deferred.sql
+practice,space_unit_assignments,fk_space_unit_assignments_role_concept_id,FOREIGN KEY,role_concept_id,FOREIGN KEY (role_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/14_practice/90_fk_deferred.sql
+practice,space_unit_assignments,fk_space_unit_assignments_created_by_user_id,FOREIGN KEY,created_by_user_id,FOREIGN KEY (created_by_user_id) REFERENCES iam.users (id),SQL/14_practice/90_fk_deferred.sql
+practice,space_unit_assignments,fk_space_unit_assignments_updated_by_user_id,FOREIGN KEY,updated_by_user_id,FOREIGN KEY (updated_by_user_id) REFERENCES iam.users (id),SQL/14_practice/90_fk_deferred.sql
+practice,space_unit_assignments,ux_space_unit_assignments_current,UNIQUE INDEX,"""care_space_id"", ""clinical_unit_id""","UNIQUE INDEX (""care_space_id"", ""clinical_unit_id"") WHERE valid_to IS NULL",SQL/14_practice/04_indexes.sql
 procedures_perioperative,anesthesia_airway_assessments,pk_anesthesia_airway_assessments,PRIMARY KEY,id,PRIMARY KEY (id),SQL/53_procedures_perioperative/02_tables.sql
 procedures_perioperative,anesthesia_airway_assessments,fk_anesthesia_airway_assessments_anesthesia_plan_id,FOREIGN KEY,anesthesia_plan_id,FOREIGN KEY (anesthesia_plan_id) REFERENCES procedures_perioperative.anesthesia_plans (id),SQL/53_procedures_perioperative/03_fk_intra.sql
 procedures_perioperative,anesthesia_airway_assessments,fk_anesthesia_airway_assessments_assessed_by_profile_id,FOREIGN KEY,assessed_by_profile_id,FOREIGN KEY (assessed_by_profile_id) REFERENCES profiles.health_practitioner_profiles (profile_id),SQL/53_procedures_perioperative/90_fk_deferred.sql

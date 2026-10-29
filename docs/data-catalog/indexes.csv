@@ -1041,6 +1041,10 @@ audit,care_spaces_history,ix_care_spaces_history_care_space_id,NO,"""care_space_
 audit,care_spaces_history,ix_care_spaces_history_operation_concept_id,NO,"""operation_concept_id""",,SQL/10_audit/04_indexes.sql
 audit,care_spaces_history,ix_care_spaces_history_changed_by_user_id,NO,"""changed_by_user_id""",,SQL/10_audit/04_indexes.sql
 audit,care_spaces_history,ix_care_spaces_history_change_reason_concept_id,NO,"""change_reason_concept_id""",,SQL/10_audit/04_indexes.sql
+audit,site_licenses_history,ix_site_licenses_history_site_license_id,NO,"""site_license_id""",,SQL/10_audit/04_indexes.sql
+audit,site_licenses_history,ix_site_licenses_history_operation_concept_id,NO,"""operation_concept_id""",,SQL/10_audit/04_indexes.sql
+audit,site_licenses_history,ix_site_licenses_history_changed_by_user_id,NO,"""changed_by_user_id""",,SQL/10_audit/04_indexes.sql
+audit,site_licenses_history,ix_site_licenses_history_change_reason_concept_id,NO,"""change_reason_concept_id""",,SQL/10_audit/04_indexes.sql
 audit,diagnostic_reports_history,ix_diagnostic_reports_history_diagnostic_report_id,NO,"""diagnostic_report_id""",,SQL/10_audit/04_indexes.sql
 audit,diagnostic_reports_history,ix_diagnostic_reports_history_operation_concept_id,NO,"""operation_concept_id""",,SQL/10_audit/04_indexes.sql
 audit,diagnostic_reports_history,ix_diagnostic_reports_history_changed_by_user_id,NO,"""changed_by_user_id""",,SQL/10_audit/04_indexes.sql
@@ -1821,6 +1825,12 @@ practice,practice_sites,ix_practice_sites_created_by_user_id,NO,"""created_by_us
 practice,practice_sites,ix_practice_sites_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/14_practice/04_indexes.sql
 practice,practice_sites,ix_practice_sites_bank_qr_file_id,NO,"""bank_qr_file_id""",,SQL/14_practice/04_indexes.sql
 practice,practice_sites,ix_practice_sites_logo_file_id,NO,"""logo_file_id""",,SQL/14_practice/04_indexes.sql
+practice,practice_sites,ix_practice_sites_tenant_id,NO,"""tenant_id""",,SQL/14_practice/04_indexes.sql
+practice,practice_sites,ix_practice_sites_subsector_concept_id,NO,"""subsector_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,practice_sites,ix_practice_sites_care_level_concept_id,NO,"""care_level_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,practice_sites,ix_practice_sites_facility_typology_concept_id,NO,"""facility_typology_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,practice_sites,ix_practice_sites_sedes_department_concept_id,NO,"""sedes_department_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,practice_sites,ux_practice_sites_snis_code,YES,"""snis_code""",WHERE snis_code IS NOT NULL,SQL/14_practice/04_indexes.sql
 practice,clinical_units,ix_clinical_units_practice_site_id,NO,"""practice_site_id""",,SQL/14_practice/04_indexes.sql
 practice,clinical_units,ix_clinical_units_parent_unit_id,NO,"""parent_unit_id""",,SQL/14_practice/04_indexes.sql
 practice,clinical_units,ix_clinical_units_unit_type_concept_id,NO,"""unit_type_concept_id""",,SQL/14_practice/04_indexes.sql
@@ -1830,6 +1840,7 @@ practice,clinical_units,ix_clinical_units_status_concept_id,NO,"""status_concept
 practice,clinical_units,ix_clinical_units_created_by_user_id,NO,"""created_by_user_id""",,SQL/14_practice/04_indexes.sql
 practice,clinical_units,ix_clinical_units_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/14_practice/04_indexes.sql
 practice,clinical_units,ix_clinical_units_responsible_user_id,NO,"""responsible_user_id""",,SQL/14_practice/04_indexes.sql
+practice,clinical_units,ix_clinical_units_tenant_id,NO,"""tenant_id""",,SQL/14_practice/04_indexes.sql
 practice,care_spaces,ix_care_spaces_practice_site_id,NO,"""practice_site_id""",,SQL/14_practice/04_indexes.sql
 practice,care_spaces,ix_care_spaces_clinical_unit_id,NO,"""clinical_unit_id""",,SQL/14_practice/04_indexes.sql
 practice,care_spaces,ix_care_spaces_parent_space_id,NO,"""parent_space_id""",,SQL/14_practice/04_indexes.sql
@@ -1838,6 +1849,43 @@ practice,care_spaces,ix_care_spaces_operational_status_concept_id,NO,"""operatio
 practice,care_spaces,ix_care_spaces_status_concept_id,NO,"""status_concept_id""",,SQL/14_practice/04_indexes.sql
 practice,care_spaces,ix_care_spaces_created_by_user_id,NO,"""created_by_user_id""",,SQL/14_practice/04_indexes.sql
 practice,care_spaces,ix_care_spaces_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/14_practice/04_indexes.sql
+practice,care_spaces,ix_care_spaces_tenant_id,NO,"""tenant_id""",,SQL/14_practice/04_indexes.sql
+practice,care_spaces,ix_care_spaces_form_concept_id,NO,"""form_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,care_spaces,ix_care_spaces_asepsis_concept_id,NO,"""asepsis_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,care_spaces,ix_care_spaces_pressure_concept_id,NO,"""pressure_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,care_spaces,ix_care_spaces_sex_restriction_concept_id,NO,"""sex_restriction_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,care_spaces,ix_care_spaces_age_group_concept_id,NO,"""age_group_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,care_spaces,ix_care_spaces_bed_category_concept_id,NO,"""bed_category_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,care_spaces,ux_care_spaces_site_code,YES,"""practice_site_id"", ""code""",,SQL/14_practice/04_indexes.sql
+practice,space_unit_assignments,ix_space_unit_assignments_tenant_id,NO,"""tenant_id""",,SQL/14_practice/04_indexes.sql
+practice,space_unit_assignments,ix_space_unit_assignments_care_space_id,NO,"""care_space_id""",,SQL/14_practice/04_indexes.sql
+practice,space_unit_assignments,ix_space_unit_assignments_clinical_unit_id,NO,"""clinical_unit_id""",,SQL/14_practice/04_indexes.sql
+practice,space_unit_assignments,ix_space_unit_assignments_role_concept_id,NO,"""role_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,space_unit_assignments,ix_space_unit_assignments_created_by_user_id,NO,"""created_by_user_id""",,SQL/14_practice/04_indexes.sql
+practice,space_unit_assignments,ix_space_unit_assignments_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/14_practice/04_indexes.sql
+practice,space_unit_assignments,ux_space_unit_assignments_current,YES,"""care_space_id"", ""clinical_unit_id""",WHERE valid_to IS NULL,SQL/14_practice/04_indexes.sql
+practice,site_licenses,ix_site_licenses_tenant_id,NO,"""tenant_id""",,SQL/14_practice/04_indexes.sql
+practice,site_licenses,ix_site_licenses_practice_site_id,NO,"""practice_site_id""",,SQL/14_practice/04_indexes.sql
+practice,site_licenses,ix_site_licenses_status_concept_id,NO,"""status_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,site_licenses,ix_site_licenses_clinical_unit_id,NO,"""clinical_unit_id""",,SQL/14_practice/04_indexes.sql
+practice,site_licenses,ix_site_licenses_healthcare_service_id,NO,"""healthcare_service_id""",,SQL/14_practice/04_indexes.sql
+practice,site_licenses,ix_site_licenses_document_file_id,NO,"""document_file_id""",,SQL/14_practice/04_indexes.sql
+practice,site_licenses,ix_site_licenses_created_by_user_id,NO,"""created_by_user_id""",,SQL/14_practice/04_indexes.sql
+practice,site_licenses,ix_site_licenses_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/14_practice/04_indexes.sql
+practice,site_licenses,ix_site_licenses_practice_site_id_expires_on,NO,"""practice_site_id"", ""expires_on""",,SQL/14_practice/04_indexes.sql
+practice,site_declared_capacities,ix_site_declared_capacities_tenant_id,NO,"""tenant_id""",,SQL/14_practice/04_indexes.sql
+practice,site_declared_capacities,ix_site_declared_capacities_practice_site_id,NO,"""practice_site_id""",,SQL/14_practice/04_indexes.sql
+practice,site_declared_capacities,ix_site_declared_capacities_capacity_kind_concept_id,NO,"""capacity_kind_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,site_declared_capacities,ix_site_declared_capacities_created_by_user_id,NO,"""created_by_user_id""",,SQL/14_practice/04_indexes.sql
+practice,site_declared_capacities,ix_site_declared_capacities_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/14_practice/04_indexes.sql
+practice,site_declared_capacities,ix_site_declared_capacities_site_kind_as_of,NO,"""practice_site_id"", ""capacity_kind_concept_id"", ""as_of"" DESC",,SQL/14_practice/04_indexes.sql
+practice,space_form_parent_rules,ix_space_form_parent_rules_child_form_concept_id,NO,"""child_form_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,space_form_parent_rules,ix_space_form_parent_rules_created_by_user_id,NO,"""created_by_user_id""",,SQL/14_practice/04_indexes.sql
+practice,space_form_parent_rules,ix_space_form_parent_rules_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/14_practice/04_indexes.sql
+practice,facility_typology_rules,ix_facility_typology_rules_space_function_concept_id,NO,"""space_function_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,facility_typology_rules,ix_facility_typology_rules_rule_concept_id,NO,"""rule_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,facility_typology_rules,ix_facility_typology_rules_created_by_user_id,NO,"""created_by_user_id""",,SQL/14_practice/04_indexes.sql
+practice,facility_typology_rules,ix_facility_typology_rules_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/14_practice/04_indexes.sql
 practice,healthcare_services,ix_healthcare_services_practice_id,NO,"""practice_id""",,SQL/14_practice/04_indexes.sql
 practice,healthcare_services,ix_healthcare_services_practice_site_id,NO,"""practice_site_id""",,SQL/14_practice/04_indexes.sql
 practice,healthcare_services,ix_healthcare_services_clinical_unit_id,NO,"""clinical_unit_id""",,SQL/14_practice/04_indexes.sql

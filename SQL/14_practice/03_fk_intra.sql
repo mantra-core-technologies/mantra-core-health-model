@@ -51,6 +51,42 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
+    ALTER TABLE "practice"."space_unit_assignments"
+        ADD CONSTRAINT "fk_space_unit_assignments_care_space_id" FOREIGN KEY ("care_space_id")
+        REFERENCES "practice"."care_spaces" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "practice"."space_unit_assignments"
+        ADD CONSTRAINT "fk_space_unit_assignments_clinical_unit_id" FOREIGN KEY ("clinical_unit_id")
+        REFERENCES "practice"."clinical_units" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "practice"."site_licenses"
+        ADD CONSTRAINT "fk_site_licenses_practice_site_id" FOREIGN KEY ("practice_site_id")
+        REFERENCES "practice"."practice_sites" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "practice"."site_licenses"
+        ADD CONSTRAINT "fk_site_licenses_clinical_unit_id" FOREIGN KEY ("clinical_unit_id")
+        REFERENCES "practice"."clinical_units" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "practice"."site_licenses"
+        ADD CONSTRAINT "fk_site_licenses_healthcare_service_id" FOREIGN KEY ("healthcare_service_id")
+        REFERENCES "practice"."healthcare_services" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "practice"."site_declared_capacities"
+        ADD CONSTRAINT "fk_site_declared_capacities_practice_site_id" FOREIGN KEY ("practice_site_id")
+        REFERENCES "practice"."practice_sites" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
     ALTER TABLE "practice"."healthcare_services"
         ADD CONSTRAINT "fk_healthcare_services_practice_id" FOREIGN KEY ("practice_id")
         REFERENCES "practice"."practices" ("id");
