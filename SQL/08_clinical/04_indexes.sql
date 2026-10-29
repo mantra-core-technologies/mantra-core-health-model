@@ -88,6 +88,14 @@ CREATE INDEX IF NOT EXISTS "ix_encounters_tenant_id_status_concept_id" ON "clini
 
 CREATE INDEX IF NOT EXISTS "ix_encounters_patient_profile_id_updated_at" ON "clinical"."encounters" ("tenant_id", "patient_profile_id", "updated_at" DESC);
 
+CREATE INDEX IF NOT EXISTS "ix_encounters_level_of_care_concept_id" ON "clinical"."encounters" ("level_of_care_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_encounters_admission_source_concept_id" ON "clinical"."encounters" ("admission_source_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_encounters_discharge_disposition_concept_id" ON "clinical"."encounters" ("discharge_disposition_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_encounters_isolation_precaution_concept_id" ON "clinical"."encounters" ("isolation_precaution_concept_id");
+
 CREATE INDEX IF NOT EXISTS "ix_observations_custodian_tenant_id" ON "clinical"."observations" ("custodian_tenant_id");
 
 CREATE INDEX IF NOT EXISTS "ix_observations_patient_profile_id" ON "clinical"."observations" ("patient_profile_id");
@@ -271,6 +279,8 @@ CREATE INDEX IF NOT EXISTS "ix_service_requests_updated_by_user_id" ON "clinical
 CREATE INDEX IF NOT EXISTS "ix_service_requests_custodian_tenant_id_status_concept_id" ON "clinical"."service_requests" ("custodian_tenant_id", "status_concept_id", "updated_at" DESC);
 
 CREATE INDEX IF NOT EXISTS "ix_service_requests_patient_profile_id_updated_at" ON "clinical"."service_requests" ("custodian_tenant_id", "patient_profile_id", "updated_at" DESC);
+
+CREATE INDEX IF NOT EXISTS "ix_service_requests_suggested_care_space_id" ON "clinical"."service_requests" ("suggested_care_space_id");
 
 CREATE INDEX IF NOT EXISTS "ix_diagnostic_reports_custodian_tenant_id" ON "clinical"."diagnostic_reports" ("custodian_tenant_id");
 
@@ -472,6 +482,8 @@ CREATE INDEX IF NOT EXISTS "gist_appointments_effective_period" ON "clinical"."a
 
 CREATE INDEX IF NOT EXISTS "ix_appointments_patient_start" ON "clinical"."appointments" ("patient_profile_id", "start_at" DESC);
 
+CREATE INDEX IF NOT EXISTS "ix_appointments_care_space_id" ON "clinical"."appointments" ("care_space_id");
+
 CREATE INDEX IF NOT EXISTS "ix_encounter_participants_encounter_id" ON "clinical"."encounter_participants" ("encounter_id");
 
 CREATE INDEX IF NOT EXISTS "ix_encounter_participants_practitioner_profile_id" ON "clinical"."encounter_participants" ("practitioner_profile_id");
@@ -499,6 +511,76 @@ CREATE INDEX IF NOT EXISTS "ix_encounter_locations_location_status_concept_id" O
 CREATE INDEX IF NOT EXISTS "ix_encounter_locations_created_by_user_id" ON "clinical"."encounter_locations" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_encounter_locations_updated_by_user_id" ON "clinical"."encounter_locations" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_encounter_locations_tenant_id" ON "clinical"."encounter_locations" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_encounter_locations_movement_type_concept_id" ON "clinical"."encounter_locations" ("movement_type_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_encounter_locations_previous_encounter_location_id" ON "clinical"."encounter_locations" ("previous_encounter_location_id");
+
+CREATE INDEX IF NOT EXISTS "ix_encounter_locations_end_reason_concept_id" ON "clinical"."encounter_locations" ("end_reason_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_encounter_locations_bed_category_concept_id" ON "clinical"."encounter_locations" ("bed_category_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_encounter_locations_placement_incident_id" ON "clinical"."encounter_locations" ("placement_incident_id");
+
+CREATE INDEX IF NOT EXISTS "ix_encounter_locations_bed_period" ON "clinical"."encounter_locations" ("care_space_id", "period_start" DESC) WHERE is_bed_assignment;
+
+CREATE INDEX IF NOT EXISTS "ix_placement_incidents_tenant_id" ON "clinical"."placement_incidents" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_placement_incidents_encounter_id" ON "clinical"."placement_incidents" ("encounter_id");
+
+CREATE INDEX IF NOT EXISTS "ix_placement_incidents_encounter_location_id" ON "clinical"."placement_incidents" ("encounter_location_id");
+
+CREATE INDEX IF NOT EXISTS "ix_placement_incidents_care_space_id" ON "clinical"."placement_incidents" ("care_space_id");
+
+CREATE INDEX IF NOT EXISTS "ix_placement_incidents_patient_profile_id" ON "clinical"."placement_incidents" ("patient_profile_id");
+
+CREATE INDEX IF NOT EXISTS "ix_placement_incidents_authorized_by_user_id" ON "clinical"."placement_incidents" ("authorized_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_placement_incidents_status_concept_id" ON "clinical"."placement_incidents" ("status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_placement_incidents_reviewed_by_user_id" ON "clinical"."placement_incidents" ("reviewed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_placement_incidents_created_by_user_id" ON "clinical"."placement_incidents" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_placement_incidents_updated_by_user_id" ON "clinical"."placement_incidents" ("updated_by_user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_inpatient_census_days_site_unit_date" ON "clinical"."inpatient_census_days" ("practice_site_id", "clinical_unit_id", "census_date");
+
+CREATE INDEX IF NOT EXISTS "ix_inpatient_census_days_tenant_id" ON "clinical"."inpatient_census_days" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_inpatient_census_days_clinical_unit_id" ON "clinical"."inpatient_census_days" ("clinical_unit_id");
+
+CREATE INDEX IF NOT EXISTS "ix_inpatient_census_days_status_concept_id" ON "clinical"."inpatient_census_days" ("status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_inpatient_census_days_closed_by_user_id" ON "clinical"."inpatient_census_days" ("closed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_inpatient_census_days_created_by_user_id" ON "clinical"."inpatient_census_days" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_inpatient_census_days_updated_by_user_id" ON "clinical"."inpatient_census_days" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_inpatient_census_days_site_date" ON "clinical"."inpatient_census_days" ("practice_site_id", "census_date" DESC);
+
+CREATE INDEX IF NOT EXISTS "ix_inpatient_census_entries_tenant_id" ON "clinical"."inpatient_census_entries" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_inpatient_census_entries_census_day_id" ON "clinical"."inpatient_census_entries" ("census_day_id");
+
+CREATE INDEX IF NOT EXISTS "ix_inpatient_census_entries_encounter_id" ON "clinical"."inpatient_census_entries" ("encounter_id");
+
+CREATE INDEX IF NOT EXISTS "ix_inpatient_census_entries_patient_profile_id" ON "clinical"."inpatient_census_entries" ("patient_profile_id");
+
+CREATE INDEX IF NOT EXISTS "ix_inpatient_census_entries_care_space_id" ON "clinical"."inpatient_census_entries" ("care_space_id");
+
+CREATE INDEX IF NOT EXISTS "ix_inpatient_census_entries_bed_category_concept_id" ON "clinical"."inpatient_census_entries" ("bed_category_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_inpatient_census_entries_movement_concept_id" ON "clinical"."inpatient_census_entries" ("movement_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_inpatient_census_adjustments_tenant_id" ON "clinical"."inpatient_census_adjustments" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_inpatient_census_adjustments_census_day_id" ON "clinical"."inpatient_census_adjustments" ("census_day_id", "created_at");
+
+CREATE INDEX IF NOT EXISTS "ix_inpatient_census_adjustments_adjusted_by_user_id" ON "clinical"."inpatient_census_adjustments" ("adjusted_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_observation_performers_observation_id" ON "clinical"."observation_performers" ("observation_id");
 

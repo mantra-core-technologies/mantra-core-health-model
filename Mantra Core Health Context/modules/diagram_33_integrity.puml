@@ -114,6 +114,11 @@ entity appointments <<REFERENCE_ONLY>> {
   EXCLUDE : practitioner/location time overlap
   EXCLUDE_SQL : ex_appointments_practitioner_time | "practitioner_profile_id" WITH =, tstzrange("start_at", "end_at", '[)') WITH && | "practitioner_profile_id" IS NOT NULL AND "end_at" IS NOT NULL AND "status_concept_id" IN ('51530fd7-05b1-5c29-80c4-da740ede4d27', '37dded87-7a7a-5a24-86f6-0ef48cccb482')
   LOCK : reservation confirmation transaction
+  ' + infraestructura hospitalaria F5d: la mitad «location» del EXCLUDE en prosa de arriba.
+  ' Mismos dos estados que ex_appointments_practitioner_time (APPOINTMENT_BOOKED,
+  ' APPOINTMENT_CHECKED_IN). care_space_id es NULL en espacios allowOverlap (la API no lo
+  ' escribe), así que no cambia las reglas de recursos con capacidad > 1.
+  EXCLUDE_SQL : ex_appointments_care_space_time | "care_space_id" WITH =, tstzrange("start_at", "end_at", '[)') WITH && | "care_space_id" IS NOT NULL AND "end_at" IS NOT NULL AND "status_concept_id" IN ('51530fd7-05b1-5c29-80c4-da740ede4d27', '37dded87-7a7a-5a24-86f6-0ef48cccb482')
 }
 ' + v4.2.60 (P34) — turnos de guardia de farmacia. Un turno vencido no se publica (lo
 ' filtra la lectura); lo que la base garantiza es que el turno tenga sentido: fin
@@ -315,6 +320,37 @@ entity "delegated_access.organization_user_assignments" as delegated_access_orga
   CHECK_SQL : ck_org_user_assignments_scope_target | ("access_scope_concept_id" <> '928c884d-ff91-584c-8aa6-68535085e078' OR "clinical_unit_id" IS NOT NULL) AND ("access_scope_concept_id" <> '4df1a147-cb37-55ba-94e8-ab469e9cccb0' OR "care_space_id" IS NOT NULL) AND ("access_scope_concept_id" <> 'e69a4c95-fe59-5c3e-b826-222af123adb9' OR "practice_site_id" IS NOT NULL)
   ' F5g (regla B.5-29): un solo jefe de unidad vigente por unidad clínica.
   EXCLUDE_SQL : ex_org_user_assignments_unit_head | "clinical_unit_id" WITH =, tstzrange("valid_from", "valid_to", '[)') WITH && | "assignment_role_concept_id" = 'ce54425b-5479-57f1-8bb2-274a8617723c' AND "status_concept_id" = '38a1d301-f40d-5b17-a695-5e6d605f8b19'
+}
+' + infraestructura hospitalaria F3 (ADT). Invariante 1: una cama, un paciente a la vez,
+' historial y reservas incluidos. Sólo cuentan las filas de cama (is_bed_assignment) en
+' LOCATION_ACTIVE 809db700…, LOCATION_RESERVED cdd86257…, LOCATION_COMPLETED 8cf00069…
+' (deterministicId('clinical:LOCATION_*') de la API; UUID literales porque el predicado de
+' un EXCLUDE tiene que ser inmutable). tstzrange(x, NULL) es abierto a la derecha. Los dos
+' EXCLUDE son DEFERRABLE para el intercambio A17 (SET CONSTRAINTS … DEFERRED dentro de la
+' transacción). Un encuentro ocupa una sola cama a la vez; la reserva de traslado
+' (RESERVED) puede convivir con su cama ACTIVE.
+entity "clinical.encounter_locations" as clinical_encounter_locations <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_encounter_locations_bed_period | (NOT "is_bed_assignment" OR ("period_start" IS NOT NULL AND "care_space_id" IS NOT NULL))
+  EXCLUDE_SQL : ex_encounter_locations_bed_occupancy | "care_space_id" WITH =, tstzrange("period_start", "period_end", '[)') WITH && | "is_bed_assignment" AND "location_status_concept_id" IN ('809db700-0627-5fe3-8278-4f038f4475b3', 'cdd86257-4297-5941-8ae8-b95e11439a48', '8cf00069-81ca-56e1-8e71-9e16333a1f6c') | DEFERRABLE INITIALLY IMMEDIATE
+  EXCLUDE_SQL : ex_encounter_locations_encounter_single_bed | "encounter_id" WITH =, tstzrange("period_start", "period_end", '[)') WITH && | "is_bed_assignment" AND "location_status_concept_id" IN ('809db700-0627-5fe3-8278-4f038f4475b3', '8cf00069-81ca-56e1-8e71-9e16333a1f6c') | DEFERRABLE INITIALLY IMMEDIATE
+}
+entity "clinical.placement_incidents" as clinical_placement_incidents <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_placement_incidents_justification_length | (char_length("justification_text") >= 20)
+}
+' El censo CERRADO es inmutable, pero la fila nace abierta: la guarda depende del estado
+' (OLD.status_concept_id = CENSUS_CLOSED f17b79e2…) y forbid_mutation() no la expresa.
+' Vive en el patch F3 (trg_inpatient_census_days_closed_guard). Detalle y ajustes son
+' append-only.
+entity "clinical.inpatient_census_days" as clinical_inpatient_census_days <<REFERENCE_ONLY>> {
+  UK : site + unit + census_date
+  GUARD : UPDATE/DELETE rechazados cuando OLD.status_concept_id = CENSUS_CLOSED (trigger trg_inpatient_census_days_closed_guard, patch 2026-10-29_infraestructura_f3_clinical.sql)
+}
+entity "clinical.inpatient_census_entries" as clinical_inpatient_census_entries <<IMMUTABLE, REFERENCE_ONLY>> {
+  UPDATE_DELETE : forbidden
+}
+entity "clinical.inpatient_census_adjustments" as clinical_inpatient_census_adjustments <<IMMUTABLE, REFERENCE_ONLY>> {
+  UPDATE_DELETE : forbidden
+  CHECK_SQL : ck_inpatient_census_adjustments_field_code | "field_code" IN ('beds_censable', 'beds_available', 'beds_blocked', 'patients_at_cutoff', 'admissions', 'discharges', 'deaths', 'transfers_in', 'transfers_out', 'same_day_stays', 'patient_days', 'discharge_stay_days')
 }
 entity "delegated_access.shared_access_link_uses" as delegated_access_shared_access_link_uses <<LOG, REFERENCE_ONLY>> {
   ' A-12: el rastro de uso de un token compartido no se reescribe (UPDATE prohibido, DELETE libre para la retencion).

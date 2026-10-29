@@ -79,6 +79,12 @@ CREATE TABLE IF NOT EXISTS "clinical"."encounters" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "level_of_care_concept_id" uuid,
+    "admission_source_concept_id" uuid,
+    "discharge_disposition_concept_id" uuid,
+    "isolation_precaution_concept_id" uuid,
+    "isolation_organism_text" varchar,
+    "expected_discharge_at" timestamptz,
     CONSTRAINT "pk_encounters" PRIMARY KEY ("id")
 );
 
@@ -239,6 +245,7 @@ CREATE TABLE IF NOT EXISTS "clinical"."service_requests" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "suggested_care_space_id" uuid,
     CONSTRAINT "pk_service_requests" PRIMARY KEY ("id")
 );
 
@@ -441,6 +448,7 @@ CREATE TABLE IF NOT EXISTS "clinical"."appointments" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "care_space_id" uuid,
     CONSTRAINT "pk_appointments" PRIMARY KEY ("id")
 );
 
@@ -476,7 +484,96 @@ CREATE TABLE IF NOT EXISTS "clinical"."encounter_locations" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "tenant_id" uuid NOT NULL,
+    "is_bed_assignment" boolean NOT NULL DEFAULT false,
+    "movement_type_concept_id" uuid,
+    "previous_encounter_location_id" uuid,
+    "end_reason_concept_id" uuid,
+    "bed_category_concept_id" uuid,
+    "placement_incident_id" uuid,
     CONSTRAINT "pk_encounter_locations" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "clinical"."placement_incidents" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "encounter_id" uuid NOT NULL,
+    "encounter_location_id" uuid,
+    "care_space_id" uuid NOT NULL,
+    "patient_profile_id" uuid NOT NULL,
+    "violations_json" jsonb NOT NULL,
+    "justification_text" text NOT NULL,
+    "authorized_by_user_id" uuid NOT NULL,
+    "status_concept_id" uuid NOT NULL,
+    "reviewed_by_user_id" uuid,
+    "reviewed_at" timestamptz,
+    "review_note" text,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_placement_incidents" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "clinical"."inpatient_census_days" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "practice_site_id" uuid NOT NULL,
+    "clinical_unit_id" uuid NOT NULL,
+    "census_date" date NOT NULL,
+    "cutoff_at" timestamptz NOT NULL,
+    "status_concept_id" uuid NOT NULL,
+    "closed_at" timestamptz,
+    "closed_by_user_id" uuid,
+    "beds_censable" integer NOT NULL,
+    "beds_available" integer NOT NULL,
+    "beds_blocked" integer NOT NULL,
+    "patients_at_cutoff" integer NOT NULL,
+    "admissions" integer NOT NULL,
+    "discharges" integer NOT NULL,
+    "deaths" integer NOT NULL,
+    "transfers_in" integer NOT NULL,
+    "transfers_out" integer NOT NULL,
+    "same_day_stays" integer NOT NULL,
+    "patient_days" integer NOT NULL,
+    "discharge_stay_days" integer NOT NULL,
+    "content_hash" varchar,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_inpatient_census_days" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "clinical"."inpatient_census_entries" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "census_day_id" uuid NOT NULL,
+    "encounter_id" uuid NOT NULL,
+    "patient_profile_id" uuid NOT NULL,
+    "care_space_id" uuid NOT NULL,
+    "bed_category_concept_id" uuid,
+    "movement_concept_id" uuid NOT NULL,
+    "occurred_at" timestamptz NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    CONSTRAINT "pk_inpatient_census_entries" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "clinical"."inpatient_census_adjustments" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "census_day_id" uuid NOT NULL,
+    "field_code" varchar NOT NULL,
+    "previous_value" integer NOT NULL,
+    "new_value" integer NOT NULL,
+    "reason_text" text NOT NULL,
+    "entry_ref_id" uuid,
+    "adjusted_by_user_id" uuid NOT NULL,
+    "request_id" varchar,
+    "created_at" timestamptz NOT NULL,
+    CONSTRAINT "pk_inpatient_census_adjustments" PRIMARY KEY ("id")
 );
 
 CREATE TABLE IF NOT EXISTS "clinical"."observation_performers" (
