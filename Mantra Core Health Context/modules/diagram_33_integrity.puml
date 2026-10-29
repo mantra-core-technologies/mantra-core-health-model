@@ -269,13 +269,15 @@ entity "clinical_ext.cds_rule_versions" as clinical_ext_cds_rule_versions <<REFE
   CHECK_SQL : ck_cds_rule_versions_number | "version_number" >= 1
 }
 entity "procedures_perioperative.procedure_cases" as procedures_perioperative_procedure_cases <<REFERENCE_ONLY>> {
-  ' ORG-QUI-005: la regla que periop-cases.service ya aplica (findOverlappingCases), ahora en la base.
-  ' Estados que ocupan el quirofano (CASE_SCHEDULED, CASE_READY, SURG_CASE_IN_PROGRESS) como UUID
-  ' literales: el predicado de un EXCLUDE tiene que ser inmutable. Rango semiabierto [), igual que
-  ' la comparacion `<`/`>` del servicio. La preparacion y la limpieza NO entran en el rango: sumar un
-  ' intervalo a un timestamptz es STABLE y un indice no lo admite; las aplica el servicio.
-  EXCLUDE : operating room time overlap
-  EXCLUDE_SQL : ex_procedure_cases_operating_room_time | "operating_room_id" WITH =, tstzrange("scheduled_start_at", "scheduled_end_at", '[)') WITH && | "operating_room_id" IS NOT NULL AND "scheduled_start_at" IS NOT NULL AND "scheduled_end_at" IS NOT NULL AND "status_concept_id" IN ('6fe38139-ad1d-5214-84c1-8c184e4e58fb', 'f6985cd5-f867-5d76-b70c-1138667fd2ab', 'fdc78cc9-eda6-5625-9a26-1bdcec4dc203')
+  ' ORG-QUI-005 / INV-38 (F4, 2026-10-29): la sala no admite dos casos cuya VENTANA RESERVADA se solape.
+  ' Ventana reservada = [inicio − preparación, fin + limpieza), materializada en reserved_start_at /
+  ' reserved_end_at por el trigger trg_procedure_cases_reserved_window del patch …_f4_periop (sumar un
+  ' intervalo a un timestamptz es STABLE y un índice no lo admite). REEMPLAZA a
+  ' ex_procedure_cases_operating_room_time (ventana programada, sin recambio). Estados que ocupan el
+  ' quirófano (CASE_SCHEDULED, CASE_READY, SURG_CASE_IN_PROGRESS) como UUID literales: el predicado de
+  ' un EXCLUDE tiene que ser inmutable. Rango semiabierto [): dos ventanas que se tocan no se solapan.
+  EXCLUDE : operating room reserved window overlap
+  EXCLUDE_SQL : ex_procedure_cases_operating_room_reserved_time | "operating_room_id" WITH =, tstzrange("reserved_start_at", "reserved_end_at", '[)') WITH && | "operating_room_id" IS NOT NULL AND "reserved_start_at" IS NOT NULL AND "reserved_end_at" IS NOT NULL AND "status_concept_id" IN ('6fe38139-ad1d-5214-84c1-8c184e4e58fb', 'f6985cd5-f867-5d76-b70c-1138667fd2ab', 'fdc78cc9-eda6-5625-9a26-1bdcec4dc203')
   CHECK_SQL : ck_procedure_cases_buffers | (COALESCE("prep_minutes", 0) >= 0 AND COALESCE("cleanup_minutes", 0) >= 0)
 }
 entity "practice.care_spaces" as practice_care_spaces <<REFERENCE_ONLY>> {
@@ -390,5 +392,43 @@ entity "practice.care_space_blocks" as practice_care_space_blocks <<REFERENCE_ON
 entity "practice.cleaning_orders" as practice_cleaning_orders <<REFERENCE_ONLY>> {
   ' Quien inspecciona no es quien terminó la limpieza (INV-27/28; criterio de aceptación 4).
   CHECK_SQL : ck_cleaning_orders_inspector_differs | ("inspected_by_user_id" IS NULL OR "inspected_by_user_id" <> "finished_by_user_id")
+}
+' + infraestructura hospitalaria F4 (quirófanos, 2026-10-29) — CONTRATO-F2-F5 §F4.1.
+' UUID literales (el predicado de un EXCLUDE / índice parcial debe ser IMMUTABLE), derivados con
+' deterministicId() de la API (common/seed/concept-seed.ts: clave `<módulo>:<NOMBRE>`):
+'   762dc30b-3e3c-5e1e-8504-5c511fd1d4a8 = procedures_perioperative:ORB_ACTIVE
+'   c3225706-ef13-5cbe-af6d-caaf25437458 = procedures_perioperative:ORB_RELEASED
+'   e420cc84-8fd2-5887-a9bd-faf77d561508 = procedures_perioperative:ORB_CANCELLED
+'   6b4fd1e9-892f-572b-9e9b-96b321ecdc26 = procedures_perioperative:ORB_OWNER_SERVICE
+'   48a989b7-6300-516d-9982-8f741aaf0758 = procedures_perioperative:ORB_OWNER_SURGEON
+' Los conceptos ORB_* los declara la API en procedures_perioperative.concepts.ts con
+' defineModuleConcepts('procedures_perioperative', …): si cambia el prefijo cambian los UUID.
+' Mismos nombres que 2026-10-29_infraestructura_f4_scheduling.sql y …_f4_periop.sql.
+entity "scheduling.schedulable_resources" as scheduling_schedulable_resources <<REFERENCE_ONLY>> {
+  ' R0 / INV-40: care_space_id existe si y sólo si el recurso apunta a la tabla care_spaces, y entonces
+  ' ES su resource_ref_id. (El contrato lo escribe `ref_type <> 'care_spaces' OR care_space_id =
+  ' resource_ref_id`, que con care_space_id NULL da NULL y pasa: aquí se cierra con IS NOT DISTINCT FROM.)
+  CHECK_SQL : ck_schedulable_resources_care_space_ref | ("resource_ref_type" = 'care_spaces') = ("care_space_id" IS NOT NULL) AND ("care_space_id" IS NULL OR "care_space_id" = "resource_ref_id")
+}
+entity "procedures_perioperative.operating_room_block_series" as procedures_perioperative_operating_room_block_series <<REFERENCE_ONLY>> {
+  ' Dueño coherente: SERVICE ⇒ unidad o especialidad; SURGEON ⇒ cirujano.
+  CHECK_SQL : ck_operating_room_block_series_owner | "owner_kind_concept_id" IN ('6b4fd1e9-892f-572b-9e9b-96b321ecdc26', '48a989b7-6300-516d-9982-8f741aaf0758') AND ("owner_kind_concept_id" <> '6b4fd1e9-892f-572b-9e9b-96b321ecdc26' OR "clinical_unit_id" IS NOT NULL OR "surgical_specialty_concept_id" IS NOT NULL) AND ("owner_kind_concept_id" <> '48a989b7-6300-516d-9982-8f741aaf0758' OR "surgeon_profile_id" IS NOT NULL)
+  ' Días de semana 0 = domingo … 6 = sábado (convención de scheduling); franja dentro de un mismo día.
+  CHECK_SQL : ck_operating_room_block_series_schedule | cardinality("weekdays") >= 1 AND "weekdays" <@ ARRAY[0,1,2,3,4,5,6]::smallint[] AND "end_time" > "start_time" AND ("valid_to" IS NULL OR "valid_to" >= "valid_from") AND "release_hours" >= 0
+}
+entity "procedures_perioperative.operating_room_blocks" as procedures_perioperative_operating_room_blocks <<REFERENCE_ONLY>> {
+  ' Un quirófano no tiene dos bloques ACTIVOS solapados. Liberado o cancelado deja el tiempo libre.
+  EXCLUDE : operating room block overlap
+  EXCLUDE_SQL : ex_operating_room_blocks_time | "operating_room_id" WITH =, tstzrange("starts_at", "ends_at", '[)') WITH && | "status_concept_id" = '762dc30b-3e3c-5e1e-8504-5c511fd1d4a8'
+  CHECK_SQL : ck_operating_room_blocks_owner | "owner_kind_concept_id" IN ('6b4fd1e9-892f-572b-9e9b-96b321ecdc26', '48a989b7-6300-516d-9982-8f741aaf0758') AND ("owner_kind_concept_id" <> '6b4fd1e9-892f-572b-9e9b-96b321ecdc26' OR "clinical_unit_id" IS NOT NULL OR "surgical_specialty_concept_id" IS NOT NULL) AND ("owner_kind_concept_id" <> '48a989b7-6300-516d-9982-8f741aaf0758' OR "surgeon_profile_id" IS NOT NULL)
+  CHECK_SQL : ck_operating_room_blocks_window | "ends_at" > "starts_at" AND "release_at" <= "starts_at"
+  CHECK_SQL : ck_operating_room_blocks_status | "status_concept_id" IN ('762dc30b-3e3c-5e1e-8504-5c511fd1d4a8', 'c3225706-ef13-5cbe-af6d-caaf25437458', 'e420cc84-8fd2-5887-a9bd-faf77d561508')
+  ' Liberado ⇒ released_at; activo ⇒ sin released_at. Liberado por una persona ⇒ con motivo
+  ' (released_by_user_id NULL = liberación automática del tick, sin persona que motive).
+  CHECK_SQL : ck_operating_room_blocks_release_state | ("status_concept_id" <> 'c3225706-ef13-5cbe-af6d-caaf25437458' OR "released_at" IS NOT NULL) AND ("status_concept_id" <> '762dc30b-3e3c-5e1e-8504-5c511fd1d4a8' OR "released_at" IS NULL) AND ("released_minutes" IS NULL OR "released_minutes" >= 0) AND ("status_concept_id" <> 'c3225706-ef13-5cbe-af6d-caaf25437458' OR "released_by_user_id" IS NULL OR btrim(coalesce("release_reason", '')) <> '')
+}
+entity "procedures_perioperative.surgical_safety_checklists" as procedures_perioperative_surgical_safety_checklists <<REFERENCE_ONLY>> {
+  ' Check-list OMS en tres fases, en orden: la Pausa exige la Entrada y la Salida exige la Pausa.
+  CHECK_SQL : ck_surgical_safety_checklists_phase_order | ("time_out_completed_at" IS NULL OR "sign_in_completed_at" IS NOT NULL) AND ("sign_out_completed_at" IS NULL OR "time_out_completed_at" IS NOT NULL)
 }
 @enduml

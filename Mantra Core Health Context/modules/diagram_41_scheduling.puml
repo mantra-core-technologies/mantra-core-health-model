@@ -12,6 +12,8 @@ entity "forms.form_instances" as forms_form_instances <<REFERENCE_ONLY>> { * id 
 ' Stub propio para declarar la FK autorreferente follow_up_of_booking_id (la convención
 ' por nombre no la resuelve: no existe una tabla `follow_up_of_bookings`).
 entity "scheduling.appointment_bookings" as scheduling_appointment_bookings <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+' + infraestructura hospitalaria F4 (2026-10-29): destino de la FK real del recurso ROOM al espacio.
+entity "practice.care_spaces" as practice_care_spaces <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 
 entity practitioner_schedules {
   * id : uuid <<PK>>
@@ -83,6 +85,13 @@ entity schedulable_resources {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + infraestructura hospitalaria F4 / R0 (2026-10-29, CONTRATO-F2-F5 §F4.1): un recurso ROOM
+  ' con resource_ref_type = 'care_spaces' tiene FK REAL al espacio (practice.care_spaces); ya no es
+  ' una referencia libre (INV-40). Mismo tenant que el espacio: FK compuesta (tenant_id,
+  ' care_space_id) en el patch …_f4_scheduling. NULL para PRACTITIONER, EQUIPMENT y filas
+  ' heredadas cuya referencia no resuelve (se listan con RAISE NOTICE; no se tocan).
+  ' Un espacio tiene a lo sumo UN recurso ACTIVO (ux_schedulable_resources_care_space_active).
+    care_space_id : uuid <<FK>>
 }
 entity schedule_templates {
   * id : uuid <<PK>>
@@ -432,6 +441,7 @@ entity appointment_reminders {
 }
 
 schedulable_resources ||--o{ schedule_templates
+schedulable_resources }o--o| practice_care_spaces : care_space_id
 practitioner_schedules |o--o{ schedule_templates
 schedule_templates ||--o{ schedule_rules
 schedulable_resources ||--o{ availability_exceptions
@@ -506,6 +516,13 @@ entity "INDEXES · schedulable_resources" as idxset_schedulable_resources <<INDE
   IX ix_schedulable_resources_created_by_user_id : (created_by_user_id) BTREE
   IX ix_schedulable_resources_updated_by_user_id : (updated_by_user_id) BTREE
   IX ix_schedulable_resources_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+  IX ix_schedulable_resources_care_space_id : (care_space_id) BTREE
+  ' (tenant_id, id) único: destino de las FK compuestas (tenant_id, schedulable_resource_id) de
+  ' procedure_cases (F4) para que un caso no apunte a un recurso de otro tenant.
+  UX ux_schedulable_resources_tenant_id_id : (tenant_id, id) UNIQUE BTREE
+  ' 38a1d301-… = deterministicId('state:active') (CONCEPTS.STATE_ACTIVE): el estado con el que la API
+  ' (create-resource.use-case) crea los recursos. UUID literal: el predicado de un índice debe ser IMMUTABLE.
+  UX ux_schedulable_resources_care_space_active : (care_space_id) UNIQUE BTREE WHERE care_space_id IS NOT NULL AND state_concept_id = '38a1d301-f40d-5b17-a695-5e6d605f8b19'
 }
 
 schedulable_resources .. idxset_schedulable_resources : indexed by
