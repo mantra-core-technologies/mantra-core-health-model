@@ -144,6 +144,14 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 |-------|-------------|-------------------|
 | `procedures_perioperative.procedure_cases` | `REFERENCE_ONLY` | **EXCLUDE** operating room time overlap; **EXCLUDE_SQL** ex_procedure_cases_operating_room_time \| "operating_room_id" WITH =, tstzrange("scheduled_start_at", "scheduled_end_at", '[)') WITH && \| "operating_room_id" IS NOT NULL AND "scheduled_start_at" IS NOT NULL AND "scheduled_end_at" IS NOT NULL AND "status_concept_id" IN ('6fe38139-ad1d-5214-84c1-8c184e4e58fb', 'f6985cd5-f867-5d76-b70c-1138667fd2ab', 'fdc78cc9-eda6-5625-9a26-1bdcec4dc203'); **CHECK_SQL** ck_procedure_cases_buffers \| (COALESCE("prep_minutes", 0) >= 0 AND COALESCE("cleanup_minutes", 0) >= 0) |
 
+### Módulo 05 · `profiles`
+
+| Tabla | Estereotipo | Reglas declaradas |
+|-------|-------------|-------------------|
+| `profiles.practitioner_admission_events` | `IMMUTABLE, REFERENCE_ONLY` | **UPDATE_DELETE** forbidden |
+| `profiles.practitioner_admissions` | `REFERENCE_ONLY` | **CHECK_SQL** ck_practitioner_admissions_resubmission_count \| ("resubmission_count" >= 0); **CHECK_SQL** ck_practitioner_admissions_due_after_submit \| ("due_at" >= "submitted_at") |
+| `profiles.admission_requirements` | `REFERENCE_ONLY` | **CHECK_SQL** ck_admission_requirements_item_range \| (COALESCE("min_items", 0) >= 0 AND ("max_items" IS NULL OR "max_items" >= COALESCE("min_items", 0))) |
+
 ### Módulo 41 · `scheduling`
 
 | Tabla | Estereotipo | Reglas declaradas |

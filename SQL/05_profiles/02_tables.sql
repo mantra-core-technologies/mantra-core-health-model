@@ -152,6 +152,7 @@ CREATE TABLE IF NOT EXISTS "profiles"."professional_credentials" (
     "verification_source_uri" text,
     "verified_by_user_id" uuid,
     "verified_at" timestamptz,
+    "rejection_reason_text" text,
     "created_at" timestamptz NOT NULL,
     "updated_at" timestamptz NOT NULL,
     "created_by_user_id" uuid,
@@ -170,6 +171,7 @@ CREATE TABLE IF NOT EXISTS "profiles"."practitioner_specialties" (
     "board_certified" boolean,
     "practice_scope_text" text,
     "verification_status_concept_id" uuid NOT NULL,
+    "verified_at" timestamptz,
     "valid_from" date,
     "valid_to" date,
     "created_at" timestamptz NOT NULL,
@@ -205,6 +207,10 @@ CREATE TABLE IF NOT EXISTS "profiles"."jurisdiction_authorizations" (
     "valid_from" date,
     "valid_to" date,
     "file_id" uuid,
+    "verified_by_user_id" uuid,
+    "verified_at" timestamptz,
+    "verification_source_uri" text,
+    "rejection_reason_text" text,
     "created_at" timestamptz NOT NULL,
     "updated_at" timestamptz NOT NULL,
     "created_by_user_id" uuid,
@@ -280,6 +286,90 @@ CREATE TABLE IF NOT EXISTS "profiles"."patient_primary_practitioners" (
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
     CONSTRAINT "pk_patient_primary_practitioners" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "profiles"."admission_requirements" (
+    "id" uuid NOT NULL,
+    "admission_type_concept_id" uuid NOT NULL,
+    "requirement_code" varchar NOT NULL,
+    "label" varchar NOT NULL,
+    "description" text,
+    "item_type_concept_id" uuid NOT NULL,
+    "item_subtype_code" varchar,
+    "evidence_kind_concept_id" uuid NOT NULL,
+    "verification_method_concept_id" uuid NOT NULL,
+    "is_required" boolean NOT NULL DEFAULT true,
+    "requires_source_uri" boolean NOT NULL DEFAULT true,
+    "applies_to_profession_group" varchar,
+    "min_items" smallint,
+    "max_items" smallint,
+    "sort_order" integer NOT NULL,
+    "is_active" boolean NOT NULL DEFAULT true,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_admission_requirements" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "profiles"."practitioner_admissions" (
+    "id" uuid NOT NULL,
+    "practitioner_profile_id" uuid NOT NULL,
+    "admission_type_concept_id" uuid NOT NULL,
+    "status_concept_id" uuid NOT NULL,
+    "submitted_at" timestamptz NOT NULL,
+    "due_at" timestamptz NOT NULL,
+    "assigned_to_user_id" uuid,
+    "decided_at" timestamptz,
+    "decided_by_user_id" uuid,
+    "decision_reason_text" text,
+    "info_requested_text" text,
+    "resubmission_count" integer NOT NULL,
+    "valid_until" date,
+    "closed_at" timestamptz,
+    "submitted_snapshot" jsonb,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_practitioner_admissions" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "profiles"."practitioner_admission_reviews" (
+    "id" uuid NOT NULL,
+    "admission_id" uuid NOT NULL,
+    "requirement_id" uuid NOT NULL,
+    "item_id" uuid NOT NULL,
+    "status_concept_id" uuid NOT NULL,
+    "file_id" uuid,
+    "verification_source_uri" text,
+    "reason_text" text,
+    "reviewed_by_user_id" uuid,
+    "reviewed_at" timestamptz,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_practitioner_admission_reviews" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "profiles"."practitioner_admission_events" (
+    "id" uuid NOT NULL,
+    "admission_id" uuid NOT NULL,
+    "event_type_concept_id" uuid NOT NULL,
+    "from_status_concept_id" uuid,
+    "to_status_concept_id" uuid,
+    "item_type_concept_id" uuid,
+    "item_id" uuid,
+    "requirement_id" uuid,
+    "verification_source_uri" text,
+    "reason_text" text,
+    "actor_user_id" uuid,
+    "occurred_at" timestamptz NOT NULL,
+    CONSTRAINT "pk_practitioner_admission_events" PRIMARY KEY ("id")
 );
 
 CREATE TABLE IF NOT EXISTS "profiles"."insurance_representative_profiles" (

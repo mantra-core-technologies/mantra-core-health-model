@@ -49,6 +49,39 @@ comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_obje
 
 ## 3. Estado actual del build
 
+### v4.2.67 — Admisiones de profesionales: verificación del alta de médicos (2026-10-29)
+
+**Cambio de esquema: +4 tablas en `profiles` (módulo 05) y +6 columnas en tablas existentes.**
+Parche: `SQL/patches/2026-10-29_v4267_practitioner_admissions.sql` (idempotente, fuera de `apply_all.sql`,
+con backfill). `v4266` ya estaba tomado (consentimiento dirigido), de ahí `v4267`.
+
+- `practitioner_admissions`: la solicitud de admisión (tipo `ALTA_DE_DOCTOR`, estado, `submitted_at`, `due_at`
+  = SLA de 3 días hábiles, asignación, decisión, motivo, `resubmission_count`, `valid_until`, `closed_at` y la
+  foto del formulario enviado `submitted_snapshot`). Es la **fuente de verdad**; `PRACT_VERIF_*` del perfil
+  es su proyección y `ENVIADA` equivale a `PRACT_VERIF_PENDING`. Único parcial
+  `uq_practitioner_admissions_open` (una abierta por médico y tipo) e índice de bandeja
+  `(status_concept_id, due_at, id)`.
+- `admission_requirements`: catálogo de requisitos por tipo de admisión (obligatorio, profesión a la que
+  aplica, documento o dato, método, si exige URI de fuente). Extensible a organización, farmacia,
+  laboratorio y aseguradora sin cambio de esquema. Lo siembra la API (proceso 2.1 del stakeholder).
+- `practitioner_admission_reviews`: estado vigente por requisito/ítem (PENDIENTE, VERIFICADO, RECHAZADO,
+  INFO_REQUERIDA), con archivo, fuente, motivo y quién/cuándo.
+- `practitioner_admission_events`: bitácora **append-only** (`UPDATE_DELETE: forbidden` en el módulo 33, trigger
+  `trg_forbid_mutation`).
+- `jurisdiction_authorizations` + `verified_by_user_id`, `verified_at`, `verification_source_uri`,
+  `rejection_reason_text`; `professional_credentials` + `rejection_reason_text`; `practitioner_specialties` +
+  `verified_at`.
+- Los conceptos (`profiles:ADMISSION_*`, `AUTH_REJECTED`, `SPEC_VERIF_REJECTED`) los siembra la API; el
+  backfill (una admisión `ENVIADA` por perfil `PRACT_VERIF_PENDING`) falla con un mensaje explícito si
+  todavía no están. No se migran filas ni cambia el significado de los conceptos existentes.
+
+**Delta:** +4 tablas, +6 columnas, +28 FK, +32 índices, +3 CHECK, +1 trigger. Total 1265 tablas.
+
+**Verificado** con PostgreSQL 16 en una base descartable: el modelo anterior (`apply_all.sql` +
+`apply_deferred.sql`) + el parche dos veces, y el DDL nuevo desde cero, terminan con el mismo `pg_dump -s`
+salvo el orden de columnas; el backfill se probó con perfiles sintéticos (cálculo de días hábiles incluido) y
+el trigger rechaza `UPDATE` y `DELETE` sobre la bitácora. No se aplicó contra una base con datos reales.
+
 ### v4.2.65 — Derivación con tipo y servicio de destino (2026-10-28)
 
 **Cambio de esquema: +2 columnas en `clinical_ext.referrals` (módulo 18).**

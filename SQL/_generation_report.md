@@ -9,7 +9,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 02 | common | 7 | 49 | 0 | 55 | 0 |
 | 03 | terminology | 16 | 80 | 0 | 103 | 0 |
 | 04 | directory | 7 | 59 | 4 | 55 | 0 |
-| 05 | profiles | 20 | 134 | 7 | 145 | 0 |
+| 05 | profiles | 24 | 162 | 30 | 172 | 0 |
 | 06 | authz | 15 | 100 | 15 | 90 | 0 |
 | 07 | consent | 10 | 81 | 0 | 103 | 0 |
 | 08 | clinical | 24 | 241 | 9 | 264 | 11 |
@@ -37,7 +37,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 30 | read_models | 13 | 74 | 0 | 89 | 76 |
 | 31 | integration_contracts | 9 | 48 | 1 | 57 | 0 |
 | 32 | workflow | 8 | 49 | 0 | 55 | 9 |
-| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 48 |
+| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 51 |
 | 34 | portal_catalog _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
 | 35 | messaging | 22 | 142 | 0 | 150 | 0 |
 | 36 | qa_lab | 13 | 79 | 0 | 92 | 0 |
@@ -74,7 +74,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 67 | data_catalog | 13 | 43 | 23 | 24 | 0 |
 | 68 | qa_execution | 4 | 14 | 6 | 6 | 0 |
 | 69 | pharma_lab | 31 | 182 | 173 | 182 | 1 |
-| **Σ** | **70** | **1260** | | **415** | | **362** |
+| **Σ** | **70** | **1265** | | **440** | | **365** |
 
 ## Detalle de entidades saltadas y avisos
 
@@ -327,6 +327,9 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - `insurance_insurance_products` — stub de cruce (tabla real en su módulo dueño)
 - `consent_treatment_informed_consents` — stub de cruce (tabla real en su módulo dueño)
 - `delegated_access_shared_access_link_uses` — stub de cruce (tabla real en su módulo dueño)
+- `profiles_practitioner_admission_events` — stub de cruce (tabla real en su módulo dueño)
+- `profiles_practitioner_admissions` — stub de cruce (tabla real en su módulo dueño)
+- `profiles_admission_requirements` — stub de cruce (tabla real en su módulo dueño)
 
 ### 35 · messaging
 - ⚠ índice 'uq_adapter_inbound_events_provider_id' omitido: columna(s) inexistente(s) ['received_time_bucket'] en adapter_inbound_events (¿tipo no-SQL descartado? requiere PostGIS)

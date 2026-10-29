@@ -301,4 +301,18 @@ entity "delegated_access.shared_access_link_uses" as delegated_access_shared_acc
   ' A-12: el rastro de uso de un token compartido no se reescribe (UPDATE prohibido, DELETE libre para la retencion).
   UPDATE : forbidden
 }
+' + v4.2.67 — admisiones de profesionales (modulo 05). La bitacora es append-only: la
+' resolucion de un alta de medico debe poder reconstruirse tal cual ocurrio, y quien
+' decide no puede reescribir lo que decidio. UPDATE y DELETE prohibidos (no hay purga:
+' es evidencia de la verificacion de una habilitacion para ejercer).
+entity "profiles.practitioner_admission_events" as profiles_practitioner_admission_events <<IMMUTABLE, REFERENCE_ONLY>> {
+  UPDATE_DELETE : forbidden
+}
+entity "profiles.practitioner_admissions" as profiles_practitioner_admissions <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_practitioner_admissions_resubmission_count | ("resubmission_count" >= 0)
+  CHECK_SQL : ck_practitioner_admissions_due_after_submit | ("due_at" >= "submitted_at")
+}
+entity "profiles.admission_requirements" as profiles_admission_requirements <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_admission_requirements_item_range | (COALESCE("min_items", 0) >= 0 AND ("max_items" IS NULL OR "max_items" >= COALESCE("min_items", 0)))
+}
 @enduml

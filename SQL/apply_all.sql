@@ -68,6 +68,8 @@
 \ir 05_profiles/03_fk_intra.sql
 \echo >>> 05_profiles/04_indexes.sql
 \ir 05_profiles/04_indexes.sql
+\echo >>> 05_profiles/05_constraints.sql
+\ir 05_profiles/05_constraints.sql
 
 -- ═══ módulo 06_authz ═══
 \echo >>> 06_authz/01_schema.sql

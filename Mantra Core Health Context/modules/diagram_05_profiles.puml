@@ -195,6 +195,10 @@ entity professional_credentials {
     verification_source_uri : text
     verified_by_user_id : uuid <<FK>>
     verified_at : timestamptz
+  ' + v4.2.67 — por qué se rechazó el título. Lo escribe la resolución de la admisión
+  ' (practitioner_admissions); sin él, quien rechaza no deja rastro de la causa y el
+  ' médico no sabe qué corregir.
+    rejection_reason_text : text
   * created_at : timestamptz
   * updated_at : timestamptz
     created_by_user_id : uuid <<FK>>
@@ -213,6 +217,9 @@ entity practitioner_specialties {
     board_certified : boolean
     practice_scope_text : text
   * verification_status_concept_id : uuid <<FK>>
+  ' + v4.2.67 — cuándo se verificó la especialidad (la fija la resolución de la
+  ' admisión; hasta hoy ninguna especialidad pasaba de SPEC_VERIF_PENDING).
+    verified_at : timestamptz
     valid_from : date
     valid_to : date
   * created_at : timestamptz
@@ -254,6 +261,13 @@ entity jurisdiction_authorizations {
   ' la matrícula no. Nullable: el padrón se declara, no se prueba, y exigir el
   ' archivo dejaría fuera a quien todavía no lo tiene escaneado.
     file_id : uuid <<FK>>
+  ' + v4.2.67 — la verificación de la matrícula: quién, cuándo, contra qué fuente y,
+  ' si se rechazó, por qué. Antes sólo cambiaba `state_concept_id` y no quedaba
+  ' rastro de la comprobación (el PDF de receta imprime la matrícula AUTH_ACTIVE).
+    verified_by_user_id : uuid <<FK>>
+    verified_at : timestamptz
+    verification_source_uri : text
+    rejection_reason_text : text
   * created_at : timestamptz
   * updated_at : timestamptz
     created_by_user_id : uuid <<FK>>
@@ -363,6 +377,130 @@ entity patient_primary_practitioners {
   * row_version : integer
 }
 
+note as PRACTITIONER_ADMISSION_diagram_05_profiles
+  PRACTITIONER ADMISSIONS (verificacion del alta de medicos, v4.2.67)
+  Cuando un medico se registra (web, movil o alta asistida) su alta queda como una
+  SOLICITUD DE ADMISION pendiente de verificacion que un administrador revisa y
+  resuelve en el portal admin ("Admisiones" > tipo ALTA_DE_DOCTOR).
+  - practitioner_admissions es la fuente de verdad del ciclo de vida; el estado del
+    PERFIL (health_practitioner_profiles.verification_status_concept_id =
+    PRACT_VERIF_*) es una PROYECCION de la admision vigente y ENVIADA equivale a
+    PRACT_VERIF_PENDING. Admisiones es el unico camino de escritura de PRACT_VERIF_*.
+  - Maquina: ENVIADA > EN_REVISION > (INFORMACION_REQUERIDA > ENVIADA | VERIFICADA |
+    RECHAZADA > ENVIADA por reenvio); VERIFICADA > EXPIRADA > ENVIADA;
+    VERIFICADA > SUSPENDIDA > VERIFICADA; ENVIADA/INFORMACION_REQUERIDA > RETIRADA.
+  - Una admision por medico y tipo (el reenvio reabre la misma). Unica excepcion: la
+    RETIRADA se cierra (closed_at) y el medico puede abrir otra.
+  - admission_requirements es el CATALOGO de requisitos por tipo de admision (lo que
+    hay que verificar, obligatorio o no, a que profesion aplica, si es documento o dato,
+    si exige URI de fuente). Se siembra para ALTA_DE_DOCTOR con el proceso 2.1 del
+    stakeholder y admite otros tipos (organizacion, farmacia, laboratorio, aseguradora)
+    sin tocar el esquema.
+  - practitioner_admission_reviews guarda el estado VIGENTE de cada requisito/item
+    (PENDIENTE | VERIFICADO | RECHAZADO | INFO_REQUERIDA) con su archivo, su fuente, su
+    motivo y quien/cuando. Una admision solo pasa a VERIFICADA si todos los requisitos
+    obligatorios aplicables estan verificados: lo decide el servidor.
+  - practitioner_admission_events es la BITACORA append-only (guarda de inmutabilidad
+    por UPDATE_DELETE: forbidden en el modulo 33).
+end note
+
+entity admission_requirements {
+  * id : uuid <<PK>>
+  --
+  * admission_type_concept_id : uuid <<FK>>
+  * requirement_code : varchar
+  * label : varchar
+    description : text
+  ' Que clase de ficha se revisa: LICENSE | CREDENTIAL | SPECIALTY | PROFILE (dato del perfil).
+  * item_type_concept_id : uuid <<FK>>
+  ' Subtipo dentro de item_type (p. ej. DEGREE, DIPLOMA, MASTER, DOCTORATE, SPECIALTY para
+  ' CREDENTIAL; NATIONAL, PROFESSIONAL_COLLEGE, SEDES para LICENSE). Nulo = cualquiera.
+    item_subtype_code : varchar
+  * evidence_kind_concept_id : uuid <<FK>>
+  * verification_method_concept_id : uuid <<FK>>
+  * is_required : boolean <<DEFAULT_TRUE>>
+  * requires_source_uri : boolean <<DEFAULT_TRUE>>
+  ' Grupo profesional al que aplica (MEDICO | ODONTOLOGO). Nulo = a todos. Proceso 2.1:
+  ' el colegio cambia entre Medico y Odontologo segun la profesion elegida.
+    applies_to_profession_group : varchar
+    min_items : smallint
+    max_items : smallint
+  * sort_order : integer
+  * is_active : boolean <<DEFAULT_TRUE>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity practitioner_admissions {
+  * id : uuid <<PK>>
+  --
+  * practitioner_profile_id : uuid <<FK>>
+  * admission_type_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * submitted_at : timestamptz
+  * due_at : timestamptz
+    assigned_to_user_id : uuid <<FK>>
+    decided_at : timestamptz
+    decided_by_user_id : uuid <<FK>>
+    decision_reason_text : text
+    info_requested_text : text
+  * resubmission_count : integer
+    valid_until : date
+    closed_at : timestamptz
+  ' FOTO del formulario tal como el medico lo envio (o reenvio): datos personales,
+  ' contacto, domicilios, matriculas, estudios, especialidades y consultorios. La
+  ' revision se hace contra lo enviado, no contra lo que el perfil diga despues de
+  ' una edicion posterior. Se reescribe en cada reenvio (el anterior queda en la
+  ' bitacora por el evento RESUBMITTED). Nulo en las admisiones del backfill hasta
+  ' que la API la toma, marcandola como lectura viva.
+    submitted_snapshot : jsonb
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity practitioner_admission_reviews {
+  * id : uuid <<PK>>
+  --
+  * admission_id : uuid <<FK>>
+  * requirement_id : uuid <<FK>>
+  ' El id de la ficha revisada (matricula, titulo, especialidad) o, para un dato del
+  ' perfil, el id del profesional.
+  * item_id : uuid
+  * status_concept_id : uuid <<FK>>
+    file_id : uuid <<FK>>
+    verification_source_uri : text
+    reason_text : text
+    reviewed_by_user_id : uuid <<FK>>
+    reviewed_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity practitioner_admission_events {
+  * id : uuid <<PK>>
+  --
+  * admission_id : uuid <<FK>>
+  * event_type_concept_id : uuid <<FK>>
+    from_status_concept_id : uuid <<FK>>
+    to_status_concept_id : uuid <<FK>>
+    item_type_concept_id : uuid <<FK>>
+    item_id : uuid
+    requirement_id : uuid <<FK>>
+    verification_source_uri : text
+    reason_text : text
+    actor_user_id : uuid <<FK>>
+  * occurred_at : timestamptz
+}
+
 entity insurance_representative_profiles {
   * profile_id : uuid <<PK,FK>>
   --
@@ -437,6 +575,13 @@ patient_profiles ||--o{ patient_portal_proxies
 ' sola en este modulo).
 patient_primary_practitioners }o--|| patient_profiles : patient_profile_id
 patient_primary_practitioners }o--|| health_practitioner_profiles : practitioner_profile_id
+' v4.2.67: admisiones. Aristas etiquetadas: `practitioner_profile_id` no resuelve sola
+' en este modulo y `admission_id` / `requirement_id` tampoco por convencion.
+practitioner_admissions }o--|| health_practitioner_profiles : practitioner_profile_id
+practitioner_admission_reviews }o--|| practitioner_admissions : admission_id
+practitioner_admission_reviews }o--|| admission_requirements : requirement_id
+practitioner_admission_events }o--|| practitioner_admissions : admission_id
+practitioner_admission_events }o--o| admission_requirements : requirement_id
 health_practitioner_profiles ||--o{ professional_credentials
 health_practitioner_profiles ||--o{ practitioner_specialties
 health_practitioner_profiles ||--o{ practitioner_languages
@@ -638,6 +783,7 @@ entity "INDEXES · jurisdiction_authorizations" as idxset_jurisdiction_authoriza
   IX ix_jurisdiction_authorizations_practice_scope_concept_id : (practice_scope_concept_id) BTREE
   IX ix_jurisdiction_authorizations_state_concept_id : (state_concept_id) BTREE
   IX ix_jurisdiction_authorizations_file_id : (file_id) BTREE
+  IX ix_jurisdiction_authorizations_verified_by_user_id : (verified_by_user_id) BTREE
   IX ix_jurisdiction_authorizations_created_by_user_id : (created_by_user_id) BTREE
   IX ix_jurisdiction_authorizations_updated_by_user_id : (updated_by_user_id) BTREE
   GIST gist_jurisdiction_authorizations_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
@@ -707,6 +853,59 @@ entity "INDEXES · patient_primary_practitioners" as idxset_patient_primary_prac
 }
 
 patient_primary_practitioners .. idxset_patient_primary_practitioners : indexed by
+
+entity "INDEXES · admission_requirements" as idxset_admission_requirements <<INDEX_SET>> {
+  PK pk_admission_requirements : (id) UNIQUE BTREE
+  UK uq_admission_requirements_type_code : (admission_type_concept_id, requirement_code) UNIQUE BTREE
+  IX ix_admission_requirements_admission_type_concept_id : (admission_type_concept_id) BTREE
+  IX ix_admission_requirements_item_type_concept_id : (item_type_concept_id) BTREE
+  IX ix_admission_requirements_evidence_kind_concept_id : (evidence_kind_concept_id) BTREE
+  IX ix_admission_requirements_verification_method_concept_id : (verification_method_concept_id) BTREE
+  IX ix_admission_requirements_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_admission_requirements_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+admission_requirements .. idxset_admission_requirements : indexed by
+
+entity "INDEXES · practitioner_admissions" as idxset_practitioner_admissions <<INDEX_SET>> {
+  PK pk_practitioner_admissions : (id) UNIQUE BTREE
+  ' Una admision abierta por medico y tipo: el reenvio reabre la misma fila; solo la
+  ' RETIRADA se cierra (closed_at) y libera el lugar.
+  UK uq_practitioner_admissions_open : (practitioner_profile_id, admission_type_concept_id) UNIQUE BTREE WHERE closed_at IS NULL
+  ' Bandeja: por estado y vencimiento, desempate por id (keyset).
+  IX ix_practitioner_admissions_inbox : (status_concept_id, due_at, id) BTREE
+  IX ix_practitioner_admissions_assigned_to_user_id : (assigned_to_user_id) BTREE
+  IX ix_practitioner_admissions_admission_type_concept_id : (admission_type_concept_id) BTREE
+  IX ix_practitioner_admissions_decided_by_user_id : (decided_by_user_id) BTREE
+  IX ix_practitioner_admissions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_practitioner_admissions_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_practitioner_admissions_valid_until : (valid_until) BTREE WHERE valid_until IS NOT NULL
+}
+
+practitioner_admissions .. idxset_practitioner_admissions : indexed by
+
+entity "INDEXES · practitioner_admission_reviews" as idxset_practitioner_admission_reviews <<INDEX_SET>> {
+  PK pk_practitioner_admission_reviews : (id) UNIQUE BTREE
+  UK uq_practitioner_admission_reviews_item : (admission_id, requirement_id, item_id) UNIQUE BTREE
+  IX ix_practitioner_admission_reviews_requirement_id : (requirement_id) BTREE
+  IX ix_practitioner_admission_reviews_admission_status : (admission_id, status_concept_id) BTREE
+  IX ix_practitioner_admission_reviews_file_id : (file_id) BTREE
+  IX ix_practitioner_admission_reviews_reviewed_by_user_id : (reviewed_by_user_id) BTREE
+  IX ix_practitioner_admission_reviews_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_practitioner_admission_reviews_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+practitioner_admission_reviews .. idxset_practitioner_admission_reviews : indexed by
+
+entity "INDEXES · practitioner_admission_events" as idxset_practitioner_admission_events <<INDEX_SET>> {
+  PK pk_practitioner_admission_events : (id) UNIQUE BTREE
+  IX ix_practitioner_admission_events_admission_occurred : (admission_id, occurred_at) BTREE
+  IX ix_practitioner_admission_events_event_type_concept_id : (event_type_concept_id) BTREE
+  IX ix_practitioner_admission_events_actor_user_id : (actor_user_id) BTREE
+  IX ix_practitioner_admission_events_requirement_id : (requirement_id) BTREE
+}
+
+practitioner_admission_events .. idxset_practitioner_admission_events : indexed by
 
 entity "INDEXES · insurance_representative_profiles" as idxset_insurance_representative_profiles <<INDEX_SET>> {
   PK pk_insurance_representative_profiles : (profile_id) UNIQUE BTREE
