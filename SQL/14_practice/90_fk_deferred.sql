@@ -212,6 +212,13 @@ DO $$ BEGIN
         REFERENCES "terminology"."catalog_concepts" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "practice"."practice_sites"
+        ADD CONSTRAINT "fk_practice_sites_snis_verified_by_user_id" FOREIGN KEY ("snis_verified_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "practice"."clinical_units"
@@ -377,41 +384,6 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención
 DO $$ BEGIN
     ALTER TABLE "practice"."space_unit_assignments"
         ADD CONSTRAINT "fk_space_unit_assignments_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
-        REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
-
--- destino: directory.tenants (requiere schema directory)
-DO $$ BEGIN
-    ALTER TABLE "practice"."site_licenses"
-        ADD CONSTRAINT "fk_site_licenses_tenant_id" FOREIGN KEY ("tenant_id")
-        REFERENCES "directory"."tenants" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
-
--- destino: terminology.catalog_concepts (requiere schema terminology)
-DO $$ BEGIN
-    ALTER TABLE "practice"."site_licenses"
-        ADD CONSTRAINT "fk_site_licenses_status_concept_id" FOREIGN KEY ("status_concept_id")
-        REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
-
--- destino: common.files (requiere schema common)
-DO $$ BEGIN
-    ALTER TABLE "practice"."site_licenses"
-        ADD CONSTRAINT "fk_site_licenses_document_file_id" FOREIGN KEY ("document_file_id")
-        REFERENCES "common"."files" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
-
--- destino: iam.users (requiere schema iam)
-DO $$ BEGIN
-    ALTER TABLE "practice"."site_licenses"
-        ADD CONSTRAINT "fk_site_licenses_created_by_user_id" FOREIGN KEY ("created_by_user_id")
-        REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
-
--- destino: iam.users (requiere schema iam)
-DO $$ BEGIN
-    ALTER TABLE "practice"."site_licenses"
-        ADD CONSTRAINT "fk_site_licenses_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 

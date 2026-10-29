@@ -1915,6 +1915,7 @@ audit,care_spaces_history,7,data_snapshot,jsonb,NO,,,,,,SQL/10_audit/02_tables.s
 audit,care_spaces_history,8,changed_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/10_audit/02_tables.sql
 audit,care_spaces_history,9,change_reason_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/10_audit/02_tables.sql
 audit,care_spaces_history,10,recorded_at,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,care_spaces_history,11,tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/10_audit/02_tables.sql
 audit,care_teams_history,1,history_id,uuid,NO,,PRIMARY KEY,,,,SQL/10_audit/02_tables.sql
 audit,care_teams_history,2,care_team_id,uuid,NO,,FOREIGN KEY,clinical_ext,care_teams,id,SQL/10_audit/02_tables.sql
 audit,care_teams_history,3,revision_no,integer,NO,,,,,,SQL/10_audit/02_tables.sql
@@ -1985,6 +1986,7 @@ audit,clinical_units_history,7,data_snapshot,jsonb,NO,,,,,,SQL/10_audit/02_table
 audit,clinical_units_history,8,changed_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/10_audit/02_tables.sql
 audit,clinical_units_history,9,change_reason_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/10_audit/02_tables.sql
 audit,clinical_units_history,10,recorded_at,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,clinical_units_history,11,tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/10_audit/02_tables.sql
 audit,comments_history,1,history_id,uuid,NO,,PRIMARY KEY,,,,SQL/10_audit/02_tables.sql
 audit,comments_history,2,comments_id,uuid,NO,,FOREIGN KEY,community,comments,id,SQL/10_audit/02_tables.sql
 audit,comments_history,3,row_version,integer,NO,1,,,,,SQL/10_audit/02_tables.sql
@@ -2709,6 +2711,7 @@ audit,practice_sites_history,7,data_snapshot,jsonb,NO,,,,,,SQL/10_audit/02_table
 audit,practice_sites_history,8,changed_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/10_audit/02_tables.sql
 audit,practice_sites_history,9,change_reason_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/10_audit/02_tables.sql
 audit,practice_sites_history,10,recorded_at,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,practice_sites_history,11,tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/10_audit/02_tables.sql
 audit,practices_history,1,history_id,uuid,NO,,PRIMARY KEY,,,,SQL/10_audit/02_tables.sql
 audit,practices_history,2,practice_id,uuid,NO,,FOREIGN KEY,practice,practices,id,SQL/10_audit/02_tables.sql
 audit,practices_history,3,revision_no,integer,NO,,,,,,SQL/10_audit/02_tables.sql
@@ -2929,16 +2932,6 @@ audit,shipments_history,7,data_snapshot,jsonb,NO,,,,,,SQL/10_audit/02_tables.sql
 audit,shipments_history,8,changed_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/10_audit/02_tables.sql
 audit,shipments_history,9,change_reason_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/10_audit/02_tables.sql
 audit,shipments_history,10,recorded_at,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
-audit,site_licenses_history,1,history_id,uuid,NO,,PRIMARY KEY,,,,SQL/10_audit/02_tables.sql
-audit,site_licenses_history,2,site_license_id,uuid,NO,,FOREIGN KEY,practice,site_licenses,id,SQL/10_audit/02_tables.sql
-audit,site_licenses_history,3,revision_no,integer,NO,,,,,,SQL/10_audit/02_tables.sql
-audit,site_licenses_history,4,operation_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/10_audit/02_tables.sql
-audit,site_licenses_history,5,valid_from,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
-audit,site_licenses_history,6,valid_to,timestamptz,YES,,,,,,SQL/10_audit/02_tables.sql
-audit,site_licenses_history,7,data_snapshot,jsonb,NO,,,,,,SQL/10_audit/02_tables.sql
-audit,site_licenses_history,8,changed_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/10_audit/02_tables.sql
-audit,site_licenses_history,9,change_reason_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/10_audit/02_tables.sql
-audit,site_licenses_history,10,recorded_at,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
 audit,social_posts_history,1,history_id,uuid,NO,,PRIMARY KEY,,,,SQL/10_audit/02_tables.sql
 audit,social_posts_history,2,social_post_id,uuid,NO,,FOREIGN KEY,community,social_posts,id,SQL/10_audit/02_tables.sql
 audit,social_posts_history,3,revision_no,integer,NO,,,,,,SQL/10_audit/02_tables.sql
@@ -11588,6 +11581,8 @@ organization_extensions,facility_licenses,15,updated_at,timestamptz,NO,,,,,,SQL/
 organization_extensions,facility_licenses,16,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/22_organization_extensions/02_tables.sql
 organization_extensions,facility_licenses,17,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/22_organization_extensions/02_tables.sql
 organization_extensions,facility_licenses,18,row_version,integer,NO,1,,,,,SQL/22_organization_extensions/02_tables.sql
+organization_extensions,facility_licenses,19,clinical_unit_id,uuid,YES,,FOREIGN KEY,practice,clinical_units,id,SQL/22_organization_extensions/02_tables.sql
+organization_extensions,facility_licenses,20,healthcare_service_id,uuid,YES,,FOREIGN KEY,practice,healthcare_services,id,SQL/22_organization_extensions/02_tables.sql
 organization_extensions,hospital_service_lines,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/22_organization_extensions/02_tables.sql
 organization_extensions,hospital_service_lines,2,hospital_id,uuid,NO,,FOREIGN KEY,organization_extensions,hospitals,id,SQL/22_organization_extensions/02_tables.sql
 organization_extensions,hospital_service_lines,3,clinical_unit_id,uuid,YES,,FOREIGN KEY,practice,clinical_units,id,SQL/22_organization_extensions/02_tables.sql
@@ -14118,7 +14113,7 @@ polyglot_storage,tenant_storage_bindings,7,tenant_encryption_key_ref,varchar,NO,
 polyglot_storage,tenant_storage_bindings,8,state,varchar,NO,,,,,,SQL/54_polyglot_storage/02_tables.sql
 polyglot_storage,tenant_storage_bindings,9,created_at,timestamptz,NO,,,,,,SQL/54_polyglot_storage/02_tables.sql
 polyglot_storage,tenant_storage_bindings,10,updated_at,timestamptz,NO,,,,,,SQL/54_polyglot_storage/02_tables.sql
-practice,care_spaces,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/14_practice/02_tables.sql
+practice,care_spaces,1,id,uuid,NO,,PRIMARY KEY; UNIQUE,,,,SQL/14_practice/02_tables.sql
 practice,care_spaces,2,practice_site_id,uuid,NO,,FOREIGN KEY; UNIQUE,practice,practice_sites,id,SQL/14_practice/02_tables.sql
 practice,care_spaces,3,clinical_unit_id,uuid,YES,,FOREIGN KEY,practice,clinical_units,id,SQL/14_practice/02_tables.sql
 practice,care_spaces,4,parent_space_id,uuid,YES,,FOREIGN KEY,practice,care_spaces,id,SQL/14_practice/02_tables.sql
@@ -14135,7 +14130,7 @@ practice,care_spaces,14,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQ
 practice,care_spaces,15,row_version,integer,NO,1,,,,,SQL/14_practice/02_tables.sql
 practice,care_spaces,16,prep_minutes,integer,YES,,,,,,SQL/14_practice/02_tables.sql
 practice,care_spaces,17,cleanup_minutes,integer,YES,,,,,,SQL/14_practice/02_tables.sql
-practice,care_spaces,18,tenant_id,uuid,YES,,FOREIGN KEY,directory,tenants,id,SQL/14_practice/02_tables.sql
+practice,care_spaces,18,tenant_id,uuid,NO,,FOREIGN KEY; UNIQUE,directory,tenants,id,SQL/14_practice/02_tables.sql
 practice,care_spaces,19,form_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/14_practice/02_tables.sql
 practice,care_spaces,20,description,varchar,YES,,,,,,SQL/14_practice/02_tables.sql
 practice,care_spaces,21,floor_number,integer,YES,,,,,,SQL/14_practice/02_tables.sql
@@ -14151,7 +14146,7 @@ practice,care_spaces,30,censable,boolean,YES,,,,,,SQL/14_practice/02_tables.sql
 practice,care_spaces,31,gln,varchar(13),YES,,,,,,SQL/14_practice/02_tables.sql
 practice,care_spaces,32,valid_from,timestamptz,YES,,,,,,SQL/14_practice/02_tables.sql
 practice,care_spaces,33,valid_to,timestamptz,YES,,,,,,SQL/14_practice/02_tables.sql
-practice,clinical_units,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/14_practice/02_tables.sql
+practice,clinical_units,1,id,uuid,NO,,PRIMARY KEY; UNIQUE,,,,SQL/14_practice/02_tables.sql
 practice,clinical_units,2,practice_site_id,uuid,NO,,FOREIGN KEY,practice,practice_sites,id,SQL/14_practice/02_tables.sql
 practice,clinical_units,3,parent_unit_id,uuid,YES,,FOREIGN KEY,practice,clinical_units,id,SQL/14_practice/02_tables.sql
 practice,clinical_units,4,code,varchar,NO,,,,,,SQL/14_practice/02_tables.sql
@@ -14166,7 +14161,7 @@ practice,clinical_units,12,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id
 practice,clinical_units,13,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
 practice,clinical_units,14,row_version,integer,NO,1,,,,,SQL/14_practice/02_tables.sql
 practice,clinical_units,15,responsible_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
-practice,clinical_units,16,tenant_id,uuid,YES,,FOREIGN KEY,directory,tenants,id,SQL/14_practice/02_tables.sql
+practice,clinical_units,16,tenant_id,uuid,NO,,FOREIGN KEY; UNIQUE,directory,tenants,id,SQL/14_practice/02_tables.sql
 practice,clinical_units,17,description,varchar,YES,,,,,,SQL/14_practice/02_tables.sql
 practice,clinical_units,18,valid_from,timestamptz,YES,,,,,,SQL/14_practice/02_tables.sql
 practice,clinical_units,19,valid_to,timestamptz,YES,,,,,,SQL/14_practice/02_tables.sql
@@ -14244,7 +14239,7 @@ practice,practice_settings,7,updated_at,timestamptz,NO,,,,,,SQL/14_practice/02_t
 practice,practice_settings,8,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
 practice,practice_settings,9,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
 practice,practice_settings,10,row_version,integer,NO,1,,,,,SQL/14_practice/02_tables.sql
-practice,practice_sites,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/14_practice/02_tables.sql
+practice,practice_sites,1,id,uuid,NO,,PRIMARY KEY; UNIQUE,,,,SQL/14_practice/02_tables.sql
 practice,practice_sites,2,practice_id,uuid,NO,,FOREIGN KEY,practice,practices,id,SQL/14_practice/02_tables.sql
 practice,practice_sites,3,branch_id,uuid,YES,,FOREIGN KEY,directory,branches,id,SQL/14_practice/02_tables.sql
 practice,practice_sites,4,code,varchar,NO,,,,,,SQL/14_practice/02_tables.sql
@@ -14263,7 +14258,7 @@ practice,practice_sites,16,updated_at,timestamptz,NO,,,,,,SQL/14_practice/02_tab
 practice,practice_sites,17,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
 practice,practice_sites,18,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
 practice,practice_sites,19,row_version,integer,NO,1,,,,,SQL/14_practice/02_tables.sql
-practice,practice_sites,20,tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/14_practice/02_tables.sql
+practice,practice_sites,20,tenant_id,uuid,NO,,FOREIGN KEY; UNIQUE,directory,tenants,id,SQL/14_practice/02_tables.sql
 practice,practice_sites,21,snis_code,varchar,YES,,UNIQUE,,,,SQL/14_practice/02_tables.sql
 practice,practice_sites,22,subsector_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/14_practice/02_tables.sql
 practice,practice_sites,23,care_level_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/14_practice/02_tables.sql
@@ -14272,8 +14267,10 @@ practice,practice_sites,25,managing_entity_name,varchar,YES,,,,,,SQL/14_practice
 practice,practice_sites,26,health_network_name,varchar,YES,,,,,,SQL/14_practice/02_tables.sql
 practice,practice_sites,27,sedes_department_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/14_practice/02_tables.sql
 practice,practice_sites,28,municipality_name,varchar,YES,,,,,,SQL/14_practice/02_tables.sql
-practice,practices,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/14_practice/02_tables.sql
-practice,practices,2,tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/14_practice/02_tables.sql
+practice,practice_sites,29,snis_verified_at,timestamptz,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,practice_sites,30,snis_verified_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
+practice,practices,1,id,uuid,NO,,PRIMARY KEY; UNIQUE,,,,SQL/14_practice/02_tables.sql
+practice,practices,2,tenant_id,uuid,NO,,FOREIGN KEY; UNIQUE,directory,tenants,id,SQL/14_practice/02_tables.sql
 practice,practices,3,code,varchar,NO,,,,,,SQL/14_practice/02_tables.sql
 practice,practices,4,name,varchar,NO,,,,,,SQL/14_practice/02_tables.sql
 practice,practices,5,type_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/14_practice/02_tables.sql
@@ -14333,23 +14330,6 @@ practice,site_declared_capacities,10,updated_at,timestamptz,NO,,,,,,SQL/14_pract
 practice,site_declared_capacities,11,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
 practice,site_declared_capacities,12,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
 practice,site_declared_capacities,13,row_version,integer,NO,1,,,,,SQL/14_practice/02_tables.sql
-practice,site_licenses,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/14_practice/02_tables.sql
-practice,site_licenses,2,tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/14_practice/02_tables.sql
-practice,site_licenses,3,practice_site_id,uuid,NO,,FOREIGN KEY,practice,practice_sites,id,SQL/14_practice/02_tables.sql
-practice,site_licenses,4,authority_name,varchar,NO,,,,,,SQL/14_practice/02_tables.sql
-practice,site_licenses,5,resolution_number,varchar,YES,,,,,,SQL/14_practice/02_tables.sql
-practice,site_licenses,6,issued_on,date,YES,,,,,,SQL/14_practice/02_tables.sql
-practice,site_licenses,7,expires_on,date,YES,,,,,,SQL/14_practice/02_tables.sql
-practice,site_licenses,8,status_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/14_practice/02_tables.sql
-practice,site_licenses,9,clinical_unit_id,uuid,YES,,FOREIGN KEY,practice,clinical_units,id,SQL/14_practice/02_tables.sql
-practice,site_licenses,10,healthcare_service_id,uuid,YES,,FOREIGN KEY,practice,healthcare_services,id,SQL/14_practice/02_tables.sql
-practice,site_licenses,11,document_file_id,uuid,YES,,FOREIGN KEY,common,files,id,SQL/14_practice/02_tables.sql
-practice,site_licenses,12,notes,text,YES,,,,,,SQL/14_practice/02_tables.sql
-practice,site_licenses,13,created_at,timestamptz,NO,,,,,,SQL/14_practice/02_tables.sql
-practice,site_licenses,14,updated_at,timestamptz,NO,,,,,,SQL/14_practice/02_tables.sql
-practice,site_licenses,15,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
-practice,site_licenses,16,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
-practice,site_licenses,17,row_version,integer,NO,1,,,,,SQL/14_practice/02_tables.sql
 practice,space_form_parent_rules,1,parent_form_concept_id,uuid,NO,,FOREIGN KEY; PRIMARY KEY,terminology,catalog_concepts,id,SQL/14_practice/02_tables.sql
 practice,space_form_parent_rules,2,child_form_concept_id,uuid,NO,,FOREIGN KEY; PRIMARY KEY,terminology,catalog_concepts,id,SQL/14_practice/02_tables.sql
 practice,space_form_parent_rules,3,created_at,timestamptz,NO,,,,,,SQL/14_practice/02_tables.sql

@@ -14,11 +14,11 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 07 | consent | 10 | 81 | 0 | 103 | 0 |
 | 08 | clinical | 24 | 241 | 9 | 264 | 11 |
 | 09 | forms | 16 | 103 | 0 | 113 | 1 |
-| 10 | audit | 134 | 558 | 44 | 710 | 1 |
+| 10 | audit | 133 | 557 | 43 | 708 | 1 |
 | 11 | system_ops | 29 | 169 | 0 | 178 | 0 |
 | 12 | integrations | 10 | 49 | 0 | 56 | 0 |
 | 13 | geo | 6 | 31 | 0 | 35 | 0 |
-| 14 | practice | 16 | 125 | 37 | 133 | 1 |
+| 14 | practice | 15 | 118 | 33 | 130 | 1 |
 | 15 | chart | 11 | 71 | 0 | 81 | 2 |
 | 16 | accounting | 45 | 316 | 1 | 369 | 15 |
 | 17 | billing | 24 | 156 | 0 | 174 | 21 |
@@ -26,7 +26,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 19 | community | 41 | 254 | 4 | 268 | 9 |
 | 20 | diagnostics | 36 | 251 | 0 | 301 | 0 |
 | 21 | deployment _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
-| 22 | organization_extensions | 5 | 49 | 0 | 55 | 0 |
+| 22 | organization_extensions | 5 | 51 | 2 | 57 | 0 |
 | 23 | diagnostic_units | 15 | 109 | 38 | 117 | 1 |
 | 24 | pharmacy | 12 | 78 | 10 | 94 | 1 |
 | 25 | pharmacy_inventory | 20 | 142 | 0 | 154 | 6 |
@@ -74,7 +74,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 67 | data_catalog | 13 | 43 | 23 | 24 | 0 |
 | 68 | qa_execution | 4 | 14 | 6 | 6 | 0 |
 | 69 | pharma_lab | 31 | 182 | 173 | 182 | 1 |
-| **Σ** | **70** | **1266** | | **454** | | **362** |
+| **Σ** | **70** | **1264** | | **451** | | **362** |
 
 ## Detalle de entidades saltadas y avisos
 

@@ -38,6 +38,8 @@ CREATE INDEX IF NOT EXISTS "ix_practices_updated_by_user_id" ON "practice"."prac
 
 CREATE INDEX IF NOT EXISTS "ix_practices_tenant_id_status_concept_id" ON "practice"."practices" ("tenant_id", "status_concept_id", "updated_at" DESC);
 
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_practices_tenant_id_id" ON "practice"."practices" ("tenant_id", "id");
+
 CREATE INDEX IF NOT EXISTS "ix_practice_sites_practice_id" ON "practice"."practice_sites" ("practice_id");
 
 CREATE INDEX IF NOT EXISTS "ix_practice_sites_branch_id" ON "practice"."practice_sites" ("branch_id");
@@ -72,7 +74,13 @@ CREATE INDEX IF NOT EXISTS "ix_practice_sites_facility_typology_concept_id" ON "
 
 CREATE INDEX IF NOT EXISTS "ix_practice_sites_sedes_department_concept_id" ON "practice"."practice_sites" ("sedes_department_concept_id");
 
-CREATE UNIQUE INDEX IF NOT EXISTS "ux_practice_sites_snis_code" ON "practice"."practice_sites" ("snis_code") WHERE snis_code IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_practice_sites_snis_code" ON "practice"."practice_sites" ("snis_code") WHERE snis_code IS NOT NULL AND snis_verified_at IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS "ix_practice_sites_tenant_id_snis_code" ON "practice"."practice_sites" ("tenant_id", "snis_code");
+
+CREATE INDEX IF NOT EXISTS "ix_practice_sites_snis_verified_by_user_id" ON "practice"."practice_sites" ("snis_verified_by_user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_practice_sites_tenant_id_id" ON "practice"."practice_sites" ("tenant_id", "id");
 
 CREATE INDEX IF NOT EXISTS "ix_clinical_units_practice_site_id" ON "practice"."clinical_units" ("practice_site_id");
 
@@ -93,6 +101,8 @@ CREATE INDEX IF NOT EXISTS "ix_clinical_units_updated_by_user_id" ON "practice".
 CREATE INDEX IF NOT EXISTS "ix_clinical_units_responsible_user_id" ON "practice"."clinical_units" ("responsible_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_clinical_units_tenant_id" ON "practice"."clinical_units" ("tenant_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_clinical_units_tenant_id_id" ON "practice"."clinical_units" ("tenant_id", "id");
 
 CREATE INDEX IF NOT EXISTS "ix_care_spaces_practice_site_id" ON "practice"."care_spaces" ("practice_site_id");
 
@@ -126,6 +136,8 @@ CREATE INDEX IF NOT EXISTS "ix_care_spaces_bed_category_concept_id" ON "practice
 
 CREATE UNIQUE INDEX IF NOT EXISTS "ux_care_spaces_site_code" ON "practice"."care_spaces" ("practice_site_id", "code");
 
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_care_spaces_tenant_id_id" ON "practice"."care_spaces" ("tenant_id", "id");
+
 CREATE INDEX IF NOT EXISTS "ix_space_unit_assignments_tenant_id" ON "practice"."space_unit_assignments" ("tenant_id");
 
 CREATE INDEX IF NOT EXISTS "ix_space_unit_assignments_care_space_id" ON "practice"."space_unit_assignments" ("care_space_id");
@@ -139,24 +151,6 @@ CREATE INDEX IF NOT EXISTS "ix_space_unit_assignments_created_by_user_id" ON "pr
 CREATE INDEX IF NOT EXISTS "ix_space_unit_assignments_updated_by_user_id" ON "practice"."space_unit_assignments" ("updated_by_user_id");
 
 CREATE UNIQUE INDEX IF NOT EXISTS "ux_space_unit_assignments_current" ON "practice"."space_unit_assignments" ("care_space_id", "clinical_unit_id") WHERE valid_to IS NULL;
-
-CREATE INDEX IF NOT EXISTS "ix_site_licenses_tenant_id" ON "practice"."site_licenses" ("tenant_id");
-
-CREATE INDEX IF NOT EXISTS "ix_site_licenses_practice_site_id" ON "practice"."site_licenses" ("practice_site_id");
-
-CREATE INDEX IF NOT EXISTS "ix_site_licenses_status_concept_id" ON "practice"."site_licenses" ("status_concept_id");
-
-CREATE INDEX IF NOT EXISTS "ix_site_licenses_clinical_unit_id" ON "practice"."site_licenses" ("clinical_unit_id");
-
-CREATE INDEX IF NOT EXISTS "ix_site_licenses_healthcare_service_id" ON "practice"."site_licenses" ("healthcare_service_id");
-
-CREATE INDEX IF NOT EXISTS "ix_site_licenses_document_file_id" ON "practice"."site_licenses" ("document_file_id");
-
-CREATE INDEX IF NOT EXISTS "ix_site_licenses_created_by_user_id" ON "practice"."site_licenses" ("created_by_user_id");
-
-CREATE INDEX IF NOT EXISTS "ix_site_licenses_updated_by_user_id" ON "practice"."site_licenses" ("updated_by_user_id");
-
-CREATE INDEX IF NOT EXISTS "ix_site_licenses_practice_site_id_expires_on" ON "practice"."site_licenses" ("practice_site_id", "expires_on");
 
 CREATE INDEX IF NOT EXISTS "ix_site_declared_capacities_tenant_id" ON "practice"."site_declared_capacities" ("tenant_id");
 

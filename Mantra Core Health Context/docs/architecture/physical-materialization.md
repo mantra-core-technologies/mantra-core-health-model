@@ -49,10 +49,42 @@ comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_obje
 
 ## 3. Estado actual del build
 
+### v4.2.67b — Infraestructura F1b: endurecimiento de seguridad (2026-10-29)
+
+**Cambio de esquema sobre v4.2.67, antes de mergear.** Parche: `SQL/patches/2026-10-29_infraestructura_f1b_seguridad.sql`
+(idempotente, fuera de `apply_all.sql`, se aplica después del de F1). Origen: revisión de seguridad de F1 y cambio de
+alcance del orquestador. Desvíos anotados en `CONTRATO-F0-F1.md`.
+
+- **Sin `practice.site_licenses` ni `audit.site_licenses_history`**: duplicaban
+  `organization_extensions.facility_licenses`, que gana `clinical_unit_id` y `healthcare_service_id` (alcance
+  opcional, FK). Se quitaron del `.puml`, del SQL generado y del parche de F1; el f1b las borra con `IF EXISTS` y
+  aborta si tienen filas. La acreditación sigue en `practice.practice_accreditations`.
+- **Aislamiento por tenant en las referencias.** `UNIQUE (tenant_id, id)` en `practices`, `practice_sites`,
+  `clinical_units` y `care_spaces` (declarados en el `.puml`) y 14 FK compuestas `(tenant_id, x_id)` escritas en el
+  parche (gen_ddl no expresa FK compuestas): sede→práctica, unidad→sede/unidad padre, espacio→sede/espacio
+  padre/unidad, vínculo espacio↔unidad, capacidad declarada, habilitación→sede/unidad e historia→origen. El servicio
+  de una habilitación (`healthcare_services` no tiene `tenant_id`) se valida con un trigger contra el tenant de su
+  práctica. `clinical_units.tenant_id` y `care_spaces.tenant_id` pasan a NOT NULL.
+- **SNIS.** `practice_sites.snis_verified_at` y `snis_verified_by_user_id`; `ux_practice_sites_snis_code` pasa a
+  `WHERE snis_code IS NOT NULL AND snis_verified_at IS NOT NULL` y se agrega `ix_practice_sites_tenant_id_snis_code`.
+  Un trigger impide a `mantra_app` escribir la verificación fuera de `app.system_context` y la borra si cambia el
+  código.
+- **Historia de la estructura** (`audit.practice_sites_history`, `clinical_units_history`, `care_spaces_history`):
+  `tenant_id NOT NULL` (backfill desde el origen; un trigger lo completa en INSERT), RLS `tenant_isolation`,
+  `mantra_app` con SELECT, INSERT y UPDATE sólo de `valid_to`; un trigger rechaza DELETE y todo UPDATE que no sea
+  cerrar una vez `valid_to`. Las otras ~120 `audit.*_history` del modelo siguen sin `tenant_id` y con DML completo:
+  no se tocaron (fuera del alcance de F1). Seeds mock de las tres historias con `tenant_id`.
+
+**Verificado (2026-10-29)** en la base local docker (PostgreSQL 18, `alovida`): el parche f1b dos veces, ambas
+exit 0 y la verificación final OK; F1 reaplicado después y f1b de nuevo, exit 0. Pruebas negativas como
+`mantra_app` con `app.current_tenant_id` fijado, dentro de una transacción revertida. `pytest salud-db` 43 passed.
+No se ensayó contra una base con datos reales ni se cargó el paquete de seeds.
+
 ### v4.2.67 — Infraestructura hospitalaria F1: establecimiento, árbol físico y habilitaciones (2026-10-29)
 
-**Cambio de esquema: +29 columnas, +6 tablas, +45 FK, +55 índices (2 únicos sobre tablas existentes) y
-+6 políticas RLS en `practice` (14) y `audit` (10).** Parche: `SQL/patches/2026-10-29_infraestructura_f1.sql`
+**Cambio de esquema: +29 columnas, +4 tablas, +33 FK, +39 índices (2 únicos sobre tablas existentes) y
++5 políticas RLS en `practice` (14)** (cifras del parche ya sin `site_licenses`; la verificación de abajo es de la
+primera versión, con 6 tablas). Parche: `SQL/patches/2026-10-29_infraestructura_f1.sql`
 (idempotente, fuera de `apply_all.sql`). Contrato: `SALUD/Arquitectura/infraestructura-hospitalaria/CONTRATO-F0-F1.md` §1
 en el repositorio de documentación.
 
@@ -65,9 +97,9 @@ en el repositorio de documentación.
   renovaciones/h, validación HVAC), restricción de sexo y edad, categoría de cama, `censable`, `gln` y vigencia.
   `UNIQUE (practice_site_id, code)`: el código es inmutable y no se reutiliza.
 - Tablas nuevas: `space_unit_assignments` (espacio ↔ unidad con rol y vigencia; un vínculo vigente por par),
-  `site_licenses` (habilitaciones), `site_declared_capacities` (capacidad declarada, la real se deriva),
-  `space_form_parent_rules` y `facility_typology_rules` (catálogos globales de reglas, PK compuesta, sin tenant)
-  y `audit.site_licenses_history`.
+  `site_declared_capacities` (capacidad declarada, la real se deriva), `space_form_parent_rules` y
+  `facility_typology_rules` (catálogos globales de reglas, PK compuesta, sin tenant). (La primera versión traía
+  también `site_licenses` y `audit.site_licenses_history`; se retiraron en v4.2.67b.)
 - Todas las `*_concept_id` → `terminology.catalog_concepts` por convención. Las FK intra-módulo de las tablas
   nuevas salen de aristas etiquetadas del `.puml` (`space_unit_assignments }o--|| care_spaces : care_space_id`…).
 - `clinical_units.tenant_id` y `care_spaces.tenant_id` son NULLables (el contrato sólo exige NOT NULL en la

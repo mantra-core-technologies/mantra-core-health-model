@@ -82,6 +82,8 @@ CREATE TABLE IF NOT EXISTS "practice"."practice_sites" (
     "health_network_name" varchar,
     "sedes_department_concept_id" uuid,
     "municipality_name" varchar,
+    "snis_verified_at" timestamptz,
+    "snis_verified_by_user_id" uuid,
     CONSTRAINT "pk_practice_sites" PRIMARY KEY ("id")
 );
 
@@ -101,7 +103,7 @@ CREATE TABLE IF NOT EXISTS "practice"."clinical_units" (
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
     "responsible_user_id" uuid,
-    "tenant_id" uuid,
+    "tenant_id" uuid NOT NULL,
     "description" varchar,
     "valid_from" timestamptz,
     "valid_to" timestamptz,
@@ -126,7 +128,7 @@ CREATE TABLE IF NOT EXISTS "practice"."care_spaces" (
     "row_version" integer NOT NULL DEFAULT 1,
     "prep_minutes" integer,
     "cleanup_minutes" integer,
-    "tenant_id" uuid,
+    "tenant_id" uuid NOT NULL,
     "form_concept_id" uuid,
     "description" varchar,
     "floor_number" integer,
@@ -159,27 +161,6 @@ CREATE TABLE IF NOT EXISTS "practice"."space_unit_assignments" (
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
     CONSTRAINT "pk_space_unit_assignments" PRIMARY KEY ("id")
-);
-
-CREATE TABLE IF NOT EXISTS "practice"."site_licenses" (
-    "id" uuid NOT NULL,
-    "tenant_id" uuid NOT NULL,
-    "practice_site_id" uuid NOT NULL,
-    "authority_name" varchar NOT NULL,
-    "resolution_number" varchar,
-    "issued_on" date,
-    "expires_on" date,
-    "status_concept_id" uuid NOT NULL,
-    "clinical_unit_id" uuid,
-    "healthcare_service_id" uuid,
-    "document_file_id" uuid,
-    "notes" text,
-    "created_at" timestamptz NOT NULL,
-    "updated_at" timestamptz NOT NULL,
-    "created_by_user_id" uuid,
-    "updated_by_user_id" uuid,
-    "row_version" integer NOT NULL DEFAULT 1,
-    CONSTRAINT "pk_site_licenses" PRIMARY KEY ("id")
 );
 
 CREATE TABLE IF NOT EXISTS "practice"."site_declared_capacities" (

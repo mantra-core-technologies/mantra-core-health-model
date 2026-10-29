@@ -164,6 +164,8 @@ CREATE INDEX IF NOT EXISTS "ix_practice_sites_history_change_reason_concept_id" 
 
 CREATE INDEX IF NOT EXISTS "brin_practice_sites_history_recorded_at" ON "audit"."practice_sites_history" USING brin ("recorded_at") WITH (pages_per_range=128);
 
+CREATE INDEX IF NOT EXISTS "ix_practice_sites_history_tenant_id" ON "audit"."practice_sites_history" ("tenant_id");
+
 CREATE INDEX IF NOT EXISTS "ix_clinical_units_history_clinical_unit_id" ON "audit"."clinical_units_history" ("clinical_unit_id");
 
 CREATE INDEX IF NOT EXISTS "ix_clinical_units_history_operation_concept_id" ON "audit"."clinical_units_history" ("operation_concept_id");
@@ -173,6 +175,8 @@ CREATE INDEX IF NOT EXISTS "ix_clinical_units_history_changed_by_user_id" ON "au
 CREATE INDEX IF NOT EXISTS "ix_clinical_units_history_change_reason_concept_id" ON "audit"."clinical_units_history" ("change_reason_concept_id");
 
 CREATE INDEX IF NOT EXISTS "brin_clinical_units_history_recorded_at" ON "audit"."clinical_units_history" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_clinical_units_history_tenant_id" ON "audit"."clinical_units_history" ("tenant_id");
 
 CREATE INDEX IF NOT EXISTS "ix_care_spaces_history_care_space_id" ON "audit"."care_spaces_history" ("care_space_id");
 
@@ -184,15 +188,7 @@ CREATE INDEX IF NOT EXISTS "ix_care_spaces_history_change_reason_concept_id" ON 
 
 CREATE INDEX IF NOT EXISTS "brin_care_spaces_history_recorded_at" ON "audit"."care_spaces_history" USING brin ("recorded_at") WITH (pages_per_range=128);
 
-CREATE INDEX IF NOT EXISTS "ix_site_licenses_history_site_license_id" ON "audit"."site_licenses_history" ("site_license_id");
-
-CREATE INDEX IF NOT EXISTS "ix_site_licenses_history_operation_concept_id" ON "audit"."site_licenses_history" ("operation_concept_id");
-
-CREATE INDEX IF NOT EXISTS "ix_site_licenses_history_changed_by_user_id" ON "audit"."site_licenses_history" ("changed_by_user_id");
-
-CREATE INDEX IF NOT EXISTS "ix_site_licenses_history_change_reason_concept_id" ON "audit"."site_licenses_history" ("change_reason_concept_id");
-
-CREATE INDEX IF NOT EXISTS "brin_site_licenses_history_recorded_at" ON "audit"."site_licenses_history" USING brin ("recorded_at") WITH (pages_per_range=128);
+CREATE INDEX IF NOT EXISTS "ix_care_spaces_history_tenant_id" ON "audit"."care_spaces_history" ("tenant_id");
 
 CREATE INDEX IF NOT EXISTS "ix_diagnostic_reports_history_diagnostic_report_id" ON "audit"."diagnostic_reports_history" ("diagnostic_report_id");
 

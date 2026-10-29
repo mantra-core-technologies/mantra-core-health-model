@@ -192,6 +192,7 @@ CREATE TABLE IF NOT EXISTS "audit"."practice_sites_history" (
     "changed_by_user_id" uuid,
     "change_reason_concept_id" uuid,
     "recorded_at" timestamptz NOT NULL,
+    "tenant_id" uuid NOT NULL,
     CONSTRAINT "pk_practice_sites_history" PRIMARY KEY ("history_id")
 );
 
@@ -206,6 +207,7 @@ CREATE TABLE IF NOT EXISTS "audit"."clinical_units_history" (
     "changed_by_user_id" uuid,
     "change_reason_concept_id" uuid,
     "recorded_at" timestamptz NOT NULL,
+    "tenant_id" uuid NOT NULL,
     CONSTRAINT "pk_clinical_units_history" PRIMARY KEY ("history_id")
 );
 
@@ -220,21 +222,8 @@ CREATE TABLE IF NOT EXISTS "audit"."care_spaces_history" (
     "changed_by_user_id" uuid,
     "change_reason_concept_id" uuid,
     "recorded_at" timestamptz NOT NULL,
+    "tenant_id" uuid NOT NULL,
     CONSTRAINT "pk_care_spaces_history" PRIMARY KEY ("history_id")
-);
-
-CREATE TABLE IF NOT EXISTS "audit"."site_licenses_history" (
-    "history_id" uuid NOT NULL,
-    "site_license_id" uuid NOT NULL,
-    "revision_no" integer NOT NULL,
-    "operation_concept_id" uuid NOT NULL,
-    "valid_from" timestamptz NOT NULL,
-    "valid_to" timestamptz,
-    "data_snapshot" jsonb NOT NULL,
-    "changed_by_user_id" uuid,
-    "change_reason_concept_id" uuid,
-    "recorded_at" timestamptz NOT NULL,
-    CONSTRAINT "pk_site_licenses_history" PRIMARY KEY ("history_id")
 );
 
 CREATE TABLE IF NOT EXISTS "audit"."diagnostic_reports_history" (

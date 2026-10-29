@@ -1,7 +1,6 @@
 -- ============================================================================
 -- SALUD · patch v4.2.67 (infraestructura hospitalaria F1 · establecimiento regulado,
--- árbol físico FHIR Location, vínculo espacio↔unidad, habilitaciones y capacidad
--- declarada) sobre BD viva
+-- árbol físico FHIR Location, vínculo espacio↔unidad y capacidad declarada) sobre BD viva
 -- Fecha: 2026-10-29 · Contrato: SALUD/Arquitectura/infraestructura-hospitalaria/
 --   CONTRATO-F0-F1.md §1 (repositorio de documentación)
 -- Idempotente (ADD COLUMN IF NOT EXISTS / CREATE … IF NOT EXISTS / FK con
@@ -28,21 +27,28 @@
 --      description, piso, m², asepsia, presión, renovaciones/h, validación HVAC,
 --      restricción de sexo y edad, categoría de cama, censable, GLN y vigencia.
 --      Único (practice_site_id, code): el código es inmutable y no se reutiliza.
---   D. Tablas nuevas en `practice`: space_unit_assignments, site_licenses,
---      site_declared_capacities, space_form_parent_rules, facility_typology_rules.
---      Y en `audit`: site_licenses_history (mismo patrón que practice_sites_history).
---   E. RLS `tenant_isolation` (texto exacto de 2026-08-05_tenant_rls.sql) en las seis
+--   D. Tablas nuevas en `practice`: space_unit_assignments, site_declared_capacities,
+--      space_form_parent_rules, facility_typology_rules. Las habilitaciones NO son tabla
+--      nueva: viven en organization_extensions.facility_licenses (ver el patch f1b).
+--   E. RLS `tenant_isolation` (texto exacto de 2026-08-05_tenant_rls.sql) en las cinco
 --      tablas con `tenant_id`: practice_sites, clinical_units, care_spaces,
---      space_unit_assignments, site_licenses, site_declared_capacities. Las dos tablas de
---      reglas son catálogos globales sin tenant y quedan sin RLS.
+--      space_unit_assignments, site_declared_capacities. Las dos tablas de reglas son
+--      catálogos globales sin tenant y quedan sin RLS.
+--
+-- REVISIÓN 2026-10-29 (antes de mergear). La primera versión de este patch creaba también
+-- practice.site_licenses y audit.site_licenses_history; duplicaban
+-- organization_extensions.facility_licenses y se quitaron de aquí. Una base que ya aplicó
+-- la versión anterior las limpia con 2026-10-29_infraestructura_f1b_seguridad.sql, que
+-- además endurece el aislamiento por tenant de todo lo que este patch agrega.
 --
 -- LO QUE ESTE PATCH NO HACE.
 --   - No siembra conceptos (LOC_FORM_*, SPACE_FN_*, LIC_*, CAP_*, …) ni las reglas
 --     padre→hijo / de tipología: sus ids los deriva la API (`practice.concepts.ts`).
 --   - No completa `care_spaces.form_concept_id`: queda NULL en las filas existentes y la
 --     API hace el backfill a LOC_FORM_ROOM, porque el uuid del concepto es de la API.
---   - `clinical_units.tenant_id` y `care_spaces.tenant_id` quedan NULLables (el contrato
---     sólo exige NOT NULL en practice_sites); el backfill igual las deja completas.
+--   - `clinical_units.tenant_id` y `care_spaces.tenant_id` quedan NULLables acá; el NOT NULL,
+--     las FK compuestas (tenant_id, x_id) y el resto del endurecimiento vienen en
+--     2026-10-29_infraestructura_f1b_seguridad.sql, que se aplica justo después.
 --   - No borra ni renombra nada.
 --
 -- PRECONDICIÓN. El índice único (practice_site_id, code) de care_spaces falla si hoy hay
@@ -55,10 +61,10 @@
 --
 -- DELTAS ESPERADOS sobre la base viva (antes de este patch):
 --   columnas  +29  (practice_sites 9 · clinical_units 4 · care_spaces 16)
---   tablas     +6  (5 en practice, 1 en audit)
---   FKs       +45
---   índices   +55  (49 declarados, 2 de ellos únicos, + 6 PK de las tablas nuevas)
---   políticas RLS +6 (tenant_isolation)
+--   tablas     +4  (en practice)
+--   FKs       +33
+--   índices   +39  (35 declarados, 2 de ellos únicos, + 4 PK de las tablas nuevas)
+--   políticas RLS +5 (tenant_isolation)
 -- ============================================================================
 
 BEGIN;
@@ -241,27 +247,6 @@ CREATE TABLE IF NOT EXISTS "practice"."space_unit_assignments" (
     CONSTRAINT "pk_space_unit_assignments" PRIMARY KEY ("id")
 );
 
-CREATE TABLE IF NOT EXISTS "practice"."site_licenses" (
-    "id" uuid NOT NULL,
-    "tenant_id" uuid NOT NULL,
-    "practice_site_id" uuid NOT NULL,
-    "authority_name" varchar NOT NULL,
-    "resolution_number" varchar,
-    "issued_on" date,
-    "expires_on" date,
-    "status_concept_id" uuid NOT NULL,
-    "clinical_unit_id" uuid,
-    "healthcare_service_id" uuid,
-    "document_file_id" uuid,
-    "notes" text,
-    "created_at" timestamptz NOT NULL,
-    "updated_at" timestamptz NOT NULL,
-    "created_by_user_id" uuid,
-    "updated_by_user_id" uuid,
-    "row_version" integer NOT NULL DEFAULT 1,
-    CONSTRAINT "pk_site_licenses" PRIMARY KEY ("id")
-);
-
 CREATE TABLE IF NOT EXISTS "practice"."site_declared_capacities" (
     "id" uuid NOT NULL,
     "tenant_id" uuid NOT NULL,
@@ -302,20 +287,6 @@ CREATE TABLE IF NOT EXISTS "practice"."facility_typology_rules" (
     CONSTRAINT "pk_facility_typology_rules" PRIMARY KEY ("typology_concept_id", "space_function_concept_id")
 );
 
-CREATE TABLE IF NOT EXISTS "audit"."site_licenses_history" (
-    "history_id" uuid NOT NULL,
-    "site_license_id" uuid NOT NULL,
-    "revision_no" integer NOT NULL,
-    "operation_concept_id" uuid NOT NULL,
-    "valid_from" timestamptz NOT NULL,
-    "valid_to" timestamptz,
-    "data_snapshot" jsonb NOT NULL,
-    "changed_by_user_id" uuid,
-    "change_reason_concept_id" uuid,
-    "recorded_at" timestamptz NOT NULL,
-    CONSTRAINT "pk_site_licenses_history" PRIMARY KEY ("history_id")
-);
-
 -- ------------------------------------------------------------- FKs (copiadas de 03_fk_intra y 90_fk_deferred)
 DO $$ BEGIN
     ALTER TABLE "practice"."space_unit_assignments"
@@ -327,24 +298,6 @@ DO $$ BEGIN
     ALTER TABLE "practice"."space_unit_assignments"
         ADD CONSTRAINT "fk_space_unit_assignments_clinical_unit_id" FOREIGN KEY ("clinical_unit_id")
         REFERENCES "practice"."clinical_units" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
-DO $$ BEGIN
-    ALTER TABLE "practice"."site_licenses"
-        ADD CONSTRAINT "fk_site_licenses_practice_site_id" FOREIGN KEY ("practice_site_id")
-        REFERENCES "practice"."practice_sites" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
-DO $$ BEGIN
-    ALTER TABLE "practice"."site_licenses"
-        ADD CONSTRAINT "fk_site_licenses_clinical_unit_id" FOREIGN KEY ("clinical_unit_id")
-        REFERENCES "practice"."clinical_units" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
-DO $$ BEGIN
-    ALTER TABLE "practice"."site_licenses"
-        ADD CONSTRAINT "fk_site_licenses_healthcare_service_id" FOREIGN KEY ("healthcare_service_id")
-        REFERENCES "practice"."healthcare_services" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
@@ -474,41 +427,6 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención
 
 -- destino: directory.tenants (requiere schema directory)
 DO $$ BEGIN
-    ALTER TABLE "practice"."site_licenses"
-        ADD CONSTRAINT "fk_site_licenses_tenant_id" FOREIGN KEY ("tenant_id")
-        REFERENCES "directory"."tenants" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
-
--- destino: terminology.catalog_concepts (requiere schema terminology)
-DO $$ BEGIN
-    ALTER TABLE "practice"."site_licenses"
-        ADD CONSTRAINT "fk_site_licenses_status_concept_id" FOREIGN KEY ("status_concept_id")
-        REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
-
--- destino: common.files (requiere schema common)
-DO $$ BEGIN
-    ALTER TABLE "practice"."site_licenses"
-        ADD CONSTRAINT "fk_site_licenses_document_file_id" FOREIGN KEY ("document_file_id")
-        REFERENCES "common"."files" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
-
--- destino: iam.users (requiere schema iam)
-DO $$ BEGIN
-    ALTER TABLE "practice"."site_licenses"
-        ADD CONSTRAINT "fk_site_licenses_created_by_user_id" FOREIGN KEY ("created_by_user_id")
-        REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
-
--- destino: iam.users (requiere schema iam)
-DO $$ BEGIN
-    ALTER TABLE "practice"."site_licenses"
-        ADD CONSTRAINT "fk_site_licenses_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
-        REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
-
--- destino: directory.tenants (requiere schema directory)
-DO $$ BEGIN
     ALTER TABLE "practice"."site_declared_capacities"
         ADD CONSTRAINT "fk_site_declared_capacities_tenant_id" FOREIGN KEY ("tenant_id")
         REFERENCES "directory"."tenants" ("id");
@@ -598,34 +516,6 @@ DO $$ BEGIN
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 
--- destino: practice.site_licenses (requiere schema practice)
-DO $$ BEGIN
-    ALTER TABLE "audit"."site_licenses_history"
-        ADD CONSTRAINT "fk_site_licenses_history_site_license_id" FOREIGN KEY ("site_license_id")
-        REFERENCES "practice"."site_licenses" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
-
--- destino: terminology.catalog_concepts (requiere schema terminology)
-DO $$ BEGIN
-    ALTER TABLE "audit"."site_licenses_history"
-        ADD CONSTRAINT "fk_site_licenses_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
-        REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
-
--- destino: iam.users (requiere schema iam)
-DO $$ BEGIN
-    ALTER TABLE "audit"."site_licenses_history"
-        ADD CONSTRAINT "fk_site_licenses_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
-        REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
-
--- destino: terminology.catalog_concepts (requiere schema terminology)
-DO $$ BEGIN
-    ALTER TABLE "audit"."site_licenses_history"
-        ADD CONSTRAINT "fk_site_licenses_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
-        REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
-
 -- ------------------------------------------------------------- índices (copiados de 04_indexes)
 CREATE INDEX IF NOT EXISTS "ix_practice_sites_tenant_id" ON "practice"."practice_sites" ("tenant_id");
 
@@ -671,24 +561,6 @@ CREATE INDEX IF NOT EXISTS "ix_space_unit_assignments_updated_by_user_id" ON "pr
 
 CREATE UNIQUE INDEX IF NOT EXISTS "ux_space_unit_assignments_current" ON "practice"."space_unit_assignments" ("care_space_id", "clinical_unit_id") WHERE valid_to IS NULL;
 
-CREATE INDEX IF NOT EXISTS "ix_site_licenses_tenant_id" ON "practice"."site_licenses" ("tenant_id");
-
-CREATE INDEX IF NOT EXISTS "ix_site_licenses_practice_site_id" ON "practice"."site_licenses" ("practice_site_id");
-
-CREATE INDEX IF NOT EXISTS "ix_site_licenses_status_concept_id" ON "practice"."site_licenses" ("status_concept_id");
-
-CREATE INDEX IF NOT EXISTS "ix_site_licenses_clinical_unit_id" ON "practice"."site_licenses" ("clinical_unit_id");
-
-CREATE INDEX IF NOT EXISTS "ix_site_licenses_healthcare_service_id" ON "practice"."site_licenses" ("healthcare_service_id");
-
-CREATE INDEX IF NOT EXISTS "ix_site_licenses_document_file_id" ON "practice"."site_licenses" ("document_file_id");
-
-CREATE INDEX IF NOT EXISTS "ix_site_licenses_created_by_user_id" ON "practice"."site_licenses" ("created_by_user_id");
-
-CREATE INDEX IF NOT EXISTS "ix_site_licenses_updated_by_user_id" ON "practice"."site_licenses" ("updated_by_user_id");
-
-CREATE INDEX IF NOT EXISTS "ix_site_licenses_practice_site_id_expires_on" ON "practice"."site_licenses" ("practice_site_id", "expires_on");
-
 CREATE INDEX IF NOT EXISTS "ix_site_declared_capacities_tenant_id" ON "practice"."site_declared_capacities" ("tenant_id");
 
 CREATE INDEX IF NOT EXISTS "ix_site_declared_capacities_practice_site_id" ON "practice"."site_declared_capacities" ("practice_site_id");
@@ -715,16 +587,6 @@ CREATE INDEX IF NOT EXISTS "ix_facility_typology_rules_created_by_user_id" ON "p
 
 CREATE INDEX IF NOT EXISTS "ix_facility_typology_rules_updated_by_user_id" ON "practice"."facility_typology_rules" ("updated_by_user_id");
 
-CREATE INDEX IF NOT EXISTS "ix_site_licenses_history_site_license_id" ON "audit"."site_licenses_history" ("site_license_id");
-
-CREATE INDEX IF NOT EXISTS "ix_site_licenses_history_operation_concept_id" ON "audit"."site_licenses_history" ("operation_concept_id");
-
-CREATE INDEX IF NOT EXISTS "ix_site_licenses_history_changed_by_user_id" ON "audit"."site_licenses_history" ("changed_by_user_id");
-
-CREATE INDEX IF NOT EXISTS "ix_site_licenses_history_change_reason_concept_id" ON "audit"."site_licenses_history" ("change_reason_concept_id");
-
-CREATE INDEX IF NOT EXISTS "brin_site_licenses_history_recorded_at" ON "audit"."site_licenses_history" USING brin ("recorded_at") WITH (pages_per_range=128);
-
 -- ------------------------------------------------------------- E. RLS
 -- Texto exacto de la política de 2026-08-05_tenant_rls.sql. Ese patch descubre toda tabla
 -- con `tenant_id` y, si se vuelve a ejecutar, deja la misma política: no hay ventana en
@@ -738,16 +600,13 @@ DECLARE
         'practice.clinical_units',
         'practice.care_spaces',
         'practice.space_unit_assignments',
-        'practice.site_licenses',
         'practice.site_declared_capacities'
     ];
     nuevas text[] := ARRAY[
         'practice.space_unit_assignments',
-        'practice.site_licenses',
         'practice.site_declared_capacities',
         'practice.space_form_parent_rules',
-        'practice.facility_typology_rules',
-        'audit.site_licenses_history'
+        'practice.facility_typology_rules'
     ];
 BEGIN
     IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'mantra_app') THEN
@@ -813,9 +672,8 @@ BEGIN
     SELECT count(*) INTO n_tablas
       FROM information_schema.tables
      WHERE (table_schema, table_name) IN (
-            ('practice', 'space_unit_assignments'), ('practice', 'site_licenses'),
-            ('practice', 'site_declared_capacities'), ('practice', 'space_form_parent_rules'),
-            ('practice', 'facility_typology_rules'), ('audit', 'site_licenses_history'));
+            ('practice', 'space_unit_assignments'), ('practice', 'site_declared_capacities'),
+            ('practice', 'space_form_parent_rules'), ('practice', 'facility_typology_rules'));
 
     SELECT count(*) INTO n_fk
       FROM pg_constraint
@@ -829,9 +687,8 @@ BEGIN
             'fk_care_spaces_asepsis_concept_id', 'fk_care_spaces_pressure_concept_id',
             'fk_care_spaces_sex_restriction_concept_id', 'fk_care_spaces_age_group_concept_id',
             'fk_care_spaces_bed_category_concept_id'])
-        OR (contype = 'f' AND convalidated AND (
+        OR (contype = 'f' AND convalidated AND array_length(conkey, 1) = 1 AND (  -- las compuestas son de f1b
                conname LIKE 'fk\_space\_unit\_assignments\_%'
-            OR conname LIKE 'fk\_site\_licenses\_%'
             OR conname LIKE 'fk\_site\_declared\_capacities\_%'
             OR conname LIKE 'fk\_space\_form\_parent\_rules\_%'
             OR conname LIKE 'fk\_facility\_typology\_rules\_%'));
@@ -848,7 +705,7 @@ BEGIN
                         AND p.policyname = 'tenant_isolation'
      WHERE n.nspname = 'practice'
        AND c.relname IN ('practice_sites', 'clinical_units', 'care_spaces',
-                         'space_unit_assignments', 'site_licenses', 'site_declared_capacities')
+                         'space_unit_assignments', 'site_declared_capacities')
        AND c.relrowsecurity AND c.relforcerowsecurity;
 
     SELECT count(*) INTO n_nn
@@ -856,13 +713,13 @@ BEGIN
      WHERE table_schema = 'practice' AND table_name = 'practice_sites'
        AND column_name = 'tenant_id' AND is_nullable = 'NO';
 
-    IF n_columnas <> 29 OR n_tablas <> 6 OR n_fk <> 45 OR n_ux <> 3 OR n_rls <> 6 OR n_nn <> 1 THEN
+    IF n_columnas <> 29 OR n_tablas <> 4 OR n_fk <> 33 OR n_ux <> 3 OR n_rls <> 5 OR n_nn <> 1 THEN
         RAISE EXCEPTION
-            'v4.2.67 incompleto: columnas=% (29), tablas=% (6), fk=% (45), únicos=% (3), rls=% (6), practice_sites.tenant_id NOT NULL=% (1)',
+            'v4.2.67 incompleto: columnas=% (29), tablas=% (4), fk=% (33), únicos=% (3), rls=% (5), practice_sites.tenant_id NOT NULL=% (1)',
             n_columnas, n_tablas, n_fk, n_ux, n_rls, n_nn;
     END IF;
 
-    RAISE NOTICE 'v4.2.67 aplicado: 29 columnas, 6 tablas, 45 FKs validadas, 3 únicos, 6 tablas con RLS.';
+    RAISE NOTICE 'v4.2.67 aplicado: 29 columnas, 4 tablas, 33 FKs validadas, 3 únicos, 5 tablas con RLS.';
 END $$;
 
 COMMIT;

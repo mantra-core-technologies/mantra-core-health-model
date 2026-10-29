@@ -72,6 +72,10 @@ CREATE INDEX IF NOT EXISTS "ix_facility_licenses_updated_by_user_id" ON "organiz
 
 CREATE INDEX IF NOT EXISTS "ix_facility_licenses_tenant_id_updated_at" ON "organization_extensions"."facility_licenses" ("tenant_id", "updated_at" DESC);
 
+CREATE INDEX IF NOT EXISTS "ix_facility_licenses_clinical_unit_id" ON "organization_extensions"."facility_licenses" ("clinical_unit_id");
+
+CREATE INDEX IF NOT EXISTS "ix_facility_licenses_healthcare_service_id" ON "organization_extensions"."facility_licenses" ("healthcare_service_id");
+
 CREATE INDEX IF NOT EXISTS "ix_organization_affiliations_primary_tenant_id" ON "organization_extensions"."organization_affiliations" ("primary_tenant_id");
 
 CREATE INDEX IF NOT EXISTS "ix_organization_affiliations_participating_tenant_id" ON "organization_extensions"."organization_affiliations" ("participating_tenant_id");

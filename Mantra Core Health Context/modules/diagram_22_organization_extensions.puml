@@ -76,6 +76,12 @@ entity facility_licenses {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + v4.2.67b (infraestructura F1): alcance opcional de la habilitación a una unidad
+  ' organizativa o a un servicio de la sede. NULL = habilita el establecimiento entero.
+  ' Sede y unidad se referencian además con FK compuesta (tenant_id, x_id) y el servicio con
+  ' un trigger: el padre tiene que ser del mismo tenant (patch 2026-10-29_infraestructura_f1b).
+    clinical_unit_id : uuid <<FK>>
+    healthcare_service_id : uuid <<FK>>
 }
 
 entity organization_affiliations {
@@ -192,6 +198,8 @@ entity "INDEXES · facility_licenses" as idxset_facility_licenses <<INDEX_SET>> 
   IX ix_facility_licenses_created_by_user_id : (created_by_user_id) BTREE
   IX ix_facility_licenses_updated_by_user_id : (updated_by_user_id) BTREE
   IX ix_facility_licenses_tenant_id_updated_at : (tenant_id, updated_at DESC) BTREE
+  IX ix_facility_licenses_clinical_unit_id : (clinical_unit_id) BTREE
+  IX ix_facility_licenses_healthcare_service_id : (healthcare_service_id) BTREE
 }
 
 facility_licenses .. idxset_facility_licenses : indexed by

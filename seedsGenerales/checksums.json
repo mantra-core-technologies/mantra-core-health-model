@@ -9,7 +9,7 @@
   "modules/07_consent.seeds.json": "7630bd8116d1cb9362327609ba948b628c364d9e7200f02692eea37740a8534f",
   "modules/08_clinical.seeds.json": "8bb3c6c3fbd7d82ca8467831919b793aab2450d93d818afbf862e2bfed416766",
   "modules/09_forms.seeds.json": "d2428002271629d5f2bbc8419688cab0fddf820cc0717659f123595b290408bf",
-  "modules/10_audit.seeds.json": "f7b6a750270a35c8fa77861fa0ada6cda9ad845dc1ee8fa1fd98720fa26e0f84",
+  "modules/10_audit.seeds.json": "58f1cb435d29096d8cf696e47c0a337ae33908b975e30f6174bf9754c2f5fec7",
   "modules/11_system_ops.seeds.json": "f5e3d85a20afe217b8916079fee10fe5fa4ff9905d405c9e5a3d5564a5504ebe",
   "modules/12_integrations.seeds.json": "7fac8dbff3d0ab5465a8da01beb8dc8d4ce5a114407d2f10148f177bb0ba6c98",
   "modules/13_geo.seeds.json": "10ed482019be6344b74eddc122700d6395b9d1a8a349123e3a89bc90cb8944ad",
