@@ -26,6 +26,10 @@ entity "billing.bills" as billing_bills <<REFERENCE_ONLY>> { * id : uuid <<PK>> 
 entity "payments.payment_transactions" as payments_payment_transactions <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 entity "directory.branches" as directory_branches <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 entity "practice.practices" as practice_practices <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+' + infraestructura hospitalaria F5f (2026-10-29): destinos de la ubicación física del activo y
+' de la unidad organizativa dueña del centro de costo.
+entity "practice.care_spaces" as practice_care_spaces <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "practice.clinical_units" as practice_clinical_units <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 entity "iam.users" as iam_users <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 
 entity exchange_rates {
@@ -131,6 +135,12 @@ entity cost_centers {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + infraestructura hospitalaria F5f (2026-10-29): la unidad organizativa (practice.clinical_units)
+  ' a la que sirve el centro de costo. Una unidad tiene a lo sumo UN centro de costo activo
+  ' (ux_cost_centers_unit_active); la unidad tiene que ser de la misma práctica que el centro
+  ' (trigger del patch …_f5_accounting: cost_centers no tiene tenant_id para una FK compuesta).
+  ' Los cargos devengados de día-cama toman el centro de costo de la unidad dueña de la cama.
+    clinical_unit_id : uuid <<FK>>
 }
 
 entity cost_center_maps {
@@ -375,6 +385,11 @@ entity infrastructure_items {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + infraestructura hospitalaria F5f (2026-10-29): el espacio físico donde está el activo
+  ' (practice.care_spaces), en lugar del texto libre. `location_text` se conserva sólo como
+  ' lectura heredada. El espacio tiene que pertenecer a una sede de la misma práctica del
+  ' activo (trigger del patch …_f5_accounting). Un activo ubicado bloquea la clausura del espacio.
+    care_space_id : uuid <<FK>>
 }
 
 
@@ -929,6 +944,8 @@ journal_transactions |o--o{ asset_depreciations : depreciation posting
 liabilities ||--o{ liability_payments
 journal_transactions |o--o{ liability_payments : settlement posting
 assets |o--o{ infrastructure_items
+practice_care_spaces |o--o{ infrastructure_items : care_space_id
+practice_clinical_units |o--o{ cost_centers : clinical_unit_id
 fiscal_periods |o--o{ employee_payments
 journal_transactions |o--o{ employee_payments
 erp_employees |o--o{ employee_payments
@@ -1477,6 +1494,9 @@ entity "INDEXES · cost_centers" as idxset_cost_centers <<INDEX_SET>> {
   IX ix_cost_centers_status_concept_id : (status_concept_id) BTREE
   IX ix_cost_centers_created_by_user_id : (created_by_user_id) BTREE
   IX ix_cost_centers_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_cost_centers_clinical_unit_id : (clinical_unit_id) BTREE
+  UX ux_cost_centers_practice_id_id : (practice_id, id) UNIQUE BTREE
+  UX ux_cost_centers_unit_active : (clinical_unit_id) UNIQUE BTREE WHERE clinical_unit_id IS NOT NULL AND status_concept_id = '38a1d301-f40d-5b17-a695-5e6d605f8b19'
 }
 
 cost_centers .. idxset_cost_centers : indexed by
@@ -1614,6 +1634,7 @@ entity "INDEXES · infrastructure_items" as idxset_infrastructure_items <<INDEX_
   IX ix_infrastructure_items_status_concept_id : (status_concept_id) BTREE
   IX ix_infrastructure_items_created_by_user_id : (created_by_user_id) BTREE
   IX ix_infrastructure_items_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_infrastructure_items_care_space_id : (care_space_id) BTREE
 }
 
 infrastructure_items .. idxset_infrastructure_items : indexed by

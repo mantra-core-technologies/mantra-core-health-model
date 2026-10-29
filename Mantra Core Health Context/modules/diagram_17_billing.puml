@@ -27,6 +27,9 @@ entity "payments.payment_transactions" as payments_payment_transactions <<REFERE
 entity "insurance.insurance_claims" as insurance_insurance_claims <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 entity "insurance.insurance_claim_lines" as insurance_insurance_claim_lines <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 entity "practice.practices" as practice_practices <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+' + infraestructura hospitalaria F5e (2026-10-29): destinos de las tarifas y de los cargos devengados.
+entity "practice.care_spaces" as practice_care_spaces <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "accounting.cost_centers" as accounting_cost_centers <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 ' Stubs propios del módulo para declarar las FK de las tablas SIAT simuladas (la
 ' convención por nombre no resuelve siat_invoice_id → siat_simulated_invoices).
 entity "billing.invoices" as billing_invoices <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
@@ -580,6 +583,79 @@ entity quotation_installments {
   * row_version : integer
 }
 
+' ------------------------------------------------------------------------------
+' + infraestructura hospitalaria F5e (2026-10-29) — día-cama por regla de medianoche (D7) y
+' quirófano por tiempo. Contrato: CONTRATO-F2-F5.md §F5e. Patch: …_f5_billing.sql.
+' Conceptos (UUID literales en diagram_33; deterministicId de la API, módulo `billing`):
+'   TARIFF_BED_DAY, TARIFF_OR_TIME · CHG_SRC_BED_DAY, CHG_SRC_OR_TIME · CHG_PENDING,
+'   CHG_INVOICED, CHG_VOIDED.
+' ------------------------------------------------------------------------------
+
+' Tarifa versionada por categoría de cama (o de una sala concreta) y por tiempo de quirófano.
+' Una tarifa no se edita: se cierra (valid_to) y se abre otra. Sin solape (ex_space_tariffs_validity
+' en diagram_33). tenant_id es la columna del RLS; (tenant_id, practice_id) y (practice_id,
+' service_catalog_id) son FK compuestas: la tarifa no cruza tenants ni toma un servicio de otra
+' práctica. La sala (care_space_id) tiene que ser de una sede de la misma práctica (trigger del patch).
+entity space_tariffs {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * practice_id : uuid <<FK, SCOPED_BY:tenant_id>>
+  * tariff_kind_concept_id : uuid <<FK>>
+    bed_category_concept_id : uuid <<FK>>
+    care_space_id : uuid <<FK, SCOPED_BY:tenant_id>>
+  * service_catalog_id : uuid <<FK, SCOPED_BY:practice_id>>
+    unit_minutes : integer
+    minimum_units : integer
+  * unit_price : numeric(20,6)
+  * currency_concept_id : uuid <<FK>>
+  * valid_from : date
+    valid_to : date
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' Cargo devengado, antes de facturar. Lo genera el sistema desde la ocupación (día-cama) o desde el
+' caso quirúrgico (uso de quirófano); nadie lo escribe a mano. unit_price es la FOTO de la tarifa
+' vigente: cambiar la tarifa después no altera cargos pasados. Sin tarifa vigente el cargo queda
+' CHG_PENDING con unit_price NULL (no se inventa precio). Un día-cama por (encuentro, noche) y por
+' (cama, noche) mientras no esté anulado; el cargo mínimo de «ingreso y egreso el mismo día»
+' (minimum_stay_charge) no es una noche y queda fuera del único por cama. Un cargo emitido no se
+' edita: sólo se anula (CHG_VOIDED) con motivo. Historia: audit.charge_captures_history.
+entity charge_captures {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * practice_id : uuid <<FK, SCOPED_BY:tenant_id>>
+  * patient_profile_id : uuid <<FK>>
+  * encounter_id : uuid <<FK>>
+  * source_kind_concept_id : uuid <<FK>>
+  * source_ref_id : uuid
+  * service_date : date
+    care_space_id : uuid <<FK, SCOPED_BY:tenant_id>>
+    bed_category_concept_id : uuid <<FK>>
+    space_tariff_id : uuid <<FK, SCOPED_BY:practice_id>>
+    service_catalog_id : uuid <<FK, SCOPED_BY:practice_id>>
+  * minimum_stay_charge : boolean
+  * quantity : numeric
+    unit_price : numeric(20,6)
+    currency_concept_id : uuid <<FK>>
+    cost_center_id : uuid <<FK, SCOPED_BY:practice_id>>
+  * status_concept_id : uuid <<FK>>
+    invoice_line_id : uuid <<FK>>
+    void_reason : varchar
+  * idempotency_key : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
 
 erp_business_partners |o--o{ vendors
 accounting_subledger_accounts |o--o{ vendors
@@ -615,6 +691,15 @@ dunning_runs ||--o{ dunning_items
 invoices ||--o{ dunning_items
 erp_business_partners |o--o{ dunning_items
 service_catalog ||--o{ quotations
+space_tariffs }o--|| practice_practices : practice_id
+space_tariffs }o--o| practice_care_spaces : care_space_id
+space_tariffs }o--|| service_catalog : service_catalog_id
+charge_captures }o--|| practice_practices : practice_id
+charge_captures }o--o| practice_care_spaces : care_space_id
+charge_captures }o--o| space_tariffs : space_tariff_id
+charge_captures }o--o| service_catalog : service_catalog_id
+charge_captures }o--o| accounting_cost_centers : cost_center_id
+charge_captures }o--o| invoice_lines : invoice_line_id
 quotations ||--o{ quotation_installments
 
 note as BILLING_CLEARING_MODEL
@@ -729,6 +814,7 @@ entity "INDEXES · service_catalog" as idxset_service_catalog <<INDEX_SET>> {
   IX ix_service_catalog_income_account_id : (income_account_id) BTREE
   IX ix_service_catalog_created_by_user_id : (created_by_user_id) BTREE
   IX ix_service_catalog_updated_by_user_id : (updated_by_user_id) BTREE
+  UX ux_service_catalog_practice_id_id : (practice_id, id) UNIQUE BTREE
 }
 
 service_catalog .. idxset_service_catalog : indexed by
@@ -942,6 +1028,52 @@ entity "INDEXES · financial_kpi_snapshots" as idxset_financial_kpi_snapshots <<
 }
 
 financial_kpi_snapshots .. idxset_financial_kpi_snapshots : indexed by
+
+entity "INDEXES · space_tariffs" as idxset_space_tariffs <<INDEX_SET>> {
+  PK pk_space_tariffs : (id) UNIQUE BTREE
+  IX ix_space_tariffs_tenant_id : (tenant_id) BTREE
+  IX ix_space_tariffs_practice_id : (practice_id) BTREE
+  IX ix_space_tariffs_tariff_kind_concept_id : (tariff_kind_concept_id) BTREE
+  IX ix_space_tariffs_bed_category_concept_id : (bed_category_concept_id) BTREE
+  IX ix_space_tariffs_care_space_id : (care_space_id) BTREE
+  IX ix_space_tariffs_service_catalog_id : (service_catalog_id) BTREE
+  IX ix_space_tariffs_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_space_tariffs_status_concept_id : (status_concept_id) BTREE
+  IX ix_space_tariffs_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_space_tariffs_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_space_tariffs_lookup : (practice_id, tariff_kind_concept_id, valid_from DESC) BTREE
+  UX ux_space_tariffs_practice_id_id : (practice_id, id) UNIQUE BTREE
+  UX ux_space_tariffs_tenant_id_id : (tenant_id, id) UNIQUE BTREE
+}
+
+space_tariffs .. idxset_space_tariffs : indexed by
+
+entity "INDEXES · charge_captures" as idxset_charge_captures <<INDEX_SET>> {
+  PK pk_charge_captures : (id) UNIQUE BTREE
+  IX ix_charge_captures_tenant_id : (tenant_id) BTREE
+  IX ix_charge_captures_practice_id : (practice_id) BTREE
+  IX ix_charge_captures_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_charge_captures_encounter_status : (encounter_id, status_concept_id) BTREE
+  IX ix_charge_captures_source_kind_concept_id : (source_kind_concept_id) BTREE
+  IX ix_charge_captures_source_ref_id : (source_ref_id) BTREE
+  IX ix_charge_captures_care_space_id : (care_space_id, service_date) BTREE
+  IX ix_charge_captures_bed_category_concept_id : (bed_category_concept_id) BTREE
+  IX ix_charge_captures_space_tariff_id : (space_tariff_id) BTREE
+  IX ix_charge_captures_service_catalog_id : (service_catalog_id) BTREE
+  IX ix_charge_captures_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_charge_captures_cost_center_id : (cost_center_id) BTREE
+  IX ix_charge_captures_status_concept_id : (status_concept_id) BTREE
+  IX ix_charge_captures_invoice_line_id : (invoice_line_id) BTREE
+  IX ix_charge_captures_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_charge_captures_updated_by_user_id : (updated_by_user_id) BTREE
+  UX ux_charge_captures_tenant_id_id : (tenant_id, id) UNIQUE BTREE
+  UX ux_charge_captures_idempotency_key : (tenant_id, idempotency_key) UNIQUE BTREE
+  UX ux_charge_captures_bed_night : (care_space_id, service_date) UNIQUE BTREE WHERE source_kind_concept_id = '5f84ea44-b0d3-582c-86c1-32c81e422d30' AND minimum_stay_charge = false AND status_concept_id <> 'f2f59654-d912-5eeb-b619-814e50a3c4d0'
+  UX ux_charge_captures_encounter_bed_day : (encounter_id, service_date) UNIQUE BTREE WHERE source_kind_concept_id = '5f84ea44-b0d3-582c-86c1-32c81e422d30' AND status_concept_id <> 'f2f59654-d912-5eeb-b619-814e50a3c4d0'
+  UX ux_charge_captures_or_case : (source_ref_id) UNIQUE BTREE WHERE source_kind_concept_id = 'a79361f6-8787-56a5-9a90-a9436d02e217' AND status_concept_id <> 'f2f59654-d912-5eeb-b619-814e50a3c4d0'
+}
+
+charge_captures .. idxset_charge_captures : indexed by
 }
 
 
