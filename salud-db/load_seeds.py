@@ -179,16 +179,33 @@ def not_null_without_default(conn, schema, table):
     return {r[0] for r in rows}
 
 
-def upsert_sql(target, col_list, placeholders, columns, pk, refresh):
+def has_deferrable_arbiters(conn, schema, table):
+    """¿La tabla tiene UNIQUE / EXCLUDE diferibles? (F3: ex_encounter_locations_*).
+
+    PostgreSQL no admite un `ON CONFLICT DO NOTHING` sin target cuando existe uno
+    (SQLSTATE 55000: «ON CONFLICT does not support deferrable unique constraints/exclusion
+    constraints as arbiters»), porque ahí todos los índices únicos son árbitros."""
+    return bool(conn.execute(
+        "SELECT 1 FROM pg_constraint WHERE conrelid = %s::regclass"
+        " AND contype IN ('u', 'x') AND condeferrable LIMIT 1",
+        (f'"{schema}"."{table}"',),
+    ).fetchone())
+
+
+def upsert_sql(target, col_list, placeholders, columns, pk, refresh, deferrable=False):
     """INSERT idempotente. Con `refresh`, el conflicto de PK actualiza la fila.
 
     Sin target de conflicto se absorben también los uniques naturales (los seeds traen
-    duplicados de clave natural con id distinto); con target solo cuenta la PK."""
+    duplicados de clave natural con id distinto); con target solo cuenta la PK. Una tabla con
+    restricciones diferibles (`deferrable=True`) no admite el DO NOTHING sin target: se usa la PK."""
     head = f"INSERT INTO {target} ({col_list}) VALUES ({placeholders})"
     sets = ", ".join(f'"{c}" = EXCLUDED."{c}"' for c in columns if c not in pk)
     if refresh and sets:
         pk_list = ", ".join(f'"{c}"' for c in sorted(pk))
         return f"{head} ON CONFLICT ({pk_list}) DO UPDATE SET {sets}"
+    if deferrable and pk:
+        pk_list = ", ".join(f'"{c}"' for c in sorted(pk))
+        return f"{head} ON CONFLICT ({pk_list}) DO NOTHING"
     return f"{head} ON CONFLICT DO NOTHING"
 
 
@@ -206,6 +223,7 @@ def insert_records(conn, schema, table, records, report, refresh=False):
     pk = primary_key_columns(conn, schema, table)
     required = not_null_without_default(conn, schema, table)
     types = column_types(conn, schema, table)
+    deferrable = has_deferrable_arbiters(conn, schema, table)
 
     groups = {}
     for rec in records:
@@ -230,7 +248,7 @@ def insert_records(conn, schema, table, records, report, refresh=False):
                       for rec in group]
             if pk:
                 sql = upsert_sql(target, col_list, placeholders, columns, pk,
-                                 refresh and set(pk) <= key_set)
+                                 refresh and set(pk) <= key_set, deferrable)
             else:
                 # Hypertables (time_series) no tienen PK: identidad = columnas provistas.
                 # El cast al tipo real de la columna hace que la comparación vea lo que la
