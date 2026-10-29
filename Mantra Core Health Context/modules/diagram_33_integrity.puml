@@ -297,6 +297,25 @@ entity "consent.treatment_informed_consents" as consent_treatment_informed_conse
   CHECK_SQL : ck_treatment_informed_consents_channel | "channel" IN ('IN_PERSON','TELEHEALTH')
   CHECK_SQL : ck_treatment_informed_consents_exception_type | "exception_type" IN ('EMERGENCY','PUBLIC_HEALTH_RISK','PATIENT_WAIVER')
 }
+' + infraestructura hospitalaria F5 (operaciones, 2026-10-29) — CONTRATO-F2-F5 F5a/F5c/F5g.
+' UUID literales (el predicado de un EXCLUDE debe ser IMMUTABLE), derivados con
+' deterministicId() de la API:
+'   ce54425b-5479-57f1-8bb2-274a8617723c = delegated_access:ASSIGN_ROLE_UNIT_HEAD (DA_ASSIGN_UNIT_HEAD)
+'   38a1d301-f40d-5b17-a695-5e6d605f8b19 = state:active (CONCEPTS.STATE_ACTIVE, el estado que escribe la API)
+'   928c884d-ff91-584c-8aa6-68535085e078 = delegated_access:SCOPE_UNIT (DA_SCOPE_UNIT)
+'   4df1a147-cb37-55ba-94e8-ab469e9cccb0 = delegated_access:SCOPE_SPACE (DA_SCOPE_SPACE)
+'   e69a4c95-fe59-5c3e-b826-222af123adb9 = delegated_access:SCOPE_SITE (DA_SCOPE_SITE)
+' Mismos nombres que el patch 2026-10-29_infraestructura_f5_operaciones.sql.
+entity "diagnostic_units.diagnostic_equipment" as diagnostic_units_diagnostic_equipment <<REFERENCE_ONLY>> {
+  ' F5a: AE Title DICOM — ≤ 16 caracteres ASCII imprimibles, sin barra invertida, no solo espacios.
+  CHECK_SQL : ck_diagnostic_equipment_ae_title | "ae_title" IS NULL OR ("ae_title" ~ '^[\x20-\x7E]{1,16}$' AND btrim("ae_title") <> '' AND "ae_title" !~ '\\')
+}
+entity "delegated_access.organization_user_assignments" as delegated_access_organization_user_assignments <<REFERENCE_ONLY>> {
+  ' F5g: el alcance exige su objetivo (UNIT → unidad, SPACE → espacio, SITE → sede).
+  CHECK_SQL : ck_org_user_assignments_scope_target | ("access_scope_concept_id" <> '928c884d-ff91-584c-8aa6-68535085e078' OR "clinical_unit_id" IS NOT NULL) AND ("access_scope_concept_id" <> '4df1a147-cb37-55ba-94e8-ab469e9cccb0' OR "care_space_id" IS NOT NULL) AND ("access_scope_concept_id" <> 'e69a4c95-fe59-5c3e-b826-222af123adb9' OR "practice_site_id" IS NOT NULL)
+  ' F5g (regla B.5-29): un solo jefe de unidad vigente por unidad clínica.
+  EXCLUDE_SQL : ex_org_user_assignments_unit_head | "clinical_unit_id" WITH =, tstzrange("valid_from", "valid_to", '[)') WITH && | "assignment_role_concept_id" = 'ce54425b-5479-57f1-8bb2-274a8617723c' AND "status_concept_id" = '38a1d301-f40d-5b17-a695-5e6d605f8b19'
+}
 entity "delegated_access.shared_access_link_uses" as delegated_access_shared_access_link_uses <<LOG, REFERENCE_ONLY>> {
   ' A-12: el rastro de uso de un token compartido no se reescribe (UPDATE prohibido, DELETE libre para la retencion).
   UPDATE : forbidden

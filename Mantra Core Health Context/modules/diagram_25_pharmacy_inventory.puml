@@ -15,6 +15,9 @@ entity "erp.purchase_order_items" as erp_purchase_order_items <<REFERENCE_ONLY>>
 entity "erp.goods_receipts" as erp_goods_receipts <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 entity "erp.goods_receipt_items" as erp_goods_receipt_items <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 entity "accounting.ledger_entries" as accounting_ledger_entries <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+' + infraestructura hospitalaria F5c (2026-10-29): destinos de la ubicación física del depósito.
+entity "practice.care_spaces" as practice_care_spaces <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "practice.clinical_units" as practice_clinical_units <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 
 note as BIZ_diagram_25_pharmacy_inventory
   BUSINESS PURPOSE
@@ -39,6 +42,14 @@ entity inventory_locations {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + infraestructura hospitalaria F5c (2026-10-29): la ubicación de inventario puede ser
+  ' un espacio del árbol físico (practice.care_spaces) y, si es un BOTIQUÍN de unidad
+  ' (PINV_LOCATION_TYPE_WARD_STOCK), pertenece a una unidad organizativa
+  ' (practice.clinical_units). Un solo botiquín ACTIVO por unidad (índice único parcial
+  ' con UUID literales). Mismo tenant que la farmacia: lo garantiza el trigger del patch
+  ' …_f5_operaciones. Reubicar cambia care_space_id; el stock sigue a la ubicación.
+    care_space_id : uuid <<FK>>
+    clinical_unit_id : uuid <<FK>>
 }
 
 entity inventory_lots {
@@ -300,6 +311,8 @@ entity inventory_recall_holds {
 
 inventory_locations |o--o{ inventory_locations : parent
 inventory_locations ||--o{ inventory_stock_positions
+inventory_locations }o--o| practice_care_spaces : care_space_id
+inventory_locations }o--o| practice_clinical_units : clinical_unit_id
 inventory_lots ||--o{ inventory_serials
 inventory_lots |o--o{ inventory_stock_positions
 inventory_reservations ||--o{ inventory_reservation_lines
@@ -527,6 +540,11 @@ entity "INDEXES · inventory_locations" as idxset_inventory_locations <<INDEX_SE
   IX ix_inventory_locations_status_concept_id : (status_concept_id) BTREE
   IX ix_inventory_locations_created_by_user_id : (created_by_user_id) BTREE
   IX ix_inventory_locations_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_inventory_locations_care_space_id : (care_space_id) BTREE
+  IX ix_inventory_locations_clinical_unit_id : (clinical_unit_id) BTREE
+  ' 51dd3c8b-… = deterministicId('pharmacy_inventory:LOCATION_TYPE_WARD_STOCK') (PINV_LOCATION_TYPE_WARD_STOCK);
+  ' 4e556b5a-… = deterministicId('pharmacy_inventory:LOCATION_ACTIVE') (PINV_LOCATION_ACTIVE).
+  UX ux_inventory_locations_ward_stock_unit : (clinical_unit_id) UNIQUE BTREE WHERE location_type_concept_id = '51dd3c8b-d630-5f5a-8bf4-2b9366752a73' AND status_concept_id = '4e556b5a-7ee6-5c64-abf9-f7e32bf83115'
 }
 
 inventory_locations .. idxset_inventory_locations : indexed by

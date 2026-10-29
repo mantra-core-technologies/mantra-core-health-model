@@ -9,6 +9,9 @@ hide circle
 ' SOURCE CONSOLIDATED: diagram_23_diagnostic_units.puml
 ' ------------------------------------------------------------------------------
 entity "directory.tenants" as directory_tenants <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+' + infraestructura hospitalaria F5a (2026-10-29): destinos de la ubicación física del equipo.
+entity "practice.care_spaces" as practice_care_spaces <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "scheduling.schedulable_resources" as scheduling_schedulable_resources <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 
 note as BIZ_diagram_23_diagnostic_units
   BUSINESS PURPOSE
@@ -189,6 +192,15 @@ entity diagnostic_equipment {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + infraestructura hospitalaria F5a (2026-10-29): el equipo vive en una SALA del árbol
+  ' físico (practice.care_spaces, mismo tenant que la unidad diagnóstica: lo garantiza el
+  ' trigger del patch …_f5_operaciones) y se identifica en DICOM por su AE Title y su
+  ' Station Name (≤ 16 caracteres, Modality Worklist 0040,0001 / 0040,0010). El recurso
+  ' agendable RES_EQUIPMENT del equipo es opcional (lo crea la API bajo demanda).
+    care_space_id : uuid <<FK>>
+    ae_title : varchar(16)
+    station_name : varchar(16)
+    schedulable_resource_id : uuid <<FK>>
 }
 
 entity diagnostic_unit_accreditations {
@@ -361,6 +373,8 @@ diagnostic_units ||--o{ diagnostic_study_offerings
 diagnostic_units ||--o{ diagnostic_price_schedules
 diagnostic_units ||--o{ diagnostic_unit_accreditations
 diagnostic_unit_sites ||--o{ diagnostic_equipment
+diagnostic_equipment }o--o| practice_care_spaces : care_space_id
+diagnostic_equipment }o--o| scheduling_schedulable_resources : schedulable_resource_id
 diagnostic_study_offerings ||--o{ diagnostic_study_components : parent
 diagnostic_price_schedules ||--o{ diagnostic_study_prices
 diagnostic_study_offerings ||--o{ diagnostic_study_prices
@@ -501,6 +515,9 @@ entity "INDEXES · diagnostic_equipment" as idxset_diagnostic_equipment <<INDEX_
   IX ix_diagnostic_equipment_operational_status_concept_id : (operational_status_concept_id) BTREE
   IX ix_diagnostic_equipment_created_by_user_id : (created_by_user_id) BTREE
   IX ix_diagnostic_equipment_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_diagnostic_equipment_care_space_id : (care_space_id) BTREE
+  IX ix_diagnostic_equipment_schedulable_resource_id : (schedulable_resource_id) BTREE
+  UX ux_diagnostic_equipment_site_ae_title : (diagnostic_unit_site_id, ae_title) UNIQUE BTREE WHERE ae_title IS NOT NULL
 }
 
 diagnostic_equipment .. idxset_diagnostic_equipment : indexed by
