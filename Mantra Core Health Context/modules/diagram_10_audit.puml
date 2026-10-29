@@ -341,6 +341,53 @@ entity operating_room_blocks_history <<HISTORY>> {
   * recorded_at : timestamptz
   * tenant_id : uuid <<FK>>
 }
+' + v4.2.68 (infraestructura F1c · plano): historia de lienzos, ubicaciones y elementos, con
+' tenant_id y RLS, solo inserción (+ cierre de valid_to) como las de F1b. NO llevan FK a la
+' fila de origen: ubicaciones y elementos se pueden borrar y su historia debe sobrevivir.
+' La API escribe la historia ANTES de borrar. Triggers/GRANT/RLS en
+' SQL/patches/2026-10-29_infraestructura_f1c_plano.sql.
+entity floor_plans_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * floor_plan_id : uuid
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+  * tenant_id : uuid <<FK>>
+}
+entity space_placements_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * space_placement_id : uuid
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+  * tenant_id : uuid <<FK>>
+}
+entity plan_elements_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * plan_element_id : uuid
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+  * tenant_id : uuid <<FK>>
+}
 entity diagnostic_reports_history <<HISTORY>> {
   * history_id : uuid <<PK>>
   --
@@ -2240,6 +2287,54 @@ entity "INDEXES · operating_room_blocks_history" as idxset_operating_room_block
 }
 
 operating_room_blocks_history .. idxset_operating_room_blocks_history : indexed by
+
+entity "INDEXES · floor_plans_history" as idxset_floor_plans_history <<INDEX_SET>> {
+  PK pk_floor_plans_history : (history_id) UNIQUE BTREE
+  IX ix_floor_plans_history_floor_plan_id : (floor_plan_id) BTREE
+  IX ix_floor_plans_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_floor_plans_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_floor_plans_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_floor_plans_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+  IX ix_floor_plans_history_tenant_id : (tenant_id) BTREE
+}
+
+floor_plans_history .. idxset_floor_plans_history : indexed by
+
+entity "INDEXES · space_placements_history" as idxset_space_placements_history <<INDEX_SET>> {
+  PK pk_space_placements_history : (history_id) UNIQUE BTREE
+  IX ix_space_placements_history_space_placement_id : (space_placement_id) BTREE
+  IX ix_space_placements_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_space_placements_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_space_placements_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_space_placements_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+  IX ix_space_placements_history_tenant_id : (tenant_id) BTREE
+}
+
+space_placements_history .. idxset_space_placements_history : indexed by
+
+entity "INDEXES · plan_elements_history" as idxset_plan_elements_history <<INDEX_SET>> {
+  PK pk_plan_elements_history : (history_id) UNIQUE BTREE
+  IX ix_plan_elements_history_plan_element_id : (plan_element_id) BTREE
+  IX ix_plan_elements_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_plan_elements_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_plan_elements_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_plan_elements_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+  IX ix_plan_elements_history_tenant_id : (tenant_id) BTREE
+}
+
+plan_elements_history .. idxset_plan_elements_history : indexed by
+
+entity "INDEXES · care_spaces_history" as idxset_care_spaces_history <<INDEX_SET>> {
+  PK pk_care_spaces_history : (history_id) UNIQUE BTREE
+  IX ix_care_spaces_history_care_space_id : (care_space_id) BTREE
+  IX ix_care_spaces_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_care_spaces_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_care_spaces_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_care_spaces_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+  IX ix_care_spaces_history_tenant_id : (tenant_id) BTREE
+}
+
+care_spaces_history .. idxset_care_spaces_history : indexed by
 
 entity "INDEXES · diagnostic_reports_history" as idxset_diagnostic_reports_history <<INDEX_SET>> {
   PK pk_diagnostic_reports_history : (history_id) UNIQUE BTREE

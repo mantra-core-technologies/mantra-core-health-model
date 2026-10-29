@@ -1,6 +1,6 @@
 # Datos de demostración: de la carga cruda a pantallas que muestran algo
 
-`load_seeds.py` deja la base llena y las pantallas vacías. Estos tres scripts son
+`load_seeds.py` deja la base llena y las pantallas vacías. Estos scripts son
 el tramo que falta, y se corren **en orden, después** de la carga.
 
 ## Por qué hacen falta
@@ -27,6 +27,7 @@ conceptos y deja huérfanas, porque la carga corre con
 | `01-conceptos-reales.sql` | Especialidades al sistema de códigos de la API, estado de los 16 profesionales, perfiles públicos atados a un profesional cada uno y sólo las 16 publicaciones del paquete en estado publicado. |
 | `02-textos-publicaciones.sql` | Reemplaza el relleno del cuerpo de las 16 publicaciones por divulgación acorde a la especialidad de quien firma. |
 | `03-imagenes.py` | Genera un avatar por vitrina y una portada por publicación, y escribe las filas de `common.files` y `common.file_versions` para que `GET /public/media/:id` las sirva. |
+| `04-plano-hospital-ejemplo.sql` | Plano de planta de un hospital de 2.º nivel (planta baja, piso 1 y campus; 88 espacios, 30 camas, 136 elementos) para la franja F1c. No forma parte de la carga cruda: parte de una sede existente (`-v site_id=<uuid>`) y de los conceptos que siembra la API. Deja a propósito dos desvíos de área para que la validación del plano tenga algo que advertir. |
 
 Los cuatro son idempotentes: volver a correrlos no duplica nada.
 

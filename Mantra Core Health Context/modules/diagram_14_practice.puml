@@ -276,6 +276,117 @@ entity facility_typology_rules {
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
 }
+' ==============================================================================
+' + v4.2.68 (infraestructura F1c · PLANO de planta) — CONTRATO-PLANO.md §1
+' Plano «tipo arquitectónico» por encima del árbol físico (care_spaces). Coordenadas en
+' METROS reales: x → derecha, y → abajo, origen arriba-izquierda del lienzo. Mover o
+' redimensionar un dibujo NO toca código, forma ni jerarquía del espacio.
+' Lo que gen_ddl.py no sabe expresar vive sólo en
+' SQL/patches/2026-10-29_infraestructura_f1c_plano.sql: columnas geométricas nativas
+' (space_placements.outline/overlap_outline/bbox :: polygon/box y plan_elements.bbox :: box),
+' el EXCLUDE gist de no solape entre hermanos, los índices gist, DEFAULT numéricos, CHECK,
+' triggers, FK compuestas (tenant_id, x_id), RLS y la vista practice.v_floor_plan_spaces.
+' ==============================================================================
+
+' LIENZO: un piso (ancla = espacio de forma LEVEL), una zona (ancla = AREA/WARD/WING) o el
+' campus (anchor_space_id NULL, uno vigente por sede). `layout_version` es el If-Match del
+' layout y sólo lo mueve la base (+1 por transacción). La imagen de fondo (plano importado)
+' se calibra con escala m/píxel + desplazamiento + rotación. Sin borrado físico: se clausura
+' con valid_to. (tenant_id, practice_site_id) y (tenant_id, anchor_space_id) son FK compuestas.
+entity floor_plans {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * practice_site_id : uuid <<FK>>
+    anchor_space_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+  * width_m : numeric(10,3)
+  * height_m : numeric(10,3)
+    elevation_m : numeric(8,3)
+  * north_bearing_deg : numeric(6,3)
+  * grid_size_m : numeric(6,3)
+  * snap_to_grid : boolean <<DEFAULT_TRUE>>
+  * contact_tolerance_m : numeric(5,3)
+    background_file_id : uuid <<FK>>
+    background_scale_m_per_px : numeric(12,6)
+  * background_offset_x_m : numeric(10,3)
+  * background_offset_y_m : numeric(10,3)
+  * background_rotation_deg : numeric(6,3)
+  * background_opacity : numeric(3,2)
+  * layout_version : integer
+    layout_version_txid : bigint
+    layout_changed_at : timestamptz
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' GEOMETRÍA de un espacio en SU lienzo (un solo lugar por espacio). RECT = centro + ancho +
+' fondo + rotación horaria en grados; POLYGON = 3..64 vértices de un polígono simple. En
+' ambos, `vertices` ([[x,y],…] en metros) es la verdad canónica y el servidor deriva
+' outline, overlap_outline (contorno de contacto, achicado por contact_tolerance_m), bbox y
+' area_calc_m2. sibling_group_id (derivado) = padre en el árbol físico, o la sede si no
+' tiene: los hermanos no se solapan (EXCLUDE). El padre debe estar ubicado en el mismo
+' lienzo (o ser su ancla) y contener al hijo (restricción diferida al COMMIT).
+entity space_placements {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * floor_plan_id : uuid <<FK>>
+  * care_space_id : uuid <<FK>>
+    sibling_group_id : uuid
+  * shape_kind : varchar(8)
+    center_x_m : numeric(10,3)
+    center_y_m : numeric(10,3)
+    width_m : numeric(10,3)
+    depth_m : numeric(10,3)
+    rotation_deg : numeric(6,3)
+  * vertices : jsonb
+    area_calc_m2 : numeric(12,3)
+  * z_order : integer
+  * locked : boolean <<DEFAULT_FALSE>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' ELEMENTOS de lienzo (kind: WALL | DOOR | WINDOW | OPENING | STAIRS | ELEVATOR |
+' CIRCULATION | COLUMN | ANNOTATION; varchar con CHECK porque la geometría decide qué columnas
+' aplican y un CHECK no puede depender de UUID de conceptos sembrados por la API).
+' WALL = polilínea abierta de 2..64 puntos con espesor; STAIRS/ELEVATOR/CIRCULATION/COLUMN =
+' polígono simple; ANNOTATION = un punto + etiqueta; DOOR/WINDOW/OPENING = alojada en un
+' muro (host_element_id + desplazamiento y ancho a lo largo del muro; sin vértices propios).
+entity plan_elements {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * floor_plan_id : uuid <<FK>>
+  * kind : varchar(12)
+    vertices : jsonb
+    thickness_m : numeric(6,3)
+    host_element_id : uuid <<FK>>
+    offset_m : numeric(8,3)
+    width_m : numeric(6,3)
+    swing : varchar(8)
+    swing_side : varchar(5)
+    label : varchar(120)
+    vertical_link_code : varchar(40)
+    connects_space_a_id : uuid <<FK>>
+    connects_space_b_id : uuid <<FK>>
+  * z_order : integer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
 entity healthcare_services {
   * id : uuid <<PK>>
   --
@@ -519,6 +630,14 @@ care_spaces |o--o{ care_spaces : parent
 space_unit_assignments }o--|| care_spaces : care_space_id
 space_unit_assignments }o--|| clinical_units : clinical_unit_id
 site_declared_capacities }o--|| practice_sites : practice_site_id
+floor_plans }o--|| practice_sites : practice_site_id
+floor_plans }o--o| care_spaces : anchor_space_id
+space_placements }o--|| floor_plans : floor_plan_id
+space_placements ||--|| care_spaces : care_space_id
+plan_elements }o--|| floor_plans : floor_plan_id
+plan_elements |o--o{ plan_elements : host
+plan_elements }o--o| care_spaces : connects_space_a_id
+plan_elements }o--o| care_spaces : connects_space_b_id
 healthcare_services |o--o{ practitioner_role_assignments
 practitioner_role_assignments ||--o{ practitioner_support_assignments
 inventory_items ||--o{ inventory_movements
@@ -686,6 +805,52 @@ entity "INDEXES · facility_typology_rules" as idxset_facility_typology_rules <<
 }
 
 facility_typology_rules .. idxset_facility_typology_rules : indexed by
+
+' + v4.2.68 (F1c): los índices gist sobre bbox y el EXCLUDE de no solape usan columnas
+' geométricas nativas que gen_ddl.py no emite: viven en el patch de F1c.
+entity "INDEXES · floor_plans" as idxset_floor_plans <<INDEX_SET>> {
+  PK pk_floor_plans : (id) UNIQUE BTREE
+  UX ux_floor_plans_tenant_id_id : (tenant_id, id) UNIQUE BTREE
+  UX ux_floor_plans_site_code : (practice_site_id, code) UNIQUE BTREE
+  UX ux_floor_plans_anchor_current : (anchor_space_id) UNIQUE BTREE WHERE anchor_space_id IS NOT NULL AND valid_to IS NULL
+  UX ux_floor_plans_site_campus_current : (practice_site_id) UNIQUE BTREE WHERE anchor_space_id IS NULL AND valid_to IS NULL
+  IX ix_floor_plans_tenant_id : (tenant_id) BTREE
+  IX ix_floor_plans_practice_site_id : (practice_site_id) BTREE
+  IX ix_floor_plans_anchor_space_id : (anchor_space_id) BTREE
+  IX ix_floor_plans_background_file_id : (background_file_id) BTREE
+  IX ix_floor_plans_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_floor_plans_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+floor_plans .. idxset_floor_plans : indexed by
+
+entity "INDEXES · space_placements" as idxset_space_placements <<INDEX_SET>> {
+  PK pk_space_placements : (id) UNIQUE BTREE
+  UX ux_space_placements_tenant_id_id : (tenant_id, id) UNIQUE BTREE
+  UX ux_space_placements_care_space : (care_space_id) UNIQUE BTREE
+  IX ix_space_placements_tenant_id : (tenant_id) BTREE
+  IX ix_space_placements_floor_plan_id : (floor_plan_id) BTREE
+  IX ix_space_placements_sibling_group_id : (sibling_group_id) BTREE
+  IX ix_space_placements_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_space_placements_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+space_placements .. idxset_space_placements : indexed by
+
+entity "INDEXES · plan_elements" as idxset_plan_elements <<INDEX_SET>> {
+  PK pk_plan_elements : (id) UNIQUE BTREE
+  UX ux_plan_elements_tenant_id_id : (tenant_id, id) UNIQUE BTREE
+  IX ix_plan_elements_tenant_id : (tenant_id) BTREE
+  IX ix_plan_elements_floor_plan_id : (floor_plan_id) BTREE
+  IX ix_plan_elements_host_element_id : (host_element_id) BTREE
+  IX ix_plan_elements_connects_space_a_id : (connects_space_a_id) BTREE
+  IX ix_plan_elements_connects_space_b_id : (connects_space_b_id) BTREE
+  IX ix_plan_elements_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_plan_elements_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_plan_elements_vertical_link : (vertical_link_code) BTREE WHERE vertical_link_code IS NOT NULL
+}
+
+plan_elements .. idxset_plan_elements : indexed by
 
 entity "INDEXES · healthcare_services" as idxset_healthcare_services <<INDEX_SET>> {
   PK pk_healthcare_services : (id) UNIQUE BTREE
