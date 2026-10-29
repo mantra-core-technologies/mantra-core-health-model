@@ -282,6 +282,10 @@ CREATE INDEX IF NOT EXISTS "ix_practitioner_admissions_admission_type_concept_id
 
 CREATE INDEX IF NOT EXISTS "ix_practitioner_admissions_decided_by_user_id" ON "profiles"."practitioner_admissions" ("decided_by_user_id");
 
+CREATE INDEX IF NOT EXISTS "ix_practitioner_admissions_decision_reason_code_concept_id" ON "profiles"."practitioner_admissions" ("decision_reason_code_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_admissions_info_due_at" ON "profiles"."practitioner_admissions" ("info_due_at") WHERE info_due_at IS NOT NULL;
+
 CREATE INDEX IF NOT EXISTS "ix_practitioner_admissions_created_by_user_id" ON "profiles"."practitioner_admissions" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_practitioner_admissions_updated_by_user_id" ON "profiles"."practitioner_admissions" ("updated_by_user_id");
@@ -296,6 +300,10 @@ CREATE INDEX IF NOT EXISTS "ix_practitioner_admission_reviews_admission_status" 
 
 CREATE INDEX IF NOT EXISTS "ix_practitioner_admission_reviews_file_id" ON "profiles"."practitioner_admission_reviews" ("file_id");
 
+CREATE INDEX IF NOT EXISTS "ix_practitioner_admission_reviews_source_type_concept_id" ON "profiles"."practitioner_admission_reviews" ("source_type_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_admission_reviews_reason_code_concept_id" ON "profiles"."practitioner_admission_reviews" ("reason_code_concept_id");
+
 CREATE INDEX IF NOT EXISTS "ix_practitioner_admission_reviews_reviewed_by_user_id" ON "profiles"."practitioner_admission_reviews" ("reviewed_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_practitioner_admission_reviews_created_by_user_id" ON "profiles"."practitioner_admission_reviews" ("created_by_user_id");
@@ -309,6 +317,8 @@ CREATE INDEX IF NOT EXISTS "ix_practitioner_admission_events_event_type_concept_
 CREATE INDEX IF NOT EXISTS "ix_practitioner_admission_events_actor_user_id" ON "profiles"."practitioner_admission_events" ("actor_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_practitioner_admission_events_requirement_id" ON "profiles"."practitioner_admission_events" ("requirement_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_admission_events_reason_code_concept_id" ON "profiles"."practitioner_admission_events" ("reason_code_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_insurance_representative_profiles_representative_ty_e1930540" ON "profiles"."insurance_representative_profiles" ("representative_type_concept_id");
 

@@ -9,7 +9,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 02 | common | 7 | 49 | 0 | 55 | 0 |
 | 03 | terminology | 16 | 80 | 0 | 103 | 0 |
 | 04 | directory | 7 | 59 | 4 | 55 | 0 |
-| 05 | profiles | 24 | 162 | 30 | 172 | 0 |
+| 05 | profiles | 24 | 166 | 34 | 177 | 0 |
 | 06 | authz | 15 | 100 | 15 | 90 | 0 |
 | 07 | consent | 10 | 81 | 0 | 103 | 0 |
 | 08 | clinical | 24 | 241 | 9 | 264 | 11 |
@@ -74,7 +74,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 67 | data_catalog | 13 | 43 | 23 | 24 | 0 |
 | 68 | qa_execution | 4 | 14 | 6 | 6 | 0 |
 | 69 | pharma_lab | 31 | 182 | 173 | 182 | 1 |
-| **Σ** | **70** | **1265** | | **440** | | **365** |
+| **Σ** | **70** | **1265** | | **444** | | **365** |
 
 ## Detalle de entidades saltadas y avisos
 

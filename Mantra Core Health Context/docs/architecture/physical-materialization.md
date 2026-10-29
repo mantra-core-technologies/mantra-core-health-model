@@ -71,15 +71,25 @@ con backfill). `v4266` ya estaba tomado (consentimiento dirigido), de ahí `v426
 - `jurisdiction_authorizations` + `verified_by_user_id`, `verified_at`, `verification_source_uri`,
   `rejection_reason_text`; `professional_credentials` + `rejection_reason_text`; `practitioner_specialties` +
   `verified_at`.
-- Los conceptos (`profiles:ADMISSION_*`, `AUTH_REJECTED`, `SPEC_VERIF_REJECTED`) los siembra la API; el
-  backfill (una admisión `ENVIADA` por perfil `PRACT_VERIF_PENDING`) falla con un mensaje explícito si
-  todavía no están. No se migran filas ni cambia el significado de los conceptos existentes.
+- Revisión por requisito con **fuente estructurada** (`source_type_concept_id` + `source_ref` +
+  `source_consulted_at`, además de la URL opcional), **huella de la evidencia** (`evidence_sha256`: si el
+  médico cambia algo al reenviar, la revisión vuelve a PENDIENTE), **motivo estructurado**
+  (`reason_code_concept_id`) y `internal_note` que nunca ve el solicitante. Atestación del solicitante
+  (`attested_at`), plazo para responder (`info_due_at`, vencido pasa a `ABANDONADA`) y `four_eyes_waived`.
+  La bitácora suma `request_id` y `actor_role_code`.
+- Los conceptos (`profiles:ADMISSION_*`, `AUTH_REJECTED`, `SPEC_VERIF_REJECTED`) los siembra la API.
+  No cambia el significado de los conceptos existentes ni se migran filas de perfil.
+- **Backfill acotado**: sólo perfiles con cuenta activa vinculada. Los pendientes reciben una admisión
+  `ENVIADA` con `due_at` = ahora + 3 días hábiles; los verificados, una `VERIFICADA` con `valid_until`
+  (vencimiento de la matrícula nacional o hoy + 12 meses). El padrón cargado (sin cuenta) no genera nada.
+  `SET admissions.backfill_dry_run = 'on'` sólo cuenta; `admissions.backfill_max` (default 200 por clase)
+  aborta si el conteo lo excede. Falla con mensaje explícito si los conceptos aún no están sembrados.
 
-**Delta:** +4 tablas, +6 columnas, +28 FK, +32 índices, +3 CHECK, +1 trigger. Total 1265 tablas.
+**Delta:** +4 tablas, +6 columnas, +32 FK, +37 índices, +4 CHECK, +1 trigger. Total 1265 tablas.
 
 **Verificado** con PostgreSQL 16 en una base descartable: el modelo anterior (`apply_all.sql` +
 `apply_deferred.sql`) + el parche dos veces, y el DDL nuevo desde cero, terminan con el mismo `pg_dump -s`
-salvo el orden de columnas; el backfill se probó con perfiles sintéticos (cálculo de días hábiles incluido) y
+salvo el orden de columnas; el backfill se probó con perfiles sintéticos (con y sin cuenta; dry-run, umbral y días hábiles) y
 el trigger rechaza `UPDATE` y `DELETE` sobre la bitácora. No se aplicó contra una base con datos reales.
 
 ### v4.2.65 — Derivación con tipo y servicio de destino (2026-10-28)

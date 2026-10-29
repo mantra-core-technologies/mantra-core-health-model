@@ -400,6 +400,9 @@ note as PRACTITIONER_ADMISSION_diagram_05_profiles
     (PENDIENTE | VERIFICADO | RECHAZADO | INFO_REQUERIDA) con su archivo, su fuente, su
     motivo y quien/cuando. Una admision solo pasa a VERIFICADA si todos los requisitos
     obligatorios aplicables estan verificados: lo decide el servidor.
+  - Motivos: un codigo estructurado (reason_code, catalogo) mas un texto acotado visible al
+    solicitante; la nota interna es solo del personal. La fuente de una verificacion es
+    estructurada (tipo + referencia + fecha de consulta), no solo una URL.
   - practitioner_admission_events es la BITACORA append-only (guarda de inmutabilidad
     por UPDATE_DELETE: forbidden en el modulo 33).
 end note
@@ -446,9 +449,24 @@ entity practitioner_admissions {
     decided_at : timestamptz
     decided_by_user_id : uuid <<FK>>
     decision_reason_text : text
+  ' Codigo estructurado del motivo de la decision (catalogo de motivos) y nota interna:
+  ' la nota NUNCA se expone al medico (solo a quien revisa).
+    decision_reason_code_concept_id : uuid <<FK>>
+    internal_note : text
     info_requested_text : text
+  ' Plazo que tiene el solicitante para responder a una peticion de informacion; vencido,
+  ' un barrido pasa la admision a ABANDONADA. El SLA de la plataforma (due_at) se pausa
+  ' mientras tanto y se recalcula al reenviar.
+    info_due_at : timestamptz
   * resubmission_count : integer
+  ' Fin de la vigencia, INCLUSIVE, hasta el fin del dia en America/La_Paz (UTC-4).
     valid_until : date
+  ' Si la plataforma resolvio sin segunda persona (cuatro ojos apagado) y el aprobador
+  ' tambien habia revisado algun requisito.
+    four_eyes_waived : boolean
+  ' Atestacion del solicitante al enviar: cuando acepto y que version del texto.
+    attested_at : timestamptz
+    attestation_text_version : varchar
     closed_at : timestamptz
   ' FOTO del formulario tal como el medico lo envio (o reenvio): datos personales,
   ' contacto, domicilios, matriculas, estudios, especialidades y consultorios. La
@@ -475,7 +493,17 @@ entity practitioner_admission_reviews {
   * status_concept_id : uuid <<FK>>
     file_id : uuid <<FK>>
     verification_source_uri : text
+  ' Fuente estructurada: tipo (catalogo), referencia (nº de tramite, comprobante o URL) y
+  ' cuando se consulto (distinto de reviewed_at). Mapea a FHIR primarySource.
+    source_type_concept_id : uuid <<FK>>
+    source_ref : text
+    source_consulted_at : timestamptz
+  ' Huella de lo que el revisor vio (documento + datos). Si el medico lo cambia al
+  ' reenviar, la revision vuelve a PENDIENTE.
+    evidence_sha256 : varchar
+    reason_code_concept_id : uuid <<FK>>
     reason_text : text
+    internal_note : text
     reviewed_by_user_id : uuid <<FK>>
     reviewed_at : timestamptz
   * created_at : timestamptz
@@ -496,8 +524,13 @@ entity practitioner_admission_events {
     item_id : uuid
     requirement_id : uuid <<FK>>
     verification_source_uri : text
+    reason_code_concept_id : uuid <<FK>>
     reason_text : text
     actor_user_id : uuid <<FK>>
+  ' Rol con el que actuo (SECURITY_ADMIN, ADMISSIONS_APPROVER, PRACTITIONER, SYSTEM...) y
+  ' la peticion HTTP que lo origino, para reconstruir quien hizo que y desde donde.
+    actor_role_code : varchar
+    request_id : uuid
   * occurred_at : timestamptz
 }
 
@@ -877,6 +910,8 @@ entity "INDEXES · practitioner_admissions" as idxset_practitioner_admissions <<
   IX ix_practitioner_admissions_assigned_to_user_id : (assigned_to_user_id) BTREE
   IX ix_practitioner_admissions_admission_type_concept_id : (admission_type_concept_id) BTREE
   IX ix_practitioner_admissions_decided_by_user_id : (decided_by_user_id) BTREE
+  IX ix_practitioner_admissions_decision_reason_code_concept_id : (decision_reason_code_concept_id) BTREE
+  IX ix_practitioner_admissions_info_due_at : (info_due_at) BTREE WHERE info_due_at IS NOT NULL
   IX ix_practitioner_admissions_created_by_user_id : (created_by_user_id) BTREE
   IX ix_practitioner_admissions_updated_by_user_id : (updated_by_user_id) BTREE
   IX ix_practitioner_admissions_valid_until : (valid_until) BTREE WHERE valid_until IS NOT NULL
@@ -890,6 +925,8 @@ entity "INDEXES · practitioner_admission_reviews" as idxset_practitioner_admiss
   IX ix_practitioner_admission_reviews_requirement_id : (requirement_id) BTREE
   IX ix_practitioner_admission_reviews_admission_status : (admission_id, status_concept_id) BTREE
   IX ix_practitioner_admission_reviews_file_id : (file_id) BTREE
+  IX ix_practitioner_admission_reviews_source_type_concept_id : (source_type_concept_id) BTREE
+  IX ix_practitioner_admission_reviews_reason_code_concept_id : (reason_code_concept_id) BTREE
   IX ix_practitioner_admission_reviews_reviewed_by_user_id : (reviewed_by_user_id) BTREE
   IX ix_practitioner_admission_reviews_created_by_user_id : (created_by_user_id) BTREE
   IX ix_practitioner_admission_reviews_updated_by_user_id : (updated_by_user_id) BTREE
@@ -903,6 +940,7 @@ entity "INDEXES · practitioner_admission_events" as idxset_practitioner_admissi
   IX ix_practitioner_admission_events_event_type_concept_id : (event_type_concept_id) BTREE
   IX ix_practitioner_admission_events_actor_user_id : (actor_user_id) BTREE
   IX ix_practitioner_admission_events_requirement_id : (requirement_id) BTREE
+  IX ix_practitioner_admission_events_reason_code_concept_id : (reason_code_concept_id) BTREE
 }
 
 practitioner_admission_events .. idxset_practitioner_admission_events : indexed by

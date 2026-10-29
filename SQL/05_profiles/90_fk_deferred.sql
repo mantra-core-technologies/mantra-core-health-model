@@ -702,6 +702,13 @@ DO $$ BEGIN
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "profiles"."practitioner_admissions"
+        ADD CONSTRAINT "fk_practitioner_admissions_decision_reason_code_concept_id" FOREIGN KEY ("decision_reason_code_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "profiles"."practitioner_admissions"
@@ -728,6 +735,20 @@ DO $$ BEGIN
     ALTER TABLE "profiles"."practitioner_admission_reviews"
         ADD CONSTRAINT "fk_practitioner_admission_reviews_file_id" FOREIGN KEY ("file_id")
         REFERENCES "common"."files" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "profiles"."practitioner_admission_reviews"
+        ADD CONSTRAINT "fk_practitioner_admission_reviews_source_type_concept_id" FOREIGN KEY ("source_type_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "profiles"."practitioner_admission_reviews"
+        ADD CONSTRAINT "fk_practitioner_admission_reviews_reason_code_concept_id" FOREIGN KEY ("reason_code_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 
 -- destino: iam.users (requiere schema iam)
@@ -776,6 +797,13 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención
 DO $$ BEGIN
     ALTER TABLE "profiles"."practitioner_admission_events"
         ADD CONSTRAINT "fk_practitioner_admission_events_item_type_concept_id" FOREIGN KEY ("item_type_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "profiles"."practitioner_admission_events"
+        ADD CONSTRAINT "fk_practitioner_admission_events_reason_code_concept_id" FOREIGN KEY ("reason_code_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 

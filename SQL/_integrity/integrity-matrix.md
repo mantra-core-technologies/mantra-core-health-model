@@ -149,7 +149,7 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 | Tabla | Estereotipo | Reglas declaradas |
 |-------|-------------|-------------------|
 | `profiles.practitioner_admission_events` | `IMMUTABLE, REFERENCE_ONLY` | **UPDATE_DELETE** forbidden |
-| `profiles.practitioner_admissions` | `REFERENCE_ONLY` | **CHECK_SQL** ck_practitioner_admissions_resubmission_count \| ("resubmission_count" >= 0); **CHECK_SQL** ck_practitioner_admissions_due_after_submit \| ("due_at" >= "submitted_at") |
+| `profiles.practitioner_admissions` | `REFERENCE_ONLY` | **CHECK_SQL** ck_practitioner_admissions_resubmission_count \| ("resubmission_count" >= 0); **CHECK_SQL** ck_practitioner_admissions_due_after_submit \| ("due_at" >= "submitted_at"); **CHECK_SQL** ck_practitioner_admissions_attestation_version \| ("attested_at" IS NULL OR "attestation_text_version" IS NOT NULL) |
 | `profiles.admission_requirements` | `REFERENCE_ONLY` | **CHECK_SQL** ck_admission_requirements_item_range \| (COALESCE("min_items", 0) >= 0 AND ("max_items" IS NULL OR "max_items" >= COALESCE("min_items", 0))) |
 
 ### Módulo 41 · `scheduling`

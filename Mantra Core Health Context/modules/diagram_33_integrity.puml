@@ -311,6 +311,7 @@ entity "profiles.practitioner_admission_events" as profiles_practitioner_admissi
 entity "profiles.practitioner_admissions" as profiles_practitioner_admissions <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_practitioner_admissions_resubmission_count | ("resubmission_count" >= 0)
   CHECK_SQL : ck_practitioner_admissions_due_after_submit | ("due_at" >= "submitted_at")
+  CHECK_SQL : ck_practitioner_admissions_attestation_version | ("attested_at" IS NULL OR "attestation_text_version" IS NOT NULL)
 }
 entity "profiles.admission_requirements" as profiles_admission_requirements <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_admission_requirements_item_range | (COALESCE("min_items", 0) >= 0 AND ("max_items" IS NULL OR "max_items" >= COALESCE("min_items", 0)))

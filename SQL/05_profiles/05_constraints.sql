@@ -23,6 +23,10 @@ ALTER TABLE "profiles"."practitioner_admissions" ADD CONSTRAINT "ck_practitioner
 ALTER TABLE "profiles"."practitioner_admissions" DROP CONSTRAINT IF EXISTS "ck_practitioner_admissions_due_after_submit";
 ALTER TABLE "profiles"."practitioner_admissions" ADD CONSTRAINT "ck_practitioner_admissions_due_after_submit" CHECK (("due_at" >= "submitted_at"));
 
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "profiles"."practitioner_admissions" DROP CONSTRAINT IF EXISTS "ck_practitioner_admissions_attestation_version";
+ALTER TABLE "profiles"."practitioner_admissions" ADD CONSTRAINT "ck_practitioner_admissions_attestation_version" CHECK (("attested_at" IS NULL OR "attestation_text_version" IS NOT NULL));
+
 
 -- ═══ admission_requirements ═══
 -- CHECK concreto declarado por el modelo (CHECK_SQL).
