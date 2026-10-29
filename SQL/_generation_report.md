@@ -69,7 +69,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 62 | cross_store_consistency | 20 | 0 | 0 | 43 | 4 |
 | 63 | lakehouse | 18 | 0 | 0 | 42 | 4 |
 | 64 | audio_assets | 4 | 1 | 0 | 10 | 0 |
-| 65 | surveys | 8 | 41 | 5 | 25 | 0 |
+| 65 | surveys | 8 | 42 | 5 | 26 | 0 |
 | 66 | medical_groups | 2 | 14 | 0 | 10 | 0 |
 | 67 | data_catalog | 13 | 43 | 23 | 24 | 0 |
 | 68 | qa_execution | 4 | 14 | 6 | 6 | 0 |

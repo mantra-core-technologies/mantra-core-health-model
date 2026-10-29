@@ -28,6 +28,12 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "surveys"."survey_invitations"
+        ADD CONSTRAINT "fk_survey_invitations_extension_survey_version_id" FOREIGN KEY ("extension_survey_version_id")
+        REFERENCES "surveys"."survey_versions" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "surveys"."survey_invitations"
         ADD CONSTRAINT "fk_survey_invitations_survey_assignment_id" FOREIGN KEY ("survey_assignment_id")
         REFERENCES "surveys"."survey_assignments" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
