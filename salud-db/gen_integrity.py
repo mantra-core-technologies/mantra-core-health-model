@@ -174,6 +174,11 @@ def escape_table_cell(value):
     return value.replace("|", r"\|")
 
 
+EXCLUDE_DEFERRABILITY = frozenset({
+    "DEFERRABLE", "DEFERRABLE INITIALLY IMMEDIATE", "DEFERRABLE INITIALLY DEFERRED", "NOT DEFERRABLE",
+})
+
+
 def exclude_concreto(schema, table, decl):
     """Un EXCLUDE con la expresión que el MODELO declara, no una inventada.
 
@@ -184,25 +189,40 @@ def exclude_concreto(schema, table, decl):
 
     Formato de la declaración, separado por `|`:
 
-        <nombre> | <elementos gist> | <predicado>
+        <nombre> | <elementos gist> | <predicado> | <diferibilidad>
 
-    El predicado es opcional: sin él sale un EXCLUDE total. Los `concept_id` van
-    como UUID literales y no como llamada a función, porque el predicado de un
-    EXCLUDE tiene que ser inmutable. Es la lección de
+    El predicado es opcional: sin él sale un EXCLUDE total (`<nombre> | <elementos>` o, si hace
+    falta la cuarta parte, con el predicado vacío: `<nombre> | <elementos> | | DEFERRABLE`).
+    La diferibilidad también es opcional y es una de `DEFERRABLE`,
+    `DEFERRABLE INITIALLY IMMEDIATE`, `DEFERRABLE INITIALLY DEFERRED` o `NOT DEFERRABLE`
+    (por omisión, la de PostgreSQL: no diferible). Hace falta cuando un traslado debe cerrar un
+    período y abrir otro dentro de una misma transacción en cualquier orden
+    (`SET CONSTRAINTS … DEFERRED`), caso de `clinical.encounter_locations` (F3). Una tabla con
+    restricciones diferibles no admite `INSERT … ON CONFLICT DO NOTHING` sin objetivo.
+
+    Los `concept_id` van como UUID literales y no como llamada a función, porque el predicado de
+    un EXCLUDE tiene que ser inmutable. Es la lección de
     `gist_appointments_practitioner_time`, que quedó comentado justamente por
     llamar a funciones que nunca se definieron.
     """
     partes = [p.strip() for p in decl.split("|")]
     if len(partes) < 2:
         return f"--   EXCLUDE_SQL mal declarado (faltan partes): {decl}"
+    if len(partes) > 4:
+        return f"--   EXCLUDE_SQL mal declarado (sobran partes; un `|` dentro de la expresión): {decl}"
     nombre, elementos = partes[0], partes[1]
     predicado = partes[2] if len(partes) > 2 and partes[2] else None
+    diferible = partes[3].upper() if len(partes) > 3 and partes[3] else None
+    if diferible is not None and diferible not in EXCLUDE_DEFERRABILITY:
+        return (f"--   EXCLUDE_SQL con diferibilidad desconocida ({partes[3]!r}); "
+                f"admitidas: {', '.join(sorted(EXCLUDE_DEFERRABILITY))}: {decl}")
     where = f" WHERE ({predicado})" if predicado else ""
+    defer = f" {diferible}" if diferible else ""
     t = f'"{schema}"."{table}"'
     return (f"-- EXCLUDE concreto declarado por el modelo (EXCLUDE_SQL).\n"
             f"ALTER TABLE {t} DROP CONSTRAINT IF EXISTS \"{nombre}\";\n"
             f"ALTER TABLE {t} ADD CONSTRAINT \"{nombre}\"\n"
-            f"    EXCLUDE USING gist ({elementos}){where};\n")
+            f"    EXCLUDE USING gist ({elementos}){where}{defer};\n")
 
 
 def entity_block(e):

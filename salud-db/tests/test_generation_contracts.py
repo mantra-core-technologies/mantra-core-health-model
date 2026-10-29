@@ -25,6 +25,28 @@ class ConcreteIntegrityTests(unittest.TestCase):
             with self.subTest(declaration=declaration), self.assertRaises(ValueError):
                 gen_integrity.concrete_check('insurance', 'insurance_claims', declaration)
 
+    def test_exclude_sql_accepts_an_optional_deferrability(self):
+        base = '"care_space_id" WITH =, tstzrange("a", "b", \'[)\') WITH &&'
+        pred = '"is_bed_assignment"'
+        plain = gen_integrity.exclude_concreto('clinical', 't', f'ex_t | {base} | {pred}')
+        self.assertIn(f'EXCLUDE USING gist ({base}) WHERE ({pred});', plain)
+        self.assertNotIn('DEFERRABLE', plain)
+        for clause in ('DEFERRABLE', 'DEFERRABLE INITIALLY IMMEDIATE', 'DEFERRABLE INITIALLY DEFERRED',
+                       'NOT DEFERRABLE'):
+            with self.subTest(clause=clause):
+                sql = gen_integrity.exclude_concreto('clinical', 't', f'ex_t | {base} | {pred} | {clause}')
+                self.assertIn(f'EXCLUDE USING gist ({base}) WHERE ({pred}) {clause};', sql)
+        # minúsculas aceptadas; sin predicado se deja la tercera parte vacía
+        self.assertIn(f'EXCLUDE USING gist ({base}) DEFERRABLE INITIALLY IMMEDIATE;',
+                      gen_integrity.exclude_concreto('clinical', 't',
+                                                     f'ex_t | {base} | | deferrable initially immediate'))
+        # una diferibilidad desconocida o partes de sobra no se inventan: salen como comentario
+        for bad in (f'ex_t | {base} | {pred} | MAYBE', f'ex_t | {base} | {pred} | DEFERRABLE | extra'):
+            with self.subTest(bad=bad):
+                sql = gen_integrity.exclude_concreto('clinical', 't', bad)
+                self.assertTrue(sql.startswith('--'))
+                self.assertNotIn('ADD CONSTRAINT', sql)
+
     def test_prose_rules_stay_as_comments_and_list_existing_uniques(self):
         entity = {'name': 'inventory_reservations', 'stereo': 'REFERENCE_ONLY',
                   'owner': ('pharmacy_inventory', 'inventory_reservations'),

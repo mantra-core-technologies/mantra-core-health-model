@@ -354,10 +354,11 @@ entity "delegated_access.organization_user_assignments" as delegated_access_orga
 '   809db700-0627-5fe3-8278-4f038f4475b3 = clinical:LOCATION_ACTIVE
 '   8cf00069-81ca-56e1-8e71-9e16333a1f6c = clinical:LOCATION_COMPLETED
 '   cdd86257-4297-5941-8ae8-b95e11439a48 = clinical:LOCATION_RESERVED (concepto nuevo de F3)
-' Mismos nombres que el patch 2026-10-29_infraestructura_f3_clinical.sql. LIMITACIÓN conocida: el
-' contrato pide los dos EXCLUDE de ocupación DEFERRABLE INITIALLY IMMEDIATE (intercambio A17), y
-' EXCLUDE_SQL no tiene dónde declararlo (gen_integrity.exclude_concreto): el 05_constraints
-' generado los crea NO diferibles y el patch los recrea diferibles al aplicarse (ver DESVIOS-M-F3).
+' Mismos nombres que el patch 2026-10-29_infraestructura_f3_clinical.sql. Los tres EXCLUDE son
+' DEFERRABLE INITIALLY IMMEDIATE (intercambio A17: cerrar el origen y abrir el destino en cualquier
+' orden dentro de una transacción con SET CONSTRAINTS … DEFERRED): cuarta parte opcional de EXCLUDE_SQL,
+' que gen_integrity.exclude_concreto emite tras el WHERE. Consecuencia: la tabla no admite
+' INSERT … ON CONFLICT DO NOTHING sin objetivo (55000); usar ON CONFLICT (id).
 entity "clinical.encounter_locations" as clinical_encounter_locations <<REFERENCE_ONLY>> {
   ' F3 · is_bed_assignment la DERIVA el trigger trg_encounter_locations_set_bed_flag de la forma del espacio
   ' (el predicado de los EXCLUDE depende de ella; no puede confiarse al cliente). Vive en el patch.
@@ -366,11 +367,11 @@ entity "clinical.encounter_locations" as clinical_encounter_locations <<REFERENC
   ' F3 · el período de una cama no termina antes de empezar (error claro 23514 en vez de 22000 del tstzrange).
   CHECK_SQL : ck_encounter_locations_bed_period_order | NOT "is_bed_assignment" OR "period_end" IS NULL OR "period_end" >= "period_start"
   ' F3 · INV-30: una cama, un paciente a la vez (historial y reservas incluidos).
-  EXCLUDE_SQL : ex_encounter_locations_bed_occupancy | "care_space_id" WITH =, tstzrange("period_start", "period_end", '[)') WITH && | "is_bed_assignment" AND "location_status_concept_id" IN ('809db700-0627-5fe3-8278-4f038f4475b3', 'cdd86257-4297-5941-8ae8-b95e11439a48', '8cf00069-81ca-56e1-8e71-9e16333a1f6c')
+  EXCLUDE_SQL : ex_encounter_locations_bed_occupancy | "care_space_id" WITH =, tstzrange("period_start", "period_end", '[)') WITH && | "is_bed_assignment" AND "location_status_concept_id" IN ('809db700-0627-5fe3-8278-4f038f4475b3', 'cdd86257-4297-5941-8ae8-b95e11439a48', '8cf00069-81ca-56e1-8e71-9e16333a1f6c') | DEFERRABLE INITIALLY IMMEDIATE
   ' F3 · INV-31: un encuentro, una cama a la vez (la reserva de traslado puede convivir).
-  EXCLUDE_SQL : ex_encounter_locations_encounter_single_bed | "encounter_id" WITH =, tstzrange("period_start", "period_end", '[)') WITH && | "is_bed_assignment" AND "location_status_concept_id" IN ('809db700-0627-5fe3-8278-4f038f4475b3', '8cf00069-81ca-56e1-8e71-9e16333a1f6c')
+  EXCLUDE_SQL : ex_encounter_locations_encounter_single_bed | "encounter_id" WITH =, tstzrange("period_start", "period_end", '[)') WITH && | "is_bed_assignment" AND "location_status_concept_id" IN ('809db700-0627-5fe3-8278-4f038f4475b3', '8cf00069-81ca-56e1-8e71-9e16333a1f6c') | DEFERRABLE INITIALLY IMMEDIATE
   ' F3 · un encuentro tiene a lo sumo UNA ubicación de cama ACTIVA (el traslado deja un solo registro activo).
-  EXCLUDE_SQL : ex_encounter_locations_encounter_one_active_bed | "encounter_id" WITH = | "is_bed_assignment" AND "location_status_concept_id" = '809db700-0627-5fe3-8278-4f038f4475b3'
+  EXCLUDE_SQL : ex_encounter_locations_encounter_one_active_bed | "encounter_id" WITH = | "is_bed_assignment" AND "location_status_concept_id" = '809db700-0627-5fe3-8278-4f038f4475b3' | DEFERRABLE INITIALLY IMMEDIATE
 }
 entity "clinical.placement_incidents" as clinical_placement_incidents <<REFERENCE_ONLY>> {
   ' F3 · forzar la compatibilidad exige una justificación de al menos 20 caracteres (sin contar espacios de borde).
