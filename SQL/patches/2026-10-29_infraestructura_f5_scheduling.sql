@@ -8,8 +8,8 @@
 -- (necesita practice.care_spaces con tenant_id NOT NULL y ux_care_spaces_tenant_id_id) y DESPUÉS
 -- del patch de M-F4 (`…_f4_scheduling.sql`, dueño de scheduling.schedulable_resources). Orden:
 -- F1 → F1b → F2 → … → F4 → F5. Idempotente (ADD COLUMN IF NOT EXISTS / CREATE … IF NOT EXISTS /
--- FK con `duplicate_object` / DROP … IF EXISTS / CREATE OR REPLACE / guarda `IF NOT EXISTS`
--- sobre el EXCLUDE). Se puede aplicar N veces; la segunda pasada no cambia nada.
+-- FK con `duplicate_object` / DROP … IF EXISTS / CREATE OR REPLACE.
+-- Se puede aplicar N veces; la segunda pasada no cambia nada.
 --
 -- Contexto: columnas, FKs simples, índices y el CHECK los emiten gen_ddl.py y gen_integrity.py
 -- en SQL/41_scheduling y SQL/08_clinical desde que diagram_41 / diagram_33 los declaran; esas
@@ -33,30 +33,17 @@
 --          (la FK simple se verifica sin RLS y no lo veía);
 --        - RLS `tenant_isolation` (texto exacto de 2026-08-05_tenant_rls.sql), ENABLE + FORCE.
 --      ux_schedulable_resources_tenant_id_id (UNIQUE (tenant_id, id)) es el destino de las FK
---      compuestas hacia el recurso. Lo declara M-F4 en diagram_41 (idxset_schedulable_resources) y
---      lo crea su patch con ese mismo nombre; acá va con IF NOT EXISTS para que este patch se
---      aplique igual si el de M-F4 todavía no corrió.
---   4. Solape imposible. clinical.appointments.care_space_id (FK real) y
---      ex_appointments_care_space_time: EXCLUDE gist (care_space_id =, tstzrange(start_at,
---      end_at, '[)') &&) para citas BOOKED / CHECKED_IN: un consultorio no admite dos citas
---      solapadas aunque sean de médicos y agendas distintas. Completa la mitad «location» que
---      quedó en prosa («practitioner/location time overlap») cuando v4.2.3 materializó sólo la
---      mitad del profesional. 23P01 → la API lo traduce a 409 CARE_SPACE_DOUBLE_BOOKED.
---      Columna nueva, sin backfill: en el primer despliegue la precondición no puede fallar.
+--      compuestas hacia el recurso; lo declara y lo crea M-F4 (diagram_41, `…_f4_scheduling.sql`).
+--   4. (Fuera de este patch) El solape imposible de las citas (appointments.care_space_id y
+--      ex_appointments_care_space_time, 23P01 → 409 CARE_SPACE_DOUBLE_BOOKED) es de M-F5-clin.
 --
--- DEPENDENCIA CRUZADA con M-F5-clin (anotada en DESVIOS-M-F5-sched.md). La columna
--- clinical.appointments.care_space_id, su FK (simple y compuesta), su índice y el propio
--- ex_appointments_care_space_time los declara también el hunk de diagram_08 / diagram_33 y
--- el patch `…_f5_clinical.sql` de M-F5-clin, con los MISMOS nombres y la MISMA expresión. Acá
--- se repiten para que este patch se aplique solo y en cualquier orden: ADD COLUMN IF NOT
--- EXISTS, FK con duplicate_object, CREATE INDEX IF NOT EXISTS y el EXCLUDE sólo si falta. En
--- el orden real (`…_f5_clinical.sql` ordena antes: «clinical» < «scheduling») todas esas
--- sentencias no hacen nada. La declaración en el modelo (.puml) es UNA sola, la de M-F5-clin.
---
--- UUID literales (el predicado de un EXCLUDE debe ser IMMUTABLE), los MISMOS dos de
--- ex_appointments_practitioner_time (SQL/08_clinical/05_constraints.sql), `deterministicId(<clave>)`:
---   51530fd7-05b1-5c29-80c4-da740ede4d27  APPOINTMENT_BOOKED
---   37dded87-7a7a-5a24-86f6-0ef48cccb482  APPOINTMENT_CHECKED_IN
+-- DUEÑO ÚNICO de clinical.appointments.care_space_id (integración del modelo, 2026-10-29).
+-- La columna, su FK (simple y compuesta fk_appointments_tenant_care_space), su índice y el
+-- EXCLUDE ex_appointments_care_space_time son de M-F5-clin (`…_f5_clinical.sql`, declarados en
+-- diagram_08 / diagram_33). Este patch ya NO los crea: los duplicaba. Tampoco crea
+-- ux_schedulable_resources_tenant_id_id: es de M-F4 (`…_f4_scheduling.sql`, diagram_41) y acá se
+-- exige como prerrequisito. Orden real (alfabético de postgres-init): f4_scheduling < f5_clinical
+-- < f5_scheduling.
 --
 -- LO QUE ESTE PATCH NO HACE.
 --   - No siembra conceptos (EXC_SRC_* los siembra la API con defineModuleConcepts) ni rellena
@@ -68,32 +55,29 @@
 --     schedule_rules, sin espacio ni vigencia propios): es 422 TEMPLATE_RULE_OVERLAP_CARE_SPACE
 --     de la API; la red en la base es el EXCLUDE de las citas.
 --   - No valida el tenant de source_ref_id (polimórfico, sin FK): lo valida la API.
---   - No toca scheduling.schedulable_resources (dueño: M-F4) salvo el UNIQUE (tenant_id, id).
+--   - No toca scheduling.schedulable_resources (dueño: M-F4) ni clinical.appointments (dueño: M-F5-clin).
 --   - No agrega historia: ninguna tabla es nueva (audit.schedule_templates_history guarda
 --     data_snapshot jsonb, así que recoge las columnas nuevas sin cambios).
 --
 -- PRECONDICIONES (abortan sin tocar nada; el BEGIN hace rollback de todo):
 --   - F1b no aplicado (falta practice.care_spaces con tenant_id NOT NULL o su ux_*_tenant_id_id);
+--   - M-F4 no aplicado (falta ux_schedulable_resources_tenant_id_id);
 --   - plantillas / excepciones cuyo tenant_id (si la columna ya existía con datos) no es el de su recurso;
---   - plantillas / citas que ya referencian un espacio de OTRO tenant;
+--   - plantillas que ya referencian un espacio de OTRO tenant;
 --   - excepciones con source_ref_id sin origen;
---   - citas BOOKED / CHECKED_IN ya solapadas en el mismo espacio (se listan los pares).
 --
 -- DELTAS ESPERADOS sobre la base viva (antes de este patch):
---   columnas   +6  (schedule_templates{tenant_id, care_space_id}, availability_exceptions{tenant_id,
---                   source_kind_concept_id, source_ref_id}, appointments{care_space_id})
---   FKs        +9  (5 simples + 4 compuestas)
---   índices    +7  (ux_schedulable_resources_tenant_id_id, 5 IX de diagram_41, ix_appointments_care_space_id;
---                   más el gist del EXCLUDE)
---   CHECK      +1 · EXCLUDE +1 · triggers +2 · políticas RLS +2 · tenant_id NOT NULL en 2 tablas
+--   columnas   +5  (schedule_templates{tenant_id, care_space_id}, availability_exceptions{tenant_id,
+--                   source_kind_concept_id, source_ref_id})
+--   FKs        +7  (4 simples + 3 compuestas)
+--   índices    +5  (los 5 IX de diagram_41)
+--   CHECK      +1 · triggers +2 · políticas RLS +2 · tenant_id NOT NULL en 2 tablas
 -- ============================================================================
 
 BEGIN;
 
 -- Las comprobaciones y el backfill leen tablas con RLS forzada (practice.*, scheduling.*, clinical.*).
 SET LOCAL app.system_context = 'true';
-
-CREATE EXTENSION IF NOT EXISTS btree_gist;  -- requerido por el EXCLUDE (uuid WITH =)
 
 -- ------------------------------------------------------------- 0. prerrequisitos
 DO $$
@@ -109,15 +93,19 @@ BEGIN
     END IF;
     IF to_regclass('scheduling.schedulable_resources') IS NULL
        OR to_regclass('scheduling.schedule_templates') IS NULL
-       OR to_regclass('scheduling.availability_exceptions') IS NULL
-       OR to_regclass('clinical.appointments') IS NULL THEN
-        RAISE EXCEPTION 'F5d requiere el módulo 41 (scheduling) y clinical.appointments creados'
+       OR to_regclass('scheduling.availability_exceptions') IS NULL THEN
+        RAISE EXCEPTION 'F5d requiere el módulo 41 (scheduling) creado'
+            USING ERRCODE = 'undefined_table';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes
+                    WHERE schemaname = 'scheduling' AND indexname = 'ux_schedulable_resources_tenant_id_id') THEN
+        RAISE EXCEPTION 'F5d requiere ux_schedulable_resources_tenant_id_id (UNIQUE (tenant_id, id) de scheduling.schedulable_resources, dueño M-F4): aplicar antes 2026-10-29_infraestructura_f4_scheduling.sql'
             USING ERRCODE = 'undefined_table';
     END IF;
 END $$;
 
 -- ------------------------------------------------------------- 1. columnas nuevas
--- (de SQL/41_scheduling/02_tables.sql; appointments.care_space_id: ver DEPENDENCIA CRUZADA)
+-- (de SQL/41_scheduling/02_tables.sql)
 ALTER TABLE "scheduling"."schedule_templates"
     ADD COLUMN IF NOT EXISTS "tenant_id" uuid;  -- NOT NULL tras el backfill
 
@@ -132,9 +120,6 @@ ALTER TABLE "scheduling"."availability_exceptions"
 
 ALTER TABLE "scheduling"."availability_exceptions"
     ADD COLUMN IF NOT EXISTS "source_ref_id" uuid;
-
-ALTER TABLE "clinical"."appointments"
-    ADD COLUMN IF NOT EXISTS "care_space_id" uuid;
 
 -- ------------------------------------------------------------- 2. backfill de tenant_id
 -- El de su recurso agendable (resource_id es NOT NULL con FK). Sólo filas con NULL.
@@ -185,11 +170,6 @@ BEGIN
           FROM "scheduling"."schedule_templates" t
           JOIN "practice"."care_spaces" cs ON cs."id" = t."care_space_id"
          WHERE cs."tenant_id" <> t."tenant_id"
-        UNION ALL
-        SELECT 'appointments.care_space_id', a."id"
-          FROM "clinical"."appointments" a
-          JOIN "practice"."care_spaces" cs ON cs."id" = a."care_space_id"
-         WHERE cs."tenant_id" <> a."tenant_id"
     )
     SELECT count(*), string_agg(format('%s (%s filas, p. ej. %s)', relacion, n, ejemplo), '; ')
       INTO n_cruz, detalle
@@ -214,39 +194,10 @@ BEGIN
     END IF;
 END $$;
 
--- 3d. Citas ya solapadas en el mismo espacio: el EXCLUDE no se podría crear. Se listan los pares.
-DO $$
-DECLARE
-    n_sol   integer;
-    detalle text;
-BEGIN
-    SELECT count(*),
-           string_agg(format('%s ↔ %s (espacio %s)', a_id, b_id, espacio), '; ')
-      INTO n_sol, detalle
-      FROM (SELECT a."id" AS a_id, b."id" AS b_id, a."care_space_id" AS espacio
-              FROM "clinical"."appointments" a
-              JOIN "clinical"."appointments" b
-                ON a."care_space_id" = b."care_space_id"
-               AND a."id" < b."id"
-               AND tstzrange(a."start_at", a."end_at", '[)') && tstzrange(b."start_at", b."end_at", '[)')
-             WHERE a."care_space_id" IS NOT NULL
-               AND a."end_at" IS NOT NULL AND b."end_at" IS NOT NULL
-               AND a."status_concept_id" IN ('51530fd7-05b1-5c29-80c4-da740ede4d27', '37dded87-7a7a-5a24-86f6-0ef48cccb482')
-               AND b."status_concept_id" IN ('51530fd7-05b1-5c29-80c4-da740ede4d27', '37dded87-7a7a-5a24-86f6-0ef48cccb482')
-             LIMIT 20) p;
-    IF n_sol > 0 THEN
-        RAISE EXCEPTION 'F5d: hay citas BOOKED/CHECKED_IN solapadas en el mismo espacio (% par(es), hasta 20 listados): %. ex_appointments_care_space_time no se crea y no se toca ningún dato; reprogramar o cancelar una de cada par y volver a aplicar.', n_sol, detalle
-            USING ERRCODE = 'exclusion_violation';
-    END IF;
-END $$;
-
 ALTER TABLE "scheduling"."schedule_templates" ALTER COLUMN "tenant_id" SET NOT NULL;
 ALTER TABLE "scheduling"."availability_exceptions" ALTER COLUMN "tenant_id" SET NOT NULL;
 
 -- ------------------------------------------------------------- 4. índices (copiados de 04_indexes)
--- Destino de las FK compuestas hacia el recurso agendable (idéntico a lo que declara diagram_41).
-CREATE UNIQUE INDEX IF NOT EXISTS "ux_schedulable_resources_tenant_id_id" ON "scheduling"."schedulable_resources" ("tenant_id", "id");
-
 CREATE INDEX IF NOT EXISTS "ix_schedule_templates_tenant_id" ON "scheduling"."schedule_templates" ("tenant_id");
 
 CREATE INDEX IF NOT EXISTS "ix_schedule_templates_care_space_id" ON "scheduling"."schedule_templates" ("care_space_id");
@@ -256,9 +207,6 @@ CREATE INDEX IF NOT EXISTS "ix_availability_exceptions_tenant_id" ON "scheduling
 CREATE INDEX IF NOT EXISTS "ix_availability_exceptions_source_kind_concept_id" ON "scheduling"."availability_exceptions" ("source_kind_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_availability_exceptions_source_ref_id" ON "scheduling"."availability_exceptions" ("source_ref_id") WHERE source_ref_id IS NOT NULL;
-
--- (appointments: el índice de la FK; el gist del EXCLUDE no sirve para buscar por espacio solo)
-CREATE INDEX IF NOT EXISTS "ix_appointments_care_space_id" ON "clinical"."appointments" ("care_space_id");
 
 -- ------------------------------------------------------------- 5. FKs simples (copiadas de 90_fk_deferred)
 -- destino: directory.tenants (requiere schema directory)
@@ -289,13 +237,6 @@ DO $$ BEGIN
         REFERENCES "terminology"."catalog_concepts" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 
--- destino: practice.care_spaces (requiere schema practice) — columna de M-F5-clin, ver DEPENDENCIA CRUZADA
-DO $$ BEGIN
-    ALTER TABLE "clinical"."appointments"
-        ADD CONSTRAINT "fk_appointments_care_space_id" FOREIGN KEY ("care_space_id")
-        REFERENCES "practice"."care_spaces" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
-
 -- ------------------------------------------------------------- 6. FKs compuestas (escritas a mano)
 -- (tenant_id, x_id) → padre (tenant_id, id). MATCH SIMPLE: si x_id es NULL no se exige nada, así
 -- sirven también para care_space_id opcional. Conviven con la FK simple generada.
@@ -307,8 +248,7 @@ BEGIN
         SELECT * FROM (VALUES
             ('scheduling.schedule_templates',      'fk_schedule_templates_tenant_resource',      'resource_id',    'scheduling.schedulable_resources'),
             ('scheduling.schedule_templates',      'fk_schedule_templates_tenant_care_space',    'care_space_id',  'practice.care_spaces'),
-            ('scheduling.availability_exceptions', 'fk_availability_exceptions_tenant_resource', 'resource_id',    'scheduling.schedulable_resources'),
-            ('clinical.appointments',              'fk_appointments_tenant_care_space',          'care_space_id',  'practice.care_spaces')
+            ('scheduling.availability_exceptions', 'fk_availability_exceptions_tenant_resource', 'resource_id',    'scheduling.schedulable_resources')
         ) AS v(hijo, nombre, columna, padre)
     LOOP
         BEGIN
@@ -319,22 +259,10 @@ BEGIN
     END LOOP;
 END $$;
 
--- ------------------------------------------------------------- 7. CHECK y EXCLUDE
--- (de SQL/41_scheduling/05_constraints.sql y SQL/08_clinical/05_constraints.sql)
+-- ------------------------------------------------------------- 7. CHECK
+-- (de SQL/41_scheduling/05_constraints.sql)
 ALTER TABLE "scheduling"."availability_exceptions" DROP CONSTRAINT IF EXISTS "ck_availability_exceptions_source_ref_needs_kind";
 ALTER TABLE "scheduling"."availability_exceptions" ADD CONSTRAINT "ck_availability_exceptions_source_ref_needs_kind" CHECK (("source_ref_id" IS NULL OR "source_kind_concept_id" IS NOT NULL));
-
--- El generador emite DROP + ADD; acá se crea sólo si falta, para que reaplicar el patch no
--- reconstruya el índice gist (ni tome ACCESS EXCLUSIVE sobre appointments) en una base poblada.
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint
-                    WHERE conname = 'ex_appointments_care_space_time'
-                      AND conrelid = 'clinical.appointments'::regclass) THEN
-        ALTER TABLE "clinical"."appointments" ADD CONSTRAINT "ex_appointments_care_space_time"
-            EXCLUDE USING gist ("care_space_id" WITH =, tstzrange("start_at", "end_at", '[)') WITH &&) WHERE ("care_space_id" IS NOT NULL AND "end_at" IS NOT NULL AND "status_concept_id" IN ('51530fd7-05b1-5c29-80c4-da740ede4d27', '37dded87-7a7a-5a24-86f6-0ef48cccb482'));
-    END IF;
-END $$;
 
 -- ------------------------------------------------------------- 8. trigger: tenant desde el recurso
 -- Si el INSERT / UPDATE no manda tenant_id, se completa con el del recurso agendable (así no se
@@ -415,7 +343,6 @@ DECLARE
     n_fk       integer;
     n_idx      integer;
     n_ck       integer;
-    n_ex       integer;
     n_tg       integer;
     n_rls      integer;
     n_pol      integer;
@@ -427,8 +354,7 @@ BEGIN
             ('scheduling', 'schedule_templates', 'care_space_id'),
             ('scheduling', 'availability_exceptions', 'tenant_id'),
             ('scheduling', 'availability_exceptions', 'source_kind_concept_id'),
-            ('scheduling', 'availability_exceptions', 'source_ref_id'),
-            ('clinical', 'appointments', 'care_space_id'));
+            ('scheduling', 'availability_exceptions', 'source_ref_id'));
 
     SELECT count(*) INTO n_notnull
       FROM information_schema.columns
@@ -440,28 +366,21 @@ BEGIN
      WHERE contype = 'f' AND convalidated
        AND conname IN ('fk_schedule_templates_tenant_id', 'fk_schedule_templates_care_space_id',
                        'fk_availability_exceptions_tenant_id', 'fk_availability_exceptions_source_kind_concept_id',
-                       'fk_appointments_care_space_id',
                        'fk_schedule_templates_tenant_resource', 'fk_schedule_templates_tenant_care_space',
-                       'fk_availability_exceptions_tenant_resource', 'fk_appointments_tenant_care_space');
+                       'fk_availability_exceptions_tenant_resource');
 
     SELECT count(*) INTO n_idx
       FROM pg_indexes
      WHERE (schemaname, indexname) IN (
-            ('scheduling', 'ux_schedulable_resources_tenant_id_id'),
             ('scheduling', 'ix_schedule_templates_tenant_id'),
             ('scheduling', 'ix_schedule_templates_care_space_id'),
             ('scheduling', 'ix_availability_exceptions_tenant_id'),
             ('scheduling', 'ix_availability_exceptions_source_kind_concept_id'),
-            ('scheduling', 'ix_availability_exceptions_source_ref_id'),
-            ('clinical', 'ix_appointments_care_space_id'));
+            ('scheduling', 'ix_availability_exceptions_source_ref_id'));
 
     SELECT count(*) INTO n_ck
       FROM pg_constraint
      WHERE contype = 'c' AND convalidated AND conname = 'ck_availability_exceptions_source_ref_needs_kind';
-
-    SELECT count(*) INTO n_ex
-      FROM pg_constraint
-     WHERE contype = 'x' AND conname = 'ex_appointments_care_space_time';
 
     SELECT count(*) INTO n_tg
       FROM pg_trigger
@@ -478,13 +397,13 @@ BEGIN
      WHERE schemaname = 'scheduling' AND policyname = 'tenant_isolation'
        AND tablename IN ('schedule_templates', 'availability_exceptions');
 
-    IF n_columnas <> 6 OR n_notnull <> 2 OR n_fk <> 9 OR n_idx <> 7 OR n_ck <> 1 OR n_ex <> 1
+    IF n_columnas <> 5 OR n_notnull <> 2 OR n_fk <> 7 OR n_idx <> 5 OR n_ck <> 1
        OR n_tg <> 2 OR n_rls <> 2 OR n_pol <> 2 THEN
-        RAISE EXCEPTION 'F5d incompleto: columnas=% (6), tenant NOT NULL=% (2), fk=% (9), índices=% (7), check=% (1), exclude=% (1), triggers=% (2), tablas con RLS forzada=% (2), políticas=% (2)',
-            n_columnas, n_notnull, n_fk, n_idx, n_ck, n_ex, n_tg, n_rls, n_pol;
+        RAISE EXCEPTION 'F5d incompleto: columnas=% (5), tenant NOT NULL=% (2), fk=% (7), índices=% (5), check=% (1), triggers=% (2), tablas con RLS forzada=% (2), políticas=% (2)',
+            n_columnas, n_notnull, n_fk, n_idx, n_ck, n_tg, n_rls, n_pol;
     END IF;
 
-    RAISE NOTICE 'F5d aplicado: 6 columnas, tenant_id NOT NULL en 2 tablas, 9 FKs validadas (5 simples + 4 compuestas), 7 índices, 1 CHECK + 1 EXCLUDE, 2 triggers, RLS forzada con tenant_isolation en 2 tablas.';
+    RAISE NOTICE 'F5d aplicado: 5 columnas, tenant_id NOT NULL en 2 tablas, 7 FKs validadas (4 simples + 3 compuestas), 5 índices, 1 CHECK, 2 triggers, RLS forzada con tenant_isolation en 2 tablas.';
 END $$;
 
 COMMIT;
