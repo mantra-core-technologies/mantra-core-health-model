@@ -682,7 +682,8 @@
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1,
-          "tenant_id": "8368b919-b77e-57c7-a5c2-55a69767c622"
+          "tenant_id": "8368b919-b77e-57c7-a5c2-55a69767c622",
+          "ops_version": 10
         },
         {
           "id": "cefba5a9-20a8-531e-9341-d469243c63cb",
@@ -700,7 +701,8 @@
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1,
-          "tenant_id": "8368b919-b77e-57c7-a5c2-55a69767c622"
+          "tenant_id": "8368b919-b77e-57c7-a5c2-55a69767c622",
+          "ops_version": 63
         },
         {
           "id": "870f0dc2-cf1d-5efc-bbd2-d3696615ca57",
@@ -718,7 +720,8 @@
           "created_by_user_id": "b34febe5-f547-58a4-871c-9705d259ce10",
           "updated_by_user_id": "b34febe5-f547-58a4-871c-9705d259ce10",
           "row_version": 1,
-          "tenant_id": "38cea556-60d8-5cd6-bf04-fda1c3bd60e9"
+          "tenant_id": "38cea556-60d8-5cd6-bf04-fda1c3bd60e9",
+          "ops_version": 24
         },
         {
           "id": "329b97c8-d5d3-5e28-8845-81d29af86991",
@@ -736,7 +739,8 @@
           "created_by_user_id": "b9bec8f0-d32e-5079-8ec7-ba835d10458e",
           "updated_by_user_id": "b9bec8f0-d32e-5079-8ec7-ba835d10458e",
           "row_version": 1,
-          "tenant_id": "2685710f-a035-556e-b099-d05ef89ce61d"
+          "tenant_id": "2685710f-a035-556e-b099-d05ef89ce61d",
+          "ops_version": 42
         },
         {
           "id": "a95cf76c-7a32-5c1a-8957-3f2737b3ac1f",
@@ -754,7 +758,8 @@
           "created_by_user_id": "23cfcb91-648c-5c26-9da1-35ec6c04c142",
           "updated_by_user_id": "23cfcb91-648c-5c26-9da1-35ec6c04c142",
           "row_version": 1,
-          "tenant_id": "3d50fab1-fdc6-5a6d-85b9-b8246203296b"
+          "tenant_id": "3d50fab1-fdc6-5a6d-85b9-b8246203296b",
+          "ops_version": 22
         },
         {
           "id": "b344f172-37ac-59b7-a899-9bd93f507d32",
@@ -772,7 +777,8 @@
           "created_by_user_id": "61f19c22-994e-5f45-976e-1a0d0dc66900",
           "updated_by_user_id": "61f19c22-994e-5f45-976e-1a0d0dc66900",
           "row_version": 1,
-          "tenant_id": "4cdc6fb2-d927-51c2-9853-6005dcee2222"
+          "tenant_id": "4cdc6fb2-d927-51c2-9853-6005dcee2222",
+          "ops_version": 20
         },
         {
           "id": "d0cf1864-b8f5-50e5-8314-53562d9b433a",
@@ -790,7 +796,8 @@
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1,
-          "tenant_id": "b962a4cd-0836-514e-bb7e-4b9fbe9dfb16"
+          "tenant_id": "b962a4cd-0836-514e-bb7e-4b9fbe9dfb16",
+          "ops_version": 40
         },
         {
           "id": "86f9cad1-8312-5b86-a03b-172685b28ba3",
@@ -808,7 +815,8 @@
           "created_by_user_id": "44a7a672-7b66-5f38-a595-69406745da5f",
           "updated_by_user_id": "44a7a672-7b66-5f38-a595-69406745da5f",
           "row_version": 1,
-          "tenant_id": "2033cf59-4e74-54b6-91cd-4f62f8a06105"
+          "tenant_id": "2033cf59-4e74-54b6-91cd-4f62f8a06105",
+          "ops_version": 90
         },
         {
           "id": "c412dceb-5496-50fe-b89c-a26a400cab5c",
@@ -826,7 +834,8 @@
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1,
-          "tenant_id": "8368b919-b77e-57c7-a5c2-55a69767c622"
+          "tenant_id": "8368b919-b77e-57c7-a5c2-55a69767c622",
+          "ops_version": 70
         },
         {
           "id": "0b0f425a-94c7-5b39-9603-f8bb90b7c8b3",
@@ -844,7 +853,8 @@
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1,
-          "tenant_id": "8368b919-b77e-57c7-a5c2-55a69767c622"
+          "tenant_id": "8368b919-b77e-57c7-a5c2-55a69767c622",
+          "ops_version": 9
         }
       ],
       "healthcare_services": [
@@ -2984,7 +2994,8 @@
           "created_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
           "updated_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
           "row_version": 1,
-          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9"
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "ops_version": 10
         },
         {
           "id": "bf732059-384a-5a5d-a137-bc28809759ee",
@@ -3002,7 +3013,8 @@
           "created_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
           "updated_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
           "row_version": 1,
-          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9"
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "ops_version": 63
         },
         {
           "id": "b2b6a3be-02f9-5943-b247-03a1c990e0e9",
@@ -3020,7 +3032,8 @@
           "created_by_user_id": "b408997d-9c68-5589-961f-eb5b2aece582",
           "updated_by_user_id": "b408997d-9c68-5589-961f-eb5b2aece582",
           "row_version": 1,
-          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0"
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "ops_version": 24
         },
         {
           "id": "c95fc3d0-7aa7-5017-a2b8-894415f14bf1",
@@ -3038,7 +3051,8 @@
           "created_by_user_id": "55224953-7ad5-5e7b-b070-8beb020555d5",
           "updated_by_user_id": "55224953-7ad5-5e7b-b070-8beb020555d5",
           "row_version": 1,
-          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a"
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "ops_version": 42
         },
         {
           "id": "e5199627-3576-5943-8186-b7f122d5f200",
@@ -3056,7 +3070,8 @@
           "created_by_user_id": "b8b57fec-d512-5793-b297-c39d389f96b2",
           "updated_by_user_id": "b8b57fec-d512-5793-b297-c39d389f96b2",
           "row_version": 1,
-          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06"
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "ops_version": 22
         },
         {
           "id": "8e084e95-df62-5a7e-bd36-54571c299ee7",
@@ -3074,7 +3089,8 @@
           "created_by_user_id": "e926fb49-acc4-5184-a3ab-7a8f13540da6",
           "updated_by_user_id": "e926fb49-acc4-5184-a3ab-7a8f13540da6",
           "row_version": 1,
-          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1"
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "ops_version": 20
         },
         {
           "id": "7be90176-fcd5-599a-9c56-188e239eaa2f",
@@ -3092,7 +3108,8 @@
           "created_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
           "updated_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
           "row_version": 1,
-          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c"
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "ops_version": 40
         },
         {
           "id": "cfe2f77e-aaac-5037-b179-dd5d60dacb96",
@@ -3110,7 +3127,8 @@
           "created_by_user_id": "7fc77350-0e92-5d7a-a2fb-e6277505c00e",
           "updated_by_user_id": "7fc77350-0e92-5d7a-a2fb-e6277505c00e",
           "row_version": 1,
-          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824"
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "ops_version": 90
         },
         {
           "id": "9813ebb5-9bbd-5edd-9340-9fe40052f103",
@@ -3128,7 +3146,8 @@
           "created_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
           "updated_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
           "row_version": 1,
-          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9"
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "ops_version": 70
         },
         {
           "id": "4c3eb3a1-1e27-58af-bea4-a8b35fa57e4d",
@@ -3146,7 +3165,8 @@
           "created_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
           "updated_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
           "row_version": 1,
-          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9"
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
+          "ops_version": 9
         },
         {
           "id": "bc180b10-50f2-50ad-bb95-0963040f4134",
@@ -3164,7 +3184,8 @@
           "created_by_user_id": "b408997d-9c68-5589-961f-eb5b2aece582",
           "updated_by_user_id": "b408997d-9c68-5589-961f-eb5b2aece582",
           "row_version": 1,
-          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0"
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
+          "ops_version": 70
         },
         {
           "id": "af44b8d7-378a-5194-a3db-5ea5c4c1d3e7",
@@ -3182,7 +3203,8 @@
           "created_by_user_id": "55224953-7ad5-5e7b-b070-8beb020555d5",
           "updated_by_user_id": "55224953-7ad5-5e7b-b070-8beb020555d5",
           "row_version": 1,
-          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a"
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
+          "ops_version": 52
         },
         {
           "id": "ddab7f51-c31d-5442-846a-3853c68386dc",
@@ -3200,7 +3222,8 @@
           "created_by_user_id": "b8b57fec-d512-5793-b297-c39d389f96b2",
           "updated_by_user_id": "b8b57fec-d512-5793-b297-c39d389f96b2",
           "row_version": 1,
-          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06"
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
+          "ops_version": 24
         },
         {
           "id": "465330ea-9dbb-5546-ac1a-9998755ad22e",
@@ -3218,7 +3241,8 @@
           "created_by_user_id": "e926fb49-acc4-5184-a3ab-7a8f13540da6",
           "updated_by_user_id": "e926fb49-acc4-5184-a3ab-7a8f13540da6",
           "row_version": 1,
-          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1"
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
+          "ops_version": 78
         },
         {
           "id": "1b04f26e-4d2d-5666-8d59-d7be234672b4",
@@ -3236,7 +3260,8 @@
           "created_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
           "updated_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
           "row_version": 1,
-          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c"
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
+          "ops_version": 62
         },
         {
           "id": "e99ea614-3fc2-5d90-baa6-9a4e391be152",
@@ -3254,7 +3279,8 @@
           "created_by_user_id": "7fc77350-0e92-5d7a-a2fb-e6277505c00e",
           "updated_by_user_id": "7fc77350-0e92-5d7a-a2fb-e6277505c00e",
           "row_version": 1,
-          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824"
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
+          "ops_version": 32
         }
       ],
       "healthcare_services": [

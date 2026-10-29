@@ -85,8 +85,8 @@
       "file": "modules/08_clinical.seeds.json",
       "boot_records": 15303,
       "mock_records": 411,
-      "line_count": 237794,
-      "sha256": "8bb3c6c3fbd7d82ca8467831919b793aab2450d93d818afbf862e2bfed416766"
+      "line_count": 237810,
+      "sha256": "6c9956725f21401401ea042fbb22f2bfec9eb84031827216db07d2bff718b45e"
     },
     {
       "number": 9,
@@ -139,8 +139,8 @@
       "file": "modules/14_practice.seeds.json",
       "boot_records": 60,
       "mock_records": 176,
-      "line_count": 4796,
-      "sha256": "cdaf782417c690cfc9a94468f79345bb969c843d647a96a3d9c771b24bb1cfd3"
+      "line_count": 4822,
+      "sha256": "c41c49093ef0661f24dace6eafffcb3ddf3a7273cadb7565b3cda86be6d06501"
     },
     {
       "number": 15,
@@ -382,8 +382,8 @@
       "file": "modules/41_scheduling.seeds.json",
       "boot_records": 10,
       "mock_records": 240,
-      "line_count": 4787,
-      "sha256": "16e993a49cad295f09a260385548e40476fa7f4ea304cdc93b9055f01401e10b"
+      "line_count": 4819,
+      "sha256": "49f7f77325bab6663af92bc0504341c8c9a0031fe7e54846603de88c18cb1157"
     },
     {
       "number": 42,
@@ -490,8 +490,8 @@
       "file": "modules/53_procedures_perioperative.seeds.json",
       "boot_records": 0,
       "mock_records": 560,
-      "line_count": 10785,
-      "sha256": "758962fee2694f2e27255ca728610f1b68b3451d951e2195ff0d1af771f44eaf"
+      "line_count": 10801,
+      "sha256": "2a70b282f5f364c275dbc9406b7e5fce81a25987883667c038282be5a413c3ff"
     },
     {
       "number": 54,

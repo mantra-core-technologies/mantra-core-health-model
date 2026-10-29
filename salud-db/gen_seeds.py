@@ -3723,6 +3723,114 @@ def phase_notnull(docs, ddl, fks, value_sets) -> dict:
     return fixed
 
 
+
+# ============================================================ fase 3e · infraestructura hospitalaria
+
+def _seed_rows(docs: dict, code: str, entity: str):
+    """(sección, fila) de una entidad, boot y mock."""
+    for section in ("boot", "mock"):
+        for row in docs[code].get(section, {}).get("records", {}).get(entity, []):
+            yield section, row
+
+
+def phase_infra_coherence(docs: dict) -> dict:
+    """Coherencia de tenant de los seeds que tocan las tablas de la infraestructura hospitalaria.
+
+    F1b–F5 sumaron `UNIQUE (tenant_id, id)` y FK compuestas `(tenant_id, x_id)`: una fila hija no
+    puede apuntar a un padre de OTRO tenant. Los seeds mock eran sintéticos y el tenant de cada
+    hija salía de la fase NOT NULL (un tenant cualquiera) o del padre equivocado. Aquí el tenant
+    de la hija se toma del padre que la define, y lo que cuelga de ella se repunta a un par
+    coherente (o se deja nulo cuando el modelo lo permite). Determinista e idempotente.
+
+      - scheduling.schedule_templates / availability_exceptions.tenant_id ← el del recurso agendable.
+      - clinical.encounter_locations.tenant_id ← el del encuentro; sede, unidad y espacio de otro
+        tenant se reemplazan por los de ese tenant (o se anulan).
+      - procedures_perioperative.procedure_cases: la sala y la sede son del tenant custodio y la
+        sala es de esa sede; si no, se eligen una sala y una sede del tenant (o ambas NULL).
+      - procedures_perioperative.operating_room_utilization_events.tenant_id ← el custodio del
+        caso; la sala, la del caso.
+    """
+    fixed = OrderedDict()
+
+    def bump(key):
+        fixed[key] = fixed.get(key, 0) + 1
+
+    resources = {r["id"]: r for _, r in _seed_rows(docs, "41", "schedulable_resources")}
+    spaces = {r["id"]: r for _, r in _seed_rows(docs, "14", "care_spaces")}
+    sites = {r["id"]: r for _, r in _seed_rows(docs, "14", "practice_sites")}
+    units = {r["id"]: r for _, r in _seed_rows(docs, "14", "clinical_units")}
+    encounters = {r["id"]: r for _, r in _seed_rows(docs, "08", "encounters")}
+
+    for entity in ("schedule_templates", "availability_exceptions"):
+        for _, row in _seed_rows(docs, "41", entity):
+            parent = resources.get(row.get("resource_id"))
+            if parent and row.get("tenant_id") != parent["tenant_id"]:
+                row["tenant_id"] = parent["tenant_id"]
+                bump(f"scheduling.{entity}.tenant_id")
+            if entity == "schedule_templates" and row.get("care_space_id"):
+                sp = spaces.get(row["care_space_id"])
+                if sp is None or sp["tenant_id"] != row.get("tenant_id"):
+                    row["care_space_id"] = None
+                    bump("scheduling.schedule_templates.care_space_id")
+
+    def pick_space(tenant):
+        """Primer espacio (por id) del tenant cuya sede es del mismo tenant."""
+        for sid in sorted(spaces):
+            sp = spaces[sid]
+            site = sites.get(sp.get("practice_site_id"))
+            if sp.get("tenant_id") == tenant and site and site.get("tenant_id") == tenant:
+                return sp
+        return None
+
+    for _, row in _seed_rows(docs, "08", "encounter_locations"):
+        enc = encounters.get(row.get("encounter_id"))
+        if not enc:
+            continue
+        tenant = enc["tenant_id"]
+        if row.get("tenant_id") != tenant:
+            row["tenant_id"] = tenant
+            bump("clinical.encounter_locations.tenant_id")
+        for col, pool in (("practice_site_id", sites), ("clinical_unit_id", units),
+                          ("care_space_id", spaces)):
+            ref = row.get(col)
+            if ref and (pool.get(ref) is None or pool[ref].get("tenant_id") != tenant):
+                sp = pick_space(tenant)
+                if col == "care_space_id":
+                    row[col] = sp["id"] if sp else None
+                elif col == "practice_site_id":
+                    row[col] = sp["practice_site_id"] if sp else None
+                else:
+                    row[col] = None
+                bump(f"clinical.encounter_locations.{col}")
+
+    cases = {}
+    for _, row in _seed_rows(docs, "53", "procedure_cases"):
+        cases[row["id"]] = row
+        tenant = row.get("custodian_tenant_id")
+        room, site = spaces.get(row.get("operating_room_id")), sites.get(row.get("practice_site_id"))
+        ok_room = row.get("operating_room_id") is None or (
+            room and room.get("tenant_id") == tenant
+            and (row.get("practice_site_id") is None or room.get("practice_site_id") == row["practice_site_id"]))
+        ok_site = row.get("practice_site_id") is None or (site and site.get("tenant_id") == tenant)
+        if not (ok_room and ok_site):
+            sp = pick_space(tenant)
+            row["operating_room_id"] = sp["id"] if sp else None
+            row["practice_site_id"] = sp["practice_site_id"] if sp else None
+            bump("procedures_perioperative.procedure_cases.operating_room_id/practice_site_id")
+
+    for _, row in _seed_rows(docs, "53", "operating_room_utilization_events"):
+        case = cases.get(row.get("procedure_case_id"))
+        if not case:
+            continue
+        if row.get("tenant_id") != case["custodian_tenant_id"]:
+            row["tenant_id"] = case["custodian_tenant_id"]
+            bump("procedures_perioperative.operating_room_utilization_events.tenant_id")
+        if row.get("operating_room_id") != case.get("operating_room_id"):
+            row["operating_room_id"] = case.get("operating_room_id")
+            bump("procedures_perioperative.operating_room_utilization_events.operating_room_id")
+    return fixed
+
+
 # ============================================================ fase 4 · claves naturales
 
 def _rename_mock_text_key(uk, boot_rows, mock_rows) -> int:
@@ -4914,6 +5022,12 @@ def main() -> None:
             sum(s.values()), len(s)))
         for k, v in s.items():
             print("      {:<62} {:>5}".format(k, v))
+    if run("notnull"):
+        s = phase_infra_coherence(docs)
+        print("[3e] infraestructura · {} valores de tenant/sala/sede alineados al padre en {} columnas".format(
+            sum(s.values()), len(s)))
+        for k, v in s.items():
+            print("      {:<78} {:>5}".format(k, v))
     if run("bindings"):
         s = phase_valueset_binding(docs, ddl)
         libres = unbound_concept_columns(docs, ddl)
