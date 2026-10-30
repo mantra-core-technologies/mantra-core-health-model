@@ -126,6 +126,16 @@ entity "PAY EXTRAS · pay_vault" as pay_extras_pay_vault <<PAY_EXTRAS>> {
   DEFAULT idempotency_keys.recovery_point : 'started'
   DEFAULT idempotency_keys.created_at : now()
   CHECK_SQL idempotency_keys : idempotency_keys_state_check | state IN ('started', 'completed')
+  FUNCTION forbid_mutation
+  | CREATE OR REPLACE FUNCTION forbid_mutation() RETURNS trigger LANGUAGE plpgsql AS $$
+  | BEGIN
+  |   RAISE EXCEPTION 'la tabla % es inmutable (%)', TG_TABLE_NAME, TG_OP USING ERRCODE = 'integrity_constraint_violation';
+  | END;
+  | $$
+  ' Rastro de auditoría de cada revelado del PAN (granted / denied_*), de SOLO-AGREGAR: vault.repo.ts es el único que escribe (INSERT) y no hay UPDATE/DELETE/TRUNCATE sobre ella en
+  ' services/*/src, test/ ni e2e/. Borrarla o editarla permitiría esconder quién vio un PAN.
+  TRIGGER reveal_audit_immutable : BEFORE UPDATE OR DELETE ON reveal_audit FOR EACH ROW EXECUTE FUNCTION forbid_mutation()
+  TRIGGER reveal_audit_no_truncate : BEFORE TRUNCATE ON reveal_audit FOR EACH STATEMENT EXECUTE FUNCTION forbid_mutation()
 }
 
 @enduml

@@ -442,6 +442,13 @@ entity "PAY EXTRAS · pay_connectors" as pay_extras_pay_connectors <<PAY_EXTRAS>
   TRIGGER connector_refunds_no_truncate : BEFORE TRUNCATE ON connector_refunds FOR EACH STATEMENT EXECUTE FUNCTION forbid_mutation()
   TRIGGER connector_transfers_monotone_trg : BEFORE UPDATE ON connector_transfers FOR EACH ROW EXECUTE FUNCTION connector_money_flags_monotone()
   TRIGGER connector_refunds_monotone_trg : BEFORE UPDATE ON connector_refunds FOR EACH ROW EXECUTE FUNCTION connector_money_flags_monotone()
+  ' connector_callback_events (huella de deduplicación y auditoría de lo que dijo el banco) y connector_api_attempts (cada llamada saliente: la evidencia de «timeout, luego ok» de la regla 11)
+  ' son de SOLO-AGREGAR: apply.ts y provider-gateway.ts solo hacen INSERT (el primero con ON CONFLICT DO NOTHING) y no hay UPDATE/DELETE/TRUNCATE en services/*/src. Guardián solo de
+  ' UPDATE/DELETE/TRUNCATE, NO de INSERT: connector_api_attempts es de alto volumen y no paga costo por llamada.
+  TRIGGER connector_callback_events_immutable : BEFORE UPDATE OR DELETE ON connector_callback_events FOR EACH ROW EXECUTE FUNCTION forbid_mutation()
+  TRIGGER connector_callback_events_no_truncate : BEFORE TRUNCATE ON connector_callback_events FOR EACH STATEMENT EXECUTE FUNCTION forbid_mutation()
+  TRIGGER connector_api_attempts_immutable : BEFORE UPDATE OR DELETE ON connector_api_attempts FOR EACH ROW EXECUTE FUNCTION forbid_mutation()
+  TRIGGER connector_api_attempts_no_truncate : BEFORE TRUNCATE ON connector_api_attempts FOR EACH STATEMENT EXECUTE FUNCTION forbid_mutation()
 }
 
 @enduml

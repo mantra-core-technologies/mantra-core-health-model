@@ -471,6 +471,16 @@ entity "PAY EXTRAS · pay_settlement" as pay_extras_pay_settlement <<PAY_EXTRAS>
   DEFAULT idempotency_keys.recovery_point : 'started'
   DEFAULT idempotency_keys.created_at : now()
   CHECK_SQL idempotency_keys : idempotency_keys_state_check | state IN ('started', 'completed')
+  FUNCTION forbid_mutation
+  | CREATE OR REPLACE FUNCTION forbid_mutation() RETURNS trigger LANGUAGE plpgsql AS $$
+  | BEGIN
+  |   RAISE EXCEPTION 'la tabla % es inmutable (%)', TG_TABLE_NAME, TG_OP USING ERRCODE = 'integrity_constraint_violation';
+  | END;
+  | $$
+  ' Rastro de auditoría de SOLO-AGREGAR (CLAUDE.md regla 11): payout.service.ts (INSERT … SELECT … WHERE NOT EXISTS) y reconciliation.service.ts (INSERT) son los únicos que escriben
+  ' y no hay UPDATE/DELETE/TRUNCATE sobre ella en services/*/src, test/ ni e2e/. Una política de retención o de supresión sería un procedimiento aparte (decisión de legal), no un DELETE suelto.
+  TRIGGER settlement_audit_immutable : BEFORE UPDATE OR DELETE ON settlement_audit FOR EACH ROW EXECUTE FUNCTION forbid_mutation()
+  TRIGGER settlement_audit_no_truncate : BEFORE TRUNCATE ON settlement_audit FOR EACH STATEMENT EXECUTE FUNCTION forbid_mutation()
 }
 
 @enduml
