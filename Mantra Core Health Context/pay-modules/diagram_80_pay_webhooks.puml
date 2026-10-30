@@ -170,6 +170,16 @@ entity "PAY EXTRAS · pay_webhooks" as pay_extras_pay_webhooks <<PAY_EXTRAS>> {
   DEFAULT idempotency_keys.recovery_point : 'started'
   DEFAULT idempotency_keys.created_at : now()
   CHECK_SQL idempotency_keys : idempotency_keys_state_check | state IN ('started', 'completed')
+  FUNCTION forbid_mutation
+  | CREATE OR REPLACE FUNCTION forbid_mutation() RETURNS trigger LANGUAGE plpgsql AS $$
+  | BEGIN
+  |   RAISE EXCEPTION 'la tabla % es inmutable (%)', TG_TABLE_NAME, TG_OP USING ERRCODE = 'integrity_constraint_violation';
+  | END;
+  | $$
+  ' Un intento de entrega es un hecho ya ocurrido: delivery.worker.ts solo hace INSERT … ON CONFLICT DO NOTHING (el estado que cambia vive en webhook_deliveries, que SÍ se actualiza y
+  ' NO se guarda). No hay UPDATE/DELETE/TRUNCATE sobre esta tabla en services/*/src; las pruebas la vacían dentro de una transacción que apaga SOLO este trigger (ver test/harness.ts).
+  TRIGGER webhook_delivery_attempts_immutable : BEFORE UPDATE OR DELETE ON webhook_delivery_attempts FOR EACH ROW EXECUTE FUNCTION forbid_mutation()
+  TRIGGER webhook_delivery_attempts_no_truncate : BEFORE TRUNCATE ON webhook_delivery_attempts FOR EACH STATEMENT EXECUTE FUNCTION forbid_mutation()
 }
 
 @enduml
