@@ -4,8 +4,9 @@
 --   CONTRATO-F2-F5.md §0.1 y §F4.1 (repositorio de documentación)
 -- Idempotente (ADD COLUMN IF NOT EXISTS / CREATE … IF NOT EXISTS / FK con
 -- `duplicate_object` / constraints con DROP IF EXISTS + ADD / DROP POLICY IF EXISTS /
--- CREATE OR REPLACE). Se puede aplicar N veces. Va ANTES de
--- 2026-10-29_infraestructura_f5_agenda.sql.
+-- CREATE OR REPLACE). Se puede aplicar N veces. Va DESPUÉS de
+-- 2026-10-29_infraestructura_f1b_seguridad.sql (usa sus UNIQUE (tenant_id, id) y sus funciones de
+-- historia) y ANTES de 2026-10-29_infraestructura_f5_agenda.sql.
 --
 -- Contexto: gen_ddl.py / gen_integrity.py ya emiten las columnas, tablas, FKs, índices,
 -- CHECK y EXCLUDE en SQL/41_scheduling, SQL/53_procedures_perioperative y SQL/10_audit
@@ -42,7 +43,17 @@
 --      ex_operating_room_blocks_time sobre bloques ORB_ACTIVE y CHECK de dueño coherente),
 --      y sus historias audit.operating_room_block_series_history / _blocks_history.
 --   F. RLS tenant_isolation (texto exacto de 2026-08-05_tenant_rls.sql) en
---      operating_room_block_series, operating_room_blocks y operating_room_utilization_events.
+--      operating_room_block_series, operating_room_blocks, operating_room_utilization_events y
+--      las dos historias.
+--   G. Aislamiento entre tenants en las REFERENCIAS (patrón F1b): UNIQUE (tenant_id, id) en
+--      schedulable_resources, operating_room_block_series y operating_room_blocks, y 14 FK
+--      compuestas (tenant_id, x_id) → padre (tenant_id, id): toda FK nueva hacia practice.*
+--      (care_spaces, practice_sites, clinical_units), las FK entre series/bloques/casos/eventos,
+--      procedure_cases (custodian_tenant_id, operating_room_id / schedulable_resource_id /
+--      operating_room_block_id) y cada historia → su origen.
+--   H. Historias con el patrón F1b: tenant_id NOT NULL (lo completa trg_fill_tenant desde el
+--      origen), trg_close_only (rechaza DELETE y todo UPDATE salvo cerrar valid_to una vez),
+--      mantra_app con SELECT, INSERT y UPDATE (valid_to).
 --
 -- UUID literales (deterministicId de common/constants/concepts.ts de la API):
 --   STATE_ACTIVE           'state:active'                              38a1d301-f40d-5b17-a695-5e6d605f8b19
@@ -84,17 +95,19 @@
 --
 --   2. Dos recursos ACTIVOS que quedarían ligados al mismo espacio (rompe el único parcial).
 --   3. Dos checklists del mismo tipo para el mismo caso (rompe el único nuevo).
+--   5. Referencias a un espacio de OTRO tenant (caso → quirófano, recurso → espacio, evento →
+--      sala): se listan y se aborta, como F1b.
 --   4. Dos bloques ACTIVOS solapados en la misma sala (sólo puede pasar si la tabla ya existía
 --      sin el EXCLUDE).
 --
 -- DELTAS ESPERADOS (primera aplicación sobre la base anterior):
 --   columnas  +7  (schedulable_resources 1 · procedure_cases 4 · operating_room_utilization_events 2)
 --   tablas    +4  (2 en procedures_perioperative, 2 en audit)
---   FKs      +34
---   índices  +44  (40 declarados —2 únicos— + 4 PK de las tablas nuevas)
+--   FKs      +36 simples (generadas) + 14 compuestas (a mano)
+--   índices  +49  (45 declarados —5 únicos— + 4 PK de las tablas nuevas)
 --   EXCLUDE   +1 nuevo (ex_operating_room_blocks_time) y 1 reemplazado
 --   CHECK     +9
---   trigger   +1  · políticas RLS +3
+--   triggers  +5  (ventana reservada + 2×2 de historia) · políticas RLS +5
 -- ============================================================================
 
 BEGIN;

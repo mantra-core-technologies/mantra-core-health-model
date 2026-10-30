@@ -31,7 +31,14 @@
 --   - No toca RLS: schedule_templates no tiene tenant_id y availability_exceptions tampoco;
 --     su aislamiento sigue siendo el del recurso (sin cambios).
 --
--- DELTAS ESPERADOS: columnas +3 · FKs +2 · índices +3.
+-- MISMO TENANT. schedule_templates no tiene tenant_id, así que la FK compuesta
+-- (tenant_id, care_space_id) de F1b no se puede declarar. La garantía es un trigger
+-- (patrón F1b para facility_licenses.healthcare_service_id): el espacio tiene que ser del
+-- tenant del recurso de la plantilla (scheduling.schedulable_resources.tenant_id); si no,
+-- 23503. Precondición: plantillas existentes con espacio de otro tenant → aborta con la lista
+-- (en el primer despliegue no puede haber: la columna es nueva).
+--
+-- DELTAS ESPERADOS: columnas +3 · FKs +2 · índices +3 · trigger +1.
 -- ============================================================================
 
 BEGIN;
@@ -66,12 +73,60 @@ CREATE INDEX IF NOT EXISTS "ix_availability_exceptions_source_kind_concept_id" O
 
 CREATE INDEX IF NOT EXISTS "ix_availability_exceptions_source_ref" ON "scheduling"."availability_exceptions" ("source_ref_id") WHERE source_ref_id IS NOT NULL;
 
+-- ------------------------------------------------------------- mismo tenant (trigger)
+DO $$
+DECLARE
+    n_cruz  integer;
+    detalle text;
+BEGIN
+    SELECT count(*), string_agg(t.id::text, ', ')
+      INTO n_cruz, detalle
+      FROM "scheduling"."schedule_templates" t
+      JOIN "scheduling"."schedulable_resources" r ON r.id = t.resource_id
+      JOIN "practice"."care_spaces" cs ON cs.id = t.care_space_id
+     WHERE cs.tenant_id <> r.tenant_id;
+    IF n_cruz > 0 THEN
+        RAISE EXCEPTION 'F5d: % plantilla(s) con un espacio de OTRO tenant: %. No se toca ningún dato; corregirlas a mano y volver a aplicar.', n_cruz, detalle
+            USING ERRCODE = 'foreign_key_violation';
+    END IF;
+END $$;
+
+-- SECURITY INVOKER a propósito (como F1b): con RLS, un espacio de otro tenant ni siquiera se
+-- ve y cae en el mismo error genérico.
+CREATE OR REPLACE FUNCTION "scheduling"."schedule_templates_assert_space_tenant"()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = pg_catalog, pg_temp
+AS $fn$
+DECLARE
+    t_espacio uuid;
+    t_recurso uuid;
+BEGIN
+    IF NEW."care_space_id" IS NULL THEN
+        RETURN NEW;
+    END IF;
+    SELECT "tenant_id" INTO t_espacio FROM "practice"."care_spaces" WHERE "id" = NEW."care_space_id";
+    SELECT "tenant_id" INTO t_recurso FROM "scheduling"."schedulable_resources" WHERE "id" = NEW."resource_id";
+    IF t_espacio IS NULL OR t_espacio IS DISTINCT FROM t_recurso THEN
+        RAISE EXCEPTION 'schedule_templates.care_space_id: el espacio no existe en el tenant del recurso de la plantilla'
+            USING ERRCODE = 'foreign_key_violation';
+    END IF;
+    RETURN NEW;
+END $fn$;
+
+DROP TRIGGER IF EXISTS "trg_schedule_templates_space_tenant" ON "scheduling"."schedule_templates";
+CREATE TRIGGER "trg_schedule_templates_space_tenant"
+    BEFORE INSERT OR UPDATE OF "care_space_id", "resource_id"
+    ON "scheduling"."schedule_templates"
+    FOR EACH ROW EXECUTE FUNCTION "scheduling"."schedule_templates_assert_space_tenant"();
+
 -- ------------------------------------------------------------- verificación
 DO $$
 DECLARE
     n_columnas integer;
     n_fk       integer;
     n_ix       integer;
+    n_trg      integer;
 BEGIN
     SELECT count(*) INTO n_columnas
       FROM information_schema.columns
@@ -94,12 +149,17 @@ BEGIN
                          'ix_availability_exceptions_source_kind_concept_id',
                          'ix_availability_exceptions_source_ref');
 
-    IF n_columnas <> 3 OR n_fk <> 2 OR n_ix <> 3 THEN
-        RAISE EXCEPTION 'F5d (agenda) incompleto: columnas=% (3), fk=% (2), índices=% (3)',
-            n_columnas, n_fk, n_ix;
+    SELECT count(*) INTO n_trg
+      FROM pg_trigger
+     WHERE tgname = 'trg_schedule_templates_space_tenant' AND NOT tgisinternal
+       AND tgrelid = '"scheduling"."schedule_templates"'::regclass;
+
+    IF n_columnas <> 3 OR n_fk <> 2 OR n_ix <> 3 OR n_trg <> 1 THEN
+        RAISE EXCEPTION 'F5d (agenda) incompleto: columnas=% (3), fk=% (2), índices=% (3), trigger=% (1)',
+            n_columnas, n_fk, n_ix, n_trg;
     END IF;
 
-    RAISE NOTICE 'F5d (agenda) aplicado: 3 columnas, 2 FKs validadas, 3 índices.';
+    RAISE NOTICE 'F5d (agenda) aplicado: 3 columnas, 2 FKs validadas, 3 índices, trigger de mismo tenant.';
 END $$;
 
 COMMIT;
