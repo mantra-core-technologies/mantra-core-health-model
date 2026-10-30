@@ -97,14 +97,29 @@ METHOD_MAP = {"BTREE": "btree", "BRIN": "brin", "GIN": "gin", "GIST": "gist", "H
 
 
 class Column:
-    def __init__(self, name, dtype, not_null, is_pk, is_fk, is_uk, default=None, on_delete=None):
+    def __init__(self, name, dtype, not_null, is_pk, is_fk, is_uk, default=None, on_delete=None,
+                 scoped_by=None):
         self.name, self.dtype, self.not_null = name, dtype, not_null
         self.is_pk, self.is_fk, self.is_uk = is_pk, is_fk, is_uk
         self.default, self.on_delete = default, on_delete
+        # FK compuesta acotada por un dueño común (p. ej. `pharmacy_id`): la fila
+        # sólo puede apuntar a una fila destino del MISMO dueño. Se declara en el
+        # .puml con `<<FK, SCOPED_BY:<columna>>>` y exige en el destino un UNIQUE
+        # (<columna>, <pk>) declarado en su INDEX_SET.
+        self.scoped_by = scoped_by
 
 
-# Default estructural de versión. Los defaults booleanos de negocio sólo se
-# emiten cuando el .puml declara DEFAULT_TRUE/DEFAULT_FALSE explícitamente.
+def scoped_by(markers: set[str]) -> str | None:
+    """Columna dueña de una FK compuesta (`SCOPED_BY:<col>`), o None."""
+    found = [m.split(":", 1)[1].strip().lower() for m in markers if m.startswith("SCOPED_BY:")]
+    if len(found) > 1:
+        raise ValueError("SCOPED_BY admite una sola columna")
+    return found[0] if found else None
+
+
+# Default estructural de versión. Los defaults de negocio sólo se emiten cuando el
+# .puml los declara explícitamente: DEFAULT_TRUE/DEFAULT_FALSE (boolean) o
+# DEFAULT_TEXT:<valor> (texto).
 #
 # No se infieren defaults de negocio: sólo se conservan los que el modelo declara.
 # `row_version` sigue siendo el default estructural porque es el contador de bloqueo optimista,
@@ -135,6 +150,41 @@ def boolean_default(dtype: str, markers: set[str]) -> str | None:
     if len(selected) != 1 or dtype != "boolean":
         raise ValueError("DEFAULT_TRUE/DEFAULT_FALSE requiere una columna boolean y un solo valor")
     return "true" if "DEFAULT_TRUE" in selected else "false"
+
+
+# `DEFAULT_TEXT:<valor>` declara un default literal para una columna de texto. Se lee
+# del estereotipo crudo porque `stereotypes()` pasa todo a mayúsculas y el valor debe
+# conservarse tal cual. Solo admite identificadores en minúscula: así el literal no
+# necesita escaparse y no se cuela SQL arbitrario desde el diagrama.
+_TEXT_DEFAULT_RE = re.compile(r"^DEFAULT_TEXT:([a-z0-9_]+)$")
+_TEXT_TYPES = ("varchar", "text")
+
+
+def text_default(dtype: str, raw: str | None) -> str | None:
+    """Default literal de texto declarado con `DEFAULT_TEXT:<valor>`, sin inferir valores."""
+    if not raw:
+        return None
+    declared = [s.strip() for s in raw.strip("<>").split(",")
+                if s.strip().upper().startswith("DEFAULT_TEXT")]
+    if not declared:
+        return None
+    if len(declared) != 1:
+        raise ValueError("DEFAULT_TEXT admite un solo valor")
+    match = _TEXT_DEFAULT_RE.match(declared[0])
+    if not match:
+        raise ValueError(f"DEFAULT_TEXT inválido: {declared[0]!r} (se espera DEFAULT_TEXT:<minúsculas_0-9_>)")
+    if not dtype.startswith(_TEXT_TYPES):
+        raise ValueError("DEFAULT_TEXT requiere una columna varchar o text")
+    return f"'{match.group(1)}'"
+
+
+def declared_default(dtype: str, raw: str | None) -> str | None:
+    """Único default de negocio que declara la columna (booleano o de texto)."""
+    boolean = boolean_default(dtype, stereotypes(raw))
+    text = text_default(dtype, raw)
+    if boolean is not None and text is not None:
+        raise ValueError("una columna no puede declarar DEFAULT_TRUE/FALSE y DEFAULT_TEXT a la vez")
+    return boolean if boolean is not None else text
 
 
 # --- identificadores > 63 bytes --------------------------------------------------
@@ -479,13 +529,16 @@ def parse_module(puml_path: Path):
                             continue
                         dtype = base_mapped + suffix
                         st = stereotypes(cm.group(4))
-                        default = boolean_default(dtype, st)
+                        default = declared_default(dtype, cm.group(4))
                         if "ON_DELETE_CASCADE" in st and "FK" not in st:
                             raise ValueError(f"ON_DELETE_CASCADE requiere FK: {schema}.{name}.{cm.group(2)}")
+                        scope = scoped_by(st)
+                        if scope and "FK" not in st:
+                            raise ValueError(f"SCOPED_BY requiere FK: {schema}.{name}.{cm.group(2)}")
                         col = Column(
                             cm.group(2), dtype, cm.group(1) == "*",
                             "PK" in st, "FK" in st, "UK" in st, default,
-                            "CASCADE" if "ON_DELETE_CASCADE" in st else None)
+                            "CASCADE" if "ON_DELETE_CASCADE" in st else None, scope)
                         prev = next((c for c in ent.columns if c.name == col.name), None)
                         if prev is None:
                             ent.columns.append(col)
@@ -696,14 +749,23 @@ def emit(module_code: str, report: list, registry: dict, pk_map: dict):
             tsch, ttbl = tgt
             tag = "  -- (inferida por convención)" if inferred else ""
             n_inf += 1 if inferred else 0
+            src_cols = [c.name] if not c.scoped_by else [c.scoped_by, c.name]
+            dst_cols = ([pk_map.get((tsch, ttbl), "id")] if not c.scoped_by
+                        else [c.scoped_by, pk_map.get((tsch, ttbl), "id")])
+            fmt = lambda cols: ", ".join(f'"{x}"' for x in cols)
             # Idempotente: si la constraint ya existe (aplicación parcial previa) se ignora.
             stmt = (f'DO $$ BEGIN\n'
                     f'    ALTER TABLE {q(schema, e.name)}\n'
-                    f'        ADD CONSTRAINT "{pg_ident(f"fk_{e.name}_{c.name}")}" FOREIGN KEY ("{c.name}")\n'
-                    f'        REFERENCES {q(tsch, ttbl)} ("{pk_map.get((tsch, ttbl), "id")}")'
+                    f'        ADD CONSTRAINT "{pg_ident(f"fk_{e.name}_{c.name}")}" FOREIGN KEY ({fmt(src_cols)})\n'
+                    f'        REFERENCES {q(tsch, ttbl)} ({fmt(dst_cols)})'
                     f'{" ON DELETE " + c.on_delete if c.on_delete else ""};\n'
                     f'EXCEPTION WHEN duplicate_object THEN NULL; END $$;{tag}\n')
-            if tsch == schema:
+            if c.scoped_by:
+                # La compuesta exige el UNIQUE (dueño, pk) del destino, que nace en
+                # 04_indexes.sql: se difiere al final, cuando ese índice ya existe.
+                deferred.append(f"-- compuesta: {schema}.{e.name} sólo apunta a {tsch}.{ttbl} "
+                                f"del mismo {c.scoped_by}\n{stmt}"); n_def += 1
+            elif tsch == schema:
                 intra.append(stmt); n_intra += 1
             else:
                 deferred.append(f"-- destino: {tsch}.{ttbl} (requiere schema {tsch})\n{stmt}"); n_def += 1

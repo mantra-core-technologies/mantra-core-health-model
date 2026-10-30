@@ -9,7 +9,7 @@
     "source_model_version": "4.0.9",
     "requested_release_label": "4.0.9",
     "business_purpose": "Reusable official identifiers, contact channels, international addresses and a storage-provider-neutral file catalog. Medical files are logical records with immutable content versions and explicit links to patients, reports, notes, studies, posts or financial records.",
-    "seed_revision": "2.8.0-v4.2.50"
+    "seed_revision": "2.8.1-v4.2.50"
   },
   "environment_policy": {
     "boot": {

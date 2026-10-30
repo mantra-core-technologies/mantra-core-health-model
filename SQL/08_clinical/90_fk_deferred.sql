@@ -807,6 +807,20 @@ DO $$ BEGIN
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- destino: chart.clinical_note_headers (requiere schema chart)
+DO $$ BEGIN
+    ALTER TABLE "clinical"."service_request_notes"
+        ADD CONSTRAINT "fk_service_request_notes_clinical_note_header_id" FOREIGN KEY ("clinical_note_header_id")
+        REFERENCES "chart"."clinical_note_headers" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "clinical"."service_request_notes"
+        ADD CONSTRAINT "fk_service_request_notes_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
 -- destino: directory.tenants (requiere schema directory)
 DO $$ BEGIN
     ALTER TABLE "clinical"."medication_requests"

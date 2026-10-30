@@ -70,7 +70,7 @@ VAULT = paths.VAULT
 MODEL_VERSION = "4.0.7"
 SOURCE_MODEL_VERSION = "4.0.9"
 RELEASE_LABEL = "4.0.9"
-SEED_REVISION = "2.8.0-v4.2.50"
+SEED_REVISION = "2.8.1-v4.2.50"
 # Namespace uuid5 por patch, misma regla que MODEL_VERSION: identifica las filas de las
 # 5 tablas ALOVIDA ya sembradas. v4.0.9 no añade uno propio porque no trae tablas que
 # sembrar — `iam.email_verifications` y `iam.password_resets` guardan tokens de runtime
@@ -695,6 +695,24 @@ INSURANCE_BACKEND_CONCEPTS = [
     ]
 ]
 BACKEND_CONCEPTS += INSURANCE_BACKEND_CONCEPTS
+
+# --- seeds 2.8.1 · tipos de organización médica (`directory.tenants.tenant_type_concept_id`) ---
+# El alta pública de una organización médica guarda uno de estos cinco tipos, y la FK
+# diferida a `catalog_concepts` rechaza el tenant si el concepto no existe. La API los
+# acuña en `CONCEPT_DEFS` (`TENANT_TYPE_HOSPITAL`, `…_CLINIC`, `…_MEDICAL_OFFICE`,
+# `…_NURSING`, `…_HEALTH_OTHER`): son centrales, así que el `code` almacenado es el
+# `def.code`, no la clave — igual que PROVIDER y PAYER arriba. Sin el espejo, una base
+# armada solo con el paquete (sin que la API haya arrancado) no admite ninguno.
+# CLINIC es contrato compartido con la API y el front: clínica, establecimiento privado
+# con internación y de menor escala que un hospital.
+TENANT_TYPE_BACKEND_CONCEPTS = [
+    ("directory:tenant-type:hospital", "HOSPITAL", "Hospital"),
+    ("directory:tenant-type:clinic", "CLINIC", "Clinic"),
+    ("directory:tenant-type:medical-office", "MEDICAL_OFFICE", "Medical office"),
+    ("directory:tenant-type:nursing", "NURSING", "Nursing facility"),
+    ("directory:tenant-type:health-other", "HEALTH_OTHER", "Other health institution"),
+]
+BACKEND_CONCEPTS += TENANT_TYPE_BACKEND_CONCEPTS
 
 # Anclas del catálogo del backend (SEED de concepts.ts) — mismos ids y literales.
 BACKEND_SEED = dict(
@@ -4012,6 +4030,9 @@ INTENTIONALLY_EMPTY = {
     "medical_groups.groups",
     "medical_groups.group_members",
     "scheduling.appointment_payment_states",
+    # v4.2.64 — el comprobante lo sube el paciente y lo revisa el médico: sembrarlo daría
+    # pagos que nadie hizo, igual que el estado de pago de arriba.
+    "scheduling.appointment_payment_receipts",
     # v4.2.49 — cada fila la escribe el proyector de la API en la misma transacción que
     # registra el procedimiento o la vacuna que la origina: sembrarla daría servicios que
     # ningún paciente recibió.
@@ -4648,6 +4669,163 @@ def phase_iso_countries(doc03: dict) -> int:
     return upsert_rows(doc03, "boot", "value_set_members", members)
 
 
+# ============================================================ fase 2e · v4.2.66 consentimiento dirigido
+
+PATCH_V4266 = "4.2.66"
+
+# Orden de preferencia de los objetos a los que se dirige un consentimiento. Cada fila arranca
+# en una posición distinta (índice % 5) para que el mock cubra los cinco tipos.
+V4266_TARGET_ORDER = ["MEDICATION_REQUEST", "SERVICE_REQUEST", "REFERRAL", "PROCEDURE", "CARE_PLAN"]
+
+V4266_REFERRAL_TYPES = ["CONSULTATION", "TREATMENT", "DIAGNOSTIC", "THERAPY", "PROCEDURE",
+                        "HOSPITALIZATION", "CONSULTATION", "OTHER"]
+
+V4266_REFERRAL_SERVICE = {
+    "CONSULTATION": "Valoración por especialista y conducta terapéutica",
+    "TREATMENT": "Tratamiento de fisioterapia de rodilla, 10 sesiones",
+    "DIAGNOSTIC": "Ecografía abdominal y perfil hepático completo",
+    "THERAPY": "Terapia respiratoria ambulatoria, 6 sesiones",
+    "PROCEDURE": "Endoscopía digestiva alta con biopsia",
+    "HOSPITALIZATION": "Internación para control metabólico",
+    "OTHER": "Evaluación nutricional y plan de alimentación",
+}
+
+V4266_CONSENT_TEXT = {
+    "MEDICATION_REQUEST": ("tratamiento farmacológico recetado",
+                           "Controlar la enfermedad de base con el fármaco y la pauta indicados.",
+                           "Alivio de síntomas y prevención de complicaciones.",
+                           "Náuseas, mareo o reacción alérgica; raramente reacciones graves."),
+    "SERVICE_REQUEST": ("orden de análisis o estudio",
+                        "Obtener la información diagnóstica necesaria para decidir el tratamiento.",
+                        "Diagnóstico oportuno y tratamiento dirigido.",
+                        "Molestia o hematoma en el sitio de punción; resultados no concluyentes."),
+    "REFERRAL": ("derivación a servicio específico",
+                 "Que otro profesional u organización preste el servicio que el caso requiere.",
+                 "Atención especializada que no se ofrece en el establecimiento de origen.",
+                 "Demora en la atención del destino y traslado del paciente."),
+    "PROCEDURE": ("procedimiento propuesto",
+                  "Realizar el procedimiento indicado para tratar o diagnosticar la afección.",
+                  "Resolución o diagnóstico definitivo de la afección.",
+                  "Dolor, sangrado o infección en el sitio; complicaciones anestésicas poco frecuentes."),
+    "CARE_PLAN": ("plan de cuidados",
+                  "Seguir el plan de cuidados y controles acordado con el equipo tratante.",
+                  "Estabilidad clínica y detección temprana de descompensaciones.",
+                  "Carga de controles periódicos; efectos de las intervenciones incluidas."),
+}
+
+
+def phase_v4266_consent_targets(docs) -> dict:
+    """v4.2.66 — el consentimiento informado se DIRIGE a un objeto clínico y la derivación
+    nombra el servicio específico y su destino. Completa las columnas nuevas (todas NULLABLE)
+    de las filas mock existentes de consent.treatment_informed_consents y
+    clinical_ext.referrals con valores coherentes con el resto del paquete: el objetivo de cada
+    consentimiento es una fila real del MISMO paciente (receta, orden, derivación, procedimiento
+    o plan de cuidados) y la derivación consentida apunta de vuelta a su consentimiento.
+    Determinista e idempotente: los valores dependen sólo del orden y de los ids de las filas."""
+    stats = {"consentimientos": 0, "derivaciones": 0, "enlaces": 0}
+    if not all(c in docs for c in ("04", "07", "08", "15", "18")):
+        return stats
+    tic = docs["07"]["mock"]["records"].get("treatment_informed_consents", [])
+    refs = docs["18"]["mock"]["records"].get("referrals", [])
+    mock08 = docs["08"]["mock"]["records"]
+    pools = {
+        "MEDICATION_REQUEST": mock08.get("medication_requests", []),
+        "SERVICE_REQUEST": mock08.get("service_requests", []),
+        "REFERRAL": refs,
+        "PROCEDURE": mock08.get("procedures", []),
+        "CARE_PLAN": docs["15"]["mock"]["records"].get("care_plans", []),
+    }
+    branches = docs["04"]["boot"]["records"].get("branches", []) or \
+        docs["04"]["mock"]["records"].get("branches", [])
+
+    # Derivaciones primero: el rótulo del consentimiento a una derivación nombra su servicio.
+    referral_service = {}
+    for i, r in enumerate(refs):
+        rtype = V4266_REFERRAL_TYPES[i % len(V4266_REFERRAL_TYPES)]
+        service = V4266_REFERRAL_SERVICE[rtype]
+        external = i % 4 == 3            # una de cada cuatro va FUERA de la plataforma
+        branch = branches[i % len(branches)] if branches and not external else None
+        r.update({
+            "target_branch_id": branch["id"] if branch else None,
+            "target_external_name": "Centro de Rehabilitación Integral (externo, sintético)"
+                                     if external else None,
+            "target_external_contact": "+591 2 2440000 · contacto@rehab-sintetico.example"
+                                       if external else None,
+            "requested_service_text": service,
+            "requested_service_concept_id": None,
+            "diagnosis_text": "Diagnóstico presuntivo sintético para validar el flujo de derivación.",
+            "clinical_summary": "Paciente sintético en seguimiento; se deriva para " +
+                                service[0].lower() + service[1:] + ". Sin datos personales reales.",
+            "treatment_given_text": "Manejo inicial en el establecimiento de origen según protocolo.",
+            "informed_consent_id": None,
+            "reject_reason": None,
+            "counter_referral_text": None,
+            "counter_referral_at": None,
+        })
+        referral_service[r["id"]] = service
+        stats["derivaciones"] += 1
+
+    def label(ttype, row):
+        if ttype == "MEDICATION_REQUEST":
+            parts = [x for x in (row.get("dose_text"), row.get("frequency_text")) if x]
+            return "Receta: " + (" · ".join(parts) if parts else "tratamiento farmacológico")
+        if ttype == "REFERRAL":
+            return "Derivación: " + referral_service.get(row["id"], "servicio específico")
+        return {"SERVICE_REQUEST": "Orden de análisis o estudio",
+                "PROCEDURE": "Procedimiento propuesto",
+                "CARE_PLAN": "Plan de cuidados"}[ttype]
+
+    for i, c in enumerate(tic):
+        patient = c.get("patient_profile_id")
+        order = V4266_TARGET_ORDER[i % 5:] + V4266_TARGET_ORDER[:i % 5]
+        ttype = target = None
+        for cand in order:
+            hit = next((x for x in pools[cand] if x.get("patient_profile_id") == patient), None)
+            if hit:
+                ttype, target = cand, hit
+                break
+        kind, purpose, benefits, risks = V4266_CONSENT_TEXT[ttype or "PROCEDURE"]
+        representative = i % 6 == 4
+        emergency = i % 8 == 7
+        c.update({
+            "target_type": ttype,
+            "target_id": target["id"] if target else None,
+            "target_label": label(ttype, target)[:300] if target else None,
+            "diagnosis_text": "Diagnóstico sintético que motiva el " + kind + ".",
+            "purpose_text": purpose,
+            "benefits_text": benefits,
+            "risks_text": risks,
+            "personalized_risks_text": "Sin comorbilidades relevantes registradas en el escenario sintético.",
+            "alternatives_text": "Conducta expectante con controles o una alternativa terapéutica equivalente.",
+            "refusal_consequences_text": "Progresión de la afección y eventual necesidad de una intervención mayor.",
+            "patient_questions_text": "El paciente preguntó por la duración y los controles; se respondió en la consulta.",
+            "granted_by": "LEGAL_REPRESENTATIVE" if representative else "PATIENT",
+            "representative_name": "Representante legal sintético" if representative else None,
+            "representative_document": "CI 0000000 LP (sintético)" if representative else None,
+            "representative_relationship": "Madre" if representative else None,
+            "incapacity_reason": "Paciente menor de edad (escenario sintético)." if representative else None,
+            "informed_by_profile_id": None,
+            "channel": "TELEHEALTH" if i % 5 == 2 else "IN_PERSON",
+            "exception_type": "EMERGENCY" if emergency else None,
+            "exception_justification": ("Urgencia vital: la demora para obtener el consentimiento "
+                                        "ponía en riesgo la vida del paciente.") if emergency else None,
+            "withdrawal_reason": None,
+            "witness_name": "Testigo familiar sintético" if representative else None,
+            "witness_document": "CI 0000001 LP (sintético)" if representative else None,
+            "information_language": "es",
+            "assent_obtained": True if representative else None,
+            "assent_notes": ("El menor recibió la explicación adaptada a su edad y asintió."
+                             if representative else None),
+            "revocation_right_informed": True,
+            "post_emergency_informed_at": c.get("updated_at") if emergency else None,
+        })
+        stats["consentimientos"] += 1
+        if ttype == "REFERRAL" and target is not None and target.get("informed_consent_id") is None:
+            target["informed_consent_id"] = c["id"]
+            stats["enlaces"] += 1
+    return stats
+
+
 def main() -> None:
     try:
         sys.stdout.reconfigure(encoding="utf-8")
@@ -4656,7 +4834,8 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="Actualiza seedsGenerales/ al modelo SALUD v4.0.8")
     ap.add_argument("--dry", action="store_true", help="no escribe; solo informa")
     ap.add_argument("--only",
-                    choices=["valuesets", "backend", "tables", "notnull", "bindings", "unique", "meta"],
+                    choices=["valuesets", "backend", "tables", "targets", "notnull", "bindings", "unique",
+                             "meta"],
                     help="ejecuta una sola fase")
     args = ap.parse_args()
 
@@ -4712,6 +4891,11 @@ def main() -> None:
                                         len(vacias) - len(sin_declarar), len(sin_declarar)))
         for t in sin_declarar:
             print("      SIN DECLARAR {:<50}".format(t))
+    if run("targets"):
+        s = phase_v4266_consent_targets(docs)
+        print("[2e] v4.2.66 · {} consentimientos dirigidos · {} derivaciones con servicio y "
+              "destino · {} derivaciones enlazadas a su consentimiento".format(
+                  s["consentimientos"], s["derivaciones"], s["enlaces"]))
     if run("notnull"):
         s = phase_notnull(docs, ddl, fks, value_sets)
         print("[3] NOT NULL · {} columnas rellenadas en {} pares tabla/columna".format(

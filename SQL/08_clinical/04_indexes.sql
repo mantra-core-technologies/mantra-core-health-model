@@ -508,6 +508,14 @@ CREATE INDEX IF NOT EXISTS "ix_observation_performers_performer_role_concept_id"
 
 CREATE INDEX IF NOT EXISTS "ix_observation_performers_created_by_user_id" ON "clinical"."observation_performers" ("created_by_user_id");
 
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_service_request_notes_request_note" ON "clinical"."service_request_notes" ("service_request_id", "clinical_note_header_id");
+
+CREATE INDEX IF NOT EXISTS "ix_service_request_notes_service_request_id" ON "clinical"."service_request_notes" ("service_request_id");
+
+CREATE INDEX IF NOT EXISTS "ix_service_request_notes_clinical_note_header_id" ON "clinical"."service_request_notes" ("clinical_note_header_id");
+
+CREATE INDEX IF NOT EXISTS "ix_service_request_notes_created_by_user_id" ON "clinical"."service_request_notes" ("created_by_user_id");
+
 CREATE INDEX IF NOT EXISTS "ix_observation_reference_ranges_observation_id" ON "clinical"."observation_reference_ranges" ("observation_id");
 
 CREATE INDEX IF NOT EXISTS "ix_observation_reference_ranges_observation_component_id" ON "clinical"."observation_reference_ranges" ("observation_component_id");

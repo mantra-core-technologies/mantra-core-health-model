@@ -83,6 +83,10 @@ entity practice_sites {
     address_id : uuid <<FK>>
     managing_tenant_id : uuid <<FK>>
     bank_qr_file_id : uuid <<FK>>
+  ' + v4.2.64 — logo del consultorio que sale en el membrete de sus PDF. Mismo camino
+  ' que `bank_qr_file_id`: el binario vive en `common.files` y acá queda solo su id.
+  ' Nullable: no toda sede tiene logo, y no hay uno por defecto que inventar.
+    logo_file_id : uuid <<FK>>
   * status_concept_id : uuid <<FK>>
   * created_at : timestamptz
   * updated_at : timestamptz
@@ -306,6 +310,7 @@ entity "INDEXES · practice_sites" as idxset_practice_sites <<INDEX_SET>> {
   IX ix_practice_sites_created_by_user_id : (created_by_user_id) BTREE
   IX ix_practice_sites_updated_by_user_id : (updated_by_user_id) BTREE
   IX ix_practice_sites_bank_qr_file_id : (bank_qr_file_id) BTREE
+  IX ix_practice_sites_logo_file_id : (logo_file_id) BTREE
 }
 
 practice_sites .. idxset_practice_sites : indexed by

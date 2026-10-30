@@ -66,6 +66,7 @@ CREATE TABLE IF NOT EXISTS "practice"."practice_sites" (
     "address_id" uuid,
     "managing_tenant_id" uuid,
     "bank_qr_file_id" uuid,
+    "logo_file_id" uuid,
     "status_concept_id" uuid NOT NULL,
     "created_at" timestamptz NOT NULL,
     "updated_at" timestamptz NOT NULL,

@@ -1,0 +1,25 @@
+-- v4.2.52 · P36 · scheduling.schedule_templates.flexible_hours (2026-10-26)
+--
+-- Horario flexible, sin turnos fijos (pedido del propietario, 18/09/2026): el
+-- médico declara cuándo atiende y el paciente pide la hora que quiera dentro de
+-- la franja. Hasta ahora la plantilla no tenía cómo decirlo y la API descartaba
+-- `flexibleHours`: contra la API real el horario se publicaba con turnos de la
+-- duración por omisión.
+--
+-- `true` ≡ el generador no materializa cupos de consulta para la plantilla; el
+-- cupo nace al retener (capacidad 1, ya tomado) en el horario que eligió el
+-- paciente, con la duración de `slot_minutes`. La regla madre
+-- `ex_appointments_practitioner_time` (v4.2.3) sigue siendo la red física contra
+-- dos citas que se pisan.
+--
+-- NOT NULL DEFAULT false: toda plantilla existente sigue siendo de turnos fijos
+-- y ninguna fila cambia de significado. `ADD COLUMN … DEFAULT <constante>` no
+-- reescribe la tabla en PG 11+, así que no hay bloqueo prolongado.
+--
+-- Canónico: `Mantra Core Health Context/modules/diagram_41_scheduling.puml`
+-- Generado: `SQL/41_scheduling/02_tables.sql` por `gen_ddl.py`
+--
+-- Idempotente. Reversible:
+--   ALTER TABLE "scheduling"."schedule_templates" DROP COLUMN IF EXISTS "flexible_hours";
+ALTER TABLE "scheduling"."schedule_templates"
+    ADD COLUMN IF NOT EXISTS "flexible_hours" boolean NOT NULL DEFAULT false;

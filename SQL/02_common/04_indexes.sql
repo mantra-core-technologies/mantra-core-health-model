@@ -40,6 +40,8 @@ CREATE INDEX IF NOT EXISTS "ix_addresses_type_concept_id" ON "common"."addresses
 
 CREATE INDEX IF NOT EXISTS "ix_addresses_administrative_area_concept_id" ON "common"."addresses" ("administrative_area_concept_id");
 
+CREATE INDEX IF NOT EXISTS "ix_addresses_administrative_area_2_concept_id" ON "common"."addresses" ("administrative_area_2_concept_id");
+
 CREATE INDEX IF NOT EXISTS "ix_addresses_municipality_concept_id" ON "common"."addresses" ("municipality_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_addresses_country_concept_id" ON "common"."addresses" ("country_concept_id");
@@ -49,6 +51,10 @@ CREATE INDEX IF NOT EXISTS "ix_addresses_created_by_user_id" ON "common"."addres
 CREATE INDEX IF NOT EXISTS "ix_addresses_updated_by_user_id" ON "common"."addresses" ("updated_by_user_id");
 
 -- OMITIDO "gist_addresses_location" (geography_point) gist: columna(s) ['geography_point'] no existe(n) — requiere PostGIS/otro tipo.
+
+CREATE INDEX IF NOT EXISTS "ix_addresses_owner_current" ON "common"."addresses" ("owner_type_concept_id", "owner_id") WHERE valid_to IS NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_addresses_owner_preferred" ON "common"."addresses" ("owner_type_concept_id", "owner_id") WHERE is_preferred AND valid_to IS NULL;
 
 CREATE INDEX IF NOT EXISTS "ix_files_tenant_id" ON "common"."files" ("tenant_id");
 

@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS "scheduling"."schedule_templates" (
     "valid_from" date,
     "valid_to" date,
     "slot_minutes" integer,
+    "flexible_hours" boolean NOT NULL DEFAULT false,
     "booking_policy_id" uuid,
     "status_concept_id" uuid NOT NULL,
     "created_at" timestamptz NOT NULL,
@@ -87,6 +88,8 @@ CREATE TABLE IF NOT EXISTS "scheduling"."schedule_rules" (
     "capacity_per_slot" integer,
     "gap_minutes" integer,
     "booking_mode_concept_id" uuid,
+    "telemedicine_enabled" boolean NOT NULL DEFAULT false,
+    "flexible_hours" boolean NOT NULL DEFAULT false,
     "valid_from" date,
     "valid_to" date,
     "created_at" timestamptz NOT NULL,
@@ -346,6 +349,7 @@ CREATE TABLE IF NOT EXISTS "scheduling"."appointment_payment_states" (
     "appointment_booking_id" uuid NOT NULL,
     "status_concept_id" uuid NOT NULL,
     "insurance_used" boolean NOT NULL,
+    "invoice_id" uuid,
     "marked_by_user_id" uuid NOT NULL,
     "marked_at" timestamptz NOT NULL,
     "created_at" timestamptz NOT NULL,
@@ -354,4 +358,26 @@ CREATE TABLE IF NOT EXISTS "scheduling"."appointment_payment_states" (
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
     CONSTRAINT "pk_appointment_payment_states" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "scheduling"."appointment_payment_receipts" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "appointment_booking_id" uuid NOT NULL,
+    "file_id" uuid NOT NULL,
+    "amount" numeric(12,2),
+    "paid_at" timestamptz,
+    "note" varchar(500),
+    "uploaded_by_user_id" uuid NOT NULL,
+    "uploaded_at" timestamptz NOT NULL,
+    "review_status_concept_id" uuid NOT NULL,
+    "reviewed_by_user_id" uuid,
+    "reviewed_at" timestamptz,
+    "rejection_reason" varchar(500),
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_appointment_payment_receipts" PRIMARY KEY ("id")
 );

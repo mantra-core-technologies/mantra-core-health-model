@@ -65,12 +65,15 @@ entity practitioner_service_offerings <<REFERENCE_ONLY>> {
 ' + v4.2.44 — facturación SIAT SIMULADA: ninguna fila puede dejar de declararse simulada, el
 ' estado es de un conjunto cerrado y la bandeja de salida nunca envía nada de verdad.
 ' Mismos nombres que el parche 2026-10-11_v4244 (las bases ya pobladas los tienen).
+' + v4.2.62 — siat_mode solo admite 'simulated' o 'real' (mismos nombres que el parche 2026-10-27_v4262).
 entity siat_simulated_invoices <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_siat_simulated_invoices_simulated | "simulated" = true
   CHECK_SQL : ck_siat_simulated_invoices_status | "status" IN ('VALIDATED','OBSERVED','REJECTED','ANNULLED')
+  CHECK_SQL : ck_siat_simulated_invoices_siat_mode | "siat_mode" IN ('simulated','real')
 }
 entity siat_simulated_outbox <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_siat_simulated_outbox_status | "status" = 'NOT_SENT_SIMULATED'
+  CHECK_SQL : ck_siat_simulated_outbox_siat_mode | "siat_mode" IN ('simulated','real')
 }
 entity identity_verification_attempts <<REFERENCE_ONLY>> {
   UK : case + endpoint + attempt number
@@ -111,6 +114,16 @@ entity appointments <<REFERENCE_ONLY>> {
   EXCLUDE : practitioner/location time overlap
   EXCLUDE_SQL : ex_appointments_practitioner_time | "practitioner_profile_id" WITH =, tstzrange("start_at", "end_at", '[)') WITH && | "practitioner_profile_id" IS NOT NULL AND "end_at" IS NOT NULL AND "status_concept_id" IN ('51530fd7-05b1-5c29-80c4-da740ede4d27', '37dded87-7a7a-5a24-86f6-0ef48cccb482')
   LOCK : reservation confirmation transaction
+}
+' + v4.2.60 (P34) — turnos de guardia de farmacia. Un turno vencido no se publica (lo
+' filtra la lectura); lo que la base garantiza es que el turno tenga sentido: fin
+' posterior al inicio, como mucho 72 h (un turno sin fin no caduca nunca), y que dos
+' turnos ACTIVOS de la misma sede no se solapen. El estado es el UUID determinista de
+' `pharmacy:ON_CALL_SHIFT_ACTIVE` (pharmacy.concepts.ts de la API); un cancelado no
+' bloquea volver a cargar el mismo horario.
+entity pharmacy_on_call_shifts <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_pharmacy_on_call_shifts_window | ("ends_at" > "starts_at" AND "ends_at" - "starts_at" <= interval '72 hours')
+  EXCLUDE_SQL : ex_pharmacy_on_call_shifts_site_overlap | "pharmacy_site_id" WITH =, tstzrange("starts_at", "ends_at", '[)') WITH && | "status_concept_id" = '14c92252-2ad8-576c-bc34-3ae2bbdb950d'
 }
 
 entity claim_appeal_decisions <<IMMUTABLE, REFERENCE_ONLY>> {
@@ -241,6 +254,8 @@ entity "surveys.survey_versions" as surveys_survey_versions <<REFERENCE_ONLY>> {
 entity "surveys.survey_invitations" as surveys_survey_invitations <<REFERENCE_ONLY>> {
   ' CAN-SURVEY-001 (REC 65.7): toda invitacion cuelga de una reserva o de un sujeto tipado; el par es todo-o-nada.
   CHECK_SQL : ck_survey_invitations_anchor | ("appointment_booking_id" IS NOT NULL OR "subject_id" IS NOT NULL) AND (("subject_type_concept_id" IS NULL) = ("subject_id" IS NULL))
+  ' REC 65.8: la extension del profesional nunca es la misma version que la base del sistema.
+  CHECK_SQL : ck_survey_invitations_extension_distinct | "extension_survey_version_id" IS NULL OR "extension_survey_version_id" <> "survey_version_id"
 }
 entity "surveys.survey_invitation_reminders" as surveys_survey_invitation_reminders <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_survey_invitation_reminders_number | "reminder_number" >= 1
@@ -274,6 +289,15 @@ entity "scheduling.booking_policies" as scheduling_booking_policies <<REFERENCE_
 entity "insurance.insurance_products" as insurance_insurance_products <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_insurance_products_age_range | (COALESCE("min_age_years", 0) >= 0 AND ("max_age_years" IS NULL OR "max_age_years" >= COALESCE("min_age_years", 0)))
   CHECK_SQL : ck_insurance_products_valid_period | ("effective_from" IS NULL OR "effective_to" IS NULL OR "effective_from" <= "effective_to")
+}
+' + v4.2.66 — consentimiento informado dirigido: las enumeraciones son varchar + CHECK
+' (como siat_mode). Un NULL pasa el CHECK: filas legadas
+' válidas. Mismos nombres que el parche 2026-10-28_v4266.
+entity "consent.treatment_informed_consents" as consent_treatment_informed_consents <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_treatment_informed_consents_target_type | "target_type" IN ('MEDICATION_REQUEST','SERVICE_REQUEST','REFERRAL','PROCEDURE','CARE_PLAN')
+  CHECK_SQL : ck_treatment_informed_consents_granted_by | "granted_by" IN ('PATIENT','LEGAL_REPRESENTATIVE','GUARDIAN','SUBSTITUTE_RELATIVE')
+  CHECK_SQL : ck_treatment_informed_consents_channel | "channel" IN ('IN_PERSON','TELEHEALTH')
+  CHECK_SQL : ck_treatment_informed_consents_exception_type | "exception_type" IN ('EMERGENCY','PUBLIC_HEALTH_RISK','PATIENT_WAIVER')
 }
 entity "delegated_access.shared_access_link_uses" as delegated_access_shared_access_link_uses <<LOG, REFERENCE_ONLY>> {
   ' A-12: el rastro de uso de un token compartido no se reescribe (UPDATE prohibido, DELETE libre para la retencion).
