@@ -248,6 +248,8 @@ CREATE INDEX IF NOT EXISTS "ix_specimen_collection_events_fasting_status_concept
 
 CREATE INDEX IF NOT EXISTS "brin_specimen_collection_events_occurred_at" ON "diagnostics"."specimen_collection_events" USING brin ("occurred_at") WITH (pages_per_range=128);
 
+CREATE INDEX IF NOT EXISTS "ix_specimen_collection_events_collection_care_space_id" ON "diagnostics"."specimen_collection_events" ("collection_care_space_id");
+
 CREATE INDEX IF NOT EXISTS "ix_specimen_containers_specimen_id" ON "diagnostics"."specimen_containers" ("specimen_id");
 
 CREATE INDEX IF NOT EXISTS "ix_specimen_containers_container_type_concept_id" ON "diagnostics"."specimen_containers" ("container_type_concept_id");
@@ -487,6 +489,10 @@ CREATE INDEX IF NOT EXISTS "ix_imaging_procedure_steps_created_by_user_id" ON "d
 CREATE INDEX IF NOT EXISTS "ix_imaging_procedure_steps_updated_by_user_id" ON "diagnostics"."imaging_procedure_steps" ("updated_by_user_id");
 
 CREATE UNIQUE INDEX IF NOT EXISTS "uk_imaging_procedure_steps_study_step" ON "diagnostics"."imaging_procedure_steps" ("imaging_study_id", "step_number");
+
+CREATE INDEX IF NOT EXISTS "ix_imaging_procedure_steps_scheduled_equipment_id" ON "diagnostics"."imaging_procedure_steps" ("scheduled_equipment_id");
+
+CREATE INDEX IF NOT EXISTS "ix_imaging_procedure_steps_scheduled_care_space_id" ON "diagnostics"."imaging_procedure_steps" ("scheduled_care_space_id", "scheduled_start_at");
 
 CREATE INDEX IF NOT EXISTS "ix_imaging_selections_custodian_tenant_id" ON "diagnostics"."imaging_selections" ("custodian_tenant_id");
 

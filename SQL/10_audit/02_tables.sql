@@ -1,7 +1,6 @@
 -- SALUD v4.0.10 · módulo 10 · schema audit
 -- Generado de diagram_10_audit.puml — NO editar a mano.
 
-
 CREATE TABLE IF NOT EXISTS "audit"."audit_log" (
     "id" uuid NOT NULL,
     "user_id" uuid NOT NULL,
@@ -254,6 +253,111 @@ CREATE TABLE IF NOT EXISTS "audit"."operating_room_blocks_history" (
     "recorded_at" timestamptz NOT NULL,
     "tenant_id" uuid NOT NULL,
     CONSTRAINT "pk_operating_room_blocks_history" PRIMARY KEY ("history_id")
+);
+
+CREATE TABLE IF NOT EXISTS "audit"."encounter_locations_history" (
+    "history_id" uuid NOT NULL,
+    "encounter_location_id" uuid NOT NULL,
+    "revision_no" integer NOT NULL,
+    "operation_concept_id" uuid NOT NULL,
+    "valid_from" timestamptz NOT NULL,
+    "valid_to" timestamptz,
+    "data_snapshot" jsonb NOT NULL,
+    "changed_by_user_id" uuid,
+    "change_reason_concept_id" uuid,
+    "recorded_at" timestamptz NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    CONSTRAINT "pk_encounter_locations_history" PRIMARY KEY ("history_id")
+);
+
+CREATE TABLE IF NOT EXISTS "audit"."placement_incidents_history" (
+    "history_id" uuid NOT NULL,
+    "placement_incident_id" uuid NOT NULL,
+    "revision_no" integer NOT NULL,
+    "operation_concept_id" uuid NOT NULL,
+    "valid_from" timestamptz NOT NULL,
+    "valid_to" timestamptz,
+    "data_snapshot" jsonb NOT NULL,
+    "changed_by_user_id" uuid,
+    "change_reason_concept_id" uuid,
+    "recorded_at" timestamptz NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    CONSTRAINT "pk_placement_incidents_history" PRIMARY KEY ("history_id")
+);
+
+CREATE TABLE IF NOT EXISTS "audit"."care_space_blocks_history" (
+    "history_id" uuid NOT NULL,
+    "care_space_block_id" uuid NOT NULL,
+    "revision_no" integer NOT NULL,
+    "operation_concept_id" uuid NOT NULL,
+    "valid_from" timestamptz NOT NULL,
+    "valid_to" timestamptz,
+    "data_snapshot" jsonb NOT NULL,
+    "changed_by_user_id" uuid,
+    "change_reason_concept_id" uuid,
+    "recorded_at" timestamptz NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    CONSTRAINT "pk_care_space_blocks_history" PRIMARY KEY ("history_id")
+);
+
+CREATE TABLE IF NOT EXISTS "audit"."cleaning_orders_history" (
+    "history_id" uuid NOT NULL,
+    "cleaning_order_id" uuid NOT NULL,
+    "revision_no" integer NOT NULL,
+    "operation_concept_id" uuid NOT NULL,
+    "valid_from" timestamptz NOT NULL,
+    "valid_to" timestamptz,
+    "data_snapshot" jsonb NOT NULL,
+    "changed_by_user_id" uuid,
+    "change_reason_concept_id" uuid,
+    "recorded_at" timestamptz NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    CONSTRAINT "pk_cleaning_orders_history" PRIMARY KEY ("history_id")
+);
+
+CREATE TABLE IF NOT EXISTS "audit"."care_space_category_periods_history" (
+    "history_id" uuid NOT NULL,
+    "care_space_category_period_id" uuid NOT NULL,
+    "revision_no" integer NOT NULL,
+    "operation_concept_id" uuid NOT NULL,
+    "valid_from" timestamptz NOT NULL,
+    "valid_to" timestamptz,
+    "data_snapshot" jsonb NOT NULL,
+    "changed_by_user_id" uuid,
+    "change_reason_concept_id" uuid,
+    "recorded_at" timestamptz NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    CONSTRAINT "pk_care_space_category_periods_history" PRIMARY KEY ("history_id")
+);
+
+CREATE TABLE IF NOT EXISTS "audit"."space_tariffs_history" (
+    "history_id" uuid NOT NULL,
+    "space_tariff_id" uuid NOT NULL,
+    "revision_no" integer NOT NULL,
+    "operation_concept_id" uuid NOT NULL,
+    "valid_from" timestamptz NOT NULL,
+    "valid_to" timestamptz,
+    "data_snapshot" jsonb NOT NULL,
+    "changed_by_user_id" uuid,
+    "change_reason_concept_id" uuid,
+    "recorded_at" timestamptz NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    CONSTRAINT "pk_space_tariffs_history" PRIMARY KEY ("history_id")
+);
+
+CREATE TABLE IF NOT EXISTS "audit"."charge_captures_history" (
+    "history_id" uuid NOT NULL,
+    "charge_capture_id" uuid NOT NULL,
+    "revision_no" integer NOT NULL,
+    "operation_concept_id" uuid NOT NULL,
+    "valid_from" timestamptz NOT NULL,
+    "valid_to" timestamptz,
+    "data_snapshot" jsonb NOT NULL,
+    "changed_by_user_id" uuid,
+    "change_reason_concept_id" uuid,
+    "recorded_at" timestamptz NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    CONSTRAINT "pk_charge_captures_history" PRIMARY KEY ("history_id")
 );
 
 CREATE TABLE IF NOT EXISTS "audit"."diagnostic_reports_history" (

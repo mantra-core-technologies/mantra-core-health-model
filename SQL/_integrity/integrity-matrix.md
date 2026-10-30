@@ -48,6 +48,7 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 | `siat_simulated_outbox` | `REFERENCE_ONLY` | **CHECK_SQL** ck_siat_simulated_outbox_status \| "status" = 'NOT_SENT_SIMULATED'; **CHECK_SQL** ck_siat_simulated_outbox_siat_mode \| "siat_mode" IN ('simulated','real') |
 | `billing.quotations` | `REFERENCE_ONLY` | **CHECK_SQL** chk_quotations_payment_frequency \| "payment_frequency" IN ('WEEKLY', 'BIWEEKLY', 'MONTHLY'); **CHECK_SQL** chk_quotations_down_payment_range \| ("down_payment_amount" >= 0 AND "down_payment_amount" <= "offered_price") |
 | `billing.quotation_installments` | `REFERENCE_ONLY` | **CHECK_SQL** chk_quotation_installments_amount_positive \| "amount" > 0 |
+| `billing.space_tariffs` | `REFERENCE_ONLY` | **EXCLUDE** one tariff per practice, kind, bed category, room and date; **EXCLUDE_SQL** ex_space_tariffs_validity \| "practice_id" WITH =, "tariff_kind_concept_id" WITH =, coalesce("bed_category_concept_id", '00000000-0000-0000-0000-000000000000'::uuid) WITH =, coalesce("care_space_id", '00000000-0000-0000-0000-000000000000'::uuid) WITH =, daterange("valid_from", "valid_to", '[)') WITH &&; **CHECK_SQL** ck_space_tariffs_or_time_unit_minutes \| ("tariff_kind_concept_id" <> '25eb53f6-8006-5959-bee9-65b16117bc9b' OR ("unit_minutes" IS NOT NULL AND "unit_minutes" > 0)); **CHECK_SQL** ck_space_tariffs_valid_period \| ("valid_to" IS NULL OR "valid_to" > "valid_from") |
 
 ### Módulo 08 · `clinical`
 
@@ -139,6 +140,10 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 | Tabla | Estereotipo | Reglas declaradas |
 |-------|-------------|-------------------|
 | `practice.care_spaces` | `REFERENCE_ONLY` | **CHECK_SQL** ck_care_spaces_buffers \| (COALESCE("prep_minutes", 0) >= 0 AND COALESCE("cleanup_minutes", 0) >= 0) |
+| `practice.care_space_status_events` | `IMMUTABLE, REFERENCE_ONLY` | **UPDATE_DELETE** forbidden; **CHECK_SQL** ck_care_space_status_events_v2_0116_code \| "v2_0116_code" IN ('C','H','I','K','O','U','R') |
+| `practice.care_space_blocks` | `REFERENCE_ONLY` | **EXCLUDE** one non-cancelled block per space and time; **EXCLUDE_SQL** ex_care_space_blocks_time \| "care_space_id" WITH =, tstzrange("starts_at", "ended_at", '[)') WITH && \| "cancelled_at" IS NULL; **CHECK_SQL** ck_care_space_blocks_maintenance_eta \| ("kind_concept_id" <> 'b0516b50-47c6-5fdb-b1e7-6ae060fbb4c0' OR "expected_end_at" IS NOT NULL); **CHECK_SQL** ck_care_space_blocks_end_after_start \| (("ended_at" IS NULL OR "ended_at" > "starts_at") AND ("expected_end_at" IS NULL OR "expected_end_at" > "starts_at")) |
+| `practice.cleaning_orders` | `REFERENCE_ONLY` | **CHECK_SQL** ck_cleaning_orders_inspector_differs \| ("inspected_by_user_id" IS NULL OR "inspected_by_user_id" <> "finished_by_user_id") |
+| `practice.care_space_category_periods` | `REFERENCE_ONLY` | **EXCLUDE** one bed category per space and time; **EXCLUDE_SQL** ex_care_space_category_periods_validity \| "care_space_id" WITH =, tstzrange("valid_from", "valid_to", '[)') WITH &&; **CHECK_SQL** ck_care_space_category_periods_valid_period \| ("valid_to" IS NULL OR "valid_to" > "valid_from") |
 
 ### Módulo 53 · `procedures_perioperative`
 

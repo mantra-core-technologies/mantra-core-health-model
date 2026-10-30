@@ -186,7 +186,11 @@ def exclude_concreto(schema, table, decl):
 
         <nombre> | <elementos gist> | <predicado>
 
-    El predicado es opcional: sin él sale un EXCLUDE total. Los `concept_id` van
+    El predicado es opcional: sin él sale un EXCLUDE total. Una cuarta parte opcional
+    declara el diferimiento (`DEFERRABLE INITIALLY IMMEDIATE` o `... DEFERRED`): hace
+    falta cuando una transacción legítima pasa por un estado intermedio que viola la
+    regla, como el intercambio de camas A17 (`SET CONSTRAINTS … DEFERRED`). Sólo se
+    aceptan esas dos frases literales. Los `concept_id` van
     como UUID literales y no como llamada a función, porque el predicado de un
     EXCLUDE tiene que ser inmutable. Es la lección de
     `gist_appointments_practitioner_time`, que quedó comentado justamente por
@@ -197,12 +201,19 @@ def exclude_concreto(schema, table, decl):
         return f"--   EXCLUDE_SQL mal declarado (faltan partes): {decl}"
     nombre, elementos = partes[0], partes[1]
     predicado = partes[2] if len(partes) > 2 and partes[2] else None
+    diferido = partes[3].upper() if len(partes) > 3 and partes[3] else None
+    if diferido and diferido not in DEFERRAL_CLAUSES:
+        raise ValueError(f"EXCLUDE_SQL inválido en {schema}.{table}: diferimiento {partes[3]!r}")
     where = f" WHERE ({predicado})" if predicado else ""
+    defer = f" {diferido}" if diferido else ""
     t = f'"{schema}"."{table}"'
     return (f"-- EXCLUDE concreto declarado por el modelo (EXCLUDE_SQL).\n"
             f"ALTER TABLE {t} DROP CONSTRAINT IF EXISTS \"{nombre}\";\n"
             f"ALTER TABLE {t} ADD CONSTRAINT \"{nombre}\"\n"
-            f"    EXCLUDE USING gist ({elementos}){where};\n")
+            f"    EXCLUDE USING gist ({elementos}){where}{defer};\n")
+
+
+DEFERRAL_CLAUSES = ("DEFERRABLE INITIALLY IMMEDIATE", "DEFERRABLE INITIALLY DEFERRED")
 
 
 def entity_block(e):
