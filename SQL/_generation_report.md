@@ -54,7 +54,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 47 | education | 15 | 88 | 0 | 103 | 0 |
 | 48 | automation | 16 | 100 | 0 | 113 | 0 |
 | 49 | crm | 33 | 232 | 4 | 285 | 6 |
-| 50 | marketing | 14 | 121 | 0 | 130 | 0 |
+| 50 | marketing | 36 | 168 | 40 | 202 | 0 |
 | 51 | promotions | 11 | 71 | 0 | 87 | 0 |
 | 52 | health_data | 34 | 178 | 0 | 255 | 9 |
 | 53 | procedures_perioperative | 35 | 220 | 0 | 262 | 8 |
@@ -74,7 +74,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 67 | data_catalog | 13 | 43 | 23 | 24 | 0 |
 | 68 | qa_execution | 4 | 14 | 6 | 6 | 0 |
 | 69 | pharma_lab | 31 | 182 | 173 | 182 | 1 |
-| **Σ** | **70** | **1264** | | **452** | | **362** |
+| **Σ** | **70** | **1286** | | **492** | | **362** |
 
 ## Detalle de entidades saltadas y avisos
 

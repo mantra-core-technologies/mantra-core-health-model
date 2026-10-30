@@ -642,9 +642,9 @@ modules:
   code: marketing
   title: Marketing Automation, Journeys and Attribution
   file: modules/diagram_50_marketing.puml
-  table_like_elements: 14
+  table_like_elements: 36
   view_elements: 0
-  index_sets: 14
+  index_sets: 36
   status: active
 - number: 51
   code: promotions

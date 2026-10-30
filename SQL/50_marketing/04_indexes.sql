@@ -261,3 +261,147 @@ CREATE INDEX IF NOT EXISTS "ix_campaign_schedules_authorized_by_user_id" ON "mar
 CREATE INDEX IF NOT EXISTS "ix_campaign_schedules_created_by_user_id" ON "marketing"."campaign_schedules" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_campaign_schedules_updated_by_user_id" ON "marketing"."campaign_schedules" ("updated_by_user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_insights_campaigns_code" ON "marketing"."insights_campaigns" ("code");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_campaigns_marketing_campaign_id" ON "marketing"."insights_campaigns" ("marketing_campaign_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_campaigns_start_on" ON "marketing"."insights_campaigns" ("start_on");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_campaigns_currency_concept_id" ON "marketing"."insights_campaigns" ("currency_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_campaigns_status_concept_id" ON "marketing"."insights_campaigns" ("status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_campaigns_created_by_user_id" ON "marketing"."insights_campaigns" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_campaigns_updated_by_user_id" ON "marketing"."insights_campaigns" ("updated_by_user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_insights_creatives_campaign_id_code" ON "marketing"."insights_creatives" ("campaign_id", "code");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_creatives_status_concept_id" ON "marketing"."insights_creatives" ("status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_creatives_created_by_user_id" ON "marketing"."insights_creatives" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_creatives_updated_by_user_id" ON "marketing"."insights_creatives" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_milestones_occurred_on" ON "marketing"."insights_milestones" ("occurred_on");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_milestones_campaign_id" ON "marketing"."insights_milestones" ("campaign_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_milestones_created_by_user_id" ON "marketing"."insights_milestones" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_milestones_updated_by_user_id" ON "marketing"."insights_milestones" ("updated_by_user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_insights_data_sources_code" ON "marketing"."insights_data_sources" ("code");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_data_sources_status_concept_id" ON "marketing"."insights_data_sources" ("status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_data_sources_created_by_user_id" ON "marketing"."insights_data_sources" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_data_sources_updated_by_user_id" ON "marketing"."insights_data_sources" ("updated_by_user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_insights_campaign_daily_facts_natural_key" ON "marketing"."insights_campaign_daily_facts" ("fact_date", "campaign_id", "channel_code", "creative_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_campaign_daily_facts_campaign_id_fact_date" ON "marketing"."insights_campaign_daily_facts" ("campaign_id", "fact_date");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_campaign_daily_facts_creative_id" ON "marketing"."insights_campaign_daily_facts" ("creative_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_insights_campaign_hourly_facts_natural_key" ON "marketing"."insights_campaign_hourly_facts" ("fact_date", "hour", "campaign_id", "channel_code");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_campaign_hourly_facts_campaign_id" ON "marketing"."insights_campaign_hourly_facts" ("campaign_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_insights_social_daily_facts_natural_key" ON "marketing"."insights_social_daily_facts" ("fact_date", "platform_code");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_insights_social_posts_code" ON "marketing"."insights_social_posts" ("code");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_social_posts_platform_code_published_at" ON "marketing"."insights_social_posts" ("platform_code", "published_at" DESC);
+
+CREATE INDEX IF NOT EXISTS "ix_insights_social_posts_created_by_user_id" ON "marketing"."insights_social_posts" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_social_posts_updated_by_user_id" ON "marketing"."insights_social_posts" ("updated_by_user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_insights_app_daily_facts_natural_key" ON "marketing"."insights_app_daily_facts" ("fact_date", "platform_code");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_insights_app_screen_daily_facts_natural_key" ON "marketing"."insights_app_screen_daily_facts" ("fact_date", "platform_code", "screen_code");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_insights_app_onboarding_facts_natural_key" ON "marketing"."insights_app_onboarding_facts" ("app_version", "step_code");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_insights_mentions_code" ON "marketing"."insights_mentions" ("code");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_mentions_mentioned_at" ON "marketing"."insights_mentions" ("mentioned_at");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_mentions_sentiment_code_mentioned_at" ON "marketing"."insights_mentions" ("sentiment_code", "mentioned_at");
+
+CREATE INDEX IF NOT EXISTS "gin_insights_mentions_search" ON "marketing"."insights_mentions" USING gin (to_tsvector('simple', body_text));
+
+CREATE INDEX IF NOT EXISTS "ix_insights_mentions_created_by_user_id" ON "marketing"."insights_mentions" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_mentions_updated_by_user_id" ON "marketing"."insights_mentions" ("updated_by_user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_insights_search_signals_natural_key" ON "marketing"."insights_search_signals" ("week_start", "query_text");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_insights_environment_items_code" ON "marketing"."insights_environment_items" ("code");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_environment_items_relevance" ON "marketing"."insights_environment_items" ("relevance" DESC);
+
+CREATE INDEX IF NOT EXISTS "ix_insights_environment_items_published_on" ON "marketing"."insights_environment_items" ("published_on" DESC);
+
+CREATE INDEX IF NOT EXISTS "ix_insights_environment_items_created_by_user_id" ON "marketing"."insights_environment_items" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_environment_items_updated_by_user_id" ON "marketing"."insights_environment_items" ("updated_by_user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_insights_sector_trends_natural_key" ON "marketing"."insights_sector_trends" ("week_start", "trend_code");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_insights_alert_rules_code" ON "marketing"."insights_alert_rules" ("code");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_alert_rules_severity_concept_id" ON "marketing"."insights_alert_rules" ("severity_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_alert_rules_created_by_user_id" ON "marketing"."insights_alert_rules" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_alert_rules_updated_by_user_id" ON "marketing"."insights_alert_rules" ("updated_by_user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_insights_alerts_code" ON "marketing"."insights_alerts" ("code");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_insights_alerts_fingerprint" ON "marketing"."insights_alerts" ("fingerprint");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_alerts_status_concept_id_priority" ON "marketing"."insights_alerts" ("status_concept_id", "priority");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_alerts_detected_on" ON "marketing"."insights_alerts" ("detected_on" DESC);
+
+CREATE INDEX IF NOT EXISTS "ix_insights_alerts_severity_concept_id" ON "marketing"."insights_alerts" ("severity_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_alerts_created_by_user_id" ON "marketing"."insights_alerts" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_alerts_updated_by_user_id" ON "marketing"."insights_alerts" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_alert_transitions_alert_id_recorded_at" ON "marketing"."insights_alert_transitions" ("alert_id", "recorded_at");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_alert_transitions_from_status_concept_id" ON "marketing"."insights_alert_transitions" ("from_status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_alert_transitions_to_status_concept_id" ON "marketing"."insights_alert_transitions" ("to_status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_alert_transitions_recorded_by_user_id" ON "marketing"."insights_alert_transitions" ("recorded_by_user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_insights_notification_preferences_user_id" ON "marketing"."insights_notification_preferences" ("user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_notification_preferences_created_by_user_id" ON "marketing"."insights_notification_preferences" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_notification_preferences_updated_by_user_id" ON "marketing"."insights_notification_preferences" ("updated_by_user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_insights_user_preferences_user_id" ON "marketing"."insights_user_preferences" ("user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_user_preferences_created_by_user_id" ON "marketing"."insights_user_preferences" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_user_preferences_updated_by_user_id" ON "marketing"."insights_user_preferences" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_reports_user_id_updated_at" ON "marketing"."insights_reports" ("user_id", "updated_at" DESC);
+
+CREATE INDEX IF NOT EXISTS "ix_insights_reports_created_by_user_id" ON "marketing"."insights_reports" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_reports_updated_by_user_id" ON "marketing"."insights_reports" ("updated_by_user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_insights_saved_views_user_id_name" ON "marketing"."insights_saved_views" ("user_id", "name");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_saved_views_created_by_user_id" ON "marketing"."insights_saved_views" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_insights_saved_views_updated_by_user_id" ON "marketing"."insights_saved_views" ("updated_by_user_id");
