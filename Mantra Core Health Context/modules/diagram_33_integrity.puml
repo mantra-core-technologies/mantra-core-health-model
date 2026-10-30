@@ -259,6 +259,8 @@ entity "surveys.survey_versions" as surveys_survey_versions <<REFERENCE_ONLY>> {
 entity "surveys.survey_invitations" as surveys_survey_invitations <<REFERENCE_ONLY>> {
   ' CAN-SURVEY-001 (REC 65.7): toda invitacion cuelga de una reserva o de un sujeto tipado; el par es todo-o-nada.
   CHECK_SQL : ck_survey_invitations_anchor | ("appointment_booking_id" IS NOT NULL OR "subject_id" IS NOT NULL) AND (("subject_type_concept_id" IS NULL) = ("subject_id" IS NULL))
+  ' REC 65.8: la extension del profesional nunca es la misma version que la base del sistema.
+  CHECK_SQL : ck_survey_invitations_extension_distinct | "extension_survey_version_id" IS NULL OR "extension_survey_version_id" <> "survey_version_id"
 }
 entity "surveys.survey_invitation_reminders" as surveys_survey_invitation_reminders <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_survey_invitation_reminders_number | "reminder_number" >= 1
