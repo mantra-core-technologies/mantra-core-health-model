@@ -1,0 +1,96 @@
+@startuml SALUD_Pay_Module_75_pay_qr
+title Module 75 — pay-qr: Códigos QR\n(schema: pay_qr)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' PERFIL PAY (D-18). Una base de PostgreSQL POR SERVICIO: este módulo describe la base `pay_qr`,
+' no un schema de la base de SALUD. Se genera con salud-db/gen_ddl_pay.py a SQL/pay/75_pay_qr/ (objetos sin
+' calificar: se crean en el esquema de la conexión). Portado el 2026-10-27 del DDL de referencia de
+' services/pay-qr/sql/ (pasarelapago). A partir de acá la fuente de verdad es ESTE archivo.
+' SQL de referencia de pay-qr (a mover a mantra-core-health-model, D-18). Índices con nombre explícito.
+' Además hay que aplicar la tabla técnica de idempotencia: contracts/packages/idempotency/sql/001_idempotency_keys.sql
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_75_pay_qr
+  BUSINESS PURPOSE
+  Base propia del microservicio pay-qr de la pasarela de pagos ALOVIDA (códigos QR).
+  Separación (regla #1 del plan maestro): ningún otro servicio lee estas tablas; los datos de otros
+  servicios llegan por eventos o por sus APIs. Dinero en unidades menores enteras (amount_minor, BOB).
+end note
+
+entity qr_codes {
+  * id : text <<PK>>
+  * kind : text
+  ' Modo de la CLAVE que pidió el QR (D-28, `X-Pay-Mode`): lo fija pay-edge. Toda lectura filtra por (id, modo).
+  * pay_mode : text
+  * merchant_id : text
+    payment_intent_id : text
+  * reference : text
+    amount_minor : bigint
+  * currency : text
+  * payload : text
+    expires_at : timestamptz
+    canceled_at : timestamptz
+  * created_at : timestamptz
+}
+
+' Tabla técnica de @pay/idempotency. Cada servicio la tiene en SU base (regla de separación #1).
+' Se declara en el modelo (mantra-core-health-model, D-18) y se aplica por el pipeline; este archivo es la referencia.
+' Tabla técnica de @pay/idempotency: la declara la librería y cada servicio la tiene en SU base.
+entity idempotency_keys {
+  ' quién: el id del comercio
+  * scope : text <<PK>>
+  ' la Idempotency-Key del cliente
+  * key : text <<PK>>
+  ' sha256 de método + ruta + cuerpo canónico
+  * request_hash : text
+  * state : text
+  ' hasta dónde llegó la ejecución
+  * recovery_point : text
+    response_status : integer
+    response_body : jsonb
+  ' null = nadie la está ejecutando
+    locked_at : timestamptz
+  ' identifica a quien la ejecuta (compare-and-set)
+    lock_token : text
+  * created_at : timestamptz
+  * expires_at : timestamptz
+}
+
+entity "INDEXES · qr_codes" as idxset_qr_codes <<INDEX_SET>> {
+  PK pk_qr_codes : (id) UNIQUE BTREE
+  ' La referencia viaja DENTRO del QR que se escanea: es única entre modos, para que un QR identifique un solo registro.
+  UK qr_codes_reference_uidx : (reference) UNIQUE BTREE
+  ' Un solo QR estático vigente por comercio, y un solo QR dinámico vigente por intento de pago.
+  UK qr_codes_static_per_merchant_uidx : (pay_mode, merchant_id) UNIQUE BTREE WHERE kind = 'static' AND canceled_at IS NULL
+  UK qr_codes_live_per_intent_uidx : (pay_mode, payment_intent_id) UNIQUE BTREE WHERE kind = 'dynamic' AND canceled_at IS NULL
+}
+qr_codes .. idxset_qr_codes : indexed by
+
+entity "INDEXES · idempotency_keys" as idxset_idempotency_keys <<INDEX_SET>> {
+  PK pk_idempotency_keys : (scope, key) UNIQUE BTREE
+  IX idempotency_keys_expires_at_idx : (expires_at) BTREE
+}
+idempotency_keys .. idxset_idempotency_keys : indexed by
+
+entity "PAY EXTRAS · pay_qr" as pay_extras_pay_qr <<PAY_EXTRAS>> {
+  ' Lo que el generador base (gen_ddl.py) no expresa: defaults no booleanos, identidades, CHECK, FK compuestas,
+  ' funciones, triggers y datos semilla. Lo materializa salud-db/gen_ddl_pay.py (05_constraints.sql / 06_seed.sql).
+  DEFAULT qr_codes.created_at : now()
+  CHECK_SQL qr_codes : qr_codes_id_check | id ~ '^qr_[a-z0-9]{10,40}$'
+  CHECK_SQL qr_codes : qr_codes_kind_check | kind IN ('static', 'dynamic')
+  CHECK_SQL qr_codes : qr_codes_pay_mode_check | pay_mode IN ('test', 'live')
+  CHECK_SQL qr_codes : qr_codes_merchant_id_check | merchant_id ~ '^mc_[a-z0-9]{10,40}$'
+  CHECK_SQL qr_codes : qr_codes_payment_intent_id_check | payment_intent_id IS NULL OR payment_intent_id ~ '^pi_[a-z0-9]{10,40}$'
+  CHECK_SQL qr_codes : qr_codes_reference_check | reference ~ '^[A-Za-z0-9]{1,25}$'
+  CHECK_SQL qr_codes : qr_codes_amount_minor_check | amount_minor IS NULL OR amount_minor > 0
+  CHECK_SQL qr_codes : qr_codes_currency_check | currency = 'BOB'
+  CHECK_SQL qr_codes : qr_codes_dynamic_fields_ck | kind = 'static' OR (payment_intent_id IS NOT NULL AND amount_minor IS NOT NULL AND expires_at IS NOT NULL)
+  DEFAULT idempotency_keys.recovery_point : 'started'
+  DEFAULT idempotency_keys.created_at : now()
+  CHECK_SQL idempotency_keys : idempotency_keys_state_check | state IN ('started', 'completed')
+}
+
+@enduml
