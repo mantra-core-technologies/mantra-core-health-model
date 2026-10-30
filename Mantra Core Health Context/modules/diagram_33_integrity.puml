@@ -308,7 +308,7 @@ entity "practice.care_space_category_periods" as practice_care_space_category_pe
 entity "billing.space_tariffs" as billing_space_tariffs <<REFERENCE_ONLY>> {
   EXCLUDE : one tariff per practice, kind, bed category, room and date
   EXCLUDE_SQL : ex_space_tariffs_validity | "practice_id" WITH =, "tariff_kind_concept_id" WITH =, coalesce("bed_category_concept_id", '00000000-0000-0000-0000-000000000000'::uuid) WITH =, coalesce("care_space_id", '00000000-0000-0000-0000-000000000000'::uuid) WITH =, daterange("valid_from", "valid_to", '[)') WITH &&
-  CHECK_SQL : ck_space_tariffs_or_time_unit_minutes | ("tariff_kind_concept_id" <> '25eb53f6-8006-5959-bee9-65b16117bc9b' OR "unit_minutes" > 0)
+  CHECK_SQL : ck_space_tariffs_or_time_unit_minutes | ("tariff_kind_concept_id" <> '25eb53f6-8006-5959-bee9-65b16117bc9b' OR ("unit_minutes" IS NOT NULL AND "unit_minutes" > 0))
   CHECK_SQL : ck_space_tariffs_valid_period | ("valid_to" IS NULL OR "valid_to" > "valid_from")
 }
 entity "scheduling.booking_policies" as scheduling_booking_policies <<REFERENCE_ONLY>> {

@@ -56,7 +56,7 @@ ALTER TABLE "billing"."space_tariffs" ADD CONSTRAINT "ex_space_tariffs_validity"
 
 -- CHECK concreto declarado por el modelo (CHECK_SQL).
 ALTER TABLE "billing"."space_tariffs" DROP CONSTRAINT IF EXISTS "ck_space_tariffs_or_time_unit_minutes";
-ALTER TABLE "billing"."space_tariffs" ADD CONSTRAINT "ck_space_tariffs_or_time_unit_minutes" CHECK (("tariff_kind_concept_id" <> '25eb53f6-8006-5959-bee9-65b16117bc9b' OR "unit_minutes" > 0));
+ALTER TABLE "billing"."space_tariffs" ADD CONSTRAINT "ck_space_tariffs_or_time_unit_minutes" CHECK (("tariff_kind_concept_id" <> '25eb53f6-8006-5959-bee9-65b16117bc9b' OR ("unit_minutes" IS NOT NULL AND "unit_minutes" > 0)));
 
 -- CHECK concreto declarado por el modelo (CHECK_SQL).
 ALTER TABLE "billing"."space_tariffs" DROP CONSTRAINT IF EXISTS "ck_space_tariffs_valid_period";
