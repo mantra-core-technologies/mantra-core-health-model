@@ -804,3 +804,117 @@ modules:
   view_elements: 0
   index_sets: 31
   status: active
+
+# Perfil PAY (D-18 de PasarelaPago). Cada módulo de esta lista es una BASE de PostgreSQL (una por microservicio), no un schema de la
+# base de SALUD: por eso NO está en `modules:` (que alimenta a gen_ddl.py, gen_integrity.py, gen_seeds.py, gen_entities.py y a
+# tools/model_inventory.py) y su salida cuelga de SQL/pay/. Se genera con `python salud-db/gen_ddl_pay.py`. Numeración 70-89 reservada.
+# El 81 (pay_lib) no es una base de servicio: son las tablas técnicas de @pay/* para las pruebas de esas librerías.
+pay_databases:
+- number: 70
+  code: pay_connectors
+  title: Conectores bancarios
+  service: pay-connectors
+  file: pay-modules/diagram_70_pay_connectors.puml
+  output: SQL/pay/70_pay_connectors/
+  table_like_elements: 13
+  index_sets: 13
+  status: active
+- number: 71
+  code: pay_edge
+  title: Borde público (réplicas de claves y comercios)
+  service: pay-edge
+  file: pay-modules/diagram_71_pay_edge.puml
+  output: SQL/pay/71_pay_edge/
+  table_like_elements: 3
+  index_sets: 3
+  status: active
+- number: 72
+  code: pay_ledger
+  title: Libro mayor (lo que TigerBeetle no guarda)
+  service: pay-ledger
+  file: pay-modules/diagram_72_pay_ledger.puml
+  output: SQL/pay/72_pay_ledger/
+  table_like_elements: 9
+  index_sets: 9
+  status: active
+- number: 73
+  code: pay_merchants
+  title: Comercios, KYC, contratos, tarifarios y claves de API
+  service: pay-merchants
+  file: pay-modules/diagram_73_pay_merchants.puml
+  output: SQL/pay/73_pay_merchants/
+  table_like_elements: 11
+  index_sets: 11
+  status: active
+- number: 74
+  code: pay_payments
+  title: Intentos de pago, reembolsos y disputas
+  service: pay-payments
+  file: pay-modules/diagram_74_pay_payments.puml
+  output: SQL/pay/74_pay_payments/
+  table_like_elements: 11
+  index_sets: 11
+  status: active
+- number: 75
+  code: pay_qr
+  title: Códigos QR
+  service: pay-qr
+  file: pay-modules/diagram_75_pay_qr.puml
+  output: SQL/pay/75_pay_qr/
+  table_like_elements: 2
+  index_sets: 2
+  status: active
+- number: 76
+  code: pay_risk
+  title: Riesgo y cribado
+  service: pay-risk
+  file: pay-modules/diagram_76_pay_risk.puml
+  output: SQL/pay/76_pay_risk/
+  table_like_elements: 3
+  index_sets: 3
+  status: active
+- number: 77
+  code: pay_schedules
+  title: Mandatos y pagos programados
+  service: pay-schedules
+  file: pay-modules/diagram_77_pay_schedules.puml
+  output: SQL/pay/77_pay_schedules/
+  table_like_elements: 6
+  index_sets: 6
+  status: active
+- number: 78
+  code: pay_settlement
+  title: Cortes, payouts, cobros y conciliación
+  service: pay-settlement
+  file: pay-modules/diagram_78_pay_settlement.puml
+  output: SQL/pay/78_pay_settlement/
+  table_like_elements: 16
+  index_sets: 16
+  status: active
+- number: 79
+  code: pay_vault
+  title: Metadatos de tokens de tarjeta
+  service: pay-vault
+  file: pay-modules/diagram_79_pay_vault.puml
+  output: SQL/pay/79_pay_vault/
+  table_like_elements: 4
+  index_sets: 4
+  status: active
+- number: 80
+  code: pay_webhooks
+  title: Endpoints, secretos y entregas de webhooks
+  service: pay-webhooks
+  file: pay-modules/diagram_80_pay_webhooks.puml
+  output: SQL/pay/80_pay_webhooks/
+  table_like_elements: 6
+  index_sets: 6
+  status: active
+- number: 81
+  code: pay_lib
+  title: Tablas técnicas de las librerías @pay/* (outbox, inbox, idempotencia)
+  service: pay-lib
+  file: pay-modules/diagram_81_pay_lib.puml
+  output: SQL/pay/81_pay_lib/
+  table_like_elements: 3
+  index_sets: 3
+  status: active

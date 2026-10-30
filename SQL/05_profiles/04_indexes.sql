@@ -244,6 +244,18 @@ CREATE INDEX IF NOT EXISTS "ix_patient_portal_proxies_updated_by_user_id" ON "pr
 
 CREATE INDEX IF NOT EXISTS "ix_patient_portal_proxies_patient_profile_id_updated_at" ON "profiles"."patient_portal_proxies" ("patient_profile_id", "updated_at" DESC);
 
+CREATE INDEX IF NOT EXISTS "ix_patient_primary_practitioners_patient_profile_id" ON "profiles"."patient_primary_practitioners" ("patient_profile_id");
+
+CREATE INDEX IF NOT EXISTS "ix_patient_primary_practitioners_practitioner_profile_id" ON "profiles"."patient_primary_practitioners" ("practitioner_profile_id");
+
+CREATE INDEX IF NOT EXISTS "ix_patient_primary_practitioners_created_by_user_id" ON "profiles"."patient_primary_practitioners" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_patient_primary_practitioners_updated_by_user_id" ON "profiles"."patient_primary_practitioners" ("updated_by_user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_patient_primary_practitioners_current" ON "profiles"."patient_primary_practitioners" ("patient_profile_id") WHERE valid_to IS NULL;
+
+CREATE INDEX IF NOT EXISTS "ix_patient_primary_practitioners_practitioner_current" ON "profiles"."patient_primary_practitioners" ("practitioner_profile_id", "valid_from" DESC) WHERE valid_to IS NULL;
+
 CREATE INDEX IF NOT EXISTS "ix_insurance_representative_profiles_representative_ty_e1930540" ON "profiles"."insurance_representative_profiles" ("representative_type_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_insurance_representative_profiles_role_concept_id" ON "profiles"."insurance_representative_profiles" ("role_concept_id");

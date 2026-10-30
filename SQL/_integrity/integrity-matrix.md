@@ -63,6 +63,12 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 |-------|-------------|-------------------|
 | `clinical_ext.cds_rule_versions` | `REFERENCE_ONLY` | **UPDATE** forbidden; **CHECK_SQL** ck_cds_rule_versions_number \| "version_number" >= 1 |
 
+### Módulo 07 · `consent`
+
+| Tabla | Estereotipo | Reglas declaradas |
+|-------|-------------|-------------------|
+| `consent.treatment_informed_consents` | `REFERENCE_ONLY` | **CHECK_SQL** ck_treatment_informed_consents_target_type \| "target_type" IN ('MEDICATION_REQUEST','SERVICE_REQUEST','REFERRAL','PROCEDURE','CARE_PLAN'); **CHECK_SQL** ck_treatment_informed_consents_granted_by \| "granted_by" IN ('PATIENT','LEGAL_REPRESENTATIVE','GUARDIAN','SUBSTITUTE_RELATIVE'); **CHECK_SQL** ck_treatment_informed_consents_channel \| "channel" IN ('IN_PERSON','TELEHEALTH'); **CHECK_SQL** ck_treatment_informed_consents_exception_type \| "exception_type" IN ('EMERGENCY','PUBLIC_HEALTH_RISK','PATIENT_WAIVER') |
+
 ### Módulo 67 · `data_catalog`
 
 | Tabla | Estereotipo | Reglas declaradas |
@@ -151,7 +157,7 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 |-------|-------------|-------------------|
 | `surveys.survey_templates` | `REFERENCE_ONLY` | **CHECK_SQL** ck_survey_templates_single_owner \| ("owner_practitioner_id" IS NOT NULL AND "owner_type_concept_id" IS NULL AND "owner_id" IS NULL) OR ("owner_practitioner_id" IS NULL AND "owner_type_concept_id" IS NOT NULL AND "owner_id" IS NOT NULL) |
 | `surveys.survey_versions` | `REFERENCE_ONLY` | **CHECK_SQL** ck_survey_versions_max_reminders \| ("max_reminders" IS NULL OR "max_reminders" >= 0) |
-| `surveys.survey_invitations` | `REFERENCE_ONLY` | **CHECK_SQL** ck_survey_invitations_anchor \| ("appointment_booking_id" IS NOT NULL OR "subject_id" IS NOT NULL) AND (("subject_type_concept_id" IS NULL) = ("subject_id" IS NULL)) |
+| `surveys.survey_invitations` | `REFERENCE_ONLY` | **CHECK_SQL** ck_survey_invitations_anchor \| ("appointment_booking_id" IS NOT NULL OR "subject_id" IS NOT NULL) AND (("subject_type_concept_id" IS NULL) = ("subject_id" IS NULL)); **CHECK_SQL** ck_survey_invitations_extension_distinct \| "extension_survey_version_id" IS NULL OR "extension_survey_version_id" <> "survey_version_id" |
 | `surveys.survey_invitation_reminders` | `REFERENCE_ONLY` | **CHECK_SQL** ck_survey_invitation_reminders_number \| "reminder_number" >= 1 |
 | `surveys.survey_answers` | `REFERENCE_ONLY` | **CHECK_SQL** ck_survey_answers_single_value \| num_nonnulls("value_text", "value_number", "value_boolean", "value_choices") = 1 |
 

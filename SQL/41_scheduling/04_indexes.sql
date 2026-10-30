@@ -259,3 +259,23 @@ CREATE INDEX IF NOT EXISTS "ix_appointment_payment_states_tenant_status" ON "sch
 CREATE INDEX IF NOT EXISTS "ix_appointment_payment_states_status_concept_id" ON "scheduling"."appointment_payment_states" ("status_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_appointment_payment_states_marked_by_user_id" ON "scheduling"."appointment_payment_states" ("marked_by_user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_appointment_payment_states_invoice" ON "scheduling"."appointment_payment_states" ("invoice_id") WHERE invoice_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS "ix_appointment_payment_receipts_tenant_id" ON "scheduling"."appointment_payment_receipts" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_appointment_payment_receipts_appointment_booking_id" ON "scheduling"."appointment_payment_receipts" ("appointment_booking_id");
+
+CREATE INDEX IF NOT EXISTS "ix_appointment_payment_receipts_file_id" ON "scheduling"."appointment_payment_receipts" ("file_id");
+
+CREATE INDEX IF NOT EXISTS "ix_appointment_payment_receipts_uploaded_by_user_id" ON "scheduling"."appointment_payment_receipts" ("uploaded_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_appointment_payment_receipts_review_status_concept_id" ON "scheduling"."appointment_payment_receipts" ("review_status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_appointment_payment_receipts_reviewed_by_user_id" ON "scheduling"."appointment_payment_receipts" ("reviewed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_appointment_payment_receipts_created_by_user_id" ON "scheduling"."appointment_payment_receipts" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_appointment_payment_receipts_updated_by_user_id" ON "scheduling"."appointment_payment_receipts" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_appointment_payment_receipts_booking_uploaded" ON "scheduling"."appointment_payment_receipts" ("appointment_booking_id", "uploaded_at");

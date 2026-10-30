@@ -1,0 +1,318 @@
+@startuml SALUD_Pay_Module_73_pay_merchants
+title Module 73 — pay-merchants: Comercios, KYC, contratos, tarifarios y claves de API\n(schema: pay_merchants)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' PERFIL PAY (D-18). Una base de PostgreSQL POR SERVICIO: este módulo describe la base `pay_merchants`,
+' no un schema de la base de SALUD. Se genera con salud-db/gen_ddl_pay.py a SQL/pay/73_pay_merchants/ (objetos sin
+' calificar: se crean en el esquema de la conexión). Portado el 2026-10-27 del DDL de referencia de
+' services/pay-merchants/sql/ (pasarelapago). A partir de acá la fuente de verdad es ESTE archivo.
+' SQL DE REFERENCIA de pay-merchants (P5.H1.M1). El modelo (D-18) todavía no existe: este archivo se mueve a
+' mantra-core-health-model cuando exista el pipeline `.puml → SQL/ → base → ORM`. Tomado de las entidades del módulo 42
+' de la API (connected_accounts, kyc_verifications, fee_schedules), reducido a lo que esta pasarela necesita.
+' Las tablas técnicas (outbox_events, inbox_events, idempotency_keys) vienen de contracts/packages/{outbox,idempotency}/sql.
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_73_pay_merchants
+  BUSINESS PURPOSE
+  Base propia del microservicio pay-merchants de la pasarela de pagos ALOVIDA (comercios, KYC, contratos, tarifarios y claves de API).
+  Separación (regla #1 del plan maestro): ningún otro servicio lee estas tablas; los datos de otros
+  servicios llegan por eventos o por sus APIs. Dinero en unidades menores enteras (amount_minor, BOB).
+end note
+
+entity merchants {
+  * id : text <<PK>>
+  * display_name : text
+  ' punto 1 del alta legal: razón social
+  * legal_name : text
+  ' punto 1.1: tipo societario (lista cerrada del registro del stakeholder)
+  * legal_type : text
+  ' punto 2: NIT
+  * tax_id : text
+  ' referencia opaca al alta legal en `directory` (Q-22); sin copiar sus datos
+    directory_tenant_ref : text
+  * status : text
+    suspension_reason : text
+  * created_at : timestamptz
+    activated_at : timestamptz
+    suspended_at : timestamptz
+    closed_at : timestamptz
+}
+
+entity merchant_kyc {
+  * merchant_id : text <<PK, FK>>
+  * status : text
+    risk_level : text
+  ' `sub` de la credencial del operador, nunca del cuerpo
+    reviewed_by : text
+    reviewed_at : timestamptz
+  ' sin datos personales
+    review_note : text
+  * updated_at : timestamptz
+}
+
+entity kyc_documents {
+  * id : text <<PK>>
+  * merchant_id : text <<FK>>
+  * kind : text
+  ' clave en el almacén de objetos: el archivo NO está en la base
+  * object_key : text
+  * sha256 : text
+  * size_bytes : integer
+  ' tipo REAL por magic bytes, no el que declaró el cliente
+  * detected_type : text
+  * uploaded_by : text
+  * uploaded_at : timestamptz
+}
+
+' Contratos legales: versiones publicadas y aceptaciones. Ambas tablas son INMUTABLES (REQ-P5-2).
+entity contract_versions {
+  * version : integer <<PK>>
+  ' hash del texto legal; el texto lo custodia legal
+  * text_sha256 : text
+  * effective_from : timestamptz
+  * published_by : text
+  * published_at : timestamptz
+}
+
+entity contract_acceptances {
+  * id : text <<PK>>
+  * merchant_id : text <<FK>>
+  * version : integer <<FK>>
+  ' copia del hash de la versión aceptada, para que la prueba no dependa de otra tabla
+  * text_sha256 : text
+  ' referencia opaca a quien firma (representante); lo declara el operador que la registra
+  * accepted_by_ref : text
+  ' `sub` de la credencial del operador que la registró
+  * recorded_by : text
+  * accepted_at : timestamptz
+}
+
+' Tarifario: una versión nueva por cada cambio, las viejas quedan intactas (REQ-P5-3). Vigente = la de mayor
+' effective_from que ya empezó; el fin de una versión es el inicio de la siguiente (no se guarda effective_to).
+entity fee_schedule_versions {
+  * merchant_id : text <<PK, FK>>
+  * version : integer <<PK>>
+  * currency : text
+  * effective_from : timestamptz
+  * monthly_fee_minor : bigint
+  * published_by : text
+  * published_at : timestamptz
+}
+
+entity fee_schedule_channels {
+  * merchant_id : text <<PK>>
+  * version : integer <<PK>>
+  * channel : text <<PK>>
+  * percent : text
+  * fixed_minor : bigint
+    min_minor : bigint
+    cap_minor : bigint
+}
+
+entity api_keys {
+  * key_id : text <<PK>>
+  * merchant_id : text <<FK>>
+  ' el modo con el que se opera sale SIEMPRE de acá, nunca del token
+  * mode : text
+    label : text
+  * last4 : text
+  ' `sha256$<hex>`; el secreto no se guarda
+  * key_hash : text
+  * created_at : timestamptz
+  ' si se rotó: hasta cuándo sigue valida la anterior
+    grace_ends_at : timestamptz
+    revoked_at : timestamptz
+    revoke_reason : text
+}
+
+' Tablas técnicas de @pay/outbox. Cada servicio las tiene en SU base. Se declaran en el modelo (D-18).
+' Tabla técnica de @pay/outbox: la declara la librería y cada servicio la tiene en SU base.
+entity outbox_events {
+  ' id del CloudEvent; también es el Nats-Msg-Id
+  * id : uuid <<PK>>
+  ' orden de publicación
+  * seq : bigserial
+  * aggregate_type : text
+  * aggregate_id : text
+  * type : text
+  ' tema NATS destino
+  * subject : text
+  ' el CloudEvent completo
+  * envelope : jsonb
+  * created_at : timestamptz
+    published_at : timestamptz
+  * attempts : integer
+    last_error : text
+}
+
+' Tabla técnica de @pay/outbox: la declara la librería y cada servicio la tiene en SU base.
+entity inbox_events {
+  ' qué consumidor procesó el evento
+  * consumer : text <<PK>>
+  * event_id : text <<PK>>
+  * processed_at : timestamptz
+}
+
+' Tabla técnica de @pay/idempotency. Cada servicio la tiene en SU base (regla de separación #1).
+' Se declara en el modelo (mantra-core-health-model, D-18) y se aplica por el pipeline; este archivo es la referencia.
+' Tabla técnica de @pay/idempotency: la declara la librería y cada servicio la tiene en SU base.
+entity idempotency_keys {
+  ' quién: el id del comercio
+  * scope : text <<PK>>
+  ' la Idempotency-Key del cliente
+  * key : text <<PK>>
+  ' sha256 de método + ruta + cuerpo canónico
+  * request_hash : text
+  * state : text
+  ' hasta dónde llegó la ejecución
+  * recovery_point : text
+    response_status : integer
+    response_body : jsonb
+  ' null = nadie la está ejecutando
+    locked_at : timestamptz
+  ' identifica a quien la ejecuta (compare-and-set)
+    lock_token : text
+  * created_at : timestamptz
+  * expires_at : timestamptz
+}
+
+merchant_kyc }o--|| merchants : merchant_id
+kyc_documents }o--|| merchants : merchant_id
+contract_acceptances }o--|| merchants : merchant_id
+contract_acceptances }o--|| contract_versions : version
+fee_schedule_versions }o--|| merchants : merchant_id
+api_keys }o--|| merchants : merchant_id
+
+entity "INDEXES · merchants" as idxset_merchants <<INDEX_SET>> {
+  PK pk_merchants : (id) UNIQUE BTREE
+  ' Un NIT, un comercio abierto (supuesto, ver DECISIONES-TOMADAS D5-04).
+  UK merchants_tax_id_open_uq : (tax_id) UNIQUE BTREE WHERE status <> 'closed'
+}
+merchants .. idxset_merchants : indexed by
+
+entity "INDEXES · merchant_kyc" as idxset_merchant_kyc <<INDEX_SET>> {
+  PK pk_merchant_kyc : (merchant_id) UNIQUE BTREE
+}
+merchant_kyc .. idxset_merchant_kyc : indexed by
+
+entity "INDEXES · kyc_documents" as idxset_kyc_documents <<INDEX_SET>> {
+  PK pk_kyc_documents : (id) UNIQUE BTREE
+  IX kyc_documents_merchant_kind_idx : (merchant_id, kind, uploaded_at DESC) BTREE
+}
+kyc_documents .. idxset_kyc_documents : indexed by
+
+entity "INDEXES · contract_versions" as idxset_contract_versions <<INDEX_SET>> {
+  PK pk_contract_versions : (version) UNIQUE BTREE
+}
+contract_versions .. idxset_contract_versions : indexed by
+
+entity "INDEXES · contract_acceptances" as idxset_contract_acceptances <<INDEX_SET>> {
+  PK pk_contract_acceptances : (id) UNIQUE BTREE
+  UK contract_acceptances_merchant_version_uq : (merchant_id, version) UNIQUE BTREE
+}
+contract_acceptances .. idxset_contract_acceptances : indexed by
+
+entity "INDEXES · fee_schedule_versions" as idxset_fee_schedule_versions <<INDEX_SET>> {
+  PK pk_fee_schedule_versions : (merchant_id, version) UNIQUE BTREE
+}
+fee_schedule_versions .. idxset_fee_schedule_versions : indexed by
+
+entity "INDEXES · fee_schedule_channels" as idxset_fee_schedule_channels <<INDEX_SET>> {
+  PK pk_fee_schedule_channels : (merchant_id, version, channel) UNIQUE BTREE
+}
+fee_schedule_channels .. idxset_fee_schedule_channels : indexed by
+
+entity "INDEXES · api_keys" as idxset_api_keys <<INDEX_SET>> {
+  PK pk_api_keys : (key_id) UNIQUE BTREE
+  IX api_keys_merchant_created_idx : (merchant_id, created_at DESC, key_id DESC) BTREE
+  IX api_keys_grace_pending_idx : (grace_ends_at) BTREE WHERE revoked_at IS NULL AND grace_ends_at IS NOT NULL
+}
+api_keys .. idxset_api_keys : indexed by
+
+entity "INDEXES · outbox_events" as idxset_outbox_events <<INDEX_SET>> {
+  PK pk_outbox_events : (id) UNIQUE BTREE
+  UK outbox_events_seq_key : (seq) UNIQUE BTREE
+  IX outbox_events_pending_idx : (seq) BTREE WHERE published_at IS NULL
+}
+outbox_events .. idxset_outbox_events : indexed by
+
+entity "INDEXES · inbox_events" as idxset_inbox_events <<INDEX_SET>> {
+  PK pk_inbox_events : (consumer, event_id) UNIQUE BTREE
+}
+inbox_events .. idxset_inbox_events : indexed by
+
+entity "INDEXES · idempotency_keys" as idxset_idempotency_keys <<INDEX_SET>> {
+  PK pk_idempotency_keys : (scope, key) UNIQUE BTREE
+  IX idempotency_keys_expires_at_idx : (expires_at) BTREE
+}
+idempotency_keys .. idxset_idempotency_keys : indexed by
+
+entity "PAY EXTRAS · pay_merchants" as pay_extras_pay_merchants <<PAY_EXTRAS>> {
+  ' Lo que el generador base (gen_ddl.py) no expresa: defaults no booleanos, identidades, CHECK, FK compuestas,
+  ' funciones, triggers y datos semilla. Lo materializa salud-db/gen_ddl_pay.py (05_constraints.sql / 06_seed.sql).
+  DEFAULT merchants.status : 'pending'
+  DEFAULT merchants.created_at : now()
+  CHECK_SQL merchants : merchants_id_format | id ~ '^mc_[a-z0-9]{10,40}$'
+  CHECK_SQL merchants : merchants_display_name_len | length(display_name) BETWEEN 1 AND 200
+  CHECK_SQL merchants : merchants_legal_type_valid | legal_type IN ('unipersonal', 'srl', 'ltda', 'sa', 'sociedad_colectiva', 'sociedad_comandita_simple', 'sociedad_comandita_acciones', 'sucursal_sociedad_extranjera')
+  CHECK_SQL merchants : merchants_status_valid | status IN ('pending', 'active', 'suspended', 'closed')
+  CHECK_SQL merchants : merchants_suspension_reason_valid | suspension_reason IS NULL OR suspension_reason IN ('kyc_expired', 'risk_review', 'contract_breach', 'manual')
+  DEFAULT merchant_kyc.status : 'pending'
+  DEFAULT merchant_kyc.updated_at : now()
+  CHECK_SQL merchant_kyc : merchant_kyc_status_valid | status IN ('pending', 'in_review', 'approved', 'rejected')
+  CHECK_SQL merchant_kyc : merchant_kyc_risk_valid | risk_level IS NULL OR risk_level IN ('low', 'medium', 'high')
+  CHECK_SQL merchant_kyc : merchant_kyc_approved_has_risk | status <> 'approved' OR risk_level IS NOT NULL
+  DEFAULT kyc_documents.uploaded_at : now()
+  CHECK_SQL kyc_documents : kyc_documents_kind_valid | kind IN ('constitucion', 'nit', 'seprec', 'licencia_funcionamiento', 'certificado_sedes', 'poder_representante')
+  CHECK_SQL kyc_documents : kyc_documents_type_valid | detected_type IN ('application/pdf', 'image/png', 'image/jpeg')
+  CHECK_SQL kyc_documents : kyc_documents_sha256_format | sha256 ~ '^[0-9a-f]{64}$'
+  CHECK_SQL kyc_documents : kyc_documents_size_positive | size_bytes > 0
+  DEFAULT contract_versions.published_at : now()
+  CHECK_SQL contract_versions : contract_versions_version_positive | version >= 1
+  CHECK_SQL contract_versions : contract_versions_sha256_format | text_sha256 ~ '^[0-9a-f]{64}$'
+  DEFAULT contract_acceptances.accepted_at : now()
+  DEFAULT fee_schedule_versions.currency : 'BOB'
+  DEFAULT fee_schedule_versions.monthly_fee_minor : 0
+  DEFAULT fee_schedule_versions.published_at : now()
+  CHECK_SQL fee_schedule_versions : fee_schedule_versions_currency_bob | currency = 'BOB'
+  CHECK_SQL fee_schedule_versions : fee_schedule_versions_monthly_nonneg | monthly_fee_minor >= 0
+  DEFAULT fee_schedule_channels.fixed_minor : 0
+  CHECK_SQL fee_schedule_channels : fee_schedule_channels_channel_valid | channel IN ('qr', 'card', 'bank_transfer', 'wallet', 'direct')
+  CHECK_SQL fee_schedule_channels : fee_schedule_channels_percent_format | percent ~ '^\d{1,3}(\.\d{1,6})?$'
+  CHECK_SQL fee_schedule_channels : fee_schedule_channels_amounts_nonneg | fixed_minor >= 0 AND (min_minor IS NULL OR min_minor >= 0) AND (cap_minor IS NULL OR cap_minor >= 0)
+  CHECK_SQL fee_schedule_channels : fee_schedule_channels_min_le_cap | min_minor IS NULL OR cap_minor IS NULL OR min_minor <= cap_minor
+  FK_SQL fee_schedule_channels : fee_schedule_channels_version_fk | (merchant_id, version) -> fee_schedule_versions (merchant_id, version)
+  DEFAULT api_keys.created_at : now()
+  CHECK_SQL api_keys : api_keys_mode_valid | mode IN ('test', 'live')
+  CHECK_SQL api_keys : api_keys_hash_format | key_hash ~ '^sha256\$[0-9a-f]{64}$'
+  CHECK_SQL api_keys : api_keys_reason_valid | revoke_reason IS NULL OR revoke_reason IN ('revoked_by_merchant', 'rotated', 'compromised', 'merchant_closed')
+  CHECK_SQL api_keys : api_keys_revoked_has_reason | (revoked_at IS NULL) = (revoke_reason IS NULL)
+  DEFAULT outbox_events.created_at : now()
+  DEFAULT outbox_events.attempts : 0
+  DEFAULT inbox_events.processed_at : now()
+  DEFAULT idempotency_keys.recovery_point : 'started'
+  DEFAULT idempotency_keys.created_at : now()
+  CHECK_SQL idempotency_keys : idempotency_keys_state_check | state IN ('started', 'completed')
+  ' Inmutabilidad: lo aceptado y lo publicado no se edita ni se borra, ni siquiera con acceso a la base de la aplicación.
+  FUNCTION forbid_mutation
+  | CREATE OR REPLACE FUNCTION forbid_mutation() RETURNS trigger LANGUAGE plpgsql AS $$
+  | BEGIN
+  |   RAISE EXCEPTION 'la tabla % es inmutable (%)', TG_TABLE_NAME, TG_OP USING ERRCODE = 'integrity_constraint_violation';
+  | END;
+  | $$
+  TRIGGER contract_versions_immutable : BEFORE UPDATE OR DELETE ON contract_versions FOR EACH ROW EXECUTE FUNCTION forbid_mutation()
+  TRIGGER contract_acceptances_immutable : BEFORE UPDATE OR DELETE ON contract_acceptances FOR EACH ROW EXECUTE FUNCTION forbid_mutation()
+  TRIGGER fee_schedule_versions_immutable : BEFORE UPDATE OR DELETE ON fee_schedule_versions FOR EACH ROW EXECUTE FUNCTION forbid_mutation()
+  TRIGGER fee_schedule_channels_immutable : BEFORE UPDATE OR DELETE ON fee_schedule_channels FOR EACH ROW EXECUTE FUNCTION forbid_mutation()
+  ' TRUNCATE: no pasa por los triggers de fila, así que cada tabla inmutable necesita el suyo (revisión de seguridad 2026-10-28: faltaba en
+  ' contract_versions y fee_schedule_channels; el SQL de referencia solo lo tenía en contract_acceptances y fee_schedule_versions).
+  TRIGGER contract_versions_no_truncate : BEFORE TRUNCATE ON contract_versions FOR EACH STATEMENT EXECUTE FUNCTION forbid_mutation()
+  TRIGGER contract_acceptances_no_truncate : BEFORE TRUNCATE ON contract_acceptances FOR EACH STATEMENT EXECUTE FUNCTION forbid_mutation()
+  TRIGGER fee_schedule_versions_no_truncate : BEFORE TRUNCATE ON fee_schedule_versions FOR EACH STATEMENT EXECUTE FUNCTION forbid_mutation()
+  TRIGGER fee_schedule_channels_no_truncate : BEFORE TRUNCATE ON fee_schedule_channels FOR EACH STATEMENT EXECUTE FUNCTION forbid_mutation()
+}
+
+@enduml

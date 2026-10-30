@@ -268,6 +268,20 @@ CREATE TABLE IF NOT EXISTS "profiles"."patient_portal_proxies" (
     CONSTRAINT "pk_patient_portal_proxies" PRIMARY KEY ("id")
 );
 
+CREATE TABLE IF NOT EXISTS "profiles"."patient_primary_practitioners" (
+    "id" uuid NOT NULL,
+    "patient_profile_id" uuid NOT NULL,
+    "practitioner_profile_id" uuid NOT NULL,
+    "valid_from" timestamptz NOT NULL,
+    "valid_to" timestamptz,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_patient_primary_practitioners" PRIMARY KEY ("id")
+);
+
 CREATE TABLE IF NOT EXISTS "profiles"."insurance_representative_profiles" (
     "profile_id" uuid NOT NULL,
     "representative_type_concept_id" uuid NOT NULL,
