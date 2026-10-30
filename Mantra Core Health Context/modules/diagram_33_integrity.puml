@@ -272,11 +272,37 @@ entity "procedures_perioperative.procedure_cases" as procedures_perioperative_pr
   ' ORG-QUI-005: la regla que periop-cases.service ya aplica (findOverlappingCases), ahora en la base.
   ' Estados que ocupan el quirofano (CASE_SCHEDULED, CASE_READY, SURG_CASE_IN_PROGRESS) como UUID
   ' literales: el predicado de un EXCLUDE tiene que ser inmutable. Rango semiabierto [), igual que
-  ' la comparacion `<`/`>` del servicio. La preparacion y la limpieza NO entran en el rango: sumar un
-  ' intervalo a un timestamptz es STABLE y un indice no lo admite; las aplica el servicio.
-  EXCLUDE : operating room time overlap
-  EXCLUDE_SQL : ex_procedure_cases_operating_room_time | "operating_room_id" WITH =, tstzrange("scheduled_start_at", "scheduled_end_at", '[)') WITH && | "operating_room_id" IS NOT NULL AND "scheduled_start_at" IS NOT NULL AND "scheduled_end_at" IS NOT NULL AND "status_concept_id" IN ('6fe38139-ad1d-5214-84c1-8c184e4e58fb', 'f6985cd5-f867-5d76-b70c-1138667fd2ab', 'fdc78cc9-eda6-5625-9a26-1bdcec4dc203')
+  ' la comparacion `<`/`>` del servicio.
+  ' + infraestructura F4 (2026-10-29): el rango pasa a ser la ventana RESERVADA (programada mas
+  ' preparacion y limpieza). Sumar un intervalo a un timestamptz es STABLE y un indice no lo
+  ' admite, asi que la ventana vive en reserved_start_at/reserved_end_at y la mantiene el trigger
+  ' trg_procedure_cases_reserved_window (patch 2026-10-29_infraestructura_f4_quirofanos.sql).
+  ' Mismo nombre de constraint: el mapa constraint -> reason de la API no cambia.
+  EXCLUDE : operating room reserved window overlap (scheduled +/- prep/cleanup)
+  EXCLUDE_SQL : ex_procedure_cases_operating_room_time | "operating_room_id" WITH =, tstzrange("reserved_start_at", "reserved_end_at", '[)') WITH && | "operating_room_id" IS NOT NULL AND "reserved_start_at" IS NOT NULL AND "reserved_end_at" IS NOT NULL AND "status_concept_id" IN ('6fe38139-ad1d-5214-84c1-8c184e4e58fb', 'f6985cd5-f867-5d76-b70c-1138667fd2ab', 'fdc78cc9-eda6-5625-9a26-1bdcec4dc203')
   CHECK_SQL : ck_procedure_cases_buffers | (COALESCE("prep_minutes", 0) >= 0 AND COALESCE("cleanup_minutes", 0) >= 0)
+}
+' + infraestructura F4 (2026-10-29) — bloques quirurgicos. Duenio SERVICE (ORB_OWNER_SERVICE) exige
+' unidad o especialidad; SURGEON (ORB_OWNER_SURGEON) exige cirujano. Dos bloques ACTIVOS
+' (ORB_ACTIVE) no se pisan en la misma sala. UUID = deterministicId('procedures_perioperative:<NOMBRE>')
+' de la API (defineModuleConcepts del modulo); literales porque el predicado debe ser inmutable.
+entity "procedures_perioperative.operating_room_block_series" as procedures_perioperative_operating_room_block_series <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_operating_room_block_series_owner | ("owner_kind_concept_id" IN ('6b4fd1e9-892f-572b-9e9b-96b321ecdc26', '48a989b7-6300-516d-9982-8f741aaf0758') AND ("owner_kind_concept_id" <> '6b4fd1e9-892f-572b-9e9b-96b321ecdc26' OR "clinical_unit_id" IS NOT NULL OR "surgical_specialty_concept_id" IS NOT NULL) AND ("owner_kind_concept_id" <> '48a989b7-6300-516d-9982-8f741aaf0758' OR "surgeon_profile_id" IS NOT NULL))
+  CHECK_SQL : ck_operating_room_block_series_time_order | ("end_time" > "start_time")
+  CHECK_SQL : ck_operating_room_block_series_validity | ("valid_to" IS NULL OR "valid_to" >= "valid_from")
+  CHECK_SQL : ck_operating_room_block_series_weekdays | (cardinality("weekdays") > 0 AND "weekdays" <@ ARRAY[1, 2, 3, 4, 5, 6, 7]::smallint[])
+  CHECK_SQL : ck_operating_room_block_series_release_hours | ("release_hours" >= 0)
+}
+entity "procedures_perioperative.operating_room_blocks" as procedures_perioperative_operating_room_blocks <<REFERENCE_ONLY>> {
+  EXCLUDE : active operating room block time overlap
+  EXCLUDE_SQL : ex_operating_room_blocks_time | "operating_room_id" WITH =, tstzrange("starts_at", "ends_at", '[)') WITH && | "status_concept_id" = '762dc30b-3e3c-5e1e-8504-5c511fd1d4a8'
+  CHECK_SQL : ck_operating_room_blocks_owner | ("owner_kind_concept_id" IN ('6b4fd1e9-892f-572b-9e9b-96b321ecdc26', '48a989b7-6300-516d-9982-8f741aaf0758') AND ("owner_kind_concept_id" <> '6b4fd1e9-892f-572b-9e9b-96b321ecdc26' OR "clinical_unit_id" IS NOT NULL OR "surgical_specialty_concept_id" IS NOT NULL) AND ("owner_kind_concept_id" <> '48a989b7-6300-516d-9982-8f741aaf0758' OR "surgeon_profile_id" IS NOT NULL))
+  CHECK_SQL : ck_operating_room_blocks_end_after_start | ("ends_at" > "starts_at")
+  CHECK_SQL : ck_operating_room_blocks_release_before_start | ("release_at" <= "starts_at")
+}
+' + infraestructura F4 (2026-10-29) — R0: un recurso de tipo sala apunta a su espacio por FK real.
+entity "scheduling.schedulable_resources" as scheduling_schedulable_resources <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_schedulable_resources_care_space_ref | ("resource_ref_type" <> 'care_spaces' OR "care_space_id" = "resource_ref_id")
 }
 entity "practice.care_spaces" as practice_care_spaces <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_care_spaces_buffers | (COALESCE("prep_minutes", 0) >= 0 AND COALESCE("cleanup_minutes", 0) >= 0)

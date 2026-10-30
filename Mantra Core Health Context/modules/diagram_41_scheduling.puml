@@ -12,6 +12,9 @@ entity "forms.form_instances" as forms_form_instances <<REFERENCE_ONLY>> { * id 
 ' Stub propio para declarar la FK autorreferente follow_up_of_booking_id (la convención
 ' por nombre no la resuelve: no existe una tabla `follow_up_of_bookings`).
 entity "scheduling.appointment_bookings" as scheduling_appointment_bookings <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+' + infraestructura F4-R0 / F5d (2026-10-29): destino de las FK `care_space_id` de
+' schedulable_resources y schedule_templates (el espacio físico, FHIR Location).
+entity "practice.care_spaces" as practice_care_spaces <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 
 entity practitioner_schedules {
   * id : uuid <<PK>>
@@ -83,6 +86,13 @@ entity schedulable_resources {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + infraestructura F4 · R0 (2026-10-29) — recurso agendable ligado a un espacio físico.
+  ' `resource_ref_type`/`resource_ref_id` siguen siendo la referencia polimórfica; cuando
+  ' el recurso es una sala (`resource_ref_type = 'care_spaces'`), esta FK real la ata a
+  ' practice.care_spaces: ck_schedulable_resources_care_space_ref (módulo 33) exige
+  ' care_space_id = resource_ref_id, y ux_schedulable_resources_care_space_active impide
+  ' dos recursos ACTIVOS (STATE_ACTIVE) sobre el mismo espacio.
+    care_space_id : uuid <<FK>>
 }
 entity schedule_templates {
   * id : uuid <<PK>>
@@ -113,6 +123,10 @@ entity schedule_templates {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + infraestructura F5d (2026-10-29) — horario por espacio: el consultorio/sala que ocupa
+  ' la plantilla. NULL = la plantilla no reserva un espacio (comportamiento previo). La
+  ' API valida tenant, función y sede; la cita hereda el espacio (clinical.appointments).
+    care_space_id : uuid <<FK>>
 }
 entity schedule_rules {
   * id : uuid <<PK>>
@@ -179,6 +193,12 @@ entity availability_exceptions {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + infraestructura F5d (2026-10-29) — origen de la excepción: EXC_SRC_MANUAL |
+  ' CARE_SPACE_BLOCK | EQUIPMENT_STATUS (conceptos de la API). `source_ref_id` es
+  ' polimórfico (practice.care_space_blocks / diagnostic_units.diagnostic_equipment), sin FK.
+  ' NULL en ambas = excepción manual previa a v4.2.68.
+    source_kind_concept_id : uuid <<FK>>
+    source_ref_id : uuid
 }
 entity bookable_slots {
   * id : uuid <<PK>>
@@ -449,6 +469,8 @@ appointment_bookings }o--o| forms_form_instances : form_instance_id
 schedulable_resources ||--o{ waitlist_entries
 appointment_bookings ||--o{ appointment_reminders
 practitioner_schedules ||--o{ availability_slots
+schedulable_resources }o--o| practice_care_spaces : care_space_id
+schedule_templates }o--o| practice_care_spaces : care_space_id
 
 note as DEP_diagram_41_scheduling
   Connects to other modules via:
@@ -506,6 +528,13 @@ entity "INDEXES · schedulable_resources" as idxset_schedulable_resources <<INDE
   IX ix_schedulable_resources_created_by_user_id : (created_by_user_id) BTREE
   IX ix_schedulable_resources_updated_by_user_id : (updated_by_user_id) BTREE
   IX ix_schedulable_resources_tenant_id_state_concept_id : (tenant_id, state_concept_id, updated_at DESC) BTREE
+  IX ix_schedulable_resources_care_space_id : (care_space_id) BTREE
+  ' Destino de la FK compuesta (custodian_tenant_id, schedulable_resource_id) de procedure_cases
+  ' (patrón F1b, patch F4).
+  UX ux_schedulable_resources_tenant_id_id : (tenant_id, id) UNIQUE BTREE
+  ' STATE_ACTIVE = deterministicId('state:active') de la API (UUID literal: el predicado
+  ' de un índice parcial tiene que ser inmutable).
+  UX ux_schedulable_resources_care_space_active : (care_space_id) UNIQUE BTREE WHERE care_space_id IS NOT NULL AND state_concept_id = '38a1d301-f40d-5b17-a695-5e6d605f8b19'
 }
 
 schedulable_resources .. idxset_schedulable_resources : indexed by
@@ -519,6 +548,7 @@ entity "INDEXES · schedule_templates" as idxset_schedule_templates <<INDEX_SET>
   IX ix_schedule_templates_status_concept_id : (status_concept_id) BTREE
   IX ix_schedule_templates_created_by_user_id : (created_by_user_id) BTREE
   IX ix_schedule_templates_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_schedule_templates_care_space_id : (care_space_id) BTREE
   GIST gist_schedule_templates_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
 }
 
@@ -541,6 +571,8 @@ entity "INDEXES · availability_exceptions" as idxset_availability_exceptions <<
   IX ix_availability_exceptions_exception_type_concept_id : (exception_type_concept_id) BTREE
   IX ix_availability_exceptions_created_by_user_id : (created_by_user_id) BTREE
   IX ix_availability_exceptions_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_availability_exceptions_source_kind_concept_id : (source_kind_concept_id) BTREE
+  IX ix_availability_exceptions_source_ref : (source_ref_id) BTREE WHERE source_ref_id IS NOT NULL
   GIST gist_availability_exceptions_effective_period : tstzrange(start_at, end_at, '[)') GIST
 }
 

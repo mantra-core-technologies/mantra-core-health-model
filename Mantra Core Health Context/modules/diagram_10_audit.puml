@@ -276,6 +276,37 @@ entity care_spaces_history <<HISTORY>> {
   ' 2026-10-29_infraestructura_f1b_seguridad.sql.
   * tenant_id : uuid <<FK>>
 }
+' + infraestructura F4 (2026-10-29): historia de las series y bloques quirúrgicos, mismo
+' patrón que care_spaces_history tras F1b (tenant de la fila de origen, RLS, solo inserción +
+' cierre de valid_to; triggers y privilegios en 2026-10-29_infraestructura_f4_quirofanos.sql).
+entity operating_room_block_series_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * operating_room_block_series_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+  * tenant_id : uuid <<FK>>
+}
+entity operating_room_blocks_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * operating_room_block_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+  * tenant_id : uuid <<FK>>
+}
 entity diagnostic_reports_history <<HISTORY>> {
   * history_id : uuid <<PK>>
   --
@@ -2067,6 +2098,30 @@ entity "INDEXES · care_spaces_history" as idxset_care_spaces_history <<INDEX_SE
 }
 
 care_spaces_history .. idxset_care_spaces_history : indexed by
+
+entity "INDEXES · operating_room_block_series_history" as idxset_operating_room_block_series_history <<INDEX_SET>> {
+  PK pk_operating_room_block_series_history : (history_id) UNIQUE BTREE
+  IX ix_operating_room_block_series_history_operating_room_block_series_id : (operating_room_block_series_id) BTREE
+  IX ix_operating_room_block_series_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_operating_room_block_series_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_operating_room_block_series_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_operating_room_block_series_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+  IX ix_operating_room_block_series_history_tenant_id : (tenant_id) BTREE
+}
+
+operating_room_block_series_history .. idxset_operating_room_block_series_history : indexed by
+
+entity "INDEXES · operating_room_blocks_history" as idxset_operating_room_blocks_history <<INDEX_SET>> {
+  PK pk_operating_room_blocks_history : (history_id) UNIQUE BTREE
+  IX ix_operating_room_blocks_history_operating_room_block_id : (operating_room_block_id) BTREE
+  IX ix_operating_room_blocks_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_operating_room_blocks_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_operating_room_blocks_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_operating_room_blocks_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+  IX ix_operating_room_blocks_history_tenant_id : (tenant_id) BTREE
+}
+
+operating_room_blocks_history .. idxset_operating_room_blocks_history : indexed by
 
 entity "INDEXES · diagnostic_reports_history" as idxset_diagnostic_reports_history <<INDEX_SET>> {
   PK pk_diagnostic_reports_history : (history_id) UNIQUE BTREE

@@ -62,6 +62,12 @@ CREATE INDEX IF NOT EXISTS "ix_schedulable_resources_updated_by_user_id" ON "sch
 
 CREATE INDEX IF NOT EXISTS "ix_schedulable_resources_tenant_id_state_concept_id" ON "scheduling"."schedulable_resources" ("tenant_id", "state_concept_id", "updated_at" DESC);
 
+CREATE INDEX IF NOT EXISTS "ix_schedulable_resources_care_space_id" ON "scheduling"."schedulable_resources" ("care_space_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_schedulable_resources_tenant_id_id" ON "scheduling"."schedulable_resources" ("tenant_id", "id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_schedulable_resources_care_space_active" ON "scheduling"."schedulable_resources" ("care_space_id") WHERE care_space_id IS NOT NULL AND state_concept_id = '38a1d301-f40d-5b17-a695-5e6d605f8b19';
+
 CREATE INDEX IF NOT EXISTS "ix_schedule_templates_resource_id" ON "scheduling"."schedule_templates" ("resource_id");
 
 CREATE INDEX IF NOT EXISTS "ix_schedule_templates_practitioner_schedule_id" ON "scheduling"."schedule_templates" ("practitioner_schedule_id");
@@ -75,6 +81,8 @@ CREATE INDEX IF NOT EXISTS "ix_schedule_templates_status_concept_id" ON "schedul
 CREATE INDEX IF NOT EXISTS "ix_schedule_templates_created_by_user_id" ON "scheduling"."schedule_templates" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_schedule_templates_updated_by_user_id" ON "scheduling"."schedule_templates" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_schedule_templates_care_space_id" ON "scheduling"."schedule_templates" ("care_space_id");
 
 CREATE INDEX IF NOT EXISTS "gist_schedule_templates_effective_period" ON "scheduling"."schedule_templates" USING gist (daterange(valid_from, valid_to, '[)'));
 
@@ -95,6 +103,10 @@ CREATE INDEX IF NOT EXISTS "ix_availability_exceptions_exception_type_concept_id
 CREATE INDEX IF NOT EXISTS "ix_availability_exceptions_created_by_user_id" ON "scheduling"."availability_exceptions" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_availability_exceptions_updated_by_user_id" ON "scheduling"."availability_exceptions" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_availability_exceptions_source_kind_concept_id" ON "scheduling"."availability_exceptions" ("source_kind_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_availability_exceptions_source_ref" ON "scheduling"."availability_exceptions" ("source_ref_id") WHERE source_ref_id IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS "gist_availability_exceptions_effective_period" ON "scheduling"."availability_exceptions" USING gist (tstzrange(start_at, end_at, '[)'));
 

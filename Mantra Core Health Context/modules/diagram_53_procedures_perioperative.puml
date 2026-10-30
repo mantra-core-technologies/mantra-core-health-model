@@ -42,6 +42,15 @@ entity common_files <<REFERENCE_ONLY>> {
   * id : uuid <<PK>>
 }
 
+' + infraestructura F4 (2026-10-29): destinos calificados de las FK nuevas del módulo
+' (las aristas etiquetadas de abajo los usan; el stub `practice_care_spaces` sin schema
+' queda como estaba).
+entity "practice.care_spaces" as ref_practice_care_spaces <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "practice.practice_sites" as ref_practice_practice_sites <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "practice.clinical_units" as ref_practice_clinical_units <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+entity "profiles.health_practitioner_profiles" as ref_health_practitioner_profiles <<REFERENCE_ONLY>> { * profile_id : uuid <<PK>> }
+entity "scheduling.schedulable_resources" as ref_scheduling_schedulable_resources <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
+
 entity procedure_cases {
   * id : uuid <<PK>>
   --
@@ -76,6 +85,18 @@ entity procedure_cases {
     prep_minutes : integer
     cleanup_minutes : integer
     version_number : integer
+  ' + infraestructura F4 (2026-10-29): el recurso agendable de la sala (R0, scheduling) y el
+  ' bloque quirúrgico en el que cae el caso (NULL = agenda abierta o urgencia fuera de bloque).
+    schedulable_resource_id : uuid <<FK>>
+    operating_room_block_id : uuid <<FK>>
+  ' Ventana RESERVADA del quirófano = programada ± preparación/limpieza. La mantiene el
+  ' trigger trg_procedure_cases_reserved_window (BEFORE INSERT/UPDATE, patch F4):
+  '   reserved_start_at = scheduled_start_at − coalesce(prep_minutes, 0) min
+  '   reserved_end_at   = scheduled_end_at   + coalesce(cleanup_minutes, 0) min
+  ' Se materializa en columnas porque `timestamptz ± interval` es STABLE y un EXCLUDE no
+  ' lo admite; ex_procedure_cases_operating_room_time (módulo 33) usa este rango.
+    reserved_start_at : timestamptz
+    reserved_end_at : timestamptz
 }
 
 entity procedure_case_diagnoses {
@@ -618,6 +639,69 @@ entity operating_room_utilization_events <<LOG>> {
     recorded_by_user_id : uuid <<FK>>
     details_json : jsonb
   * created_at : timestamptz
+  ' + infraestructura F4 (2026-10-29): tenant (backfill desde la sala; RLS) y bloque al que
+  ' se imputa el evento (utilización por bloque).
+    tenant_id : uuid <<FK>>
+    operating_room_block_id : uuid <<FK>>
+}
+
+' + infraestructura F4 (2026-10-29) — BLOQUES QUIRÚRGICOS (block scheduling). Una serie
+' declara la regla (sala, dueño, días, horario, vigencia, horas de liberación); las
+' instancias son los bloques concretos. Dueño SERVICE ⇒ unidad o especialidad; SURGEON ⇒
+' cirujano (ck_*_owner, módulo 33). Dos bloques ACTIVOS no se pisan en la misma sala
+' (ex_operating_room_blocks_time). Un bloque sin casos se libera a `release_at`
+' (= starts_at − release_hours) y su tiempo vuelve a la agenda abierta.
+entity operating_room_block_series {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * practice_site_id : uuid <<FK>>
+  * operating_room_id : uuid <<FK>>
+  * owner_kind_concept_id : uuid <<FK>>
+    clinical_unit_id : uuid <<FK>>
+    surgical_specialty_concept_id : uuid <<FK>>
+    surgeon_profile_id : uuid <<FK>>
+  ' Días ISO (1 = lunes … 7 = domingo).
+  * weekdays : smallint[]
+  * start_time : time
+  * end_time : time
+  * valid_from : date
+    valid_to : date
+  ' 72 h por defecto (practice_settings `infra.or_block_release_hours`); lo escribe la API.
+  * release_hours : integer
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity operating_room_blocks {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+    series_id : uuid <<FK>>
+  * operating_room_id : uuid <<FK>>
+  * owner_kind_concept_id : uuid <<FK>>
+    clinical_unit_id : uuid <<FK>>
+    surgical_specialty_concept_id : uuid <<FK>>
+    surgeon_profile_id : uuid <<FK>>
+  * starts_at : timestamptz
+  * ends_at : timestamptz
+  * release_at : timestamptz
+  ' ORB_ACTIVE | ORB_RELEASED | ORB_CANCELLED
+  * status_concept_id : uuid <<FK>>
+    released_at : timestamptz
+  ' NULL = liberación automática (worker).
+    released_by_user_id : uuid <<FK>>
+    release_reason : text
+    released_minutes : integer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
 }
 
 entity sterility_verification_checks <<IMMUTABLE>> {
@@ -667,6 +751,17 @@ procedure_cases ||--o{ procedure_cancellations
 procedure_cases ||--o{ procedure_charge_items
 procedure_cases ||--o{ operating_room_utilization_events
 procedure_cases ||--o{ sterility_verification_checks
+procedure_cases }o--o| ref_scheduling_schedulable_resources : schedulable_resource_id
+procedure_cases }o--o| operating_room_blocks : operating_room_block_id
+operating_room_utilization_events }o--o| operating_room_blocks : operating_room_block_id
+operating_room_block_series }o--|| ref_practice_practice_sites : practice_site_id
+operating_room_block_series }o--|| ref_practice_care_spaces : operating_room_id
+operating_room_block_series }o--o| ref_practice_clinical_units : clinical_unit_id
+operating_room_block_series }o--o| ref_health_practitioner_profiles : surgeon_profile_id
+operating_room_blocks }o--o| operating_room_block_series : series_id
+operating_room_blocks }o--|| ref_practice_care_spaces : operating_room_id
+operating_room_blocks }o--o| ref_practice_clinical_units : clinical_unit_id
+operating_room_blocks }o--o| ref_health_practitioner_profiles : surgeon_profile_id
 
 note right of procedure_cases
   PERIOPERATIVE CASE
@@ -707,6 +802,8 @@ entity "INDEXES · procedure_cases" as idxset_procedure_cases <<INDEX_SET>> {
   UK uk_procedure_cases_tenant_number : (custodian_tenant_id, case_number) UNIQUE BTREE
   IX ix_procedure_cases_room_schedule : (operating_room_id, scheduled_start_at, scheduled_end_at) BTREE
   IX ix_procedure_cases_patient_time : (custodian_tenant_id, patient_profile_id, scheduled_start_at DESC) BTREE
+  IX ix_procedure_cases_schedulable_resource_id : (schedulable_resource_id) BTREE
+  IX ix_procedure_cases_operating_room_block_id : (operating_room_block_id) BTREE
 }
 
 procedure_cases .. idxset_procedure_cases : indexed by
@@ -821,6 +918,9 @@ entity "INDEXES · surgical_safety_checklists" as idxset_surgical_safety_checkli
   IX ix_surgical_safety_checklists_status_concept_id : (status_concept_id) BTREE
   IX ix_surgical_safety_checklists_coordinator_profile_id : (coordinator_profile_id) BTREE
   UK uk_surgical_safety_checklists_case_type_version : (procedure_case_id, checklist_type_concept_id, checklist_version) UNIQUE BTREE
+  ' + infraestructura F4 (2026-10-29): un solo checklist de cada tipo por caso, sea cual sea la
+  ' versión (crear el checklist es idempotente en la API).
+  UX ux_surgical_safety_checklists_case_type : (procedure_case_id, checklist_type_concept_id) UNIQUE BTREE
 }
 
 surgical_safety_checklists .. idxset_surgical_safety_checklists : indexed by
@@ -1140,9 +1240,53 @@ entity "INDEXES · operating_room_utilization_events" as idxset_operating_room_u
   IX ix_operating_room_utilization_events_recorded_by_user_id : (recorded_by_user_id) BTREE
   BRIN brin_operating_room_utilization_events_occurred_at : (occurred_at) BRIN pages_per_range=128
   IX ix_or_utilization_room_time : (operating_room_id, occurred_at DESC) BTREE
+  IX ix_operating_room_utilization_events_tenant_id : (tenant_id) BTREE
+  IX ix_operating_room_utilization_events_operating_room_block_id : (operating_room_block_id) BTREE
 }
 
 operating_room_utilization_events .. idxset_operating_room_utilization_events : indexed by
+
+entity "INDEXES · operating_room_block_series" as idxset_operating_room_block_series <<INDEX_SET>> {
+  PK pk_operating_room_block_series : (id) UNIQUE BTREE
+  IX ix_operating_room_block_series_tenant_id : (tenant_id) BTREE
+  IX ix_operating_room_block_series_practice_site_id : (practice_site_id) BTREE
+  IX ix_operating_room_block_series_operating_room_id : (operating_room_id) BTREE
+  IX ix_operating_room_block_series_owner_kind_concept_id : (owner_kind_concept_id) BTREE
+  IX ix_operating_room_block_series_clinical_unit_id : (clinical_unit_id) BTREE
+  IX ix_operating_room_block_series_surgical_specialty_concept_id : (surgical_specialty_concept_id) BTREE
+  IX ix_operating_room_block_series_surgeon_profile_id : (surgeon_profile_id) BTREE
+  IX ix_operating_room_block_series_status_concept_id : (status_concept_id) BTREE
+  IX ix_operating_room_block_series_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_operating_room_block_series_updated_by_user_id : (updated_by_user_id) BTREE
+  ' Destino de las FK compuestas (tenant_id, x_id) del patch F4 (patrón F1b: el hijo no puede
+  ' apuntar a un padre de otro tenant).
+  UX ux_operating_room_block_series_tenant_id_id : (tenant_id, id) UNIQUE BTREE
+}
+
+operating_room_block_series .. idxset_operating_room_block_series : indexed by
+
+entity "INDEXES · operating_room_blocks" as idxset_operating_room_blocks <<INDEX_SET>> {
+  PK pk_operating_room_blocks : (id) UNIQUE BTREE
+  IX ix_operating_room_blocks_tenant_id : (tenant_id) BTREE
+  IX ix_operating_room_blocks_series_id : (series_id) BTREE
+  IX ix_operating_room_blocks_operating_room_id : (operating_room_id) BTREE
+  IX ix_operating_room_blocks_owner_kind_concept_id : (owner_kind_concept_id) BTREE
+  IX ix_operating_room_blocks_clinical_unit_id : (clinical_unit_id) BTREE
+  IX ix_operating_room_blocks_surgical_specialty_concept_id : (surgical_specialty_concept_id) BTREE
+  IX ix_operating_room_blocks_surgeon_profile_id : (surgeon_profile_id) BTREE
+  IX ix_operating_room_blocks_status_concept_id : (status_concept_id) BTREE
+  IX ix_operating_room_blocks_released_by_user_id : (released_by_user_id) BTREE
+  IX ix_operating_room_blocks_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_operating_room_blocks_updated_by_user_id : (updated_by_user_id) BTREE
+  ' Lecturas: agenda de la sala por rango, y el tick de liberación (activos por release_at).
+  IX ix_operating_room_blocks_room_time : (operating_room_id, starts_at, ends_at) BTREE
+  IX ix_operating_room_blocks_release_due : (status_concept_id, release_at) BTREE
+  ' Destino de las FK compuestas (tenant_id, x_id) del patch F4 (patrón F1b: el hijo no puede
+  ' apuntar a un padre de otro tenant).
+  UX ux_operating_room_blocks_tenant_id_id : (tenant_id, id) UNIQUE BTREE
+}
+
+operating_room_blocks .. idxset_operating_room_blocks : indexed by
 
 entity "INDEXES · sterility_verification_checks" as idxset_sterility_verification_checks <<INDEX_SET>> {
   PK pk_sterility_verification_checks : (id) UNIQUE BTREE
