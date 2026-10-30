@@ -198,6 +198,20 @@ DO $$ BEGIN
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "accounting"."cost_centers"
+        ADD CONSTRAINT "fk_cost_centers_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: practice.clinical_units (requiere schema practice)
+DO $$ BEGIN
+    ALTER TABLE "accounting"."cost_centers"
+        ADD CONSTRAINT "fk_cost_centers_clinical_unit_id" FOREIGN KEY ("clinical_unit_id")
+        REFERENCES "practice"."clinical_units" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 -- destino: practice.practices (requiere schema practice)
 DO $$ BEGIN
     ALTER TABLE "accounting"."cost_center_maps"
@@ -567,6 +581,20 @@ DO $$ BEGIN
     ALTER TABLE "accounting"."infrastructure_items"
         ADD CONSTRAINT "fk_infrastructure_items_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "accounting"."infrastructure_items"
+        ADD CONSTRAINT "fk_infrastructure_items_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: practice.care_spaces (requiere schema practice)
+DO $$ BEGIN
+    ALTER TABLE "accounting"."infrastructure_items"
+        ADD CONSTRAINT "fk_infrastructure_items_care_space_id" FOREIGN KEY ("care_space_id")
+        REFERENCES "practice"."care_spaces" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: erp.employees (requiere schema erp)
