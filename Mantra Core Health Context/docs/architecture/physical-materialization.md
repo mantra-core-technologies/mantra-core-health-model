@@ -122,6 +122,34 @@ de la base parcheada. Con un código duplicado en la misma sede el parche aborta
 estaba. Como `mantra_app` con el tenant A fijado se ve 1 de 3 espacios y se rechaza escribir una habilitación del
 tenant B. No se aplicó contra una base con datos reales, ni se cargó el paquete de seeds.
 
+### v4.2.68 — La factura de la cita (FAC-01, M-01) (2026-10-29)
+
+**Cambio de esquema: +1 columna en `scheduling.appointment_payment_states` (módulo 41).**
+Parche: `SQL/patches/2026-10-29_v4268_appointment_payment_states_invoice.sql` (idempotente, fuera de
+`apply_all.sql`). `v4267` ya estaba tomado (encuesta base), de ahí `v4268`.
+
+- `invoice_id` → `billing.invoices`, nullable: la cuenta por cobrar que crea el primer pago confirmado
+  con monto de la cita. Los pagos siguientes se asignan a esa misma factura. Las filas que ya existen
+  no tienen factura, y una marca sin monto, una cita sin práctica o una práctica sin precio tampoco
+  (CONTRATO de facturación, S-2 y S-5).
+- Índice único parcial `ux_appointment_payment_states_invoice` (`WHERE invoice_id IS NOT NULL`): una
+  factura es de una sola cita.
+- La FK se resuelve por convención (`invoice_id` → `invoices`, unívoco en el modelo) y sale diferida
+  **sin** `ON DELETE`: no deja borrar una factura referenciada. Una factura se anula con nota de
+  crédito, no se borra. El generador sólo sabe emitir la cascada, así que se queda con NO ACTION.
+- Dirección `scheduling` → `billing`, la misma de `practitioner_service_offerings.service_catalog_id`:
+  no arma el anillo que evita `quotations.appointment_id`.
+
+**Delta del módulo 41:** +1 FK, +1 índice. **Cómo se generó.** La copia de la bóveda con la que se corrió
+`gen_ddl.py all` no reproduce byte a byte el `SQL/` de `dev` (28 archivos de otros módulos cambian sin
+tocar ningún `.puml`). Para no arrastrar esa deriva, se generó dos veces con la misma bóveda, el modelo
+anterior y el nuevo, y se aplicó sobre `SQL/` sólo la diferencia entre las dos: la columna, el índice, la
+FK y los totales del reporte. `gen_integrity.py` no cambia nada; `gen_seeds.py --dry` no suma filas.
+
+**Verificado** sobre la base local del stack Docker (con datos sintéticos): el parche dos veces, y la
+segunda sólo avisa «already exists». La tabla queda con la columna, el índice parcial y la FK. No se
+aplicó contra una base con datos reales.
+
 ### v4.2.65 — Derivación con tipo y servicio de destino (2026-10-28)
 
 **Cambio de esquema: +2 columnas en `clinical_ext.referrals` (módulo 18).**
@@ -2506,3 +2534,13 @@ y la cascada de miembros se declaran explícitamente en PUML; no se infieren por
 
 Despliegue: patch de modelo → API → frontend. Retirar una versión de aplicación conserva las
 columnas aditivas, las versiones adjudicadas y sus reversiones financieras.
+
+## v4.2.31 — Cuentas de acceso de aseguradoras: de patch SQL a seed de demostración de la API
+
+El patch `2026-09-26_v4231_seed_insurer_accounts.sql` sembraba 33 cuentas `acceso@<dominio>` con una
+misma clave conocida y la reponía en cada despliegue. Como `postgres-init` aplica todo `SQL/patches/`
+en cualquier entorno, un entorno de producción nuevo las habría recibido. Se retiran el patch y su
+generador (`salud-db/seed_insurer_accounts.py`): las cuentas pasan a un seed de demostración opt-in de
+la API (`SEED_DEMO_PASSWORD`; se niega en producción sin `SEED_DEMO_ALLOW_PRODUCTION=true`), que solo
+crea las que faltan y nunca repone la clave de una existente. No se borra ninguna fila de ninguna base.
+Esto resuelve además el patch que fallaba en base limpia por depender del catálogo.
