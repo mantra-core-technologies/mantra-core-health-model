@@ -3,7 +3,9 @@
 -- sobre BD viva
 -- Fecha: 2026-10-29 · Contrato: SALUD/Arquitectura/infraestructura-hospitalaria/
 --   CONTRATO-F2-F5.md §F3.1 (repositorio de documentación)
--- Requiere: 2026-10-29_infraestructura_f1.sql (practice.care_spaces.form_concept_id).
+-- Requiere: 2026-10-29_infraestructura_f1.sql (practice.care_spaces.form_concept_id) y
+--   2026-10-29_infraestructura_f1b_seguridad.sql (UNIQUE (tenant_id, id) de practice y las
+--   funciones audit.structure_history_fill_tenant / structure_history_close_only).
 -- Idempotente (ADD COLUMN IF NOT EXISTS / CREATE … IF NOT EXISTS / FK con
 -- `duplicate_object` / DROP … IF EXISTS antes de cada CHECK, EXCLUDE, trigger y
 -- política). Se puede aplicar N veces.
@@ -31,8 +33,20 @@
 --      history y audit.placement_incidents_history.
 --   E. Guardas: detalle y ajustes del censo append-only (forbid_mutation); el día de censo
 --      CERRADO rechaza UPDATE/DELETE (trg_inpatient_census_days_closed_guard).
---   F. RLS tenant_isolation (texto exacto de 2026-08-05_tenant_rls.sql) en las cinco
---      tablas con tenant_id: encounter_locations, placement_incidents y las tres del censo.
+--   F. Aislamiento entre tenants en las REFERENCIAS (patrón F1b, 2026-10-29_infraestructura_
+--      f1b_seguridad.sql): UNIQUE (tenant_id, id) en encounters, encounter_locations,
+--      placement_incidents e inpatient_census_days, y 17 FK compuestas (tenant_id, x_id) →
+--      padre (tenant_id, id): encuentro, sede, unidad, espacio, ubicación previa, incidente,
+--      día de censo y origen de la historia. El paciente (profiles.patient_profiles) no tiene
+--      tenant: trigger BEFORE INSERT/UPDATE que exige que placement_incidents y
+--      inpatient_census_entries lleven el MISMO paciente que su encuentro.
+--   G. Historia (audit.encounter_locations_history, audit.placement_incidents_history) con
+--      el patrón F1b: tenant_id NOT NULL (lo completa un trigger desde la fila de origen si la
+--      API no lo manda), sólo inserción + cierre de valid_to (trigger, también para el dueño),
+--      mantra_app con SELECT, INSERT y UPDATE ("valid_to") únicamente, RLS tenant_isolation.
+--   H. RLS tenant_isolation (texto exacto de 2026-08-05_tenant_rls.sql) en las siete tablas
+--      con tenant_id: encounter_locations, placement_incidents, las tres del censo y las dos
+--      historias.
 --
 -- UUID LITERALES (deterministicId de la API, common/constants/concepts.ts):
 --   809db700-0627-5fe3-8278-4f038f4475b3  clinical:LOCATION_ACTIVE
@@ -62,10 +76,10 @@
 -- DELTAS ESPERADOS sobre la base viva (antes de este patch):
 --   columnas  +13  (encounters 6 · encounter_locations 7)
 --   tablas     +6  (4 en clinical, 2 en audit)
---   FKs       +45
---   índices   +55  (49 declarados, 1 de ellos único, + 6 PK de las tablas nuevas)
+--   FKs       +64  (47 generadas + 17 compuestas)
+--   índices   +61  (55 declarados, 5 de ellos únicos, + 6 PK de las tablas nuevas)
 --             +2   (índices de los dos EXCLUDE)
---   CHECK      +3 · EXCLUDE +2 · triggers +3 · políticas RLS +5
+--   CHECK      +3 · EXCLUDE +2 · triggers +9 · políticas RLS +7
 -- ============================================================================
 
 BEGIN;
@@ -306,6 +320,7 @@ CREATE TABLE IF NOT EXISTS "audit"."encounter_locations_history" (
     "changed_by_user_id" uuid,
     "change_reason_concept_id" uuid,
     "recorded_at" timestamptz NOT NULL,
+    "tenant_id" uuid NOT NULL,
     CONSTRAINT "pk_encounter_locations_history" PRIMARY KEY ("history_id")
 );
 
@@ -320,8 +335,31 @@ CREATE TABLE IF NOT EXISTS "audit"."placement_incidents_history" (
     "changed_by_user_id" uuid,
     "change_reason_concept_id" uuid,
     "recorded_at" timestamptz NOT NULL,
+    "tenant_id" uuid NOT NULL,
     CONSTRAINT "pk_placement_incidents_history" PRIMARY KEY ("history_id")
 );
+
+-- Historia creada por una versión previa de este patch (sin tenant_id): se agrega, se
+-- completa desde la fila de origen y pasa a NOT NULL. En una base nueva no hace nada.
+ALTER TABLE "audit"."encounter_locations_history" ADD COLUMN IF NOT EXISTS "tenant_id" uuid;
+ALTER TABLE "audit"."placement_incidents_history" ADD COLUMN IF NOT EXISTS "tenant_id" uuid;
+UPDATE "audit"."encounter_locations_history" h SET "tenant_id" = o."tenant_id"
+  FROM "clinical"."encounter_locations" o
+ WHERE o."id" = h."encounter_location_id" AND h."tenant_id" IS NULL;
+UPDATE "audit"."placement_incidents_history" h SET "tenant_id" = o."tenant_id"
+  FROM "clinical"."placement_incidents" o
+ WHERE o."id" = h."placement_incident_id" AND h."tenant_id" IS NULL;
+DO $$
+DECLARE n integer;
+BEGIN
+    SELECT (SELECT count(*) FROM "audit"."encounter_locations_history" WHERE "tenant_id" IS NULL)
+         + (SELECT count(*) FROM "audit"."placement_incidents_history" WHERE "tenant_id" IS NULL) INTO n;
+    IF n > 0 THEN
+        RAISE EXCEPTION 'audit: % fila(s) de historia F3 sin tenant derivable desde su origen; revisar a mano', n;
+    END IF;
+END $$;
+ALTER TABLE "audit"."encounter_locations_history" ALTER COLUMN "tenant_id" SET NOT NULL;
+ALTER TABLE "audit"."placement_incidents_history" ALTER COLUMN "tenant_id" SET NOT NULL;
 
 -- ------------------------------------------------------------- FKs (copiadas de 03_fk_intra y 90_fk_deferred)
 
@@ -605,6 +643,13 @@ DO $$ BEGIN
         REFERENCES "terminology"."catalog_concepts" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "audit"."encounter_locations_history"
+        ADD CONSTRAINT "fk_encounter_locations_history_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
 -- destino: clinical.placement_incidents (requiere schema clinical)
 DO $$ BEGIN
     ALTER TABLE "audit"."placement_incidents_history"
@@ -633,6 +678,13 @@ DO $$ BEGIN
         REFERENCES "terminology"."catalog_concepts" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "audit"."placement_incidents_history"
+        ADD CONSTRAINT "fk_placement_incidents_history_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
 -- ------------------------------------------------------------- índices (copiados de 04_indexes)
 
 CREATE INDEX IF NOT EXISTS "ix_encounters_level_of_care_concept_id" ON "clinical"."encounters" ("level_of_care_concept_id");
@@ -642,6 +694,8 @@ CREATE INDEX IF NOT EXISTS "ix_encounters_admission_source_concept_id" ON "clini
 CREATE INDEX IF NOT EXISTS "ix_encounters_discharge_disposition_concept_id" ON "clinical"."encounters" ("discharge_disposition_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_encounters_isolation_precaution_concept_id" ON "clinical"."encounters" ("isolation_precaution_concept_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_encounters_tenant_id_id" ON "clinical"."encounters" ("tenant_id", "id");
 
 CREATE INDEX IF NOT EXISTS "ix_encounter_locations_tenant_id" ON "clinical"."encounter_locations" ("tenant_id");
 
@@ -656,6 +710,8 @@ CREATE INDEX IF NOT EXISTS "ix_encounter_locations_bed_category_concept_id" ON "
 CREATE INDEX IF NOT EXISTS "ix_encounter_locations_placement_incident_id" ON "clinical"."encounter_locations" ("placement_incident_id");
 
 CREATE INDEX IF NOT EXISTS "ix_encounter_locations_bed_period" ON "clinical"."encounter_locations" ("care_space_id", "period_start" DESC) WHERE is_bed_assignment;
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_encounter_locations_tenant_id_id" ON "clinical"."encounter_locations" ("tenant_id", "id");
 
 CREATE INDEX IF NOT EXISTS "ix_placement_incidents_tenant_id" ON "clinical"."placement_incidents" ("tenant_id");
 
@@ -677,6 +733,8 @@ CREATE INDEX IF NOT EXISTS "ix_placement_incidents_created_by_user_id" ON "clini
 
 CREATE INDEX IF NOT EXISTS "ix_placement_incidents_updated_by_user_id" ON "clinical"."placement_incidents" ("updated_by_user_id");
 
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_placement_incidents_tenant_id_id" ON "clinical"."placement_incidents" ("tenant_id", "id");
+
 CREATE UNIQUE INDEX IF NOT EXISTS "ux_inpatient_census_days_site_unit_date" ON "clinical"."inpatient_census_days" ("practice_site_id", "clinical_unit_id", "census_date");
 
 CREATE INDEX IF NOT EXISTS "ix_inpatient_census_days_tenant_id" ON "clinical"."inpatient_census_days" ("tenant_id");
@@ -692,6 +750,8 @@ CREATE INDEX IF NOT EXISTS "ix_inpatient_census_days_created_by_user_id" ON "cli
 CREATE INDEX IF NOT EXISTS "ix_inpatient_census_days_updated_by_user_id" ON "clinical"."inpatient_census_days" ("updated_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_inpatient_census_days_site_date" ON "clinical"."inpatient_census_days" ("practice_site_id", "census_date" DESC);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_inpatient_census_days_tenant_id_id" ON "clinical"."inpatient_census_days" ("tenant_id", "id");
 
 CREATE INDEX IF NOT EXISTS "ix_inpatient_census_entries_tenant_id" ON "clinical"."inpatient_census_entries" ("tenant_id");
 
@@ -723,6 +783,8 @@ CREATE INDEX IF NOT EXISTS "ix_encounter_locations_history_change_reason_concept
 
 CREATE INDEX IF NOT EXISTS "brin_encounter_locations_history_recorded_at" ON "audit"."encounter_locations_history" USING brin ("recorded_at") WITH (pages_per_range=128);
 
+CREATE INDEX IF NOT EXISTS "ix_encounter_locations_history_tenant_id" ON "audit"."encounter_locations_history" ("tenant_id");
+
 CREATE INDEX IF NOT EXISTS "ix_placement_incidents_history_placement_incident_id" ON "audit"."placement_incidents_history" ("placement_incident_id");
 
 CREATE INDEX IF NOT EXISTS "ix_placement_incidents_history_operation_concept_id" ON "audit"."placement_incidents_history" ("operation_concept_id");
@@ -732,6 +794,115 @@ CREATE INDEX IF NOT EXISTS "ix_placement_incidents_history_changed_by_user_id" O
 CREATE INDEX IF NOT EXISTS "ix_placement_incidents_history_change_reason_concept_id" ON "audit"."placement_incidents_history" ("change_reason_concept_id");
 
 CREATE INDEX IF NOT EXISTS "brin_placement_incidents_history_recorded_at" ON "audit"."placement_incidents_history" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_placement_incidents_history_tenant_id" ON "audit"."placement_incidents_history" ("tenant_id");
+
+-- ------------------------------------------------------------- F. FKs compuestas (escritas a mano)
+-- (tenant_id, x_id) → padre (tenant_id, id), igual que F1b. MATCH SIMPLE: si x_id es NULL no
+-- se exige nada. Conviven con la FK simple generada. Antes de crearlas se cuentan las
+-- referencias entre tenants distintos y se aborta con la lista (la FK fallaría igual, pero
+-- sin decir cuáles son).
+CREATE TEMP TABLE _f3_fk_tenant (hijo text, nombre text, columna text, padre text) ON COMMIT DROP;
+INSERT INTO _f3_fk_tenant VALUES
+    ('clinical.encounter_locations',          'fk_encounter_locations_tenant_encounter',      'encounter_id',                   'clinical.encounters'),
+    ('clinical.encounter_locations',          'fk_encounter_locations_tenant_site',           'practice_site_id',               'practice.practice_sites'),
+    ('clinical.encounter_locations',          'fk_encounter_locations_tenant_unit',           'clinical_unit_id',               'practice.clinical_units'),
+    ('clinical.encounter_locations',          'fk_encounter_locations_tenant_space',          'care_space_id',                  'practice.care_spaces'),
+    ('clinical.encounter_locations',          'fk_encounter_locations_tenant_previous',       'previous_encounter_location_id', 'clinical.encounter_locations'),
+    ('clinical.encounter_locations',          'fk_encounter_locations_tenant_incident',       'placement_incident_id',          'clinical.placement_incidents'),
+    ('clinical.placement_incidents',          'fk_placement_incidents_tenant_encounter',      'encounter_id',                   'clinical.encounters'),
+    ('clinical.placement_incidents',          'fk_placement_incidents_tenant_location',       'encounter_location_id',          'clinical.encounter_locations'),
+    ('clinical.placement_incidents',          'fk_placement_incidents_tenant_space',          'care_space_id',                  'practice.care_spaces'),
+    ('clinical.inpatient_census_days',        'fk_inpatient_census_days_tenant_site',         'practice_site_id',               'practice.practice_sites'),
+    ('clinical.inpatient_census_days',        'fk_inpatient_census_days_tenant_unit',         'clinical_unit_id',               'practice.clinical_units'),
+    ('clinical.inpatient_census_entries',     'fk_inpatient_census_entries_tenant_day',       'census_day_id',                  'clinical.inpatient_census_days'),
+    ('clinical.inpatient_census_entries',     'fk_inpatient_census_entries_tenant_encounter', 'encounter_id',                   'clinical.encounters'),
+    ('clinical.inpatient_census_entries',     'fk_inpatient_census_entries_tenant_space',     'care_space_id',                  'practice.care_spaces'),
+    ('clinical.inpatient_census_adjustments', 'fk_inpatient_census_adjustments_tenant_day',   'census_day_id',                  'clinical.inpatient_census_days'),
+    ('audit.encounter_locations_history',     'fk_encounter_locations_history_tenant_source', 'encounter_location_id',          'clinical.encounter_locations'),
+    ('audit.placement_incidents_history',     'fk_placement_incidents_history_tenant_source', 'placement_incident_id',          'clinical.placement_incidents');
+
+DO $$
+DECLARE
+    r       record;
+    n       bigint;
+    total   bigint := 0;
+    detalle text := '';
+BEGIN
+    FOR r IN SELECT * FROM _f3_fk_tenant LOOP
+        EXECUTE format('SELECT count(*) FROM %s h WHERE h.%I IS NOT NULL AND NOT EXISTS '
+                       '(SELECT 1 FROM %s p WHERE p."id" = h.%I AND p."tenant_id" = h."tenant_id")',
+                       r.hijo, r.columna, r.padre, r.columna)
+           INTO n;
+        IF n > 0 THEN
+            total := total + n;
+            detalle := detalle || format('%s.%s → %s: %s; ', r.hijo, r.columna, r.padre, n);
+        END IF;
+    END LOOP;
+    IF total > 0 THEN
+        RAISE EXCEPTION 'F3: % referencia(s) hijo → padre entre tenants distintos (o a un padre inexistente); no se crean las FK compuestas y no se toca ningún dato. Detalle: %', total, detalle
+            USING ERRCODE = 'foreign_key_violation';
+    END IF;
+
+    FOR r IN SELECT * FROM _f3_fk_tenant LOOP
+        BEGIN
+            EXECUTE format('ALTER TABLE %s ADD CONSTRAINT %I FOREIGN KEY ("tenant_id", %I) REFERENCES %s ("tenant_id", "id")',
+                           r.hijo, r.nombre, r.columna, r.padre);
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END;
+    END LOOP;
+END $$;
+
+-- El paciente no tiene tenant (profiles.patient_profiles es la persona, global): no hay FK
+-- compuesta posible. Lo que sí garantiza la base es que el incidente y la fila del censo
+-- nombren al MISMO paciente que su encuentro (que sí está acotado al tenant por la FK de
+-- arriba). SECURITY INVOKER: con RLS, el encuentro sólo es visible en su propio tenant.
+CREATE OR REPLACE FUNCTION "clinical"."assert_patient_matches_encounter"()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = pg_catalog, pg_temp
+AS $fn$
+DECLARE
+    p uuid;
+BEGIN
+    SELECT e."patient_profile_id" INTO p FROM "clinical"."encounters" e WHERE e."id" = NEW."encounter_id";
+    IF p IS DISTINCT FROM NEW."patient_profile_id" THEN
+        RAISE EXCEPTION '%.%: patient_profile_id % no es el paciente del encuentro %',
+            TG_TABLE_SCHEMA, TG_TABLE_NAME, NEW."patient_profile_id", NEW."encounter_id"
+            USING ERRCODE = 'foreign_key_violation';
+    END IF;
+    RETURN NEW;
+END $fn$;
+
+DROP TRIGGER IF EXISTS trg_patient_matches_encounter ON "clinical"."placement_incidents";
+CREATE TRIGGER trg_patient_matches_encounter BEFORE INSERT OR UPDATE OF "patient_profile_id", "encounter_id"
+    ON "clinical"."placement_incidents"
+    FOR EACH ROW EXECUTE FUNCTION "clinical"."assert_patient_matches_encounter"();
+-- inpatient_census_entries es append-only (sin UPDATE): basta con el INSERT.
+DROP TRIGGER IF EXISTS trg_patient_matches_encounter ON "clinical"."inpatient_census_entries";
+CREATE TRIGGER trg_patient_matches_encounter BEFORE INSERT
+    ON "clinical"."inpatient_census_entries"
+    FOR EACH ROW EXECUTE FUNCTION "clinical"."assert_patient_matches_encounter"();
+
+-- ------------------------------------------------------------- G. historia sólo inserción (funciones de F1b)
+DO $$
+DECLARE
+    r record;
+BEGIN
+    FOR r IN
+        SELECT * FROM (VALUES
+            ('encounter_locations_history', 'clinical.encounter_locations', 'encounter_location_id'),
+            ('placement_incidents_history', 'clinical.placement_incidents', 'placement_incident_id')
+        ) AS v(historia, origen, columna)
+    LOOP
+        EXECUTE format('DROP TRIGGER IF EXISTS trg_fill_tenant ON "audit".%I', r.historia);
+        EXECUTE format('CREATE TRIGGER trg_fill_tenant BEFORE INSERT ON "audit".%I FOR EACH ROW EXECUTE FUNCTION "audit"."structure_history_fill_tenant"(%L, %L)',
+                       r.historia, r.origen, r.columna);
+        EXECUTE format('DROP TRIGGER IF EXISTS trg_close_only ON "audit".%I', r.historia);
+        EXECUTE format('CREATE TRIGGER trg_close_only BEFORE UPDATE OR DELETE ON "audit".%I FOR EACH ROW EXECUTE FUNCTION "audit"."structure_history_close_only"()',
+                       r.historia);
+    END LOOP;
+END $$;
 
 -- ------------------------------------------------------------- C. restricciones (copiadas de 05_constraints)
 
@@ -788,7 +959,7 @@ DROP TRIGGER IF EXISTS trg_inpatient_census_days_closed_guard ON "clinical"."inp
 CREATE TRIGGER trg_inpatient_census_days_closed_guard BEFORE UPDATE OR DELETE ON "clinical"."inpatient_census_days"
     FOR EACH ROW EXECUTE FUNCTION "integrity"."forbid_closed_census_mutation"();
 
--- ------------------------------------------------------------- F. RLS
+-- ------------------------------------------------------------- H. privilegios y RLS
 -- Texto exacto de la política de 2026-08-05_tenant_rls.sql. Los GRANT cubren el caso en
 -- que las tablas nuevas las cree un rol distinto del que fijó los DEFAULT PRIVILEGES.
 DO $$
@@ -799,13 +970,17 @@ DECLARE
         'clinical.placement_incidents',
         'clinical.inpatient_census_days',
         'clinical.inpatient_census_entries',
-        'clinical.inpatient_census_adjustments'
+        'clinical.inpatient_census_adjustments',
+        'audit.encounter_locations_history',
+        'audit.placement_incidents_history'
     ];
     nuevas text[] := ARRAY[
         'clinical.placement_incidents',
         'clinical.inpatient_census_days',
         'clinical.inpatient_census_entries',
-        'clinical.inpatient_census_adjustments',
+        'clinical.inpatient_census_adjustments'
+    ];
+    historias text[] := ARRAY[
         'audit.encounter_locations_history',
         'audit.placement_incidents_history'
     ];
@@ -813,6 +988,15 @@ BEGIN
     IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'mantra_app') THEN
         FOREACH t IN ARRAY nuevas LOOP
             EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON %s TO mantra_app', t);
+        END LOOP;
+        -- Historia (patrón F1b): SELECT e INSERT, y UPDATE sólo de valid_to (cierre SCD-2).
+        -- Si 2026-08-05_tenant_rls.sql se reaplica (GRANT … ON ALL TABLES), trg_close_only
+        -- sigue rechazando todo lo que no sea cerrar valid_to; reaplicar este patch deja
+        -- otra vez los privilegios mínimos.
+        FOREACH t IN ARRAY historias LOOP
+            EXECUTE format('REVOKE UPDATE, DELETE, TRUNCATE ON %s FROM mantra_app', t);
+            EXECUTE format('GRANT SELECT, INSERT ON %s TO mantra_app', t);
+            EXECUTE format('GRANT UPDATE ("valid_to") ON %s TO mantra_app', t);
         END LOOP;
         -- La guarda append-only revoca UPDATE/DELETE a PUBLIC; el rol de aplicación
         -- tampoco los necesita sobre el detalle y los ajustes del censo.
@@ -856,6 +1040,7 @@ DECLARE
     n_trg      integer;
     n_rls      integer;
     n_nn       integer;
+    n_hist     integer;
 BEGIN
     SELECT count(*) INTO n_columnas
       FROM information_schema.columns
@@ -887,7 +1072,8 @@ BEGIN
             'fk_encounter_locations_bed_category_concept_id', 'fk_encounter_locations_placement_incident_id'])
          OR conname LIKE 'fk\_placement\_incidents\_%'
          OR conname LIKE 'fk\_inpatient\_census\_%'
-         OR conname LIKE 'fk\_encounter\_locations\_history\_%');
+         OR conname LIKE 'fk\_encounter\_locations\_history\_%'
+         OR conname IN (SELECT nombre FROM _f3_fk_tenant));
 
     SELECT count(*) INTO n_ix
       FROM pg_indexes
@@ -897,7 +1083,9 @@ BEGIN
                              'ix_encounter_locations_tenant_id', 'ix_encounter_locations_movement_type_concept_id',
                              'ix_encounter_locations_previous_encounter_location_id', 'ix_encounter_locations_end_reason_concept_id',
                              'ix_encounter_locations_bed_category_concept_id', 'ix_encounter_locations_placement_incident_id',
-                             'ix_encounter_locations_bed_period', 'ux_inpatient_census_days_site_unit_date')
+                             'ix_encounter_locations_bed_period', 'ux_inpatient_census_days_site_unit_date',
+                             'ux_encounters_tenant_id_id', 'ux_encounter_locations_tenant_id_id',
+                             'ux_placement_incidents_tenant_id_id', 'ux_inpatient_census_days_tenant_id_id')
             OR indexname LIKE 'ix\_placement\_incidents\_%'
             OR indexname LIKE 'ix\_inpatient\_census\_%'))
         OR (schemaname = 'audit' AND (indexname LIKE 'ix\_encounter\_locations\_history\_%'
@@ -918,34 +1106,55 @@ BEGIN
     SELECT count(*) INTO n_trg
       FROM pg_trigger tg JOIN pg_class c ON c.oid = tg.tgrelid
       JOIN pg_namespace n ON n.oid = c.relnamespace
-     WHERE n.nspname = 'clinical' AND NOT tg.tgisinternal
-       AND (c.relname, tg.tgname) IN (
-            ('inpatient_census_entries', 'trg_forbid_mutation'),
-            ('inpatient_census_adjustments', 'trg_forbid_mutation'),
-            ('inpatient_census_days', 'trg_inpatient_census_days_closed_guard'));
+     WHERE NOT tg.tgisinternal
+       AND (n.nspname, c.relname, tg.tgname) IN (
+            ('clinical', 'inpatient_census_entries', 'trg_forbid_mutation'),
+            ('clinical', 'inpatient_census_adjustments', 'trg_forbid_mutation'),
+            ('clinical', 'inpatient_census_days', 'trg_inpatient_census_days_closed_guard'),
+            ('clinical', 'placement_incidents', 'trg_patient_matches_encounter'),
+            ('clinical', 'inpatient_census_entries', 'trg_patient_matches_encounter'),
+            ('audit', 'encounter_locations_history', 'trg_fill_tenant'),
+            ('audit', 'encounter_locations_history', 'trg_close_only'),
+            ('audit', 'placement_incidents_history', 'trg_fill_tenant'),
+            ('audit', 'placement_incidents_history', 'trg_close_only'));
 
     SELECT count(*) INTO n_rls
       FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
       JOIN pg_policies p ON p.schemaname = n.nspname AND p.tablename = c.relname
                         AND p.policyname = 'tenant_isolation'
-     WHERE n.nspname = 'clinical'
-       AND c.relname IN ('encounter_locations', 'placement_incidents', 'inpatient_census_days',
-                         'inpatient_census_entries', 'inpatient_census_adjustments')
+     WHERE (n.nspname, c.relname) IN (('clinical', 'encounter_locations'), ('clinical', 'placement_incidents'),
+            ('clinical', 'inpatient_census_days'), ('clinical', 'inpatient_census_entries'),
+            ('clinical', 'inpatient_census_adjustments'), ('audit', 'encounter_locations_history'),
+            ('audit', 'placement_incidents_history'))
        AND c.relrowsecurity AND c.relforcerowsecurity;
 
     SELECT count(*) INTO n_nn
       FROM information_schema.columns
-     WHERE table_schema = 'clinical' AND table_name = 'encounter_locations'
+     WHERE (table_schema, table_name) IN (('clinical', 'encounter_locations'),
+            ('audit', 'encounter_locations_history'), ('audit', 'placement_incidents_history'))
        AND column_name = 'tenant_id' AND is_nullable = 'NO';
 
-    IF n_columnas <> 13 OR n_tablas <> 6 OR n_fk <> 45 OR n_ix <> 49 OR n_ck <> 3 OR n_ex <> 2
-       OR n_trg <> 3 OR n_rls <> 5 OR n_nn <> 1 THEN
-        RAISE EXCEPTION
-            'F3 incompleto: columnas=% (13), tablas=% (6), fk=% (45), índices=% (49), check=% (3), exclude diferibles=% (2), triggers=% (3), rls=% (5), encounter_locations.tenant_id NOT NULL=% (1)',
-            n_columnas, n_tablas, n_fk, n_ix, n_ck, n_ex, n_trg, n_rls, n_nn;
+    -- Historia: mantra_app sin UPDATE/DELETE/TRUNCATE de tabla (sólo UPDATE de valid_to).
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'mantra_app') THEN
+        SELECT count(*) INTO n_hist
+          FROM unnest(ARRAY['audit.encounter_locations_history', 'audit.placement_incidents_history']) t
+         WHERE has_table_privilege('mantra_app', t, 'UPDATE')
+            OR has_table_privilege('mantra_app', t, 'DELETE')
+            OR has_table_privilege('mantra_app', t, 'TRUNCATE')
+            OR NOT has_column_privilege('mantra_app', t, 'valid_to', 'UPDATE')
+            OR has_column_privilege('mantra_app', t, 'data_snapshot', 'UPDATE');
+    ELSE
+        n_hist := 0;
     END IF;
 
-    RAISE NOTICE 'F3 aplicado: 13 columnas, 6 tablas, 45 FKs validadas, 49 índices, 3 CHECK, 2 EXCLUDE diferibles, 3 guardas, 5 tablas con RLS.';
+    IF n_columnas <> 13 OR n_tablas <> 6 OR n_fk <> 64 OR n_ix <> 55 OR n_ck <> 3 OR n_ex <> 2
+       OR n_trg <> 9 OR n_rls <> 7 OR n_nn <> 3 OR n_hist <> 0 THEN
+        RAISE EXCEPTION
+            'F3 incompleto: columnas=% (13), tablas=% (6), fk=% (64), índices=% (55), check=% (3), exclude diferibles=% (2), triggers=% (9), rls=% (7), tenant_id NOT NULL=% (3), historia con privilegios de más=% (0)',
+            n_columnas, n_tablas, n_fk, n_ix, n_ck, n_ex, n_trg, n_rls, n_nn, n_hist;
+    END IF;
+
+    RAISE NOTICE 'F3 aplicado: 13 columnas, 6 tablas, 64 FKs validadas (17 compuestas), 55 índices, 3 CHECK, 2 EXCLUDE diferibles, 9 triggers, 7 tablas con RLS, historia sólo inserción.';
 END $$;
 
 COMMIT;

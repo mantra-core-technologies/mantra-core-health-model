@@ -3,7 +3,8 @@
 -- sobre BD viva
 -- Fecha: 2026-10-29 · Contrato: SALUD/Arquitectura/infraestructura-hospitalaria/
 --   CONTRATO-F2-F5.md §F5b (puntos de toma) y §F5d (agenda de consultorios)
--- Requiere: 2026-10-29_infraestructura_f1.sql. Se aplica después del patch F3 de clinical.
+-- Requiere: 2026-10-29_infraestructura_f1.sql y _f1b_seguridad.sql (UNIQUE (tenant_id, id) de
+-- practice.care_spaces). Se aplica después del patch F3 de clinical.
 -- Idempotente (ADD COLUMN IF NOT EXISTS / CREATE INDEX IF NOT EXISTS / FK con
 -- `duplicate_object` / DROP CONSTRAINT IF EXISTS antes del EXCLUDE). Se puede aplicar N veces.
 --
@@ -21,12 +22,16 @@
 --        37dded87-7a7a-5a24-86f6-0ef48cccb482  clinical:APPOINTMENT_CHECKED_IN
 --      La API no escribe care_space_id en espacios allowOverlap (salas de espera,
 --      gimnasio), así que el EXCLUDE no cambia reglas de recursos con capacidad > 1.
+--      Además FK compuesta (tenant_id, care_space_id) → care_spaces (tenant_id, id) (patrón
+--      F1b): la cita sólo puede ocupar un espacio de su propio tenant.
+--      service_requests.suggested_care_space_id NO lleva FK compuesta: el punto de toma es
+--      del establecimiento ejecutor, que puede ser otro tenant (como suggested_practice_site_id).
 --
 -- PRECONDICIÓN. La columna nace sin backfill, así que en el primer despliegue no puede
 -- haber solapes. En una re-aplicación sí podría (si alguien escribió care_space_id con el
 -- EXCLUDE caído): se cuentan y se aborta con RAISE EXCEPTION; el BEGIN hace rollback.
 --
--- DELTAS ESPERADOS: columnas +2 · FKs +2 · índices +2 (+1 del EXCLUDE) · EXCLUDE +1
+-- DELTAS ESPERADOS: columnas +2 · FKs +3 (2 generadas + 1 compuesta) · índices +2 (+1 del EXCLUDE) · EXCLUDE +1
 -- ============================================================================
 
 BEGIN;
@@ -60,6 +65,25 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 CREATE INDEX IF NOT EXISTS "ix_service_requests_suggested_care_space_id" ON "clinical"."service_requests" ("suggested_care_space_id");
 
 CREATE INDEX IF NOT EXISTS "ix_appointments_care_space_id" ON "clinical"."appointments" ("care_space_id");
+
+-- ------------------------------------------------------------- FK compuesta (escrita a mano)
+DO $$
+DECLARE n bigint;
+BEGIN
+    SELECT count(*) INTO n FROM "clinical"."appointments" a
+     WHERE a."care_space_id" IS NOT NULL
+       AND NOT EXISTS (SELECT 1 FROM "practice"."care_spaces" cs
+                        WHERE cs."id" = a."care_space_id" AND cs."tenant_id" = a."tenant_id");
+    IF n > 0 THEN
+        RAISE EXCEPTION 'clinical.appointments: % cita(s) en un espacio de otro tenant; no se crea fk_appointments_tenant_space', n
+            USING ERRCODE = 'foreign_key_violation';
+    END IF;
+    BEGIN
+        ALTER TABLE "clinical"."appointments" ADD CONSTRAINT "fk_appointments_tenant_space"
+            FOREIGN KEY ("tenant_id", "care_space_id") REFERENCES "practice"."care_spaces" ("tenant_id", "id");
+    EXCEPTION WHEN duplicate_object THEN NULL;
+    END;
+END $$;
 
 -- ------------------------------------------------------------- precondición del EXCLUDE
 DO $$
@@ -101,16 +125,17 @@ BEGIN
                                          ('appointments', 'care_space_id'));
     SELECT count(*) INTO n_fk FROM pg_constraint
      WHERE contype = 'f' AND convalidated
-       AND conname IN ('fk_service_requests_suggested_care_space_id', 'fk_appointments_care_space_id');
+       AND conname IN ('fk_service_requests_suggested_care_space_id', 'fk_appointments_care_space_id',
+                       'fk_appointments_tenant_space');
     SELECT count(*) INTO n_ix FROM pg_indexes
      WHERE schemaname = 'clinical'
        AND indexname IN ('ix_service_requests_suggested_care_space_id', 'ix_appointments_care_space_id');
     SELECT count(*) INTO n_ex FROM pg_constraint
      WHERE contype = 'x' AND conname = 'ex_appointments_care_space_time';
-    IF n_col <> 2 OR n_fk <> 2 OR n_ix <> 2 OR n_ex <> 1 THEN
-        RAISE EXCEPTION 'F5 clinical incompleto: columnas=% (2), fk=% (2), índices=% (2), exclude=% (1)', n_col, n_fk, n_ix, n_ex;
+    IF n_col <> 2 OR n_fk <> 3 OR n_ix <> 2 OR n_ex <> 1 THEN
+        RAISE EXCEPTION 'F5 clinical incompleto: columnas=% (2), fk=% (3), índices=% (2), exclude=% (1)', n_col, n_fk, n_ix, n_ex;
     END IF;
-    RAISE NOTICE 'F5 clinical aplicado: 2 columnas, 2 FKs validadas, 2 índices, ex_appointments_care_space_time.';
+    RAISE NOTICE 'F5 clinical aplicado: 2 columnas, 3 FKs validadas (1 compuesta), 2 índices, ex_appointments_care_space_time.';
 END $$;
 
 COMMIT;

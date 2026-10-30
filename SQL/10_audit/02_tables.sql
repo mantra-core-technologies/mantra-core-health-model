@@ -226,6 +226,36 @@ CREATE TABLE IF NOT EXISTS "audit"."care_spaces_history" (
     CONSTRAINT "pk_care_spaces_history" PRIMARY KEY ("history_id")
 );
 
+CREATE TABLE IF NOT EXISTS "audit"."encounter_locations_history" (
+    "history_id" uuid NOT NULL,
+    "encounter_location_id" uuid NOT NULL,
+    "revision_no" integer NOT NULL,
+    "operation_concept_id" uuid NOT NULL,
+    "valid_from" timestamptz NOT NULL,
+    "valid_to" timestamptz,
+    "data_snapshot" jsonb NOT NULL,
+    "changed_by_user_id" uuid,
+    "change_reason_concept_id" uuid,
+    "recorded_at" timestamptz NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    CONSTRAINT "pk_encounter_locations_history" PRIMARY KEY ("history_id")
+);
+
+CREATE TABLE IF NOT EXISTS "audit"."placement_incidents_history" (
+    "history_id" uuid NOT NULL,
+    "placement_incident_id" uuid NOT NULL,
+    "revision_no" integer NOT NULL,
+    "operation_concept_id" uuid NOT NULL,
+    "valid_from" timestamptz NOT NULL,
+    "valid_to" timestamptz,
+    "data_snapshot" jsonb NOT NULL,
+    "changed_by_user_id" uuid,
+    "change_reason_concept_id" uuid,
+    "recorded_at" timestamptz NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    CONSTRAINT "pk_placement_incidents_history" PRIMARY KEY ("history_id")
+);
+
 CREATE TABLE IF NOT EXISTS "audit"."diagnostic_reports_history" (
     "history_id" uuid NOT NULL,
     "diagnostic_report_id" uuid NOT NULL,
