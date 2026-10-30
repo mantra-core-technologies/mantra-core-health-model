@@ -117,6 +117,16 @@ entity encounters {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + infraestructura hospitalaria F3 (ADT): la internación es un encuentro de clase
+  ' ENC_IMP dentro de un care_episode. Nivel de cuidado (LOC_CARE_*), origen del ingreso
+  ' (ADM_SRC_*), disposición al egreso (DISP_*), precaución de aislamiento del paciente
+  ' (ISO_* de F2) con su organismo, y fecha estimada de alta. Nulas fuera de internación.
+    level_of_care_concept_id : uuid <<FK>>
+    admission_source_concept_id : uuid <<FK>>
+    discharge_disposition_concept_id : uuid <<FK>>
+    isolation_precaution_concept_id : uuid <<FK>>
+    isolation_organism_text : varchar
+    expected_discharge_at : timestamptz
 }
 
 entity observations {
@@ -298,6 +308,10 @@ entity service_requests {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + infraestructura hospitalaria F5b: punto de toma de muestra sugerido (espacio de
+  ' función SAMPLE_COLLECTION de suggested_practice_site_id; lo valida la API, 422
+  ' COLLECTION_POINT_INVALID). Recomendación, no custodia: no concede acceso.
+    suggested_care_space_id : uuid <<FK>>
 }
 
 entity diagnostic_reports {
@@ -337,6 +351,7 @@ entity "practice.practice_sites" as practice_practice_sites <<REFERENCE_ONLY>> {
 }
 service_requests }o--o| profiles_health_practitioner_profiles : performer_practitioner_profile_id
 service_requests }o--o| practice_practice_sites : suggested_practice_site_id
+service_requests }o--o| practice_care_spaces : suggested_care_space_id
 service_requests }o--o| forms_form_instances : form_instance_id
 entity "chart.clinical_note_headers" as chart_clinical_note_headers <<REFERENCE_ONLY>> {
   * id : uuid <<PK>>
@@ -606,6 +621,11 @@ entity appointments {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + infraestructura hospitalaria F5d: consultorio (o sala) que ocupa la cita. Lo escribe
+  ' la API desde la plantilla del cupo o el recurso ROOM; NULL para espacios con perfil
+  ' allowOverlap (salas de espera, gimnasio). ex_appointments_care_space_time (módulo 33)
+  ' impide que dos citas vivas ocupen el mismo espacio a la vez. Sin backfill.
+    care_space_id : uuid <<FK>>
 }
 
 entity encounter_participants {
@@ -641,7 +661,148 @@ entity encounter_locations {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + infraestructura hospitalaria F3 (ADT): esta tabla ES el historial de estancias
+  ' (FHIR Encounter.location). `tenant_id` se copia del encuentro para el RLS.
+  ' `is_bed_assignment` la pone la API cuando el espacio es forma BED: sólo esas filas
+  ' entran en los EXCLUDE de ocupación de cama (módulo 33). Movimiento (ADT_ADMIT |
+  ' TRANSFER | SWAP | RESERVE), ubicación previa (PV1-6), motivo de cierre (ADT_END_*),
+  ' foto de la categoría de cama al ocupar y el incidente si se forzó compatibilidad.
+  ' Estados: LOCATION_ACTIVE | COMPLETED (existen) | RESERVED | CANCELLED (nuevos).
+  ' Como en F1b, encuentro, sede, unidad, espacio, ubicación previa e incidente se
+  ' referencian además con FK compuesta (tenant_id, x_id) al padre del MISMO tenant
+  ' (patch 2026-10-29_infraestructura_f3_clinical.sql); por eso los UNIQUE (tenant_id, id).
+  * tenant_id : uuid <<FK>>
+  * is_bed_assignment : boolean <<DEFAULT_FALSE>>
+    movement_type_concept_id : uuid <<FK>>
+    previous_encounter_location_id : uuid <<FK>>
+    end_reason_concept_id : uuid <<FK>>
+    bed_category_concept_id : uuid <<FK>>
+    placement_incident_id : uuid <<FK>>
 }
+
+' + infraestructura hospitalaria F3: ubicación forzada contra una regla de compatibilidad
+' forzable (SEX, AGE, ISOLATION_COHORT, LEVEL_OF_CARE). La justificación es obligatoria
+' (>= 20 caracteres, CHECK en el módulo 33) y la revisa supervisión de enfermería o
+' control de infecciones (PLC_INC_OPEN | REVIEWED | CLOSED). Historia en audit.
+entity placement_incidents {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * encounter_id : uuid <<FK>>
+    encounter_location_id : uuid <<FK>>
+  * care_space_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+  * violations_json : jsonb
+  * justification_text : text
+  * authorized_by_user_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    reviewed_by_user_id : uuid <<FK>>
+    reviewed_at : timestamptz
+    review_note : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' + infraestructura hospitalaria F3: censo diario de internación por unidad (unidad
+' OWNER vigente de la cama). `cutoff_at` = 00:00 del día siguiente en la zona de la
+' sede. Se persiste al CERRAR (CENSUS_CLOSED); el día abierto es una vista previa que
+' la API calcula y no guarda. Cerrado es inmutable: la guarda vive en el patch F3 (no la
+' expresa el módulo 33, porque depende del estado de la fila). Correcciones: ajustes.
+' patient_days = patients_at_cutoff + same_day_stays (convención OPS).
+entity inpatient_census_days {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * practice_site_id : uuid <<FK>>
+  * clinical_unit_id : uuid <<FK>>
+  * census_date : date
+  * cutoff_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+    closed_at : timestamptz
+    closed_by_user_id : uuid <<FK>>
+  * beds_censable : integer
+  * beds_available : integer
+  * beds_blocked : integer
+  * patients_at_cutoff : integer
+  * admissions : integer
+  * discharges : integer
+  * deaths : integer
+  * transfers_in : integer
+  * transfers_out : integer
+  * same_day_stays : integer
+  * patient_days : integer
+  * discharge_stay_days : integer
+    content_hash : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' + infraestructura hospitalaria F3: detalle del censo (quién estaba, entró o salió),
+' append-only (guarda en el módulo 33). `tenant_id` se agrega para el RLS.
+' movement: CEN_PRESENT | ADMITTED | DISCHARGED | TRANSFER_IN | TRANSFER_OUT | SAME_DAY.
+entity inpatient_census_entries <<APPEND_ONLY>> {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * census_day_id : uuid <<FK>>
+  * encounter_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+  * care_space_id : uuid <<FK>>
+    bed_category_concept_id : uuid <<FK>>
+  * movement_concept_id : uuid <<FK>>
+  * occurred_at : timestamptz
+  * created_at : timestamptz
+}
+
+' + infraestructura hospitalaria F3: ajuste de un día cerrado, append-only. El snapshot
+' no cambia: los indicadores suman original + ajustes. `field_code` es el nombre de la
+' columna numérica ajustada (CHECK en el módulo 33). `entry_ref_id` es una referencia
+' opcional sin FK (la fila o el movimiento que motiva el ajuste).
+entity inpatient_census_adjustments <<APPEND_ONLY>> {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * census_day_id : uuid <<FK>>
+  * field_code : varchar
+  * previous_value : integer
+  * new_value : integer
+  * reason_text : text
+    entry_ref_id : uuid
+  * adjusted_by_user_id : uuid <<FK>>
+    request_id : varchar
+  * created_at : timestamptz
+}
+
+' Destinos canónicos de las FK de infraestructura F3/F5, declarados en su módulo dueño.
+entity "practice.care_spaces" as practice_care_spaces <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity "practice.clinical_units" as practice_clinical_units <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity "profiles.patient_profiles" as profiles_patient_profiles <<REFERENCE_ONLY>> {
+  * profile_id : uuid <<PK>>
+}
+encounter_locations }o--o| encounter_locations : previous_encounter_location_id
+encounter_locations }o--o| placement_incidents : placement_incident_id
+placement_incidents }o--|| encounters : encounter_id
+placement_incidents }o--o| encounter_locations : encounter_location_id
+placement_incidents }o--|| practice_care_spaces : care_space_id
+placement_incidents }o--|| profiles_patient_profiles : patient_profile_id
+inpatient_census_days }o--|| practice_practice_sites : practice_site_id
+inpatient_census_days }o--|| practice_clinical_units : clinical_unit_id
+inpatient_census_entries }o--|| inpatient_census_days : census_day_id
+inpatient_census_entries }o--|| encounters : encounter_id
+inpatient_census_entries }o--|| profiles_patient_profiles : patient_profile_id
+inpatient_census_entries }o--|| practice_care_spaces : care_space_id
+inpatient_census_adjustments }o--|| inpatient_census_days : census_day_id
+appointments }o--o| practice_care_spaces : care_space_id
 
 
 
@@ -788,6 +949,11 @@ entity "INDEXES · encounters" as idxset_encounters <<INDEX_SET>> {
   IX ix_encounters_updated_by_user_id : (updated_by_user_id) BTREE
   IX ix_encounters_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
   IX ix_encounters_patient_profile_id_updated_at : (tenant_id, patient_profile_id, updated_at DESC) BTREE
+  IX ix_encounters_level_of_care_concept_id : (level_of_care_concept_id) BTREE
+  IX ix_encounters_admission_source_concept_id : (admission_source_concept_id) BTREE
+  IX ix_encounters_discharge_disposition_concept_id : (discharge_disposition_concept_id) BTREE
+  IX ix_encounters_isolation_precaution_concept_id : (isolation_precaution_concept_id) BTREE
+  UX ux_encounters_tenant_id_id : (tenant_id, id) UNIQUE BTREE
 }
 
 encounters .. idxset_encounters : indexed by
@@ -916,6 +1082,7 @@ entity "INDEXES · service_requests" as idxset_service_requests <<INDEX_SET>> {
   IX ix_service_requests_updated_by_user_id : (updated_by_user_id) BTREE
   IX ix_service_requests_custodian_tenant_id_status_concept_id : (custodian_tenant_id, status_concept_id, updated_at DESC) BTREE
   IX ix_service_requests_patient_profile_id_updated_at : (custodian_tenant_id, patient_profile_id, updated_at DESC) BTREE
+  IX ix_service_requests_suggested_care_space_id : (suggested_care_space_id) BTREE
 }
 
 service_requests .. idxset_service_requests : indexed by
@@ -1058,6 +1225,7 @@ entity "INDEXES · appointments" as idxset_appointments <<INDEX_SET>> {
   GIST gist_appointments_effective_period : tstzrange(start_at, end_at, '[)') GIST
   GIST gist_appointments_practitioner_time : (practitioner_profile_id, tstzrange(start_at, end_at, '[)')) GIST WHERE status_concept_id IN (held_status(), confirmed_status())
   IX ix_appointments_patient_start : (patient_profile_id, start_at DESC) BTREE
+  IX ix_appointments_care_space_id : (care_space_id) BTREE
 }
 
 appointments .. idxset_appointments : indexed by
@@ -1084,9 +1252,71 @@ entity "INDEXES · encounter_locations" as idxset_encounter_locations <<INDEX_SE
   IX ix_encounter_locations_location_status_concept_id : (location_status_concept_id) BTREE
   IX ix_encounter_locations_created_by_user_id : (created_by_user_id) BTREE
   IX ix_encounter_locations_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_encounter_locations_tenant_id : (tenant_id) BTREE
+  IX ix_encounter_locations_movement_type_concept_id : (movement_type_concept_id) BTREE
+  IX ix_encounter_locations_previous_encounter_location_id : (previous_encounter_location_id) BTREE
+  IX ix_encounter_locations_end_reason_concept_id : (end_reason_concept_id) BTREE
+  IX ix_encounter_locations_bed_category_concept_id : (bed_category_concept_id) BTREE
+  IX ix_encounter_locations_placement_incident_id : (placement_incident_id) BTREE
+  IX ix_encounter_locations_bed_period : (care_space_id, period_start DESC) BTREE WHERE is_bed_assignment
+  UX ux_encounter_locations_tenant_id_id : (tenant_id, id) UNIQUE BTREE
 }
 
 encounter_locations .. idxset_encounter_locations : indexed by
+
+entity "INDEXES · placement_incidents" as idxset_placement_incidents <<INDEX_SET>> {
+  PK pk_placement_incidents : (id) UNIQUE BTREE
+  IX ix_placement_incidents_tenant_id : (tenant_id) BTREE
+  IX ix_placement_incidents_encounter_id : (encounter_id) BTREE
+  IX ix_placement_incidents_encounter_location_id : (encounter_location_id) BTREE
+  IX ix_placement_incidents_care_space_id : (care_space_id) BTREE
+  IX ix_placement_incidents_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_placement_incidents_authorized_by_user_id : (authorized_by_user_id) BTREE
+  IX ix_placement_incidents_status_concept_id : (status_concept_id) BTREE
+  IX ix_placement_incidents_reviewed_by_user_id : (reviewed_by_user_id) BTREE
+  IX ix_placement_incidents_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_placement_incidents_updated_by_user_id : (updated_by_user_id) BTREE
+  UX ux_placement_incidents_tenant_id_id : (tenant_id, id) UNIQUE BTREE
+}
+
+placement_incidents .. idxset_placement_incidents : indexed by
+
+entity "INDEXES · inpatient_census_days" as idxset_inpatient_census_days <<INDEX_SET>> {
+  PK pk_inpatient_census_days : (id) UNIQUE BTREE
+  UX ux_inpatient_census_days_site_unit_date : (practice_site_id, clinical_unit_id, census_date) UNIQUE BTREE
+  IX ix_inpatient_census_days_tenant_id : (tenant_id) BTREE
+  IX ix_inpatient_census_days_clinical_unit_id : (clinical_unit_id) BTREE
+  IX ix_inpatient_census_days_status_concept_id : (status_concept_id) BTREE
+  IX ix_inpatient_census_days_closed_by_user_id : (closed_by_user_id) BTREE
+  IX ix_inpatient_census_days_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_inpatient_census_days_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_inpatient_census_days_site_date : (practice_site_id, census_date DESC) BTREE
+  UX ux_inpatient_census_days_tenant_id_id : (tenant_id, id) UNIQUE BTREE
+}
+
+inpatient_census_days .. idxset_inpatient_census_days : indexed by
+
+entity "INDEXES · inpatient_census_entries" as idxset_inpatient_census_entries <<INDEX_SET>> {
+  PK pk_inpatient_census_entries : (id) UNIQUE BTREE
+  IX ix_inpatient_census_entries_tenant_id : (tenant_id) BTREE
+  IX ix_inpatient_census_entries_census_day_id : (census_day_id) BTREE
+  IX ix_inpatient_census_entries_encounter_id : (encounter_id) BTREE
+  IX ix_inpatient_census_entries_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_inpatient_census_entries_care_space_id : (care_space_id) BTREE
+  IX ix_inpatient_census_entries_bed_category_concept_id : (bed_category_concept_id) BTREE
+  IX ix_inpatient_census_entries_movement_concept_id : (movement_concept_id) BTREE
+}
+
+inpatient_census_entries .. idxset_inpatient_census_entries : indexed by
+
+entity "INDEXES · inpatient_census_adjustments" as idxset_inpatient_census_adjustments <<INDEX_SET>> {
+  PK pk_inpatient_census_adjustments : (id) UNIQUE BTREE
+  IX ix_inpatient_census_adjustments_tenant_id : (tenant_id) BTREE
+  IX ix_inpatient_census_adjustments_census_day_id : (census_day_id, created_at) BTREE
+  IX ix_inpatient_census_adjustments_adjusted_by_user_id : (adjusted_by_user_id) BTREE
+}
+
+inpatient_census_adjustments .. idxset_inpatient_census_adjustments : indexed by
 
 entity "INDEXES · observation_performers" as idxset_observation_performers <<INDEX_SET>> {
   PK pk_observation_performers : (id) UNIQUE BTREE

@@ -1,7 +1,6 @@
 -- SALUD v4.0.10 · módulo 10 · schema audit
 -- Generado de diagram_10_audit.puml — NO editar a mano.
 
-
 CREATE INDEX IF NOT EXISTS "ix_audit_log_user_id" ON "audit"."audit_log" ("user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_audit_log_tenant_id" ON "audit"."audit_log" ("tenant_id");
@@ -189,6 +188,30 @@ CREATE INDEX IF NOT EXISTS "ix_care_spaces_history_change_reason_concept_id" ON 
 CREATE INDEX IF NOT EXISTS "brin_care_spaces_history_recorded_at" ON "audit"."care_spaces_history" USING brin ("recorded_at") WITH (pages_per_range=128);
 
 CREATE INDEX IF NOT EXISTS "ix_care_spaces_history_tenant_id" ON "audit"."care_spaces_history" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_encounter_locations_history_encounter_location_id" ON "audit"."encounter_locations_history" ("encounter_location_id");
+
+CREATE INDEX IF NOT EXISTS "ix_encounter_locations_history_operation_concept_id" ON "audit"."encounter_locations_history" ("operation_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_encounter_locations_history_changed_by_user_id" ON "audit"."encounter_locations_history" ("changed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_encounter_locations_history_change_reason_concept_id" ON "audit"."encounter_locations_history" ("change_reason_concept_id");
+
+CREATE INDEX IF NOT EXISTS "brin_encounter_locations_history_recorded_at" ON "audit"."encounter_locations_history" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_encounter_locations_history_tenant_id" ON "audit"."encounter_locations_history" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_placement_incidents_history_placement_incident_id" ON "audit"."placement_incidents_history" ("placement_incident_id");
+
+CREATE INDEX IF NOT EXISTS "ix_placement_incidents_history_operation_concept_id" ON "audit"."placement_incidents_history" ("operation_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_placement_incidents_history_changed_by_user_id" ON "audit"."placement_incidents_history" ("changed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_placement_incidents_history_change_reason_concept_id" ON "audit"."placement_incidents_history" ("change_reason_concept_id");
+
+CREATE INDEX IF NOT EXISTS "brin_placement_incidents_history_recorded_at" ON "audit"."placement_incidents_history" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_placement_incidents_history_tenant_id" ON "audit"."placement_incidents_history" ("tenant_id");
 
 CREATE INDEX IF NOT EXISTS "ix_care_space_blocks_history_care_space_block_id" ON "audit"."care_space_blocks_history" ("care_space_block_id");
 

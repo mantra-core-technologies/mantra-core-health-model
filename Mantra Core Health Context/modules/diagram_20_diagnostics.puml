@@ -277,6 +277,17 @@ entity specimen_parent_links <<IMMUTABLE>> {
   * created_at : timestamptz
 }
 
+' Destinos canónicos de las FK de infraestructura F5a/F5b, declarados en su módulo dueño.
+entity "practice.care_spaces" as practice_care_spaces <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity "diagnostic_units.diagnostic_equipment" as diagnostic_units_diagnostic_equipment <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+specimen_collection_events }o--o| practice_care_spaces : collection_care_space_id
+imaging_procedure_steps }o--o| diagnostic_units_diagnostic_equipment : scheduled_equipment_id
+imaging_procedure_steps }o--o| practice_care_spaces : scheduled_care_space_id
+
 entity specimen_collection_events <<LOG>> {
   * id : uuid <<PK>>
   --
@@ -291,6 +302,9 @@ entity specimen_collection_events <<LOG>> {
     condition_json : jsonb
     notes : text
   * created_at : timestamptz
+  ' + infraestructura hospitalaria F5b: espacio físico donde se tomó la muestra (función
+  ' SAMPLE_COLLECTION). collection_site_id se conserva.
+    collection_care_space_id : uuid <<FK>>
 }
 
 entity specimen_containers {
@@ -524,6 +538,12 @@ entity imaging_procedure_steps {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + infraestructura hospitalaria F5a: Scheduled Procedure Step para la Modality Worklist
+  ' (DICOM): equipo y sala programados y hora de inicio programada. La sala es la del
+  ' equipo (diagnostic_equipment.care_space_id); la API lo valida.
+    scheduled_equipment_id : uuid <<FK>>
+    scheduled_care_space_id : uuid <<FK>>
+    scheduled_start_at : timestamptz
 }
 
 entity imaging_selections {
@@ -896,6 +916,7 @@ entity "INDEXES · specimen_collection_events" as idxset_specimen_collection_eve
   IX ix_specimen_collection_events_method_concept_id : (method_concept_id) BTREE
   IX ix_specimen_collection_events_fasting_status_concept_id : (fasting_status_concept_id) BTREE
   BRIN brin_specimen_collection_events_occurred_at : (occurred_at) BRIN pages_per_range=128
+  IX ix_specimen_collection_events_collection_care_space_id : (collection_care_space_id) BTREE
 }
 
 specimen_collection_events .. idxset_specimen_collection_events : indexed by
@@ -1094,6 +1115,8 @@ entity "INDEXES · imaging_procedure_steps" as idxset_imaging_procedure_steps <<
   IX ix_imaging_procedure_steps_created_by_user_id : (created_by_user_id) BTREE
   IX ix_imaging_procedure_steps_updated_by_user_id : (updated_by_user_id) BTREE
   UK uk_imaging_procedure_steps_study_step : (imaging_study_id, step_number) UNIQUE BTREE
+  IX ix_imaging_procedure_steps_scheduled_equipment_id : (scheduled_equipment_id) BTREE
+  IX ix_imaging_procedure_steps_scheduled_care_space_id : (scheduled_care_space_id, scheduled_start_at) BTREE
 }
 
 imaging_procedure_steps .. idxset_imaging_procedure_steps : indexed by

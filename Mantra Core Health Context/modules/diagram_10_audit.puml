@@ -276,6 +276,38 @@ entity care_spaces_history <<HISTORY>> {
   ' 2026-10-29_infraestructura_f1b_seguridad.sql.
   * tenant_id : uuid <<FK>>
 }
+' + infraestructura hospitalaria F3 (ADT): historia de las estancias (encounter_locations)
+' y de los incidentes de ubicación forzada, mismo patrón que care_spaces_history (v4.2.67b):
+' tenant_id del origen para el RLS y solo inserción (SELECT, INSERT y UPDATE de valid_to);
+' ver el patch 2026-10-29_infraestructura_f3_clinical.sql.
+entity encounter_locations_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * encounter_location_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+  * tenant_id : uuid <<FK>>
+}
+entity placement_incidents_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * placement_incident_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+  * tenant_id : uuid <<FK>>
+}
 ' + v4.2.68 (infraestructura F2 y F5e): historia de las tablas mutables nuevas de operación
 ' (bloqueos, limpieza) y facturación por espacio (períodos de categoría, tarifas, cargos
 ' devengados). Mismo patrón que care_spaces_history desde v4.2.67b: tenant_id NOT NULL (lo completa
@@ -2144,6 +2176,29 @@ entity "INDEXES · care_spaces_history" as idxset_care_spaces_history <<INDEX_SE
 
 care_spaces_history .. idxset_care_spaces_history : indexed by
 
+entity "INDEXES · encounter_locations_history" as idxset_encounter_locations_history <<INDEX_SET>> {
+  PK pk_encounter_locations_history : (history_id) UNIQUE BTREE
+  IX ix_encounter_locations_history_encounter_location_id : (encounter_location_id) BTREE
+  IX ix_encounter_locations_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_encounter_locations_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_encounter_locations_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_encounter_locations_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+  IX ix_encounter_locations_history_tenant_id : (tenant_id) BTREE
+}
+
+encounter_locations_history .. idxset_encounter_locations_history : indexed by
+
+entity "INDEXES · placement_incidents_history" as idxset_placement_incidents_history <<INDEX_SET>> {
+  PK pk_placement_incidents_history : (history_id) UNIQUE BTREE
+  IX ix_placement_incidents_history_placement_incident_id : (placement_incident_id) BTREE
+  IX ix_placement_incidents_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_placement_incidents_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_placement_incidents_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_placement_incidents_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+  IX ix_placement_incidents_history_tenant_id : (tenant_id) BTREE
+}
+
+placement_incidents_history .. idxset_placement_incidents_history : indexed by
 entity "INDEXES · care_space_blocks_history" as idxset_care_space_blocks_history <<INDEX_SET>> {
   PK pk_care_space_blocks_history : (history_id) UNIQUE BTREE
   IX ix_care_space_blocks_history_care_space_block_id : (care_space_block_id) BTREE
