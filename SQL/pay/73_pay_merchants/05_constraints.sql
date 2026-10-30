@@ -104,8 +104,16 @@ CREATE TRIGGER fee_schedule_versions_immutable BEFORE UPDATE OR DELETE ON fee_sc
 DROP TRIGGER IF EXISTS "fee_schedule_channels_immutable" ON "fee_schedule_channels";
 CREATE TRIGGER fee_schedule_channels_immutable BEFORE UPDATE OR DELETE ON fee_schedule_channels FOR EACH ROW EXECUTE FUNCTION forbid_mutation();
 
+-- TRUNCATE: no pasa por los triggers de fila, así que cada tabla inmutable necesita el suyo (revisión de seguridad 2026-10-28: faltaba en
+-- contract_versions y fee_schedule_channels; el SQL de referencia solo lo tenía en contract_acceptances y fee_schedule_versions).
+DROP TRIGGER IF EXISTS "contract_versions_no_truncate" ON "contract_versions";
+CREATE TRIGGER contract_versions_no_truncate BEFORE TRUNCATE ON contract_versions FOR EACH STATEMENT EXECUTE FUNCTION forbid_mutation();
+
 DROP TRIGGER IF EXISTS "contract_acceptances_no_truncate" ON "contract_acceptances";
 CREATE TRIGGER contract_acceptances_no_truncate BEFORE TRUNCATE ON contract_acceptances FOR EACH STATEMENT EXECUTE FUNCTION forbid_mutation();
 
 DROP TRIGGER IF EXISTS "fee_schedule_versions_no_truncate" ON "fee_schedule_versions";
 CREATE TRIGGER fee_schedule_versions_no_truncate BEFORE TRUNCATE ON fee_schedule_versions FOR EACH STATEMENT EXECUTE FUNCTION forbid_mutation();
+
+DROP TRIGGER IF EXISTS "fee_schedule_channels_no_truncate" ON "fee_schedule_channels";
+CREATE TRIGGER fee_schedule_channels_no_truncate BEFORE TRUNCATE ON fee_schedule_channels FOR EACH STATEMENT EXECUTE FUNCTION forbid_mutation();
