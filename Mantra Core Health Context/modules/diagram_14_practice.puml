@@ -185,6 +185,132 @@ entity care_spaces {
     gln : varchar(13)
     valid_from : timestamptz
     valid_to : timestamptz
+  ' + v4.2.68 (infraestructura F2, operación): tres ejes MANUALES del estado operativo; la
+  ' ocupación es derivada (F3) y no se guarda acá. Disponibilidad = operational_status_concept_id
+  ' (SPACE_OP_*), con su motivo vigente (BLOCK_RSN_*), fecha estimada de fin y momento del
+  ' cambio. Higiene (HYG_*) y aislamiento (ISO_*, con el organismo para cohortes). La bandera de
+  ' limpieza terminal se activa con K o al terminar un aislamiento y sólo la apaga la inspección
+  ' PASS de un supervisor. `ops_version` es la versión OPERATIVA (If-Match-Ops), separada de
+  ' row_version para que limpieza/enfermería no choquen con ediciones de estructura; su
+  ' DEFAULT 1 lo pone el patch 2026-10-29_infraestructura_f2_operacion.sql (gen_ddl sólo emite
+  ' el default de row_version). Contrato: CONTRATO-F2-F5.md §F2.1.
+    availability_reason_concept_id : uuid <<FK>>
+    availability_expected_until : timestamptz
+    availability_changed_at : timestamptz
+    hygiene_status_concept_id : uuid <<FK>>
+    hygiene_changed_at : timestamptz
+  * terminal_cleaning_required : boolean <<DEFAULT_FALSE>>
+    isolation_concept_id : uuid <<FK>>
+    isolation_organism_text : varchar
+    isolation_changed_at : timestamptz
+  * ops_version : integer
+}
+
+' + v4.2.68 (infraestructura F2): evento de estado A20 (append-only, guarda de inmutabilidad en
+' el módulo 33). Un evento por cambio de eje (AXIS_AVAILABILITY | HYGIENE | ISOLATION |
+' OCCUPANCY), con el código HL7 v2-0116 resultante (C/H/I/K/O/U/R) y la fuente del cambio
+' (SRC_MANUAL | ADT | CLEANING | BLOCK | ROOM_EVENT | SYSTEM). Sin columnas de edición: no se
+' edita, no tiene historia.
+entity care_space_status_events <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * practice_site_id : uuid <<FK>>
+  * care_space_id : uuid <<FK>>
+  * axis_concept_id : uuid <<FK>>
+    from_concept_id : uuid <<FK>>
+  * to_concept_id : uuid <<FK>>
+    reason_concept_id : uuid <<FK>>
+    reason_text : varchar
+    expected_until : timestamptz
+  * v2_0116_code : char(1)
+  * source_concept_id : uuid <<FK>>
+    source_ref_id : uuid
+  * occurred_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+    request_id : varchar
+  * created_at : timestamptz
+}
+
+' + v4.2.68 (infraestructura F2): bloqueo de un espacio (BLOCK_CLINICAL | ADMIN | MAINTENANCE |
+' CLOSURE) con motivo obligatorio. ended_at NULL = abierto. Sin solapes por espacio entre los no
+' cancelados (EXCLUDE en el módulo 33) y mantenimiento siempre con fecha estimada de fin.
+entity care_space_blocks {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * care_space_id : uuid <<FK>>
+  * kind_concept_id : uuid <<FK>>
+  * reason_concept_id : uuid <<FK>>
+    reason_text : varchar
+  * starts_at : timestamptz
+    expected_end_at : timestamptz
+    ended_at : timestamptz
+    ended_by_user_id : uuid <<FK>>
+    end_note : varchar
+    cancelled_at : timestamptz
+    cancel_reason : varchar
+    work_order_ref : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' + v4.2.68 (infraestructura F2): orden de limpieza. Una sola orden ABIERTA por espacio
+' (PENDING, IN_PROGRESS o DONE sin inspeccionar: índice único parcial con UUID literales) y quien
+' inspecciona no es quien terminó (CHECK en el módulo 33). La inspección FAIL rechaza la orden y
+' abre otra con previous_order_id y trigger INSPECTION_FAILED.
+entity cleaning_orders {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * practice_site_id : uuid <<FK>>
+  * care_space_id : uuid <<FK>>
+    clinical_unit_id : uuid <<FK>>
+  * cleaning_type_concept_id : uuid <<FK>>
+  * trigger_concept_id : uuid <<FK>>
+    source_ref_id : uuid
+    previous_order_id : uuid <<FK>>
+  * priority_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * requested_at : timestamptz
+    due_at : timestamptz
+    assigned_user_id : uuid <<FK>>
+    started_at : timestamptz
+    started_by_user_id : uuid <<FK>>
+    finished_at : timestamptz
+    finished_by_user_id : uuid <<FK>>
+    inspected_at : timestamptz
+    inspected_by_user_id : uuid <<FK>>
+    inspection_result_concept_id : uuid <<FK>>
+    rejection_reason : varchar
+    cancel_reason : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' + v4.2.68 (infraestructura F5e, facturación): categoría de cama por PERÍODO. El día-cama se
+' tarifa con la categoría vigente en cada medianoche; cambiar bed_category_concept_id del espacio
+' cierra el período vigente y abre otro en la misma transacción (API). Sin solapes por espacio
+' (EXCLUDE en el módulo 33). Backfill: una fila por cama con categoría, desde su created_at.
+entity care_space_category_periods {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * care_space_id : uuid <<FK>>
+  * bed_category_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
 }
 
 ' + v4.2.67 (infraestructura F1): vínculo espacio físico ↔ unidad organizativa, con
@@ -275,6 +401,13 @@ entity healthcare_services {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + v4.2.67c (seguridad, servicios): tenant de la práctica dueña, para el RLS y para que la
+  ' habilitación por servicio (organization_extensions.facility_licenses.healthcare_service_id)
+  ' se ate con FK compuesta (tenant_id, healthcare_service_id) en vez del trigger de F1b, que se
+  ' podía eludir cambiando practice_id. (tenant_id, practice_id/practice_site_id/clinical_unit_id)
+  ' son FK compuestas al padre del MISMO tenant; un trigger lo completa desde la práctica si la
+  ' API no lo manda (patch 2026-10-29_infraestructura_f1c_servicios.sql).
+  * tenant_id : uuid <<FK>>
 }
 entity practitioner_role_assignments {
   * id : uuid <<PK>>
@@ -367,6 +500,14 @@ care_spaces |o--o{ care_spaces : parent
 space_unit_assignments }o--|| care_spaces : care_space_id
 space_unit_assignments }o--|| clinical_units : clinical_unit_id
 site_declared_capacities }o--|| practice_sites : practice_site_id
+care_space_status_events }o--|| care_spaces : care_space_id
+care_space_status_events }o--|| practice_sites : practice_site_id
+care_space_blocks }o--|| care_spaces : care_space_id
+cleaning_orders }o--|| care_spaces : care_space_id
+cleaning_orders }o--|| practice_sites : practice_site_id
+cleaning_orders }o--o| clinical_units : clinical_unit_id
+cleaning_orders }o--o| cleaning_orders : previous_order_id
+care_space_category_periods }o--|| care_spaces : care_space_id
 healthcare_services |o--o{ practitioner_role_assignments
 practitioner_role_assignments ||--o{ practitioner_support_assignments
 inventory_items ||--o{ inventory_movements
@@ -483,9 +624,78 @@ entity "INDEXES · care_spaces" as idxset_care_spaces <<INDEX_SET>> {
   IX ix_care_spaces_bed_category_concept_id : (bed_category_concept_id) BTREE
   UX ux_care_spaces_site_code : (practice_site_id, code) UNIQUE BTREE
   UX ux_care_spaces_tenant_id_id : (tenant_id, id) UNIQUE BTREE
+  IX ix_care_spaces_availability_reason_concept_id : (availability_reason_concept_id) BTREE
+  IX ix_care_spaces_hygiene_status_concept_id : (hygiene_status_concept_id) BTREE
+  IX ix_care_spaces_isolation_concept_id : (isolation_concept_id) BTREE
 }
 
 care_spaces .. idxset_care_spaces : indexed by
+
+entity "INDEXES · care_space_status_events" as idxset_care_space_status_events <<INDEX_SET>> {
+  PK pk_care_space_status_events : (id) UNIQUE BTREE
+  IX ix_care_space_status_events_tenant_id : (tenant_id) BTREE
+  IX ix_care_space_status_events_space_occurred : (care_space_id, occurred_at DESC) BTREE
+  IX ix_care_space_status_events_site_occurred : (practice_site_id, occurred_at DESC) BTREE
+  IX ix_care_space_status_events_axis_concept_id : (axis_concept_id) BTREE
+  IX ix_care_space_status_events_from_concept_id : (from_concept_id) BTREE
+  IX ix_care_space_status_events_to_concept_id : (to_concept_id) BTREE
+  IX ix_care_space_status_events_reason_concept_id : (reason_concept_id) BTREE
+  IX ix_care_space_status_events_source_concept_id : (source_concept_id) BTREE
+  IX ix_care_space_status_events_recorded_by_user_id : (recorded_by_user_id) BTREE
+}
+
+care_space_status_events .. idxset_care_space_status_events : indexed by
+
+entity "INDEXES · care_space_blocks" as idxset_care_space_blocks <<INDEX_SET>> {
+  PK pk_care_space_blocks : (id) UNIQUE BTREE
+  IX ix_care_space_blocks_tenant_id : (tenant_id) BTREE
+  IX ix_care_space_blocks_care_space_id : (care_space_id) BTREE
+  IX ix_care_space_blocks_kind_concept_id : (kind_concept_id) BTREE
+  IX ix_care_space_blocks_reason_concept_id : (reason_concept_id) BTREE
+  IX ix_care_space_blocks_ended_by_user_id : (ended_by_user_id) BTREE
+  IX ix_care_space_blocks_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_care_space_blocks_updated_by_user_id : (updated_by_user_id) BTREE
+  UX ux_care_space_blocks_tenant_id_id : (tenant_id, id) UNIQUE BTREE
+}
+
+care_space_blocks .. idxset_care_space_blocks : indexed by
+
+entity "INDEXES · cleaning_orders" as idxset_cleaning_orders <<INDEX_SET>> {
+  PK pk_cleaning_orders : (id) UNIQUE BTREE
+  IX ix_cleaning_orders_tenant_id : (tenant_id) BTREE
+  IX ix_cleaning_orders_practice_site_id : (practice_site_id) BTREE
+  IX ix_cleaning_orders_care_space_id : (care_space_id) BTREE
+  IX ix_cleaning_orders_clinical_unit_id : (clinical_unit_id) BTREE
+  IX ix_cleaning_orders_cleaning_type_concept_id : (cleaning_type_concept_id) BTREE
+  IX ix_cleaning_orders_trigger_concept_id : (trigger_concept_id) BTREE
+  IX ix_cleaning_orders_previous_order_id : (previous_order_id) BTREE
+  IX ix_cleaning_orders_priority_concept_id : (priority_concept_id) BTREE
+  IX ix_cleaning_orders_status_concept_id : (status_concept_id) BTREE
+  IX ix_cleaning_orders_assigned_user_id : (assigned_user_id) BTREE
+  IX ix_cleaning_orders_started_by_user_id : (started_by_user_id) BTREE
+  IX ix_cleaning_orders_finished_by_user_id : (finished_by_user_id) BTREE
+  IX ix_cleaning_orders_inspected_by_user_id : (inspected_by_user_id) BTREE
+  IX ix_cleaning_orders_inspection_result_concept_id : (inspection_result_concept_id) BTREE
+  IX ix_cleaning_orders_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_cleaning_orders_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_cleaning_orders_site_status_requested : (practice_site_id, status_concept_id, requested_at) BTREE
+  UX ux_cleaning_orders_tenant_id_id : (tenant_id, id) UNIQUE BTREE
+  UX ux_cleaning_orders_one_open_per_space : (care_space_id) UNIQUE BTREE WHERE status_concept_id IN ('c0c5918f-cf97-51e1-9ede-72d856e61c93', '60ff8df8-4ba5-591c-b092-e8da81187539', '334b9e1f-b123-5477-a22e-2dd1b838c2fa')
+}
+
+cleaning_orders .. idxset_cleaning_orders : indexed by
+
+entity "INDEXES · care_space_category_periods" as idxset_care_space_category_periods <<INDEX_SET>> {
+  PK pk_care_space_category_periods : (id) UNIQUE BTREE
+  IX ix_care_space_category_periods_tenant_id : (tenant_id) BTREE
+  IX ix_care_space_category_periods_care_space_id : (care_space_id) BTREE
+  IX ix_care_space_category_periods_bed_category_concept_id : (bed_category_concept_id) BTREE
+  IX ix_care_space_category_periods_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_care_space_category_periods_updated_by_user_id : (updated_by_user_id) BTREE
+  UX ux_care_space_category_periods_tenant_id_id : (tenant_id, id) UNIQUE BTREE
+}
+
+care_space_category_periods .. idxset_care_space_category_periods : indexed by
 
 entity "INDEXES · space_unit_assignments" as idxset_space_unit_assignments <<INDEX_SET>> {
   PK pk_space_unit_assignments : (id) UNIQUE BTREE
@@ -543,6 +753,8 @@ entity "INDEXES · healthcare_services" as idxset_healthcare_services <<INDEX_SE
   UX ux_healthcare_services_site_service : (practice_site_id, service_concept_id) UNIQUE BTREE
   IX ix_healthcare_services_created_by_user_id : (created_by_user_id) BTREE
   IX ix_healthcare_services_updated_by_user_id : (updated_by_user_id) BTREE
+  IX ix_healthcare_services_tenant_id : (tenant_id) BTREE
+  UX ux_healthcare_services_tenant_id_id : (tenant_id, id) UNIQUE BTREE
 }
 
 healthcare_services .. idxset_healthcare_services : indexed by
