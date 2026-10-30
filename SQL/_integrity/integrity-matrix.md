@@ -83,6 +83,7 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 | Tabla | Estereotipo | Reglas declaradas |
 |-------|-------------|-------------------|
 | `practitioner_delegate_assignments` | `REFERENCE_ONLY` | **EXCLUDE** incompatible overlapping assignments; **CHECK** signature permission requires authorized role |
+| `delegated_access.organization_user_assignments` | `REFERENCE_ONLY` | **CHECK_SQL** ck_org_user_assignments_scope_target \| ("access_scope_concept_id" <> '928c884d-ff91-584c-8aa6-68535085e078' OR "clinical_unit_id" IS NOT NULL) AND ("access_scope_concept_id" <> '4df1a147-cb37-55ba-94e8-ab469e9cccb0' OR "care_space_id" IS NOT NULL) AND ("access_scope_concept_id" <> 'e69a4c95-fe59-5c3e-b826-222af123adb9' OR "practice_site_id" IS NOT NULL); **EXCLUDE_SQL** ex_org_user_assignments_unit_head \| "clinical_unit_id" WITH =, tstzrange("valid_from", "valid_to", '[)') WITH && \| "assignment_role_concept_id" = 'ce54425b-5479-57f1-8bb2-274a8617723c' AND "status_concept_id" = '38a1d301-f40d-5b17-a695-5e6d605f8b19' |
 | `delegated_access.shared_access_link_uses` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden |
 
 ### Módulo 23 · `diagnostic_units`
@@ -90,6 +91,7 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 | Tabla | Estereotipo | Reglas declaradas |
 |-------|-------------|-------------------|
 | `diagnostic_study_prices` | `VERSIONED, REFERENCE_ONLY` | **UK** schedule + offering + version; **EXCLUDE** no overlapping active effective periods; **CHECK** amounts >= 0 |
+| `diagnostic_units.diagnostic_equipment` | `REFERENCE_ONLY` | **CHECK_SQL** ck_diagnostic_equipment_ae_title \| "ae_title" IS NULL OR ("ae_title" ~ '^[\x20-\x7E]{1,16}$' AND btrim("ae_title") <> '' AND "ae_title" !~ '\\') |
 
 ### Módulo 27 · `identity_assurance`
 

@@ -103,8 +103,8 @@
       "file": "modules/10_audit.seeds.json",
       "boot_records": 0,
       "mock_records": 1968,
-      "line_count": 43175,
-      "sha256": "f7b6a750270a35c8fa77861fa0ada6cda9ad845dc1ee8fa1fd98720fa26e0f84"
+      "line_count": 43223,
+      "sha256": "58f1cb435d29096d8cf696e47c0a337ae33908b975e30f6174bf9754c2f5fec7"
     },
     {
       "number": 11,
@@ -139,8 +139,8 @@
       "file": "modules/14_practice.seeds.json",
       "boot_records": 60,
       "mock_records": 176,
-      "line_count": 4718,
-      "sha256": "42c627d61037ecffc19350ea818e1d1371e5ffd559a8070482da5b91e446ba52"
+      "line_count": 4796,
+      "sha256": "cdaf782417c690cfc9a94468f79345bb969c843d647a96a3d9c771b24bb1cfd3"
     },
     {
       "number": 15,

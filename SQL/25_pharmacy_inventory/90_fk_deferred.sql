@@ -44,6 +44,20 @@ DO $$ BEGIN
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- destino: practice.care_spaces (requiere schema practice)
+DO $$ BEGIN
+    ALTER TABLE "pharmacy_inventory"."inventory_locations"
+        ADD CONSTRAINT "fk_inventory_locations_care_space_id" FOREIGN KEY ("care_space_id")
+        REFERENCES "practice"."care_spaces" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: practice.clinical_units (requiere schema practice)
+DO $$ BEGIN
+    ALTER TABLE "pharmacy_inventory"."inventory_locations"
+        ADD CONSTRAINT "fk_inventory_locations_clinical_unit_id" FOREIGN KEY ("clinical_unit_id")
+        REFERENCES "practice"."clinical_units" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 -- destino: pharmacy.pharmacy_products (requiere schema pharmacy)
 DO $$ BEGIN
     ALTER TABLE "pharmacy_inventory"."inventory_lots"

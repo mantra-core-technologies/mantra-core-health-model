@@ -61,6 +61,8 @@ CREATE TABLE IF NOT EXISTS "organization_extensions"."facility_licenses" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "clinical_unit_id" uuid,
+    "healthcare_service_id" uuid,
     CONSTRAINT "pk_facility_licenses" PRIMARY KEY ("id")
 );
 

@@ -234,6 +234,11 @@ entity practice_sites_history <<HISTORY>> {
     changed_by_user_id : uuid <<FK>>
     change_reason_concept_id : uuid <<FK>>
   * recorded_at : timestamptz
+  ' + v4.2.67b (seguridad): el tenant de la fila de origen, para que el RLS tenant_isolation
+  ' cubra también la historia (data_snapshot es la foto completa de la fila). Solo inserción:
+  ' mantra_app tiene SELECT, INSERT y UPDATE de valid_to (cierre SCD-2); ver el patch
+  ' 2026-10-29_infraestructura_f1b_seguridad.sql.
+  * tenant_id : uuid <<FK>>
 }
 entity clinical_units_history <<HISTORY>> {
   * history_id : uuid <<PK>>
@@ -247,6 +252,11 @@ entity clinical_units_history <<HISTORY>> {
     changed_by_user_id : uuid <<FK>>
     change_reason_concept_id : uuid <<FK>>
   * recorded_at : timestamptz
+  ' + v4.2.67b (seguridad): el tenant de la fila de origen, para que el RLS tenant_isolation
+  ' cubra también la historia (data_snapshot es la foto completa de la fila). Solo inserción:
+  ' mantra_app tiene SELECT, INSERT y UPDATE de valid_to (cierre SCD-2); ver el patch
+  ' 2026-10-29_infraestructura_f1b_seguridad.sql.
+  * tenant_id : uuid <<FK>>
 }
 entity care_spaces_history <<HISTORY>> {
   * history_id : uuid <<PK>>
@@ -260,6 +270,11 @@ entity care_spaces_history <<HISTORY>> {
     changed_by_user_id : uuid <<FK>>
     change_reason_concept_id : uuid <<FK>>
   * recorded_at : timestamptz
+  ' + v4.2.67b (seguridad): el tenant de la fila de origen, para que el RLS tenant_isolation
+  ' cubra también la historia (data_snapshot es la foto completa de la fila). Solo inserción:
+  ' mantra_app tiene SELECT, INSERT y UPDATE de valid_to (cierre SCD-2); ver el patch
+  ' 2026-10-29_infraestructura_f1b_seguridad.sql.
+  * tenant_id : uuid <<FK>>
 }
 entity diagnostic_reports_history <<HISTORY>> {
   * history_id : uuid <<PK>>
@@ -2024,6 +2039,7 @@ entity "INDEXES · practice_sites_history" as idxset_practice_sites_history <<IN
   IX ix_practice_sites_history_changed_by_user_id : (changed_by_user_id) BTREE
   IX ix_practice_sites_history_change_reason_concept_id : (change_reason_concept_id) BTREE
   BRIN brin_practice_sites_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+  IX ix_practice_sites_history_tenant_id : (tenant_id) BTREE
 }
 
 practice_sites_history .. idxset_practice_sites_history : indexed by
@@ -2035,6 +2051,7 @@ entity "INDEXES · clinical_units_history" as idxset_clinical_units_history <<IN
   IX ix_clinical_units_history_changed_by_user_id : (changed_by_user_id) BTREE
   IX ix_clinical_units_history_change_reason_concept_id : (change_reason_concept_id) BTREE
   BRIN brin_clinical_units_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+  IX ix_clinical_units_history_tenant_id : (tenant_id) BTREE
 }
 
 clinical_units_history .. idxset_clinical_units_history : indexed by
@@ -2046,6 +2063,7 @@ entity "INDEXES · care_spaces_history" as idxset_care_spaces_history <<INDEX_SE
   IX ix_care_spaces_history_changed_by_user_id : (changed_by_user_id) BTREE
   IX ix_care_spaces_history_change_reason_concept_id : (change_reason_concept_id) BTREE
   BRIN brin_care_spaces_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+  IX ix_care_spaces_history_tenant_id : (tenant_id) BTREE
 }
 
 care_spaces_history .. idxset_care_spaces_history : indexed by
