@@ -668,6 +668,9 @@ entity encounter_locations {
   ' TRANSFER | SWAP | RESERVE), ubicación previa (PV1-6), motivo de cierre (ADT_END_*),
   ' foto de la categoría de cama al ocupar y el incidente si se forzó compatibilidad.
   ' Estados: LOCATION_ACTIVE | COMPLETED (existen) | RESERVED | CANCELLED (nuevos).
+  ' Como en F1b, encuentro, sede, unidad, espacio, ubicación previa e incidente se
+  ' referencian además con FK compuesta (tenant_id, x_id) al padre del MISMO tenant
+  ' (patch 2026-10-29_infraestructura_f3_clinical.sql); por eso los UNIQUE (tenant_id, id).
   * tenant_id : uuid <<FK>>
   * is_bed_assignment : boolean <<DEFAULT_FALSE>>
     movement_type_concept_id : uuid <<FK>>
@@ -950,6 +953,7 @@ entity "INDEXES · encounters" as idxset_encounters <<INDEX_SET>> {
   IX ix_encounters_admission_source_concept_id : (admission_source_concept_id) BTREE
   IX ix_encounters_discharge_disposition_concept_id : (discharge_disposition_concept_id) BTREE
   IX ix_encounters_isolation_precaution_concept_id : (isolation_precaution_concept_id) BTREE
+  UX ux_encounters_tenant_id_id : (tenant_id, id) UNIQUE BTREE
 }
 
 encounters .. idxset_encounters : indexed by
@@ -1255,6 +1259,7 @@ entity "INDEXES · encounter_locations" as idxset_encounter_locations <<INDEX_SE
   IX ix_encounter_locations_bed_category_concept_id : (bed_category_concept_id) BTREE
   IX ix_encounter_locations_placement_incident_id : (placement_incident_id) BTREE
   IX ix_encounter_locations_bed_period : (care_space_id, period_start DESC) BTREE WHERE is_bed_assignment
+  UX ux_encounter_locations_tenant_id_id : (tenant_id, id) UNIQUE BTREE
 }
 
 encounter_locations .. idxset_encounter_locations : indexed by
@@ -1271,6 +1276,7 @@ entity "INDEXES · placement_incidents" as idxset_placement_incidents <<INDEX_SE
   IX ix_placement_incidents_reviewed_by_user_id : (reviewed_by_user_id) BTREE
   IX ix_placement_incidents_created_by_user_id : (created_by_user_id) BTREE
   IX ix_placement_incidents_updated_by_user_id : (updated_by_user_id) BTREE
+  UX ux_placement_incidents_tenant_id_id : (tenant_id, id) UNIQUE BTREE
 }
 
 placement_incidents .. idxset_placement_incidents : indexed by
@@ -1285,6 +1291,7 @@ entity "INDEXES · inpatient_census_days" as idxset_inpatient_census_days <<INDE
   IX ix_inpatient_census_days_created_by_user_id : (created_by_user_id) BTREE
   IX ix_inpatient_census_days_updated_by_user_id : (updated_by_user_id) BTREE
   IX ix_inpatient_census_days_site_date : (practice_site_id, census_date DESC) BTREE
+  UX ux_inpatient_census_days_tenant_id_id : (tenant_id, id) UNIQUE BTREE
 }
 
 inpatient_census_days .. idxset_inpatient_census_days : indexed by

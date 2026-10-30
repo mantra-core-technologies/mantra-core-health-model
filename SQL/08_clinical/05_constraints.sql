@@ -58,7 +58,7 @@ ALTER TABLE "clinical"."placement_incidents" ADD CONSTRAINT "ck_placement_incide
 -- ═══ inpatient_census_days ═══
 --   UK: site + unit + census_date  (en prosa; el módulo 33 no declara su expresión SQL)
 --   GUARD: UPDATE/DELETE rechazados cuando OLD.status_concept_id = CENSUS_CLOSED (trigger trg_inpatient_census_days_closed_guard, patch 2026-10-29_infraestructura_f3_clinical.sql)
---   índices únicos que la tabla ya tiene en 04_indexes: ux_inpatient_census_days_site_unit_date
+--   índices únicos que la tabla ya tiene en 04_indexes: ux_inpatient_census_days_site_unit_date, ux_inpatient_census_days_tenant_id_id
 
 -- ═══ inpatient_census_entries ═══
 --   UPDATE_DELETE: forbidden
