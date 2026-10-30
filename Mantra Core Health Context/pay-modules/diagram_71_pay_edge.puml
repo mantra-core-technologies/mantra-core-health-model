@@ -1,0 +1,82 @@
+@startuml SALUD_Pay_Module_71_pay_edge
+title Module 71 — pay-edge: Borde público (réplicas de claves y comercios)\n(schema: pay_edge)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' PERFIL PAY (D-18). Una base de PostgreSQL POR SERVICIO: este módulo describe la base `pay_edge`,
+' no un schema de la base de SALUD. Se genera con salud-db/gen_ddl_pay.py a SQL/pay/71_pay_edge/ (objetos sin
+' calificar: se crean en el esquema de la conexión). Portado el 2026-10-27 del DDL de referencia de
+' services/pay-edge/sql/ (pasarelapago). A partir de acá la fuente de verdad es ESTE archivo.
+' SQL de referencia de pay-edge (a mover a mantra-core-health-model, D-18).
+' pay-edge NO es dueño de estos datos: son RÉPLICAS de solo lectura que se llenan con eventos de pay-merchants
+' (api_key.* y merchant.*). La fuente de la verdad es pay-merchants.
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_71_pay_edge
+  BUSINESS PURPOSE
+  Base propia del microservicio pay-edge de la pasarela de pagos ALOVIDA (borde público (réplicas de claves y comercios)).
+  Separación (regla #1 del plan maestro): ningún otro servicio lee estas tablas; los datos de otros
+  servicios llegan por eventos o por sus APIs. Dinero en unidades menores enteras (amount_minor, BOB).
+end note
+
+entity api_key_replica {
+  * key_id : text <<PK>>
+  * merchant_id : text
+  * mode : text
+  ' null mientras solo se conoce una revocación que llegó ANTES que la creación (tombstone): sin hash, la clave no verifica.
+    key_hash : text
+  ' instante desde el que la clave deja de servir; puede ser futuro (periodo de gracia de una rotación).
+    revoked_at : timestamptz
+  * last_event_id : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+}
+
+entity merchant_replica {
+  * merchant_id : text <<PK>>
+  * status : text
+  ' instante del evento que fijó el estado: un evento más viejo que este no lo pisa (los eventos llegan desordenados).
+  * status_at : timestamptz
+  * last_event_id : text
+  * updated_at : timestamptz
+}
+
+' Inbox de @pay/outbox: un evento, un efecto.
+' Tabla técnica de @pay/outbox: la declara la librería y cada servicio la tiene en SU base.
+entity inbox_events {
+  * consumer : text <<PK>>
+  * event_id : text <<PK>>
+  * processed_at : timestamptz
+}
+
+entity "INDEXES · api_key_replica" as idxset_api_key_replica <<INDEX_SET>> {
+  PK pk_api_key_replica : (key_id) UNIQUE BTREE
+  IX api_key_replica_merchant_idx : (merchant_id) BTREE
+}
+api_key_replica .. idxset_api_key_replica : indexed by
+
+entity "INDEXES · merchant_replica" as idxset_merchant_replica <<INDEX_SET>> {
+  PK pk_merchant_replica : (merchant_id) UNIQUE BTREE
+}
+merchant_replica .. idxset_merchant_replica : indexed by
+
+entity "INDEXES · inbox_events" as idxset_inbox_events <<INDEX_SET>> {
+  PK pk_inbox_events : (consumer, event_id) UNIQUE BTREE
+}
+inbox_events .. idxset_inbox_events : indexed by
+
+entity "PAY EXTRAS · pay_edge" as pay_extras_pay_edge <<PAY_EXTRAS>> {
+  ' Lo que el generador base (gen_ddl.py) no expresa: defaults no booleanos, identidades, CHECK, FK compuestas,
+  ' funciones, triggers y datos semilla. Lo materializa salud-db/gen_ddl_pay.py (05_constraints.sql / 06_seed.sql).
+  DEFAULT api_key_replica.created_at : now()
+  DEFAULT api_key_replica.updated_at : now()
+  CHECK_SQL api_key_replica : api_key_replica_mode_check | mode IN ('test', 'live')
+  CHECK_SQL api_key_replica : api_key_replica_hash_check | key_hash IS NULL OR key_hash ~ '^sha256\$[0-9a-f]{64}$'
+  DEFAULT merchant_replica.updated_at : now()
+  CHECK_SQL merchant_replica : merchant_replica_status_check | status IN ('active', 'suspended', 'closed')
+  DEFAULT inbox_events.processed_at : now()
+}
+
+@enduml

@@ -172,6 +172,10 @@ CREATE TABLE IF NOT EXISTS "diagnostic_units"."diagnostic_equipment" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "care_space_id" uuid,
+    "ae_title" varchar(16),
+    "station_name" varchar(16),
+    "schedulable_resource_id" uuid,
     CONSTRAINT "pk_diagnostic_equipment" PRIMARY KEY ("id")
 );
 

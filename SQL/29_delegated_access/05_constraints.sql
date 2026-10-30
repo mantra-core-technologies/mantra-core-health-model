@@ -11,6 +11,17 @@ CREATE EXTENSION IF NOT EXISTS btree_gist;  -- requerido por EXCLUDE
 --   EXCLUDE: incompatible overlapping assignments  (en prosa; el módulo 33 no declara su expresión SQL)
 --   CHECK: signature permission requires authorized role  (en prosa; el módulo 33 no declara su expresión SQL)
 
+-- ═══ organization_user_assignments ═══
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "delegated_access"."organization_user_assignments" DROP CONSTRAINT IF EXISTS "ck_org_user_assignments_scope_target";
+ALTER TABLE "delegated_access"."organization_user_assignments" ADD CONSTRAINT "ck_org_user_assignments_scope_target" CHECK (("access_scope_concept_id" <> '928c884d-ff91-584c-8aa6-68535085e078' OR "clinical_unit_id" IS NOT NULL) AND ("access_scope_concept_id" <> '4df1a147-cb37-55ba-94e8-ab469e9cccb0' OR "care_space_id" IS NOT NULL) AND ("access_scope_concept_id" <> 'e69a4c95-fe59-5c3e-b826-222af123adb9' OR "practice_site_id" IS NOT NULL));
+
+-- EXCLUDE concreto declarado por el modelo (EXCLUDE_SQL).
+ALTER TABLE "delegated_access"."organization_user_assignments" DROP CONSTRAINT IF EXISTS "ex_org_user_assignments_unit_head";
+ALTER TABLE "delegated_access"."organization_user_assignments" ADD CONSTRAINT "ex_org_user_assignments_unit_head"
+    EXCLUDE USING gist ("clinical_unit_id" WITH =, tstzrange("valid_from", "valid_to", '[)') WITH &&) WHERE ("assignment_role_concept_id" = 'ce54425b-5479-57f1-8bb2-274a8617723c' AND "status_concept_id" = '38a1d301-f40d-5b17-a695-5e6d605f8b19');
+
+
 -- ═══ shared_access_link_uses ═══
 --   UPDATE: forbidden
 -- UPDATE: forbidden → barrera física parcial (DELETE permitido: retención)

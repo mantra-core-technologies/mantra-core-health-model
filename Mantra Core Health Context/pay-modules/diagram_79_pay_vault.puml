@@ -1,0 +1,131 @@
+@startuml SALUD_Pay_Module_79_pay_vault
+title Module 79 — pay-vault: Metadatos de tokens de tarjeta\n(schema: pay_vault)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' PERFIL PAY (D-18). Una base de PostgreSQL POR SERVICIO: este módulo describe la base `pay_vault`,
+' no un schema de la base de SALUD. Se genera con salud-db/gen_ddl_pay.py a SQL/pay/79_pay_vault/ (objetos sin
+' calificar: se crean en el esquema de la conexión). Portado el 2026-10-27 del DDL de referencia de
+' services/pay-vault/sql/ (pasarelapago). A partir de acá la fuente de verdad es ESTE archivo.
+' SQL de referencia de pay-vault (P3.H3.M2). Hay que moverlo a mantra-core-health-model (D-18, regla 97.1).
+' IMPORTANTE: esta base guarda METADATOS de tokens, nunca el número de tarjeta, el CVV ni el nombre del titular.
+' El dato sensible lo custodia el `VaultBackend` (hyperswitch-card-vault o los campos alojados del banco). Ninguna columna
+' de este archivo puede contener un PAN: el test `pan-leak.spec.ts` lo comprueba recorriendo todas las tablas.
+' Idempotencia: contracts/packages/idempotency/sql/001_idempotency_keys.sql.
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_79_pay_vault
+  BUSINESS PURPOSE
+  Base propia del microservicio pay-vault de la pasarela de pagos ALOVIDA (metadatos de tokens de tarjeta).
+  Separación (regla #1 del plan maestro): ningún otro servicio lee estas tablas; los datos de otros
+  servicios llegan por eventos o por sus APIs. Dinero en unidades menores enteras (amount_minor, BOB).
+end note
+
+entity capture_sessions {
+  * id : text <<PK>>
+  * merchant_id : text
+    payment_intent_id : text
+  * save_card : boolean <<DEFAULT_FALSE>>
+  * status : text
+  * capture_url : text
+    token : text
+  * expires_at : timestamptz
+  * created_at : timestamptz
+    completed_at : timestamptz
+}
+
+entity card_tokens {
+  * token : text <<PK>>
+  * merchant_id : text
+  * brand : text
+  * last4 : text
+  * exp_month : smallint
+  * exp_year : smallint
+  * fingerprint : text
+  * single_use : boolean
+  ' Un token de un solo uso queda atado al primer cobro que lo revela: otro cobro no puede usarlo.
+    bound_charge_id : text
+    deleted_at : timestamptz
+  * created_at : timestamptz
+}
+
+' Cada llamada a `reveal` deja rastro (también las negadas). Sin datos de tarjeta.
+entity reveal_audit {
+  * id : bigserial <<PK>>
+  * token : text
+  * merchant_id : text
+  * charge_id : text
+  * caller : text
+  * outcome : text
+    idempotency_key : text
+  * at : timestamptz
+}
+
+' Tabla técnica de @pay/idempotency. Cada servicio la tiene en SU base (regla de separación #1).
+' Se declara en el modelo (mantra-core-health-model, D-18) y se aplica por el pipeline; este archivo es la referencia.
+' Tabla técnica de @pay/idempotency: la declara la librería y cada servicio la tiene en SU base.
+entity idempotency_keys {
+  ' quién: el id del comercio
+  * scope : text <<PK>>
+  ' la Idempotency-Key del cliente
+  * key : text <<PK>>
+  ' sha256 de método + ruta + cuerpo canónico
+  * request_hash : text
+  * state : text
+  ' hasta dónde llegó la ejecución
+  * recovery_point : text
+    response_status : integer
+    response_body : jsonb
+  ' null = nadie la está ejecutando
+    locked_at : timestamptz
+  ' identifica a quien la ejecuta (compare-and-set)
+    lock_token : text
+  * created_at : timestamptz
+  * expires_at : timestamptz
+}
+
+entity "INDEXES · capture_sessions" as idxset_capture_sessions <<INDEX_SET>> {
+  PK pk_capture_sessions : (id) UNIQUE BTREE
+  IX capture_sessions_merchant_idx : (merchant_id, created_at) BTREE
+}
+capture_sessions .. idxset_capture_sessions : indexed by
+
+entity "INDEXES · card_tokens" as idxset_card_tokens <<INDEX_SET>> {
+  PK pk_card_tokens : (token) UNIQUE BTREE
+  IX card_tokens_merchant_idx : (merchant_id, created_at) BTREE
+}
+card_tokens .. idxset_card_tokens : indexed by
+
+entity "INDEXES · reveal_audit" as idxset_reveal_audit <<INDEX_SET>> {
+  PK pk_reveal_audit : (id) UNIQUE BTREE
+  IX reveal_audit_token_idx : (token, at) BTREE
+}
+reveal_audit .. idxset_reveal_audit : indexed by
+
+entity "INDEXES · idempotency_keys" as idxset_idempotency_keys <<INDEX_SET>> {
+  PK pk_idempotency_keys : (scope, key) UNIQUE BTREE
+  IX idempotency_keys_expires_at_idx : (expires_at) BTREE
+}
+idempotency_keys .. idxset_idempotency_keys : indexed by
+
+entity "PAY EXTRAS · pay_vault" as pay_extras_pay_vault <<PAY_EXTRAS>> {
+  ' Lo que el generador base (gen_ddl.py) no expresa: defaults no booleanos, identidades, CHECK, FK compuestas,
+  ' funciones, triggers y datos semilla. Lo materializa salud-db/gen_ddl_pay.py (05_constraints.sql / 06_seed.sql).
+  DEFAULT capture_sessions.status : 'open'
+  DEFAULT capture_sessions.created_at : now()
+  CHECK_SQL capture_sessions : capture_sessions_status_chk | status IN ('open', 'completed', 'expired', 'canceled')
+  CHECK_SQL capture_sessions : capture_sessions_token_chk | (status = 'completed') = (token IS NOT NULL)
+  DEFAULT card_tokens.created_at : now()
+  CHECK_SQL card_tokens : card_tokens_brand_chk | brand IN ('visa', 'mastercard', 'other')
+  CHECK_SQL card_tokens : card_tokens_last4_chk | last4 ~ '^[0-9]{4}$'
+  CHECK_SQL card_tokens : card_tokens_exp_chk | exp_month BETWEEN 1 AND 12 AND exp_year BETWEEN 2026 AND 2100
+  DEFAULT reveal_audit.at : now()
+  CHECK_SQL reveal_audit : reveal_audit_outcome_chk | outcome IN ('granted', 'denied_not_found', 'denied_bound_to_other_charge', 'backend_error')
+  DEFAULT idempotency_keys.recovery_point : 'started'
+  DEFAULT idempotency_keys.created_at : now()
+  CHECK_SQL idempotency_keys : idempotency_keys_state_check | state IN ('started', 'completed')
+}
+
+@enduml

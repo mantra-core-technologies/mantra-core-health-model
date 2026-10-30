@@ -16,6 +16,12 @@ CREATE INDEX IF NOT EXISTS "ix_inventory_locations_created_by_user_id" ON "pharm
 
 CREATE INDEX IF NOT EXISTS "ix_inventory_locations_updated_by_user_id" ON "pharmacy_inventory"."inventory_locations" ("updated_by_user_id");
 
+CREATE INDEX IF NOT EXISTS "ix_inventory_locations_care_space_id" ON "pharmacy_inventory"."inventory_locations" ("care_space_id");
+
+CREATE INDEX IF NOT EXISTS "ix_inventory_locations_clinical_unit_id" ON "pharmacy_inventory"."inventory_locations" ("clinical_unit_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_inventory_locations_ward_stock_unit" ON "pharmacy_inventory"."inventory_locations" ("clinical_unit_id") WHERE location_type_concept_id = '51dd3c8b-d630-5f5a-8bf4-2b9366752a73' AND status_concept_id = '4e556b5a-7ee6-5c64-abf9-f7e32bf83115';
+
 CREATE INDEX IF NOT EXISTS "ix_inventory_lots_pharmacy_product_id" ON "pharmacy_inventory"."inventory_lots" ("pharmacy_product_id");
 
 CREATE INDEX IF NOT EXISTS "ix_inventory_lots_quarantine_status_concept_id" ON "pharmacy_inventory"."inventory_lots" ("quarantine_status_concept_id");

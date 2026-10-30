@@ -761,6 +761,14 @@ entity appointment_payment_states {
   ' seguro dentro del estado daría seis valores para dos preguntas distintas.
   ' Booleano y no concepto porque no es un estado cerrado: es un sí o un no.
   * insurance_used : boolean
+  ' v4.2.68 (FAC-01, M-01): la cuenta por cobrar de la cita. La agenda es donde
+  ' se registra el pago y facturación es su asiento (CONTRATO S-1): el primer
+  ' pago confirmado con monto crea la factura y la deja acá; los siguientes
+  ' suman pagos a la misma. Nula mientras la cita no tenga factura: una marca
+  ' sin monto, una cita sin práctica o una práctica sin precio no facturan.
+  ' Dirección scheduling → billing, la misma de
+  ' `practitioner_service_offerings.service_catalog_id`, para no armar un anillo.
+    invoice_id : uuid <<FK>>
   ' Quién y cuándo: es el «nada se pisa en silencio» de AC-13-10.
   * marked_by_user_id : uuid <<FK>>
   * marked_at : timestamptz
@@ -779,6 +787,7 @@ entity "INDEXES · appointment_payment_states" as idxset_appointment_payment_sta
   IX ix_appointment_payment_states_tenant_status : (tenant_id, status_concept_id) BTREE
   IX ix_appointment_payment_states_status_concept_id : (status_concept_id) BTREE
   IX ix_appointment_payment_states_marked_by_user_id : (marked_by_user_id) BTREE
+  UX ux_appointment_payment_states_invoice : (invoice_id) UNIQUE BTREE WHERE invoice_id IS NOT NULL
 }
 appointment_payment_states .. idxset_appointment_payment_states : indexed by
 

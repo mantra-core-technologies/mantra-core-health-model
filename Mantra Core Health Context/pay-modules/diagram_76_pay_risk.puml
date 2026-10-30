@@ -1,0 +1,167 @@
+@startuml SALUD_Pay_Module_76_pay_risk
+title Module 76 — pay-risk: Riesgo y cribado\n(schema: pay_risk)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' PERFIL PAY (D-18). Una base de PostgreSQL POR SERVICIO: este módulo describe la base `pay_risk`,
+' no un schema de la base de SALUD. Se genera con salud-db/gen_ddl_pay.py a SQL/pay/76_pay_risk/ (objetos sin
+' calificar: se crean en el esquema de la conexión). Portado el 2026-10-27 del DDL de referencia de
+' services/pay-risk/sql/ (pasarelapago). A partir de acá la fuente de verdad es ESTE archivo.
+' SQL DE REFERENCIA de pay-risk (P5.H2). El modelo (D-18) todavía no existe: este archivo se mueve a
+' mantra-core-health-model cuando exista el pipeline `.puml → SQL/ → base → ORM`.
+' Las tablas técnicas (idempotency_keys) vienen de contracts/packages/idempotency/sql.
+' Ningún dato personal: el pagador se guarda como huella (HMAC) y el nombre que se criba NO se guarda (regla 90.2).
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_76_pay_risk
+  BUSINESS PURPOSE
+  Base propia del microservicio pay-risk de la pasarela de pagos ALOVIDA (riesgo y cribado).
+  Separación (regla #1 del plan maestro): ningún otro servicio lee estas tablas; los datos de otros
+  servicios llegan por eventos o por sus APIs. Dinero en unidades menores enteras (amount_minor, BOB).
+end note
+
+' Conjuntos de reglas versionados (D-23). NINGÚN límite tiene valor por defecto: NULL = regla apagada.
+entity risk_rule_sets {
+  * version : integer <<PK>>
+  * effective_from : timestamptz
+  ' por transacción
+    max_amount_minor : bigint
+  ' por comercio, ventana móvil de 24 h
+    merchant_daily_amount_minor : bigint
+  ' por pagador, ventana móvil de 24 h
+    payer_daily_amount_minor : bigint
+  ' evaluaciones de intentos distintos por pagador en la ventana
+    payer_velocity_max : integer
+    payer_velocity_window_seconds : integer
+    merchant_velocity_max : integer
+    merchant_velocity_window_seconds : integer
+  ' horario permitido [from, to) en hora de La Paz (UTC-4, sin horario de verano)
+    hours_from : smallint
+    hours_to : smallint
+  * published_by : text
+  * created_at : timestamptz
+}
+
+' Rastro auditable de cada decisión. Inmutable. Sin nombres, sin huellas en claro.
+entity risk_assessments {
+  * id : text <<PK>>
+  * caller_service : text
+  ' Idempotency-Key del llamador: una evaluación por (servicio, clave)
+  * request_key : text
+  * merchant_id : text
+  * payment_intent_id : text
+  * amount_minor : bigint
+  * currency : text
+  * method : text
+  ' HMAC-SHA256 de la huella opaca del pagador
+    payer_hash : text
+  * decision : text
+  ' el motivo principal (el que se devuelve)
+  * reason_code : text
+  ' todas las reglas que se activaron, para auditar
+  * reason_codes : text[]
+  * rule_version : integer <<FK>>
+  * screened : boolean
+  ' el mayor puntaje que devolvió Watchman, si cribó
+    screening_top_score : numeric(8,6)
+  ' lista pública de la coincidencia (por ejemplo us_ofac)
+    screening_list : text
+  ' id de la entrada de la lista pública; NO es dato del pagador
+    screening_source_id : text
+  ' de quién fue la mejor coincidencia: merchant | payer (D-29); no guarda ningún nombre
+    screening_party : text
+  * duration_ms : integer
+  * created_at : timestamptz
+}
+
+' Tabla técnica de @pay/idempotency. Cada servicio la tiene en SU base (regla de separación #1).
+' Se declara en el modelo (mantra-core-health-model, D-18) y se aplica por el pipeline; este archivo es la referencia.
+' Tabla técnica de @pay/idempotency: la declara la librería y cada servicio la tiene en SU base.
+entity idempotency_keys {
+  ' quién: el id del comercio
+  * scope : text <<PK>>
+  ' la Idempotency-Key del cliente
+  * key : text <<PK>>
+  ' sha256 de método + ruta + cuerpo canónico
+  * request_hash : text
+  * state : text
+  ' hasta dónde llegó la ejecución
+  * recovery_point : text
+    response_status : integer
+    response_body : jsonb
+  ' null = nadie la está ejecutando
+    locked_at : timestamptz
+  ' identifica a quien la ejecuta (compare-and-set)
+    lock_token : text
+  * created_at : timestamptz
+  * expires_at : timestamptz
+}
+
+risk_assessments }o--|| risk_rule_sets : rule_version
+
+entity "INDEXES · risk_rule_sets" as idxset_risk_rule_sets <<INDEX_SET>> {
+  PK pk_risk_rule_sets : (version) UNIQUE BTREE
+}
+risk_rule_sets .. idxset_risk_rule_sets : indexed by
+
+entity "INDEXES · risk_assessments" as idxset_risk_assessments <<INDEX_SET>> {
+  PK pk_risk_assessments : (id) UNIQUE BTREE
+  UK risk_assessments_request_uq : (caller_service, request_key) UNIQUE BTREE
+  IX risk_assessments_merchant_created_idx : (merchant_id, created_at) BTREE
+  IX risk_assessments_payer_created_idx : (payer_hash, created_at) BTREE WHERE payer_hash IS NOT NULL
+  IX risk_assessments_intent_idx : (payment_intent_id, created_at) BTREE
+}
+risk_assessments .. idxset_risk_assessments : indexed by
+
+entity "INDEXES · idempotency_keys" as idxset_idempotency_keys <<INDEX_SET>> {
+  PK pk_idempotency_keys : (scope, key) UNIQUE BTREE
+  IX idempotency_keys_expires_at_idx : (expires_at) BTREE
+}
+idempotency_keys .. idxset_idempotency_keys : indexed by
+
+entity "PAY EXTRAS · pay_risk" as pay_extras_pay_risk <<PAY_EXTRAS>> {
+  ' Lo que el generador base (gen_ddl.py) no expresa: defaults no booleanos, identidades, CHECK, FK compuestas,
+  ' funciones, triggers y datos semilla. Lo materializa salud-db/gen_ddl_pay.py (05_constraints.sql / 06_seed.sql).
+  DEFAULT risk_rule_sets.created_at : now()
+  CHECK_SQL risk_rule_sets : risk_rule_sets_version_pos | version >= 1
+  CHECK_SQL risk_rule_sets : risk_rule_sets_max_amount_pos | max_amount_minor IS NULL OR max_amount_minor > 0
+  CHECK_SQL risk_rule_sets : risk_rule_sets_merchant_daily_pos | merchant_daily_amount_minor IS NULL OR merchant_daily_amount_minor > 0
+  CHECK_SQL risk_rule_sets : risk_rule_sets_payer_daily_pos | payer_daily_amount_minor IS NULL OR payer_daily_amount_minor > 0
+  CHECK_SQL risk_rule_sets : risk_rule_sets_payer_velocity_pair | (payer_velocity_max IS NULL) = (payer_velocity_window_seconds IS NULL)
+  CHECK_SQL risk_rule_sets : risk_rule_sets_payer_velocity_pos | payer_velocity_max IS NULL OR (payer_velocity_max > 0 AND payer_velocity_window_seconds > 0)
+  CHECK_SQL risk_rule_sets : risk_rule_sets_merchant_velocity_pair | (merchant_velocity_max IS NULL) = (merchant_velocity_window_seconds IS NULL)
+  CHECK_SQL risk_rule_sets : risk_rule_sets_merchant_velocity_pos | merchant_velocity_max IS NULL OR (merchant_velocity_max > 0 AND merchant_velocity_window_seconds > 0)
+  CHECK_SQL risk_rule_sets : risk_rule_sets_hours_pair | (hours_from IS NULL) = (hours_to IS NULL)
+  CHECK_SQL risk_rule_sets : risk_rule_sets_hours_range | hours_from IS NULL OR (hours_from >= 0 AND hours_to <= 24 AND hours_from < hours_to)
+  CHECK_SQL risk_assessments : risk_assessments_id_format | id ~ '^ra_[a-z0-9]{10,40}$'
+  CHECK_SQL risk_assessments : risk_assessments_decision_valid | decision IN ('allow', 'review', 'deny')
+  CHECK_SQL risk_assessments : risk_assessments_amount_pos | amount_minor >= 1
+  CHECK_SQL risk_assessments : risk_assessments_party_valid | screening_party IS NULL OR screening_party IN ('merchant', 'payer')
+  CHECK_SQL risk_assessments : risk_assessments_method_valid | method IN ('qr', 'card', 'bank_transfer', 'wallet')
+  ' Nunca `allow` si no se cribó (contrato: «pay-risk nunca responde allow si no pudo cribar»).
+  CHECK_SQL risk_assessments : risk_assessments_allow_requires_screening | decision <> 'allow' OR screened
+  DEFAULT idempotency_keys.recovery_point : 'started'
+  DEFAULT idempotency_keys.created_at : now()
+  CHECK_SQL idempotency_keys : idempotency_keys_state_check | state IN ('started', 'completed')
+  ' SQL DE REFERENCIA de pay-risk (P5.H2). El modelo (D-18) todavía no existe: este archivo se mueve a
+  ' mantra-core-health-model cuando exista el pipeline `.puml → SQL/ → base → ORM`.
+  ' Las tablas técnicas (idempotency_keys) vienen de contracts/packages/idempotency/sql.
+  ' Ningún dato personal: el pagador se guarda como huella (HMAC) y el nombre que se criba NO se guarda (regla 90.2).
+  FUNCTION forbid_mutation
+  | CREATE OR REPLACE FUNCTION forbid_mutation() RETURNS trigger LANGUAGE plpgsql AS $$
+  | BEGIN
+  |   RAISE EXCEPTION 'la tabla % es inmutable (%)', TG_TABLE_NAME, TG_OP USING ERRCODE = 'integrity_constraint_violation';
+  | END;
+  | $$
+  ' Versión 1 = SIN límites: es la ausencia declarada de reglas, no un número inventado. Idempotente.
+  SEED_SQL risk_rule_sets
+  | INSERT INTO risk_rule_sets (version, effective_from, published_by) VALUES (1, '2000-01-01T00:00:00Z', 'system:no-limits') ON CONFLICT (version) DO NOTHING
+  TRIGGER risk_rule_sets_immutable : BEFORE UPDATE OR DELETE ON risk_rule_sets FOR EACH ROW EXECUTE FUNCTION forbid_mutation()
+  TRIGGER risk_assessments_immutable : BEFORE UPDATE OR DELETE ON risk_assessments FOR EACH ROW EXECUTE FUNCTION forbid_mutation()
+  TRIGGER risk_rule_sets_no_truncate : BEFORE TRUNCATE ON risk_rule_sets FOR EACH STATEMENT EXECUTE FUNCTION forbid_mutation()
+  TRIGGER risk_assessments_no_truncate : BEFORE TRUNCATE ON risk_assessments FOR EACH STATEMENT EXECUTE FUNCTION forbid_mutation()
+}
+
+@enduml
