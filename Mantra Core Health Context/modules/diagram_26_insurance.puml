@@ -256,6 +256,41 @@ entity network_provider_memberships {
   * row_version : integer
 }
 
+' v4.2.64 — el médico pide trabajar con una aseguradora (propietario, 2026-10-28:
+' «falta la opción de seleccionar con qué seguros trabajo»). Hasta acá la única
+' forma de que un profesional figurara en la red de una aseguradora era que
+' soporte diera de alta la membresía (network_provider_memberships); el médico
+' no tenía cómo declararlo ni la aseguradora cómo confirmarlo.
+'
+' Por qué no es network_provider_memberships: esa fila es el CONTRATO —cuelga de
+' una red concreta y de un rol en una práctica— y nace del lado de la
+' aseguradora. Esto es la SOLICITUD: la hace el médico, nombra a la compañía y
+' no a una red, y puede nacer el día del alta, cuando todavía no tiene ningún
+' rol. Que la aseguradora la apruebe es el sello («check oficial»); sumarlo a una
+' red sigue siendo la membresía.
+'
+' Reglas del servicio (gen_ddl.py no emite CHECK):
+'   - nace PENDIENTE; sólo la aseguradora (miembro de su tenant) la aprueba o la
+'     rechaza; el médico puede retirarla mientras está pendiente;
+'   - decision_reason_text sólo con rechazo, y lo lee el médico;
+'   - una sola fila viva por médico y aseguradora; volver a pedir crea otra y
+'     la rechazada o retirada queda como historia.
+entity practitioner_insurer_requests {
+  * id : uuid <<PK>>
+  --
+  * practitioner_profile_id : uuid <<FK>>
+  * insurance_carrier_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    decision_reason_text : varchar
+    decided_at : timestamptz
+    decided_by_user_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
 entity insurance_campaigns {
   * id : uuid <<PK>>
   --
@@ -355,6 +390,12 @@ insurance_plans ||--o{ insurance_plan_benefits
 insurance_carriers ||--o{ provider_networks
 provider_networks ||--o{ network_provider_memberships
 insurance_carriers ||--o{ insurance_campaigns
+insurance_carriers ||--o{ practitioner_insurer_requests
+' Destino canónico del médico, declarado en su módulo dueño.
+entity "profiles.health_practitioner_profiles" as profiles_health_practitioner_profiles <<REFERENCE_ONLY>> {
+  * profile_id : uuid <<PK>>
+}
+practitioner_insurer_requests }o--|| profiles_health_practitioner_profiles : practitioner_profile_id
 insurance_campaigns ||--o{ insurance_campaign_partners
 network_provider_memberships |o--o{ insurance_campaign_partners
 insurance_carriers ||--o{ broker_carrier_agreements
@@ -875,6 +916,22 @@ entity "INDEXES · network_provider_memberships" as idxset_network_provider_memb
 }
 
 network_provider_memberships .. idxset_network_provider_memberships : indexed by
+
+' Una sola solicitud VIVA (pendiente o aprobada) por médico y aseguradora.
+' Volver a pedir tras un rechazo o un retiro crea otra fila: la anterior queda
+' como historia y el médico sigue leyendo por qué se rechazó.
+entity "INDEXES · practitioner_insurer_requests" as idxset_practitioner_insurer_requests <<INDEX_SET>> {
+  PK pk_practitioner_insurer_requests : (id) UNIQUE BTREE
+  IX ix_practitioner_insurer_requests_practitioner_profile_id : (practitioner_profile_id) BTREE
+  IX ix_practitioner_insurer_requests_insurance_carrier_id : (insurance_carrier_id) BTREE
+  IX ix_practitioner_insurer_requests_status_concept_id : (status_concept_id) BTREE
+  IX ix_practitioner_insurer_requests_decided_by_user_id : (decided_by_user_id) BTREE
+  IX ix_practitioner_insurer_requests_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_practitioner_insurer_requests_updated_by_user_id : (updated_by_user_id) BTREE
+  UK uq_practitioner_insurer_requests_live_pair : (practitioner_profile_id, insurance_carrier_id) UNIQUE BTREE WHERE status_concept_id IN ('bc4f121c-f0cf-54b9-a1b8-f9a62a1cde8c', 'dfb1912e-d1ad-5566-8f9b-1d7a09f9da8f')
+}
+
+practitioner_insurer_requests .. idxset_practitioner_insurer_requests : indexed by
 
 entity "INDEXES · insurance_campaigns" as idxset_insurance_campaigns <<INDEX_SET>> {
   PK pk_insurance_campaigns : (id) UNIQUE BTREE
