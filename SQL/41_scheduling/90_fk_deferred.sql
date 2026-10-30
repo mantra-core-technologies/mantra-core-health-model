@@ -716,6 +716,13 @@ DO $$ BEGIN
         REFERENCES "terminology"."catalog_concepts" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 
+-- destino: billing.invoices (requiere schema billing)
+DO $$ BEGIN
+    ALTER TABLE "scheduling"."appointment_payment_states"
+        ADD CONSTRAINT "fk_appointment_payment_states_invoice_id" FOREIGN KEY ("invoice_id")
+        REFERENCES "billing"."invoices" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "scheduling"."appointment_payment_states"

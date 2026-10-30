@@ -1,0 +1,331 @@
+@startuml SALUD_Pay_Module_74_pay_payments
+title Module 74 — pay-payments: Intentos de pago, reembolsos y disputas\n(schema: pay_payments)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' PERFIL PAY (D-18). Una base de PostgreSQL POR SERVICIO: este módulo describe la base `pay_payments`,
+' no un schema de la base de SALUD. Se genera con salud-db/gen_ddl_pay.py a SQL/pay/74_pay_payments/ (objetos sin
+' calificar: se crean en el esquema de la conexión). Portado el 2026-10-27 del DDL de referencia de
+' services/pay-payments/sql/ (pasarelapago). A partir de acá la fuente de verdad es ESTE archivo.
+' SQL de referencia de pay-payments (P3.H1.M2). El modelo (D-18) todavía no existe: este archivo es lo que hay que mover a
+' mantra-core-health-model. Parte de payment_intents, refunds, payment_disputes y payment_cancellation_requests del módulo 42.
+' Idempotencia, outbox e inbox: contracts/packages/{idempotency,outbox}/sql/. Todo índice lleva nombre explícito.
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_74_pay_payments
+  BUSINESS PURPOSE
+  Base propia del microservicio pay-payments de la pasarela de pagos ALOVIDA (intentos de pago, reembolsos y disputas).
+  Separación (regla #1 del plan maestro): ningún otro servicio lee estas tablas; los datos de otros
+  servicios llegan por eventos o por sus APIs. Dinero en unidades menores enteras (amount_minor, BOB).
+end note
+
+entity payment_intents {
+  * id : text <<PK>>
+  * merchant_id : text
+  ' Modo de la CLAVE que originó el cobro (D-28): lo fija pay-edge (X-Pay-Mode), nunca el cliente. Todo acceso filtra por (comercio, modo).
+  * mode : text
+  * amount_minor : bigint
+  * currency : text
+  * method : text
+  * status : text
+  * fee_minor : bigint
+  * net_minor : bigint
+    description : text
+  * metadata : jsonb
+    next_action : jsonb
+    failure_code : text
+  ' Motivo fino de un fallo, para el `detail` de la respuesta; el `failure_code` siempre es del catálogo (@pay/problem). Ej.: payment_method_unavailable.
+    failure_reason : text
+  ' conector que tomó el cobro (mock, mercantil_qr, …)
+    connector : text
+  ' id del cargo en pay-connectors
+    charge_id : text
+  ' último estado del cargo que APLICAMOS (máquina decideCallback)
+  * charge_status : text
+  ' sube SOLO tras un rechazo del ledger (H-TB1)
+  * ledger_attempt : integer
+  ' id del asiento aceptado (tx_… del ledger)
+    ledger_transfer_id : text
+  ' tok_… (nunca el número: el PAN no entra a este servicio)
+    card_token : text
+  ' usuario de la billetera, salido de wallet_authorization
+    wallet_user_ref : text
+  ' {kind:'mandate', id, period} si lo inició pay-schedules
+    source : jsonb
+  ' obligation | commission (solo mandatos)
+    kind : text
+    beneficiary_merchant_id : text
+  ' Nombre del pagador SOLO para cribarlo en pay-risk (D-29). Dato personal: no sale en respuestas, eventos ni logs y se BORRA al llegar el
+  ' intento a un estado terminal (la transición lo pone en NULL). NULL = pagador invitado sin nombre: no bloquea el cobro.
+    payer_name : text
+  * created_at : timestamptz
+  * expires_at : timestamptz
+    succeeded_at : timestamptz
+    completed_at : timestamptz
+}
+
+entity refunds {
+  * id : text <<PK>>
+  * payment_intent_id : text <<FK>>
+  * merchant_id : text
+  ' el del cobro que se reembolsa (D-28)
+  * mode : text
+  * amount_minor : bigint
+  * currency : text
+  * status : text
+    reason : text
+    failure_code : text
+  ' retención de la primera fase (hd_…)
+    ledger_hold_id : text
+    ledger_transfer_id : text
+  ' cr_… que devolvió el conector: con él se consulta GET /refunds/{id}
+    connector_refund_id : text
+  * metadata : jsonb
+  * created_at : timestamptz
+    completed_at : timestamptz
+}
+
+entity disputes {
+  * id : text <<PK>>
+  * payment_intent_id : text <<FK>>
+  * merchant_id : text
+  ' el del cobro disputado (D-28)
+  * mode : text
+  * amount_minor : bigint
+  * currency : text
+  * status : text
+  ' referencias a documentos (ids), nunca su contenido
+  * evidence : jsonb
+    ledger_transfer_id : text
+  * opened_at : timestamptz
+    resolved_at : timestamptz
+}
+
+entity payment_cancellation_requests {
+  * id : bigserial <<PK>>
+  * payment_intent_id : text <<FK>>
+  * requested_at : timestamptz
+  ' canceled | too_late
+  * outcome : text
+}
+
+' Réplicas locales (regla de separación #5): el estado del comercio y su tarifario llegan por eventos.
+entity merchant_replica {
+  * merchant_id : text <<PK>>
+  ' pending | active | suspended | closed
+  * status : text
+  ' del evento: un evento atrasado no pisa a uno más nuevo
+  * occurred_at : timestamptz
+  * updated_at : timestamptz
+  ' razón social (D-29): solo si el evento la trae (PROP-17); NULL = sin fuente contractual
+    legal_name : text
+}
+
+entity fee_schedule_replica {
+  * merchant_id : text <<PK>>
+  * version : integer <<PK>>
+  * currency : text
+  ' [{channel, percent, fixed_minor?, min_minor?, cap_minor?}]
+  * channels : jsonb
+  * effective_from : timestamptz
+    effective_to : timestamptz
+  * published_at : timestamptz
+}
+
+' Eventos del conector que contradicen un estado terminal (REQ-P3-3): quedan para conciliación humana, no se pisan.
+entity intent_contradictions {
+  * id : bigserial <<PK>>
+  * payment_intent_id : text
+  * current_status : text
+  * incoming_status : text
+  * source_event_id : text
+  ' status_conflict: el conector dice algo incompatible con lo ya aplicado; compensation_failed / refund_pending_timeout: a mano.
+  * kind : text
+  * reason : text
+  * detected_at : timestamptz
+    resolved_at : timestamptz
+}
+
+' Autorizaciones de billetera ya usadas (un solo uso, Q-20). Se guarda el id del token, no el token.
+entity wallet_authorizations_used {
+  * authorization_id : text <<PK>>
+  * merchant_id : text
+  * payment_intent_id : text
+  * used_at : timestamptz
+}
+
+' Tablas técnicas de @pay/outbox. Cada servicio las tiene en SU base. Se declaran en el modelo (D-18).
+' Tabla técnica de @pay/outbox: la declara la librería y cada servicio la tiene en SU base.
+entity outbox_events {
+  ' id del CloudEvent; también es el Nats-Msg-Id
+  * id : uuid <<PK>>
+  ' orden de publicación
+  * seq : bigserial
+  * aggregate_type : text
+  * aggregate_id : text
+  * type : text
+  ' tema NATS destino
+  * subject : text
+  ' el CloudEvent completo
+  * envelope : jsonb
+  * created_at : timestamptz
+    published_at : timestamptz
+  * attempts : integer
+    last_error : text
+}
+
+' Tabla técnica de @pay/outbox: la declara la librería y cada servicio la tiene en SU base.
+entity inbox_events {
+  ' qué consumidor procesó el evento
+  * consumer : text <<PK>>
+  * event_id : text <<PK>>
+  * processed_at : timestamptz
+}
+
+' Tabla técnica de @pay/idempotency. Cada servicio la tiene en SU base (regla de separación #1).
+' Se declara en el modelo (mantra-core-health-model, D-18) y se aplica por el pipeline; este archivo es la referencia.
+' Tabla técnica de @pay/idempotency: la declara la librería y cada servicio la tiene en SU base.
+entity idempotency_keys {
+  ' quién: el id del comercio
+  * scope : text <<PK>>
+  ' la Idempotency-Key del cliente
+  * key : text <<PK>>
+  ' sha256 de método + ruta + cuerpo canónico
+  * request_hash : text
+  * state : text
+  ' hasta dónde llegó la ejecución
+  * recovery_point : text
+    response_status : integer
+    response_body : jsonb
+  ' null = nadie la está ejecutando
+    locked_at : timestamptz
+  ' identifica a quien la ejecuta (compare-and-set)
+    lock_token : text
+  * created_at : timestamptz
+  * expires_at : timestamptz
+}
+
+refunds }o--|| payment_intents : payment_intent_id
+disputes }o--|| payment_intents : payment_intent_id
+payment_cancellation_requests }o--|| payment_intents : payment_intent_id
+
+entity "INDEXES · payment_intents" as idxset_payment_intents <<INDEX_SET>> {
+  PK pk_payment_intents : (id) UNIQUE BTREE
+  ' Listado por comercio: orden determinista (created_at desc, id desc) para paginar por cursor.
+  IX payment_intents_merchant_created_idx : (merchant_id, mode, created_at DESC, id DESC) BTREE
+  IX payment_intents_merchant_status_idx : (merchant_id, status) BTREE
+  ' Un mandato paga cada periodo una sola vez (idempotencia de negocio de los cobros programados).
+  UK payment_intents_mandate_period_uidx : ((source ->> 'id'), (source ->> 'period')) UNIQUE BTREE WHERE source IS NOT NULL
+  IX payment_intents_charge_idx : (charge_id) BTREE WHERE charge_id IS NOT NULL
+}
+payment_intents .. idxset_payment_intents : indexed by
+
+entity "INDEXES · refunds" as idxset_refunds <<INDEX_SET>> {
+  PK pk_refunds : (id) UNIQUE BTREE
+  IX refunds_intent_idx : (payment_intent_id) BTREE
+  IX refunds_merchant_created_idx : (merchant_id, mode, created_at DESC, id DESC) BTREE
+}
+refunds .. idxset_refunds : indexed by
+
+entity "INDEXES · disputes" as idxset_disputes <<INDEX_SET>> {
+  PK pk_disputes : (id) UNIQUE BTREE
+  ' Una sola disputa abierta por cobro.
+  UK disputes_one_open_per_intent_uidx : (payment_intent_id) UNIQUE BTREE WHERE status = 'open'
+}
+disputes .. idxset_disputes : indexed by
+
+entity "INDEXES · payment_cancellation_requests" as idxset_payment_cancellation_requests <<INDEX_SET>> {
+  PK pk_payment_cancellation_requests : (id) UNIQUE BTREE
+}
+payment_cancellation_requests .. idxset_payment_cancellation_requests : indexed by
+
+entity "INDEXES · merchant_replica" as idxset_merchant_replica <<INDEX_SET>> {
+  PK pk_merchant_replica : (merchant_id) UNIQUE BTREE
+}
+merchant_replica .. idxset_merchant_replica : indexed by
+
+entity "INDEXES · fee_schedule_replica" as idxset_fee_schedule_replica <<INDEX_SET>> {
+  PK pk_fee_schedule_replica : (merchant_id, version) UNIQUE BTREE
+  IX fee_schedule_replica_effective_idx : (merchant_id, effective_from DESC) BTREE
+}
+fee_schedule_replica .. idxset_fee_schedule_replica : indexed by
+
+entity "INDEXES · intent_contradictions" as idxset_intent_contradictions <<INDEX_SET>> {
+  PK pk_intent_contradictions : (id) UNIQUE BTREE
+  UK intent_contradictions_event_uidx : (payment_intent_id, source_event_id) UNIQUE BTREE
+}
+intent_contradictions .. idxset_intent_contradictions : indexed by
+
+entity "INDEXES · wallet_authorizations_used" as idxset_wallet_authorizations_used <<INDEX_SET>> {
+  PK pk_wallet_authorizations_used : (authorization_id) UNIQUE BTREE
+}
+wallet_authorizations_used .. idxset_wallet_authorizations_used : indexed by
+
+entity "INDEXES · outbox_events" as idxset_outbox_events <<INDEX_SET>> {
+  PK pk_outbox_events : (id) UNIQUE BTREE
+  UK outbox_events_seq_key : (seq) UNIQUE BTREE
+  IX outbox_events_pending_idx : (seq) BTREE WHERE published_at IS NULL
+}
+outbox_events .. idxset_outbox_events : indexed by
+
+entity "INDEXES · inbox_events" as idxset_inbox_events <<INDEX_SET>> {
+  PK pk_inbox_events : (consumer, event_id) UNIQUE BTREE
+}
+inbox_events .. idxset_inbox_events : indexed by
+
+entity "INDEXES · idempotency_keys" as idxset_idempotency_keys <<INDEX_SET>> {
+  PK pk_idempotency_keys : (scope, key) UNIQUE BTREE
+  IX idempotency_keys_expires_at_idx : (expires_at) BTREE
+}
+idempotency_keys .. idxset_idempotency_keys : indexed by
+
+entity "PAY EXTRAS · pay_payments" as pay_extras_pay_payments <<PAY_EXTRAS>> {
+  ' Lo que el generador base (gen_ddl.py) no expresa: defaults no booleanos, identidades, CHECK, FK compuestas,
+  ' funciones, triggers y datos semilla. Lo materializa salud-db/gen_ddl_pay.py (05_constraints.sql / 06_seed.sql).
+  DEFAULT payment_intents.currency : 'BOB'
+  DEFAULT payment_intents.status : 'processing'
+  DEFAULT payment_intents.metadata : '{}'::jsonb
+  DEFAULT payment_intents.charge_status : 'pending'
+  DEFAULT payment_intents.ledger_attempt : 1
+  DEFAULT payment_intents.created_at : now()
+  CHECK_SQL payment_intents : payment_intents_mode_chk | mode IN ('test', 'live')
+  CHECK_SQL payment_intents : payment_intents_amount_positive_chk | amount_minor > 0
+  CHECK_SQL payment_intents : payment_intents_fee_net_sum_chk | fee_minor >= 0 AND net_minor >= 0 AND fee_minor + net_minor = amount_minor
+  CHECK_SQL payment_intents : payment_intents_method_chk | method IN ('qr', 'card', 'bank_transfer', 'wallet')
+  CHECK_SQL payment_intents : payment_intents_status_chk | status IN ('requires_action', 'processing', 'succeeded', 'failed', 'canceled', 'expired')
+  CHECK_SQL payment_intents : payment_intents_charge_status_chk | charge_status IN ('pending', 'authorized', 'captured', 'settled', 'failed', 'canceled', 'expired')
+  CHECK_SQL payment_intents : payment_intents_card_token_chk | card_token IS NULL OR card_token ~ '^tok_[a-z0-9]{10,60}$'
+  CHECK_SQL payment_intents : payment_intents_terminal_completed_chk | (status IN ('succeeded', 'failed', 'canceled', 'expired')) = (completed_at IS NOT NULL)
+  DEFAULT refunds.currency : 'BOB'
+  DEFAULT refunds.status : 'pending'
+  DEFAULT refunds.metadata : '{}'::jsonb
+  DEFAULT refunds.created_at : now()
+  CHECK_SQL refunds : refunds_mode_chk | mode IN ('test', 'live')
+  CHECK_SQL refunds : refunds_amount_positive_chk | amount_minor > 0
+  CHECK_SQL refunds : refunds_status_chk | status IN ('pending', 'succeeded', 'failed')
+  DEFAULT disputes.currency : 'BOB'
+  DEFAULT disputes.status : 'open'
+  DEFAULT disputes.evidence : '[]'::jsonb
+  DEFAULT disputes.opened_at : now()
+  CHECK_SQL disputes : disputes_mode_chk | mode IN ('test', 'live')
+  CHECK_SQL disputes : disputes_amount_positive_chk | amount_minor > 0
+  CHECK_SQL disputes : disputes_status_chk | status IN ('open', 'won', 'lost')
+  DEFAULT payment_cancellation_requests.requested_at : now()
+  DEFAULT merchant_replica.updated_at : now()
+  CHECK_SQL merchant_replica : merchant_replica_status_chk | status IN ('pending', 'active', 'suspended', 'closed')
+  DEFAULT fee_schedule_replica.published_at : now()
+  DEFAULT intent_contradictions.kind : 'status_conflict'
+  DEFAULT intent_contradictions.reason : ''
+  DEFAULT intent_contradictions.detected_at : now()
+  DEFAULT wallet_authorizations_used.used_at : now()
+  DEFAULT outbox_events.created_at : now()
+  DEFAULT outbox_events.attempts : 0
+  DEFAULT inbox_events.processed_at : now()
+  DEFAULT idempotency_keys.recovery_point : 'started'
+  DEFAULT idempotency_keys.created_at : now()
+  CHECK_SQL idempotency_keys : idempotency_keys_state_check | state IN ('started', 'completed')
+}
+
+@enduml

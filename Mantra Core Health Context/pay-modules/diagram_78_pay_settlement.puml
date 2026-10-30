@@ -1,0 +1,476 @@
+@startuml SALUD_Pay_Module_78_pay_settlement
+title Module 78 — pay-settlement: Cortes, payouts, cobros y conciliación\n(schema: pay_settlement)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' PERFIL PAY (D-18). Una base de PostgreSQL POR SERVICIO: este módulo describe la base `pay_settlement`,
+' no un schema de la base de SALUD. Se genera con salud-db/gen_ddl_pay.py a SQL/pay/78_pay_settlement/ (objetos sin
+' calificar: se crean en el esquema de la conexión). Portado el 2026-10-27 del DDL de referencia de
+' services/pay-settlement/sql/ (pasarelapago). A partir de acá la fuente de verdad es ESTE archivo.
+' SQL de referencia de pay-settlement (P2.H2.M1). A mover a mantra-core-health-model (D-18): el modelo todavía no existe.
+' pay-settlement NUNCA guarda saldos (los saldos son del ledger): guarda el estado de sus procesos —cortes, payouts, cobros pendientes,
+' corridas de conciliación y excepciones— y las marcas que le permiten repetir cualquier paso sin duplicar efectos.
+' Montos en centavos de BOB (bigint). Las tablas técnicas outbox_events / inbox_events / idempotency_keys vienen de contracts/packages.
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_78_pay_settlement
+  BUSINESS PURPOSE
+  Base propia del microservicio pay-settlement de la pasarela de pagos ALOVIDA (cortes, payouts, cobros y conciliación).
+  Separación (regla #1 del plan maestro): ningún otro servicio lee estas tablas; los datos de otros
+  servicios llegan por eventos o por sus APIs. Dinero en unidades menores enteras (amount_minor, BOB).
+end note
+
+' Modo (D-28): `test` o `live`, el de la CLAVE que hizo la petición (cabecera X-Pay-Mode). Todo registro que mueve o lee dinero lo lleva, toda consulta lo
+' filtra, y se propaga al ledger y a los conectores. Un registro de un modo no se ve, no se cobra y no se paga desde el otro.
+' Comercios que el servicio conoce (los que aparecieron en el ledger). Es un directorio SIN modo: los eventos `ledger.*` todavía no llevan `mode`
+' (el AsyncAPI no lo declara), así que no se puede saber en qué modo vendió. Un comercio sin movimiento en un modo libera 0 en ese modo.
+entity settlement_merchants {
+  * merchant_id : text <<PK>>
+  * first_seen_at : timestamptz
+  * last_activity_at : timestamptz
+}
+
+' Marcas del corte por (modo, comercio). `watermark_at` y `residual_minor` hacen incremental el corte: lo cobrado antes de `watermark_at` ya se
+' liberó, y `residual_minor` arrastra lo que quedó sin liberar (positivo) o lo que se devolvió de más (negativo) para que la ventana siguiente no lea
+' el ledger desde el principio de los tiempos. Cada modo tiene su propio saldo en el ledger, así que cada uno lleva sus propias marcas.
+entity settlement_merchant_marks {
+  * mode : text <<PK>>
+  * merchant_id : text <<PK, FK>>
+    watermark_at : timestamptz
+  * residual_minor : bigint
+}
+
+' Última versión del tarifario con abono mensual (evento fee_schedule.published). Una versión vieja nunca pisa a una nueva.
+entity settlement_fee_plans {
+  * merchant_id : text <<PK>>
+  * version : integer
+  * monthly_fee_minor : bigint
+  * effective_from : timestamptz
+    effective_to : timestamptz
+  * updated_at : timestamptz
+}
+
+' Un lote por modo y fecha de corte: `(mode, cutoff_date)` única es la idempotencia del corte (REQ-P2-5).
+entity settlement_batches {
+  ' sb_<base>
+  * id : text <<PK>>
+  * mode : text
+  * cutoff_date : date
+  * release_days : integer
+  * release_before : timestamptz
+  * period_from : timestamptz
+  * status : text
+  * merchants_count : integer
+  * released_minor : bigint
+  * payouts_count : integer
+  * failed_count : integer
+  * created_at : timestamptz
+    completed_at : timestamptz
+}
+
+' Un renglón por comercio y lote: lo planeado se guarda ANTES de tocar el ledger, así un reintento repite exactamente lo mismo.
+entity settlement_batch_items {
+  * batch_id : text <<PK, FK>>
+  * merchant_id : text <<PK>>
+  * status : text
+    window_from : timestamptz
+    planned_release_minor : bigint
+    new_residual_minor : bigint
+  * ledger_attempt : integer
+    release_ref : text
+  * released_minor : bigint
+  ' Deuda del comercio en `merchant:{id}:debt` (lo que un contracargo perdido dejó por encima de su saldo pendiente, D-22) que el corte netea moviendo disponible → deuda.
+  ' NULL = todavía no planeado; el monto se fija ANTES de llamar al ledger, como el de la liberación.
+    netting_minor : bigint
+  * netting_attempt : integer
+    payout_id : text
+    failure_code : text
+  * updated_at : timestamptz
+}
+
+' Pagos a comercios. `step` es el avance interno de la máquina (created → held → sent → resolved); `status` es el público.
+entity settlement_payouts {
+  ' po_<base>
+  * id : text <<PK>>
+  * mode : text
+  * merchant_id : text
+  * amount_minor : bigint
+  * currency : char(3)
+  * rail : text
+  * simulated : boolean
+  * reason : text
+  * status : text
+  * step : text
+    hold_id : text
+  * hold_business_ref : text
+    rail_reference : text
+    batch_id : text <<FK>>
+  * requested_by : text
+    failure_code : text
+  * period_from : timestamptz
+  * period_to : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    paid_at : timestamptz
+}
+
+' Cobros a un comercio que se netean contra su saldo: abono mensual (D-07), comisión programada de proveedores (7.8) y deuda por
+' contracargo (D-22). Una vez por (comercio, tipo, periodo): ese es el «una sola vez por mes» de P2.H2.M9.
+entity settlement_charges {
+  ' cg_<base>
+  * id : text <<PK>>
+  * mode : text
+  * merchant_id : text
+  * kind : text
+  ' 2026-11 para el abono; la referencia del llamador en los demás
+  * period_key : text
+  ' platform:fees (abono, comisión) o connector:<x>:clearing (contracargo)
+  * credit_account : text
+  * ledger_code : text
+  * amount_minor : bigint
+  * collected_minor : bigint
+  * status : text
+  * requested_by : text
+  * created_at : timestamptz
+    collected_at : timestamptz
+}
+
+' Cada intento de cobro contra el saldo. El monto se fija antes de llamar al ledger y su referencia es única por (cobro, seq).
+entity settlement_charge_collections {
+  * charge_id : text <<PK, FK>>
+  * seq : integer <<PK>>
+  * amount_minor : bigint
+  * ledger_ref : text
+  * status : text
+  * created_at : timestamptz
+}
+
+' Corridas de conciliación.
+entity settlement_reconciliation_runs {
+  ' rr_<base>
+  * id : text <<PK>>
+  * mode : text
+  * connector : text
+  * period_from : timestamptz
+  * period_to : timestamptz
+  * source : text
+  * status : text
+  * matched_count : integer
+  * exception_count : integer
+  * ignored_count : integer
+    failure_code : text
+  * requested_by : text
+  * created_at : timestamptz
+    completed_at : timestamptz
+}
+
+' Las líneas del extracto que se leyeron. Se descarta la glosa del banco (puede traer datos personales).
+entity settlement_statement_lines {
+  * run_id : text <<PK, FK>>
+  ' extracto#n: referencia opaca, nunca el texto de la línea
+  * line_ref : text <<PK>>
+  * provider_reference : text
+    our_reference : text
+  * direction : text
+  * amount_minor : bigint
+  * value_date : date
+    booked_at : timestamptz
+  * outcome : text
+}
+
+' Diferencias que una persona tiene que mirar. El ledger NO se ajusta solo (REQ-P2-6). `dedupe_key` evita reabrir la misma
+' diferencia en cada corrida.
+' `payment_contradiction` NO sale de una corrida: la abre el consumidor de `payment_intent.contradiction_detected` (pay-payments), por eso
+' no tiene corrida ni conector (`run_id` y `connector` NULL), y `mode` puede ser NULL si el productor no lo informó (visible desde los dos
+' modos hasta que una persona la resuelva). Las demás exigen corrida, conector y modo.
+entity settlement_exceptions {
+  ' rx_<base>
+  * id : text <<PK>>
+    mode : text
+    run_id : text <<FK>>
+    connector : text
+  * kind : text
+    provider_reference : text
+    business_ref : text
+    statement_amount_minor : bigint
+    ledger_amount_minor : bigint
+  * difference_minor : bigint
+  * statement_line_ref : text
+    merchant_id : text
+    payment_intent_id : text
+  ' solo payment_contradiction: {kind, current_status, incoming_status, detected_at}; sin datos personales
+    source_detail : jsonb
+  * status : text
+    resolution : text
+    resolved_by : text
+    resolution_note : text
+    resolved_at : timestamptz
+  * dedupe_key : char(64)
+  * created_at : timestamptz
+}
+
+' Un pedido de ajuste NO mueve dinero: lo toma el flujo normal de asientos con su propia aprobación.
+entity settlement_adjustment_requests {
+  * id : bigint <<PK>>
+  * exception_id : text <<FK>>
+  * requested_by : text
+  * difference_minor : bigint
+  * note : text
+  * status : text
+  * created_at : timestamptz
+}
+
+' Auditoría de las decisiones de personas (quién decidió, con qué rol, sobre qué). Solo se agrega.
+entity settlement_audit {
+  * id : bigint <<PK>>
+  * actor : text
+  * role : text
+  * action : text
+  * subject : text
+  * detail : jsonb
+  * at : timestamptz
+}
+
+' Tablas técnicas de @pay/outbox. Cada servicio las tiene en SU base. Se declaran en el modelo (D-18).
+' Tabla técnica de @pay/outbox: la declara la librería y cada servicio la tiene en SU base.
+entity outbox_events {
+  ' id del CloudEvent; también es el Nats-Msg-Id
+  * id : uuid <<PK>>
+  ' orden de publicación
+  * seq : bigserial
+  * aggregate_type : text
+  * aggregate_id : text
+  * type : text
+  ' tema NATS destino
+  * subject : text
+  ' el CloudEvent completo
+  * envelope : jsonb
+  * created_at : timestamptz
+    published_at : timestamptz
+  * attempts : integer
+    last_error : text
+}
+
+' Tabla técnica de @pay/outbox: la declara la librería y cada servicio la tiene en SU base.
+entity inbox_events {
+  ' qué consumidor procesó el evento
+  * consumer : text <<PK>>
+  * event_id : text <<PK>>
+  * processed_at : timestamptz
+}
+
+' Tabla técnica de @pay/idempotency. Cada servicio la tiene en SU base (regla de separación #1).
+' Se declara en el modelo (mantra-core-health-model, D-18) y se aplica por el pipeline; este archivo es la referencia.
+' Tabla técnica de @pay/idempotency: la declara la librería y cada servicio la tiene en SU base.
+entity idempotency_keys {
+  ' quién: el id del comercio
+  * scope : text <<PK>>
+  ' la Idempotency-Key del cliente
+  * key : text <<PK>>
+  ' sha256 de método + ruta + cuerpo canónico
+  * request_hash : text
+  * state : text
+  ' hasta dónde llegó la ejecución
+  * recovery_point : text
+    response_status : integer
+    response_body : jsonb
+  ' null = nadie la está ejecutando
+    locked_at : timestamptz
+  ' identifica a quien la ejecuta (compare-and-set)
+    lock_token : text
+  * created_at : timestamptz
+  * expires_at : timestamptz
+}
+
+settlement_merchant_marks }o--|| settlement_merchants : merchant_id
+settlement_batch_items }o--|| settlement_batches : batch_id
+settlement_payouts }o--|| settlement_batches : batch_id
+settlement_charge_collections }o--|| settlement_charges : charge_id
+settlement_statement_lines }o--|| settlement_reconciliation_runs : run_id
+settlement_exceptions }o--|| settlement_reconciliation_runs : run_id
+settlement_adjustment_requests }o--|| settlement_exceptions : exception_id
+
+entity "INDEXES · settlement_merchants" as idxset_settlement_merchants <<INDEX_SET>> {
+  PK pk_settlement_merchants : (merchant_id) UNIQUE BTREE
+}
+settlement_merchants .. idxset_settlement_merchants : indexed by
+
+entity "INDEXES · settlement_merchant_marks" as idxset_settlement_merchant_marks <<INDEX_SET>> {
+  PK pk_settlement_merchant_marks : (mode, merchant_id) UNIQUE BTREE
+}
+settlement_merchant_marks .. idxset_settlement_merchant_marks : indexed by
+
+entity "INDEXES · settlement_fee_plans" as idxset_settlement_fee_plans <<INDEX_SET>> {
+  PK pk_settlement_fee_plans : (merchant_id) UNIQUE BTREE
+}
+settlement_fee_plans .. idxset_settlement_fee_plans : indexed by
+
+entity "INDEXES · settlement_batches" as idxset_settlement_batches <<INDEX_SET>> {
+  PK pk_settlement_batches : (id) UNIQUE BTREE
+  UK settlement_batches_cutoff_unique : (mode, cutoff_date) UNIQUE BTREE
+}
+settlement_batches .. idxset_settlement_batches : indexed by
+
+entity "INDEXES · settlement_batch_items" as idxset_settlement_batch_items <<INDEX_SET>> {
+  PK pk_settlement_batch_items : (batch_id, merchant_id) UNIQUE BTREE
+}
+settlement_batch_items .. idxset_settlement_batch_items : indexed by
+
+entity "INDEXES · settlement_payouts" as idxset_settlement_payouts <<INDEX_SET>> {
+  PK pk_settlement_payouts : (id) UNIQUE BTREE
+  UK settlement_payouts_batch_merchant_unique : (batch_id, merchant_id) UNIQUE BTREE WHERE batch_id IS NOT NULL
+  IX settlement_payouts_merchant_page : (mode, merchant_id, created_at DESC, id DESC) BTREE
+  IX settlement_payouts_open : (updated_at) BTREE WHERE step <> 'resolved'
+}
+settlement_payouts .. idxset_settlement_payouts : indexed by
+
+entity "INDEXES · settlement_charges" as idxset_settlement_charges <<INDEX_SET>> {
+  PK pk_settlement_charges : (id) UNIQUE BTREE
+  UK settlement_charges_period_unique : (mode, merchant_id, kind, period_key) UNIQUE BTREE
+  IX settlement_charges_open : (mode, merchant_id) BTREE WHERE status = 'open'
+}
+settlement_charges .. idxset_settlement_charges : indexed by
+
+entity "INDEXES · settlement_charge_collections" as idxset_settlement_charge_collections <<INDEX_SET>> {
+  PK pk_settlement_charge_collections : (charge_id, seq) UNIQUE BTREE
+}
+settlement_charge_collections .. idxset_settlement_charge_collections : indexed by
+
+entity "INDEXES · settlement_reconciliation_runs" as idxset_settlement_reconciliation_runs <<INDEX_SET>> {
+  PK pk_settlement_reconciliation_runs : (id) UNIQUE BTREE
+}
+settlement_reconciliation_runs .. idxset_settlement_reconciliation_runs : indexed by
+
+entity "INDEXES · settlement_statement_lines" as idxset_settlement_statement_lines <<INDEX_SET>> {
+  PK pk_settlement_statement_lines : (run_id, line_ref) UNIQUE BTREE
+}
+settlement_statement_lines .. idxset_settlement_statement_lines : indexed by
+
+entity "INDEXES · settlement_exceptions" as idxset_settlement_exceptions <<INDEX_SET>> {
+  PK pk_settlement_exceptions : (id) UNIQUE BTREE
+  UK settlement_exceptions_dedupe_unique : (dedupe_key) UNIQUE BTREE
+  IX settlement_exceptions_page : (mode, created_at DESC, id DESC) BTREE
+  IX settlement_exceptions_run : (run_id) BTREE
+}
+settlement_exceptions .. idxset_settlement_exceptions : indexed by
+
+entity "INDEXES · settlement_adjustment_requests" as idxset_settlement_adjustment_requests <<INDEX_SET>> {
+  PK pk_settlement_adjustment_requests : (id) UNIQUE BTREE
+  UK settlement_adjustment_requests_exception_unique : (exception_id) UNIQUE BTREE
+}
+settlement_adjustment_requests .. idxset_settlement_adjustment_requests : indexed by
+
+entity "INDEXES · settlement_audit" as idxset_settlement_audit <<INDEX_SET>> {
+  PK pk_settlement_audit : (id) UNIQUE BTREE
+}
+settlement_audit .. idxset_settlement_audit : indexed by
+
+entity "INDEXES · outbox_events" as idxset_outbox_events <<INDEX_SET>> {
+  PK pk_outbox_events : (id) UNIQUE BTREE
+  UK outbox_events_seq_key : (seq) UNIQUE BTREE
+  IX outbox_events_pending_idx : (seq) BTREE WHERE published_at IS NULL
+}
+outbox_events .. idxset_outbox_events : indexed by
+
+entity "INDEXES · inbox_events" as idxset_inbox_events <<INDEX_SET>> {
+  PK pk_inbox_events : (consumer, event_id) UNIQUE BTREE
+}
+inbox_events .. idxset_inbox_events : indexed by
+
+entity "INDEXES · idempotency_keys" as idxset_idempotency_keys <<INDEX_SET>> {
+  PK pk_idempotency_keys : (scope, key) UNIQUE BTREE
+  IX idempotency_keys_expires_at_idx : (expires_at) BTREE
+}
+idempotency_keys .. idxset_idempotency_keys : indexed by
+
+entity "PAY EXTRAS · pay_settlement" as pay_extras_pay_settlement <<PAY_EXTRAS>> {
+  ' Lo que el generador base (gen_ddl.py) no expresa: defaults no booleanos, identidades, CHECK, FK compuestas,
+  ' funciones, triggers y datos semilla. Lo materializa salud-db/gen_ddl_pay.py (05_constraints.sql / 06_seed.sql).
+  DEFAULT settlement_merchants.first_seen_at : now()
+  DEFAULT settlement_merchants.last_activity_at : now()
+  DEFAULT settlement_merchant_marks.residual_minor : 0
+  CHECK_SQL settlement_merchant_marks : settlement_merchant_marks_mode_check | mode IN ('test', 'live')
+  DEFAULT settlement_fee_plans.monthly_fee_minor : 0
+  DEFAULT settlement_fee_plans.updated_at : now()
+  CHECK_SQL settlement_fee_plans : settlement_fee_plans_version_check | version >= 1
+  CHECK_SQL settlement_fee_plans : settlement_fee_plans_monthly_fee_minor_check | monthly_fee_minor >= 0
+  DEFAULT settlement_batches.merchants_count : 0
+  DEFAULT settlement_batches.released_minor : 0
+  DEFAULT settlement_batches.payouts_count : 0
+  DEFAULT settlement_batches.failed_count : 0
+  DEFAULT settlement_batches.created_at : now()
+  CHECK_SQL settlement_batches : settlement_batches_mode_check | mode IN ('test', 'live')
+  CHECK_SQL settlement_batches : settlement_batches_release_days_check | release_days BETWEEN 0 AND 60
+  CHECK_SQL settlement_batches : settlement_batches_status_check | status IN ('running', 'completed', 'failed')
+  CHECK_SQL settlement_batches : settlement_batches_released_minor_check | released_minor >= 0
+  DEFAULT settlement_batch_items.ledger_attempt : 1
+  DEFAULT settlement_batch_items.released_minor : 0
+  DEFAULT settlement_batch_items.netting_attempt : 1
+  DEFAULT settlement_batch_items.updated_at : now()
+  CHECK_SQL settlement_batch_items : settlement_batch_items_status_check | status IN ('pending', 'planned', 'released', 'done', 'failed')
+  CHECK_SQL settlement_batch_items : settlement_batch_items_planned_release_minor_check | planned_release_minor >= 0
+  CHECK_SQL settlement_batch_items : settlement_batch_items_ledger_attempt_check | ledger_attempt >= 1
+  CHECK_SQL settlement_batch_items : settlement_batch_items_released_minor_check | released_minor >= 0
+  CHECK_SQL settlement_batch_items : settlement_batch_items_netting_minor_check | netting_minor >= 0
+  CHECK_SQL settlement_batch_items : settlement_batch_items_netting_attempt_check | netting_attempt >= 1
+  DEFAULT settlement_payouts.created_at : now()
+  DEFAULT settlement_payouts.updated_at : now()
+  CHECK_SQL settlement_payouts : settlement_payouts_mode_check | mode IN ('test', 'live')
+  CHECK_SQL settlement_payouts : settlement_payouts_amount_minor_check | amount_minor >= 1
+  CHECK_SQL settlement_payouts : settlement_payouts_rail_check | rail IN ('bank_transfer', 'acquirer_settlement')
+  CHECK_SQL settlement_payouts : settlement_payouts_reason_check | reason IN ('weekly_cut', 'mandate_obligation', 'mandate_commission', 'manual')
+  CHECK_SQL settlement_payouts : settlement_payouts_status_check | status IN ('pending', 'in_transit', 'paid', 'failed')
+  CHECK_SQL settlement_payouts : settlement_payouts_step_check | step IN ('created', 'held', 'sent', 'resolved')
+  CHECK_SQL settlement_payouts : settlement_payouts_terminal_consistency | (status IN ('paid', 'failed')) = (step = 'resolved')
+  CHECK_SQL settlement_payouts : settlement_payouts_failure_consistency | (status = 'failed') = (failure_code IS NOT NULL)
+  DEFAULT settlement_charges.collected_minor : 0
+  DEFAULT settlement_charges.created_at : now()
+  CHECK_SQL settlement_charges : settlement_charges_mode_check | mode IN ('test', 'live')
+  CHECK_SQL settlement_charges : settlement_charges_kind_check | kind IN ('monthly_fee', 'provider_commission', 'chargeback_debt')
+  CHECK_SQL settlement_charges : settlement_charges_ledger_code_check | ledger_code IN ('fee', 'refund')
+  CHECK_SQL settlement_charges : settlement_charges_amount_minor_check | amount_minor >= 1
+  CHECK_SQL settlement_charges : settlement_charges_check | collected_minor >= 0 AND collected_minor <= amount_minor
+  CHECK_SQL settlement_charges : settlement_charges_status_check | status IN ('open', 'collected')
+  CHECK_SQL settlement_charges : settlement_charges_status_consistency | (status = 'collected') = (collected_minor = amount_minor)
+  DEFAULT settlement_charge_collections.created_at : now()
+  CHECK_SQL settlement_charge_collections : settlement_charge_collections_seq_check | seq >= 1
+  CHECK_SQL settlement_charge_collections : settlement_charge_collections_amount_minor_check | amount_minor >= 1
+  CHECK_SQL settlement_charge_collections : settlement_charge_collections_status_check | status IN ('planned', 'posted', 'rejected')
+  DEFAULT settlement_reconciliation_runs.matched_count : 0
+  DEFAULT settlement_reconciliation_runs.exception_count : 0
+  DEFAULT settlement_reconciliation_runs.ignored_count : 0
+  DEFAULT settlement_reconciliation_runs.created_at : now()
+  CHECK_SQL settlement_reconciliation_runs : settlement_reconciliation_runs_mode_check | mode IN ('test', 'live')
+  CHECK_SQL settlement_reconciliation_runs : settlement_reconciliation_runs_source_check | source IN ('api', 'csv', 'camt053')
+  CHECK_SQL settlement_reconciliation_runs : settlement_reconciliation_runs_status_check | status IN ('running', 'completed', 'failed')
+  CHECK_SQL settlement_statement_lines : settlement_statement_lines_direction_check | direction IN ('credit', 'debit')
+  CHECK_SQL settlement_statement_lines : settlement_statement_lines_amount_minor_check | amount_minor >= 0
+  CHECK_SQL settlement_statement_lines : settlement_statement_lines_outcome_check | outcome IN ('matched', 'exception', 'ignored')
+  DEFAULT settlement_exceptions.created_at : now()
+  CHECK_SQL settlement_exceptions : settlement_exceptions_mode_check | mode IN ('test', 'live')
+  CHECK_SQL settlement_exceptions : settlement_exceptions_kind_check | kind IN ('missing_in_ledger', 'missing_in_statement', 'amount_mismatch', 'duplicate_in_statement', 'unknown_reference', 'payment_contradiction')
+  CHECK_SQL settlement_exceptions : settlement_exceptions_statement_amount_minor_check | statement_amount_minor >= 0
+  CHECK_SQL settlement_exceptions : settlement_exceptions_ledger_amount_minor_check | ledger_amount_minor >= 0
+  CHECK_SQL settlement_exceptions : settlement_exceptions_status_check | status IN ('open', 'resolved', 'dismissed')
+  CHECK_SQL settlement_exceptions : settlement_exceptions_resolution_check | resolution IN ('request_adjustment', 'dismiss')
+  CHECK_SQL settlement_exceptions : settlement_exceptions_resolution_note_check | char_length(resolution_note) <= 500
+  CHECK_SQL settlement_exceptions : settlement_exceptions_origin_shape | (kind = 'payment_contradiction' AND run_id IS NULL AND connector IS NULL AND source_detail IS NOT NULL) OR (kind <> 'payment_contradiction' AND run_id IS NOT NULL AND connector IS NOT NULL AND mode IS NOT NULL AND source_detail IS NULL)
+  CHECK_SQL settlement_exceptions : settlement_exceptions_resolution_consistency | (status = 'open') = (resolution IS NULL)
+  IDENTITY settlement_adjustment_requests.id
+  DEFAULT settlement_adjustment_requests.status : 'requested'
+  DEFAULT settlement_adjustment_requests.created_at : now()
+  CHECK_SQL settlement_adjustment_requests : settlement_adjustment_requests_status_check | status IN ('requested')
+  IDENTITY settlement_audit.id
+  DEFAULT settlement_audit.detail : '{}'::jsonb
+  DEFAULT settlement_audit.at : now()
+  DEFAULT outbox_events.created_at : now()
+  DEFAULT outbox_events.attempts : 0
+  DEFAULT inbox_events.processed_at : now()
+  DEFAULT idempotency_keys.recovery_point : 'started'
+  DEFAULT idempotency_keys.created_at : now()
+  CHECK_SQL idempotency_keys : idempotency_keys_state_check | state IN ('started', 'completed')
+}
+
+@enduml
