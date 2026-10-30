@@ -1,0 +1,275 @@
+@startuml SALUD_Pay_Module_72_pay_ledger
+title Module 72 — pay-ledger: Libro mayor (lo que TigerBeetle no guarda)\n(schema: pay_ledger)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' PERFIL PAY (D-18). Una base de PostgreSQL POR SERVICIO: este módulo describe la base `pay_ledger`,
+' no un schema de la base de SALUD. Se genera con salud-db/gen_ddl_pay.py a SQL/pay/72_pay_ledger/ (objetos sin
+' calificar: se crean en el esquema de la conexión). Portado el 2026-10-27 del DDL de referencia de
+' services/pay-ledger/sql/ (pasarelapago). A partir de acá la fuente de verdad es ESTE archivo.
+' SQL de referencia de pay-ledger (P2.H1.M2). A mover a mantra-core-health-model (D-18): el modelo todavía no existe.
+' TigerBeetle guarda saldos y asientos; acá vive lo que TigerBeetle no tiene (H-7 del spike): a qué operación de
+' negocio corresponde cada asiento, el extracto y el rastro de los rechazos (H-2). Montos en centavos de BOB (bigint).
+' Las tablas técnicas outbox_events / inbox_events / idempotency_keys vienen de contracts/packages/{outbox,idempotency}/sql.
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_72_pay_ledger
+  BUSINESS PURPOSE
+  Base propia del microservicio pay-ledger de la pasarela de pagos ALOVIDA (libro mayor (lo que TigerBeetle no guarda)).
+  Separación (regla #1 del plan maestro): ningún otro servicio lee estas tablas; los datos de otros
+  servicios llegan por eventos o por sus APIs. Dinero en unidades menores enteras (amount_minor, BOB).
+end note
+
+' Modo (D-28): `test` o `live`, el de la CLAVE que hizo la petición (cabecera X-Pay-Mode). Cada registro lo lleva y toda consulta lo filtra; las cuentas
+' de TigerBeetle también son distintas por modo (el id lo incluye), así que ni el saldo ni un asiento pueden mezclar `test` con `live`.
+' Cuentas lógicas del plan de cuentas (PLAN-MAESTRO §3.3) y su id determinista de 128 bits en TigerBeetle.
+entity ledger_accounts {
+  * mode : text <<PK>>
+  * account : text <<PK>>
+  * kind : text
+  ' hex del id de 128 bits
+  * tb_id : char(32)
+  * created_at : timestamptz
+}
+
+' Un asiento por (business_ref, attempt). Los rechazados también quedan: son los que fijan el siguiente attempt (H-TB1).
+entity ledger_transactions {
+  ' tx_<base> (el modo forma parte de la base)
+  * id : text <<PK>>
+  * mode : text
+  * business_ref : text
+  * attempt : integer
+  ' sha256 del contenido canónico: mismo attempt con otro contenido ⇒ 422
+  * content_hash : char(64)
+  * status : text
+    reject_code : text
+  * currency : char(3)
+  * legs : jsonb
+  * created_at : timestamptz
+}
+
+' Cada pata asentada (una transferencia de TigerBeetle). `id` es el tf_ que viaja en el evento ledger.transfer.posted.
+entity ledger_legs {
+  ' tf_<base>
+  * id : text <<PK>>
+  * mode : text
+  * source : text
+  ' tx_… o hd_…
+  * source_id : text
+  * business_ref : text
+  * attempt : integer
+  * leg_index : integer
+  * debit_account : text
+  * credit_account : text
+  * amount_minor : bigint
+  * code : text
+  * posted_at : timestamptz
+}
+
+' Extracto: dos líneas por pata (débito y crédito). Orden estable: (posted_at desc, id desc).
+entity ledger_statement_lines {
+  ' sl_<base>
+  * id : text <<PK>>
+  * mode : text
+  * account : text
+  * leg_id : text <<FK>>
+  * business_ref : text
+  * attempt : integer
+  * leg_index : integer
+  * direction : text
+  * counterparty_account : text
+  * amount_minor : bigint
+  * code : text
+  * posted_at : timestamptz
+}
+
+' Retenciones (primera fase) con vencimiento.
+entity ledger_holds {
+  ' hd_<base> (el modo forma parte de la base)
+  * id : text <<PK>>
+  * mode : text
+  * business_ref : text
+  * attempt : integer
+  * content_hash : char(64)
+  * status : text
+    reject_code : text
+  * debit_account : text
+  * credit_account : text
+  * amount_minor : bigint
+    posted_amount_minor : bigint
+  * currency : char(3)
+    void_reason : text
+  * expires_at : timestamptz
+  * created_at : timestamptz
+    resolved_at : timestamptz
+}
+
+' Rastro de rechazos (P2.H1.M9): TigerBeetle NO guarda las transferencias rechazadas (H-2 del spike).
+entity ledger_rejections {
+  * id : bigserial <<PK>>
+  * mode : text
+  * kind : text
+  * business_ref : text
+  * attempt : integer
+  * reject_code : text
+  ' nombre del estado de TigerBeetle (sin datos personales)
+  * tb_status : text
+  ' X-Service-Id
+  * caller : text
+  * rejected_at : timestamptz
+}
+
+' Tablas técnicas de @pay/outbox. Cada servicio las tiene en SU base. Se declaran en el modelo (D-18).
+' Tabla técnica de @pay/outbox: la declara la librería y cada servicio la tiene en SU base.
+entity outbox_events {
+  ' id del CloudEvent; también es el Nats-Msg-Id
+  * id : uuid <<PK>>
+  ' orden de publicación
+  * seq : bigserial
+  * aggregate_type : text
+  * aggregate_id : text
+  * type : text
+  ' tema NATS destino
+  * subject : text
+  ' el CloudEvent completo
+  * envelope : jsonb
+  * created_at : timestamptz
+    published_at : timestamptz
+  * attempts : integer
+    last_error : text
+}
+
+' Tabla técnica de @pay/outbox: la declara la librería y cada servicio la tiene en SU base.
+entity inbox_events {
+  ' qué consumidor procesó el evento
+  * consumer : text <<PK>>
+  * event_id : text <<PK>>
+  * processed_at : timestamptz
+}
+
+' Tabla técnica de @pay/idempotency. Cada servicio la tiene en SU base (regla de separación #1).
+' Se declara en el modelo (mantra-core-health-model, D-18) y se aplica por el pipeline; este archivo es la referencia.
+' Tabla técnica de @pay/idempotency: la declara la librería y cada servicio la tiene en SU base.
+entity idempotency_keys {
+  ' quién: el id del comercio
+  * scope : text <<PK>>
+  ' la Idempotency-Key del cliente
+  * key : text <<PK>>
+  ' sha256 de método + ruta + cuerpo canónico
+  * request_hash : text
+  * state : text
+  ' hasta dónde llegó la ejecución
+  * recovery_point : text
+    response_status : integer
+    response_body : jsonb
+  ' null = nadie la está ejecutando
+    locked_at : timestamptz
+  ' identifica a quien la ejecuta (compare-and-set)
+    lock_token : text
+  * created_at : timestamptz
+  * expires_at : timestamptz
+}
+
+ledger_statement_lines }o--|| ledger_legs : leg_id
+
+entity "INDEXES · ledger_accounts" as idxset_ledger_accounts <<INDEX_SET>> {
+  PK pk_ledger_accounts : (mode, account) UNIQUE BTREE
+  UK ledger_accounts_tb_id_unique : (tb_id) UNIQUE BTREE
+}
+ledger_accounts .. idxset_ledger_accounts : indexed by
+
+entity "INDEXES · ledger_transactions" as idxset_ledger_transactions <<INDEX_SET>> {
+  PK pk_ledger_transactions : (id) UNIQUE BTREE
+  UK ledger_transactions_ref_attempt_key : (mode, business_ref, attempt) UNIQUE BTREE
+}
+ledger_transactions .. idxset_ledger_transactions : indexed by
+
+entity "INDEXES · ledger_legs" as idxset_ledger_legs <<INDEX_SET>> {
+  PK pk_ledger_legs : (id) UNIQUE BTREE
+  UK ledger_legs_source_index_key : (source_id, leg_index) UNIQUE BTREE
+  IX ledger_legs_business_ref_idx : (mode, business_ref, attempt) BTREE
+}
+ledger_legs .. idxset_ledger_legs : indexed by
+
+entity "INDEXES · ledger_statement_lines" as idxset_ledger_statement_lines <<INDEX_SET>> {
+  PK pk_ledger_statement_lines : (id) UNIQUE BTREE
+  IX ledger_statement_lines_account_page_idx : (mode, account, posted_at DESC, id DESC) BTREE
+}
+ledger_statement_lines .. idxset_ledger_statement_lines : indexed by
+
+entity "INDEXES · ledger_holds" as idxset_ledger_holds <<INDEX_SET>> {
+  PK pk_ledger_holds : (id) UNIQUE BTREE
+  UK ledger_holds_ref_attempt_key : (mode, business_ref, attempt) UNIQUE BTREE
+  IX ledger_holds_pending_expiry_idx : (expires_at) BTREE WHERE status = 'pending'
+}
+ledger_holds .. idxset_ledger_holds : indexed by
+
+entity "INDEXES · ledger_rejections" as idxset_ledger_rejections <<INDEX_SET>> {
+  PK pk_ledger_rejections : (id) UNIQUE BTREE
+  UK ledger_rejections_ref_attempt_kind_key : (mode, kind, business_ref, attempt) UNIQUE BTREE
+}
+ledger_rejections .. idxset_ledger_rejections : indexed by
+
+entity "INDEXES · outbox_events" as idxset_outbox_events <<INDEX_SET>> {
+  PK pk_outbox_events : (id) UNIQUE BTREE
+  UK outbox_events_seq_key : (seq) UNIQUE BTREE
+  IX outbox_events_pending_idx : (seq) BTREE WHERE published_at IS NULL
+}
+outbox_events .. idxset_outbox_events : indexed by
+
+entity "INDEXES · inbox_events" as idxset_inbox_events <<INDEX_SET>> {
+  PK pk_inbox_events : (consumer, event_id) UNIQUE BTREE
+}
+inbox_events .. idxset_inbox_events : indexed by
+
+entity "INDEXES · idempotency_keys" as idxset_idempotency_keys <<INDEX_SET>> {
+  PK pk_idempotency_keys : (scope, key) UNIQUE BTREE
+  IX idempotency_keys_expires_at_idx : (expires_at) BTREE
+}
+idempotency_keys .. idxset_idempotency_keys : indexed by
+
+entity "PAY EXTRAS · pay_ledger" as pay_extras_pay_ledger <<PAY_EXTRAS>> {
+  ' Lo que el generador base (gen_ddl.py) no expresa: defaults no booleanos, identidades, CHECK, FK compuestas,
+  ' funciones, triggers y datos semilla. Lo materializa salud-db/gen_ddl_pay.py (05_constraints.sql / 06_seed.sql).
+  DEFAULT ledger_accounts.created_at : now()
+  CHECK_SQL ledger_accounts : ledger_accounts_mode_check | mode IN ('test', 'live')
+  CHECK_SQL ledger_accounts : ledger_accounts_kind_check | kind IN ('merchant_pending', 'merchant_available', 'merchant_debt', 'user_wallet', 'platform_fees', 'connector_clearing', 'payout_clearing', 'schedule_reserve')
+  DEFAULT ledger_transactions.created_at : now()
+  CHECK_SQL ledger_transactions : ledger_transactions_mode_check | mode IN ('test', 'live')
+  CHECK_SQL ledger_transactions : ledger_transactions_attempt_check | attempt >= 1
+  CHECK_SQL ledger_transactions : ledger_transactions_status_check | status IN ('posted', 'rejected')
+  CHECK_SQL ledger_transactions : ledger_transactions_reject_code_check | reject_code IN ('insufficient_funds', 'validation_failed')
+  CHECK_SQL ledger_transactions : ledger_transactions_reject_consistency | (status = 'rejected') = (reject_code IS NOT NULL)
+  DEFAULT ledger_legs.posted_at : now()
+  CHECK_SQL ledger_legs : ledger_legs_mode_check | mode IN ('test', 'live')
+  CHECK_SQL ledger_legs : ledger_legs_source_check | source IN ('transaction', 'hold')
+  CHECK_SQL ledger_legs : ledger_legs_leg_index_check | leg_index >= 0
+  CHECK_SQL ledger_legs : ledger_legs_amount_minor_check | amount_minor > 0
+  FK_SQL ledger_legs : ledger_legs_debit_account_fkey | (mode, debit_account) -> ledger_accounts (mode, account)
+  FK_SQL ledger_legs : ledger_legs_credit_account_fkey | (mode, credit_account) -> ledger_accounts (mode, account)
+  CHECK_SQL ledger_statement_lines : ledger_statement_lines_mode_check | mode IN ('test', 'live')
+  CHECK_SQL ledger_statement_lines : ledger_statement_lines_direction_check | direction IN ('debit', 'credit')
+  CHECK_SQL ledger_statement_lines : ledger_statement_lines_amount_minor_check | amount_minor > 0
+  FK_SQL ledger_statement_lines : ledger_statement_lines_account_fkey | (mode, account) -> ledger_accounts (mode, account)
+  DEFAULT ledger_holds.created_at : now()
+  CHECK_SQL ledger_holds : ledger_holds_mode_check | mode IN ('test', 'live')
+  CHECK_SQL ledger_holds : ledger_holds_attempt_check | attempt >= 1
+  CHECK_SQL ledger_holds : ledger_holds_status_check | status IN ('pending', 'posted', 'voided', 'expired', 'rejected')
+  CHECK_SQL ledger_holds : ledger_holds_reject_code_check | reject_code IN ('insufficient_funds', 'validation_failed')
+  CHECK_SQL ledger_holds : ledger_holds_amount_minor_check | amount_minor > 0
+  CHECK_SQL ledger_holds : ledger_holds_posted_amount_minor_check | posted_amount_minor >= 0
+  CHECK_SQL ledger_holds : ledger_holds_void_reason_check | void_reason IN ('requested', 'downstream_failed')
+  DEFAULT ledger_rejections.rejected_at : now()
+  CHECK_SQL ledger_rejections : ledger_rejections_mode_check | mode IN ('test', 'live')
+  CHECK_SQL ledger_rejections : ledger_rejections_kind_check | kind IN ('transaction', 'hold')
+  DEFAULT outbox_events.created_at : now()
+  DEFAULT outbox_events.attempts : 0
+  DEFAULT inbox_events.processed_at : now()
+  DEFAULT idempotency_keys.recovery_point : 'started'
+  DEFAULT idempotency_keys.created_at : now()
+  CHECK_SQL idempotency_keys : idempotency_keys_state_check | state IN ('started', 'completed')
+}
+
+@enduml

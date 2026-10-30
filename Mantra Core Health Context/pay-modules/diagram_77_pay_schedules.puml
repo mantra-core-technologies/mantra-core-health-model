@@ -1,0 +1,212 @@
+@startuml SALUD_Pay_Module_77_pay_schedules
+title Module 77 — pay-schedules: Mandatos y pagos programados\n(schema: pay_schedules)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' PERFIL PAY (D-18). Una base de PostgreSQL POR SERVICIO: este módulo describe la base `pay_schedules`,
+' no un schema de la base de SALUD. Se genera con salud-db/gen_ddl_pay.py a SQL/pay/77_pay_schedules/ (objetos sin
+' calificar: se crean en el esquema de la conexión). Portado el 2026-10-27 del DDL de referencia de
+' services/pay-schedules/sql/ (pasarelapago). A partir de acá la fuente de verdad es ESTE archivo.
+' SQL DE REFERENCIA de pay-schedules (P5.H3.M1). El modelo (D-18) todavía no existe: este archivo se mueve a
+' mantra-core-health-model cuando exista el pipeline `.puml → SQL/ → base → ORM`. Tomado de payment_mandates,
+' installment_plans e installment_schedules del módulo 42 de la API, reducido a lo que esta pasarela necesita.
+' Las tablas técnicas (outbox_events, inbox_events, idempotency_keys) vienen de contracts/packages/{outbox,idempotency}/sql.
+' Ningún nombre, documento ni cuenta de personas: solo ids y montos.
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_77_pay_schedules
+  BUSINESS PURPOSE
+  Base propia del microservicio pay-schedules de la pasarela de pagos ALOVIDA (mandatos y pagos programados).
+  Separación (regla #1 del plan maestro): ningún otro servicio lee estas tablas; los datos de otros
+  servicios llegan por eventos o por sus APIs. Dinero en unidades menores enteras (amount_minor, BOB).
+end note
+
+' Réplica del estado de los comercios, mantenida por eventos `merchant.*` de pay-merchants (esta base no lee la de nadie).
+entity merchant_replica {
+  * merchant_id : text <<PK>>
+  * status : text
+  ' hora del hecho que dejó este estado: un evento viejo no pisa a uno nuevo
+  * as_of : timestamptz
+  * updated_at : timestamptz
+}
+
+entity mandates {
+  * id : text <<PK>>
+  ' el pagador (dueño del mandato)
+  * merchant_id : text
+  ' D-28: lo fija pay-edge; los datos test y live no se mezclan
+  * mode : text
+  * kind : text
+  * beneficiary_merchant_id : text
+  * amount_minor : bigint
+  * currency : text
+  * frequency : text
+  * day_of_month : smallint
+  * start_date : date
+    end_date : date
+    description : text
+  * status : text
+  ' próxima fecha por materializar; NULL = no quedan periodos
+    next_run_on : date
+  * created_at : timestamptz
+    canceled_at : timestamptz
+}
+
+' Un pago programado por (mandato, periodo): la UNIQUE es la garantía última de «una sola ejecución por periodo».
+entity scheduled_payments {
+  * id : text <<PK>>
+  * mandate_id : text <<FK>>
+  ' AAAA-MM
+  * period : text
+  * due_on : date
+  * status : text
+  ' hasta dónde llegó con el libro mayor (recuperación sin repetir efectos)
+  * phase : text
+  ' intentos de ejecución (política de reintentos)
+  * attempts : integer
+  ' `attempt` del libro mayor: sube SOLO tras un rechazo definitivo
+  * ledger_attempt : integer
+    hold_id : text
+    ledger_transaction_id : text
+  ' sin uso: el evento cita ledger_transaction_id (tx_…); se conserva por compatibilidad
+    ledger_transfer_id : text
+  * next_attempt_at : timestamptz
+    lease_until : timestamptz
+    last_failure_code : text
+  ' un resultado ambiguo sin resolver: lo mira una persona, nada se anula solo
+  * needs_review : boolean <<DEFAULT_FALSE>>
+  * created_at : timestamptz
+    executed_at : timestamptz
+}
+
+' Tablas técnicas de @pay/outbox. Cada servicio las tiene en SU base. Se declaran en el modelo (D-18).
+' Tabla técnica de @pay/outbox: la declara la librería y cada servicio la tiene en SU base.
+entity outbox_events {
+  ' id del CloudEvent; también es el Nats-Msg-Id
+  * id : uuid <<PK>>
+  ' orden de publicación
+  * seq : bigserial
+  * aggregate_type : text
+  * aggregate_id : text
+  * type : text
+  ' tema NATS destino
+  * subject : text
+  ' el CloudEvent completo
+  * envelope : jsonb
+  * created_at : timestamptz
+    published_at : timestamptz
+  * attempts : integer
+    last_error : text
+}
+
+' Tabla técnica de @pay/outbox: la declara la librería y cada servicio la tiene en SU base.
+entity inbox_events {
+  ' qué consumidor procesó el evento
+  * consumer : text <<PK>>
+  * event_id : text <<PK>>
+  * processed_at : timestamptz
+}
+
+' Tabla técnica de @pay/idempotency. Cada servicio la tiene en SU base (regla de separación #1).
+' Se declara en el modelo (mantra-core-health-model, D-18) y se aplica por el pipeline; este archivo es la referencia.
+' Tabla técnica de @pay/idempotency: la declara la librería y cada servicio la tiene en SU base.
+entity idempotency_keys {
+  ' quién: el id del comercio
+  * scope : text <<PK>>
+  ' la Idempotency-Key del cliente
+  * key : text <<PK>>
+  ' sha256 de método + ruta + cuerpo canónico
+  * request_hash : text
+  * state : text
+  ' hasta dónde llegó la ejecución
+  * recovery_point : text
+    response_status : integer
+    response_body : jsonb
+  ' null = nadie la está ejecutando
+    locked_at : timestamptz
+  ' identifica a quien la ejecuta (compare-and-set)
+    lock_token : text
+  * created_at : timestamptz
+  * expires_at : timestamptz
+}
+
+scheduled_payments }o--|| mandates : mandate_id
+
+entity "INDEXES · merchant_replica" as idxset_merchant_replica <<INDEX_SET>> {
+  PK pk_merchant_replica : (merchant_id) UNIQUE BTREE
+}
+merchant_replica .. idxset_merchant_replica : indexed by
+
+entity "INDEXES · mandates" as idxset_mandates <<INDEX_SET>> {
+  PK pk_mandates : (id) UNIQUE BTREE
+  IX mandates_owner_idx : (merchant_id, mode, created_at DESC, id DESC) BTREE
+  IX mandates_due_idx : (next_run_on) BTREE WHERE status = 'active' AND next_run_on IS NOT NULL
+}
+mandates .. idxset_mandates : indexed by
+
+entity "INDEXES · scheduled_payments" as idxset_scheduled_payments <<INDEX_SET>> {
+  PK pk_scheduled_payments : (id) UNIQUE BTREE
+  UK scheduled_payments_period_uq : (mandate_id, period) UNIQUE BTREE
+  IX scheduled_payments_due_idx : (next_attempt_at) BTREE WHERE status IN ('due', 'waiting_funds')
+}
+scheduled_payments .. idxset_scheduled_payments : indexed by
+
+entity "INDEXES · outbox_events" as idxset_outbox_events <<INDEX_SET>> {
+  PK pk_outbox_events : (id) UNIQUE BTREE
+  UK outbox_events_seq_key : (seq) UNIQUE BTREE
+  IX outbox_events_pending_idx : (seq) BTREE WHERE published_at IS NULL
+}
+outbox_events .. idxset_outbox_events : indexed by
+
+entity "INDEXES · inbox_events" as idxset_inbox_events <<INDEX_SET>> {
+  PK pk_inbox_events : (consumer, event_id) UNIQUE BTREE
+}
+inbox_events .. idxset_inbox_events : indexed by
+
+entity "INDEXES · idempotency_keys" as idxset_idempotency_keys <<INDEX_SET>> {
+  PK pk_idempotency_keys : (scope, key) UNIQUE BTREE
+  IX idempotency_keys_expires_at_idx : (expires_at) BTREE
+}
+idempotency_keys .. idxset_idempotency_keys : indexed by
+
+entity "PAY EXTRAS · pay_schedules" as pay_extras_pay_schedules <<PAY_EXTRAS>> {
+  ' Lo que el generador base (gen_ddl.py) no expresa: defaults no booleanos, identidades, CHECK, FK compuestas,
+  ' funciones, triggers y datos semilla. Lo materializa salud-db/gen_ddl_pay.py (05_constraints.sql / 06_seed.sql).
+  DEFAULT merchant_replica.updated_at : now()
+  CHECK_SQL merchant_replica : merchant_replica_id_format | merchant_id ~ '^mc_[a-z0-9]{10,40}$'
+  CHECK_SQL merchant_replica : merchant_replica_status_valid | status IN ('active', 'suspended', 'closed')
+  DEFAULT mandates.currency : 'BOB'
+  DEFAULT mandates.frequency : 'monthly'
+  DEFAULT mandates.status : 'active'
+  CHECK_SQL mandates : mandates_id_format | id ~ '^md_[a-z0-9]{10,40}$'
+  CHECK_SQL mandates : mandates_merchant_format | merchant_id ~ '^mc_[a-z0-9]{10,40}$' AND beneficiary_merchant_id ~ '^mc_[a-z0-9]{10,40}$'
+  CHECK_SQL mandates : mandates_mode_valid | mode IN ('test', 'live')
+  CHECK_SQL mandates : mandates_kind_valid | kind IN ('pay_obligation', 'pay_commission')
+  CHECK_SQL mandates : mandates_amount_pos | amount_minor >= 1
+  CHECK_SQL mandates : mandates_currency_bob | currency = 'BOB'
+  CHECK_SQL mandates : mandates_frequency_monthly | frequency = 'monthly'
+  CHECK_SQL mandates : mandates_day_valid | day_of_month BETWEEN 1 AND 28
+  CHECK_SQL mandates : mandates_end_after_start | end_date IS NULL OR end_date >= start_date
+  CHECK_SQL mandates : mandates_status_valid | status IN ('active', 'paused_insufficient_funds', 'canceled', 'completed')
+  CHECK_SQL mandates : mandates_not_self | merchant_id <> beneficiary_merchant_id
+  DEFAULT scheduled_payments.status : 'due'
+  DEFAULT scheduled_payments.phase : 'hold'
+  DEFAULT scheduled_payments.attempts : 0
+  DEFAULT scheduled_payments.ledger_attempt : 1
+  CHECK_SQL scheduled_payments : scheduled_payments_id_format | id ~ '^sp_[a-z0-9]{10,40}$'
+  CHECK_SQL scheduled_payments : scheduled_payments_period_format | period ~ '^\d{4}-(0[1-9]|1[0-2])$'
+  CHECK_SQL scheduled_payments : scheduled_payments_status_valid | status IN ('due', 'waiting_funds', 'executed', 'failed', 'canceled')
+  CHECK_SQL scheduled_payments : scheduled_payments_phase_valid | phase IN ('hold', 'post', 'release', 'void', 'reverse', 'done')
+  ' El dinero se movió: un `executed` siempre tiene su asiento (`tx_…`), que es lo que cita `scheduled_payment.executed.ledger_transfer_id`.
+  CHECK_SQL scheduled_payments : scheduled_payments_executed_has_transaction | status <> 'executed' OR (ledger_transaction_id IS NOT NULL AND executed_at IS NOT NULL)
+  DEFAULT outbox_events.created_at : now()
+  DEFAULT outbox_events.attempts : 0
+  DEFAULT inbox_events.processed_at : now()
+  DEFAULT idempotency_keys.recovery_point : 'started'
+  DEFAULT idempotency_keys.created_at : now()
+  CHECK_SQL idempotency_keys : idempotency_keys_state_check | state IN ('started', 'completed')
+}
+
+@enduml

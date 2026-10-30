@@ -36,6 +36,11 @@ CONTEXT_DIR = MODEL_ROOT / "Mantra Core Health Context"
 PUML_DIR = CONTEXT_DIR / "modules"
 MANIFEST = CONTEXT_DIR / "model-manifest.yaml"
 SQL_DIR = MODEL_ROOT / "SQL"
+# Perfil PAY (D-18 de PasarelaPago): las bases `pay_*` NO son schemas de la base de SALUD, así que sus
+# módulos viven aparte de `modules/` (que alimenta a todos los generadores de SALUD) y su salida cuelga de
+# `SQL/pay/` (que ningún glob `SQL/[0-9][0-9]_*` de SALUD alcanza). Ver `gen_ddl_pay.py`.
+PAY_PUML_DIR = CONTEXT_DIR / "pay-modules"
+PAY_SQL_DIR = SQL_DIR / "pay"
 NOSQL_DIR = MODEL_ROOT / "NoSQL"
 SEEDS_DIR = MODEL_ROOT / "seedsGenerales"
 SEEDS_MODULES_DIR = SEEDS_DIR / "modules"

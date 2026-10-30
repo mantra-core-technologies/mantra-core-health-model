@@ -1,0 +1,162 @@
+-- SALUD v4.0.10 · perfil pay · módulo 70 · base pay_connectors
+-- Generado de diagram_70_pay_connectors.puml — NO editar a mano.
+
+-- Complementos del perfil pay (gen_ddl_pay.py): funciones, CHECK, FK compuestas y triggers.
+-- Aplicar DESPUÉS de 04_indexes.sql. Idempotente.
+
+-- `may_have_reached_provider` y `send_claims` son MONÓTONOS: una vez que una orden pudo haber llegado, ningún camino (ni una
+-- corrección a mano) puede volver a decir que no. Se hace cumplir en la base, no solo en el código.
+CREATE OR REPLACE FUNCTION connector_money_flags_monotone() RETURNS trigger AS $$
+BEGIN
+  IF OLD.may_have_reached_provider AND NOT NEW.may_have_reached_provider THEN
+    RAISE EXCEPTION 'may_have_reached_provider es monotono: no puede volver a false' USING ERRCODE = 'check_violation';
+  END IF;
+  IF NEW.send_claims < OLD.send_claims THEN
+    RAISE EXCEPTION 'send_claims es monotono: no puede disminuir' USING ERRCODE = 'check_violation';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+ALTER TABLE "connector_charges" DROP CONSTRAINT IF EXISTS "connector_charges_id_check";
+ALTER TABLE "connector_charges" ADD CONSTRAINT "connector_charges_id_check" CHECK (id ~ '^ch_[a-z0-9]{10,40}$');
+
+ALTER TABLE "connector_charges" DROP CONSTRAINT IF EXISTS "connector_charges_payment_intent_id_check";
+ALTER TABLE "connector_charges" ADD CONSTRAINT "connector_charges_payment_intent_id_check" CHECK (payment_intent_id ~ '^pi_[a-z0-9]{10,40}$');
+
+ALTER TABLE "connector_charges" DROP CONSTRAINT IF EXISTS "connector_charges_merchant_id_check";
+ALTER TABLE "connector_charges" ADD CONSTRAINT "connector_charges_merchant_id_check" CHECK (merchant_id ~ '^mc_[a-z0-9]{10,40}$');
+
+ALTER TABLE "connector_charges" DROP CONSTRAINT IF EXISTS "connector_charges_pay_mode_check";
+ALTER TABLE "connector_charges" ADD CONSTRAINT "connector_charges_pay_mode_check" CHECK (pay_mode IN ('test', 'live'));
+
+ALTER TABLE "connector_charges" DROP CONSTRAINT IF EXISTS "connector_charges_connector_check";
+ALTER TABLE "connector_charges" ADD CONSTRAINT "connector_charges_connector_check" CHECK (connector IN ('mock', 'mercantil_qr', 'mercantil_card', 'bank_transfer'));
+
+ALTER TABLE "connector_charges" DROP CONSTRAINT IF EXISTS "connector_charges_connector_mode_check";
+ALTER TABLE "connector_charges" ADD CONSTRAINT "connector_charges_connector_mode_check" CHECK (connector_mode IN ('sandbox', 'live'));
+
+ALTER TABLE "connector_charges" DROP CONSTRAINT IF EXISTS "connector_charges_method_check";
+ALTER TABLE "connector_charges" ADD CONSTRAINT "connector_charges_method_check" CHECK (method IN ('qr', 'card', 'bank_transfer'));
+
+ALTER TABLE "connector_charges" DROP CONSTRAINT IF EXISTS "connector_charges_amount_minor_check";
+ALTER TABLE "connector_charges" ADD CONSTRAINT "connector_charges_amount_minor_check" CHECK (amount_minor > 0);
+
+ALTER TABLE "connector_charges" DROP CONSTRAINT IF EXISTS "connector_charges_currency_check";
+ALTER TABLE "connector_charges" ADD CONSTRAINT "connector_charges_currency_check" CHECK (currency = 'BOB');
+
+ALTER TABLE "connector_charges" DROP CONSTRAINT IF EXISTS "connector_charges_provider_status_check";
+ALTER TABLE "connector_charges" ADD CONSTRAINT "connector_charges_provider_status_check" CHECK (provider_status IN ('pending', 'authorized', 'captured', 'failed', 'canceled', 'expired'));
+
+-- Una clave `test` solo opera con un conector `sandbox` y una `live` con uno `live`: jamás se cae en `live` por defecto.
+ALTER TABLE "connector_charges" DROP CONSTRAINT IF EXISTS "connector_charges_mode_match_ck";
+ALTER TABLE "connector_charges" ADD CONSTRAINT "connector_charges_mode_match_ck" CHECK ((pay_mode = 'test' AND connector_mode = 'sandbox') OR (pay_mode = 'live' AND connector_mode = 'live'));
+
+ALTER TABLE "connector_refunds" DROP CONSTRAINT IF EXISTS "connector_refunds_id_check";
+ALTER TABLE "connector_refunds" ADD CONSTRAINT "connector_refunds_id_check" CHECK (id ~ '^cr_[a-z0-9]{10,40}$');
+
+ALTER TABLE "connector_refunds" DROP CONSTRAINT IF EXISTS "connector_refunds_refund_id_check";
+ALTER TABLE "connector_refunds" ADD CONSTRAINT "connector_refunds_refund_id_check" CHECK (refund_id IS NULL OR refund_id ~ '^re_[a-z0-9]{10,40}$');
+
+ALTER TABLE "connector_refunds" DROP CONSTRAINT IF EXISTS "connector_refunds_pay_mode_check";
+ALTER TABLE "connector_refunds" ADD CONSTRAINT "connector_refunds_pay_mode_check" CHECK (pay_mode IN ('test', 'live'));
+
+ALTER TABLE "connector_refunds" DROP CONSTRAINT IF EXISTS "connector_refunds_amount_minor_check";
+ALTER TABLE "connector_refunds" ADD CONSTRAINT "connector_refunds_amount_minor_check" CHECK (amount_minor > 0);
+
+ALTER TABLE "connector_refunds" DROP CONSTRAINT IF EXISTS "connector_refunds_currency_check";
+ALTER TABLE "connector_refunds" ADD CONSTRAINT "connector_refunds_currency_check" CHECK (currency = 'BOB');
+
+ALTER TABLE "connector_refunds" DROP CONSTRAINT IF EXISTS "connector_refunds_status_check";
+ALTER TABLE "connector_refunds" ADD CONSTRAINT "connector_refunds_status_check" CHECK (status IN ('pending', 'succeeded', 'failed'));
+
+ALTER TABLE "connector_callback_events" DROP CONSTRAINT IF EXISTS "connector_callback_events_provider_event_id_check";
+ALTER TABLE "connector_callback_events" ADD CONSTRAINT "connector_callback_events_provider_event_id_check" CHECK (length(provider_event_id) BETWEEN 1 AND 200);
+
+ALTER TABLE "connector_callback_events" DROP CONSTRAINT IF EXISTS "connector_callback_events_pay_mode_check";
+ALTER TABLE "connector_callback_events" ADD CONSTRAINT "connector_callback_events_pay_mode_check" CHECK (pay_mode IS NULL OR pay_mode IN ('test', 'live'));
+
+ALTER TABLE "connector_callback_events" DROP CONSTRAINT IF EXISTS "connector_callback_events_result_check";
+ALTER TABLE "connector_callback_events" ADD CONSTRAINT "connector_callback_events_result_check" CHECK (result IN ('applied', 'duplicate', 'stale', 'contradiction'));
+
+ALTER TABLE "connector_callback_events" DROP CONSTRAINT IF EXISTS "connector_callback_events_observed_via_check";
+ALTER TABLE "connector_callback_events" ADD CONSTRAINT "connector_callback_events_observed_via_check" CHECK (observed_via IN ('callback', 'status_inquiry'));
+
+ALTER TABLE "connector_api_attempts" DROP CONSTRAINT IF EXISTS "connector_api_attempts_operation_check";
+ALTER TABLE "connector_api_attempts" ADD CONSTRAINT "connector_api_attempts_operation_check" CHECK (operation IN ('create_charge', 'get_status', 'cancel', 'refund', 'get_refund', 'create_transfer', 'get_transfer'));
+
+ALTER TABLE "connector_api_attempts" DROP CONSTRAINT IF EXISTS "connector_api_attempts_outcome_check";
+ALTER TABLE "connector_api_attempts" ADD CONSTRAINT "connector_api_attempts_outcome_check" CHECK (outcome IN ('ok', 'unavailable', 'timeout', 'rejected'));
+
+ALTER TABLE "connector_api_attempts" DROP CONSTRAINT IF EXISTS "connector_api_attempts_latency_ms_check";
+ALTER TABLE "connector_api_attempts" ADD CONSTRAINT "connector_api_attempts_latency_ms_check" CHECK (latency_ms >= 0);
+
+ALTER TABLE "connector_health" DROP CONSTRAINT IF EXISTS "connector_health_connector_mode_check";
+ALTER TABLE "connector_health" ADD CONSTRAINT "connector_health_connector_mode_check" CHECK (connector_mode IN ('sandbox', 'live'));
+
+ALTER TABLE "connector_health" DROP CONSTRAINT IF EXISTS "connector_health_status_check";
+ALTER TABLE "connector_health" ADD CONSTRAINT "connector_health_status_check" CHECK (status IN ('up', 'degraded', 'down'));
+
+ALTER TABLE "connector_health" DROP CONSTRAINT IF EXISTS "connector_health_consecutive_failures_check";
+ALTER TABLE "connector_health" ADD CONSTRAINT "connector_health_consecutive_failures_check" CHECK (consecutive_failures >= 0);
+
+ALTER TABLE "connector_health" DROP CONSTRAINT IF EXISTS "connector_health_last_reason_check";
+ALTER TABLE "connector_health" ADD CONSTRAINT "connector_health_last_reason_check" CHECK (last_reason IS NULL OR last_reason IN ('timeout', 'error_rate', 'unreachable', 'auth_failed'));
+
+ALTER TABLE "connector_callback_endpoints" DROP CONSTRAINT IF EXISTS "connector_callback_endpoints_replay_window_seconds_check";
+ALTER TABLE "connector_callback_endpoints" ADD CONSTRAINT "connector_callback_endpoints_replay_window_seconds_check" CHECK (replay_window_seconds IS NULL OR replay_window_seconds > 0);
+
+ALTER TABLE "routing_rule_sets" DROP CONSTRAINT IF EXISTS "routing_rule_sets_version_check";
+ALTER TABLE "routing_rule_sets" ADD CONSTRAINT "routing_rule_sets_version_check" CHECK (version >= 1);
+
+ALTER TABLE "bank_transfer_references" DROP CONSTRAINT IF EXISTS "bank_transfer_references_reference_check";
+ALTER TABLE "bank_transfer_references" ADD CONSTRAINT "bank_transfer_references_reference_check" CHECK (reference ~ '^TR[A-Z2-7]{10}$');
+
+ALTER TABLE "statement_exceptions" DROP CONSTRAINT IF EXISTS "statement_exceptions_kind_check";
+ALTER TABLE "statement_exceptions" ADD CONSTRAINT "statement_exceptions_kind_check" CHECK (kind IN ('unmatched', 'amount_mismatch', 'late_credit'));
+
+ALTER TABLE "connector_transfers" DROP CONSTRAINT IF EXISTS "connector_transfers_id_check";
+ALTER TABLE "connector_transfers" ADD CONSTRAINT "connector_transfers_id_check" CHECK (id ~ '^tr_[a-z0-9]{10,40}$');
+
+ALTER TABLE "connector_transfers" DROP CONSTRAINT IF EXISTS "connector_transfers_business_ref_check";
+ALTER TABLE "connector_transfers" ADD CONSTRAINT "connector_transfers_business_ref_check" CHECK (business_ref ~ '^[A-Za-z0-9:._-]{3,150}$');
+
+ALTER TABLE "connector_transfers" DROP CONSTRAINT IF EXISTS "connector_transfers_attempt_check";
+ALTER TABLE "connector_transfers" ADD CONSTRAINT "connector_transfers_attempt_check" CHECK (attempt >= 1);
+
+ALTER TABLE "connector_transfers" DROP CONSTRAINT IF EXISTS "connector_transfers_pay_mode_check";
+ALTER TABLE "connector_transfers" ADD CONSTRAINT "connector_transfers_pay_mode_check" CHECK (pay_mode IN ('test', 'live'));
+
+ALTER TABLE "connector_transfers" DROP CONSTRAINT IF EXISTS "connector_transfers_connector_check";
+ALTER TABLE "connector_transfers" ADD CONSTRAINT "connector_transfers_connector_check" CHECK (connector IN ('mock', 'mercantil_qr', 'mercantil_card', 'bank_transfer'));
+
+ALTER TABLE "connector_transfers" DROP CONSTRAINT IF EXISTS "connector_transfers_connector_mode_check";
+ALTER TABLE "connector_transfers" ADD CONSTRAINT "connector_transfers_connector_mode_check" CHECK (connector_mode IN ('sandbox', 'live'));
+
+ALTER TABLE "connector_transfers" DROP CONSTRAINT IF EXISTS "connector_transfers_amount_minor_check";
+ALTER TABLE "connector_transfers" ADD CONSTRAINT "connector_transfers_amount_minor_check" CHECK (amount_minor > 0);
+
+ALTER TABLE "connector_transfers" DROP CONSTRAINT IF EXISTS "connector_transfers_currency_check";
+ALTER TABLE "connector_transfers" ADD CONSTRAINT "connector_transfers_currency_check" CHECK (currency = 'BOB');
+
+ALTER TABLE "connector_transfers" DROP CONSTRAINT IF EXISTS "connector_transfers_destination_ref_check";
+ALTER TABLE "connector_transfers" ADD CONSTRAINT "connector_transfers_destination_ref_check" CHECK (length(destination_ref) BETWEEN 1 AND 100);
+
+ALTER TABLE "connector_transfers" DROP CONSTRAINT IF EXISTS "connector_transfers_status_check";
+ALTER TABLE "connector_transfers" ADD CONSTRAINT "connector_transfers_status_check" CHECK (status IN ('pending', 'in_transit', 'paid', 'failed'));
+
+-- Registro de dinero de solo-agregar: `failed` solo con explicación (la confirmó el proveedor o el conector garantiza que no envió).
+ALTER TABLE "connector_transfers" DROP CONSTRAINT IF EXISTS "connector_transfers_failed_reason_ck";
+ALTER TABLE "connector_transfers" ADD CONSTRAINT "connector_transfers_failed_reason_ck" CHECK (status <> 'failed' OR failure_code IS NOT NULL);
+
+ALTER TABLE "connector_transfers" DROP CONSTRAINT IF EXISTS "connector_transfers_mode_match_ck";
+ALTER TABLE "connector_transfers" ADD CONSTRAINT "connector_transfers_mode_match_ck" CHECK ((pay_mode = 'test' AND connector_mode = 'sandbox') OR (pay_mode = 'live' AND connector_mode = 'live'));
+
+ALTER TABLE "idempotency_keys" DROP CONSTRAINT IF EXISTS "idempotency_keys_state_check";
+ALTER TABLE "idempotency_keys" ADD CONSTRAINT "idempotency_keys_state_check" CHECK (state IN ('started', 'completed'));
+
+DROP TRIGGER IF EXISTS "connector_transfers_monotone_trg" ON "connector_transfers";
+CREATE TRIGGER connector_transfers_monotone_trg BEFORE UPDATE ON connector_transfers FOR EACH ROW EXECUTE FUNCTION connector_money_flags_monotone();
+
+DROP TRIGGER IF EXISTS "connector_refunds_monotone_trg" ON "connector_refunds";
+CREATE TRIGGER connector_refunds_monotone_trg BEFORE UPDATE ON connector_refunds FOR EACH ROW EXECUTE FUNCTION connector_money_flags_monotone();
