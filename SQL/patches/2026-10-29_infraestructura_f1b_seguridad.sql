@@ -613,9 +613,14 @@ BEGIN
      WHERE schemaname = 'practice' AND indexname = 'ux_practice_sites_snis_code'
        AND indexdef LIKE '%snis_verified_at IS NOT NULL%';
 
+    -- trg_fill_tenant / trg_close_only se cuentan sólo en las tres historias de F1b: los
+    -- patches posteriores (F2–F5) reutilizan las mismas funciones y nombres en sus historias.
     SELECT count(*) INTO n_trg FROM pg_trigger
-     WHERE NOT tgisinternal AND tgname IN ('trg_facility_licenses_service_tenant',
-            'trg_practice_sites_snis_verification', 'trg_fill_tenant', 'trg_close_only');
+     WHERE NOT tgisinternal
+       AND (tgname IN ('trg_facility_licenses_service_tenant', 'trg_practice_sites_snis_verification')
+         OR (tgname IN ('trg_fill_tenant', 'trg_close_only')
+             AND tgrelid IN ('audit.practice_sites_history'::regclass, 'audit.clinical_units_history'::regclass,
+                             'audit.care_spaces_history'::regclass)));
 
     SELECT count(*) INTO n_rls
       FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace

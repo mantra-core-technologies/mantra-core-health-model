@@ -144,7 +144,108 @@ CREATE TABLE IF NOT EXISTS "practice"."care_spaces" (
     "gln" varchar(13),
     "valid_from" timestamptz,
     "valid_to" timestamptz,
+    "availability_reason_concept_id" uuid,
+    "availability_expected_until" timestamptz,
+    "availability_changed_at" timestamptz,
+    "hygiene_status_concept_id" uuid,
+    "hygiene_changed_at" timestamptz,
+    "terminal_cleaning_required" boolean NOT NULL DEFAULT false,
+    "isolation_concept_id" uuid,
+    "isolation_organism_text" varchar,
+    "isolation_changed_at" timestamptz,
+    "ops_version" integer NOT NULL,
     CONSTRAINT "pk_care_spaces" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "practice"."care_space_status_events" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "practice_site_id" uuid NOT NULL,
+    "care_space_id" uuid NOT NULL,
+    "axis_concept_id" uuid NOT NULL,
+    "from_concept_id" uuid,
+    "to_concept_id" uuid NOT NULL,
+    "reason_concept_id" uuid,
+    "reason_text" varchar,
+    "expected_until" timestamptz,
+    "v2_0116_code" char(1) NOT NULL,
+    "source_concept_id" uuid NOT NULL,
+    "source_ref_id" uuid,
+    "occurred_at" timestamptz NOT NULL,
+    "recorded_by_user_id" uuid,
+    "request_id" varchar,
+    "created_at" timestamptz NOT NULL,
+    CONSTRAINT "pk_care_space_status_events" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "practice"."care_space_blocks" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "care_space_id" uuid NOT NULL,
+    "kind_concept_id" uuid NOT NULL,
+    "reason_concept_id" uuid NOT NULL,
+    "reason_text" varchar,
+    "starts_at" timestamptz NOT NULL,
+    "expected_end_at" timestamptz,
+    "ended_at" timestamptz,
+    "ended_by_user_id" uuid,
+    "end_note" varchar,
+    "cancelled_at" timestamptz,
+    "cancel_reason" varchar,
+    "work_order_ref" varchar,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_care_space_blocks" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "practice"."cleaning_orders" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "practice_site_id" uuid NOT NULL,
+    "care_space_id" uuid NOT NULL,
+    "clinical_unit_id" uuid,
+    "cleaning_type_concept_id" uuid NOT NULL,
+    "trigger_concept_id" uuid NOT NULL,
+    "source_ref_id" uuid,
+    "previous_order_id" uuid,
+    "priority_concept_id" uuid NOT NULL,
+    "status_concept_id" uuid NOT NULL,
+    "requested_at" timestamptz NOT NULL,
+    "due_at" timestamptz,
+    "assigned_user_id" uuid,
+    "started_at" timestamptz,
+    "started_by_user_id" uuid,
+    "finished_at" timestamptz,
+    "finished_by_user_id" uuid,
+    "inspected_at" timestamptz,
+    "inspected_by_user_id" uuid,
+    "inspection_result_concept_id" uuid,
+    "rejection_reason" varchar,
+    "cancel_reason" varchar,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_cleaning_orders" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "practice"."care_space_category_periods" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "care_space_id" uuid NOT NULL,
+    "bed_category_concept_id" uuid NOT NULL,
+    "valid_from" timestamptz NOT NULL,
+    "valid_to" timestamptz,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_care_space_category_periods" PRIMARY KEY ("id")
 );
 
 CREATE TABLE IF NOT EXISTS "practice"."space_unit_assignments" (
@@ -220,6 +321,7 @@ CREATE TABLE IF NOT EXISTS "practice"."healthcare_services" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "tenant_id" uuid NOT NULL,
     CONSTRAINT "pk_healthcare_services" PRIMARY KEY ("id")
 );
 

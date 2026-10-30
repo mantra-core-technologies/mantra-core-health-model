@@ -308,6 +308,82 @@ entity placement_incidents_history <<HISTORY>> {
   * recorded_at : timestamptz
   * tenant_id : uuid <<FK>>
 }
+' + v4.2.68 (infraestructura F2 y F5e): historia de las tablas mutables nuevas de operación
+' (bloqueos, limpieza) y facturación por espacio (períodos de categoría, tarifas, cargos
+' devengados). Mismo patrón que care_spaces_history desde v4.2.67b: tenant_id NOT NULL (lo completa
+' un trigger desde el origen), FK compuesta (tenant_id, <origen>_id), RLS tenant_isolation y sólo
+' inserción + cierre de valid_to (patches 2026-10-29_infraestructura_f2_operacion.sql y
+' 2026-10-29_infraestructura_f5_facturacion.sql).
+entity care_space_blocks_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * care_space_block_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+  * tenant_id : uuid <<FK>>
+}
+entity cleaning_orders_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * cleaning_order_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+  * tenant_id : uuid <<FK>>
+}
+entity care_space_category_periods_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * care_space_category_period_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+  * tenant_id : uuid <<FK>>
+}
+entity space_tariffs_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * space_tariff_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+  * tenant_id : uuid <<FK>>
+}
+entity charge_captures_history <<HISTORY>> {
+  * history_id : uuid <<PK>>
+  --
+  * charge_capture_id : uuid <<FK>>
+  * revision_no : integer
+  * operation_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * data_snapshot : jsonb
+    changed_by_user_id : uuid <<FK>>
+    change_reason_concept_id : uuid <<FK>>
+  * recorded_at : timestamptz
+  * tenant_id : uuid <<FK>>
+}
 entity diagnostic_reports_history <<HISTORY>> {
   * history_id : uuid <<PK>>
   --
@@ -2123,6 +2199,65 @@ entity "INDEXES · placement_incidents_history" as idxset_placement_incidents_hi
 }
 
 placement_incidents_history .. idxset_placement_incidents_history : indexed by
+entity "INDEXES · care_space_blocks_history" as idxset_care_space_blocks_history <<INDEX_SET>> {
+  PK pk_care_space_blocks_history : (history_id) UNIQUE BTREE
+  IX ix_care_space_blocks_history_care_space_block_id : (care_space_block_id) BTREE
+  IX ix_care_space_blocks_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_care_space_blocks_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_care_space_blocks_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_care_space_blocks_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+  IX ix_care_space_blocks_history_tenant_id : (tenant_id) BTREE
+}
+
+care_space_blocks_history .. idxset_care_space_blocks_history : indexed by
+
+entity "INDEXES · cleaning_orders_history" as idxset_cleaning_orders_history <<INDEX_SET>> {
+  PK pk_cleaning_orders_history : (history_id) UNIQUE BTREE
+  IX ix_cleaning_orders_history_cleaning_order_id : (cleaning_order_id) BTREE
+  IX ix_cleaning_orders_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_cleaning_orders_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_cleaning_orders_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_cleaning_orders_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+  IX ix_cleaning_orders_history_tenant_id : (tenant_id) BTREE
+}
+
+cleaning_orders_history .. idxset_cleaning_orders_history : indexed by
+
+entity "INDEXES · care_space_category_periods_history" as idxset_care_space_category_periods_history <<INDEX_SET>> {
+  PK pk_care_space_category_periods_history : (history_id) UNIQUE BTREE
+  IX ix_care_space_category_periods_history_care_space_category_period_id : (care_space_category_period_id) BTREE
+  IX ix_care_space_category_periods_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_care_space_category_periods_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_care_space_category_periods_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_care_space_category_periods_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+  IX ix_care_space_category_periods_history_tenant_id : (tenant_id) BTREE
+}
+
+care_space_category_periods_history .. idxset_care_space_category_periods_history : indexed by
+
+entity "INDEXES · space_tariffs_history" as idxset_space_tariffs_history <<INDEX_SET>> {
+  PK pk_space_tariffs_history : (history_id) UNIQUE BTREE
+  IX ix_space_tariffs_history_space_tariff_id : (space_tariff_id) BTREE
+  IX ix_space_tariffs_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_space_tariffs_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_space_tariffs_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_space_tariffs_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+  IX ix_space_tariffs_history_tenant_id : (tenant_id) BTREE
+}
+
+space_tariffs_history .. idxset_space_tariffs_history : indexed by
+
+entity "INDEXES · charge_captures_history" as idxset_charge_captures_history <<INDEX_SET>> {
+  PK pk_charge_captures_history : (history_id) UNIQUE BTREE
+  IX ix_charge_captures_history_charge_capture_id : (charge_capture_id) BTREE
+  IX ix_charge_captures_history_operation_concept_id : (operation_concept_id) BTREE
+  IX ix_charge_captures_history_changed_by_user_id : (changed_by_user_id) BTREE
+  IX ix_charge_captures_history_change_reason_concept_id : (change_reason_concept_id) BTREE
+  BRIN brin_charge_captures_history_recorded_at : (recorded_at) BRIN pages_per_range=128
+  IX ix_charge_captures_history_tenant_id : (tenant_id) BTREE
+}
+
+charge_captures_history .. idxset_charge_captures_history : indexed by
 
 entity "INDEXES · diagnostic_reports_history" as idxset_diagnostic_reports_history <<INDEX_SET>> {
   PK pk_diagnostic_reports_history : (history_id) UNIQUE BTREE

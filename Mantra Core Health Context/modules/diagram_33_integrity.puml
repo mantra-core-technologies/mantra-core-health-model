@@ -288,6 +288,36 @@ entity "procedures_perioperative.procedure_cases" as procedures_perioperative_pr
 entity "practice.care_spaces" as practice_care_spaces <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_care_spaces_buffers | (COALESCE("prep_minutes", 0) >= 0 AND COALESCE("cleanup_minutes", 0) >= 0)
 }
+' + v4.2.68 — infraestructura F2 (operación) y F5e (facturación por espacio), CONTRATO-F2-F5.md
+' §F2.1 y §F5e. Los concept_id van como UUID literales (predicado inmutable):
+'   b0516b50-47c6-5fdb-b1e7-6ae060fbb4c0 = practice:BLOCK_MAINTENANCE
+'   25eb53f6-8006-5959-bee9-65b16117bc9b = billing:TARIFF_OR_TIME
+' Un tstzrange/daterange con límite superior NULL es abierto (bloqueo o período vigente).
+' La orden de limpieza abierta única es un índice único parcial (INDEX_SET del módulo 14).
+entity "practice.care_space_status_events" as practice_care_space_status_events <<IMMUTABLE, REFERENCE_ONLY>> {
+  UPDATE_DELETE : forbidden
+  CHECK_SQL : ck_care_space_status_events_v2_0116_code | "v2_0116_code" IN ('C','H','I','K','O','U','R')
+}
+entity "practice.care_space_blocks" as practice_care_space_blocks <<REFERENCE_ONLY>> {
+  EXCLUDE : one non-cancelled block per space and time
+  EXCLUDE_SQL : ex_care_space_blocks_time | "care_space_id" WITH =, tstzrange("starts_at", "ended_at", '[)') WITH && | "cancelled_at" IS NULL
+  CHECK_SQL : ck_care_space_blocks_maintenance_eta | ("kind_concept_id" <> 'b0516b50-47c6-5fdb-b1e7-6ae060fbb4c0' OR "expected_end_at" IS NOT NULL)
+  CHECK_SQL : ck_care_space_blocks_end_after_start | (("ended_at" IS NULL OR "ended_at" > "starts_at") AND ("expected_end_at" IS NULL OR "expected_end_at" > "starts_at"))
+}
+entity "practice.cleaning_orders" as practice_cleaning_orders <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_cleaning_orders_inspector_differs | ("inspected_by_user_id" IS NULL OR "inspected_by_user_id" <> "finished_by_user_id")
+}
+entity "practice.care_space_category_periods" as practice_care_space_category_periods <<REFERENCE_ONLY>> {
+  EXCLUDE : one bed category per space and time
+  EXCLUDE_SQL : ex_care_space_category_periods_validity | "care_space_id" WITH =, tstzrange("valid_from", "valid_to", '[)') WITH &&
+  CHECK_SQL : ck_care_space_category_periods_valid_period | ("valid_to" IS NULL OR "valid_to" > "valid_from")
+}
+entity "billing.space_tariffs" as billing_space_tariffs <<REFERENCE_ONLY>> {
+  EXCLUDE : one tariff per practice, kind, bed category, room and date
+  EXCLUDE_SQL : ex_space_tariffs_validity | "practice_id" WITH =, "tariff_kind_concept_id" WITH =, coalesce("bed_category_concept_id", '00000000-0000-0000-0000-000000000000'::uuid) WITH =, coalesce("care_space_id", '00000000-0000-0000-0000-000000000000'::uuid) WITH =, daterange("valid_from", "valid_to", '[)') WITH &&
+  CHECK_SQL : ck_space_tariffs_or_time_unit_minutes | ("tariff_kind_concept_id" <> '25eb53f6-8006-5959-bee9-65b16117bc9b' OR ("unit_minutes" IS NOT NULL AND "unit_minutes" > 0))
+  CHECK_SQL : ck_space_tariffs_valid_period | ("valid_to" IS NULL OR "valid_to" > "valid_from")
+}
 entity "scheduling.booking_policies" as scheduling_booking_policies <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_booking_policies_no_show_fee_percentage | ("no_show_fee_percentage" IS NULL OR ("no_show_fee_percentage" >= 0 AND "no_show_fee_percentage" <= 100))
 }
