@@ -49,7 +49,7 @@
       "dynamic_enum_options",
       "dynamic_enum_bindings"
     ],
-    "record_count": 831,
+    "record_count": 832,
     "records": {
       "system_contexts": [
         {
@@ -12764,6 +12764,22 @@
           },
           "recorded_at": "2026-09-25T12:41:00Z",
           "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "4147ca42-527c-50a0-82d7-9c687ed5a262",
+          "dynamic_enum_version_id": "a577f456-a152-508f-8dba-d8686b155353",
+          "concept_id": "8d7fc1a7-9271-51db-8a0e-f60eaa2c4819",
+          "code": "DISMISSED",
+          "display": "Descartada",
+          "ordinal": 5,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_insights_alert_status",
+            "patch": "v4.2.69"
+          },
+          "recorded_at": "2026-10-09T17:47:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
         }
       ],
       "dynamic_enum_bindings": [
@@ -13801,7 +13817,7 @@
       }
     ],
     "summary": {
-      "record_count": 831,
+      "record_count": 832,
       "entity_count": 6,
       "populated_entity_count": 6,
       "scenario_count": null,

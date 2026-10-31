@@ -53,7 +53,7 @@
       "value_set_members",
       "tenant_catalog_policies"
     ],
-    "record_count": 4776,
+    "record_count": 4779,
     "records": {
       "terminology_sources": [
         {
@@ -34519,6 +34519,24 @@
           "created_at": "2026-08-17T21:45:00Z",
           "updated_at": "2026-08-17T21:45:00Z",
           "row_version": 1
+        },
+        {
+          "id": "8d7fc1a7-9271-51db-8a0e-f60eaa2c4819",
+          "code_system_version_id": "76ebd0bf-ddbf-5576-a58b-0c565f2408e3",
+          "code": "DISMISSED",
+          "display": "Descartada",
+          "definition": "Valor dismissed del value set vs_insights_alert_status (patch v4.2.69).",
+          "abstract": false,
+          "selectable": true,
+          "valid_from": "2026-10-09T17:47:00Z",
+          "valid_to": null,
+          "replaced_by_concept_id": null,
+          "state_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-10-09T17:47:00Z",
+          "updated_at": "2026-10-09T18:07:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
         }
       ],
       "concept_designations": [
@@ -55971,6 +55989,19 @@
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1
+        },
+        {
+          "id": "acfce1b3-afc9-5aac-9051-0b0faf6ac239",
+          "concept_id": "8d7fc1a7-9271-51db-8a0e-f60eaa2c4819",
+          "language_concept_id": "4535601f-316b-52a0-a068-bcc832910077",
+          "designation_type_concept_id": "1115f950-d892-5413-8019-e6234e2dbac5",
+          "value": "Descartada",
+          "preferred": true,
+          "created_at": "2026-10-09T17:47:00Z",
+          "updated_at": "2026-10-09T18:07:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
         }
       ],
       "concept_properties": [
@@ -69354,6 +69385,18 @@
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1
+        },
+        {
+          "id": "8e843e1d-beef-5e4b-b26b-c75d4790c781",
+          "value_set_version_id": "c47aff6e-ced3-5cb7-b51a-7614e53867fd",
+          "concept_id": "8d7fc1a7-9271-51db-8a0e-f60eaa2c4819",
+          "included": true,
+          "ordinal": 5,
+          "created_at": "2026-10-09T17:47:00Z",
+          "updated_at": "2026-10-09T18:07:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
         }
       ],
       "value_set_rules": [],
@@ -69794,7 +69837,7 @@
       }
     ],
     "summary": {
-      "record_count": 4776,
+      "record_count": 4779,
       "entity_count": 10,
       "populated_entity_count": 10,
       "scenario_count": null,
