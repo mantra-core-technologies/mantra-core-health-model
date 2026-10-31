@@ -1,6 +1,6 @@
 model:
   name: SALUD
-  version: 4.2.79
+  version: 4.2.80
   status: canonical-polyglot-nosql-health-platform
   generated_at: '2026-10-31'
   design_patches:
@@ -182,6 +182,16 @@ model:
       SQL/patches/2026-10-31_v4275_personal_apoyo.sql, _v4278_gobierno_de_accesos.sql
       y _v4279_revision_seguridad_gobierno.sql. Al portar se retiró
       care_spaces.fhir_physical_type (duplicaba form_concept_id de v4.2.67).
+  - id: patch-v4.2.80-service-request-detalle
+    role: product-features
+    doc: docs/architecture/physical-materialization.md (v4.2.80)
+    status: materialized-physically
+    summary: >-
+      Detalle de la orden de estudios. clinical.service_requests gana seis columnas nullable
+      (requisition_id, specimen_type_concept_id, modality_concept_id, body_site_concept_id,
+      laterality_concept_id, contrast_concept_id) y nace clinical.service_request_components
+      (componentes marcados de un panel de laboratorio). Tres CHECK, índice de bandeja del
+      ejecutor, RLS de lectura del ejecutante. Sin backfill. SQL/patches/2026-11-01_v4280_service_request_detalle.sql.
   materialization_note: >-
     v4.0.1 materializado en el ER (fuente: el vault/grafo). Se añadieron 14
     entidades nuevas (marketing.campaign_schedules/dispatches/dispatch_recipients,

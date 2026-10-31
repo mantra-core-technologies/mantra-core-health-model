@@ -264,6 +264,20 @@ CREATE INDEX IF NOT EXISTS "ix_service_requests_previous_diagnostic_report_id" O
 
 CREATE INDEX IF NOT EXISTS "ix_service_requests_form_instance_id" ON "clinical"."service_requests" ("form_instance_id");
 
+CREATE INDEX IF NOT EXISTS "ix_service_requests_specimen_type_concept_id" ON "clinical"."service_requests" ("specimen_type_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_service_requests_modality_concept_id" ON "clinical"."service_requests" ("modality_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_service_requests_body_site_concept_id" ON "clinical"."service_requests" ("body_site_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_service_requests_laterality_concept_id" ON "clinical"."service_requests" ("laterality_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_service_requests_contrast_concept_id" ON "clinical"."service_requests" ("contrast_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_service_requests_requisition_id" ON "clinical"."service_requests" ("custodian_tenant_id", "requisition_id");
+
+CREATE INDEX IF NOT EXISTS "ix_service_requests_performer_inbox" ON "clinical"."service_requests" ("performer_tenant_id", "status_concept_id", "created_at", "id");
+
 CREATE INDEX IF NOT EXISTS "ix_service_requests_created_by_user_id" ON "clinical"."service_requests" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_service_requests_updated_by_user_id" ON "clinical"."service_requests" ("updated_by_user_id");
@@ -515,6 +529,16 @@ CREATE INDEX IF NOT EXISTS "ix_service_request_notes_service_request_id" ON "cli
 CREATE INDEX IF NOT EXISTS "ix_service_request_notes_clinical_note_header_id" ON "clinical"."service_request_notes" ("clinical_note_header_id");
 
 CREATE INDEX IF NOT EXISTS "ix_service_request_notes_created_by_user_id" ON "clinical"."service_request_notes" ("created_by_user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_service_request_components_request_component" ON "clinical"."service_request_components" ("service_request_id", "component_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_service_request_components_service_request_id" ON "clinical"."service_request_components" ("service_request_id");
+
+CREATE INDEX IF NOT EXISTS "ix_service_request_components_custodian_tenant_id" ON "clinical"."service_request_components" ("custodian_tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_service_request_components_component_concept_id" ON "clinical"."service_request_components" ("component_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_service_request_components_created_by_user_id" ON "clinical"."service_request_components" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_observation_reference_ranges_observation_id" ON "clinical"."observation_reference_ranges" ("observation_id");
 

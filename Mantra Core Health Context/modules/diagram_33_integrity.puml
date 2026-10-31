@@ -47,6 +47,9 @@ entity prior_authorization_requests <<REFERENCE_ONLY>> {
 }
 entity service_requests <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_service_requests_override_reason_requires_previous_report | ("duplicate_override_reason" IS NULL OR "previous_diagnostic_report_id" IS NOT NULL)
+  CHECK_SQL : ck_service_requests_specimen_xor_imaging | ("specimen_type_concept_id" IS NULL OR ("modality_concept_id" IS NULL AND "body_site_concept_id" IS NULL AND "laterality_concept_id" IS NULL AND "contrast_concept_id" IS NULL))
+  CHECK_SQL : ck_service_requests_laterality_requires_site | ("laterality_concept_id" IS NULL OR "body_site_concept_id" IS NOT NULL)
+  CHECK_SQL : ck_service_requests_contrast_requires_modality | ("contrast_concept_id" IS NULL OR "modality_concept_id" IS NOT NULL)
 }
 entity received_services <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_received_services_has_source | ("source_procedure_id" IS NOT NULL OR "source_immunization_id" IS NOT NULL OR "procedure_case_id" IS NOT NULL)

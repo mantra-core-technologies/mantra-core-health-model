@@ -234,6 +234,12 @@ CREATE TABLE IF NOT EXISTS "clinical"."service_requests" (
     "previous_diagnostic_report_id" uuid,
     "duplicate_override_reason" text,
     "form_instance_id" uuid,
+    "requisition_id" uuid,
+    "specimen_type_concept_id" uuid,
+    "modality_concept_id" uuid,
+    "body_site_concept_id" uuid,
+    "laterality_concept_id" uuid,
+    "contrast_concept_id" uuid,
     "created_at" timestamptz NOT NULL,
     "updated_at" timestamptz NOT NULL,
     "created_by_user_id" uuid,
@@ -270,6 +276,17 @@ CREATE TABLE IF NOT EXISTS "clinical"."service_request_notes" (
     "created_at" timestamptz NOT NULL,
     "created_by_user_id" uuid,
     CONSTRAINT "pk_service_request_notes" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "clinical"."service_request_components" (
+    "id" uuid NOT NULL,
+    "service_request_id" uuid NOT NULL,
+    "custodian_tenant_id" uuid NOT NULL,
+    "component_concept_id" uuid NOT NULL,
+    "ordinal" integer NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    CONSTRAINT "pk_service_request_components" PRIMARY KEY ("id")
 );
 
 CREATE TABLE IF NOT EXISTS "clinical"."medication_requests" (

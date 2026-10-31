@@ -4527,6 +4527,13 @@ clinical,received_services,20,updated_at,timestamptz,NO,,,,,,SQL/08_clinical/02_
 clinical,received_services,21,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
 clinical,received_services,22,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
 clinical,received_services,23,row_version,integer,NO,1,,,,,SQL/08_clinical/02_tables.sql
+clinical,service_request_components,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/08_clinical/02_tables.sql
+clinical,service_request_components,2,service_request_id,uuid,NO,,FOREIGN KEY; UNIQUE,clinical,service_requests,id,SQL/08_clinical/02_tables.sql
+clinical,service_request_components,3,custodian_tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/08_clinical/02_tables.sql
+clinical,service_request_components,4,component_concept_id,uuid,NO,,FOREIGN KEY; UNIQUE,terminology,catalog_concepts,id,SQL/08_clinical/02_tables.sql
+clinical,service_request_components,5,ordinal,integer,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,service_request_components,6,created_at,timestamptz,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,service_request_components,7,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
 clinical,service_request_notes,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/08_clinical/02_tables.sql
 clinical,service_request_notes,2,service_request_id,uuid,NO,,FOREIGN KEY; UNIQUE,clinical,service_requests,id,SQL/08_clinical/02_tables.sql
 clinical,service_request_notes,3,clinical_note_header_id,uuid,NO,,FOREIGN KEY; UNIQUE,chart,clinical_note_headers,id,SQL/08_clinical/02_tables.sql
@@ -4550,11 +4557,17 @@ clinical,service_requests,14,suggested_practice_site_id,uuid,YES,,FOREIGN KEY,pr
 clinical,service_requests,15,previous_diagnostic_report_id,uuid,YES,,FOREIGN KEY,clinical,diagnostic_reports,id,SQL/08_clinical/02_tables.sql
 clinical,service_requests,16,duplicate_override_reason,text,YES,,,,,,SQL/08_clinical/02_tables.sql
 clinical,service_requests,17,form_instance_id,uuid,YES,,FOREIGN KEY,forms,form_instances,id,SQL/08_clinical/02_tables.sql
-clinical,service_requests,18,created_at,timestamptz,NO,,,,,,SQL/08_clinical/02_tables.sql
-clinical,service_requests,19,updated_at,timestamptz,NO,,,,,,SQL/08_clinical/02_tables.sql
-clinical,service_requests,20,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
-clinical,service_requests,21,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
-clinical,service_requests,22,row_version,integer,NO,1,,,,,SQL/08_clinical/02_tables.sql
+clinical,service_requests,18,requisition_id,uuid,YES,,,,,,SQL/08_clinical/02_tables.sql
+clinical,service_requests,19,specimen_type_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/08_clinical/02_tables.sql
+clinical,service_requests,20,modality_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/08_clinical/02_tables.sql
+clinical,service_requests,21,body_site_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/08_clinical/02_tables.sql
+clinical,service_requests,22,laterality_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/08_clinical/02_tables.sql
+clinical,service_requests,23,contrast_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/08_clinical/02_tables.sql
+clinical,service_requests,24,created_at,timestamptz,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,service_requests,25,updated_at,timestamptz,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,service_requests,26,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
+clinical,service_requests,27,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
+clinical,service_requests,28,row_version,integer,NO,1,,,,,SQL/08_clinical/02_tables.sql
 clinical,social_history,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/08_clinical/02_tables.sql
 clinical,social_history,2,custodian_tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/08_clinical/02_tables.sql
 clinical,social_history,3,patient_profile_id,uuid,NO,,FOREIGN KEY,profiles,patient_profiles,profile_id,SQL/08_clinical/02_tables.sql

@@ -80,6 +80,7 @@ psql -v ON_ERROR_STOP=1 -d <base> -f SQL/apply_all.sql && psql -v ON_ERROR_STOP=
 psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-10-31_v4275_personal_apoyo.sql     # personal de apoyo (v4.2.75 → v4.2.77)
 psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-10-31_v4278_gobierno_de_accesos.sql # gobierno de accesos (v4.2.78)
 psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-10-31_v4279_revision_seguridad_gobierno.sql # revisión de seguridad ronda 1 (v4.2.79)
+psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-01_v4280_service_request_detalle.sql # detalle de la orden de estudios (v4.2.80); luego re-ejecutar v4226
 ```
 
 Todos son idempotentes (una transacción, re-ejecutables). **Si se vuelve a ejecutar el v4275 después del v4278, hay que volver a

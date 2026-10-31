@@ -81,6 +81,12 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 
 DO $$ BEGIN
+    ALTER TABLE "clinical"."service_request_components"
+        ADD CONSTRAINT "fk_service_request_components_service_request_id" FOREIGN KEY ("service_request_id")
+        REFERENCES "clinical"."service_requests" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+DO $$ BEGIN
     ALTER TABLE "clinical"."medication_requests"
         ADD CONSTRAINT "fk_medication_requests_encounter_id" FOREIGN KEY ("encounter_id")
         REFERENCES "clinical"."encounters" ("id");

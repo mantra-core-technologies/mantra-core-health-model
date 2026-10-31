@@ -12,6 +12,18 @@ CREATE EXTENSION IF NOT EXISTS btree_gist;  -- requerido por EXCLUDE
 ALTER TABLE "clinical"."service_requests" DROP CONSTRAINT IF EXISTS "ck_service_requests_override_reason_requires_previous_report";
 ALTER TABLE "clinical"."service_requests" ADD CONSTRAINT "ck_service_requests_override_reason_requires_previous_report" CHECK (("duplicate_override_reason" IS NULL OR "previous_diagnostic_report_id" IS NOT NULL));
 
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "clinical"."service_requests" DROP CONSTRAINT IF EXISTS "ck_service_requests_specimen_xor_imaging";
+ALTER TABLE "clinical"."service_requests" ADD CONSTRAINT "ck_service_requests_specimen_xor_imaging" CHECK (("specimen_type_concept_id" IS NULL OR ("modality_concept_id" IS NULL AND "body_site_concept_id" IS NULL AND "laterality_concept_id" IS NULL AND "contrast_concept_id" IS NULL)));
+
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "clinical"."service_requests" DROP CONSTRAINT IF EXISTS "ck_service_requests_laterality_requires_site";
+ALTER TABLE "clinical"."service_requests" ADD CONSTRAINT "ck_service_requests_laterality_requires_site" CHECK (("laterality_concept_id" IS NULL OR "body_site_concept_id" IS NOT NULL));
+
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "clinical"."service_requests" DROP CONSTRAINT IF EXISTS "ck_service_requests_contrast_requires_modality";
+ALTER TABLE "clinical"."service_requests" ADD CONSTRAINT "ck_service_requests_contrast_requires_modality" CHECK (("contrast_concept_id" IS NULL OR "modality_concept_id" IS NOT NULL));
+
 
 -- ═══ received_services ═══
 -- CHECK concreto declarado por el modelo (CHECK_SQL).

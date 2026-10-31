@@ -754,6 +754,13 @@ clinical,service_requests,ix_service_requests_performer_practitioner_profile_id,
 clinical,service_requests,ix_service_requests_suggested_practice_site_id,NO,"""suggested_practice_site_id""",,SQL/08_clinical/04_indexes.sql
 clinical,service_requests,ix_service_requests_previous_diagnostic_report_id,NO,"""previous_diagnostic_report_id""",,SQL/08_clinical/04_indexes.sql
 clinical,service_requests,ix_service_requests_form_instance_id,NO,"""form_instance_id""",,SQL/08_clinical/04_indexes.sql
+clinical,service_requests,ix_service_requests_specimen_type_concept_id,NO,"""specimen_type_concept_id""",,SQL/08_clinical/04_indexes.sql
+clinical,service_requests,ix_service_requests_modality_concept_id,NO,"""modality_concept_id""",,SQL/08_clinical/04_indexes.sql
+clinical,service_requests,ix_service_requests_body_site_concept_id,NO,"""body_site_concept_id""",,SQL/08_clinical/04_indexes.sql
+clinical,service_requests,ix_service_requests_laterality_concept_id,NO,"""laterality_concept_id""",,SQL/08_clinical/04_indexes.sql
+clinical,service_requests,ix_service_requests_contrast_concept_id,NO,"""contrast_concept_id""",,SQL/08_clinical/04_indexes.sql
+clinical,service_requests,ix_service_requests_requisition_id,NO,"""custodian_tenant_id"", ""requisition_id""",,SQL/08_clinical/04_indexes.sql
+clinical,service_requests,ix_service_requests_performer_inbox,NO,"""performer_tenant_id"", ""status_concept_id"", ""created_at"", ""id""",,SQL/08_clinical/04_indexes.sql
 clinical,service_requests,ix_service_requests_created_by_user_id,NO,"""created_by_user_id""",,SQL/08_clinical/04_indexes.sql
 clinical,service_requests,ix_service_requests_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/08_clinical/04_indexes.sql
 clinical,service_requests,ix_service_requests_custodian_tenant_id_status_concept_id,NO,"""custodian_tenant_id"", ""status_concept_id"", ""updated_at"" DESC",,SQL/08_clinical/04_indexes.sql
@@ -878,6 +885,11 @@ clinical,service_request_notes,ux_service_request_notes_request_note,YES,"""serv
 clinical,service_request_notes,ix_service_request_notes_service_request_id,NO,"""service_request_id""",,SQL/08_clinical/04_indexes.sql
 clinical,service_request_notes,ix_service_request_notes_clinical_note_header_id,NO,"""clinical_note_header_id""",,SQL/08_clinical/04_indexes.sql
 clinical,service_request_notes,ix_service_request_notes_created_by_user_id,NO,"""created_by_user_id""",,SQL/08_clinical/04_indexes.sql
+clinical,service_request_components,ux_service_request_components_request_component,YES,"""service_request_id"", ""component_concept_id""",,SQL/08_clinical/04_indexes.sql
+clinical,service_request_components,ix_service_request_components_service_request_id,NO,"""service_request_id""",,SQL/08_clinical/04_indexes.sql
+clinical,service_request_components,ix_service_request_components_custodian_tenant_id,NO,"""custodian_tenant_id""",,SQL/08_clinical/04_indexes.sql
+clinical,service_request_components,ix_service_request_components_component_concept_id,NO,"""component_concept_id""",,SQL/08_clinical/04_indexes.sql
+clinical,service_request_components,ix_service_request_components_created_by_user_id,NO,"""created_by_user_id""",,SQL/08_clinical/04_indexes.sql
 clinical,observation_reference_ranges,ix_observation_reference_ranges_observation_id,NO,"""observation_id""",,SQL/08_clinical/04_indexes.sql
 clinical,observation_reference_ranges,ix_observation_reference_ranges_observation_component_id,NO,"""observation_component_id""",,SQL/08_clinical/04_indexes.sql
 clinical,observation_reference_ranges,ix_observation_reference_ranges_unit_concept_id,NO,"""unit_concept_id""",,SQL/08_clinical/04_indexes.sql

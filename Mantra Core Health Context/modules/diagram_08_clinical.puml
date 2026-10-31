@@ -293,6 +293,20 @@ entity service_requests {
     ' emitiendo sin formulario. La API valida (422) que la instancia exista, esté cerrada
     ' y sea del mismo encuentro. FK → forms.form_instances.
     form_instance_id : uuid <<FK>>
+    ' + v4.2.80: detalle de la orden de estudios. Un renglon = un estudio; requisition_id
+    ' agrupa los renglones que el medico pidio juntos (FHIR ServiceRequest.requisition;
+    ' identificador de grupo, sin FK). Laboratorio: specimen_type_concept_id (HL7 v2-0487).
+    ' Imagen: modality_concept_id, body_site_concept_id (UBERON/FMA o SNOMED), laterality_concept_id
+    ' y contrast_concept_id. Todo nullable y sin backfill: una orden anterior queda
+    ' "estudio completo, sin detalle". La API valida el cruce con la categoria (muestra
+    ' solo en laboratorio, imagen solo en imagenologia); el modelo cierra lo que puede
+    ' decir sin leer conceptos (ck_service_requests_*).
+    requisition_id : uuid
+    specimen_type_concept_id : uuid <<FK>>
+    modality_concept_id : uuid <<FK>>
+    body_site_concept_id : uuid <<FK>>
+    laterality_concept_id : uuid <<FK>>
+    contrast_concept_id : uuid <<FK>>
   * created_at : timestamptz
   * updated_at : timestamptz
     created_by_user_id : uuid <<FK>>
@@ -355,6 +369,21 @@ entity service_request_notes {
   * created_at : timestamptz
     created_by_user_id : uuid <<FK>>
 }
+entity service_request_components {
+  * id : uuid <<PK>>
+  --
+  ' + v4.2.80: los componentes (analitos) que el medico marco de un panel de laboratorio
+  ' (p. ej. hemoglobina dentro del hemograma). Tabla hija append-only. component_concept_id
+  ' es miembro part-of del panel pedido (la API lo valida). custodian_tenant_id copia el del
+  ' padre para que lo cubra el RLS por custodio. ordinal conserva el orden del panel.
+  * service_request_id : uuid <<FK>>
+  * custodian_tenant_id : uuid <<FK>>
+  * component_concept_id : uuid <<FK>>
+  * ordinal : integer
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+service_requests ||--o{ service_request_components
 service_requests ||--o{ service_request_notes
 service_request_notes }o--|| chart_clinical_note_headers : clinical_note_header_id
 medication_requests }o--o| forms_form_instances : form_instance_id
@@ -912,6 +941,13 @@ entity "INDEXES · service_requests" as idxset_service_requests <<INDEX_SET>> {
   IX ix_service_requests_suggested_practice_site_id : (suggested_practice_site_id) BTREE
   IX ix_service_requests_previous_diagnostic_report_id : (previous_diagnostic_report_id) BTREE
   IX ix_service_requests_form_instance_id : (form_instance_id) BTREE
+  IX ix_service_requests_specimen_type_concept_id : (specimen_type_concept_id) BTREE
+  IX ix_service_requests_modality_concept_id : (modality_concept_id) BTREE
+  IX ix_service_requests_body_site_concept_id : (body_site_concept_id) BTREE
+  IX ix_service_requests_laterality_concept_id : (laterality_concept_id) BTREE
+  IX ix_service_requests_contrast_concept_id : (contrast_concept_id) BTREE
+  IX ix_service_requests_requisition_id : (custodian_tenant_id, requisition_id) BTREE
+  IX ix_service_requests_performer_inbox : (performer_tenant_id, status_concept_id, created_at, id) BTREE
   IX ix_service_requests_created_by_user_id : (created_by_user_id) BTREE
   IX ix_service_requests_updated_by_user_id : (updated_by_user_id) BTREE
   IX ix_service_requests_custodian_tenant_id_status_concept_id : (custodian_tenant_id, status_concept_id, updated_at DESC) BTREE
@@ -1107,6 +1143,17 @@ entity "INDEXES · service_request_notes" as idxset_service_request_notes <<INDE
 }
 
 service_request_notes .. idxset_service_request_notes : indexed by
+
+entity "INDEXES · service_request_components" as idxset_service_request_components <<INDEX_SET>> {
+  PK pk_service_request_components : (id) UNIQUE BTREE
+  UX ux_service_request_components_request_component : (service_request_id, component_concept_id) UNIQUE BTREE
+  IX ix_service_request_components_service_request_id : (service_request_id) BTREE
+  IX ix_service_request_components_custodian_tenant_id : (custodian_tenant_id) BTREE
+  IX ix_service_request_components_component_concept_id : (component_concept_id) BTREE
+  IX ix_service_request_components_created_by_user_id : (created_by_user_id) BTREE
+}
+
+service_request_components .. idxset_service_request_components : indexed by
 
 entity "INDEXES · observation_reference_ranges" as idxset_observation_reference_ranges <<INDEX_SET>> {
   PK pk_observation_reference_ranges : (id) UNIQUE BTREE
