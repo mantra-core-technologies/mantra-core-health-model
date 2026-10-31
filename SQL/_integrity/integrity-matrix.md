@@ -235,6 +235,8 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 | Tabla | Estereotipo | Reglas declaradas |
 |-------|-------------|-------------------|
 | `system_ops.governance_policy_revisions` | `REFERENCE_ONLY` | **CHECK_SQL** ck_governance_policy_revisions_not_self \| ("decided_by_user_id" IS NULL OR "decided_by_user_id" <> "submitted_by_user_id"); **CHECK_SQL** ck_governance_policy_revisions_decision \| ("status" NOT IN ('APPROVED', 'REJECTED') OR ("decided_by_user_id" IS NOT NULL AND "decided_at" IS NOT NULL)) |
+| `system_ops.bulk_import_batches` | `REFERENCE_ONLY` | **CHECK_SQL** ck_bulk_import_batches_counts \| ("rows_total" >= 0 AND "rows_valid" >= 0 AND "rows_rejected" >= 0 AND "rows_total" = "rows_valid" + "rows_rejected" AND "processed_rows" BETWEEN 0 AND "rows_total" AND "issues_total" >= 0) |
+| `system_ops.bulk_import_batch_rows` | `REFERENCE_ONLY` | **CHECK_SQL** ck_bulk_import_batch_rows_row_no \| ("row_no" >= 1); **CHECK_SQL** ck_bulk_import_batch_rows_closed_no_data \| ("outcome" IS NULL OR ("row_data_json" IS NULL AND "row_key" IS NULL)) |
 | `system_ops.restore_test_runs` | `REFERENCE_ONLY` | **CHECK_SQL** ck_system_ops_restore_test_runs_objective_status \| "objective_status" IN ('PASSED', 'FAILED', 'NOT_MEASURED') |
 
 ### Módulo 28 · `telemetry`

@@ -217,7 +217,10 @@ model:
       catalog_change_acknowledgements) y catalog_objects.domain_id; módulo 11 +governance_policy_revisions
       (inmutabilidad parcial por disparador de columnas, D-F1b-7) e índice ix_governance_change_log_target_recorded;
       módulo 33: UPDATE prohibido en 4 tablas y 9 CHECK de gobierno. Sin RLS a propósito (ninguna lleva tenant).
-      SQL/patches/2026-10-31_v4281_gobierno_de_datos.sql.
+      SQL/patches/2026-10-31_v4281_gobierno_de_datos.sql. (3) Cargas masivas: system_ops.bulk_import_batches y
+      bulk_import_batch_rows (lote persistente de bulk_import; clave de confirmación única por organización, hash del
+      archivo, sin PII en las columnas de resultado, tenant_isolation).
+      SQL/patches/2026-10-31_v4281_cargas_masivas.sql.
   materialization_note: >-
     v4.0.1 materializado en el ER (fuente: el vault/grafo). Se añadieron 14
     entidades nuevas (marketing.campaign_schedules/dispatches/dispatch_recipients,
@@ -230,12 +233,12 @@ model:
   inventory:
     modules_puml: 71
     schemas: 59
-    entity_declarations_total: 3181
-    table_like_elements: 1448
+    entity_declarations_total: 3188
+    table_like_elements: 1450
     view_elements: 81
-    index_sets: 1410
-    reference_only_stubs: 242
-    fk_references: 7629
+    index_sets: 1412
+    reference_only_stubs: 245
+    fk_references: 7636
     note: >-
       Cifras producidas por tools/model_inventory.py (fuente única reproducible:
       clasifica cada `entity` en una sola clase, suma == total). v4.0 base
@@ -270,8 +273,8 @@ model:
       (v4.2.80: módulo 70 con 12 tablas + client_error_events en el 28 + los
       stubs y entradas de la matriz del 33): 3144 entity / 1431 table_like /
       81 vistas / 1397 idx / 7581 FK / 235 ref / 59 schemas (tools/model_inventory.py).
-      Recontado el 2026-10-31 con la franja F1b (v4.2.81, entregables 1 a 2): 3181 entity / 1448 table_like /
-      81 vistas / 1410 idx / 7629 FK / 242 ref / 59 schemas (tools/model_inventory.py).
+      Recontado el 2026-10-31 con la franja F1b (v4.2.81, entregables 1 a 3): 3188 entity / 1450 table_like /
+      81 vistas / 1412 idx / 7636 FK / 245 ref / 59 schemas (tools/model_inventory.py).
   database: PostgreSQL canonical + governed specialized stores
   rules:
     one_puml_per_module: true
@@ -396,9 +399,9 @@ modules:
   code: system_ops
   title: Data Governance and System Operations
   file: modules/diagram_11_system_ops.puml
-  table_like_elements: 30
+  table_like_elements: 32
   view_elements: 0
-  index_sets: 30
+  index_sets: 32
   status: active
 - number: 12
   code: integrations

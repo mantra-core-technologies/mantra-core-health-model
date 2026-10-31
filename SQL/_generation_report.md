@@ -15,7 +15,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 08 | clinical | 24 | 241 | 9 | 264 | 11 |
 | 09 | forms | 16 | 103 | 0 | 113 | 1 |
 | 10 | audit | 133 | 557 | 43 | 708 | 1 |
-| 11 | system_ops | 30 | 171 | 2 | 184 | 0 |
+| 11 | system_ops | 32 | 178 | 7 | 195 | 1 |
 | 12 | integrations | 10 | 49 | 0 | 56 | 0 |
 | 13 | geo | 6 | 31 | 0 | 35 | 0 |
 | 14 | practice | 16 | 124 | 37 | 138 | 1 |
@@ -75,7 +75,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 68 | qa_execution | 4 | 14 | 6 | 6 | 0 |
 | 69 | pharma_lab | 31 | 182 | 173 | 182 | 1 |
 | 70 | observability | 12 | 13 | 8 | 39 | 2 |
-| **Σ** | **71** | **1346** | | **699** | | **429** |
+| **Σ** | **71** | **1348** | | **704** | | **430** |
 
 ## Detalle de entidades saltadas y avisos
 
@@ -109,6 +109,9 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 
 ### 10 · audit
 - `iam_sessions` — stub de cruce (tabla real en su módulo dueño)
+
+### 11 · system_ops
+- `delegated_access_four_eyes_requests` — stub de cruce (tabla real en su módulo dueño)
 
 ### 13 · geo
 - ⚠ índice 'gist_location_pings_location' omitido: columna(s) inexistente(s) ['geography_point'] en location_pings (¿tipo no-SQL descartado? requiere PostGIS)

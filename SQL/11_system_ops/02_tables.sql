@@ -566,3 +566,57 @@ CREATE TABLE IF NOT EXISTS "system_ops"."governance_policy_revisions" (
     "created_at" timestamptz NOT NULL,
     CONSTRAINT "pk_governance_policy_revisions" PRIMARY KEY ("id")
 );
+
+CREATE TABLE IF NOT EXISTS "system_ops"."bulk_import_batches" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "kind" varchar NOT NULL,
+    "kind_version" varchar NOT NULL,
+    "kind_group" varchar NOT NULL,
+    "status" varchar NOT NULL,
+    "source_format" varchar NOT NULL,
+    "source_byte_size" integer NOT NULL,
+    "file_sha256" varchar(64),
+    "declared_reason" text,
+    "declared_source_organization" varchar,
+    "declared_legal_basis" varchar,
+    "declared_loaded_on" date,
+    "rows_total" integer NOT NULL,
+    "rows_valid" integer NOT NULL,
+    "rows_rejected" integer NOT NULL,
+    "issues_total" integer NOT NULL DEFAULT 0,
+    "processed_rows" integer NOT NULL DEFAULT 0,
+    "file_issues_json" jsonb,
+    "preview_issues_json" jsonb,
+    "confirm_key" varchar(128),
+    "confirmed_at" timestamptz,
+    "confirmed_by_user_id" uuid,
+    "approval_request_id" uuid,
+    "started_at" timestamptz,
+    "finished_at" timestamptz,
+    "failure_reason" varchar,
+    "report_json" jsonb,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_bulk_import_batches" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "system_ops"."bulk_import_batch_rows" (
+    "id" uuid NOT NULL,
+    "batch_id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "row_no" integer NOT NULL,
+    "outcome" varchar,
+    "reason_code" varchar,
+    "field_name" varchar,
+    "target_entity" varchar,
+    "target_id" uuid,
+    "processed_at" timestamptz,
+    "row_key" varchar(64),
+    "row_data_json" jsonb,
+    "created_at" timestamptz NOT NULL,
+    CONSTRAINT "pk_bulk_import_batch_rows" PRIMARY KEY ("id")
+);

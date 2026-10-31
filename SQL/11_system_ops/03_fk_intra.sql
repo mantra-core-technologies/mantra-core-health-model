@@ -169,3 +169,9 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_breach_notifications_security_incident_id" FOREIGN KEY ("security_incident_id")
         REFERENCES "system_ops"."security_incidents" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "system_ops"."bulk_import_batch_rows"
+        ADD CONSTRAINT "fk_bulk_import_batch_rows_batch_id" FOREIGN KEY ("batch_id")
+        REFERENCES "system_ops"."bulk_import_batches" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;

@@ -11,6 +11,8 @@ Un parche por entregable (se aplican en este orden, todos idempotentes, una tran
   gobierno       SQL/patches/2026-10-31_v4281_gobierno_de_datos.sql
                  módulo 67 (12 tablas + catalog_objects.domain_id) y módulo 11 (governance_policy_revisions + índice
                  del change-log), con la guarda parcial de las revisiones de política.
+  cargas         SQL/patches/2026-10-31_v4281_cargas_masivas.sql
+                 lote persistente de bulk_import (módulo 11: bulk_import_batches y bulk_import_batch_rows).
 
 Fuentes (todas generadas; correr antes `gen_ddl.py 11 28 29 67`, `gen_integrity.py`):
   SQL/28_telemetry/04_indexes.sql   sólo los dos índices nuevos de user_activity_events
@@ -455,9 +457,139 @@ COMMIT;
     return write("2026-10-31_v4281_gobierno_de_datos.sql", "\n".join(parts))
 
 
+# ======================================================================================================================
+# 3. cargas masivas: lote persistente de bulk_import (módulo 11)
+# ======================================================================================================================
+BULK_TABLES = ["bulk_import_batches", "bulk_import_batch_rows"]
+
+
+def gen_cargas() -> tuple[str, str]:
+    t11 = select_blocks(read("11_system_ops/02_tables.sql"), "system_ops", BULK_TABLES)
+    assert t11.count("CREATE TABLE IF NOT EXISTS") == len(BULK_TABLES)
+    fk_intra = select_blocks(read("11_system_ops/03_fk_intra.sql"), "system_ops", BULK_TABLES)
+    idx11 = select_blocks(read("11_system_ops/04_indexes.sql"), "system_ops", BULK_TABLES)
+    fk_def = select_blocks(read("11_system_ops/90_fk_deferred.sql"), "system_ops", BULK_TABLES)
+    c11_text = read("11_system_ops/05_constraints.sql")
+    cons11 = "\n\n".join(table_section(c11_text, t) for t in BULK_TABLES if f"-- ═══ {t} ═══" in c11_text)
+    n_fk = (fk_intra + fk_def).count("ADD CONSTRAINT")
+    n_idx = idx11.count("INDEX IF NOT EXISTS")
+    n_chk = cons11.count("ADD CONSTRAINT")
+    bulk = ", ".join(f"'{t}'" for t in BULK_TABLES)
+
+    head = f"""-- ============================================================================
+-- SALUD · patch {VERSION} (franja F1b del portal de observabilidad y gobierno: cargas masivas, lote persistente de bulk_import) sobre BD viva
+-- Fecha: 2026-10-31
+-- GENERADO por salud-db/gen_v4281_patches.py a partir del DDL que ya emiten gen_ddl.py y gen_integrity.py: aquí no hay DDL escrito a mano
+-- salvo las políticas RLS, los permisos y las comprobaciones. Idempotente (CREATE ... IF NOT EXISTS, FK con duplicate_object, CHECK con DROP IF
+-- EXISTS + ADD). UNA sola transacción; se puede volver a correr. Solo AGREGA.
+--
+-- Contexto: 06-cargas-masivas-aprobacion-gobierno-usuarios.md H2.S1.M1 del plan docs/trabajo/2026-10-31-portal-observabilidad-gobierno/ (repo del
+-- front). Contrato del API que estas tablas calzan: src/modules/bulk_import/ports/bulk-import.ports.ts (BatchRecord, StoredRow, ReportRow,
+-- BulkImportBatchRepository), bulk-import.constants.ts (estados y resultados) y bulk-import.error-reasons.ts (motivos).
+--
+-- QUE AGREGA (system_ops, módulo 11)
+--   bulk_import_batches     el lote: tipo y versión, estado, formato y tamaño del archivo, hash del archivo, declaración (motivo, organización de origen,
+--                           base legal, fecha de carga), contadores, hallazgos de la vista previa, clave de confirmación UNICA por (organización, clave),
+--                           quién y cuándo confirmó, solicitud de aprobación (FK a delegated_access.four_eyes_requests), informe final
+--   bulk_import_batch_rows  una fila por fila del archivo: resultado, motivo (código estable), columna, entidad creada (target_entity, target_id)
+--                           {n_fk} FK, {n_idx} índices, {n_chk} CHECK en total
+--   RLS: tenant_isolation en las 2 tablas (llevan `tenant_id`, a propósito)
+--
+-- DECISIONES (detalle en el .puml 11)
+--   * Viven en system_ops, no en un módulo nuevo: no hay número libre (55-59 NoSQL, 70 observability, 71-89 PAY) y se evita un schema con
+--     USAGE/GRANT propios.
+--   * SIN PII en las columnas de resultado. Lo único con datos personales es bulk_import_batch_rows.row_data_json y su row_key (hash de
+--     tenant+tipo+clave natural, seudónimo), ambos TRANSITORIOS: ck_bulk_import_batch_rows_closed_no_data impide que una fila con resultado los
+--     conserve. El archivo original no se guarda, solo su hash. Para comprobar que no queda nada sobre un lote cerrado:
+--       SELECT count(*) FROM system_ops.bulk_import_batch_rows r JOIN system_ops.bulk_import_batches b ON b.id = r.batch_id
+--        WHERE b.status IN ('COMPLETADO','FALLIDO','RECHAZADO') AND (r.row_data_json IS NOT NULL OR r.row_key IS NOT NULL);   -- debe ser 0
+--   * Estados y resultados son texto (los valores en español del enum del API) sin CHECK de vocabulario: el API los gobierna con
+--     BATCH_TRANSITIONS y un estado nuevo no debe exigir un parche del modelo. La espera de aprobación (06 H3) se modela con approval_request_id.
+--
+-- REVERSA (solo agrega):
+--   DROP TABLE IF EXISTS system_ops.bulk_import_batch_rows, system_ops.bulk_import_batches;
+-- ============================================================================
+
+BEGIN;
+SET LOCAL lock_timeout = '15s';
+
+-- ---- 0. prerequisitos ----
+DO $$
+BEGIN
+    IF to_regclass('delegated_access.four_eyes_requests') IS NULL OR to_regclass('directory.tenants') IS NULL OR to_regclass('iam.users') IS NULL THEN
+        RAISE EXCEPTION 'faltan tablas base (delegated_access.four_eyes_requests (parche v4278), directory.tenants, iam.users): aplicar antes apply_all.sql y los parches v4275/v4278';
+    END IF;
+END $$;
+"""
+    parts = [head]
+    parts.append("-- ---- 1. tablas del lote (SQL/11_system_ops/02_tables.sql) ----\n" + t11 + "\n")
+    parts.append("-- ---- 2. FK dentro de system_ops (SQL/11_system_ops/03_fk_intra.sql) ----\n" + fk_intra + "\n")
+    parts.append("-- ---- 3. indices (SQL/11_system_ops/04_indexes.sql) ----\n" + idx11 + "\n")
+    parts.append("-- ---- 4. FK entre schemas: directory.tenants, iam.users, delegated_access.four_eyes_requests (SQL/11_system_ops/90_fk_deferred.sql) ----\n" + fk_def + "\n")
+    parts.append("-- ---- 5. integridad: contadores y «sin datos personales en una fila cerrada» (SQL/11_system_ops/05_constraints.sql) ----\n" + cons11 + "\n")
+    parts.append("""-- ---- 6. RLS: tenant_isolation en las tablas del lote (mismo patron que 2026-08-05_tenant_rls.sql y el v4278; la fila repite el tenant del lote) ----
+DO $$
+DECLARE
+    r record;
+BEGIN
+    FOR r IN SELECT * FROM (VALUES ('system_ops', 'bulk_import_batches'), ('system_ops', 'bulk_import_batch_rows')) AS v(s, t) LOOP
+        EXECUTE format('ALTER TABLE %I.%I ENABLE ROW LEVEL SECURITY', r.s, r.t);
+        EXECUTE format('ALTER TABLE %I.%I FORCE ROW LEVEL SECURITY', r.s, r.t);
+        EXECUTE format('DROP POLICY IF EXISTS tenant_isolation ON %I.%I', r.s, r.t);
+        EXECUTE format($pol$
+        CREATE POLICY tenant_isolation ON %I.%I
+          USING (
+            tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+            OR current_setting('app.system_context', true) = 'true'
+          )
+          WITH CHECK (
+            tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+            OR current_setting('app.system_context', true) = 'true'
+          )
+        $pol$, r.s, r.t);
+    END LOOP;
+END $$;
+""")
+    parts.append(f"""-- ---- 7. permisos de la aplicacion (solo si existe el rol) ----
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'mantra_app') THEN
+{grants([], BULK_TABLES, "system_ops")}
+    END IF;
+END $$;
+""")
+    parts.append(f"""-- ---- 8. verificacion final (si algo no cuadra, la transaccion entera se revierte) ----
+DO $$
+DECLARE
+    n int;
+BEGIN
+    SELECT count(*) INTO n FROM information_schema.tables WHERE table_schema = 'system_ops' AND table_type = 'BASE TABLE' AND table_name IN ({bulk});
+    IF n <> {len(BULK_TABLES)} THEN RAISE EXCEPTION 'v4281 cargas: deberia haber {len(BULK_TABLES)} tablas del lote y hay %', n; END IF;
+    SELECT count(*) INTO n FROM pg_indexes WHERE schemaname = 'system_ops' AND indexname = 'ux_bulk_import_batches_confirm_key' AND indexdef LIKE 'CREATE UNIQUE INDEX%';
+    IF n <> 1 THEN RAISE EXCEPTION 'v4281 cargas: falta el indice unico de la clave de confirmacion por organizacion'; END IF;
+    SELECT count(*) INTO n FROM pg_constraint k JOIN pg_class c ON c.oid = k.conrelid JOIN pg_namespace s ON s.oid = c.relnamespace
+     WHERE k.contype = 'c' AND s.nspname = 'system_ops' AND c.relname IN ({bulk});
+    IF n <> {n_chk} THEN RAISE EXCEPTION 'v4281 cargas: deberia haber {n_chk} CHECK y hay %', n; END IF;
+    SELECT count(*) INTO n FROM pg_constraint k JOIN pg_class c ON c.oid = k.conrelid JOIN pg_namespace s ON s.oid = c.relnamespace
+     WHERE k.contype = 'f' AND s.nspname = 'system_ops' AND c.relname IN ({bulk});
+    IF n <> {n_fk} THEN RAISE EXCEPTION 'v4281 cargas: deberia haber {n_fk} FK y hay %', n; END IF;
+    SELECT count(*) INTO n FROM pg_policies WHERE schemaname = 'system_ops' AND tablename IN ({bulk}) AND policyname = 'tenant_isolation';
+    IF n <> {len(BULK_TABLES)} THEN RAISE EXCEPTION 'v4281 cargas: deberia haber {len(BULK_TABLES)} politicas tenant_isolation y hay %', n; END IF;
+    SELECT count(*) INTO n FROM pg_class c JOIN pg_namespace s ON s.oid = c.relnamespace
+     WHERE s.nspname = 'system_ops' AND c.relname IN ({bulk}) AND c.relrowsecurity AND c.relforcerowsecurity;
+    IF n <> {len(BULK_TABLES)} THEN RAISE EXCEPTION 'v4281 cargas: las tablas del lote deben tener RLS forzada'; END IF;
+    RAISE NOTICE 'v4281 cargas: {len(BULK_TABLES)} tablas, {n_fk} FK, {n_idx} indices, {n_chk} CHECK, RLS forzada';
+END $$;
+
+COMMIT;
+""")
+    return write("2026-10-31_v4281_cargas_masivas.sql", "\n".join(parts))
+
+
 GENERATORS = {
     "idempotencia": gen_idempotencia,
     "gobierno": gen_gobierno,
+    "cargas": gen_cargas,
 }
 
 

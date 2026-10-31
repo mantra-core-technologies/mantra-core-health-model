@@ -263,6 +263,16 @@ entity "system_ops.governance_policy_revisions" as system_ops_governance_policy_
   CHECK_SQL : ck_governance_policy_revisions_decision | ("status" NOT IN ('APPROVED', 'REJECTED') OR ("decided_by_user_id" IS NOT NULL AND "decided_at" IS NOT NULL))
 }
 
+' v4.2.81 (cargas masivas) — el lote persistente de bulk_import (modulo 11). Los contadores cuadran y una fila con resultado ya no guarda
+' datos personales: el procesador escribe el resultado y vacia row_data_json/row_key en la misma sentencia (D-F1b-9).
+entity "system_ops.bulk_import_batches" as system_ops_bulk_import_batches <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_bulk_import_batches_counts | ("rows_total" >= 0 AND "rows_valid" >= 0 AND "rows_rejected" >= 0 AND "rows_total" = "rows_valid" + "rows_rejected" AND "processed_rows" BETWEEN 0 AND "rows_total" AND "issues_total" >= 0)
+}
+entity "system_ops.bulk_import_batch_rows" as system_ops_bulk_import_batch_rows <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_bulk_import_batch_rows_row_no | ("row_no" >= 1)
+  CHECK_SQL : ck_bulk_import_batch_rows_closed_no_data | ("outcome" IS NULL OR ("row_data_json" IS NULL AND "row_key" IS NULL))
+}
+
 inventory_stock_positions --> inventory_ledger_entries : atomic projection
 inventory_reservations --> inventory_ledger_entries : reserve/release
 patient_coverages --> claim_adjudication_versions : adjudication basis

@@ -1006,3 +1006,45 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_governance_policy_revisions_decided_by_user_id" FOREIGN KEY ("decided_by_user_id")
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "system_ops"."bulk_import_batches"
+        ADD CONSTRAINT "fk_bulk_import_batches_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "system_ops"."bulk_import_batches"
+        ADD CONSTRAINT "fk_bulk_import_batches_confirmed_by_user_id" FOREIGN KEY ("confirmed_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: delegated_access.four_eyes_requests (requiere schema delegated_access)
+DO $$ BEGIN
+    ALTER TABLE "system_ops"."bulk_import_batches"
+        ADD CONSTRAINT "fk_bulk_import_batches_approval_request_id" FOREIGN KEY ("approval_request_id")
+        REFERENCES "delegated_access"."four_eyes_requests" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "system_ops"."bulk_import_batches"
+        ADD CONSTRAINT "fk_bulk_import_batches_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "system_ops"."bulk_import_batches"
+        ADD CONSTRAINT "fk_bulk_import_batches_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "system_ops"."bulk_import_batch_rows"
+        ADD CONSTRAINT "fk_bulk_import_batch_rows_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)

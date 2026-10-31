@@ -342,6 +342,28 @@ CREATE INDEX IF NOT EXISTS "ix_governance_policy_revisions_submitted_by_user_id"
 
 CREATE INDEX IF NOT EXISTS "ix_governance_policy_revisions_decided_by_user_id" ON "system_ops"."governance_policy_revisions" ("decided_by_user_id");
 
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_bulk_import_batches_confirm_key" ON "system_ops"."bulk_import_batches" ("tenant_id", "confirm_key") WHERE confirm_key IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS "ix_bulk_import_batches_tenant_created" ON "system_ops"."bulk_import_batches" ("tenant_id", "created_at" DESC);
+
+CREATE INDEX IF NOT EXISTS "ix_bulk_import_batches_active" ON "system_ops"."bulk_import_batches" ("status", "created_at") WHERE status IN ('EN_COLA', 'PROCESANDO');
+
+CREATE INDEX IF NOT EXISTS "ix_bulk_import_batches_file_hash" ON "system_ops"."bulk_import_batches" ("tenant_id", "kind", "file_sha256") WHERE file_sha256 IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS "ix_bulk_import_batches_approval_request_id" ON "system_ops"."bulk_import_batches" ("approval_request_id") WHERE approval_request_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS "ix_bulk_import_batches_confirmed_by_user_id" ON "system_ops"."bulk_import_batches" ("confirmed_by_user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_bulk_import_batch_rows_row" ON "system_ops"."bulk_import_batch_rows" ("batch_id", "row_no");
+
+CREATE INDEX IF NOT EXISTS "ix_bulk_import_batch_rows_outcome" ON "system_ops"."bulk_import_batch_rows" ("batch_id", "outcome");
+
+CREATE INDEX IF NOT EXISTS "ix_bulk_import_batch_rows_tenant_id" ON "system_ops"."bulk_import_batch_rows" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_bulk_import_batch_rows_target" ON "system_ops"."bulk_import_batch_rows" ("target_entity", "target_id") WHERE target_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS "ix_bulk_import_batch_rows_pending_data" ON "system_ops"."bulk_import_batch_rows" ("batch_id") WHERE row_data_json IS NOT NULL OR row_key IS NOT NULL;
+
 CREATE UNIQUE INDEX IF NOT EXISTS "uk_encryption_keys_key_alias" ON "system_ops"."encryption_keys" ("key_alias");
 
 CREATE INDEX IF NOT EXISTS "ix_encryption_keys_purpose_concept_id" ON "system_ops"."encryption_keys" ("key_purpose_concept_id");

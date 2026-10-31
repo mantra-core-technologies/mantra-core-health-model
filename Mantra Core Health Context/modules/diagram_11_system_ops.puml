@@ -999,6 +999,110 @@ entity "INDEXES · governance_policy_revisions" as idxset_governance_policy_revi
 }
 governance_policy_revisions .. idxset_governance_policy_revisions : indexed by
 
+' ===== v4.2.81 (cargas masivas) · lote persistente del motor `bulk_import` =====
+' Fuente: docs/trabajo/2026-10-31-portal-observabilidad-gobierno/06-cargas-masivas-aprobacion-gobierno-usuarios.md H2.S1.M1.
+' Calza con el contrato real del API: src/modules/bulk_import/ports/bulk-import.ports.ts (BatchRecord, StoredRow, ReportRow,
+' BulkImportBatchRepository), bulk-import.constants.ts (estados VALIDADO > EN_COLA > PROCESANDO > COMPLETADO|FALLIDO, RECHAZADO terminal;
+' resultados CREADA, OMITIDA, CONFLICTO, RECHAZADA, FALLIDA, NO_PROCESADA) y bulk-import.error-reasons.ts (motivos estables).
+'
+' DECISION D-F1b-8 — DONDE VIVE: en `system_ops` (modulo 11), NO en un modulo nuevo. SALUD no tiene numero libre: 55-59 son los
+'   almacenes NoSQL, 70 es observability y 71-89 estan reservados para las bases PAY. Un schema nuevo ademas pediria USAGE/GRANT propios
+'   y otro modulo del API. Las tablas son de gobierno operativo (como draft_records o retention_executions) y no alteran nada existente.
+' DECISION D-F1b-9 — SIN PII EN LAS COLUMNAS DE RESULTADO. El informe (outcome, reason_code, field_name, target_*, report_json) guarda
+'   solo codigos estables, nombres de columna de la plantilla y el id de la entidad creada; nunca valores recibidos. La unica columna con
+'   datos personales es bulk_import_batch_rows.row_data_json (la fila normalizada que el procesador necesita) y su clave estable row_key
+'   (sha256 de tenant+tipo+clave natural: seudonima, igual de sensible). Ambas son TRANSITORIAS: ck_bulk_import_batch_rows_closed_no_data
+'   (modulo 33) impide que una fila con resultado conserve alguno de los dos, asi que al cerrar el lote el procesador escribe el resultado
+'   y vacia la fila en la misma sentencia. ix_bulk_import_batch_rows_pending_data lista lo que aun guarda datos (recuperacion tras un reinicio
+'   y auditoria de «no queda nada sobre un lote cerrado»). El archivo original NO se guarda: solo su hash.
+' DECISION D-F1b-10 — tenant_id (organizacion; la plataforma usa su tenant) NOT NULL en las dos tablas, columna llamada `tenant_id`
+'   A PROPOSITO: 2026-08-05_tenant_rls.sql les pone tenant_isolation (el lote es de una organizacion y uno ajeno es indistinguible de uno
+'   inexistente). La fila repite el tenant del lote para que su propia politica la proteja sin un join.
+' DECISION D-F1b-11 — estados y resultados son texto (los valores en espanol del enum del API), sin CHECK de vocabulario: el API los
+'   gobierna con BATCH_TRANSITIONS y un estado nuevo (p. ej. a la espera de aprobacion, H3) no debe exigir un parche del modelo.
+'   La aprobacion previa a encolar se modela con approval_request_id (FK a delegated_access.four_eyes_requests), no con un estado.
+' La clave de confirmacion es unica por (organizacion, clave): ux_bulk_import_batches_confirm_key. `findByConfirmKey` y la
+' precondicion de `transition(from,to)` (UPDATE ... WHERE status IN (...)) usan estos indices.
+
+entity "delegated_access.four_eyes_requests" as delegated_access_four_eyes_requests <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity bulk_import_batches {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * kind : varchar
+  * kind_version : varchar
+  * kind_group : varchar
+  * status : varchar
+  * source_format : varchar
+  * source_byte_size : integer
+    file_sha256 : varchar(64)
+    declared_reason : text
+    declared_source_organization : varchar
+    declared_legal_basis : varchar
+    declared_loaded_on : date
+  * rows_total : integer
+  * rows_valid : integer
+  * rows_rejected : integer
+  * issues_total : integer <<DEFAULT_INT:0>>
+  * processed_rows : integer <<DEFAULT_INT:0>>
+    file_issues_json : jsonb
+    preview_issues_json : jsonb
+    confirm_key : varchar(128)
+    confirmed_at : timestamptz
+    confirmed_by_user_id : uuid <<FK>>
+    approval_request_id : uuid <<FK>>
+    started_at : timestamptz
+    finished_at : timestamptz
+    failure_reason : varchar
+    report_json : jsonb
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity bulk_import_batch_rows {
+  * id : uuid <<PK>>
+  --
+  * batch_id : uuid <<FK>>
+  * tenant_id : uuid <<FK>>
+  * row_no : integer
+    outcome : varchar
+    reason_code : varchar
+    field_name : varchar
+    target_entity : varchar
+    target_id : uuid
+    processed_at : timestamptz
+    row_key : varchar(64)
+    row_data_json : jsonb
+  * created_at : timestamptz
+}
+
+entity "INDEXES · bulk_import_batches" as idxset_bulk_import_batches <<INDEX_SET>> {
+  PK pk_bulk_import_batches : (id) UNIQUE BTREE
+  UX ux_bulk_import_batches_confirm_key : (tenant_id, confirm_key) UNIQUE BTREE WHERE confirm_key IS NOT NULL
+  IX ix_bulk_import_batches_tenant_created : (tenant_id, created_at DESC) BTREE
+  IX ix_bulk_import_batches_active : (status, created_at) BTREE WHERE status IN ('EN_COLA', 'PROCESANDO')
+  IX ix_bulk_import_batches_file_hash : (tenant_id, kind, file_sha256) BTREE WHERE file_sha256 IS NOT NULL
+  IX ix_bulk_import_batches_approval_request_id : (approval_request_id) BTREE WHERE approval_request_id IS NOT NULL
+  IX ix_bulk_import_batches_confirmed_by_user_id : (confirmed_by_user_id) BTREE
+}
+bulk_import_batches .. idxset_bulk_import_batches : indexed by
+
+entity "INDEXES · bulk_import_batch_rows" as idxset_bulk_import_batch_rows <<INDEX_SET>> {
+  PK pk_bulk_import_batch_rows : (id) UNIQUE BTREE
+  UX ux_bulk_import_batch_rows_row : (batch_id, row_no) UNIQUE BTREE
+  IX ix_bulk_import_batch_rows_outcome : (batch_id, outcome) BTREE
+  IX ix_bulk_import_batch_rows_tenant_id : (tenant_id) BTREE
+  IX ix_bulk_import_batch_rows_target : (target_entity, target_id) BTREE WHERE target_id IS NOT NULL
+  IX ix_bulk_import_batch_rows_pending_data : (batch_id) BTREE WHERE row_data_json IS NOT NULL OR row_key IS NOT NULL
+}
+bulk_import_batch_rows .. idxset_bulk_import_batch_rows : indexed by
+
 ' ===== v4.0.6 (endurecimiento de seguridad) ===== (index sets)
 
 entity "INDEXES · encryption_keys" as idxset_encryption_keys <<INDEX_SET>> {
@@ -1044,5 +1148,9 @@ encryption_keys ||--o{ key_rotation_events
 retention_policies ||--o{ encryption_keys
 
 security_incidents ||--o{ breach_notifications
+
+' ===== v4.2.81 ===== (aristas etiquetadas: la etiqueta es la columna FK)
+bulk_import_batches }o--o| delegated_access_four_eyes_requests : approval_request_id
+bulk_import_batch_rows }o--|| bulk_import_batches : batch_id
 
 @enduml
