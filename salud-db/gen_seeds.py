@@ -4826,6 +4826,97 @@ def phase_v4266_consent_targets(docs) -> dict:
     return stats
 
 
+# ============================================================ fase 2g · v4.2.74 traslado en la derivación
+
+PATCH_V4274 = "4.2.74"
+
+# Columnas de traslado de clinical_ext.referrals (v4.2.74). Todas NULLABLE: las derivaciones
+# mock que no se trasladan (o que no tienen el dato) las llevan en null.
+V4274_TRANSFER_COLUMNS = (
+    "transfer_required", "transport_mode", "transport_detail", "companion_name",
+    "companion_relationship", "companion_phone", "escort_professional_name",
+    "escort_professional_role", "departure_condition", "vitals_recorded_at",
+    "vital_systolic_bp", "vital_diastolic_bp", "vital_heart_rate", "vital_respiratory_rate",
+    "vital_temperature_c", "vital_oxygen_saturation", "vital_glasgow", "receiver_contacted",
+    "receiver_contact_name", "receiver_contacted_at", "departed_at", "arrived_at",
+    "arrival_condition", "arrival_notes",
+)
+
+
+def _v4274_at(base: str, minutes: int) -> str:
+    """`base` (ISO UTC con Z) más `minutes`, en el mismo formato que el resto del paquete."""
+    from datetime import datetime, timedelta, timezone
+    t = datetime.strptime(base, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    return (t + timedelta(minutes=minutes)).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def phase_v4274_referral_transfer(docs) -> dict:
+    """v4.2.74 — datos de traslado en la derivación (Norma Nacional de Referencia y
+    Contrarreferencia, MSD Bolivia 2013). Todas las derivaciones mock reciben las columnas
+    nuevas en null y tres de ellas, elegidas por su posición (el tipo de la fase 2e se asigna
+    por posición), llevan un traslado coherente:
+
+      · la de internación (índice 5): urgente, paciente INESTABLE en ambulancia avanzada, con
+        médico acompañante, signos vitales completos y aviso previo al receptor;
+      · la de tratamiento (índice 1): programada, paciente estable en vehículo particular con
+        un familiar;
+      · la de estudio diagnóstico (índice 2): programada, sin traslado físico.
+
+    La llegada queda en null: la registra el destino cuando acepta. Determinista e
+    idempotente: los valores dependen sólo de la posición y del created_at de cada fila."""
+    stats = {"derivaciones": 0, "con_traslado": 0, "sin_traslado": 0}
+    if "18" not in docs:
+        return stats
+    refs = docs["18"]["mock"]["records"].get("referrals", [])
+    for r in refs:
+        for col in V4274_TRANSFER_COLUMNS:
+            r[col] = None
+        stats["derivaciones"] += 1
+
+    if len(refs) > 5:
+        r = refs[5]
+        base = r["created_at"]
+        r.update({
+            "transfer_required": True,
+            "transport_mode": "AMBULANCE_ADVANCED",
+            "transport_detail": "Unidad móvil de soporte vital avanzado 2154-XYZ (sintética)",
+            "companion_name": "Familiar acompañante sintético",
+            "companion_relationship": "Hija",
+            "companion_phone": "+591 70000000",
+            "escort_professional_name": "Médico de guardia sintético",
+            "escort_professional_role": "Médico",
+            "departure_condition": "UNSTABLE",
+            "vitals_recorded_at": _v4274_at(base, 5),
+            "vital_systolic_bp": 92,
+            "vital_diastolic_bp": 58,
+            "vital_heart_rate": 118,
+            "vital_respiratory_rate": 24,
+            "vital_temperature_c": 38.4,
+            "vital_oxygen_saturation": 91,
+            "vital_glasgow": 14,
+            "receiver_contacted": True,
+            "receiver_contact_name": "Jefe de guardia del establecimiento receptor (sintético)",
+            "receiver_contacted_at": _v4274_at(base, 10),
+            "departed_at": _v4274_at(base, 20),
+        })
+        stats["con_traslado"] += 1
+    if len(refs) > 1:
+        r = refs[1]
+        r.update({
+            "transfer_required": True,
+            "transport_mode": "PRIVATE_VEHICLE",
+            "companion_name": "Familiar acompañante sintético",
+            "companion_relationship": "Esposo",
+            "companion_phone": "+591 70000001",
+            "departure_condition": "STABLE",
+        })
+        stats["con_traslado"] += 1
+    if len(refs) > 2:
+        refs[2]["transfer_required"] = False
+        stats["sin_traslado"] += 1
+    return stats
+
+
 # ============================================================ fase 2f · AloVida Insights (v4.2.69)
 
 PATCH_INSIGHTS = "4.2.69"
@@ -5050,6 +5141,10 @@ def main() -> None:
         print("[2e] v4.2.66 · {} consentimientos dirigidos · {} derivaciones con servicio y "
               "destino · {} derivaciones enlazadas a su consentimiento".format(
                   s["consentimientos"], s["derivaciones"], s["enlaces"]))
+        s = phase_v4274_referral_transfer(docs)
+        print("[2g] v4.2.74 · {} derivaciones con columnas de traslado · {} con traslado · "
+              "{} sin traslado físico".format(s["derivaciones"], s["con_traslado"],
+                                              s["sin_traslado"]))
     if run("insights"):
         s = phase_v4269_marketing_insights(docs, ddl, uniques)
         print("[2f] v4.2.69 · AloVida Insights · {} value sets · {}".format(
