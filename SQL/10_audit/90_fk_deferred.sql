@@ -1,7 +1,6 @@
 -- SALUD v4.0.10 · módulo 10 · schema audit
 -- Generado de diagram_10_audit.puml — NO editar a mano.
 
-
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "audit"."audit_log"
@@ -496,6 +495,76 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN
     ALTER TABLE "audit"."care_spaces_history"
         ADD CONSTRAINT "fk_care_spaces_history_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: clinical.encounter_locations (requiere schema clinical)
+DO $$ BEGIN
+    ALTER TABLE "audit"."encounter_locations_history"
+        ADD CONSTRAINT "fk_encounter_locations_history_encounter_location_id" FOREIGN KEY ("encounter_location_id")
+        REFERENCES "clinical"."encounter_locations" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "audit"."encounter_locations_history"
+        ADD CONSTRAINT "fk_encounter_locations_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "audit"."encounter_locations_history"
+        ADD CONSTRAINT "fk_encounter_locations_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "audit"."encounter_locations_history"
+        ADD CONSTRAINT "fk_encounter_locations_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "audit"."encounter_locations_history"
+        ADD CONSTRAINT "fk_encounter_locations_history_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: clinical.placement_incidents (requiere schema clinical)
+DO $$ BEGIN
+    ALTER TABLE "audit"."placement_incidents_history"
+        ADD CONSTRAINT "fk_placement_incidents_history_placement_incident_id" FOREIGN KEY ("placement_incident_id")
+        REFERENCES "clinical"."placement_incidents" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "audit"."placement_incidents_history"
+        ADD CONSTRAINT "fk_placement_incidents_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "audit"."placement_incidents_history"
+        ADD CONSTRAINT "fk_placement_incidents_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "audit"."placement_incidents_history"
+        ADD CONSTRAINT "fk_placement_incidents_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "audit"."placement_incidents_history"
+        ADD CONSTRAINT "fk_placement_incidents_history_tenant_id" FOREIGN KEY ("tenant_id")
         REFERENCES "directory"."tenants" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 
