@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · módulo 29 · schema delegated_access
+-- SALUD v4.2.80 · módulo 29 · schema delegated_access
 -- Generado de diagram_29_delegated_access.puml — NO editar a mano.
 
 
@@ -111,6 +111,13 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención
 DO $$ BEGIN
     ALTER TABLE "delegated_access"."organization_user_assignments"
         ADD CONSTRAINT "fk_organization_user_assignments_owner_kind_concept_id" FOREIGN KEY ("owner_kind_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."organization_user_assignments"
+        ADD CONSTRAINT "fk_organization_user_assignments_initiated_by_party_concept_id" FOREIGN KEY ("initiated_by_party_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 

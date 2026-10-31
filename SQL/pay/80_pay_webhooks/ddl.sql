@@ -1,8 +1,8 @@
--- SALUD v4.2.79 · perfil pay · base pay_webhooks · DDL completo en orden (generado de diagram_80_pay_webhooks.puml)
+-- SALUD v4.2.80 · perfil pay · base pay_webhooks · DDL completo en orden (generado de diagram_80_pay_webhooks.puml)
 -- Archivo SQL plano, apto para `pool.query(readFileSync(...))`. NO editar a mano.
 
 -- >>> 02_tables.sql
--- SALUD v4.2.79 · módulo 80 · schema pay_webhooks
+-- SALUD v4.2.80 · módulo 80 · schema pay_webhooks
 -- Generado de diagram_80_pay_webhooks.puml — NO editar a mano.
 
 
@@ -82,7 +82,7 @@ CREATE TABLE IF NOT EXISTS "idempotency_keys" (
 );
 
 -- >>> 03_fk_intra.sql
--- SALUD v4.2.79 · módulo 80 · schema pay_webhooks
+-- SALUD v4.2.80 · módulo 80 · schema pay_webhooks
 -- Generado de diagram_80_pay_webhooks.puml — NO editar a mano.
 
 
@@ -105,7 +105,7 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- >>> 04_indexes.sql
--- SALUD v4.2.79 · módulo 80 · schema pay_webhooks
+-- SALUD v4.2.80 · módulo 80 · schema pay_webhooks
 -- Generado de diagram_80_pay_webhooks.puml — NO editar a mano.
 
 
@@ -118,7 +118,7 @@ CREATE INDEX IF NOT EXISTS "webhook_deliveries_due_idx" ON "webhook_deliveries" 
 CREATE INDEX IF NOT EXISTS "idempotency_keys_expires_at_idx" ON "idempotency_keys" ("expires_at");
 
 -- >>> 05_constraints.sql
--- SALUD v4.2.79 · perfil pay · módulo 80 · base pay_webhooks
+-- SALUD v4.2.80 · perfil pay · módulo 80 · base pay_webhooks
 -- Generado de diagram_80_pay_webhooks.puml — NO editar a mano.
 
 -- Complementos del perfil pay (gen_ddl_pay.py): funciones, CHECK, FK compuestas y triggers.

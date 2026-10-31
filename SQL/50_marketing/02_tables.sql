@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · módulo 50 · schema marketing
+-- SALUD v4.2.80 · módulo 50 · schema marketing
 -- Generado de diagram_50_marketing.puml — NO editar a mano.
 
 

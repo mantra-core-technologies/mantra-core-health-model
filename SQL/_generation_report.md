@@ -1,4 +1,4 @@
-# Reporte de generación SQL — SALUD v4.2.79
+# Reporte de generación SQL — SALUD v4.2.80
 
 Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vistas, stubs de cruce y stores no-SQL (Redis/Mongo/OpenSearch/vector/timeseries) se listan como *saltados*. Graph (61) y Lakehouse (63) SÍ se materializan como tablas PG (catálogo del plano de control). Las FK marcadas *inferidas* se resolvieron por convención cuando el vault no tenía destino.
 
@@ -18,7 +18,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 11 | system_ops | 29 | 169 | 0 | 178 | 0 |
 | 12 | integrations | 10 | 49 | 0 | 56 | 0 |
 | 13 | geo | 6 | 31 | 0 | 35 | 0 |
-| 14 | practice | 16 | 124 | 37 | 138 | 1 |
+| 14 | practice | 16 | 125 | 38 | 139 | 1 |
 | 15 | chart | 11 | 71 | 0 | 81 | 2 |
 | 16 | accounting | 45 | 316 | 1 | 369 | 15 |
 | 17 | billing | 24 | 156 | 0 | 174 | 21 |
@@ -33,7 +33,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 26 | insurance | 33 | 224 | 20 | 244 | 1 |
 | 27 | identity_assurance | 11 | 70 | 1 | 77 | 0 |
 | 28 | telemetry | 14 | 73 | 0 | 83 | 0 |
-| 29 | delegated_access | 33 | 251 | 144 | 282 | 11 |
+| 29 | delegated_access | 33 | 252 | 145 | 283 | 11 |
 | 30 | read_models | 13 | 74 | 0 | 89 | 76 |
 | 31 | integration_contracts | 9 | 48 | 1 | 57 | 0 |
 | 32 | workflow | 8 | 49 | 0 | 55 | 9 |
@@ -74,7 +74,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 67 | data_catalog | 13 | 43 | 23 | 24 | 0 |
 | 68 | qa_execution | 4 | 14 | 6 | 6 | 0 |
 | 69 | pharma_lab | 31 | 182 | 173 | 182 | 1 |
-| **Σ** | **70** | **1320** | | **664** | | **421** |
+| **Σ** | **70** | **1320** | | **666** | | **421** |
 
 ## Detalle de entidades saltadas y avisos
 

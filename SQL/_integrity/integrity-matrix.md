@@ -1,4 +1,4 @@
-# Matriz de integridad y concurrencia — SALUD v4.2.79 (módulo 33)
+# Matriz de integridad y concurrencia — SALUD v4.2.80 (módulo 33)
 
 El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación cross-dominio. Cada regla se implementa en la **migración de la tabla dueña** (su módulo) y se repite aquí como referencia. Extraído fielmente del `.puml`.
 

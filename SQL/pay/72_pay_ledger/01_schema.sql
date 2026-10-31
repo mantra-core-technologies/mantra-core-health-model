@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · perfil pay · módulo 72 · base pay_ledger
+-- SALUD v4.2.80 · perfil pay · módulo 72 · base pay_ledger
 -- Generado de diagram_72_pay_ledger.puml — NO editar a mano.
 
 -- Sin CREATE SCHEMA a propósito: el módulo es una BASE (una por servicio) y sus objetos van sin calificar,

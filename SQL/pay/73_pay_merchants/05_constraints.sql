@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · perfil pay · módulo 73 · base pay_merchants
+-- SALUD v4.2.80 · perfil pay · módulo 73 · base pay_merchants
 -- Generado de diagram_73_pay_merchants.puml — NO editar a mano.
 
 -- Complementos del perfil pay (gen_ddl_pay.py): funciones, CHECK, FK compuestas y triggers.

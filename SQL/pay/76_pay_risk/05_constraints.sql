@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · perfil pay · módulo 76 · base pay_risk
+-- SALUD v4.2.80 · perfil pay · módulo 76 · base pay_risk
 -- Generado de diagram_76_pay_risk.puml — NO editar a mano.
 
 -- Complementos del perfil pay (gen_ddl_pay.py): funciones, CHECK, FK compuestas y triggers.

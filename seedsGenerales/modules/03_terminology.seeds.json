@@ -53,7 +53,7 @@
       "value_set_members",
       "tenant_catalog_policies"
     ],
-    "record_count": 4776,
+    "record_count": 4779,
     "records": {
       "terminology_sources": [
         {
@@ -34514,6 +34514,39 @@
           "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
           "code": "audit:LEGAL_BASIS_LEGAL_OBLIGATION",
           "display": "Legal obligation basis",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "b3079461-5c2b-5b8d-9a4e-100d0e268589",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "DA_INITIATOR_SUPPORT_STAFF",
+          "display": "Initiated by the support staff member",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "991d107b-6a82-55c2-9166-94db5e3e7b90",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "DA_INITIATOR_ORGANIZATION",
+          "display": "Initiated by an organization administrator",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "6e00282d-84c4-59b0-bac2-9da5f945dfe7",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "DA_INITIATOR_PRACTITIONER",
+          "display": "Initiated by the practitioner",
           "abstract": false,
           "selectable": true,
           "created_at": "2026-08-17T21:45:00Z",
@@ -69794,7 +69827,7 @@
       }
     ],
     "summary": {
-      "record_count": 4776,
+      "record_count": 4779,
       "entity_count": 10,
       "populated_entity_count": 10,
       "scenario_count": null,

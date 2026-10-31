@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · perfil pay · módulo 80 · base pay_webhooks
+-- SALUD v4.2.80 · perfil pay · módulo 80 · base pay_webhooks
 -- Generado de diagram_80_pay_webhooks.puml — NO editar a mano.
 
 -- Sin CREATE SCHEMA a propósito: el módulo es una BASE (una por servicio) y sus objetos van sin calificar,

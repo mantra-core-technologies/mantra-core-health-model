@@ -6857,15 +6857,16 @@ delegated_access,organization_user_assignments,23,role_template_id,uuid,YES,,FOR
 delegated_access,organization_user_assignments,24,recertify_every_months,integer,YES,,,,,,SQL/29_delegated_access/02_tables.sql
 delegated_access,organization_user_assignments,25,next_recertification_at,timestamptz,YES,,,,,,SQL/29_delegated_access/02_tables.sql
 delegated_access,organization_user_assignments,26,ended_reason_text,text,YES,,,,,,SQL/29_delegated_access/02_tables.sql
-delegated_access,organization_user_assignments,27,identity_verified_at,timestamptz,YES,,,,,,SQL/29_delegated_access/02_tables.sql
-delegated_access,organization_user_assignments,28,identity_verified_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/29_delegated_access/02_tables.sql
-delegated_access,organization_user_assignments,29,identity_method_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/29_delegated_access/02_tables.sql
-delegated_access,organization_user_assignments,30,suspended_at,timestamptz,YES,,,,,,SQL/29_delegated_access/02_tables.sql
-delegated_access,organization_user_assignments,31,suspension_reason_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/29_delegated_access/02_tables.sql
-delegated_access,organization_user_assignments,32,suspension_note_text,text,YES,,,,,,SQL/29_delegated_access/02_tables.sql
-delegated_access,organization_user_assignments,33,onboarding_completed_at,timestamptz,YES,,,,,,SQL/29_delegated_access/02_tables.sql
-delegated_access,organization_user_assignments,34,last_certified_at,timestamptz,YES,,,,,,SQL/29_delegated_access/02_tables.sql
-delegated_access,organization_user_assignments,35,last_active_at,timestamptz,YES,,,,,,SQL/29_delegated_access/02_tables.sql
+delegated_access,organization_user_assignments,27,initiated_by_party_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/29_delegated_access/02_tables.sql
+delegated_access,organization_user_assignments,28,identity_verified_at,timestamptz,YES,,,,,,SQL/29_delegated_access/02_tables.sql
+delegated_access,organization_user_assignments,29,identity_verified_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/29_delegated_access/02_tables.sql
+delegated_access,organization_user_assignments,30,identity_method_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/29_delegated_access/02_tables.sql
+delegated_access,organization_user_assignments,31,suspended_at,timestamptz,YES,,,,,,SQL/29_delegated_access/02_tables.sql
+delegated_access,organization_user_assignments,32,suspension_reason_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/29_delegated_access/02_tables.sql
+delegated_access,organization_user_assignments,33,suspension_note_text,text,YES,,,,,,SQL/29_delegated_access/02_tables.sql
+delegated_access,organization_user_assignments,34,onboarding_completed_at,timestamptz,YES,,,,,,SQL/29_delegated_access/02_tables.sql
+delegated_access,organization_user_assignments,35,last_certified_at,timestamptz,YES,,,,,,SQL/29_delegated_access/02_tables.sql
+delegated_access,organization_user_assignments,36,last_active_at,timestamptz,YES,,,,,,SQL/29_delegated_access/02_tables.sql
 delegated_access,patient_restriction_flags,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/29_delegated_access/02_tables.sql
 delegated_access,patient_restriction_flags,2,tenant_id,uuid,NO,,FOREIGN KEY; UNIQUE,directory,tenants,id,SQL/29_delegated_access/02_tables.sql
 delegated_access,patient_restriction_flags,3,patient_profile_id,uuid,NO,,FOREIGN KEY; UNIQUE,profiles,patient_profiles,profile_id,SQL/29_delegated_access/02_tables.sql
@@ -15090,6 +15091,7 @@ practice,practitioner_support_assignments,10,updated_at,timestamptz,NO,,,,,,SQL/
 practice,practitioner_support_assignments,11,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
 practice,practitioner_support_assignments,12,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
 practice,practitioner_support_assignments,13,row_version,integer,NO,1,,,,,SQL/14_practice/02_tables.sql
+practice,practitioner_support_assignments,14,initiated_by_party_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/14_practice/02_tables.sql
 practice,site_declared_capacities,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/14_practice/02_tables.sql
 practice,site_declared_capacities,2,tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/14_practice/02_tables.sql
 practice,site_declared_capacities,3,practice_site_id,uuid,NO,,FOREIGN KEY,practice,practice_sites,id,SQL/14_practice/02_tables.sql

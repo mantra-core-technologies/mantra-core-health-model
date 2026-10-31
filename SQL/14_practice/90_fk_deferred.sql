@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · módulo 14 · schema practice
+-- SALUD v4.2.80 · módulo 14 · schema practice
 -- Generado de diagram_14_practice.puml — NO editar a mano.
 
 
@@ -610,6 +610,13 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_practitioner_support_assignments_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "practice"."practitioner_support_assignments"
+        ADD CONSTRAINT "fk_practitioner_support_assignments_initiated_by_party_7e268d24" FOREIGN KEY ("initiated_by_party_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN

@@ -49,6 +49,21 @@ comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_obje
 
 ## 3. Estado actual del build
 
+### v4.2.80 — Quién inició cada vínculo de la secretaria (2026-10-31)
+
+**Cambio de esquema: +2 columnas NULLABLE, +2 FK, +2 índices, +3 conceptos de módulo.** Parche idempotente:
+`SQL/patches/2026-10-31_v4280_iniciador_vinculos.sql` (después del v4279). Lo pide la API de la secretaria (alta por
+solicitud y aceptación): decide la parte que NO inició el vínculo, y eso no se deduce de `created_by_user_id`.
+
+- `delegated_access.organization_user_assignments.initiated_by_party_concept_id` y
+  `practice.practitioner_support_assignments.initiated_by_party_concept_id` (`uuid NULL`, FK a
+  `terminology.catalog_concepts`). Conceptos `delegated_access:INITIATOR_SUPPORT_STAFF | _ORGANIZATION | _PRACTITIONER`
+  (códigos almacenados `DA_INITIATOR_*`, como los declara `delegated_access.concepts.ts`). NULL = no decidible: la API
+  falla cerrada. Sin backfill.
+- Índices `ix_org_user_assignments_initiated_by_party` e `ix_prac_support_assignments_initiated_by_party` (mismos nombres
+  que el parche de la API); las FK llevan el nombre de `gen_ddl.py` y el parche no agrega una segunda si ya hay una.
+- La API no usa `engagement_requests` para este flujo: la solicitud/aceptación vive en las dos tablas de vínculo.
+
 ### v4.2.78 — Gobierno de accesos: permisos de ultra granularidad y gobierno de usuarios (2026-11-02)
 
 **Cambio de esquema: +12 tablas (`delegated_access`), +29 columnas en 5 tablas existentes, +98 FK, +111 índices, +35 CHECK, +1 barrera WORM,

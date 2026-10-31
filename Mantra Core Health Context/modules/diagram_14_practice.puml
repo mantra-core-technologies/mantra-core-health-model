@@ -320,6 +320,11 @@ entity practitioner_support_assignments {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + v4.2.80 (alta de la secretaria por solicitud y aceptacion): QUIEN inicio el vinculo
+  ' (delegated_access:DA_INITIATOR_SUPPORT_STAFF | DA_INITIATOR_ORGANIZATION | DA_INITIATOR_PRACTITIONER;
+  ' los siembra la API). Decide la parte que NO inicio. NULL = no decidible (filas previas u otros flujos):
+  ' la API falla cerrada. No se deduce de created_by_user_id (una cuenta puede ser secretaria y doctor a la vez).
+    initiated_by_party_concept_id : uuid <<FK>>
 }
 entity practice_accreditations {
   * id : uuid <<PK>>
@@ -582,6 +587,7 @@ entity "INDEXES · practitioner_support_assignments" as idxset_practitioner_supp
   IX ix_practitioner_support_assignments_created_by_user_id : (created_by_user_id) BTREE
   IX ix_practitioner_support_assignments_updated_by_user_id : (updated_by_user_id) BTREE
   GIST gist_practitioner_support_assignments_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+  IX ix_prac_support_assignments_initiated_by_party : (initiated_by_party_concept_id) BTREE
 }
 
 practitioner_support_assignments .. idxset_practitioner_support_assignments : indexed by

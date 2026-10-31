@@ -57,6 +57,11 @@ entity organization_user_assignments {
     recertify_every_months : integer
     next_recertification_at : timestamptz
     ended_reason_text : text
+  ' + v4.2.80 (alta de la secretaria por solicitud y aceptacion): QUIEN inicio el vinculo
+  ' (delegated_access:DA_INITIATOR_SUPPORT_STAFF | DA_INITIATOR_ORGANIZATION | DA_INITIATOR_PRACTITIONER;
+  ' los siembra la API). Decide la parte que NO inicio. NULL = no decidible (filas previas u otros flujos):
+  ' la API falla cerrada. No se deduce de created_by_user_id (una cuenta puede ser secretaria y doctor a la vez).
+    initiated_by_party_concept_id : uuid <<FK>>
   ' + v4.2.78 (gobierno de accesos): verificacion de identidad, suspension, incorporacion y certificacion del vinculo.
   ' supervisor_user_id pasa a significar DUENO DE LA CUENTA (sin renombrar la columna).
     identity_verified_at : timestamptz
@@ -263,6 +268,7 @@ IX ix_organization_user_assignments_origin_concept_id : (origin_concept_id) BTRE
 IX ix_organization_user_assignments_owner_kind_concept_id : (owner_kind_concept_id) BTREE
 IX ix_organization_user_assignments_role_template_id : (role_template_id) BTREE
 IX ix_organization_user_assignments_next_recertification : (next_recertification_at) BTREE WHERE next_recertification_at IS NOT NULL
+IX ix_org_user_assignments_initiated_by_party : (initiated_by_party_concept_id) BTREE
 ' v4.2.76: un solo vinculo de apoyo ACTIVO por membresia (persona + organizacion) y plantilla. Solo para los
 ' vinculos del modelo nuevo (role_template_id NOT NULL): los heredados, sin plantilla, pueden repetir rol por alcance.
 UK uq_organization_user_assignments_active_template : (tenant_membership_id, role_template_id) UNIQUE BTREE WHERE role_template_id IS NOT NULL AND status_concept_id = '38a1d301-f40d-5b17-a695-5e6d605f8b19'

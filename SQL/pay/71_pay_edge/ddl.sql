@@ -1,8 +1,8 @@
--- SALUD v4.2.79 · perfil pay · base pay_edge · DDL completo en orden (generado de diagram_71_pay_edge.puml)
+-- SALUD v4.2.80 · perfil pay · base pay_edge · DDL completo en orden (generado de diagram_71_pay_edge.puml)
 -- Archivo SQL plano, apto para `pool.query(readFileSync(...))`. NO editar a mano.
 
 -- >>> 02_tables.sql
--- SALUD v4.2.79 · módulo 71 · schema pay_edge
+-- SALUD v4.2.80 · módulo 71 · schema pay_edge
 -- Generado de diagram_71_pay_edge.puml — NO editar a mano.
 
 
@@ -35,19 +35,19 @@ CREATE TABLE IF NOT EXISTS "inbox_events" (
 );
 
 -- >>> 03_fk_intra.sql
--- SALUD v4.2.79 · módulo 71 · schema pay_edge
+-- SALUD v4.2.80 · módulo 71 · schema pay_edge
 -- Generado de diagram_71_pay_edge.puml — NO editar a mano.
 
 
 -- >>> 04_indexes.sql
--- SALUD v4.2.79 · módulo 71 · schema pay_edge
+-- SALUD v4.2.80 · módulo 71 · schema pay_edge
 -- Generado de diagram_71_pay_edge.puml — NO editar a mano.
 
 
 CREATE INDEX IF NOT EXISTS "api_key_replica_merchant_idx" ON "api_key_replica" ("merchant_id");
 
 -- >>> 05_constraints.sql
--- SALUD v4.2.79 · perfil pay · módulo 71 · base pay_edge
+-- SALUD v4.2.80 · perfil pay · módulo 71 · base pay_edge
 -- Generado de diagram_71_pay_edge.puml — NO editar a mano.
 
 -- Complementos del perfil pay (gen_ddl_pay.py): funciones, CHECK, FK compuestas y triggers.

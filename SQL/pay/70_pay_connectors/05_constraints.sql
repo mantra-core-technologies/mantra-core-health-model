@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · perfil pay · módulo 70 · base pay_connectors
+-- SALUD v4.2.80 · perfil pay · módulo 70 · base pay_connectors
 -- Generado de diagram_70_pay_connectors.puml — NO editar a mano.
 
 -- Complementos del perfil pay (gen_ddl_pay.py): funciones, CHECK, FK compuestas y triggers.

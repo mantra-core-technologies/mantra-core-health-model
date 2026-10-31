@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · módulo 29 · schema delegated_access
+-- SALUD v4.2.80 · módulo 29 · schema delegated_access
 -- Generado de diagram_29_delegated_access.puml — NO editar a mano.
 
 
@@ -39,6 +39,8 @@ CREATE INDEX IF NOT EXISTS "ix_organization_user_assignments_owner_kind_concept_
 CREATE INDEX IF NOT EXISTS "ix_organization_user_assignments_role_template_id" ON "delegated_access"."organization_user_assignments" ("role_template_id");
 
 CREATE INDEX IF NOT EXISTS "ix_organization_user_assignments_next_recertification" ON "delegated_access"."organization_user_assignments" ("next_recertification_at") WHERE next_recertification_at IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS "ix_org_user_assignments_initiated_by_party" ON "delegated_access"."organization_user_assignments" ("initiated_by_party_concept_id");
 
 CREATE UNIQUE INDEX IF NOT EXISTS "uq_organization_user_assignments_active_template" ON "delegated_access"."organization_user_assignments" ("tenant_membership_id", "role_template_id") WHERE role_template_id IS NOT NULL AND status_concept_id = '38a1d301-f40d-5b17-a695-5e6d605f8b19';
 

@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · módulo 14 · schema practice
+-- SALUD v4.2.80 · módulo 14 · schema practice
 -- Generado de diagram_14_practice.puml — NO editar a mano.
 
 
@@ -239,6 +239,8 @@ CREATE INDEX IF NOT EXISTS "ix_practitioner_support_assignments_created_by_user_
 CREATE INDEX IF NOT EXISTS "ix_practitioner_support_assignments_updated_by_user_id" ON "practice"."practitioner_support_assignments" ("updated_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "gist_practitioner_support_assignments_effective_period" ON "practice"."practitioner_support_assignments" USING gist (daterange(valid_from, valid_to, '[)'));
+
+CREATE INDEX IF NOT EXISTS "ix_prac_support_assignments_initiated_by_party" ON "practice"."practitioner_support_assignments" ("initiated_by_party_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_practice_accreditations_practice_id" ON "practice"."practice_accreditations" ("practice_id");
 

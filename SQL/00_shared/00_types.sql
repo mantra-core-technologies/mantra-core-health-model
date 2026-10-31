@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · tipos compartidos (aplicar PRIMERO, antes de cualquier tabla)
+-- SALUD v4.2.80 · tipos compartidos (aplicar PRIMERO, antes de cualquier tabla)
 -- 'technical_data_type' es el único enum nativo permitido por el modelo
 -- (doc: semantic-data-analysis §3.2). Usado en módulos 03/09/30/39/44.
 -- Vocabulario: el que declara y usa la aplicación en forms/dto

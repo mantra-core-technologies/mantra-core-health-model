@@ -815,6 +815,19 @@ MEMBERSHIP_ORIGIN_BACKEND_CONCEPTS = [
 ]
 BACKEND_CONCEPTS += MEMBERSHIP_ORIGIN_BACKEND_CONCEPTS
 
+# --- v4.2.80 · quién inició un vínculo de la secretaria -------------------------------
+# `delegated_access.organization_user_assignments.initiated_by_party_concept_id` y
+# `practice.practitioner_support_assignments.initiated_by_party_concept_id` (NULL = no decidible:
+# la API falla cerrada). La API los declara en `delegated_access.concepts.ts` con
+# defineModuleConcepts('delegated_access', { INITIATOR_* }): clave `delegated_access:INITIATOR_*`,
+# código almacenado `DA_INITIATOR_*` (el estilo DA_* del módulo).
+INITIATOR_BACKEND_CONCEPTS = [
+    ("delegated_access:INITIATOR_SUPPORT_STAFF", "DA_INITIATOR_SUPPORT_STAFF", "Initiated by the support staff member"),
+    ("delegated_access:INITIATOR_ORGANIZATION", "DA_INITIATOR_ORGANIZATION", "Initiated by an organization administrator"),
+    ("delegated_access:INITIATOR_PRACTITIONER", "DA_INITIATOR_PRACTITIONER", "Initiated by the practitioner"),
+]
+BACKEND_CONCEPTS += INITIATOR_BACKEND_CONCEPTS
+
 # Conceptos EXISTENTES de la API que las filas boot nuevas referencian (permisos y plantillas de
 # rol). Se espejan igual que los demás: sin ellos la FK diferida rechazaría la fila al cargar en
 # una base donde la app todavía no arrancó. Displays literales de `authz.concepts.ts`.

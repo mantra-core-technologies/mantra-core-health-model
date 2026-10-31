@@ -1939,6 +1939,7 @@ practice,practitioner_support_assignments,ix_practitioner_support_assignments_sc
 practice,practitioner_support_assignments,ix_practitioner_support_assignments_status_concept_id,NO,"""status_concept_id""",,SQL/14_practice/04_indexes.sql
 practice,practitioner_support_assignments,ix_practitioner_support_assignments_created_by_user_id,NO,"""created_by_user_id""",,SQL/14_practice/04_indexes.sql
 practice,practitioner_support_assignments,ix_practitioner_support_assignments_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/14_practice/04_indexes.sql
+practice,practitioner_support_assignments,ix_prac_support_assignments_initiated_by_party,NO,"""initiated_by_party_concept_id""",,SQL/14_practice/04_indexes.sql
 practice,practice_accreditations,ix_practice_accreditations_practice_id,NO,"""practice_id""",,SQL/14_practice/04_indexes.sql
 practice,practice_accreditations,ix_practice_accreditations_practice_site_id,NO,"""practice_site_id""",,SQL/14_practice/04_indexes.sql
 practice,practice_accreditations,ix_practice_accreditations_accreditation_type_concept_id,NO,"""accreditation_type_concept_id""",,SQL/14_practice/04_indexes.sql
@@ -4077,6 +4078,7 @@ delegated_access,organization_user_assignments,ix_organization_user_assignments_
 delegated_access,organization_user_assignments,ix_organization_user_assignments_owner_kind_concept_id,NO,"""owner_kind_concept_id""",,SQL/29_delegated_access/04_indexes.sql
 delegated_access,organization_user_assignments,ix_organization_user_assignments_role_template_id,NO,"""role_template_id""",,SQL/29_delegated_access/04_indexes.sql
 delegated_access,organization_user_assignments,ix_organization_user_assignments_next_recertification,NO,"""next_recertification_at""",WHERE next_recertification_at IS NOT NULL,SQL/29_delegated_access/04_indexes.sql
+delegated_access,organization_user_assignments,ix_org_user_assignments_initiated_by_party,NO,"""initiated_by_party_concept_id""",,SQL/29_delegated_access/04_indexes.sql
 delegated_access,organization_user_assignments,uq_organization_user_assignments_active_template,YES,"""tenant_membership_id"", ""role_template_id""",WHERE role_template_id IS NOT NULL AND status_concept_id = '38a1d301-f40d-5b17-a695-5e6d605f8b19',SQL/29_delegated_access/04_indexes.sql
 delegated_access,organization_user_assignments,ix_organization_user_assignments_identity_verified_by_user_id,NO,"""identity_verified_by_user_id""",,SQL/29_delegated_access/04_indexes.sql
 delegated_access,organization_user_assignments,ix_organization_user_assignments_identity_method_concept_id,NO,"""identity_method_concept_id""",,SQL/29_delegated_access/04_indexes.sql

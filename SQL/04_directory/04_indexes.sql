@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · módulo 04 · schema directory
+-- SALUD v4.2.80 · módulo 04 · schema directory
 -- Generado de diagram_04_directory.puml — NO editar a mano.
 
 

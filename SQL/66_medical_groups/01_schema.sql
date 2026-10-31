@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · módulo 66 · schema medical_groups
+-- SALUD v4.2.80 · módulo 66 · schema medical_groups
 -- Generado de diagram_66_medical_groups.puml — NO editar a mano.
 
 CREATE SCHEMA IF NOT EXISTS "medical_groups";
