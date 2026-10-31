@@ -15,6 +15,12 @@ ALTER TABLE "scheduling"."practitioner_service_offerings" DROP CONSTRAINT IF EXI
 ALTER TABLE "scheduling"."practitioner_service_offerings" ADD CONSTRAINT "ck_practitioner_service_offerings_buffers" CHECK ((COALESCE("prep_minutes", 0) >= 0 AND COALESCE("cleanup_minutes", 0) >= 0));
 
 
+-- ═══ schedulable_resources ═══
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "scheduling"."schedulable_resources" DROP CONSTRAINT IF EXISTS "ck_schedulable_resources_care_space_ref";
+ALTER TABLE "scheduling"."schedulable_resources" ADD CONSTRAINT "ck_schedulable_resources_care_space_ref" CHECK (("resource_ref_type" <> 'care_spaces' OR "care_space_id" = "resource_ref_id"));
+
+
 -- ═══ booking_policies ═══
 -- CHECK concreto declarado por el modelo (CHECK_SQL).
 ALTER TABLE "scheduling"."booking_policies" DROP CONSTRAINT IF EXISTS "ck_booking_policies_no_show_fee_percentage";

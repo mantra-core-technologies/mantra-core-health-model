@@ -225,6 +225,36 @@ CREATE TABLE IF NOT EXISTS "audit"."care_spaces_history" (
     CONSTRAINT "pk_care_spaces_history" PRIMARY KEY ("history_id")
 );
 
+CREATE TABLE IF NOT EXISTS "audit"."operating_room_block_series_history" (
+    "history_id" uuid NOT NULL,
+    "operating_room_block_series_id" uuid NOT NULL,
+    "revision_no" integer NOT NULL,
+    "operation_concept_id" uuid NOT NULL,
+    "valid_from" timestamptz NOT NULL,
+    "valid_to" timestamptz,
+    "data_snapshot" jsonb NOT NULL,
+    "changed_by_user_id" uuid,
+    "change_reason_concept_id" uuid,
+    "recorded_at" timestamptz NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    CONSTRAINT "pk_operating_room_block_series_history" PRIMARY KEY ("history_id")
+);
+
+CREATE TABLE IF NOT EXISTS "audit"."operating_room_blocks_history" (
+    "history_id" uuid NOT NULL,
+    "operating_room_block_id" uuid NOT NULL,
+    "revision_no" integer NOT NULL,
+    "operation_concept_id" uuid NOT NULL,
+    "valid_from" timestamptz NOT NULL,
+    "valid_to" timestamptz,
+    "data_snapshot" jsonb NOT NULL,
+    "changed_by_user_id" uuid,
+    "change_reason_concept_id" uuid,
+    "recorded_at" timestamptz NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    CONSTRAINT "pk_operating_room_blocks_history" PRIMARY KEY ("history_id")
+);
+
 CREATE TABLE IF NOT EXISTS "audit"."encounter_locations_history" (
     "history_id" uuid NOT NULL,
     "encounter_location_id" uuid NOT NULL,

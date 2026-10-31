@@ -189,6 +189,30 @@ CREATE INDEX IF NOT EXISTS "brin_care_spaces_history_recorded_at" ON "audit"."ca
 
 CREATE INDEX IF NOT EXISTS "ix_care_spaces_history_tenant_id" ON "audit"."care_spaces_history" ("tenant_id");
 
+CREATE INDEX IF NOT EXISTS "ix_operating_room_block_series_history_operating_room__bd611718" ON "audit"."operating_room_block_series_history" ("operating_room_block_series_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_block_series_history_operation_concept_id" ON "audit"."operating_room_block_series_history" ("operation_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_block_series_history_changed_by_user_id" ON "audit"."operating_room_block_series_history" ("changed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_block_series_history_change_reason_concept_id" ON "audit"."operating_room_block_series_history" ("change_reason_concept_id");
+
+CREATE INDEX IF NOT EXISTS "brin_operating_room_block_series_history_recorded_at" ON "audit"."operating_room_block_series_history" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_block_series_history_tenant_id" ON "audit"."operating_room_block_series_history" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_blocks_history_operating_room_block_id" ON "audit"."operating_room_blocks_history" ("operating_room_block_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_blocks_history_operation_concept_id" ON "audit"."operating_room_blocks_history" ("operation_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_blocks_history_changed_by_user_id" ON "audit"."operating_room_blocks_history" ("changed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_blocks_history_change_reason_concept_id" ON "audit"."operating_room_blocks_history" ("change_reason_concept_id");
+
+CREATE INDEX IF NOT EXISTS "brin_operating_room_blocks_history_recorded_at" ON "audit"."operating_room_blocks_history" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_operating_room_blocks_history_tenant_id" ON "audit"."operating_room_blocks_history" ("tenant_id");
+
 CREATE INDEX IF NOT EXISTS "ix_encounter_locations_history_encounter_location_id" ON "audit"."encounter_locations_history" ("encounter_location_id");
 
 CREATE INDEX IF NOT EXISTS "ix_encounter_locations_history_operation_concept_id" ON "audit"."encounter_locations_history" ("operation_concept_id");

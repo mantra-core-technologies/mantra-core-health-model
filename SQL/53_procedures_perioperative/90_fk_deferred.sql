@@ -127,6 +127,13 @@ DO $$ BEGIN
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- destino: scheduling.schedulable_resources (requiere schema scheduling)
+DO $$ BEGIN
+    ALTER TABLE "procedures_perioperative"."procedure_cases"
+        ADD CONSTRAINT "fk_procedure_cases_schedulable_resource_id" FOREIGN KEY ("schedulable_resource_id")
+        REFERENCES "scheduling"."schedulable_resources" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 -- destino: clinical.conditions (requiere schema clinical)
 DO $$ BEGIN
     ALTER TABLE "procedures_perioperative"."procedure_case_diagnoses"
@@ -1274,6 +1281,153 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_operating_room_utilization_events_recorded_by_user_id" FOREIGN KEY ("recorded_by_user_id")
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "procedures_perioperative"."operating_room_utilization_events"
+        ADD CONSTRAINT "fk_operating_room_utilization_events_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "procedures_perioperative"."operating_room_block_series"
+        ADD CONSTRAINT "fk_operating_room_block_series_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: practice.practice_sites (requiere schema practice)
+DO $$ BEGIN
+    ALTER TABLE "procedures_perioperative"."operating_room_block_series"
+        ADD CONSTRAINT "fk_operating_room_block_series_practice_site_id" FOREIGN KEY ("practice_site_id")
+        REFERENCES "practice"."practice_sites" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: practice.care_spaces (requiere schema practice)
+DO $$ BEGIN
+    ALTER TABLE "procedures_perioperative"."operating_room_block_series"
+        ADD CONSTRAINT "fk_operating_room_block_series_operating_room_id" FOREIGN KEY ("operating_room_id")
+        REFERENCES "practice"."care_spaces" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "procedures_perioperative"."operating_room_block_series"
+        ADD CONSTRAINT "fk_operating_room_block_series_owner_kind_concept_id" FOREIGN KEY ("owner_kind_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: practice.clinical_units (requiere schema practice)
+DO $$ BEGIN
+    ALTER TABLE "procedures_perioperative"."operating_room_block_series"
+        ADD CONSTRAINT "fk_operating_room_block_series_clinical_unit_id" FOREIGN KEY ("clinical_unit_id")
+        REFERENCES "practice"."clinical_units" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "procedures_perioperative"."operating_room_block_series"
+        ADD CONSTRAINT "fk_operating_room_block_series_surgical_specialty_concept_id" FOREIGN KEY ("surgical_specialty_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: profiles.health_practitioner_profiles (requiere schema profiles)
+DO $$ BEGIN
+    ALTER TABLE "procedures_perioperative"."operating_room_block_series"
+        ADD CONSTRAINT "fk_operating_room_block_series_surgeon_profile_id" FOREIGN KEY ("surgeon_profile_id")
+        REFERENCES "profiles"."health_practitioner_profiles" ("profile_id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "procedures_perioperative"."operating_room_block_series"
+        ADD CONSTRAINT "fk_operating_room_block_series_status_concept_id" FOREIGN KEY ("status_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "procedures_perioperative"."operating_room_block_series"
+        ADD CONSTRAINT "fk_operating_room_block_series_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "procedures_perioperative"."operating_room_block_series"
+        ADD CONSTRAINT "fk_operating_room_block_series_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "procedures_perioperative"."operating_room_blocks"
+        ADD CONSTRAINT "fk_operating_room_blocks_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: practice.care_spaces (requiere schema practice)
+DO $$ BEGIN
+    ALTER TABLE "procedures_perioperative"."operating_room_blocks"
+        ADD CONSTRAINT "fk_operating_room_blocks_operating_room_id" FOREIGN KEY ("operating_room_id")
+        REFERENCES "practice"."care_spaces" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "procedures_perioperative"."operating_room_blocks"
+        ADD CONSTRAINT "fk_operating_room_blocks_owner_kind_concept_id" FOREIGN KEY ("owner_kind_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: practice.clinical_units (requiere schema practice)
+DO $$ BEGIN
+    ALTER TABLE "procedures_perioperative"."operating_room_blocks"
+        ADD CONSTRAINT "fk_operating_room_blocks_clinical_unit_id" FOREIGN KEY ("clinical_unit_id")
+        REFERENCES "practice"."clinical_units" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "procedures_perioperative"."operating_room_blocks"
+        ADD CONSTRAINT "fk_operating_room_blocks_surgical_specialty_concept_id" FOREIGN KEY ("surgical_specialty_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: profiles.health_practitioner_profiles (requiere schema profiles)
+DO $$ BEGIN
+    ALTER TABLE "procedures_perioperative"."operating_room_blocks"
+        ADD CONSTRAINT "fk_operating_room_blocks_surgeon_profile_id" FOREIGN KEY ("surgeon_profile_id")
+        REFERENCES "profiles"."health_practitioner_profiles" ("profile_id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "procedures_perioperative"."operating_room_blocks"
+        ADD CONSTRAINT "fk_operating_room_blocks_status_concept_id" FOREIGN KEY ("status_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "procedures_perioperative"."operating_room_blocks"
+        ADD CONSTRAINT "fk_operating_room_blocks_released_by_user_id" FOREIGN KEY ("released_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "procedures_perioperative"."operating_room_blocks"
+        ADD CONSTRAINT "fk_operating_room_blocks_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "procedures_perioperative"."operating_room_blocks"
+        ADD CONSTRAINT "fk_operating_room_blocks_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
