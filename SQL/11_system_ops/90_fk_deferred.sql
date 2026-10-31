@@ -1021,11 +1021,11 @@ DO $$ BEGIN
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 
--- destino: delegated_access.four_eyes_requests (requiere schema delegated_access)
+-- compuesta: system_ops.bulk_import_batches sólo apunta a delegated_access.four_eyes_requests del mismo tenant_id
 DO $$ BEGIN
     ALTER TABLE "system_ops"."bulk_import_batches"
-        ADD CONSTRAINT "fk_bulk_import_batches_approval_request_id" FOREIGN KEY ("approval_request_id")
-        REFERENCES "delegated_access"."four_eyes_requests" ("id");
+        ADD CONSTRAINT "fk_bulk_import_batches_approval_request_id" FOREIGN KEY ("tenant_id", "approval_request_id")
+        REFERENCES "delegated_access"."four_eyes_requests" ("tenant_id", "id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
@@ -1041,6 +1041,13 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_bulk_import_batches_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- compuesta: system_ops.bulk_import_batch_rows sólo apunta a system_ops.bulk_import_batches del mismo tenant_id
+DO $$ BEGIN
+    ALTER TABLE "system_ops"."bulk_import_batch_rows"
+        ADD CONSTRAINT "fk_bulk_import_batch_rows_batch_id" FOREIGN KEY ("tenant_id", "batch_id")
+        REFERENCES "system_ops"."bulk_import_batches" ("tenant_id", "id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: directory.tenants (requiere schema directory)
 DO $$ BEGIN

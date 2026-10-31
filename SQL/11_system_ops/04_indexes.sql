@@ -342,6 +342,8 @@ CREATE INDEX IF NOT EXISTS "ix_governance_policy_revisions_submitted_by_user_id"
 
 CREATE INDEX IF NOT EXISTS "ix_governance_policy_revisions_decided_by_user_id" ON "system_ops"."governance_policy_revisions" ("decided_by_user_id");
 
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_bulk_import_batches_tenant_id_id" ON "system_ops"."bulk_import_batches" ("tenant_id", "id");
+
 CREATE UNIQUE INDEX IF NOT EXISTS "ux_bulk_import_batches_confirm_key" ON "system_ops"."bulk_import_batches" ("tenant_id", "confirm_key") WHERE confirm_key IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS "ix_bulk_import_batches_tenant_created" ON "system_ops"."bulk_import_batches" ("tenant_id", "created_at" DESC);

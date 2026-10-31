@@ -14,7 +14,7 @@
 --                           base legal, fecha de carga), contadores, hallazgos de la vista previa, clave de confirmación UNICA por (organización, clave),
 --                           quién y cuándo confirmó, solicitud de aprobación (FK a delegated_access.four_eyes_requests), informe final
 --   bulk_import_batch_rows  una fila por fila del archivo: resultado, motivo (código estable), columna, entidad creada (target_entity, target_id)
---                           7 FK, 11 índices, 3 CHECK en total
+--                           7 FK, 12 índices, 3 CHECK en total
 --   RLS: tenant_isolation en las 2 tablas (llevan `tenant_id`, a propósito)
 --
 -- DECISIONES (detalle en el .puml 11)
@@ -99,13 +99,11 @@ CREATE TABLE IF NOT EXISTS "system_ops"."bulk_import_batch_rows" (
 );
 
 -- ---- 2. FK dentro de system_ops (SQL/11_system_ops/03_fk_intra.sql) ----
-DO $$ BEGIN
-    ALTER TABLE "system_ops"."bulk_import_batch_rows"
-        ADD CONSTRAINT "fk_bulk_import_batch_rows_batch_id" FOREIGN KEY ("batch_id")
-        REFERENCES "system_ops"."bulk_import_batches" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
--- ---- 3. indices (SQL/11_system_ops/04_indexes.sql) ----
+
+-- ---- 3. indices (SQL/11_system_ops/04_indexes.sql; el UNIQUE (tenant_id, id) de four_eyes_requests es el destino de la FK compuesta) ----
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_bulk_import_batches_tenant_id_id" ON "system_ops"."bulk_import_batches" ("tenant_id", "id");
+
 CREATE UNIQUE INDEX IF NOT EXISTS "ux_bulk_import_batches_confirm_key" ON "system_ops"."bulk_import_batches" ("tenant_id", "confirm_key") WHERE confirm_key IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS "ix_bulk_import_batches_tenant_created" ON "system_ops"."bulk_import_batches" ("tenant_id", "created_at" DESC);
@@ -128,7 +126,20 @@ CREATE INDEX IF NOT EXISTS "ix_bulk_import_batch_rows_target" ON "system_ops"."b
 
 CREATE INDEX IF NOT EXISTS "ix_bulk_import_batch_rows_pending_data" ON "system_ops"."bulk_import_batch_rows" ("batch_id") WHERE row_data_json IS NOT NULL OR row_key IS NOT NULL;
 
--- ---- 4. FK entre schemas: directory.tenants, iam.users, delegated_access.four_eyes_requests (SQL/11_system_ops/90_fk_deferred.sql) ----
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_four_eyes_requests_tenant_id_id" ON "delegated_access"."four_eyes_requests" ("tenant_id", "id");
+
+-- ---- 3b. FK simples anteriores (primer borrador de este parche) -> se sustituyen por las compuestas por tenant; no-op si ya son compuestas ----
+DO $$
+DECLARE r record;
+BEGIN
+    FOR r IN SELECT k.conname, c.relname FROM pg_constraint k JOIN pg_class c ON c.oid = k.conrelid JOIN pg_namespace s ON s.oid = c.relnamespace
+              WHERE k.contype = 'f' AND s.nspname = 'system_ops' AND array_length(k.conkey, 1) = 1
+                AND k.conname IN ('fk_bulk_import_batch_rows_batch_id', 'fk_bulk_import_batches_approval_request_id') LOOP
+        EXECUTE format('ALTER TABLE system_ops.%I DROP CONSTRAINT %I', r.relname, r.conname);
+    END LOOP;
+END $$;
+
+-- ---- 4. FK entre schemas y COMPUESTAS POR TENANT (una fila del tenant A no puede apuntar a un lote ni a una aprobacion del tenant B): SQL/11_system_ops/90_fk_deferred.sql ----
 -- destino: directory.tenants (requiere schema directory)
 DO $$ BEGIN
     ALTER TABLE "system_ops"."bulk_import_batches"
@@ -143,11 +154,11 @@ DO $$ BEGIN
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 
--- destino: delegated_access.four_eyes_requests (requiere schema delegated_access)
+-- compuesta: system_ops.bulk_import_batches sólo apunta a delegated_access.four_eyes_requests del mismo tenant_id
 DO $$ BEGIN
     ALTER TABLE "system_ops"."bulk_import_batches"
-        ADD CONSTRAINT "fk_bulk_import_batches_approval_request_id" FOREIGN KEY ("approval_request_id")
-        REFERENCES "delegated_access"."four_eyes_requests" ("id");
+        ADD CONSTRAINT "fk_bulk_import_batches_approval_request_id" FOREIGN KEY ("tenant_id", "approval_request_id")
+        REFERENCES "delegated_access"."four_eyes_requests" ("tenant_id", "id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
@@ -163,6 +174,13 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_bulk_import_batches_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- compuesta: system_ops.bulk_import_batch_rows sólo apunta a system_ops.bulk_import_batches del mismo tenant_id
+DO $$ BEGIN
+    ALTER TABLE "system_ops"."bulk_import_batch_rows"
+        ADD CONSTRAINT "fk_bulk_import_batch_rows_batch_id" FOREIGN KEY ("tenant_id", "batch_id")
+        REFERENCES "system_ops"."bulk_import_batches" ("tenant_id", "id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: directory.tenants (requiere schema directory)
 DO $$ BEGIN
@@ -233,12 +251,15 @@ BEGIN
     SELECT count(*) INTO n FROM pg_constraint k JOIN pg_class c ON c.oid = k.conrelid JOIN pg_namespace s ON s.oid = c.relnamespace
      WHERE k.contype = 'f' AND s.nspname = 'system_ops' AND c.relname IN ('bulk_import_batches', 'bulk_import_batch_rows');
     IF n <> 7 THEN RAISE EXCEPTION 'v4281 cargas: deberia haber 7 FK y hay %', n; END IF;
+    SELECT count(*) INTO n FROM pg_constraint k WHERE k.contype = 'f' AND array_length(k.conkey, 1) = 2
+       AND k.conname IN ('fk_bulk_import_batch_rows_batch_id', 'fk_bulk_import_batches_approval_request_id');
+    IF n <> 2 THEN RAISE EXCEPTION 'v4281 cargas: las FK batch_id y approval_request_id deben ser compuestas con tenant_id'; END IF;
     SELECT count(*) INTO n FROM pg_policies WHERE schemaname = 'system_ops' AND tablename IN ('bulk_import_batches', 'bulk_import_batch_rows') AND policyname = 'tenant_isolation';
     IF n <> 2 THEN RAISE EXCEPTION 'v4281 cargas: deberia haber 2 politicas tenant_isolation y hay %', n; END IF;
     SELECT count(*) INTO n FROM pg_class c JOIN pg_namespace s ON s.oid = c.relnamespace
      WHERE s.nspname = 'system_ops' AND c.relname IN ('bulk_import_batches', 'bulk_import_batch_rows') AND c.relrowsecurity AND c.relforcerowsecurity;
     IF n <> 2 THEN RAISE EXCEPTION 'v4281 cargas: las tablas del lote deben tener RLS forzada'; END IF;
-    RAISE NOTICE 'v4281 cargas: 2 tablas, 7 FK, 11 indices, 3 CHECK, RLS forzada';
+    RAISE NOTICE 'v4281 cargas: 2 tablas, 7 FK, 12 indices, 3 CHECK, RLS forzada';
 END $$;
 
 COMMIT;

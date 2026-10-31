@@ -1021,6 +1021,12 @@ governance_policy_revisions .. idxset_governance_policy_revisions : indexed by
 ' DECISION D-F1b-11 — estados y resultados son texto (los valores en espanol del enum del API), sin CHECK de vocabulario: el API los
 '   gobierna con BATCH_TRANSITIONS y un estado nuevo (p. ej. a la espera de aprobacion, H3) no debe exigir un parche del modelo.
 '   La aprobacion previa a encolar se modela con approval_request_id (FK a delegated_access.four_eyes_requests), no con un estado.
+' DECISION D-F1b-12 — CONSISTENCIA DE TENANT ENTRE TABLAS CON RLS. Una FK simple no impide que una fila del tenant A apunte a un lote o a una
+'   aprobacion del tenant B (la RLS filtra lecturas, no referencias). Por eso las dos FK que cruzan tablas con tenant son COMPUESTAS:
+'   bulk_import_batch_rows (tenant_id, batch_id) -> bulk_import_batches (tenant_id, id) y bulk_import_batches (tenant_id, approval_request_id)
+'   -> delegated_access.four_eyes_requests (tenant_id, id). Ambas columnas tenant_id son NOT NULL, asi que no hay caso de NULL que decidir en
+'   la fila; approval_request_id SI es nullable y con MATCH SIMPLE un NULL no se valida (un lote sin aprobacion es valido). Nada de esto
+'   garantiza que subject_entity/subject_id de la solicitud apunte a ESTE lote (referencia polimorfica): lo verifica el servicio al ligar.
 ' La clave de confirmacion es unica por (organizacion, clave): ux_bulk_import_batches_confirm_key. `findByConfirmKey` y la
 ' precondicion de `transition(from,to)` (UPDATE ... WHERE status IN (...)) usan estos indices.
 
@@ -1053,7 +1059,7 @@ entity bulk_import_batches {
     confirm_key : varchar(128)
     confirmed_at : timestamptz
     confirmed_by_user_id : uuid <<FK>>
-    approval_request_id : uuid <<FK>>
+    approval_request_id : uuid <<FK, SCOPED_BY:tenant_id>>
     started_at : timestamptz
     finished_at : timestamptz
     failure_reason : varchar
@@ -1068,7 +1074,7 @@ entity bulk_import_batches {
 entity bulk_import_batch_rows {
   * id : uuid <<PK>>
   --
-  * batch_id : uuid <<FK>>
+  * batch_id : uuid <<FK, SCOPED_BY:tenant_id>>
   * tenant_id : uuid <<FK>>
   * row_no : integer
     outcome : varchar
@@ -1084,6 +1090,7 @@ entity bulk_import_batch_rows {
 
 entity "INDEXES · bulk_import_batches" as idxset_bulk_import_batches <<INDEX_SET>> {
   PK pk_bulk_import_batches : (id) UNIQUE BTREE
+  UK uq_bulk_import_batches_tenant_id_id : (tenant_id, id) UNIQUE BTREE
   UX ux_bulk_import_batches_confirm_key : (tenant_id, confirm_key) UNIQUE BTREE WHERE confirm_key IS NOT NULL
   IX ix_bulk_import_batches_tenant_created : (tenant_id, created_at DESC) BTREE
   IX ix_bulk_import_batches_active : (status, created_at) BTREE WHERE status IN ('EN_COLA', 'PROCESANDO')

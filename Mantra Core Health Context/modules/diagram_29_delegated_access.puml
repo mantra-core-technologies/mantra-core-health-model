@@ -1043,6 +1043,7 @@ sod_exceptions .. idxset_sod_exceptions : indexed by
 
 entity "INDEXES · four_eyes_requests" as idxset_four_eyes_requests <<INDEX_SET>> {
   PK pk_four_eyes_requests : (id) UNIQUE BTREE
+  UK uq_four_eyes_requests_tenant_id_id : (tenant_id, id) UNIQUE BTREE
   IX ix_four_eyes_requests_tenant_id : (tenant_id, status_concept_id, expires_at) BTREE
   IX ix_four_eyes_requests_requester : (requester_user_id, status_concept_id) BTREE
   UK uq_four_eyes_requests_pending_payload : (tenant_id, kind_concept_id, requester_user_id, COALESCE(permission_code, ''), payload_hash) UNIQUE BTREE WHERE status_concept_id = 'a977935a-9073-5113-9644-7df96732e776'

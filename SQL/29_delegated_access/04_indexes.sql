@@ -322,6 +322,8 @@ CREATE INDEX IF NOT EXISTS "ix_sod_exceptions_created_by_user_id" ON "delegated_
 
 CREATE INDEX IF NOT EXISTS "ix_sod_exceptions_updated_by_user_id" ON "delegated_access"."sod_exceptions" ("updated_by_user_id");
 
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_four_eyes_requests_tenant_id_id" ON "delegated_access"."four_eyes_requests" ("tenant_id", "id");
+
 CREATE INDEX IF NOT EXISTS "ix_four_eyes_requests_tenant_id" ON "delegated_access"."four_eyes_requests" ("tenant_id", "status_concept_id", "expires_at");
 
 CREATE INDEX IF NOT EXISTS "ix_four_eyes_requests_requester" ON "delegated_access"."four_eyes_requests" ("requester_user_id", "status_concept_id");

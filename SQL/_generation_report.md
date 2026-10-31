@@ -15,7 +15,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 08 | clinical | 24 | 241 | 9 | 264 | 11 |
 | 09 | forms | 16 | 103 | 0 | 113 | 1 |
 | 10 | audit | 133 | 557 | 43 | 708 | 1 |
-| 11 | system_ops | 32 | 178 | 7 | 195 | 1 |
+| 11 | system_ops | 32 | 178 | 7 | 196 | 1 |
 | 12 | integrations | 10 | 49 | 0 | 56 | 0 |
 | 13 | geo | 6 | 31 | 0 | 35 | 0 |
 | 14 | practice | 16 | 124 | 37 | 138 | 1 |
@@ -33,7 +33,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 26 | insurance | 33 | 224 | 20 | 244 | 1 |
 | 27 | identity_assurance | 11 | 70 | 1 | 77 | 0 |
 | 28 | telemetry | 15 | 77 | 3 | 95 | 1 |
-| 29 | delegated_access | 27 | 207 | 120 | 235 | 6 |
+| 29 | delegated_access | 27 | 207 | 120 | 236 | 6 |
 | 30 | read_models | 13 | 74 | 0 | 89 | 76 |
 | 31 | integration_contracts | 9 | 48 | 1 | 57 | 0 |
 | 32 | workflow | 8 | 49 | 0 | 55 | 9 |

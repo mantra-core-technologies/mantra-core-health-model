@@ -471,6 +471,8 @@ def gen_cargas() -> tuple[str, str]:
     fk_intra = select_blocks(read("11_system_ops/03_fk_intra.sql"), "system_ops", BULK_TABLES)
     idx11 = select_blocks(read("11_system_ops/04_indexes.sql"), "system_ops", BULK_TABLES)
     fk_def = select_blocks(read("11_system_ops/90_fk_deferred.sql"), "system_ops", BULK_TABLES)
+    idx29 = select_blocks(read("29_delegated_access/04_indexes.sql"), "delegated_access", [], ('"uq_four_eyes_requests_tenant_id_id"',))
+    assert idx29.count("UNIQUE INDEX IF NOT EXISTS") == 1 and fk_def.count('FOREIGN KEY ("tenant_id", ') == 2, "FK compuestas por tenant"
     c11_text = read("11_system_ops/05_constraints.sql")
     cons11 = "\n\n".join(table_section(c11_text, t) for t in BULK_TABLES if f"-- ═══ {t} ═══" in c11_text)
     n_fk = (fk_intra + fk_def).count("ADD CONSTRAINT")
@@ -526,8 +528,20 @@ END $$;
     parts = [head]
     parts.append("-- ---- 1. tablas del lote (SQL/11_system_ops/02_tables.sql) ----\n" + t11 + "\n")
     parts.append("-- ---- 2. FK dentro de system_ops (SQL/11_system_ops/03_fk_intra.sql) ----\n" + fk_intra + "\n")
-    parts.append("-- ---- 3. indices (SQL/11_system_ops/04_indexes.sql) ----\n" + idx11 + "\n")
-    parts.append("-- ---- 4. FK entre schemas: directory.tenants, iam.users, delegated_access.four_eyes_requests (SQL/11_system_ops/90_fk_deferred.sql) ----\n" + fk_def + "\n")
+    parts.append("-- ---- 3. indices (SQL/11_system_ops/04_indexes.sql; el UNIQUE (tenant_id, id) de four_eyes_requests es el destino de la FK compuesta) ----\n"
+                 + idx11 + "\n\n" + idx29 + "\n")
+    parts.append("""-- ---- 3b. FK simples anteriores (primer borrador de este parche) -> se sustituyen por las compuestas por tenant; no-op si ya son compuestas ----
+DO $$
+DECLARE r record;
+BEGIN
+    FOR r IN SELECT k.conname, c.relname FROM pg_constraint k JOIN pg_class c ON c.oid = k.conrelid JOIN pg_namespace s ON s.oid = c.relnamespace
+              WHERE k.contype = 'f' AND s.nspname = 'system_ops' AND array_length(k.conkey, 1) = 1
+                AND k.conname IN ('fk_bulk_import_batch_rows_batch_id', 'fk_bulk_import_batches_approval_request_id') LOOP
+        EXECUTE format('ALTER TABLE system_ops.%I DROP CONSTRAINT %I', r.relname, r.conname);
+    END LOOP;
+END $$;
+""")
+    parts.append("-- ---- 4. FK entre schemas y COMPUESTAS POR TENANT (una fila del tenant A no puede apuntar a un lote ni a una aprobacion del tenant B): SQL/11_system_ops/90_fk_deferred.sql ----\n" + fk_def + "\n")
     parts.append("-- ---- 5. integridad: contadores y «sin datos personales en una fila cerrada» (SQL/11_system_ops/05_constraints.sql) ----\n" + cons11 + "\n")
     parts.append("""-- ---- 6. RLS: tenant_isolation en las tablas del lote (mismo patron que 2026-08-05_tenant_rls.sql y el v4278; la fila repite el tenant del lote) ----
 DO $$
@@ -575,6 +589,9 @@ BEGIN
     SELECT count(*) INTO n FROM pg_constraint k JOIN pg_class c ON c.oid = k.conrelid JOIN pg_namespace s ON s.oid = c.relnamespace
      WHERE k.contype = 'f' AND s.nspname = 'system_ops' AND c.relname IN ({bulk});
     IF n <> {n_fk} THEN RAISE EXCEPTION 'v4281 cargas: deberia haber {n_fk} FK y hay %', n; END IF;
+    SELECT count(*) INTO n FROM pg_constraint k WHERE k.contype = 'f' AND array_length(k.conkey, 1) = 2
+       AND k.conname IN ('fk_bulk_import_batch_rows_batch_id', 'fk_bulk_import_batches_approval_request_id');
+    IF n <> 2 THEN RAISE EXCEPTION 'v4281 cargas: las FK batch_id y approval_request_id deben ser compuestas con tenant_id'; END IF;
     SELECT count(*) INTO n FROM pg_policies WHERE schemaname = 'system_ops' AND tablename IN ({bulk}) AND policyname = 'tenant_isolation';
     IF n <> {len(BULK_TABLES)} THEN RAISE EXCEPTION 'v4281 cargas: deberia haber {len(BULK_TABLES)} politicas tenant_isolation y hay %', n; END IF;
     SELECT count(*) INTO n FROM pg_class c JOIN pg_namespace s ON s.oid = c.relnamespace
