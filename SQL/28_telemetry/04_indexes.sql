@@ -1,4 +1,4 @@
--- SALUD v4.2.80 · módulo 28 · schema telemetry
+-- SALUD v4.2.81 · módulo 28 · schema telemetry
 -- Generado de diagram_28_telemetry.puml — NO editar a mano.
 
 
@@ -89,6 +89,10 @@ CREATE INDEX IF NOT EXISTS "brin_user_activity_events_created_at" ON "telemetry"
 CREATE INDEX IF NOT EXISTS "ix_user_activity_events_occurred_at" ON "telemetry"."user_activity_events" ("occurred_at");
 
 CREATE INDEX IF NOT EXISTS "ix_user_activity_events_route_template_occurred_at" ON "telemetry"."user_activity_events" ("route_template", "occurred_at");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_user_activity_events_anonymous_idempotency" ON "telemetry"."user_activity_events" (COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000'::uuid), "event_idempotency_key") WHERE user_id IS NULL;
+
+CREATE INDEX IF NOT EXISTS "ix_user_activity_events_user_idempotency" ON "telemetry"."user_activity_events" ("user_id", "event_idempotency_key") WHERE user_id IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS "ix_user_activity_event_properties_user_activity_event_id" ON "telemetry"."user_activity_event_properties" ("user_activity_event_id");
 

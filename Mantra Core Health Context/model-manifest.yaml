@@ -1,6 +1,6 @@
 model:
   name: SALUD
-  version: 4.2.80
+  version: 4.2.81
   status: canonical-polyglot-nosql-health-platform
   generated_at: '2026-10-31'
   design_patches:
@@ -203,6 +203,15 @@ model:
       8 tablas de historia y 6 CHECK de vocabularios cerrados. Conceptos
       observability:ERROR_GROUP_STATE_* y telemetry:ERROR_CLASS_* sembrados por
       SQL/patches/2026-10-31_v4280_observabilidad_sistema.sql.
+  - id: patch-v4.2.81-gobierno-de-datos-y-cargas
+    role: product-features
+    doc: docs/trabajo/2026-10-31-portal-observabilidad-gobierno/04-catalogo-y-gobierno.md (§3), 06-cargas-masivas-aprobacion-gobierno-usuarios.md (H2, H3) y evidencia-f0/REVISION-codigo-api.md (hallazgo 2)
+    status: materialized-physically
+    summary: >-
+      Franja F1b del portal de observabilidad y gobierno. (1) Módulo 28: índice único parcial
+      ux_user_activity_events_anonymous_idempotency (tenant con COALESCE, clave) WHERE user_id IS NULL e índice de
+      búsqueda (user_id, clave) para los identificados; el parche deduplica de forma determinista los repetidos
+      previos (SQL/patches/2026-10-31_v4281_idempotencia_anonima.sql).
   materialization_note: >-
     v4.0.1 materializado en el ER (fuente: el vault/grafo). Se añadieron 14
     entidades nuevas (marketing.campaign_schedules/dispatches/dispatch_recipients,
@@ -254,6 +263,8 @@ model:
       Recontado el 2026-10-31 con la franja F1 del portal de observabilidad
       (v4.2.80: módulo 70 con 12 tablas + client_error_events en el 28 + los
       stubs y entradas de la matriz del 33): 3144 entity / 1431 table_like /
+      81 vistas / 1397 idx / 7581 FK / 235 ref / 59 schemas (tools/model_inventory.py).
+      Recontado el 2026-10-31 con la franja F1b (v4.2.81, entregable 1): 3144 entity / 1431 table_like /
       81 vistas / 1397 idx / 7581 FK / 235 ref / 59 schemas (tools/model_inventory.py).
   database: PostgreSQL canonical + governed specialized stores
   rules:

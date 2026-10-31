@@ -375,6 +375,30 @@ note as VALUE_SETS_client_error_events
   portal_type->the existing portal concepts {WEB,MOBILE}.
 end note
 
+' ------------------------------------------------------------------------------
+' v4.2.81 (franja F1b, hallazgo 2 de la revision de codigo del API F0) — idempotencia
+' de los eventos anonimos de user_activity_events.
+' ------------------------------------------------------------------------------
+note as IDEMPOTENCY_user_activity_events
+  IDEMPOTENCY OF ANONYMOUS EVENTS (v4.2.81)
+  - The anonymous event (purpose PLATFORM_USAGE_AGGREGATE) has user_id NULL and keeps an HMAC
+    of (person, organization, client key) in event_idempotency_key. Without a unique index two
+    concurrent batches with the same key both passed the "find, then insert" check.
+  - ux_user_activity_events_anonymous_idempotency is UNIQUE (tenant, key) only for rows with
+    user_id NULL. The tenant is wrapped in COALESCE(tenant_id, zero uuid) on purpose: tenant_id
+    is nullable and PostgreSQL treats NULLs as distinct in a unique index, so an anonymous event
+    without an organization would never collide. The API must infer the conflict with the SAME
+    expression: ON CONFLICT ((COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000'::uuid)),
+    event_idempotency_key) WHERE user_id IS NULL DO NOTHING; or catch SQLSTATE 23505 and count
+    the event as skipped.
+  - Identified events get a lookup index (user_id, event_idempotency_key), partial on user_id NOT
+    NULL, and it is NOT unique: the client chooses that key and the table may already hold
+    repeats, so the identified path stays "find, then insert" and only gains the index.
+  - The patch SQL/patches/2026-10-31_v4281_idempotencia_anonima.sql removes, deterministically,
+    the duplicates that may already exist (keeps the oldest row by created_at, then id) before
+    creating the unique index.
+end note
+
 package "Physical Indexes" {
 entity "INDEXES · tracking_purpose_definitions" as idxset_tracking_purpose_definitions <<INDEX_SET>> {
   PK pk_tracking_purpose_definitions : (id) UNIQUE BTREE
@@ -458,6 +482,8 @@ entity "INDEXES · user_activity_events" as idxset_user_activity_events <<INDEX_
   BRIN brin_user_activity_events_created_at : (created_at) BRIN pages_per_range=128
   IX ix_user_activity_events_occurred_at : (occurred_at) BTREE
   IX ix_user_activity_events_route_template_occurred_at : (route_template, occurred_at) BTREE
+  UX ux_user_activity_events_anonymous_idempotency : (COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000'::uuid), event_idempotency_key) UNIQUE BTREE WHERE user_id IS NULL
+  IX ix_user_activity_events_user_idempotency : (user_id, event_idempotency_key) BTREE WHERE user_id IS NOT NULL
 }
 
 user_activity_events .. idxset_user_activity_events : indexed by

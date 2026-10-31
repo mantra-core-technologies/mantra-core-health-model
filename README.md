@@ -81,6 +81,7 @@ psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-10-31_v4275_personal_apoyo
 psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-10-31_v4278_gobierno_de_accesos.sql # gobierno de accesos (v4.2.78)
 psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-10-31_v4279_revision_seguridad_gobierno.sql # revisión de seguridad ronda 1 (v4.2.79)
 psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-10-31_v4280_observabilidad_sistema.sql # observabilidad del sistema: módulo 70 + telemetry.client_error_events (v4.2.80; se genera con salud-db/gen_observability_patch.py)
+psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-10-31_v4281_idempotencia_anonima.sql # telemetría: índice único parcial de los eventos anónimos + deduplicación previa (v4.2.81; los cuatro v4281 se generan con salud-db/gen_v4281_patches.py)
 ```
 
 Todos son idempotentes (una transacción, re-ejecutables). **Si se vuelve a ejecutar el v4275 después del v4278, hay que volver a

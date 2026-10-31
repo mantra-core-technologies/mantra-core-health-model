@@ -1,4 +1,4 @@
--- SALUD v4.2.80 · schema telemetry · constraints de integridad (módulo 33)
+-- SALUD v4.2.81 · schema telemetry · constraints de integridad (módulo 33)
 -- Aplicar DESPUÉS de 04_indexes.sql y de SQL/_integrity/00_integrity_functions.sql.
 -- Reglas del módulo 33. Las UK/CHECK/EXCLUDE en prosa quedan como comentario:
 -- el modelo no declara su expresión SQL y no se inventa (temperatura-0).
@@ -9,6 +9,7 @@
 --   UK: event schema + event idempotency key  (en prosa; el módulo 33 no declara su expresión SQL)
 --   PARTITION: received_at
 --   RETENTION: purpose-specific
+--   índices únicos que la tabla ya tiene en 04_indexes: ux_user_activity_events_anonymous_idempotency
 
 -- ═══ client_error_events ═══
 --   UPDATE: forbidden
