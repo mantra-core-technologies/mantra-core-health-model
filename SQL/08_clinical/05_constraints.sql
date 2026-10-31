@@ -1,4 +1,4 @@
--- SALUD v4.2.81 · schema clinical · constraints de integridad (módulo 33)
+-- SALUD v4.2.82 · schema clinical · constraints de integridad (módulo 33)
 -- Aplicar DESPUÉS de 04_indexes.sql y de SQL/_integrity/00_integrity_functions.sql.
 -- Reglas del módulo 33. Las UK/CHECK/EXCLUDE en prosa quedan como comentario:
 -- el modelo no declara su expresión SQL y no se inventa (temperatura-0).
@@ -11,6 +11,18 @@ CREATE EXTENSION IF NOT EXISTS btree_gist;  -- requerido por EXCLUDE
 -- CHECK concreto declarado por el modelo (CHECK_SQL).
 ALTER TABLE "clinical"."service_requests" DROP CONSTRAINT IF EXISTS "ck_service_requests_override_reason_requires_previous_report";
 ALTER TABLE "clinical"."service_requests" ADD CONSTRAINT "ck_service_requests_override_reason_requires_previous_report" CHECK (("duplicate_override_reason" IS NULL OR "previous_diagnostic_report_id" IS NOT NULL));
+
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "clinical"."service_requests" DROP CONSTRAINT IF EXISTS "ck_service_requests_specimen_xor_imaging";
+ALTER TABLE "clinical"."service_requests" ADD CONSTRAINT "ck_service_requests_specimen_xor_imaging" CHECK (("specimen_type_concept_id" IS NULL OR ("modality_concept_id" IS NULL AND "body_site_concept_id" IS NULL AND "laterality_concept_id" IS NULL AND "contrast_concept_id" IS NULL)));
+
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "clinical"."service_requests" DROP CONSTRAINT IF EXISTS "ck_service_requests_laterality_requires_site";
+ALTER TABLE "clinical"."service_requests" ADD CONSTRAINT "ck_service_requests_laterality_requires_site" CHECK (("laterality_concept_id" IS NULL OR "body_site_concept_id" IS NOT NULL));
+
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "clinical"."service_requests" DROP CONSTRAINT IF EXISTS "ck_service_requests_contrast_requires_modality";
+ALTER TABLE "clinical"."service_requests" ADD CONSTRAINT "ck_service_requests_contrast_requires_modality" CHECK (("contrast_concept_id" IS NULL OR "modality_concept_id" IS NOT NULL));
 
 
 -- ═══ received_services ═══

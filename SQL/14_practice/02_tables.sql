@@ -1,4 +1,4 @@
--- SALUD v4.2.81 · módulo 14 · schema practice
+-- SALUD v4.2.82 · módulo 14 · schema practice
 -- Generado de diagram_14_practice.puml — NO editar a mano.
 
 
@@ -364,6 +364,7 @@ CREATE TABLE IF NOT EXISTS "practice"."practitioner_support_assignments" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "initiated_by_party_concept_id" uuid,
     CONSTRAINT "pk_practitioner_support_assignments" PRIMARY KEY ("id")
 );
 

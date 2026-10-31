@@ -40,8 +40,8 @@
       "file": "modules/03_terminology.seeds.json",
       "boot_records": 4779,
       "mock_records": 180,
-      "line_count": 72668,
-      "sha256": "f9e8bf07e2163495ffcc80c0c1c309b23d9de64ad3629395371c4a272e6d4b73"
+      "line_count": 72701,
+      "sha256": "42b61279843c95ed85c6de4ca42190ea4150ae5736fafc25aec8de3f564a9e9c"
     },
     {
       "number": 4,

@@ -1,4 +1,4 @@
--- SALUD v4.2.81 · módulo 08 · schema clinical
+-- SALUD v4.2.82 · módulo 08 · schema clinical
 -- Generado de diagram_08_clinical.puml — NO editar a mano.
 
 
@@ -246,6 +246,12 @@ CREATE TABLE IF NOT EXISTS "clinical"."service_requests" (
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
     "suggested_care_space_id" uuid,
+    "requisition_id" uuid,
+    "specimen_type_concept_id" uuid,
+    "modality_concept_id" uuid,
+    "body_site_concept_id" uuid,
+    "laterality_concept_id" uuid,
+    "contrast_concept_id" uuid,
     CONSTRAINT "pk_service_requests" PRIMARY KEY ("id")
 );
 
@@ -277,6 +283,17 @@ CREATE TABLE IF NOT EXISTS "clinical"."service_request_notes" (
     "created_at" timestamptz NOT NULL,
     "created_by_user_id" uuid,
     CONSTRAINT "pk_service_request_notes" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "clinical"."service_request_components" (
+    "id" uuid NOT NULL,
+    "service_request_id" uuid NOT NULL,
+    "custodian_tenant_id" uuid NOT NULL,
+    "component_concept_id" uuid NOT NULL,
+    "ordinal" integer NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    CONSTRAINT "pk_service_request_components" PRIMARY KEY ("id")
 );
 
 CREATE TABLE IF NOT EXISTS "clinical"."medication_requests" (

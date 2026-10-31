@@ -1,4 +1,4 @@
-# Reporte de generación SQL — SALUD v4.2.81
+# Reporte de generación SQL — SALUD v4.2.82
 
 Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vistas, stubs de cruce y stores no-SQL (Redis/Mongo/OpenSearch/vector/timeseries) se listan como *saltados*. Graph (61) y Lakehouse (63) SÍ se materializan como tablas PG (catálogo del plano de control). Las FK marcadas *inferidas* se resolvieron por convención cuando el vault no tenía destino.
 
@@ -12,13 +12,13 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 05 | profiles | 24 | 166 | 34 | 177 | 0 |
 | 06 | authz | 15 | 104 | 19 | 95 | 0 |
 | 07 | consent | 10 | 81 | 0 | 103 | 0 |
-| 08 | clinical | 29 | 288 | 36 | 317 | 15 |
+| 08 | clinical | 30 | 297 | 44 | 329 | 15 |
 | 09 | forms | 16 | 103 | 0 | 113 | 1 |
 | 10 | audit | 142 | 602 | 88 | 762 | 1 |
 | 11 | system_ops | 32 | 178 | 7 | 196 | 1 |
 | 12 | integrations | 10 | 49 | 0 | 56 | 0 |
 | 13 | geo | 6 | 31 | 0 | 35 | 0 |
-| 14 | practice | 20 | 165 | 70 | 185 | 1 |
+| 14 | practice | 20 | 166 | 71 | 186 | 1 |
 | 15 | chart | 11 | 71 | 0 | 81 | 2 |
 | 16 | accounting | 45 | 320 | 3 | 375 | 17 |
 | 17 | billing | 26 | 181 | 14 | 204 | 25 |
@@ -33,7 +33,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 26 | insurance | 33 | 224 | 20 | 244 | 1 |
 | 27 | identity_assurance | 11 | 70 | 1 | 77 | 0 |
 | 28 | telemetry | 15 | 77 | 3 | 95 | 1 |
-| 29 | delegated_access | 27 | 207 | 120 | 236 | 6 |
+| 29 | delegated_access | 27 | 208 | 121 | 237 | 6 |
 | 30 | read_models | 13 | 74 | 0 | 89 | 76 |
 | 31 | integration_contracts | 9 | 48 | 1 | 57 | 0 |
 | 32 | workflow | 8 | 49 | 0 | 55 | 9 |
@@ -75,7 +75,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 68 | qa_execution | 4 | 14 | 6 | 6 | 0 |
 | 69 | pharma_lab | 31 | 182 | 173 | 182 | 1 |
 | 70 | observability | 12 | 13 | 8 | 39 | 2 |
-| **Σ** | **71** | **1369** | | **843** | | **472** |
+| **Σ** | **71** | **1370** | | **853** | | **472** |
 
 ## Detalle de entidades saltadas y avisos
 

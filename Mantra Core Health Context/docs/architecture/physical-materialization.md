@@ -49,6 +49,36 @@ comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_obje
 
 ## 3. Estado actual del build
 
+### v4.2.82 — Detalle de la orden de estudios (2026-11-01)
+
+**Cambio de esquema: +6 columnas NULLABLE en `clinical.service_requests`, +1 tabla (`clinical.service_request_components`), +9 FK,
++12 índices, +3 CHECK.** Parche idempotente: `SQL/patches/2026-11-01_v4282_service_request_detalle.sql`, escrito primero en la API
+(cb63a0cdc) y traído al modelo con el mismo nombre y contenido. El médico pide qué muestra se analiza, qué componentes de un panel
+y, en imagen, la modalidad, la parte del cuerpo, la lateralidad y el contraste.
+
+- `requisition_id` agrupa los renglones pedidos juntos (sin FK). `specimen_type_concept_id`, `modality_concept_id`,
+  `body_site_concept_id`, `laterality_concept_id` y `contrast_concept_id` con FK a `terminology.catalog_concepts`. Sin backfill:
+  una orden anterior se expone como «estudio completo, sin detalle».
+- `service_request_components`: append-only, `UNIQUE (service_request_id, component_concept_id)`; `custodian_tenant_id` repetido
+  para el RLS. El parche crea RLS por custodio (ENABLE+FORCE), la lectura del ejecutor (`service_request_components_performer_read`)
+  y el disparador `trg_service_request_component_tenant` (custodio del componente = el de su orden), que `gen_ddl.py` no expresa.
+- CHECK en el módulo 33: `ck_service_requests_specimen_xor_imaging`, `_laterality_requires_site`, `_contrast_requires_modality`.
+
+### v4.2.82 — Quién inició cada vínculo de la secretaria (2026-10-31)
+
+**Cambio de esquema: +2 columnas NULLABLE, +2 FK, +2 índices, +3 conceptos de módulo.** Parche idempotente:
+`SQL/patches/2026-10-31_secretaria_iniciador_vinculos.sql` (el nombre es el del parche que la API escribió a mano, 819487e82, al que reemplaza; sobre una base viva va después del v4279). Lo pide la API de la secretaria (alta por
+solicitud y aceptación): decide la parte que NO inició el vínculo, y eso no se deduce de `created_by_user_id`.
+
+- `delegated_access.organization_user_assignments.initiated_by_party_concept_id` y
+  `practice.practitioner_support_assignments.initiated_by_party_concept_id` (`uuid NULL`, FK a
+  `terminology.catalog_concepts`). Conceptos `delegated_access:INITIATOR_SUPPORT_STAFF | _ORGANIZATION | _PRACTITIONER`
+  (códigos almacenados `DA_INITIATOR_*`, como los declara `delegated_access.concepts.ts`). NULL = no decidible: la API
+  falla cerrada. Sin backfill.
+- Índices `ix_org_user_assignments_initiated_by_party` e `ix_prac_support_assignments_initiated_by_party` (mismos nombres
+  que el parche de la API); las FK llevan el nombre de `gen_ddl.py` y el parche no agrega una segunda si ya hay una.
+- La API no usa `engagement_requests` para este flujo: la solicitud/aceptación vive en las dos tablas de vínculo.
+
 ### v4.2.78 — Gobierno de accesos: permisos de ultra granularidad y gobierno de usuarios (2026-11-02)
 
 **Cambio de esquema: +12 tablas (`delegated_access`), +29 columnas en 5 tablas existentes, +98 FK, +111 índices, +35 CHECK, +1 barrera WORM,

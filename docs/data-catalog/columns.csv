@@ -4767,6 +4767,13 @@ clinical,received_services,20,updated_at,timestamptz,NO,,,,,,SQL/08_clinical/02_
 clinical,received_services,21,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
 clinical,received_services,22,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
 clinical,received_services,23,row_version,integer,NO,1,,,,,SQL/08_clinical/02_tables.sql
+clinical,service_request_components,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/08_clinical/02_tables.sql
+clinical,service_request_components,2,service_request_id,uuid,NO,,FOREIGN KEY; UNIQUE,clinical,service_requests,id,SQL/08_clinical/02_tables.sql
+clinical,service_request_components,3,custodian_tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/08_clinical/02_tables.sql
+clinical,service_request_components,4,component_concept_id,uuid,NO,,FOREIGN KEY; UNIQUE,terminology,catalog_concepts,id,SQL/08_clinical/02_tables.sql
+clinical,service_request_components,5,ordinal,integer,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,service_request_components,6,created_at,timestamptz,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,service_request_components,7,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
 clinical,service_request_notes,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/08_clinical/02_tables.sql
 clinical,service_request_notes,2,service_request_id,uuid,NO,,FOREIGN KEY; UNIQUE,clinical,service_requests,id,SQL/08_clinical/02_tables.sql
 clinical,service_request_notes,3,clinical_note_header_id,uuid,NO,,FOREIGN KEY; UNIQUE,chart,clinical_note_headers,id,SQL/08_clinical/02_tables.sql
@@ -4796,6 +4803,12 @@ clinical,service_requests,20,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,
 clinical,service_requests,21,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
 clinical,service_requests,22,row_version,integer,NO,1,,,,,SQL/08_clinical/02_tables.sql
 clinical,service_requests,23,suggested_care_space_id,uuid,YES,,FOREIGN KEY,practice,care_spaces,id,SQL/08_clinical/02_tables.sql
+clinical,service_requests,24,requisition_id,uuid,YES,,,,,,SQL/08_clinical/02_tables.sql
+clinical,service_requests,25,specimen_type_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/08_clinical/02_tables.sql
+clinical,service_requests,26,modality_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/08_clinical/02_tables.sql
+clinical,service_requests,27,body_site_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/08_clinical/02_tables.sql
+clinical,service_requests,28,laterality_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/08_clinical/02_tables.sql
+clinical,service_requests,29,contrast_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/08_clinical/02_tables.sql
 clinical,social_history,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/08_clinical/02_tables.sql
 clinical,social_history,2,custodian_tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/08_clinical/02_tables.sql
 clinical,social_history,3,patient_profile_id,uuid,NO,,FOREIGN KEY,profiles,patient_profiles,profile_id,SQL/08_clinical/02_tables.sql
@@ -7264,15 +7277,16 @@ delegated_access,organization_user_assignments,23,role_template_id,uuid,YES,,FOR
 delegated_access,organization_user_assignments,24,recertify_every_months,integer,YES,,,,,,SQL/29_delegated_access/02_tables.sql
 delegated_access,organization_user_assignments,25,next_recertification_at,timestamptz,YES,,,,,,SQL/29_delegated_access/02_tables.sql
 delegated_access,organization_user_assignments,26,ended_reason_text,text,YES,,,,,,SQL/29_delegated_access/02_tables.sql
-delegated_access,organization_user_assignments,27,identity_verified_at,timestamptz,YES,,,,,,SQL/29_delegated_access/02_tables.sql
-delegated_access,organization_user_assignments,28,identity_verified_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/29_delegated_access/02_tables.sql
-delegated_access,organization_user_assignments,29,identity_method_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/29_delegated_access/02_tables.sql
-delegated_access,organization_user_assignments,30,suspended_at,timestamptz,YES,,,,,,SQL/29_delegated_access/02_tables.sql
-delegated_access,organization_user_assignments,31,suspension_reason_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/29_delegated_access/02_tables.sql
-delegated_access,organization_user_assignments,32,suspension_note_text,text,YES,,,,,,SQL/29_delegated_access/02_tables.sql
-delegated_access,organization_user_assignments,33,onboarding_completed_at,timestamptz,YES,,,,,,SQL/29_delegated_access/02_tables.sql
-delegated_access,organization_user_assignments,34,last_certified_at,timestamptz,YES,,,,,,SQL/29_delegated_access/02_tables.sql
-delegated_access,organization_user_assignments,35,last_active_at,timestamptz,YES,,,,,,SQL/29_delegated_access/02_tables.sql
+delegated_access,organization_user_assignments,27,initiated_by_party_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/29_delegated_access/02_tables.sql
+delegated_access,organization_user_assignments,28,identity_verified_at,timestamptz,YES,,,,,,SQL/29_delegated_access/02_tables.sql
+delegated_access,organization_user_assignments,29,identity_verified_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/29_delegated_access/02_tables.sql
+delegated_access,organization_user_assignments,30,identity_method_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/29_delegated_access/02_tables.sql
+delegated_access,organization_user_assignments,31,suspended_at,timestamptz,YES,,,,,,SQL/29_delegated_access/02_tables.sql
+delegated_access,organization_user_assignments,32,suspension_reason_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/29_delegated_access/02_tables.sql
+delegated_access,organization_user_assignments,33,suspension_note_text,text,YES,,,,,,SQL/29_delegated_access/02_tables.sql
+delegated_access,organization_user_assignments,34,onboarding_completed_at,timestamptz,YES,,,,,,SQL/29_delegated_access/02_tables.sql
+delegated_access,organization_user_assignments,35,last_certified_at,timestamptz,YES,,,,,,SQL/29_delegated_access/02_tables.sql
+delegated_access,organization_user_assignments,36,last_active_at,timestamptz,YES,,,,,,SQL/29_delegated_access/02_tables.sql
 delegated_access,patient_restriction_flags,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/29_delegated_access/02_tables.sql
 delegated_access,patient_restriction_flags,2,tenant_id,uuid,NO,,FOREIGN KEY; UNIQUE,directory,tenants,id,SQL/29_delegated_access/02_tables.sql
 delegated_access,patient_restriction_flags,3,patient_profile_id,uuid,NO,,FOREIGN KEY; UNIQUE,profiles,patient_profiles,profile_id,SQL/29_delegated_access/02_tables.sql
@@ -15812,6 +15826,7 @@ practice,practitioner_support_assignments,10,updated_at,timestamptz,NO,,,,,,SQL/
 practice,practitioner_support_assignments,11,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
 practice,practitioner_support_assignments,12,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
 practice,practitioner_support_assignments,13,row_version,integer,NO,1,,,,,SQL/14_practice/02_tables.sql
+practice,practitioner_support_assignments,14,initiated_by_party_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/14_practice/02_tables.sql
 practice,site_declared_capacities,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/14_practice/02_tables.sql
 practice,site_declared_capacities,2,tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/14_practice/02_tables.sql
 practice,site_declared_capacities,3,practice_site_id,uuid,NO,,FOREIGN KEY,practice,practice_sites,id,SQL/14_practice/02_tables.sql

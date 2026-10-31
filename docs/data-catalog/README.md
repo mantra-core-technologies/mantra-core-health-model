@@ -19,7 +19,7 @@ registra como `PENDING_REVIEW`; no se rellena con una frase genérica.
   `04_indexes.sql` y `05_constraints.sql`.
 - Inventario PostgreSQL canónico: los scripts `02_tables.sql` de los módulos. Los archivos de
   `SQL/patches/` son ALTERs/seeds incrementales y no se cuentan como tablas del rebuild canónico.
-- El inventario incluye **1.313 tablas, 18.263 columnas, 7.567 FK y 8.420 índices** en 61 schemas.
+- El inventario incluye **1.313 tablas, 18.265 columnas, 7.569 FK y 8.422 índices** en 61 schemas.
   Estos conteos describen el contenido leído hoy; prevalecen sobre
   los conteos históricos que aún aparecen en algunos encabezados de `SQL/`.
 - Fuera de este catálogo relacional: stores no relacionales de `NoSQL/`, vistas y metadata observada
