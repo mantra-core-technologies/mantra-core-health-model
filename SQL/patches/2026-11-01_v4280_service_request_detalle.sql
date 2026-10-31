@@ -161,11 +161,20 @@ CREATE OR REPLACE FUNCTION "integrity"."service_request_component_tenant"()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public AS $$
 DECLARE
     padre uuid;
+    sesion uuid := NULLIF(current_setting('app.current_tenant_id', true), '')::uuid;
 BEGIN
+    -- Antes de consultar la orden con derechos de definidor: si quien escribe no es el
+    -- custodio declarado (ni el contexto de sistema), se rechaza con el MISMO error que
+    -- cualquier otra falla. Así la función no sirve para averiguar de quién es una orden ajena.
+    IF current_setting('app.system_context', true) IS DISTINCT FROM 'true'
+       AND NEW.custodian_tenant_id IS DISTINCT FROM sesion THEN
+        RAISE EXCEPTION 'service_request_components.custodian_tenant_id no coincide con su orden'
+            USING ERRCODE = 'check_violation';
+    END IF;
     SELECT sr.custodian_tenant_id INTO padre
       FROM clinical.service_requests sr WHERE sr.id = NEW.service_request_id;
     IF padre IS NULL OR padre IS DISTINCT FROM NEW.custodian_tenant_id THEN
-        RAISE EXCEPTION 'service_request_components.custodian_tenant_id debe ser el de su orden (service_request_id=%)', NEW.service_request_id
+        RAISE EXCEPTION 'service_request_components.custodian_tenant_id no coincide con su orden'
             USING ERRCODE = 'check_violation';
     END IF;
     RETURN NEW;
