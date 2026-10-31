@@ -334,3 +334,399 @@ CREATE TABLE IF NOT EXISTS "marketing"."campaign_schedules" (
     "row_version" integer NOT NULL DEFAULT 1,
     CONSTRAINT "pk_campaign_schedules" PRIMARY KEY ("id")
 );
+
+CREATE TABLE IF NOT EXISTS "marketing"."insights_campaigns" (
+    "id" uuid NOT NULL,
+    "code" varchar NOT NULL,
+    "name" varchar NOT NULL,
+    "short_name" varchar NOT NULL,
+    "kind_code" varchar NOT NULL,
+    "objective_text" text,
+    "audience_text" varchar,
+    "start_on" date NOT NULL,
+    "end_on" date,
+    "budget_cents" bigint,
+    "currency_concept_id" uuid,
+    "ltv_cents" bigint,
+    "revenue_per_conversion_cents" bigint,
+    "owner_team_code" varchar,
+    "targets_json" jsonb,
+    "marketing_campaign_id" uuid,
+    "status_concept_id" uuid NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_insights_campaigns" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "marketing"."insights_creatives" (
+    "id" uuid NOT NULL,
+    "campaign_id" uuid NOT NULL,
+    "channel_code" varchar NOT NULL,
+    "code" varchar NOT NULL,
+    "name" varchar NOT NULL,
+    "format_code" varchar,
+    "audience_code" varchar,
+    "cta_code" varchar,
+    "status_concept_id" uuid NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_insights_creatives" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "marketing"."insights_milestones" (
+    "id" uuid NOT NULL,
+    "occurred_on" date NOT NULL,
+    "label" varchar NOT NULL,
+    "campaign_id" uuid,
+    "kind_code" varchar NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_insights_milestones" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "marketing"."insights_data_sources" (
+    "id" uuid NOT NULL,
+    "code" varchar NOT NULL,
+    "name" varchar NOT NULL,
+    "last_received_at" timestamptz,
+    "status_concept_id" uuid NOT NULL,
+    "dataset_code" varchar NOT NULL DEFAULT 'demo',
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_insights_data_sources" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "marketing"."insights_campaign_daily_facts" (
+    "id" uuid NOT NULL,
+    "fact_date" date NOT NULL,
+    "campaign_id" uuid NOT NULL,
+    "channel_code" varchar NOT NULL,
+    "creative_id" uuid,
+    "impressions" bigint,
+    "reach" bigint,
+    "engagements" bigint,
+    "clicks" bigint,
+    "video_views" bigint,
+    "watch_seconds" bigint,
+    "visits" bigint,
+    "leads" bigint,
+    "registrations" bigint,
+    "activations" bigint,
+    "first_uses" bigint,
+    "conversions" bigint,
+    "spend_cents" bigint,
+    "revenue_cents" bigint,
+    "recorded_at" timestamptz NOT NULL,
+    CONSTRAINT "pk_insights_campaign_daily_facts" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "marketing"."insights_campaign_hourly_facts" (
+    "id" uuid NOT NULL,
+    "fact_date" date NOT NULL,
+    "hour" smallint NOT NULL,
+    "campaign_id" uuid NOT NULL,
+    "channel_code" varchar NOT NULL,
+    "impressions" bigint,
+    "clicks" bigint,
+    "registrations" bigint,
+    "conversions" bigint,
+    "spend_cents" bigint,
+    "recorded_at" timestamptz NOT NULL,
+    CONSTRAINT "pk_insights_campaign_hourly_facts" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "marketing"."insights_social_daily_facts" (
+    "id" uuid NOT NULL,
+    "fact_date" date NOT NULL,
+    "platform_code" varchar NOT NULL,
+    "followers" bigint,
+    "new_followers" bigint,
+    "reach" bigint,
+    "impressions" bigint,
+    "engagements" bigint,
+    "saves" bigint,
+    "shares" bigint,
+    "comments" bigint,
+    "clicks" bigint,
+    "video_views" bigint,
+    "watch_seconds" bigint,
+    "completions" bigint,
+    "viewed_pct_numerator" numeric(18,4),
+    "viewed_pct_denominator" bigint,
+    "recorded_at" timestamptz NOT NULL,
+    CONSTRAINT "pk_insights_social_daily_facts" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "marketing"."insights_social_posts" (
+    "id" uuid NOT NULL,
+    "code" varchar NOT NULL,
+    "platform_code" varchar NOT NULL,
+    "published_at" timestamptz NOT NULL,
+    "format_code" varchar NOT NULL,
+    "topic_code" varchar NOT NULL,
+    "title" varchar NOT NULL,
+    "impressions" bigint,
+    "reach" bigint,
+    "engagements" bigint,
+    "video_views" bigint,
+    "shares" bigint,
+    "saves" bigint,
+    "comments" bigint,
+    "clicks" bigint,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_insights_social_posts" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "marketing"."insights_app_daily_facts" (
+    "id" uuid NOT NULL,
+    "fact_date" date NOT NULL,
+    "platform_code" varchar NOT NULL,
+    "dau" bigint,
+    "wau" bigint,
+    "mau" bigint,
+    "sessions" bigint,
+    "total_session_seconds" bigint,
+    "new_users" bigint,
+    "returning_users" bigint,
+    "searches" bigint,
+    "bookings_started" bigint,
+    "bookings_completed" bigint,
+    "recorded_at" timestamptz NOT NULL,
+    CONSTRAINT "pk_insights_app_daily_facts" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "marketing"."insights_app_screen_daily_facts" (
+    "id" uuid NOT NULL,
+    "fact_date" date NOT NULL,
+    "platform_code" varchar NOT NULL,
+    "screen_code" varchar NOT NULL,
+    "views" bigint,
+    "exits" bigint,
+    "rage_taps" bigint,
+    "avg_seconds" integer,
+    "recorded_at" timestamptz NOT NULL,
+    CONSTRAINT "pk_insights_app_screen_daily_facts" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "marketing"."insights_app_onboarding_facts" (
+    "id" uuid NOT NULL,
+    "app_version" varchar NOT NULL,
+    "step_code" varchar NOT NULL,
+    "step_order" integer NOT NULL,
+    "users_reached" bigint,
+    "recorded_at" timestamptz NOT NULL,
+    CONSTRAINT "pk_insights_app_onboarding_facts" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "marketing"."insights_mentions" (
+    "id" uuid NOT NULL,
+    "code" varchar NOT NULL,
+    "mentioned_at" timestamptz NOT NULL,
+    "brand_code" varchar NOT NULL,
+    "source_code" varchar NOT NULL,
+    "topic_code" varchar NOT NULL,
+    "sentiment_code" varchar NOT NULL,
+    "kind_code" varchar NOT NULL,
+    "department_code" varchar,
+    "body_text" text NOT NULL,
+    "reach" bigint,
+    "confidence" numeric(5,4),
+    "needs_response" boolean NOT NULL DEFAULT false,
+    "responded_at" timestamptz,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_insights_mentions" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "marketing"."insights_search_signals" (
+    "id" uuid NOT NULL,
+    "week_start" date NOT NULL,
+    "query_text" varchar NOT NULL,
+    "kind_code" varchar NOT NULL,
+    "volume" bigint NOT NULL,
+    "recorded_at" timestamptz NOT NULL,
+    CONSTRAINT "pk_insights_search_signals" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "marketing"."insights_environment_items" (
+    "id" uuid NOT NULL,
+    "code" varchar NOT NULL,
+    "published_on" date NOT NULL,
+    "domain_code" varchar NOT NULL,
+    "category_code" varchar NOT NULL,
+    "scope_code" varchar NOT NULL,
+    "kind_code" varchar NOT NULL,
+    "title" varchar NOT NULL,
+    "source_name" varchar,
+    "affects_text" text,
+    "relevance" integer NOT NULL,
+    "impact_text" text,
+    "action_text" text,
+    "monitor_text" text,
+    "campaign_effects_json" jsonb,
+    "analysis_json" jsonb,
+    "trend_seed" integer,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_insights_environment_items" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "marketing"."insights_sector_trends" (
+    "id" uuid NOT NULL,
+    "week_start" date NOT NULL,
+    "trend_code" varchar NOT NULL,
+    "value" numeric(18,4) NOT NULL,
+    "recorded_at" timestamptz NOT NULL,
+    CONSTRAINT "pk_insights_sector_trends" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "marketing"."insights_alert_rules" (
+    "id" uuid NOT NULL,
+    "code" varchar NOT NULL,
+    "name" varchar NOT NULL,
+    "description" text,
+    "severity_concept_id" uuid NOT NULL,
+    "unit" varchar NOT NULL,
+    "default_threshold" numeric(18,4) NOT NULL,
+    "threshold" numeric(18,4) NOT NULL,
+    "direction" varchar NOT NULL,
+    "enabled" boolean NOT NULL DEFAULT true,
+    "min_sample_json" jsonb,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_insights_alert_rules" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "marketing"."insights_alerts" (
+    "id" uuid NOT NULL,
+    "code" varchar NOT NULL,
+    "fingerprint" varchar NOT NULL,
+    "rule_code" varchar,
+    "severity_concept_id" uuid NOT NULL,
+    "title" varchar NOT NULL,
+    "what_text" text NOT NULL,
+    "detected_on" date NOT NULL,
+    "magnitude" numeric(18,4),
+    "magnitude_unit" varchar,
+    "source_text" varchar,
+    "module_code" varchar,
+    "context_json" jsonb,
+    "cause_text" text,
+    "impact_text" text,
+    "recommendation_text" text,
+    "confidence_code" varchar,
+    "priority" smallint NOT NULL,
+    "status_concept_id" uuid NOT NULL,
+    "owner_team_code" varchar,
+    "evidence_json" jsonb,
+    "series_json" jsonb,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_insights_alerts" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "marketing"."insights_alert_transitions" (
+    "id" uuid NOT NULL,
+    "alert_id" uuid NOT NULL,
+    "from_status_concept_id" uuid,
+    "to_status_concept_id" uuid NOT NULL,
+    "from_owner_team_code" varchar,
+    "to_owner_team_code" varchar,
+    "note" text,
+    "recorded_by_user_id" uuid,
+    "recorded_at" timestamptz NOT NULL,
+    CONSTRAINT "pk_insights_alert_transitions" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "marketing"."insights_notification_preferences" (
+    "id" uuid NOT NULL,
+    "user_id" uuid NOT NULL,
+    "matrix_json" jsonb NOT NULL,
+    "frequency_code" varchar NOT NULL,
+    "digest_hour" smallint,
+    "quiet_from" time,
+    "quiet_to" time,
+    "quiet_exempt_critical" boolean NOT NULL DEFAULT true,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_insights_notification_preferences" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "marketing"."insights_user_preferences" (
+    "id" uuid NOT NULL,
+    "user_id" uuid NOT NULL,
+    "density_code" varchar NOT NULL,
+    "theme_code" varchar NOT NULL,
+    "nav_collapsed" boolean NOT NULL DEFAULT false,
+    "timezone" varchar,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_insights_user_preferences" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "marketing"."insights_reports" (
+    "id" uuid NOT NULL,
+    "user_id" uuid NOT NULL,
+    "title" varchar NOT NULL,
+    "type_code" varchar NOT NULL,
+    "audience_code" varchar NOT NULL,
+    "period_from" date NOT NULL,
+    "period_to" date NOT NULL,
+    "campaign_ids_json" jsonb,
+    "channels_json" jsonb,
+    "sections_json" jsonb,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_insights_reports" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "marketing"."insights_saved_views" (
+    "id" uuid NOT NULL,
+    "user_id" uuid NOT NULL,
+    "name" varchar NOT NULL,
+    "module_code" varchar NOT NULL,
+    "filters_json" jsonb,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_insights_saved_views" PRIMARY KEY ("id")
+);

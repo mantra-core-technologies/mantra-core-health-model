@@ -414,6 +414,416 @@ campaign_schedules ||--o{ campaign_dispatches
 campaign_dispatches ||--o{ campaign_dispatch_recipients
 ' ===== v4.0.1 (scheduled campaigns / site-admin / tracking) ===== (fin entidades)
 
+' ===== v4.2.69 (AloVida Insights · dataset de PLATAFORMA, sin tenant_id) =====
+' Tablas insights_*: lecturas de hechos, catálogo, alertas y espacio de trabajo del portal /insights.
+' Códigos de dimensión analítica (channel_code, platform_code, topic_code…) = varchar validado por DTO;
+' ciclo de vida y severidad por *_concept_id. <<LOG>> = append-only con recorded_at.
+
+' Campañas del portal Insights (dataset de PLATAFORMA, sin tenant_id). marketing_campaign_id es el puente opcional a marketing.marketing_campaigns (aquella es por tenant y monocanal).
+entity insights_campaigns {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * name : varchar
+  * short_name : varchar
+  * kind_code : varchar
+    objective_text : text
+    audience_text : varchar
+  * start_on : date
+    end_on : date
+    budget_cents : bigint
+    currency_concept_id : uuid <<FK>>
+    ltv_cents : bigint
+    revenue_per_conversion_cents : bigint
+    owner_team_code : varchar
+    targets_json : jsonb
+    marketing_campaign_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity insights_creatives {
+  * id : uuid <<PK>>
+  --
+  * campaign_id : uuid <<FK>>
+  * channel_code : varchar
+  * code : varchar
+  * name : varchar
+    format_code : varchar
+    audience_code : varchar
+    cta_code : varchar
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity insights_milestones {
+  * id : uuid <<PK>>
+  --
+  * occurred_on : date
+  * label : varchar
+    campaign_id : uuid <<FK>>
+  * kind_code : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity insights_data_sources {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * name : varchar
+    last_received_at : timestamptz
+  * status_concept_id : uuid <<FK>>
+  * dataset_code : varchar <<DEFAULT_TEXT:demo>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+' Hecho diario por campaña x canal x creativo. reach es el alcance DIARIO del canal (no se suma entre días). NULL = no medido. Ojo: en PostgreSQL un UNIQUE con creative_id NULL no deduplica; las cargas deben informar creative_id.
+entity insights_campaign_daily_facts <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * fact_date : date
+  * campaign_id : uuid <<FK>>
+  * channel_code : varchar
+    creative_id : uuid <<FK>>
+    impressions : bigint
+    reach : bigint
+    engagements : bigint
+    clicks : bigint
+    video_views : bigint
+    watch_seconds : bigint
+    visits : bigint
+    leads : bigint
+    registrations : bigint
+    activations : bigint
+    first_uses : bigint
+    conversions : bigint
+    spend_cents : bigint
+    revenue_cents : bigint
+  * recorded_at : timestamptz
+}
+entity insights_campaign_hourly_facts <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * fact_date : date
+  * hour : smallint
+  * campaign_id : uuid <<FK>>
+  * channel_code : varchar
+    impressions : bigint
+    clicks : bigint
+    registrations : bigint
+    conversions : bigint
+    spend_cents : bigint
+  * recorded_at : timestamptz
+}
+' Hecho diario por plataforma social. Las tasas se calculan en el consumidor: numerador y denominador van separados (viewed_pct_*).
+entity insights_social_daily_facts <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * fact_date : date
+  * platform_code : varchar
+    followers : bigint
+    new_followers : bigint
+    reach : bigint
+    impressions : bigint
+    engagements : bigint
+    saves : bigint
+    shares : bigint
+    comments : bigint
+    clicks : bigint
+    video_views : bigint
+    watch_seconds : bigint
+    completions : bigint
+    viewed_pct_numerator : numeric(18,4)
+    viewed_pct_denominator : bigint
+  * recorded_at : timestamptz
+}
+entity insights_social_posts {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * platform_code : varchar
+  * published_at : timestamptz
+  * format_code : varchar
+  * topic_code : varchar
+  * title : varchar
+    impressions : bigint
+    reach : bigint
+    engagements : bigint
+    video_views : bigint
+    shares : bigint
+    saves : bigint
+    comments : bigint
+    clicks : bigint
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity insights_app_daily_facts <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * fact_date : date
+  * platform_code : varchar
+    dau : bigint
+    wau : bigint
+    mau : bigint
+    sessions : bigint
+    total_session_seconds : bigint
+    new_users : bigint
+    returning_users : bigint
+    searches : bigint
+    bookings_started : bigint
+    bookings_completed : bigint
+  * recorded_at : timestamptz
+}
+entity insights_app_screen_daily_facts <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * fact_date : date
+  * platform_code : varchar
+  * screen_code : varchar
+    views : bigint
+    exits : bigint
+    rage_taps : bigint
+    avg_seconds : integer
+  * recorded_at : timestamptz
+}
+entity insights_app_onboarding_facts <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * app_version : varchar
+  * step_code : varchar
+  * step_order : integer
+    users_reached : bigint
+  * recorded_at : timestamptz
+}
+' Menciones públicas de marca. body_text es texto SINTÉTICO en el dataset demo (nunca datos personales).
+entity insights_mentions {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * mentioned_at : timestamptz
+  * brand_code : varchar
+  * source_code : varchar
+  * topic_code : varchar
+  * sentiment_code : varchar
+  * kind_code : varchar
+    department_code : varchar
+  * body_text : text
+    reach : bigint
+    confidence : numeric(5,4)
+  * needs_response : boolean <<DEFAULT_FALSE>>
+    responded_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity insights_search_signals <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * week_start : date
+  * query_text : varchar
+  * kind_code : varchar
+  * volume : bigint
+  * recorded_at : timestamptz
+}
+entity insights_environment_items {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * published_on : date
+  * domain_code : varchar
+  * category_code : varchar
+  * scope_code : varchar
+  * kind_code : varchar
+  * title : varchar
+    source_name : varchar
+    affects_text : text
+  * relevance : integer
+    impact_text : text
+    action_text : text
+    monitor_text : text
+    campaign_effects_json : jsonb
+    analysis_json : jsonb
+    trend_seed : integer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity insights_sector_trends <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * week_start : date
+  * trend_code : varchar
+  * value : numeric(18,4)
+  * recorded_at : timestamptz
+}
+entity insights_alert_rules {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * name : varchar
+    description : text
+  * severity_concept_id : uuid <<FK>>
+  * unit : varchar
+  * default_threshold : numeric(18,4)
+  * threshold : numeric(18,4)
+  * direction : varchar
+  * enabled : boolean <<DEFAULT_TRUE>>
+    min_sample_json : jsonb
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity insights_alerts {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * fingerprint : varchar <<UK>>
+    rule_code : varchar
+  * severity_concept_id : uuid <<FK>>
+  * title : varchar
+  * what_text : text
+  * detected_on : date
+    magnitude : numeric(18,4)
+    magnitude_unit : varchar
+    source_text : varchar
+    module_code : varchar
+    context_json : jsonb
+    cause_text : text
+    impact_text : text
+    recommendation_text : text
+    confidence_code : varchar
+  * priority : smallint
+  * status_concept_id : uuid <<FK>>
+    owner_team_code : varchar
+    evidence_json : jsonb
+    series_json : jsonb
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+' Línea de tiempo append-only de cada alerta: es la prueba de persistencia de PATCH /alerts/:id.
+entity insights_alert_transitions <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * alert_id : uuid <<FK>>
+    from_status_concept_id : uuid <<FK>>
+  * to_status_concept_id : uuid <<FK>>
+    from_owner_team_code : varchar
+    to_owner_team_code : varchar
+    note : text
+    recorded_by_user_id : uuid <<FK>>
+  * recorded_at : timestamptz
+}
+' Preferencias por actor. No envía nada: el contrato responde nothingIsSent = true.
+entity insights_notification_preferences {
+  * id : uuid <<PK>>
+  --
+  * user_id : uuid <<FK>>
+  * matrix_json : jsonb
+  * frequency_code : varchar
+    digest_hour : smallint
+    quiet_from : time
+    quiet_to : time
+  * quiet_exempt_critical : boolean <<DEFAULT_TRUE>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity insights_user_preferences {
+  * id : uuid <<PK>>
+  --
+  * user_id : uuid <<FK>>
+  * density_code : varchar
+  * theme_code : varchar
+  * nav_collapsed : boolean <<DEFAULT_FALSE>>
+    timezone : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+' Historial de informes del actor (máximo 12; el 13.º expulsa el más viejo). El id lo genera el cliente (PUT idempotente).
+entity insights_reports {
+  * id : uuid <<PK>>
+  --
+  * user_id : uuid <<FK>>
+  * title : varchar
+  * type_code : varchar
+  * audience_code : varchar
+  * period_from : date
+  * period_to : date
+    campaign_ids_json : jsonb
+    channels_json : jsonb
+    sections_json : jsonb
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+entity insights_saved_views {
+  * id : uuid <<PK>>
+  --
+  * user_id : uuid <<FK>>
+  * name : varchar
+  * module_code : varchar
+    filters_json : jsonb
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+insights_campaigns }o--o| marketing_campaigns : marketing_campaign_id
+insights_creatives }o--|| insights_campaigns : campaign_id
+insights_milestones }o--o| insights_campaigns : campaign_id
+insights_campaign_daily_facts }o--|| insights_campaigns : campaign_id
+insights_campaign_daily_facts }o--o| insights_creatives : creative_id
+insights_campaign_hourly_facts }o--|| insights_campaigns : campaign_id
+insights_alert_transitions }o--|| insights_alerts : alert_id
+
+note as INSIGHTS_diagram_50_marketing
+  AloVida Insights (v4.2.69)
+  - 22 tablas insights_* SIN tenant_id: dataset de plataforma. Un MARKETING_MANAGER (rol TENANT) lee el mismo dato
+    en cualquier tenant; la autoridad es la API (roles + PlatformTenantOptional), no la fila.
+  - Hechos (*_facts, search_signals, sector_trends, alert_transitions) son <<LOG>>: solo se insertan.
+  - Alertas: la línea de tiempo y la prueba de persistencia salen de insights_alert_transitions.
+  - Datos de demostración declarados: insights_data_sources.dataset_code = demo | live.
+  - Sin audit.*_history para estas tablas.
+  VALUE SETS (bind *_concept_id; los valores definitivos los fija la fase de value sets de seeds)
+  campaign status->vs_insights_campaign_status{planned,active,ended};
+  data source status->vs_insights_data_source_status{connected,delayed,disconnected};
+  alert severity->vs_insights_alert_severity{critical,risk,anomaly,opportunity};
+  alert status->vs_insights_alert_status{new,seen,in_progress,resolved}.
+end note
+
 package "Physical Indexes" {
 entity "INDEXES · segments" as idxset_segments <<INDEX_SET>> {
   PK pk_segments : (id) UNIQUE BTREE
@@ -623,6 +1033,211 @@ entity "INDEXES · campaign_schedules" as idxset_campaign_schedules <<INDEX_SET>
   IX ix_campaign_schedules_updated_by_user_id : (updated_by_user_id) BTREE
 }
 campaign_schedules .. idxset_campaign_schedules : indexed by
+
+' ===== v4.2.69 (AloVida Insights) (index sets) =====
+entity "INDEXES · insights_campaigns" as idxset_insights_campaigns <<INDEX_SET>> {
+  PK pk_insights_campaigns : (id) UNIQUE BTREE
+  UK uq_insights_campaigns_code : (code) UNIQUE BTREE
+  IX ix_insights_campaigns_marketing_campaign_id : (marketing_campaign_id) BTREE
+  IX ix_insights_campaigns_start_on : (start_on) BTREE
+  IX ix_insights_campaigns_currency_concept_id : (currency_concept_id) BTREE
+  IX ix_insights_campaigns_status_concept_id : (status_concept_id) BTREE
+  IX ix_insights_campaigns_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_insights_campaigns_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+insights_campaigns .. idxset_insights_campaigns : indexed by
+
+entity "INDEXES · insights_creatives" as idxset_insights_creatives <<INDEX_SET>> {
+  PK pk_insights_creatives : (id) UNIQUE BTREE
+  UK uq_insights_creatives_campaign_id_code : (campaign_id, code) UNIQUE BTREE
+  IX ix_insights_creatives_status_concept_id : (status_concept_id) BTREE
+  IX ix_insights_creatives_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_insights_creatives_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+insights_creatives .. idxset_insights_creatives : indexed by
+
+entity "INDEXES · insights_milestones" as idxset_insights_milestones <<INDEX_SET>> {
+  PK pk_insights_milestones : (id) UNIQUE BTREE
+  IX ix_insights_milestones_occurred_on : (occurred_on) BTREE
+  IX ix_insights_milestones_campaign_id : (campaign_id) BTREE
+  IX ix_insights_milestones_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_insights_milestones_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+insights_milestones .. idxset_insights_milestones : indexed by
+
+entity "INDEXES · insights_data_sources" as idxset_insights_data_sources <<INDEX_SET>> {
+  PK pk_insights_data_sources : (id) UNIQUE BTREE
+  UK uq_insights_data_sources_code : (code) UNIQUE BTREE
+  IX ix_insights_data_sources_status_concept_id : (status_concept_id) BTREE
+  IX ix_insights_data_sources_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_insights_data_sources_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+insights_data_sources .. idxset_insights_data_sources : indexed by
+
+entity "INDEXES · insights_campaign_daily_facts" as idxset_insights_campaign_daily_facts <<INDEX_SET>> {
+  PK pk_insights_campaign_daily_facts : (id) UNIQUE BTREE
+  UK uq_insights_campaign_daily_facts_natural_key : (fact_date, campaign_id, channel_code, creative_id) UNIQUE BTREE
+  IX ix_insights_campaign_daily_facts_campaign_id_fact_date : (campaign_id, fact_date) BTREE
+  IX ix_insights_campaign_daily_facts_creative_id : (creative_id) BTREE
+}
+
+insights_campaign_daily_facts .. idxset_insights_campaign_daily_facts : indexed by
+
+entity "INDEXES · insights_campaign_hourly_facts" as idxset_insights_campaign_hourly_facts <<INDEX_SET>> {
+  PK pk_insights_campaign_hourly_facts : (id) UNIQUE BTREE
+  UK uq_insights_campaign_hourly_facts_natural_key : (fact_date, hour, campaign_id, channel_code) UNIQUE BTREE
+  IX ix_insights_campaign_hourly_facts_campaign_id : (campaign_id) BTREE
+}
+
+insights_campaign_hourly_facts .. idxset_insights_campaign_hourly_facts : indexed by
+
+entity "INDEXES · insights_social_daily_facts" as idxset_insights_social_daily_facts <<INDEX_SET>> {
+  PK pk_insights_social_daily_facts : (id) UNIQUE BTREE
+  UK uq_insights_social_daily_facts_natural_key : (fact_date, platform_code) UNIQUE BTREE
+}
+
+insights_social_daily_facts .. idxset_insights_social_daily_facts : indexed by
+
+entity "INDEXES · insights_social_posts" as idxset_insights_social_posts <<INDEX_SET>> {
+  PK pk_insights_social_posts : (id) UNIQUE BTREE
+  UK uq_insights_social_posts_code : (code) UNIQUE BTREE
+  IX ix_insights_social_posts_platform_code_published_at : (platform_code, published_at DESC) BTREE
+  IX ix_insights_social_posts_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_insights_social_posts_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+insights_social_posts .. idxset_insights_social_posts : indexed by
+
+entity "INDEXES · insights_app_daily_facts" as idxset_insights_app_daily_facts <<INDEX_SET>> {
+  PK pk_insights_app_daily_facts : (id) UNIQUE BTREE
+  UK uq_insights_app_daily_facts_natural_key : (fact_date, platform_code) UNIQUE BTREE
+}
+
+insights_app_daily_facts .. idxset_insights_app_daily_facts : indexed by
+
+entity "INDEXES · insights_app_screen_daily_facts" as idxset_insights_app_screen_daily_facts <<INDEX_SET>> {
+  PK pk_insights_app_screen_daily_facts : (id) UNIQUE BTREE
+  UK uq_insights_app_screen_daily_facts_natural_key : (fact_date, platform_code, screen_code) UNIQUE BTREE
+}
+
+insights_app_screen_daily_facts .. idxset_insights_app_screen_daily_facts : indexed by
+
+entity "INDEXES · insights_app_onboarding_facts" as idxset_insights_app_onboarding_facts <<INDEX_SET>> {
+  PK pk_insights_app_onboarding_facts : (id) UNIQUE BTREE
+  UK uq_insights_app_onboarding_facts_natural_key : (app_version, step_code) UNIQUE BTREE
+}
+
+insights_app_onboarding_facts .. idxset_insights_app_onboarding_facts : indexed by
+
+entity "INDEXES · insights_mentions" as idxset_insights_mentions <<INDEX_SET>> {
+  PK pk_insights_mentions : (id) UNIQUE BTREE
+  UK uq_insights_mentions_code : (code) UNIQUE BTREE
+  IX ix_insights_mentions_mentioned_at : (mentioned_at) BTREE
+  IX ix_insights_mentions_sentiment_code_mentioned_at : (sentiment_code, mentioned_at) BTREE
+  GIN gin_insights_mentions_search : to_tsvector('simple', body_text) GIN
+  IX ix_insights_mentions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_insights_mentions_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+insights_mentions .. idxset_insights_mentions : indexed by
+
+entity "INDEXES · insights_search_signals" as idxset_insights_search_signals <<INDEX_SET>> {
+  PK pk_insights_search_signals : (id) UNIQUE BTREE
+  UK uq_insights_search_signals_natural_key : (week_start, query_text) UNIQUE BTREE
+}
+
+insights_search_signals .. idxset_insights_search_signals : indexed by
+
+entity "INDEXES · insights_environment_items" as idxset_insights_environment_items <<INDEX_SET>> {
+  PK pk_insights_environment_items : (id) UNIQUE BTREE
+  UK uq_insights_environment_items_code : (code) UNIQUE BTREE
+  IX ix_insights_environment_items_relevance : (relevance DESC) BTREE
+  IX ix_insights_environment_items_published_on : (published_on DESC) BTREE
+  IX ix_insights_environment_items_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_insights_environment_items_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+insights_environment_items .. idxset_insights_environment_items : indexed by
+
+entity "INDEXES · insights_sector_trends" as idxset_insights_sector_trends <<INDEX_SET>> {
+  PK pk_insights_sector_trends : (id) UNIQUE BTREE
+  UK uq_insights_sector_trends_natural_key : (week_start, trend_code) UNIQUE BTREE
+}
+
+insights_sector_trends .. idxset_insights_sector_trends : indexed by
+
+entity "INDEXES · insights_alert_rules" as idxset_insights_alert_rules <<INDEX_SET>> {
+  PK pk_insights_alert_rules : (id) UNIQUE BTREE
+  UK uq_insights_alert_rules_code : (code) UNIQUE BTREE
+  IX ix_insights_alert_rules_severity_concept_id : (severity_concept_id) BTREE
+  IX ix_insights_alert_rules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_insights_alert_rules_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+insights_alert_rules .. idxset_insights_alert_rules : indexed by
+
+entity "INDEXES · insights_alerts" as idxset_insights_alerts <<INDEX_SET>> {
+  PK pk_insights_alerts : (id) UNIQUE BTREE
+  UK uq_insights_alerts_code : (code) UNIQUE BTREE
+  UK uq_insights_alerts_fingerprint : (fingerprint) UNIQUE BTREE
+  IX ix_insights_alerts_status_concept_id_priority : (status_concept_id, priority) BTREE
+  IX ix_insights_alerts_detected_on : (detected_on DESC) BTREE
+  IX ix_insights_alerts_severity_concept_id : (severity_concept_id) BTREE
+  IX ix_insights_alerts_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_insights_alerts_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+insights_alerts .. idxset_insights_alerts : indexed by
+
+entity "INDEXES · insights_alert_transitions" as idxset_insights_alert_transitions <<INDEX_SET>> {
+  PK pk_insights_alert_transitions : (id) UNIQUE BTREE
+  IX ix_insights_alert_transitions_alert_id_recorded_at : (alert_id, recorded_at) BTREE
+  IX ix_insights_alert_transitions_from_status_concept_id : (from_status_concept_id) BTREE
+  IX ix_insights_alert_transitions_to_status_concept_id : (to_status_concept_id) BTREE
+  IX ix_insights_alert_transitions_recorded_by_user_id : (recorded_by_user_id) BTREE
+}
+
+insights_alert_transitions .. idxset_insights_alert_transitions : indexed by
+
+entity "INDEXES · insights_notification_preferences" as idxset_insights_notification_preferences <<INDEX_SET>> {
+  PK pk_insights_notification_preferences : (id) UNIQUE BTREE
+  UK uq_insights_notification_preferences_user_id : (user_id) UNIQUE BTREE
+  IX ix_insights_notification_preferences_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_insights_notification_preferences_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+insights_notification_preferences .. idxset_insights_notification_preferences : indexed by
+
+entity "INDEXES · insights_user_preferences" as idxset_insights_user_preferences <<INDEX_SET>> {
+  PK pk_insights_user_preferences : (id) UNIQUE BTREE
+  UK uq_insights_user_preferences_user_id : (user_id) UNIQUE BTREE
+  IX ix_insights_user_preferences_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_insights_user_preferences_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+insights_user_preferences .. idxset_insights_user_preferences : indexed by
+
+entity "INDEXES · insights_reports" as idxset_insights_reports <<INDEX_SET>> {
+  PK pk_insights_reports : (id) UNIQUE BTREE
+  IX ix_insights_reports_user_id_updated_at : (user_id, updated_at DESC) BTREE
+  IX ix_insights_reports_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_insights_reports_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+insights_reports .. idxset_insights_reports : indexed by
+
+entity "INDEXES · insights_saved_views" as idxset_insights_saved_views <<INDEX_SET>> {
+  PK pk_insights_saved_views : (id) UNIQUE BTREE
+  UK uq_insights_saved_views_user_id_name : (user_id, name) UNIQUE BTREE
+  IX ix_insights_saved_views_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_insights_saved_views_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+insights_saved_views .. idxset_insights_saved_views : indexed by
 }
 
 
