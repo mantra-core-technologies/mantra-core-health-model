@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · perfil pay · módulo 78 · base pay_settlement
+-- SALUD v4.2.81 · perfil pay · módulo 78 · base pay_settlement
 -- Generado de diagram_78_pay_settlement.puml — NO editar a mano.
 
 -- Complementos del perfil pay (gen_ddl_pay.py): funciones, CHECK, FK compuestas y triggers.

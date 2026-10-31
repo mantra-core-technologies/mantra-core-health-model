@@ -1,8 +1,8 @@
--- SALUD v4.2.79 · perfil pay · base pay_merchants · DDL completo en orden (generado de diagram_73_pay_merchants.puml)
+-- SALUD v4.2.81 · perfil pay · base pay_merchants · DDL completo en orden (generado de diagram_73_pay_merchants.puml)
 -- Archivo SQL plano, apto para `pool.query(readFileSync(...))`. NO editar a mano.
 
 -- >>> 02_tables.sql
--- SALUD v4.2.79 · módulo 73 · schema pay_merchants
+-- SALUD v4.2.81 · módulo 73 · schema pay_merchants
 -- Generado de diagram_73_pay_merchants.puml — NO editar a mano.
 
 
@@ -140,7 +140,7 @@ CREATE TABLE IF NOT EXISTS "idempotency_keys" (
 );
 
 -- >>> 03_fk_intra.sql
--- SALUD v4.2.79 · módulo 73 · schema pay_merchants
+-- SALUD v4.2.81 · módulo 73 · schema pay_merchants
 -- Generado de diagram_73_pay_merchants.puml — NO editar a mano.
 
 
@@ -181,7 +181,7 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- >>> 04_indexes.sql
--- SALUD v4.2.79 · módulo 73 · schema pay_merchants
+-- SALUD v4.2.81 · módulo 73 · schema pay_merchants
 -- Generado de diagram_73_pay_merchants.puml — NO editar a mano.
 
 
@@ -202,7 +202,7 @@ CREATE INDEX IF NOT EXISTS "outbox_events_pending_idx" ON "outbox_events" ("seq"
 CREATE INDEX IF NOT EXISTS "idempotency_keys_expires_at_idx" ON "idempotency_keys" ("expires_at");
 
 -- >>> 05_constraints.sql
--- SALUD v4.2.79 · perfil pay · módulo 73 · base pay_merchants
+-- SALUD v4.2.81 · perfil pay · módulo 73 · base pay_merchants
 -- Generado de diagram_73_pay_merchants.puml — NO editar a mano.
 
 -- Complementos del perfil pay (gen_ddl_pay.py): funciones, CHECK, FK compuestas y triggers.
