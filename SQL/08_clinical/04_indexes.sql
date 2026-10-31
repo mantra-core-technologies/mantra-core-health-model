@@ -621,3 +621,20 @@ CREATE INDEX IF NOT EXISTS "ix_observation_reference_ranges_created_by_user_id" 
 CREATE INDEX IF NOT EXISTS "ix_observation_notes_observation_id" ON "clinical"."observation_notes" ("observation_id");
 
 CREATE INDEX IF NOT EXISTS "ix_observation_notes_author_user_id" ON "clinical"."observation_notes" ("author_user_id");
+
+-- + patient_admission_footprints (Admisión crea el vínculo, 2026-10-31)
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_patient_admission_footprints_tenant_patient" ON "clinical"."patient_admission_footprints" ("tenant_id", "patient_profile_id");
+
+CREATE INDEX IF NOT EXISTS "ix_patient_admission_footprints_patient_profile_id" ON "clinical"."patient_admission_footprints" ("patient_profile_id");
+
+CREATE INDEX IF NOT EXISTS "ix_patient_admission_footprints_encounter_id" ON "clinical"."patient_admission_footprints" ("encounter_id");
+
+CREATE INDEX IF NOT EXISTS "ix_patient_admission_footprints_practice_site_id" ON "clinical"."patient_admission_footprints" ("practice_site_id");
+
+CREATE INDEX IF NOT EXISTS "ix_patient_admission_footprints_admission_origin_concept_id" ON "clinical"."patient_admission_footprints" ("admission_origin_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_patient_admission_footprints_identity_verification__51230394" ON "clinical"."patient_admission_footprints" ("identity_verification_method_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_patient_admission_footprints_referral_id" ON "clinical"."patient_admission_footprints" ("referral_id");
+
+CREATE INDEX IF NOT EXISTS "ix_patient_admission_footprints_recorded_by_user_id" ON "clinical"."patient_admission_footprints" ("recorded_by_user_id");

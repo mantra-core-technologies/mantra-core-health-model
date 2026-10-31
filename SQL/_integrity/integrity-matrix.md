@@ -62,6 +62,7 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 | `clinical.inpatient_census_days` | `REFERENCE_ONLY` | **UK** site + unit + census_date; **GUARD** UPDATE/DELETE rechazados cuando OLD.status_concept_id = CENSUS_CLOSED (trigger trg_inpatient_census_days_closed_guard, patch 2026-10-29_infraestructura_f3_clinical.sql) |
 | `clinical.inpatient_census_entries` | `IMMUTABLE, REFERENCE_ONLY` | **UPDATE_DELETE** forbidden |
 | `clinical.inpatient_census_adjustments` | `IMMUTABLE, REFERENCE_ONLY` | **UPDATE_DELETE** forbidden; **CHECK_SQL** ck_inpatient_census_adjustments_field_code \| "field_code" IN ('beds_censable', 'beds_available', 'beds_blocked', 'patients_at_cutoff', 'admissions', 'discharges', 'deaths', 'transfers_in', 'transfers_out', 'same_day_stays', 'patient_days', 'discharge_stay_days') |
+| `clinical.patient_admission_footprints` | `IMMUTABLE, REFERENCE_ONLY` | **UPDATE_DELETE** forbidden |
 
 ### Módulo 18 · `clinical_ext`
 

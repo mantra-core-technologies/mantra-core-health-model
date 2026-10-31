@@ -1695,3 +1695,46 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_observation_notes_author_user_id" FOREIGN KEY ("author_user_id")
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- + patient_admission_footprints (Admisión crea el vínculo, 2026-10-31)
+DO $$ BEGIN
+    ALTER TABLE "clinical"."patient_admission_footprints"
+        ADD CONSTRAINT "fk_patient_admission_footprints_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "clinical"."patient_admission_footprints"
+        ADD CONSTRAINT "fk_patient_admission_footprints_patient_profile_id" FOREIGN KEY ("patient_profile_id")
+        REFERENCES "profiles"."patient_profiles" ("profile_id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "clinical"."patient_admission_footprints"
+        ADD CONSTRAINT "fk_patient_admission_footprints_practice_site_id" FOREIGN KEY ("practice_site_id")
+        REFERENCES "practice"."practice_sites" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "clinical"."patient_admission_footprints"
+        ADD CONSTRAINT "fk_patient_admission_footprints_admission_origin_concept_id" FOREIGN KEY ("admission_origin_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+DO $$ BEGIN
+    ALTER TABLE "clinical"."patient_admission_footprints"
+        ADD CONSTRAINT "fk_patient_admission_footprints_identity_verification__4ddbb04f" FOREIGN KEY ("identity_verification_method_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+DO $$ BEGIN
+    ALTER TABLE "clinical"."patient_admission_footprints"
+        ADD CONSTRAINT "fk_patient_admission_footprints_referral_id" FOREIGN KEY ("referral_id")
+        REFERENCES "clinical_ext"."referrals" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "clinical"."patient_admission_footprints"
+        ADD CONSTRAINT "fk_patient_admission_footprints_recorded_by_user_id" FOREIGN KEY ("recorded_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)

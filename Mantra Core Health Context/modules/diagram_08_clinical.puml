@@ -6,6 +6,9 @@ skinparam packageStyle rectangle
 hide circle
 
 ' Canonical FK targets for clinical.received_services, declared in their owning modules.
+entity "clinical_ext.referrals" as clinical_ext_referrals <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
 entity "directory.tenants" as directory_tenants <<REFERENCE_ONLY>> {
   * id : uuid <<PK>>
 }
@@ -743,6 +746,28 @@ entity inpatient_census_days {
   * row_version : integer
 }
 
+' + Admisión crea el vínculo (decisión del usuario 2026-10-31, CONTRATO-F2-F5 «Desvíos»
+' API-F2F5): la huella de un paciente en el tenant que deja un INGRESO auditado cuando el
+' paciente no tenía huella propia (emergencia, derivación). Una por tenant y paciente;
+' append-only. La lee la regla de huella de authz (patientHasFootprintInTenant) y no
+' depende de que el paciente tenga cuenta: se vincula sola cuando la active (es por
+' persona). origin: ADM_ORIGIN_EMERGENCY | REFERRAL | SCHEDULED | TRANSFER_IN.
+' identity_verification_method: IDV_CI | IDV_PASSPORT | IDV_FOREIGN_ID | IDV_BIRTH_CERT | IDV_OTHER.
+entity patient_admission_footprints <<APPEND_ONLY>> {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+  * encounter_id : uuid <<FK>>
+  * practice_site_id : uuid <<FK>>
+  * admission_origin_concept_id : uuid <<FK>>
+  * identity_verification_method_concept_id : uuid <<FK>>
+  * identity_document_reference : varchar(64)
+    referral_id : uuid <<FK>>
+  * recorded_by_user_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
 ' + infraestructura hospitalaria F3: detalle del censo (quién estaba, entró o salió),
 ' append-only (guarda en el módulo 33). `tenant_id` se agrega para el RLS.
 ' movement: CEN_PRESENT | ADMITTED | DISCHARGED | TRANSFER_IN | TRANSFER_OUT | SAME_DAY.
@@ -803,6 +828,11 @@ inpatient_census_entries }o--|| profiles_patient_profiles : patient_profile_id
 inpatient_census_entries }o--|| practice_care_spaces : care_space_id
 inpatient_census_adjustments }o--|| inpatient_census_days : census_day_id
 appointments }o--o| practice_care_spaces : care_space_id
+patient_admission_footprints }o--|| directory_tenants : tenant_id
+patient_admission_footprints }o--|| profiles_patient_profiles : patient_profile_id
+patient_admission_footprints }o--|| encounters : encounter_id
+patient_admission_footprints }o--|| practice_practice_sites : practice_site_id
+patient_admission_footprints }o--o| clinical_ext_referrals : referral_id
 
 
 
@@ -1295,6 +1325,20 @@ entity "INDEXES · inpatient_census_days" as idxset_inpatient_census_days <<INDE
 }
 
 inpatient_census_days .. idxset_inpatient_census_days : indexed by
+
+entity "INDEXES · patient_admission_footprints" as idxset_patient_admission_footprints <<INDEX_SET>> {
+  PK pk_patient_admission_footprints : (id) UNIQUE BTREE
+  UX ux_patient_admission_footprints_tenant_patient : (tenant_id, patient_profile_id) UNIQUE BTREE
+  IX ix_patient_admission_footprints_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_patient_admission_footprints_encounter_id : (encounter_id) BTREE
+  IX ix_patient_admission_footprints_practice_site_id : (practice_site_id) BTREE
+  IX ix_patient_admission_footprints_admission_origin_concept_id : (admission_origin_concept_id) BTREE
+  IX ix_patient_admission_footprints_identity_verification_method_concept_id : (identity_verification_method_concept_id) BTREE
+  IX ix_patient_admission_footprints_referral_id : (referral_id) BTREE
+  IX ix_patient_admission_footprints_recorded_by_user_id : (recorded_by_user_id) BTREE
+}
+
+patient_admission_footprints .. idxset_patient_admission_footprints : indexed by
 
 entity "INDEXES · inpatient_census_entries" as idxset_inpatient_census_entries <<INDEX_SET>> {
   PK pk_inpatient_census_entries : (id) UNIQUE BTREE

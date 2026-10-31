@@ -613,3 +613,19 @@ CREATE TABLE IF NOT EXISTS "clinical"."observation_notes" (
     "recorded_at" timestamptz NOT NULL,
     CONSTRAINT "pk_observation_notes" PRIMARY KEY ("id")
 );
+
+-- + patient_admission_footprints (Admisión crea el vínculo, 2026-10-31)
+CREATE TABLE IF NOT EXISTS "clinical"."patient_admission_footprints" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "patient_profile_id" uuid NOT NULL,
+    "encounter_id" uuid NOT NULL,
+    "practice_site_id" uuid NOT NULL,
+    "admission_origin_concept_id" uuid NOT NULL,
+    "identity_verification_method_concept_id" uuid NOT NULL,
+    "identity_document_reference" varchar(64) NOT NULL,
+    "referral_id" uuid,
+    "recorded_by_user_id" uuid NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    CONSTRAINT "pk_patient_admission_footprints" PRIMARY KEY ("id")
+);

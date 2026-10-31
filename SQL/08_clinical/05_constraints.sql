@@ -80,3 +80,12 @@ REVOKE UPDATE, DELETE ON "clinical"."inpatient_census_adjustments" FROM PUBLIC;
 DROP TRIGGER IF EXISTS trg_forbid_mutation ON "clinical"."inpatient_census_adjustments";
 CREATE TRIGGER trg_forbid_mutation BEFORE UPDATE OR DELETE ON "clinical"."inpatient_census_adjustments"
     FOR EACH ROW EXECUTE FUNCTION "integrity"."forbid_mutation"();
+
+
+-- ═══ patient_admission_footprints ═══
+--   UPDATE_DELETE: forbidden
+-- UPDATE_DELETE: forbidden → barrera física (append-only)
+REVOKE UPDATE, DELETE ON "clinical"."patient_admission_footprints" FROM PUBLIC;
+DROP TRIGGER IF EXISTS trg_forbid_mutation ON "clinical"."patient_admission_footprints";
+CREATE TRIGGER trg_forbid_mutation BEFORE UPDATE OR DELETE ON "clinical"."patient_admission_footprints"
+    FOR EACH ROW EXECUTE FUNCTION "integrity"."forbid_mutation"();

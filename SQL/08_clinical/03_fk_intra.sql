@@ -229,3 +229,10 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_observation_notes_observation_id" FOREIGN KEY ("observation_id")
         REFERENCES "clinical"."observations" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- + patient_admission_footprints (Admisión crea el vínculo, 2026-10-31)
+DO $$ BEGIN
+    ALTER TABLE "clinical"."patient_admission_footprints"
+        ADD CONSTRAINT "fk_patient_admission_footprints_encounter_id" FOREIGN KEY ("encounter_id")
+        REFERENCES "clinical"."encounters" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
