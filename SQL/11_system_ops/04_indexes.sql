@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · módulo 11 · schema system_ops
+-- SALUD v4.2.81 · módulo 11 · schema system_ops
 -- Generado de diagram_11_system_ops.puml — NO editar a mano.
 
 
@@ -95,6 +95,8 @@ CREATE INDEX IF NOT EXISTS "ix_governance_change_log_changed_by_user_id" ON "sys
 CREATE INDEX IF NOT EXISTS "ix_governance_change_log_recorded_by_user_id" ON "system_ops"."governance_change_log" ("recorded_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "brin_governance_change_log_recorded_at" ON "system_ops"."governance_change_log" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_governance_change_log_target_recorded" ON "system_ops"."governance_change_log" ("target_type", "target_id", "recorded_at" DESC);
 
 CREATE INDEX IF NOT EXISTS "ix_record_revisions_operation_concept_id" ON "system_ops"."record_revisions" ("operation_concept_id");
 
@@ -329,6 +331,16 @@ CREATE INDEX IF NOT EXISTS "ix_partition_specs_entity_registry_id" ON "system_op
 CREATE INDEX IF NOT EXISTS "ix_partition_specs_strategy_concept_id" ON "system_ops"."partition_specs" ("partition_strategy_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_partition_specs_retention_policy_id" ON "system_ops"."partition_specs" ("retention_policy_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_governance_policy_revisions_no" ON "system_ops"."governance_policy_revisions" ("policy_type", "policy_id", "revision_no");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_governance_policy_revisions_one_pending" ON "system_ops"."governance_policy_revisions" ("policy_type", "policy_id") WHERE status = 'PENDING_APPROVAL';
+
+CREATE INDEX IF NOT EXISTS "ix_governance_policy_revisions_status_submitted" ON "system_ops"."governance_policy_revisions" ("status", "submitted_at" DESC);
+
+CREATE INDEX IF NOT EXISTS "ix_governance_policy_revisions_submitted_by_user_id" ON "system_ops"."governance_policy_revisions" ("submitted_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_governance_policy_revisions_decided_by_user_id" ON "system_ops"."governance_policy_revisions" ("decided_by_user_id");
 
 CREATE UNIQUE INDEX IF NOT EXISTS "uk_encryption_keys_key_alias" ON "system_ops"."encryption_keys" ("key_alias");
 

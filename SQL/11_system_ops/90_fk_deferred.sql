@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · módulo 11 · schema system_ops
+-- SALUD v4.2.81 · módulo 11 · schema system_ops
 -- Generado de diagram_11_system_ops.puml — NO editar a mano.
 
 
@@ -992,3 +992,17 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_breach_notifications_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "system_ops"."governance_policy_revisions"
+        ADD CONSTRAINT "fk_governance_policy_revisions_submitted_by_user_id" FOREIGN KEY ("submitted_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "system_ops"."governance_policy_revisions"
+        ADD CONSTRAINT "fk_governance_policy_revisions_decided_by_user_id" FOREIGN KEY ("decided_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)

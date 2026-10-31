@@ -8,6 +8,9 @@ Un parche por entregable (se aplican en este orden, todos idempotentes, una tran
   idempotencia   SQL/patches/2026-10-31_v4281_idempotencia_anonima.sql
                  índice único parcial de los eventos anónimos + índice de búsqueda de los identificados
                  (módulo 28), con la deduplicación determinista previa.
+  gobierno       SQL/patches/2026-10-31_v4281_gobierno_de_datos.sql
+                 módulo 67 (12 tablas + catalog_objects.domain_id) y módulo 11 (governance_policy_revisions + índice
+                 del change-log), con la guarda parcial de las revisiones de política.
 
 Fuentes (todas generadas; correr antes `gen_ddl.py 11 28 29 67`, `gen_integrity.py`):
   SQL/28_telemetry/04_indexes.sql   sólo los dos índices nuevos de user_activity_events
@@ -269,8 +272,192 @@ COMMIT;
     return write("2026-10-31_v4281_idempotencia_anonima.sql", head + dedup + indexes + verify)
 
 
+# ======================================================================================================================
+# 2. gobierno de datos: módulo 67 (data_catalog) y módulo 11 (system_ops.governance_policy_revisions)
+# ======================================================================================================================
+GOV67_TABLES = [
+    "catalog_stewardships", "catalog_glossary_terms", "catalog_glossary_term_revisions", "catalog_glossary_term_links",
+    "quality_rules", "quality_rule_runs", "quality_issues", "quality_issue_events", "quality_score_snapshots",
+    "catalog_lineage_edges", "catalog_certifications", "catalog_change_acknowledgements",
+]
+GOV67_IMMUTABLE = ["catalog_glossary_term_revisions", "quality_issue_events", "quality_score_snapshots", "catalog_change_acknowledgements"]
+GOV11_TABLES = ["governance_policy_revisions"]
+
+POLICY_GUARD = """-- Guarda de columnas de las revisiones de politica (D-F1b-7 del .puml 11). No es expresable en el .puml: vive en este generador, como las
+-- politicas RLS de los parches v4278/v4280. Un UPDATE solo puede mover el ciclo de vida (status, decided_*, decision_comment, effective_from);
+-- lo propuesto no cambia nunca, una decision tomada no se reescribe, el estado no retrocede y la historia no se borra.
+CREATE OR REPLACE FUNCTION "system_ops"."guard_governance_policy_revision"() RETURNS trigger
+LANGUAGE plpgsql AS $fn$
+BEGIN
+    IF TG_OP = 'DELETE' THEN
+        RAISE EXCEPTION 'append-only/immutable: DELETE no permitido en %.%', TG_TABLE_SCHEMA, TG_TABLE_NAME USING ERRCODE = 'restrict_violation';
+    END IF;
+    IF ROW(NEW.id, NEW.policy_type, NEW.policy_id, NEW.revision_no, NEW.content_json, NEW.content_hash, NEW.change_reason,
+           NEW.submitted_by_user_id, NEW.submitted_at, NEW.created_at)
+       IS DISTINCT FROM
+       ROW(OLD.id, OLD.policy_type, OLD.policy_id, OLD.revision_no, OLD.content_json, OLD.content_hash, OLD.change_reason,
+           OLD.submitted_by_user_id, OLD.submitted_at, OLD.created_at) THEN
+        RAISE EXCEPTION 'append-only/immutable: lo propuesto de una revision de politica (contenido, hash, motivo, autor) no se modifica en %.%',
+            TG_TABLE_SCHEMA, TG_TABLE_NAME USING ERRCODE = 'restrict_violation';
+    END IF;
+    IF OLD.decided_at IS NOT NULL
+       AND ROW(NEW.decided_by_user_id, NEW.decided_at, NEW.decision_comment)
+           IS DISTINCT FROM ROW(OLD.decided_by_user_id, OLD.decided_at, OLD.decision_comment) THEN
+        RAISE EXCEPTION 'append-only/immutable: una decision ya tomada sobre una revision de politica no se reescribe (%.%)',
+            TG_TABLE_SCHEMA, TG_TABLE_NAME USING ERRCODE = 'restrict_violation';
+    END IF;
+    IF (OLD.status IN ('REJECTED', 'SUPERSEDED') AND NEW.status <> OLD.status)
+       OR (OLD.status = 'APPROVED' AND NEW.status NOT IN ('APPROVED', 'SUPERSEDED')) THEN
+        RAISE EXCEPTION 'append-only/immutable: el estado de una revision de politica no retrocede (% -> %)', OLD.status, NEW.status
+            USING ERRCODE = 'restrict_violation';
+    END IF;
+    RETURN NEW;
+END $fn$;
+
+DROP TRIGGER IF EXISTS trg_guard_policy_revision ON "system_ops"."governance_policy_revisions";
+CREATE TRIGGER trg_guard_policy_revision BEFORE UPDATE OR DELETE ON "system_ops"."governance_policy_revisions"
+    FOR EACH ROW EXECUTE FUNCTION "system_ops"."guard_governance_policy_revision"();"""
+
+
+def gen_gobierno() -> tuple[str, str]:
+    t67 = select_blocks(read("67_data_catalog/02_tables.sql"), "data_catalog", GOV67_TABLES)
+    t11 = select_blocks(read("11_system_ops/02_tables.sql"), "system_ops", GOV11_TABLES)
+    assert t67.count("CREATE TABLE IF NOT EXISTS") == len(GOV67_TABLES) and t11.count("CREATE TABLE IF NOT EXISTS") == 1
+    add_domain = add_column("data_catalog", "catalog_objects", "domain_id")
+    fk_intra = select_blocks(read("67_data_catalog/03_fk_intra.sql"), "data_catalog", GOV67_TABLES)
+    idx67 = select_blocks(read("67_data_catalog/04_indexes.sql"), "data_catalog", GOV67_TABLES, ('"ix_data_catalog_objects_domain_id"',))
+    idx11 = select_blocks(read("11_system_ops/04_indexes.sql"), "system_ops", GOV11_TABLES, ('"ix_governance_change_log_target_recorded"',))
+    fk_def67 = select_blocks(read("67_data_catalog/90_fk_deferred.sql"), "data_catalog", GOV67_TABLES, ('"fk_catalog_objects_domain_id"',))
+    fk_def11 = select_blocks(read("11_system_ops/90_fk_deferred.sql"), "system_ops", GOV11_TABLES)
+    c67_text, c11_text = read("67_data_catalog/05_constraints.sql"), read("11_system_ops/05_constraints.sql")
+    cons67 = "\n\n".join(table_section(c67_text, t) for t in GOV67_TABLES if f"-- ═══ {t} ═══" in c67_text)
+    cons11 = "\n\n".join(table_section(c11_text, t) for t in GOV11_TABLES if f"-- ═══ {t} ═══" in c11_text)
+    n_fk = (fk_intra + fk_def67 + fk_def11).count("ADD CONSTRAINT")
+    n_idx = (idx67 + idx11).count("INDEX IF NOT EXISTS")
+    n_chk = (cons67 + cons11).count("ADD CONSTRAINT")
+    n_trg = cons67.count("CREATE TRIGGER trg_forbid_update")
+    assert n_trg == len(GOV67_IMMUTABLE), f"triggers de inmutabilidad: {n_trg}"
+    n_tables = len(GOV67_TABLES) + len(GOV11_TABLES)
+
+    head = f"""-- ============================================================================
+-- SALUD · patch {VERSION} (franja F1b del portal de observabilidad y gobierno: gobierno de datos, módulos 67 y 11) sobre BD viva
+-- Fecha: 2026-10-31
+-- GENERADO por salud-db/gen_v4281_patches.py a partir del DDL que ya emiten gen_ddl.py y gen_integrity.py: aquí no hay DDL escrito a mano
+-- salvo la guarda de columnas de las revisiones de política (sección 6) y los permisos/comprobaciones. Idempotente (CREATE ... IF NOT
+-- EXISTS, ADD COLUMN IF NOT EXISTS, FK con duplicate_object, CHECK con DROP IF EXISTS + ADD, disparadores con DROP IF EXISTS + CREATE).
+-- UNA sola transacción; se puede volver a correr. Solo AGREGA: no cambia ni borra nada existente.
+--
+-- Contexto: 04-catalogo-y-gobierno.md §3 (H1.S1.M1–M4) del plan docs/trabajo/2026-10-31-portal-observabilidad-gobierno/ (repo del front).
+--
+-- QUE AGREGA
+--   data_catalog (módulo 67)  +{len(GOV67_TABLES)} tablas: {", ".join(GOV67_TABLES)}
+--                             + catalog_objects.domain_id (columna nullable, ADD COLUMN IF NOT EXISTS: no reescribe la tabla ni toma bloqueo largo)
+--   system_ops (módulo 11)    +1 tabla: governance_policy_revisions; + índice ix_governance_change_log_target_recorded en la bitácora
+--                             (CREATE INDEX normal: governance_change_log es chica; en una base grande, crearlo antes con CONCURRENTLY)
+--   {n_fk} FK (las que van a iam.users, system_ops.data_domains, read_models y reporting son diferidas: sección 4), {n_idx} índices, {n_chk} CHECK,
+--   {n_trg} disparadores de inmutabilidad (+1 de columnas en governance_policy_revisions)
+--
+-- DECISIONES (detalle en el .puml 67 y 11)
+--   * Sin RLS, a propósito: ninguna tabla nueva tiene columna `tenant_id` ni `actor_tenant_id`. El catálogo y el gobierno son datos de PLATAFORMA
+--     (`@TenantAgnostic()` en el API; los actores son `*_user_id`). 2026-08-05_tenant_rls.sql solo alcanza columnas `tenant_id`: la sección 8
+--     aborta si aparece una. Si una tabla de este bloque llegara a llevar el tenant de un actor, debe llamarse `actor_tenant_id` y recibir
+--     políticas explícitas (patrón del v4280).
+--   * Inmutables (UPDATE prohibido por `integrity.forbid_mutation`): catalog_glossary_term_revisions, quality_issue_events,
+--     quality_score_snapshots, catalog_change_acknowledgements. `mantra_app` pierde UPDATE/TRUNCATE sobre ellas.
+--   * governance_policy_revisions NO usa forbid_mutation (D-F1b-7): su ciclo de vida vive en la misma fila y aprobar es un UPDATE. Un
+--     disparador de columnas (sección 6) congela lo propuesto, no reescribe una decisión tomada, impide retroceder el estado y prohíbe el
+--     DELETE; ck_governance_policy_revisions_not_self impone en la base que quien decide no es quien propuso.
+--   * quality_rules.threshold_pct no lleva DEFAULT 0 (D-F1b-4): el API debe enviar el umbral.
+--
+-- REVERSA (solo agrega; un rollback de la API deja datos inertes). Orden: primero las tablas con FK hacia otras.
+--   DROP TABLE IF EXISTS data_catalog.catalog_change_acknowledgements, data_catalog.catalog_certifications, data_catalog.catalog_lineage_edges,
+--     data_catalog.quality_score_snapshots, data_catalog.quality_issue_events, data_catalog.quality_issues, data_catalog.quality_rule_runs,
+--     data_catalog.quality_rules, data_catalog.catalog_glossary_term_links, data_catalog.catalog_glossary_term_revisions,
+--     data_catalog.catalog_glossary_terms, data_catalog.catalog_stewardships, system_ops.governance_policy_revisions;
+--   DROP FUNCTION IF EXISTS system_ops.guard_governance_policy_revision();
+--   ALTER TABLE data_catalog.catalog_objects DROP COLUMN IF EXISTS domain_id;
+--   DROP INDEX IF EXISTS system_ops.ix_governance_change_log_target_recorded;
+-- ============================================================================
+
+BEGIN;
+SET LOCAL lock_timeout = '15s';
+
+-- ---- 0. prerequisitos ----
+DO $$
+BEGIN
+    IF to_regprocedure('integrity.forbid_mutation()') IS NULL THEN
+        RAISE EXCEPTION 'falta integrity.forbid_mutation(): aplicar antes SQL/_integrity/00_integrity_functions.sql';
+    END IF;
+    IF to_regclass('iam.users') IS NULL OR to_regclass('system_ops.data_domains') IS NULL OR to_regclass('system_ops.governance_change_log') IS NULL
+       OR to_regclass('data_catalog.catalog_objects') IS NULL OR to_regclass('data_catalog.catalog_columns') IS NULL
+       OR to_regclass('data_catalog.catalog_change_events') IS NULL
+       OR to_regclass('read_models.read_model_definitions') IS NULL OR to_regclass('reporting.report_definitions') IS NULL THEN
+        RAISE EXCEPTION 'faltan tablas base (iam.users, system_ops.data_domains/governance_change_log, data_catalog.catalog_objects/columns/change_events, read_models.read_model_definitions, reporting.report_definitions): aplicar antes apply_all.sql';
+    END IF;
+END $$;
+"""
+    parts = [head]
+    parts.append("-- ---- 1. tablas (SQL/67_data_catalog/02_tables.sql y SQL/11_system_ops/02_tables.sql) ----\n"
+                 + t67 + "\n\n" + t11 + "\n\n"
+                 + "-- la unica columna nueva en una tabla que ya existia (nullable: ADD COLUMN IF NOT EXISTS no reescribe ni bloquea)\n" + add_domain + "\n")
+    parts.append("-- ---- 2. FK dentro del schema data_catalog (SQL/67_data_catalog/03_fk_intra.sql) ----\n" + fk_intra + "\n")
+    parts.append("-- ---- 3. indices (SQL/67_data_catalog/04_indexes.sql y SQL/11_system_ops/04_indexes.sql) ----\n" + idx67 + "\n\n" + idx11 + "\n")
+    parts.append("-- ---- 4. FK entre schemas: iam.users, system_ops.data_domains, read_models, reporting (90_fk_deferred.sql de los modulos 67 y 11) ----\n"
+                 + fk_def67 + "\n\n" + fk_def11 + "\n")
+    parts.append("-- ---- 5. integridad: CHECK de gobierno y UPDATE prohibido (05_constraints.sql de los modulos 67 y 11) ----\n" + cons67 + "\n\n" + cons11 + "\n")
+    parts.append("-- ---- 6. guarda de columnas de governance_policy_revisions ----\n" + POLICY_GUARD + "\n")
+    parts.append(f"""-- ---- 7. permisos de la aplicacion (solo si existe el rol; 2026-08-05_tenant_rls.sql vuelve a conceder DML, el disparador sigue frenando) ----
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'mantra_app') THEN
+{grants(GOV67_IMMUTABLE, [t for t in GOV67_TABLES if t not in GOV67_IMMUTABLE], "data_catalog")}
+{grants([], [], "system_ops", history_no_delete=GOV11_TABLES)}
+    END IF;
+END $$;
+""")
+    imm = ", ".join(f"'{t}'" for t in GOV67_IMMUTABLE)
+    all67 = ", ".join(f"'{t}'" for t in GOV67_TABLES)
+    parts.append(f"""-- ---- 8. verificacion final (si algo no cuadra, la transaccion entera se revierte) ----
+DO $$
+DECLARE
+    n int;
+BEGIN
+    SELECT count(*) INTO n FROM information_schema.tables WHERE table_schema = 'data_catalog' AND table_type = 'BASE TABLE' AND table_name IN ({all67});
+    IF n <> {len(GOV67_TABLES)} THEN RAISE EXCEPTION 'v4281 gobierno: deberia haber {len(GOV67_TABLES)} tablas nuevas en data_catalog y hay %', n; END IF;
+    IF to_regclass('system_ops.governance_policy_revisions') IS NULL THEN RAISE EXCEPTION 'v4281 gobierno: falta system_ops.governance_policy_revisions'; END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'data_catalog' AND table_name = 'catalog_objects' AND column_name = 'domain_id') THEN
+        RAISE EXCEPTION 'v4281 gobierno: falta catalog_objects.domain_id';
+    END IF;
+    IF to_regclass('system_ops.ix_governance_change_log_target_recorded') IS NULL THEN RAISE EXCEPTION 'v4281 gobierno: falta ix_governance_change_log_target_recorded'; END IF;
+    -- D-F1b-1: ninguna tabla nueva lleva tenant (el RLS global las alcanzaria y la escritura de plataforma dejaria de funcionar)
+    SELECT count(*) INTO n FROM information_schema.columns
+     WHERE column_name IN ('tenant_id', 'actor_tenant_id')
+       AND ((table_schema = 'data_catalog' AND table_name IN ({all67})) OR (table_schema = 'system_ops' AND table_name = 'governance_policy_revisions'));
+    IF n <> 0 THEN RAISE EXCEPTION 'v4281 gobierno: las tablas nuevas no deben tener columna de tenant (decision D-F1b-1): %', n; END IF;
+    SELECT count(*) INTO n FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid JOIN pg_namespace s ON s.oid = c.relnamespace
+     WHERE t.tgname = 'trg_forbid_update' AND NOT t.tgisinternal AND s.nspname = 'data_catalog' AND c.relname IN ({imm});
+    IF n <> {len(GOV67_IMMUTABLE)} THEN RAISE EXCEPTION 'v4281 gobierno: deberia haber {len(GOV67_IMMUTABLE)} disparadores trg_forbid_update y hay %', n; END IF;
+    SELECT count(*) INTO n FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid JOIN pg_namespace s ON s.oid = c.relnamespace
+     WHERE t.tgname = 'trg_guard_policy_revision' AND NOT t.tgisinternal AND s.nspname = 'system_ops' AND c.relname = 'governance_policy_revisions';
+    IF n <> 1 THEN RAISE EXCEPTION 'v4281 gobierno: falta el disparador de columnas de governance_policy_revisions'; END IF;
+    SELECT count(*) INTO n FROM pg_constraint k JOIN pg_class c ON c.oid = k.conrelid JOIN pg_namespace s ON s.oid = c.relnamespace
+     WHERE k.contype = 'c' AND ((s.nspname = 'data_catalog' AND c.relname IN ({all67})) OR (s.nspname = 'system_ops' AND c.relname = 'governance_policy_revisions'));
+    IF n <> {n_chk} THEN RAISE EXCEPTION 'v4281 gobierno: deberia haber {n_chk} CHECK y hay %', n; END IF;
+    SELECT count(*) INTO n FROM pg_constraint k JOIN pg_class c ON c.oid = k.conrelid JOIN pg_namespace s ON s.oid = c.relnamespace
+     WHERE k.contype = 'f' AND ((s.nspname = 'data_catalog' AND (c.relname IN ({all67}) OR k.conname = 'fk_catalog_objects_domain_id'))
+                              OR (s.nspname = 'system_ops' AND c.relname = 'governance_policy_revisions'));
+    IF n <> {n_fk} THEN RAISE EXCEPTION 'v4281 gobierno: deberia haber {n_fk} FK y hay %', n; END IF;
+    RAISE NOTICE 'v4281 gobierno: {n_tables} tablas, {n_fk} FK, {n_idx} indices, {n_chk} CHECK, {len(GOV67_IMMUTABLE)}+1 disparadores';
+END $$;
+
+COMMIT;
+""")
+    return write("2026-10-31_v4281_gobierno_de_datos.sql", "\n".join(parts))
+
+
 GENERATORS = {
     "idempotencia": gen_idempotencia,
+    "gobierno": gen_gobierno,
 }
 
 

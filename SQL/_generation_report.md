@@ -15,7 +15,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 08 | clinical | 24 | 241 | 9 | 264 | 11 |
 | 09 | forms | 16 | 103 | 0 | 113 | 1 |
 | 10 | audit | 133 | 557 | 43 | 708 | 1 |
-| 11 | system_ops | 29 | 169 | 0 | 178 | 0 |
+| 11 | system_ops | 30 | 171 | 2 | 184 | 0 |
 | 12 | integrations | 10 | 49 | 0 | 56 | 0 |
 | 13 | geo | 6 | 31 | 0 | 35 | 0 |
 | 14 | practice | 16 | 124 | 37 | 138 | 1 |
@@ -71,11 +71,11 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 64 | audio_assets | 4 | 1 | 0 | 10 | 0 |
 | 65 | surveys | 8 | 42 | 5 | 26 | 0 |
 | 66 | medical_groups | 2 | 14 | 0 | 10 | 0 |
-| 67 | data_catalog | 13 | 43 | 23 | 24 | 0 |
+| 67 | data_catalog | 25 | 89 | 45 | 69 | 3 |
 | 68 | qa_execution | 4 | 14 | 6 | 6 | 0 |
 | 69 | pharma_lab | 31 | 182 | 173 | 182 | 1 |
 | 70 | observability | 12 | 13 | 8 | 39 | 2 |
-| **Σ** | **71** | **1333** | | **675** | | **426** |
+| **Σ** | **71** | **1346** | | **699** | | **429** |
 
 ## Detalle de entidades saltadas y avisos
 
@@ -589,6 +589,11 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - `health_data_ingestion_batches` — stub de cruce (tabla real en su módulo dueño)
 - `health_data_deidentification_runs` — stub de cruce (tabla real en su módulo dueño)
 - `common_files` — stub de cruce (tabla real en su módulo dueño)
+
+### 67 · data_catalog
+- `system_ops_data_domains` — stub de cruce (tabla real en su módulo dueño)
+- `read_models_read_model_definitions` — stub de cruce (tabla real en su módulo dueño)
+- `reporting_report_definitions` — stub de cruce (tabla real en su módulo dueño)
 
 ### 69 · pharma_lab
 - `directory_tenants` — stub de cruce (tabla real en su módulo dueño)

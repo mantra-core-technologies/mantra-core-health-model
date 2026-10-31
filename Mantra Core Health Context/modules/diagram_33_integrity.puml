@@ -225,6 +225,44 @@ entity "telemetry.client_error_events" as telemetry_client_error_events <<APPEND
   RETENTION : 90 days (purge job on received_at; DELETE allowed)
 }
 
+' v4.2.81 (franja F1b, gobierno de datos) — inmutabilidad e invariantes de gobierno de los modulos 67 y 11.
+' Inmutables (se prohibe UPDATE y NO el DELETE, igual que las cuatro <<LOG>> previas del modulo 67): revisiones del glosario,
+' eventos de incidencia de calidad, fotos de puntaje y acuses de cambio. El resto del bloque son maquinas de estado y se actualiza.
+' governance_policy_revisions NO esta aqui a proposito (ver D-F1b-7 en el modulo 11): lleva su ciclo de vida en la misma fila y
+' usa un disparador de columnas en el parche v4281_gobierno_de_datos; aqui solo sus CHECK.
+entity "data_catalog.catalog_glossary_term_revisions" as data_catalog_catalog_glossary_term_revisions <<LOG, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+}
+entity "data_catalog.quality_issue_events" as data_catalog_quality_issue_events <<LOG, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+}
+entity "data_catalog.quality_score_snapshots" as data_catalog_quality_score_snapshots <<LOG, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+  CHECK_SQL : ck_quality_score_snapshots_score | ("score" BETWEEN 0 AND 100)
+}
+entity "data_catalog.catalog_change_acknowledgements" as data_catalog_catalog_change_acknowledgements <<LOG, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+}
+entity "data_catalog.catalog_stewardships" as data_catalog_catalog_stewardships <<REFERENCE_ONLY>> {
+  ' El responsable de un dominio no tiene tabla y el de una tabla no tiene dominio: la columna del alcance y el alcance coinciden.
+  CHECK_SQL : ck_catalog_stewardships_scope | (("scope_kind" = 'DOMAIN' AND "domain_id" IS NOT NULL AND "object_id" IS NULL) OR ("scope_kind" = 'OBJECT' AND "object_id" IS NOT NULL AND "domain_id" IS NULL))
+  CHECK_SQL : ck_catalog_stewardships_holder | ("user_id" IS NOT NULL OR "team_code" IS NOT NULL)
+  CHECK_SQL : ck_catalog_stewardships_period | ("valid_to" IS NULL OR "valid_to" >= "valid_from")
+}
+entity "data_catalog.quality_rules" as data_catalog_quality_rules <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_quality_rules_threshold | ("threshold_pct" BETWEEN 0 AND 100)
+}
+' Quien pide la certificacion no la concede (SELF_CERTIFY): lo impone la base, no solo el servicio. Un destino por fila.
+entity "data_catalog.catalog_certifications" as data_catalog_catalog_certifications <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_catalog_certifications_not_self | ("certified_by_user_id" IS NULL OR "certified_by_user_id" <> "requested_by_user_id")
+  CHECK_SQL : ck_catalog_certifications_target | (num_nonnulls("object_id", "read_model_definition_id", "report_definition_id", "kpi_code") = 1)
+}
+' Quien propone una revision de politica no la aprueba (SELF_APPROVAL); una decision tomada lleva decisor y fecha.
+entity "system_ops.governance_policy_revisions" as system_ops_governance_policy_revisions <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_governance_policy_revisions_not_self | ("decided_by_user_id" IS NULL OR "decided_by_user_id" <> "submitted_by_user_id")
+  CHECK_SQL : ck_governance_policy_revisions_decision | ("status" NOT IN ('APPROVED', 'REJECTED') OR ("decided_by_user_id" IS NOT NULL AND "decided_at" IS NOT NULL))
+}
+
 inventory_stock_positions --> inventory_ledger_entries : atomic projection
 inventory_reservations --> inventory_ledger_entries : reserve/release
 patient_coverages --> claim_adjudication_versions : adjudication basis

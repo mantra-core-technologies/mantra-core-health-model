@@ -90,6 +90,13 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 | `catalog_annotation_revisions` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden |
 | `catalog_review_decisions` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden |
 | `catalog_evidence_items` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden |
+| `data_catalog.catalog_glossary_term_revisions` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden |
+| `data_catalog.quality_issue_events` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden |
+| `data_catalog.quality_score_snapshots` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden; **CHECK_SQL** ck_quality_score_snapshots_score \| ("score" BETWEEN 0 AND 100) |
+| `data_catalog.catalog_change_acknowledgements` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden |
+| `data_catalog.catalog_stewardships` | `REFERENCE_ONLY` | **CHECK_SQL** ck_catalog_stewardships_scope \| (("scope_kind" = 'DOMAIN' AND "domain_id" IS NOT NULL AND "object_id" IS NULL) OR ("scope_kind" = 'OBJECT' AND "object_id" IS NOT NULL AND "domain_id" IS NULL)); **CHECK_SQL** ck_catalog_stewardships_holder \| ("user_id" IS NOT NULL OR "team_code" IS NOT NULL); **CHECK_SQL** ck_catalog_stewardships_period \| ("valid_to" IS NULL OR "valid_to" >= "valid_from") |
+| `data_catalog.quality_rules` | `REFERENCE_ONLY` | **CHECK_SQL** ck_quality_rules_threshold \| ("threshold_pct" BETWEEN 0 AND 100) |
+| `data_catalog.catalog_certifications` | `REFERENCE_ONLY` | **CHECK_SQL** ck_catalog_certifications_not_self \| ("certified_by_user_id" IS NULL OR "certified_by_user_id" <> "requested_by_user_id"); **CHECK_SQL** ck_catalog_certifications_target \| (num_nonnulls("object_id", "read_model_definition_id", "report_definition_id", "kpi_code") = 1) |
 
 ### Módulo 29 · `delegated_access`
 
@@ -227,6 +234,7 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 
 | Tabla | Estereotipo | Reglas declaradas |
 |-------|-------------|-------------------|
+| `system_ops.governance_policy_revisions` | `REFERENCE_ONLY` | **CHECK_SQL** ck_governance_policy_revisions_not_self \| ("decided_by_user_id" IS NULL OR "decided_by_user_id" <> "submitted_by_user_id"); **CHECK_SQL** ck_governance_policy_revisions_decision \| ("status" NOT IN ('APPROVED', 'REJECTED') OR ("decided_by_user_id" IS NOT NULL AND "decided_at" IS NOT NULL)) |
 | `system_ops.restore_test_runs` | `REFERENCE_ONLY` | **CHECK_SQL** ck_system_ops_restore_test_runs_objective_status \| "objective_status" IN ('PASSED', 'FAILED', 'NOT_MEASURED') |
 
 ### Módulo 28 · `telemetry`

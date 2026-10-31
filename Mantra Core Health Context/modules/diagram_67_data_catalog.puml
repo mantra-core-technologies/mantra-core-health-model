@@ -75,6 +75,7 @@ entity catalog_objects {
   * last_seen_scan_id : uuid <<FK>>
   * last_seen_at : timestamptz
     not_observed_since : timestamptz
+    domain_id : uuid <<FK>>
   * created_at : timestamptz
   * updated_at : timestamptz
     created_by_user_id : uuid <<FK>>
@@ -86,6 +87,7 @@ entity "INDEXES · catalog_objects" as idxset_catalog_objects <<INDEX_SET>> {
   PK pk_catalog_objects : (id) UNIQUE BTREE
   UX ux_data_catalog_objects_identity : (source_code, schema_name, object_name) UNIQUE BTREE
   IX ix_data_catalog_objects_observation_status : (observation_status) BTREE
+  IX ix_data_catalog_objects_domain_id : (domain_id) BTREE
 }
 catalog_objects .. idxset_catalog_objects : indexed by
 
@@ -376,6 +378,356 @@ entity "INDEXES · catalog_process_step_operations" as idxset_catalog_process_st
 }
 catalog_process_step_operations .. idxset_catalog_process_step_operations : indexed by
 
+' ── v4.2.81 · gobierno de datos (franja F1b del portal de observabilidad y gobierno) ────────────
+' Fuente: docs/trabajo/2026-10-31-portal-observabilidad-gobierno/04-catalogo-y-gobierno.md §3.1,
+' §3.2, §3.3, §3.6, §3.8 y §3.9 (H1.S1.M1). Observado (el escaneo) vs declarado (gobierno) vs
+' aprobado (segunda persona): estas tablas guardan lo declarado y lo aprobado; nada del escaneo
+' las pisa y nada manual se aprueba a sí mismo.
+'
+' DECISIONES DE ESTA FRANJA
+'  D-F1b-1 Ninguna tabla de este bloque lleva columna `tenant_id` ni `actor_tenant_id`: el catalogo
+'          y el gobierno son datos de PLATAFORMA (`@TenantAgnostic()` en el API), los actores
+'          aparecen solo como `*_user_id`. 2026-08-05_tenant_rls.sql solo alcanza columnas
+'          `tenant_id`, y aqui no hay ninguna: por decision, SIN politicas RLS (la autoridad es el
+'          API por rol). Si algun dia una tabla de este bloque lleva el tenant de un actor, debe
+'          nombrarse `actor_tenant_id` y recibir politicas explicitas como las del parche v4280.
+'  D-F1b-2 Inmutables (UPDATE prohibido, modulo 33): catalog_glossary_term_revisions,
+'          quality_issue_events, quality_score_snapshots y catalog_change_acknowledgements. Las
+'          demas son maquinas de estado y se actualizan (con `row_version` las que lo declaran).
+'  D-F1b-3 Sin CHECK sobre vocabularios de texto acotados (scope_kind, role_kind, status, ...), igual
+'          que el resto del modulo (ver el comentario de catalog_operations): el ORM crea las
+'          tablas en una base vacia sin CHECK y dos bases «iguales» validarian distinto. Se
+'          validan en el dominio. Solo hay CHECK estructurales de invariantes de gobierno
+'          (modulo 33): alcance de la responsabilidad, destino unico de la certificacion,
+'          rangos 0..100 y «quien pide no certifica».
+'  D-F1b-4 quality_rules.threshold_pct NO lleva DEFAULT 0 (el plan lo sugeria): el generador solo
+'          declara defaults enteros/booleanos/texto/uuid; el API debe enviar el umbral (0 = nada tolerado).
+'  D-F1b-5 Las FK a system_ops.data_domains e iam.users son diferidas (90_fk_deferred.sql).
+'  D-F1b-6 Cada FK de negocio (todas menos los `*_user_id` de auditoria) tiene un indice de
+'          apoyo; created_by/updated_by no se indexan (los usuarios no se borran, se anonimizan).
+
+entity "system_ops.data_domains" as system_ops_data_domains <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity "read_models.read_model_definitions" as read_models_read_model_definitions <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity "reporting.report_definitions" as reporting_report_definitions <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+' §3.1 responsables con usuario y vigencia (no texto libre). Un solo responsable vigente por (alcance, objetivo, rol).
+entity catalog_stewardships {
+  * id : uuid <<PK>>
+  * scope_kind : varchar
+    domain_id : uuid <<FK>>
+    object_id : uuid <<FK>>
+  * role_kind : varchar
+    user_id : uuid <<FK>>
+    team_code : varchar
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' §3.2 glosario de negocio vivo, con revisiones inmutables y enlaces a tablas/columnas.
+entity catalog_glossary_terms {
+  * id : uuid <<PK>>
+  * term_code : varchar
+  * name : varchar
+  * definition : text
+    domain_id : uuid <<FK>>
+    synonyms : jsonb
+  * status : varchar
+  * current_revision_no : integer
+    approved_revision_no : integer
+    approved_by_user_id : uuid <<FK>>
+    approved_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity catalog_glossary_term_revisions <<LOG>> {
+  * id : uuid <<PK>>
+  * term_id : uuid <<FK>>
+  * revision_no : integer
+  * content_json : jsonb
+  * content_hash : varchar
+    change_reason : text
+    author_user_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+entity catalog_glossary_term_links {
+  * id : uuid <<PK>>
+  * term_id : uuid <<FK>>
+  * object_id : uuid <<FK>>
+    column_id : uuid <<FK>>
+  * link_kind : varchar
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+
+' §3.3 calidad de datos: reglas declarativas -> corridas con lease -> incidencias con ciclo de vida -> puntaje.
+' sample_ids_json guarda SOLO claves primarias de muestra, nunca valores de columnas.
+entity quality_rules {
+  * id : uuid <<PK>>
+  * rule_code : varchar
+  * name : varchar
+    description : text
+  * object_id : uuid <<FK>>
+    column_id : uuid <<FK>>
+  * rule_kind : varchar
+  * params_json : jsonb
+  * severity : varchar
+  * threshold_pct : numeric(5,2)
+    schedule_minutes : integer
+  * sample_limit : integer <<DEFAULT_INT:20>>
+  * enabled : boolean <<DEFAULT_TRUE>>
+    owner_user_id : uuid <<FK>>
+  * version : integer <<DEFAULT_INT:1>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity quality_rule_runs {
+  * id : uuid <<PK>>
+  * rule_id : uuid <<FK>>
+  * trigger : varchar
+  * status : varchar
+    idempotency_key : varchar
+    requested_by_user_id : uuid <<FK>>
+    lease_owner : varchar
+    lease_expires_at : timestamptz
+    started_at : timestamptz
+    finished_at : timestamptz
+    evaluated_rows : bigint
+    failed_rows : bigint
+    failed_pct : numeric(7,4)
+    passed : boolean
+    sample_ids_json : jsonb
+    error_code : varchar
+    error_message : text
+  * created_at : timestamptz
+}
+
+entity quality_issues {
+  * id : uuid <<PK>>
+  * rule_id : uuid <<FK>>
+  * object_id : uuid <<FK>>
+    column_id : uuid <<FK>>
+  * fingerprint : varchar
+  * severity : varchar
+  * status : varchar
+  * first_seen_run_id : uuid <<FK>>
+  * last_seen_run_id : uuid <<FK>>
+  * occurrences : integer <<DEFAULT_INT:1>>
+    failed_rows_last : bigint
+    failed_pct_last : numeric(7,4)
+    acknowledged_by_user_id : uuid <<FK>>
+    acknowledged_at : timestamptz
+    resolved_by_user_id : uuid <<FK>>
+    resolved_at : timestamptz
+    resolution_kind : varchar
+    ignored_until : timestamptz
+    reason : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  * row_version : integer
+}
+
+entity quality_issue_events <<LOG>> {
+  * id : uuid <<PK>>
+  * issue_id : uuid <<FK>>
+  * event_kind : varchar
+    run_id : uuid <<FK>>
+    actor_user_id : uuid <<FK>>
+    reason : text
+  * created_at : timestamptz
+}
+
+entity quality_score_snapshots <<LOG>> {
+  * id : uuid <<PK>>
+  * scope_kind : varchar
+    object_id : uuid <<FK>>
+    domain_id : uuid <<FK>>
+  * as_of : timestamptz
+  * score : numeric(5,2)
+  * components_json : jsonb
+  * created_at : timestamptz
+}
+
+' §3.6 linaje oficial: aristas materializadas con origen y aprobacion («oficial» es un dato, no una opinion).
+' source_ref/target_ref son referencias por nombre (schema.tabla, operation_key, codigo de ruta...) y por eso
+' NO son FK: una arista debe sobrevivir a que el nodo desaparezca (pasa a NOT_OBSERVED, nunca se borra).
+entity catalog_lineage_edges {
+  * id : uuid <<PK>>
+  * source_kind : varchar
+  * source_ref : varchar
+  * target_kind : varchar
+  * target_ref : varchar
+  * edge_kind : varchar
+  * origin : varchar
+    confidence : varchar
+  * is_official : boolean <<DEFAULT_FALSE>>
+    approved_by_user_id : uuid <<FK>>
+    approved_at : timestamptz
+  * observation_status : varchar
+  * first_seen_at : timestamptz
+  * last_seen_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' §3.8 certificacion de datasets y KPI. Una certificacion viva (REQUESTED o CERTIFIED) por destino (indice unico parcial).
+entity catalog_certifications {
+  * id : uuid <<PK>>
+  * target_kind : varchar
+    object_id : uuid <<FK>>
+    read_model_definition_id : uuid <<FK>>
+    report_definition_id : uuid <<FK>>
+    kpi_code : varchar
+  * status : varchar
+  * basis_json : jsonb
+  * requested_by_user_id : uuid <<FK>>
+  * requested_at : timestamptz
+    certified_by_user_id : uuid <<FK>>
+    certified_at : timestamptz
+    expires_at : timestamptz
+    revoked_by_user_id : uuid <<FK>>
+    revoked_at : timestamptz
+    reason : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  * row_version : integer
+}
+
+' §3.9 acuse de recibo de un cambio de esquema detectado (catalog_change_events es inmutable: el estado vive aca).
+entity catalog_change_acknowledgements <<LOG>> {
+  * id : uuid <<PK>>
+  * change_event_id : uuid <<FK>>
+  * user_id : uuid <<FK>>
+    reason : text
+  * created_at : timestamptz
+}
+
+entity "INDEXES · catalog_stewardships" as idxset_catalog_stewardships <<INDEX_SET>> {
+  PK pk_catalog_stewardships : (id) UNIQUE BTREE
+  UX ux_data_catalog_stewardships_active_role : (scope_kind, COALESCE(domain_id, object_id), role_kind) UNIQUE BTREE WHERE valid_to IS NULL
+  IX ix_data_catalog_stewardships_user_id : (user_id) BTREE
+  IX ix_data_catalog_stewardships_object_id : (object_id) BTREE
+  IX ix_data_catalog_stewardships_domain_id : (domain_id) BTREE
+}
+catalog_stewardships .. idxset_catalog_stewardships : indexed by
+
+entity "INDEXES · catalog_glossary_terms" as idxset_catalog_glossary_terms <<INDEX_SET>> {
+  PK pk_catalog_glossary_terms : (id) UNIQUE BTREE
+  UX ux_data_catalog_glossary_terms_code : (term_code) UNIQUE BTREE
+  IX ix_data_catalog_glossary_terms_status : (status) BTREE
+  IX ix_data_catalog_glossary_terms_domain_id : (domain_id) BTREE
+}
+catalog_glossary_terms .. idxset_catalog_glossary_terms : indexed by
+
+entity "INDEXES · catalog_glossary_term_revisions" as idxset_catalog_glossary_term_revisions <<INDEX_SET>> {
+  PK pk_catalog_glossary_term_revisions : (id) UNIQUE BTREE
+  UX ux_data_catalog_glossary_term_revisions_no : (term_id, revision_no) UNIQUE BTREE
+}
+catalog_glossary_term_revisions .. idxset_catalog_glossary_term_revisions : indexed by
+
+entity "INDEXES · catalog_glossary_term_links" as idxset_catalog_glossary_term_links <<INDEX_SET>> {
+  PK pk_catalog_glossary_term_links : (id) UNIQUE BTREE
+  UX ux_data_catalog_glossary_term_links_pair : (term_id, object_id, COALESCE(column_id, '00000000-0000-0000-0000-000000000000'::uuid)) UNIQUE BTREE
+  IX ix_data_catalog_glossary_term_links_column_id : (column_id) BTREE
+  IX ix_data_catalog_glossary_term_links_object_id : (object_id) BTREE
+}
+catalog_glossary_term_links .. idxset_catalog_glossary_term_links : indexed by
+
+entity "INDEXES · quality_rules" as idxset_quality_rules <<INDEX_SET>> {
+  PK pk_quality_rules : (id) UNIQUE BTREE
+  UX ux_data_catalog_quality_rules_code : (rule_code) UNIQUE BTREE
+  IX ix_data_catalog_quality_rules_object_id : (object_id) BTREE
+  IX ix_data_catalog_quality_rules_column_id : (column_id) BTREE
+  IX ix_data_catalog_quality_rules_due : (enabled, schedule_minutes) BTREE WHERE enabled
+  IX ix_data_catalog_quality_rules_owner_user_id : (owner_user_id) BTREE
+}
+quality_rules .. idxset_quality_rules : indexed by
+
+entity "INDEXES · quality_rule_runs" as idxset_quality_rule_runs <<INDEX_SET>> {
+  PK pk_quality_rule_runs : (id) UNIQUE BTREE
+  UX ux_data_catalog_quality_rule_runs_one_active : (rule_id) UNIQUE BTREE WHERE status IN ('QUEUED', 'RUNNING')
+  UX ux_data_catalog_quality_rule_runs_idempotency : (requested_by_user_id, idempotency_key) UNIQUE BTREE WHERE idempotency_key IS NOT NULL
+  IX ix_data_catalog_quality_rule_runs_rule_created : (rule_id, created_at DESC) BTREE
+  IX ix_data_catalog_quality_rule_runs_status_created : (status, created_at) BTREE
+}
+quality_rule_runs .. idxset_quality_rule_runs : indexed by
+
+entity "INDEXES · quality_issues" as idxset_quality_issues <<INDEX_SET>> {
+  PK pk_quality_issues : (id) UNIQUE BTREE
+  UX ux_data_catalog_quality_issues_live : (fingerprint) UNIQUE BTREE WHERE status IN ('OPEN', 'ACKNOWLEDGED')
+  IX ix_data_catalog_quality_issues_status_severity : (status, severity) BTREE
+  IX ix_data_catalog_quality_issues_object_id : (object_id) BTREE
+  IX ix_data_catalog_quality_issues_rule_id : (rule_id) BTREE
+  IX ix_data_catalog_quality_issues_column_id : (column_id) BTREE
+  IX ix_data_catalog_quality_issues_first_seen_run_id : (first_seen_run_id) BTREE
+  IX ix_data_catalog_quality_issues_last_seen_run_id : (last_seen_run_id) BTREE
+}
+quality_issues .. idxset_quality_issues : indexed by
+
+entity "INDEXES · quality_issue_events" as idxset_quality_issue_events <<INDEX_SET>> {
+  PK pk_quality_issue_events : (id) UNIQUE BTREE
+  IX ix_data_catalog_quality_issue_events_issue_created : (issue_id, created_at) BTREE
+  IX ix_data_catalog_quality_issue_events_run_id : (run_id) BTREE
+}
+quality_issue_events .. idxset_quality_issue_events : indexed by
+
+entity "INDEXES · quality_score_snapshots" as idxset_quality_score_snapshots <<INDEX_SET>> {
+  PK pk_quality_score_snapshots : (id) UNIQUE BTREE
+  UX ux_data_catalog_quality_score_snapshots_scope_asof : (scope_kind, COALESCE(object_id, domain_id, '00000000-0000-0000-0000-000000000000'::uuid), as_of) UNIQUE BTREE
+  IX ix_data_catalog_quality_score_snapshots_object_asof : (object_id, as_of DESC) BTREE
+  IX ix_data_catalog_quality_score_snapshots_domain_asof : (domain_id, as_of DESC) BTREE
+}
+quality_score_snapshots .. idxset_quality_score_snapshots : indexed by
+
+entity "INDEXES · catalog_lineage_edges" as idxset_catalog_lineage_edges <<INDEX_SET>> {
+  PK pk_catalog_lineage_edges : (id) UNIQUE BTREE
+  UX ux_data_catalog_lineage_edges_identity : (source_kind, source_ref, target_kind, target_ref, edge_kind, origin) UNIQUE BTREE
+  IX ix_data_catalog_lineage_edges_source : (source_kind, source_ref) BTREE
+  IX ix_data_catalog_lineage_edges_target : (target_kind, target_ref) BTREE
+  IX ix_data_catalog_lineage_edges_official : (source_kind, source_ref) BTREE WHERE is_official
+}
+catalog_lineage_edges .. idxset_catalog_lineage_edges : indexed by
+
+entity "INDEXES · catalog_certifications" as idxset_catalog_certifications <<INDEX_SET>> {
+  PK pk_catalog_certifications : (id) UNIQUE BTREE
+  UX ux_data_catalog_certifications_live : (target_kind, COALESCE(object_id, read_model_definition_id, report_definition_id, '00000000-0000-0000-0000-000000000000'::uuid), COALESCE(kpi_code, '')) UNIQUE BTREE WHERE status IN ('REQUESTED', 'CERTIFIED')
+  IX ix_data_catalog_certifications_status_expires : (status, expires_at) BTREE
+  IX ix_data_catalog_certifications_object_id : (object_id) BTREE
+  IX ix_data_catalog_certifications_read_model_definition_id : (read_model_definition_id) BTREE
+  IX ix_data_catalog_certifications_report_definition_id : (report_definition_id) BTREE
+  IX ix_data_catalog_certifications_requested_by_user_id : (requested_by_user_id) BTREE
+}
+catalog_certifications .. idxset_catalog_certifications : indexed by
+
+entity "INDEXES · catalog_change_acknowledgements" as idxset_catalog_change_acknowledgements <<INDEX_SET>> {
+  PK pk_catalog_change_acknowledgements : (id) UNIQUE BTREE
+  UX ux_data_catalog_change_acknowledgements_event : (change_event_id) UNIQUE BTREE
+  IX ix_data_catalog_change_acknowledgements_user_id : (user_id) BTREE
+}
+catalog_change_acknowledgements .. idxset_catalog_change_acknowledgements : indexed by
+
 catalog_scan_runs ||--o{ catalog_objects
 catalog_scan_runs ||--o{ catalog_columns
 catalog_objects ||--o{ catalog_columns
@@ -397,4 +749,48 @@ catalog_operation_impacts }o--o| catalog_columns : column_id
 catalog_process_steps }o--|| catalog_processes : process_id
 catalog_process_step_operations }o--|| catalog_process_steps : step_id
 catalog_process_step_operations }o--|| catalog_operations : operation_id
+
+' ── v4.2.81 · aristas etiquetadas (la etiqueta es la columna FK; gen_ddl resuelve el destino sin nota del vault) ──
+' Las 14 primeras aristas reponen, de forma explicita, las FK intra-modulo de las tablas ya
+' promovidas (catalog_objects ... catalog_evidence_items): antes salian de notas FK de la boveda que no
+' todos los checkouts tienen, y regenerar sin ellas las perdia en silencio.
+catalog_objects }o--|| catalog_scan_runs : first_seen_scan_id
+catalog_objects }o--|| catalog_scan_runs : last_seen_scan_id
+catalog_columns }o--|| catalog_objects : object_id
+catalog_columns }o--|| catalog_scan_runs : first_seen_scan_id
+catalog_columns }o--|| catalog_scan_runs : last_seen_scan_id
+catalog_change_events }o--|| catalog_scan_runs : scan_run_id
+catalog_change_events }o--|| catalog_objects : object_id
+catalog_change_events }o--o| catalog_columns : column_id
+catalog_annotations }o--|| catalog_objects : object_id
+catalog_annotations }o--o| catalog_columns : column_id
+catalog_annotation_revisions }o--|| catalog_annotations : annotation_id
+catalog_review_decisions }o--|| catalog_annotations : annotation_id
+catalog_evidence_items }o--|| catalog_objects : object_id
+catalog_evidence_items }o--o| catalog_columns : column_id
+' Nuevas (v4.2.81)
+catalog_objects }o--o| system_ops_data_domains : domain_id
+catalog_stewardships }o--o| system_ops_data_domains : domain_id
+catalog_stewardships }o--o| catalog_objects : object_id
+catalog_glossary_terms }o--o| system_ops_data_domains : domain_id
+catalog_glossary_term_revisions }o--|| catalog_glossary_terms : term_id
+catalog_glossary_term_links }o--|| catalog_glossary_terms : term_id
+catalog_glossary_term_links }o--|| catalog_objects : object_id
+catalog_glossary_term_links }o--o| catalog_columns : column_id
+quality_rules }o--|| catalog_objects : object_id
+quality_rules }o--o| catalog_columns : column_id
+quality_rule_runs }o--|| quality_rules : rule_id
+quality_issues }o--|| quality_rules : rule_id
+quality_issues }o--|| catalog_objects : object_id
+quality_issues }o--o| catalog_columns : column_id
+quality_issues }o--|| quality_rule_runs : first_seen_run_id
+quality_issues }o--|| quality_rule_runs : last_seen_run_id
+quality_issue_events }o--|| quality_issues : issue_id
+quality_issue_events }o--o| quality_rule_runs : run_id
+quality_score_snapshots }o--o| catalog_objects : object_id
+quality_score_snapshots }o--o| system_ops_data_domains : domain_id
+catalog_certifications }o--o| catalog_objects : object_id
+catalog_certifications }o--o| read_models_read_model_definitions : read_model_definition_id
+catalog_certifications }o--o| reporting_report_definitions : report_definition_id
+catalog_change_acknowledgements }o--|| catalog_change_events : change_event_id
 @enduml

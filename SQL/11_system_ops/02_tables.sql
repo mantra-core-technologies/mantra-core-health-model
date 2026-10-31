@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · módulo 11 · schema system_ops
+-- SALUD v4.2.81 · módulo 11 · schema system_ops
 -- Generado de diagram_11_system_ops.puml — NO editar a mano.
 
 
@@ -546,4 +546,23 @@ CREATE TABLE IF NOT EXISTS "system_ops"."breach_notifications" (
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
     CONSTRAINT "pk_breach_notifications" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "system_ops"."governance_policy_revisions" (
+    "id" uuid NOT NULL,
+    "policy_type" varchar NOT NULL,
+    "policy_id" uuid NOT NULL,
+    "revision_no" integer NOT NULL,
+    "content_json" jsonb NOT NULL,
+    "content_hash" varchar NOT NULL,
+    "status" varchar NOT NULL,
+    "change_reason" text NOT NULL,
+    "submitted_by_user_id" uuid NOT NULL,
+    "submitted_at" timestamptz NOT NULL,
+    "decided_by_user_id" uuid,
+    "decided_at" timestamptz,
+    "decision_comment" text,
+    "effective_from" timestamptz,
+    "created_at" timestamptz NOT NULL,
+    CONSTRAINT "pk_governance_policy_revisions" PRIMARY KEY ("id")
 );

@@ -211,7 +211,13 @@ model:
       Franja F1b del portal de observabilidad y gobierno. (1) Módulo 28: índice único parcial
       ux_user_activity_events_anonymous_idempotency (tenant con COALESCE, clave) WHERE user_id IS NULL e índice de
       búsqueda (user_id, clave) para los identificados; el parche deduplica de forma determinista los repetidos
-      previos (SQL/patches/2026-10-31_v4281_idempotencia_anonima.sql).
+      previos (SQL/patches/2026-10-31_v4281_idempotencia_anonima.sql). (2) Gobierno de datos: módulo 67 +12 tablas
+      (catalog_stewardships, glosario con revisiones y enlaces,
+      quality_rules/_rule_runs/_issues/_issue_events/_score_snapshots, catalog_lineage_edges, catalog_certifications,
+      catalog_change_acknowledgements) y catalog_objects.domain_id; módulo 11 +governance_policy_revisions
+      (inmutabilidad parcial por disparador de columnas, D-F1b-7) e índice ix_governance_change_log_target_recorded;
+      módulo 33: UPDATE prohibido en 4 tablas y 9 CHECK de gobierno. Sin RLS a propósito (ninguna lleva tenant).
+      SQL/patches/2026-10-31_v4281_gobierno_de_datos.sql.
   materialization_note: >-
     v4.0.1 materializado en el ER (fuente: el vault/grafo). Se añadieron 14
     entidades nuevas (marketing.campaign_schedules/dispatches/dispatch_recipients,
@@ -224,12 +230,12 @@ model:
   inventory:
     modules_puml: 71
     schemas: 59
-    entity_declarations_total: 3144
-    table_like_elements: 1431
+    entity_declarations_total: 3181
+    table_like_elements: 1448
     view_elements: 81
-    index_sets: 1397
-    reference_only_stubs: 235
-    fk_references: 7581
+    index_sets: 1410
+    reference_only_stubs: 242
+    fk_references: 7629
     note: >-
       Cifras producidas por tools/model_inventory.py (fuente única reproducible:
       clasifica cada `entity` en una sola clase, suma == total). v4.0 base
@@ -264,8 +270,8 @@ model:
       (v4.2.80: módulo 70 con 12 tablas + client_error_events en el 28 + los
       stubs y entradas de la matriz del 33): 3144 entity / 1431 table_like /
       81 vistas / 1397 idx / 7581 FK / 235 ref / 59 schemas (tools/model_inventory.py).
-      Recontado el 2026-10-31 con la franja F1b (v4.2.81, entregable 1): 3144 entity / 1431 table_like /
-      81 vistas / 1397 idx / 7581 FK / 235 ref / 59 schemas (tools/model_inventory.py).
+      Recontado el 2026-10-31 con la franja F1b (v4.2.81, entregables 1 a 2): 3181 entity / 1448 table_like /
+      81 vistas / 1410 idx / 7629 FK / 242 ref / 59 schemas (tools/model_inventory.py).
   database: PostgreSQL canonical + governed specialized stores
   rules:
     one_puml_per_module: true
@@ -390,9 +396,9 @@ modules:
   code: system_ops
   title: Data Governance and System Operations
   file: modules/diagram_11_system_ops.puml
-  table_like_elements: 29
+  table_like_elements: 30
   view_elements: 0
-  index_sets: 29
+  index_sets: 30
   status: active
 - number: 12
   code: integrations
@@ -566,7 +572,7 @@ modules:
   code: integrity
   title: Concurrency, Constraints and Integrity Matrix
   file: modules/diagram_33_integrity.puml
-  table_like_elements: 15
+  table_like_elements: 27
   view_elements: 0
   index_sets: 0
   status: active
@@ -842,9 +848,9 @@ modules:
   code: data_catalog
   title: Data Catalog and Column Governance
   file: modules/diagram_67_data_catalog.puml
-  table_like_elements: 13
+  table_like_elements: 25
   view_elements: 0
-  index_sets: 13
+  index_sets: 25
   status: active
 
 - number: 68

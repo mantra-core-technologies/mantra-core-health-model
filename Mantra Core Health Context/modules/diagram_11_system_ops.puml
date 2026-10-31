@@ -605,6 +605,7 @@ entity "INDEXES · governance_change_log" as idxset_governance_change_log <<INDE
   IX ix_governance_change_log_changed_by_user_id : (changed_by_user_id) BTREE
   IX ix_governance_change_log_recorded_by_user_id : (recorded_by_user_id) BTREE
   BRIN brin_governance_change_log_recorded_at : (recorded_at) BRIN pages_per_range=128
+  IX ix_governance_change_log_target_recorded : (target_type, target_id, recorded_at DESC) BTREE
 }
 
 governance_change_log .. idxset_governance_change_log : indexed by
@@ -953,6 +954,50 @@ entity breach_notifications {
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
 }
+
+' ===== v4.2.81 (gobierno de datos) · politicas con version y aprobacion =====
+' Fuente: docs/trabajo/2026-10-31-portal-observabilidad-gobierno/04-catalogo-y-gobierno.md §3.4 (H1.S1.M2).
+' Cada cambio de una politica (escritura, retencion, anonimizacion, residencia, respaldo, cifrado) es una
+' REVISION: nace DRAFT, se envia (PENDING_APPROVAL: una sola por politica, indice unico parcial) y OTRA persona la
+' aprueba o rechaza; al aprobar, el servicio aplica `content_json` a la tabla de la politica en la misma
+' transaccion y marca SUPERSEDED a la anterior. `policy_id` es polimorfico (apunta a la tabla que diga `policy_type`),
+' por eso no es FK, igual que governance_change_log.target_id.
+'
+' DECISION D-F1b-7 — inmutabilidad PARCIAL, no UPDATE: forbidden. El plan la llamaba «inmutable (forbid_mutation)», pero la
+'   misma fila lleva el ciclo de vida (status, decided_*, effective_from) y el flujo exige actualizarlo: con
+'   integrity.forbid_mutation() ninguna revision podria aprobarse ni quedar SUPERSEDED. Lo que NO puede cambiar nunca es lo que
+'   se propuso: policy_type, policy_id, revision_no, content_json, content_hash, change_reason, submitted_by_user_id,
+'   submitted_at, created_at; y una decision tomada (decided_*) no se reescribe. Lo impone un disparador de columnas
+'   (system_ops.guard_governance_policy_revision, en SQL/patches/2026-10-31_v4281_gobierno_de_datos.sql: no es expresable en el
+'   .puml) y ck_governance_policy_revisions_not_self impone en la base que quien decide no es quien propuso.
+entity governance_policy_revisions {
+  * id : uuid <<PK>>
+  --
+  * policy_type : varchar
+  * policy_id : uuid
+  * revision_no : integer
+  * content_json : jsonb
+  * content_hash : varchar
+  * status : varchar
+  * change_reason : text
+  * submitted_by_user_id : uuid <<FK>>
+  * submitted_at : timestamptz
+    decided_by_user_id : uuid <<FK>>
+    decided_at : timestamptz
+    decision_comment : text
+    effective_from : timestamptz
+  * created_at : timestamptz
+}
+
+entity "INDEXES · governance_policy_revisions" as idxset_governance_policy_revisions <<INDEX_SET>> {
+  PK pk_governance_policy_revisions : (id) UNIQUE BTREE
+  UX ux_governance_policy_revisions_no : (policy_type, policy_id, revision_no) UNIQUE BTREE
+  UX ux_governance_policy_revisions_one_pending : (policy_type, policy_id) UNIQUE BTREE WHERE status = 'PENDING_APPROVAL'
+  IX ix_governance_policy_revisions_status_submitted : (status, submitted_at DESC) BTREE
+  IX ix_governance_policy_revisions_submitted_by_user_id : (submitted_by_user_id) BTREE
+  IX ix_governance_policy_revisions_decided_by_user_id : (decided_by_user_id) BTREE
+}
+governance_policy_revisions .. idxset_governance_policy_revisions : indexed by
 
 ' ===== v4.0.6 (endurecimiento de seguridad) ===== (index sets)
 
