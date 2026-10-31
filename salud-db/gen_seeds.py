@@ -5775,7 +5775,7 @@ INSIGHTS_VALUE_SETS = OrderedDict([
     ("vs_insights_campaign_status", ("planned", "active", "ended")),
     ("vs_insights_data_source_status", ("connected", "delayed", "disconnected")),
     ("vs_insights_alert_severity", ("critical", "risk", "anomaly", "opportunity")),
-    ("vs_insights_alert_status", ("new", "seen", "in_progress", "resolved")),
+    ("vs_insights_alert_status", ("new", "seen", "in_progress", "resolved", "dismissed")),
 ])
 VS_DISPLAY.update({
     "vs_insights_campaign_status": {"planned": "Planificada", "active": "Activa",
@@ -5785,7 +5785,7 @@ VS_DISPLAY.update({
     "vs_insights_alert_severity": {"critical": "Crítica", "risk": "Riesgo",
                                    "anomaly": "Anomalía", "opportunity": "Oportunidad"},
     "vs_insights_alert_status": {"new": "Nueva", "seen": "Vista", "in_progress": "En curso",
-                                 "resolved": "Resuelta"},
+                                 "resolved": "Resuelta", "dismissed": "Descartada"},
 })
 
 

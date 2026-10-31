@@ -821,7 +821,7 @@ note as INSIGHTS_diagram_50_marketing
   campaign status->vs_insights_campaign_status{planned,active,ended};
   data source status->vs_insights_data_source_status{connected,delayed,disconnected};
   alert severity->vs_insights_alert_severity{critical,risk,anomaly,opportunity};
-  alert status->vs_insights_alert_status{new,seen,in_progress,resolved}.
+  alert status->vs_insights_alert_status{new,seen,in_progress,resolved,dismissed}.
 end note
 
 package "Physical Indexes" {
