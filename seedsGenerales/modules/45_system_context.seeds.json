@@ -49,7 +49,7 @@
       "dynamic_enum_options",
       "dynamic_enum_bindings"
     ],
-    "record_count": 809,
+    "record_count": 831,
     "records": {
       "system_contexts": [
         {
@@ -1601,6 +1601,82 @@
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "row_version": 1
+        },
+        {
+          "id": "92ebbcf3-0c2a-5ae4-81e6-2d0a411b53ab",
+          "code": "VS_INSIGHTS_CAMPAIGN_STATUS",
+          "name": "Insights Campaign Status",
+          "description": "Enum dinámico del value set vs_insights_campaign_status (patch v4.2.69).",
+          "value_set_id": "7baf3b49-f6b8-5a70-a7ec-d7e53f67d24a",
+          "scope_type_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "tenant_id": null,
+          "country_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
+          "selection_mode_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "allow_tenant_extension": false,
+          "allow_custom_value": false,
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-08-17T03:04:00Z",
+          "updated_at": "2026-08-17T03:24:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "b49fd6a9-9fd7-5c0b-8231-ca442aeb27e3",
+          "code": "VS_INSIGHTS_DATA_SOURCE_STATUS",
+          "name": "Insights Data Source Status",
+          "description": "Enum dinámico del value set vs_insights_data_source_status (patch v4.2.69).",
+          "value_set_id": "9624ea20-0537-5f6f-a618-fb2cbbeb951f",
+          "scope_type_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "tenant_id": null,
+          "country_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
+          "selection_mode_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "allow_tenant_extension": false,
+          "allow_custom_value": false,
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-08-26T01:51:00Z",
+          "updated_at": "2026-08-26T02:11:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "44036530-9282-5892-b5f8-43a4b34fbe55",
+          "code": "VS_INSIGHTS_ALERT_SEVERITY",
+          "name": "Insights Alert Severity",
+          "description": "Enum dinámico del value set vs_insights_alert_severity (patch v4.2.69).",
+          "value_set_id": "578208f3-93c5-52f3-945e-16ca0ba21d19",
+          "scope_type_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "tenant_id": null,
+          "country_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
+          "selection_mode_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "allow_tenant_extension": false,
+          "allow_custom_value": false,
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-08-18T15:52:00Z",
+          "updated_at": "2026-08-18T16:12:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "b407edf7-b6bd-5d50-8950-9445399d4aaf",
+          "code": "VS_INSIGHTS_ALERT_STATUS",
+          "name": "Insights Alert Status",
+          "description": "Enum dinámico del value set vs_insights_alert_status (patch v4.2.69).",
+          "value_set_id": "b2746899-2d9e-506c-a4d7-65456cd43429",
+          "scope_type_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "tenant_id": null,
+          "country_concept_id": "68c85767-41c5-5734-b220-e7cbd99395f3",
+          "selection_mode_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "allow_tenant_extension": false,
+          "allow_custom_value": false,
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "created_at": "2026-08-16T01:02:00Z",
+          "updated_at": "2026-08-16T01:22:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
         }
       ],
       "dynamic_enum_versions": [
@@ -2317,6 +2393,58 @@
           "effective_to": null,
           "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
           "recorded_at": "2026-09-22T05:48:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "00bfe94a-843c-567d-b999-505aa349981d",
+          "dynamic_enum_definition_id": "92ebbcf3-0c2a-5ae4-81e6-2d0a411b53ab",
+          "version_number": 1,
+          "value_set_version_id": "20449b85-7162-5512-95f0-fe210311a878",
+          "schema_version": "1.0.0",
+          "cache_token": "224095b6755d3b4ba0e23f8e01aa0ef3",
+          "effective_from": "2026-08-17T03:04:00Z",
+          "effective_to": null,
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "recorded_at": "2026-08-17T03:04:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "2afa2f20-869d-5ffe-866d-5b8198bdf6f1",
+          "dynamic_enum_definition_id": "b49fd6a9-9fd7-5c0b-8231-ca442aeb27e3",
+          "version_number": 1,
+          "value_set_version_id": "c281f8dd-8aba-518f-ad3f-c42062abe3d1",
+          "schema_version": "1.0.0",
+          "cache_token": "8b09b0e1a3268fd5c5b4d0e3ab8babc5",
+          "effective_from": "2026-08-26T01:51:00Z",
+          "effective_to": null,
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "recorded_at": "2026-08-26T01:51:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "b6ec4fcb-41f5-5111-a87a-5dce6c394617",
+          "dynamic_enum_definition_id": "44036530-9282-5892-b5f8-43a4b34fbe55",
+          "version_number": 1,
+          "value_set_version_id": "cee2ed87-5267-5954-8e7b-04a5eb9b7b2a",
+          "schema_version": "1.0.0",
+          "cache_token": "e3c4893fe4e839f1019972815165928b",
+          "effective_from": "2026-08-18T15:52:00Z",
+          "effective_to": null,
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "recorded_at": "2026-08-18T15:52:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "a577f456-a152-508f-8dba-d8686b155353",
+          "dynamic_enum_definition_id": "b407edf7-b6bd-5d50-8950-9445399d4aaf",
+          "version_number": 1,
+          "value_set_version_id": "c47aff6e-ced3-5cb7-b51a-7614e53867fd",
+          "schema_version": "1.0.0",
+          "cache_token": "3b98dc776923b33b9c63abb006d22b5a",
+          "effective_from": "2026-08-16T01:02:00Z",
+          "effective_to": null,
+          "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
+          "recorded_at": "2026-08-16T01:02:00Z",
           "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
         }
       ],
@@ -12412,6 +12540,230 @@
           },
           "recorded_at": "2026-08-12T23:24:00Z",
           "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "f303adcd-36d4-557c-bb2a-406c2ef6e15e",
+          "dynamic_enum_version_id": "00bfe94a-843c-567d-b999-505aa349981d",
+          "concept_id": "18d25a8d-8c57-5200-99e6-b256fad3b023",
+          "code": "PLANNED",
+          "display": "Planificada",
+          "ordinal": 1,
+          "is_default": true,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_insights_campaign_status",
+            "patch": "v4.2.69"
+          },
+          "recorded_at": "2026-08-31T08:16:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "46323e8d-686d-5eb0-a4f0-fe17465917a5",
+          "dynamic_enum_version_id": "00bfe94a-843c-567d-b999-505aa349981d",
+          "concept_id": "ebb67caf-1099-5569-9f5f-0e782d7302a4",
+          "code": "ACTIVE",
+          "display": "Activa",
+          "ordinal": 2,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_insights_campaign_status",
+            "patch": "v4.2.69"
+          },
+          "recorded_at": "2026-09-20T09:01:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "fa22476a-5131-51d2-9c25-f22272fcd3ff",
+          "dynamic_enum_version_id": "00bfe94a-843c-567d-b999-505aa349981d",
+          "concept_id": "e4a6881a-ee04-5f91-bf69-552880e6475d",
+          "code": "ENDED",
+          "display": "Finalizada",
+          "ordinal": 3,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_insights_campaign_status",
+            "patch": "v4.2.69"
+          },
+          "recorded_at": "2026-09-22T21:52:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "8f720e91-8b73-5185-948f-281697387689",
+          "dynamic_enum_version_id": "2afa2f20-869d-5ffe-866d-5b8198bdf6f1",
+          "concept_id": "752349aa-3c2c-5ada-9460-34bc14325055",
+          "code": "CONNECTED",
+          "display": "Conectada",
+          "ordinal": 1,
+          "is_default": true,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_insights_data_source_status",
+            "patch": "v4.2.69"
+          },
+          "recorded_at": "2026-08-17T21:32:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "8cbc0a45-44a5-5a10-9ab4-ebc6eb08fa2a",
+          "dynamic_enum_version_id": "2afa2f20-869d-5ffe-866d-5b8198bdf6f1",
+          "concept_id": "c88c657b-3b7f-5cc9-ba41-60255143b6d6",
+          "code": "DELAYED",
+          "display": "Con retraso",
+          "ordinal": 2,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_insights_data_source_status",
+            "patch": "v4.2.69"
+          },
+          "recorded_at": "2026-09-10T19:36:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "61aa6f48-055d-51e3-a75b-db140918c911",
+          "dynamic_enum_version_id": "2afa2f20-869d-5ffe-866d-5b8198bdf6f1",
+          "concept_id": "a8860b2a-22c9-5369-b76a-25c3ca9047e2",
+          "code": "DISCONNECTED",
+          "display": "Desconectada",
+          "ordinal": 3,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_insights_data_source_status",
+            "patch": "v4.2.69"
+          },
+          "recorded_at": "2026-09-17T16:55:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "404ea663-23f0-5d6f-9bdf-2f494ceb91db",
+          "dynamic_enum_version_id": "b6ec4fcb-41f5-5111-a87a-5dce6c394617",
+          "concept_id": "8ef3eb72-1baa-52bf-9e70-9b635b6d5728",
+          "code": "CRITICAL",
+          "display": "Crítica",
+          "ordinal": 1,
+          "is_default": true,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_insights_alert_severity",
+            "patch": "v4.2.69"
+          },
+          "recorded_at": "2026-09-15T15:31:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "860afead-e027-56c8-8d8b-8d502a5532cb",
+          "dynamic_enum_version_id": "b6ec4fcb-41f5-5111-a87a-5dce6c394617",
+          "concept_id": "fec4d6a6-e597-51de-a9fc-b08373e8c1cc",
+          "code": "RISK",
+          "display": "Riesgo",
+          "ordinal": 2,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_insights_alert_severity",
+            "patch": "v4.2.69"
+          },
+          "recorded_at": "2026-10-13T09:05:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "9797f9c5-17b0-5bd4-abd7-20dd8d041271",
+          "dynamic_enum_version_id": "b6ec4fcb-41f5-5111-a87a-5dce6c394617",
+          "concept_id": "9786bcfb-459e-5c9f-a63b-5ac5c78874d4",
+          "code": "ANOMALY",
+          "display": "Anomalía",
+          "ordinal": 3,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_insights_alert_severity",
+            "patch": "v4.2.69"
+          },
+          "recorded_at": "2026-08-21T07:42:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "111fd582-d379-5e69-8363-780877879770",
+          "dynamic_enum_version_id": "b6ec4fcb-41f5-5111-a87a-5dce6c394617",
+          "concept_id": "da035835-d8bc-5bea-815f-25b7e1649bb9",
+          "code": "OPPORTUNITY",
+          "display": "Oportunidad",
+          "ordinal": 4,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_insights_alert_severity",
+            "patch": "v4.2.69"
+          },
+          "recorded_at": "2026-08-10T07:16:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "3da83562-fd4b-504c-8f22-772b7c44fb7c",
+          "dynamic_enum_version_id": "a577f456-a152-508f-8dba-d8686b155353",
+          "concept_id": "5d8b8a31-6504-5d2c-9acf-61bdbd7b6707",
+          "code": "NEW",
+          "display": "Nueva",
+          "ordinal": 1,
+          "is_default": true,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_insights_alert_status",
+            "patch": "v4.2.69"
+          },
+          "recorded_at": "2026-10-14T16:20:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "bfe07192-ed85-5c50-b8ea-c56726fa7d0b",
+          "dynamic_enum_version_id": "a577f456-a152-508f-8dba-d8686b155353",
+          "concept_id": "3e2ea571-076e-5880-8b09-ca06fce8b33f",
+          "code": "SEEN",
+          "display": "Vista",
+          "ordinal": 2,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_insights_alert_status",
+            "patch": "v4.2.69"
+          },
+          "recorded_at": "2026-07-28T14:23:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "eb5bf6f8-7523-5689-98ee-494d2283e688",
+          "dynamic_enum_version_id": "a577f456-a152-508f-8dba-d8686b155353",
+          "concept_id": "2d42fbd2-5ba7-5638-8d3f-da33dfd7f56d",
+          "code": "IN_PROGRESS",
+          "display": "En curso",
+          "ordinal": 3,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_insights_alert_status",
+            "patch": "v4.2.69"
+          },
+          "recorded_at": "2026-09-02T06:57:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
+        },
+        {
+          "id": "ca327707-05c8-5115-ac5d-a9e8ae2b813e",
+          "dynamic_enum_version_id": "a577f456-a152-508f-8dba-d8686b155353",
+          "concept_id": "a4803af5-763c-5472-ae61-cc3c7bf01a36",
+          "code": "RESOLVED",
+          "display": "Resuelta",
+          "ordinal": 4,
+          "is_default": false,
+          "enabled": true,
+          "metadata_json": {
+            "value_set": "vs_insights_alert_status",
+            "patch": "v4.2.69"
+          },
+          "recorded_at": "2026-09-25T12:41:00Z",
+          "recorded_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193"
         }
       ],
       "dynamic_enum_bindings": [
@@ -13449,7 +13801,7 @@
       }
     ],
     "summary": {
-      "record_count": 809,
+      "record_count": 831,
       "entity_count": 6,
       "populated_entity_count": 6,
       "scenario_count": null,
