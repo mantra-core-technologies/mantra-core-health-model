@@ -1,4 +1,4 @@
--- SALUD v4.2.81 · módulo 14 · schema practice
+-- SALUD v4.2.82 · módulo 14 · schema practice
 -- Generado de diagram_14_practice.puml — NO editar a mano.
 
 
@@ -140,6 +140,96 @@ CREATE UNIQUE INDEX IF NOT EXISTS "ux_care_spaces_tenant_id_id" ON "practice"."c
 
 CREATE INDEX IF NOT EXISTS "ix_care_spaces_location_path" ON "practice"."care_spaces" (location_path varchar_pattern_ops);
 
+CREATE INDEX IF NOT EXISTS "ix_care_spaces_availability_reason_concept_id" ON "practice"."care_spaces" ("availability_reason_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_care_spaces_hygiene_status_concept_id" ON "practice"."care_spaces" ("hygiene_status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_care_spaces_isolation_concept_id" ON "practice"."care_spaces" ("isolation_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_care_space_status_events_tenant_id" ON "practice"."care_space_status_events" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_care_space_status_events_space_occurred" ON "practice"."care_space_status_events" ("care_space_id", "occurred_at" DESC);
+
+CREATE INDEX IF NOT EXISTS "ix_care_space_status_events_site_occurred" ON "practice"."care_space_status_events" ("practice_site_id", "occurred_at" DESC);
+
+CREATE INDEX IF NOT EXISTS "ix_care_space_status_events_axis_concept_id" ON "practice"."care_space_status_events" ("axis_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_care_space_status_events_from_concept_id" ON "practice"."care_space_status_events" ("from_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_care_space_status_events_to_concept_id" ON "practice"."care_space_status_events" ("to_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_care_space_status_events_reason_concept_id" ON "practice"."care_space_status_events" ("reason_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_care_space_status_events_source_concept_id" ON "practice"."care_space_status_events" ("source_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_care_space_status_events_recorded_by_user_id" ON "practice"."care_space_status_events" ("recorded_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_care_space_blocks_tenant_id" ON "practice"."care_space_blocks" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_care_space_blocks_care_space_id" ON "practice"."care_space_blocks" ("care_space_id");
+
+CREATE INDEX IF NOT EXISTS "ix_care_space_blocks_kind_concept_id" ON "practice"."care_space_blocks" ("kind_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_care_space_blocks_reason_concept_id" ON "practice"."care_space_blocks" ("reason_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_care_space_blocks_ended_by_user_id" ON "practice"."care_space_blocks" ("ended_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_care_space_blocks_created_by_user_id" ON "practice"."care_space_blocks" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_care_space_blocks_updated_by_user_id" ON "practice"."care_space_blocks" ("updated_by_user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_care_space_blocks_tenant_id_id" ON "practice"."care_space_blocks" ("tenant_id", "id");
+
+CREATE INDEX IF NOT EXISTS "ix_cleaning_orders_tenant_id" ON "practice"."cleaning_orders" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_cleaning_orders_practice_site_id" ON "practice"."cleaning_orders" ("practice_site_id");
+
+CREATE INDEX IF NOT EXISTS "ix_cleaning_orders_care_space_id" ON "practice"."cleaning_orders" ("care_space_id");
+
+CREATE INDEX IF NOT EXISTS "ix_cleaning_orders_clinical_unit_id" ON "practice"."cleaning_orders" ("clinical_unit_id");
+
+CREATE INDEX IF NOT EXISTS "ix_cleaning_orders_cleaning_type_concept_id" ON "practice"."cleaning_orders" ("cleaning_type_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_cleaning_orders_trigger_concept_id" ON "practice"."cleaning_orders" ("trigger_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_cleaning_orders_previous_order_id" ON "practice"."cleaning_orders" ("previous_order_id");
+
+CREATE INDEX IF NOT EXISTS "ix_cleaning_orders_priority_concept_id" ON "practice"."cleaning_orders" ("priority_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_cleaning_orders_status_concept_id" ON "practice"."cleaning_orders" ("status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_cleaning_orders_assigned_user_id" ON "practice"."cleaning_orders" ("assigned_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_cleaning_orders_started_by_user_id" ON "practice"."cleaning_orders" ("started_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_cleaning_orders_finished_by_user_id" ON "practice"."cleaning_orders" ("finished_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_cleaning_orders_inspected_by_user_id" ON "practice"."cleaning_orders" ("inspected_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_cleaning_orders_inspection_result_concept_id" ON "practice"."cleaning_orders" ("inspection_result_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_cleaning_orders_created_by_user_id" ON "practice"."cleaning_orders" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_cleaning_orders_updated_by_user_id" ON "practice"."cleaning_orders" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_cleaning_orders_site_status_requested" ON "practice"."cleaning_orders" ("practice_site_id", "status_concept_id", "requested_at");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_cleaning_orders_tenant_id_id" ON "practice"."cleaning_orders" ("tenant_id", "id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_cleaning_orders_one_open_per_space" ON "practice"."cleaning_orders" ("care_space_id") WHERE status_concept_id IN ('c0c5918f-cf97-51e1-9ede-72d856e61c93', '60ff8df8-4ba5-591c-b092-e8da81187539', '334b9e1f-b123-5477-a22e-2dd1b838c2fa');
+
+CREATE INDEX IF NOT EXISTS "ix_care_space_category_periods_tenant_id" ON "practice"."care_space_category_periods" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_care_space_category_periods_care_space_id" ON "practice"."care_space_category_periods" ("care_space_id");
+
+CREATE INDEX IF NOT EXISTS "ix_care_space_category_periods_bed_category_concept_id" ON "practice"."care_space_category_periods" ("bed_category_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_care_space_category_periods_created_by_user_id" ON "practice"."care_space_category_periods" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_care_space_category_periods_updated_by_user_id" ON "practice"."care_space_category_periods" ("updated_by_user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_care_space_category_periods_tenant_id_id" ON "practice"."care_space_category_periods" ("tenant_id", "id");
+
 CREATE INDEX IF NOT EXISTS "ix_space_unit_assignments_tenant_id" ON "practice"."space_unit_assignments" ("tenant_id");
 
 CREATE INDEX IF NOT EXISTS "ix_space_unit_assignments_care_space_id" ON "practice"."space_unit_assignments" ("care_space_id");
@@ -200,6 +290,10 @@ CREATE INDEX IF NOT EXISTS "ix_healthcare_services_created_by_user_id" ON "pract
 
 CREATE INDEX IF NOT EXISTS "ix_healthcare_services_updated_by_user_id" ON "practice"."healthcare_services" ("updated_by_user_id");
 
+CREATE INDEX IF NOT EXISTS "ix_healthcare_services_tenant_id" ON "practice"."healthcare_services" ("tenant_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_healthcare_services_tenant_id_id" ON "practice"."healthcare_services" ("tenant_id", "id");
+
 CREATE INDEX IF NOT EXISTS "ix_practitioner_role_assignments_practitioner_profile_id" ON "practice"."practitioner_role_assignments" ("practitioner_profile_id");
 
 CREATE INDEX IF NOT EXISTS "ix_practitioner_role_assignments_practice_id" ON "practice"."practitioner_role_assignments" ("practice_id");
@@ -239,6 +333,8 @@ CREATE INDEX IF NOT EXISTS "ix_practitioner_support_assignments_created_by_user_
 CREATE INDEX IF NOT EXISTS "ix_practitioner_support_assignments_updated_by_user_id" ON "practice"."practitioner_support_assignments" ("updated_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "gist_practitioner_support_assignments_effective_period" ON "practice"."practitioner_support_assignments" USING gist (daterange(valid_from, valid_to, '[)'));
+
+CREATE INDEX IF NOT EXISTS "ix_prac_support_assignments_initiated_by_party" ON "practice"."practitioner_support_assignments" ("initiated_by_party_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_practice_accreditations_practice_id" ON "practice"."practice_accreditations" ("practice_id");
 

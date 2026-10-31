@@ -40,8 +40,8 @@
       "file": "modules/03_terminology.seeds.json",
       "boot_records": 4779,
       "mock_records": 180,
-      "line_count": 72668,
-      "sha256": "f9e8bf07e2163495ffcc80c0c1c309b23d9de64ad3629395371c4a272e6d4b73"
+      "line_count": 72701,
+      "sha256": "42b61279843c95ed85c6de4ca42190ea4150ae5736fafc25aec8de3f564a9e9c"
     },
     {
       "number": 4,
@@ -139,8 +139,8 @@
       "file": "modules/14_practice.seeds.json",
       "boot_records": 60,
       "mock_records": 176,
-      "line_count": 4796,
-      "sha256": "cdaf782417c690cfc9a94468f79345bb969c843d647a96a3d9c771b24bb1cfd3"
+      "line_count": 4822,
+      "sha256": "382ccc1daa7d36f0166f940e2dc6a53e8f616e72d1cba46c97a901fb5d0b1d43"
     },
     {
       "number": 15,
@@ -157,8 +157,8 @@
       "file": "modules/16_accounting.seeds.json",
       "boot_records": 110,
       "mock_records": 671,
-      "line_count": 14074,
-      "sha256": "ae14516c04a8471d53746f53bad1a7e2625807add2ae43959f2fb58b6f5cbbea"
+      "line_count": 14116,
+      "sha256": "e23865e65640a2a09d3e3b98c08d2bcf993b9032ed8bfe63c6e68e1cf124db89"
     },
     {
       "number": 17,
@@ -491,7 +491,7 @@
       "boot_records": 0,
       "mock_records": 560,
       "line_count": 10785,
-      "sha256": "758962fee2694f2e27255ca728610f1b68b3451d951e2195ff0d1af771f44eaf"
+      "sha256": "a595b9cd3b2f06dcc4b7cfd0bacd4d113961eb2d584e296144b58cc020263724"
     },
     {
       "number": 54,

@@ -1,4 +1,4 @@
--- SALUD v4.2.81 · módulo 05 · schema profiles
+-- SALUD v4.2.82 · módulo 05 · schema profiles
 -- Generado de diagram_05_profiles.puml — NO editar a mano.
 
 
@@ -126,6 +126,36 @@ DO $$ BEGIN
     ALTER TABLE "profiles"."patient_primary_practitioners"
         ADD CONSTRAINT "fk_patient_primary_practitioners_practitioner_profile_id" FOREIGN KEY ("practitioner_profile_id")
         REFERENCES "profiles"."health_practitioner_profiles" ("profile_id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "profiles"."practitioner_admissions"
+        ADD CONSTRAINT "fk_practitioner_admissions_practitioner_profile_id" FOREIGN KEY ("practitioner_profile_id")
+        REFERENCES "profiles"."health_practitioner_profiles" ("profile_id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "profiles"."practitioner_admission_reviews"
+        ADD CONSTRAINT "fk_practitioner_admission_reviews_admission_id" FOREIGN KEY ("admission_id")
+        REFERENCES "profiles"."practitioner_admissions" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "profiles"."practitioner_admission_reviews"
+        ADD CONSTRAINT "fk_practitioner_admission_reviews_requirement_id" FOREIGN KEY ("requirement_id")
+        REFERENCES "profiles"."admission_requirements" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "profiles"."practitioner_admission_events"
+        ADD CONSTRAINT "fk_practitioner_admission_events_admission_id" FOREIGN KEY ("admission_id")
+        REFERENCES "profiles"."practitioner_admissions" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "profiles"."practitioner_admission_events"
+        ADD CONSTRAINT "fk_practitioner_admission_events_requirement_id" FOREIGN KEY ("requirement_id")
+        REFERENCES "profiles"."admission_requirements" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN

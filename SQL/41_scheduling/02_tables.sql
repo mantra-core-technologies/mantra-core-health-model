@@ -1,4 +1,4 @@
--- SALUD v4.2.81 · módulo 41 · schema scheduling
+-- SALUD v4.2.82 · módulo 41 · schema scheduling
 -- Generado de diagram_41_scheduling.puml — NO editar a mano.
 
 
@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS "scheduling"."schedulable_resources" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "care_space_id" uuid,
     CONSTRAINT "pk_schedulable_resources" PRIMARY KEY ("id")
 );
 
@@ -75,6 +76,7 @@ CREATE TABLE IF NOT EXISTS "scheduling"."schedule_templates" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "care_space_id" uuid,
     CONSTRAINT "pk_schedule_templates" PRIMARY KEY ("id")
 );
 
@@ -113,6 +115,8 @@ CREATE TABLE IF NOT EXISTS "scheduling"."availability_exceptions" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "source_kind_concept_id" uuid,
+    "source_ref_id" uuid,
     CONSTRAINT "pk_availability_exceptions" PRIMARY KEY ("id")
 );
 
