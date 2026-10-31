@@ -20,14 +20,18 @@
 --                   (occurred_at; route_template + occurred_at)
 --   conceptos       +12: observability:ERROR_GROUP_STATE_{NEW,SEEN,RESOLVED,IGNORED} y telemetry:ERROR_CLASS_{JS,PROMISE,HTTP,ROUTE,CHUNK,HYDRATION,TEMPLATE,NATIVE}
 --                   (ids = UUIDv5 de la clave, los mismos que deriva la API: si ya arranco con ellos, es un no-op)
+--   RLS             6 politicas (3 en error_events y 3 en client_error_events) sobre actor_tenant_id; RLS forzada
 --   permisos        mantra_app: USAGE en observability; en las tablas de historia SELECT/INSERT/DELETE y sin UPDATE/TRUNCATE; en las mutables DML completo
 --
 -- DELTAS ESPERADOS sobre una base con v4.2.79 y sin este parche:
 --   tablas 13 (12 + 1) · FKs 17 (13 del modulo 70 + 4 de client_error_events) · indices 49 (secundarios y unicos; los PK nacen con las tablas)
 --   CHECK +6 (modulo 70) · disparadores trg_forbid_update +8 (7 historias del modulo 70 + client_error_events) · conceptos +12
 --
--- RLS: NINGUNA tabla nueva tiene columna `tenant_id` (el tenant del actor es `actor_tenant_id`), asi que 2026-08-05_tenant_rls.sql no las
--- alcanza y esta base no recibe politicas nuevas. La seccion 9 lo comprueba.
+-- RLS: ninguna tabla nueva tiene columna `tenant_id`, asi que 2026-08-05_tenant_rls.sql no las alcanza. Las dos que llevan el tenant del
+-- ACTOR (observability.error_events y telemetry.client_error_events, columna `actor_tenant_id`) reciben aqui, a mano, el mismo patron de
+-- ese parche (GUC app.current_tenant_id / app.system_context, FORCE RLS), con una diferencia: la ingesta es publica y no conoce el tenant, asi
+-- que el INSERT no lo exige. SELECT: solo el tenant del contexto, o el contexto de sistema (runSystemSweep). DELETE (retencion): solo sistema.
+-- Las filas con actor_tenant_id nulo solo las ve el contexto de sistema. Seccion 6b; la 9 lo comprueba.
 --
 -- TIMESCALEDB: no se requiere. Las 6 series con hypertable declarada (ver nota HYPERTABLE POLICY del .puml 70) llevan la columna de tiempo en la
 -- clave primaria; la API las convierte al arrancar (physical.catalog.ts) si la extension esta presente. Este parche NO llama create_hypertable.
@@ -35,6 +39,7 @@
 -- REVERSA (el parche solo agrega; un rollback de la API deja datos inertes):
 --   DROP TABLE IF EXISTS "telemetry"."client_error_events";
 --   DROP INDEX IF EXISTS "telemetry"."ix_user_activity_events_occurred_at", "telemetry"."ix_user_activity_events_route_template_occurred_at";
+--   DROP POLICY IF EXISTS actor_tenant_select, public_ingest_insert, system_retention_delete ON <las dos tablas>; ALTER TABLE ... NO FORCE / DISABLE ROW LEVEL SECURITY;
 --   DROP SCHEMA IF EXISTS "observability" CASCADE;
 --   DELETE FROM terminology.catalog_concepts WHERE code LIKE 'observability:ERROR_GROUP_STATE_%' OR code LIKE 'telemetry:ERROR_CLASS_%';
 -- ============================================================================
@@ -653,6 +658,35 @@ DROP TRIGGER IF EXISTS trg_forbid_update ON "telemetry"."client_error_events";
 CREATE TRIGGER trg_forbid_update BEFORE UPDATE ON "telemetry"."client_error_events"
     FOR EACH ROW EXECUTE FUNCTION "integrity"."forbid_mutation"();
 
+-- ---- 6b. RLS por tenant del actor (error_events, client_error_events): mismo patron que 2026-08-05_tenant_rls.sql ----
+DO $$
+DECLARE
+    r record;
+BEGIN
+    FOR r IN SELECT * FROM (VALUES ('observability', 'error_events'), ('telemetry', 'client_error_events')) AS v(s, t) LOOP
+        EXECUTE format('ALTER TABLE %I.%I ENABLE ROW LEVEL SECURITY', r.s, r.t);
+        EXECUTE format('ALTER TABLE %I.%I FORCE ROW LEVEL SECURITY', r.s, r.t);
+        EXECUTE format('DROP POLICY IF EXISTS actor_tenant_select ON %I.%I', r.s, r.t);
+        EXECUTE format('DROP POLICY IF EXISTS public_ingest_insert ON %I.%I', r.s, r.t);
+        EXECUTE format('DROP POLICY IF EXISTS system_retention_delete ON %I.%I', r.s, r.t);
+        -- lectura: solo las filas del tenant del contexto, o el contexto de sistema (runSystemSweep). Fila sin tenant: solo sistema.
+        EXECUTE format($pol$
+        CREATE POLICY actor_tenant_select ON %I.%I FOR SELECT
+          USING (
+            actor_tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+            OR current_setting('app.system_context', true) = 'true'
+          )
+        $pol$, r.s, r.t);
+        -- alta: la ingesta publica no conoce el tenant; el WITH CHECK no puede exigirlo (el servicio lo rellena desde el actor, nunca del cuerpo)
+        EXECUTE format('CREATE POLICY public_ingest_insert ON %I.%I FOR INSERT WITH CHECK (true)', r.s, r.t);
+        -- retencion (DELETE por ventana): solo contexto de sistema. No hay politica de UPDATE: ademas esta prohibido por trigger.
+        EXECUTE format($pol$
+        CREATE POLICY system_retention_delete ON %I.%I FOR DELETE
+          USING (current_setting('app.system_context', true) = 'true')
+        $pol$, r.s, r.t);
+    END LOOP;
+END $$;
+
 -- ---- 7. conceptos (12 nuevos; ids = UUIDv5 de la clave, como deriva la API) ----
 INSERT INTO terminology.terminology_sources (id, code, name, created_at, updated_at, row_version)
 VALUES ('d94cf414-ad1b-59b9-afe2-903641f26011', 'MANTRA_CORE', 'Mantra Core Internal Terminology', now(), now(), 1)
@@ -725,8 +759,18 @@ BEGIN
     SELECT count(*) INTO n FROM information_schema.columns
      WHERE column_name = 'tenant_id' AND ((table_schema = 'observability') OR (table_schema = 'telemetry' AND table_name = 'client_error_events'));
     IF n <> 0 THEN RAISE EXCEPTION 'las tablas nuevas no deben tener columna tenant_id (RLS): %', n; END IF;
-    SELECT count(*) INTO n FROM pg_policies WHERE schemaname = 'observability' OR (schemaname = 'telemetry' AND tablename = 'client_error_events');
-    IF n <> 0 THEN RAISE EXCEPTION 'las tablas nuevas no deben tener politicas RLS: %', n; END IF;
+    SELECT count(*) INTO n FROM pg_policies
+     WHERE (schemaname = 'observability' AND tablename <> 'error_events')
+        OR (schemaname = 'telemetry' AND tablename = 'client_error_events' AND policyname NOT IN ('actor_tenant_select', 'public_ingest_insert', 'system_retention_delete'))
+        OR (schemaname = 'observability' AND tablename = 'error_events' AND policyname NOT IN ('actor_tenant_select', 'public_ingest_insert', 'system_retention_delete'));
+    IF n <> 0 THEN RAISE EXCEPTION 'politicas RLS inesperadas en las tablas nuevas: %', n; END IF;
+    SELECT count(*) INTO n FROM pg_policies
+     WHERE (schemaname, tablename) IN (('observability', 'error_events'), ('telemetry', 'client_error_events'));
+    IF n <> 6 THEN RAISE EXCEPTION 'deberia haber 6 politicas RLS (3 por tabla) y hay %', n; END IF;
+    SELECT count(*) INTO n FROM pg_class c JOIN pg_namespace s ON s.oid = c.relnamespace
+     WHERE c.relrowsecurity AND c.relforcerowsecurity
+       AND ((s.nspname = 'observability' AND c.relname = 'error_events') OR (s.nspname = 'telemetry' AND c.relname = 'client_error_events'));
+    IF n <> 2 THEN RAISE EXCEPTION 'error_events y client_error_events deben tener RLS FORZADA'; END IF;
     SELECT count(*) INTO n FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid JOIN pg_namespace s ON s.oid = c.relnamespace
      WHERE t.tgname = 'trg_forbid_update' AND NOT t.tgisinternal
        AND ((s.nspname = 'observability') OR (s.nspname = 'telemetry' AND c.relname = 'client_error_events'));

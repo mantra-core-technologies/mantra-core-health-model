@@ -24,8 +24,12 @@ hide circle
 '   every SELECT would return nothing outside a SYSTEM context. The only tenant these
 '   tables ever carry is the tenant of the ACTOR that caused an error, so it is named
 '   `actor_tenant_id` (plain uuid, no FK: telemetry must survive the deletion of the
-'   tenant and must never block it) and the RLS patch does not reach it. Verified in
-'   the F1 evidence (pg_policies is empty for schema observability).
+'   tenant and must never block it) and the RLS patch does not reach it. The two tables that DO carry an actor
+'   tenant (error_events here, telemetry.client_error_events) get an explicit policy set in
+'   SQL/patches/2026-10-31_v4280_*.sql §6b (same GUC pattern: app.current_tenant_id /
+'   app.system_context): SELECT own tenant or system context, INSERT unconditional (public
+'   ingestion does not know the tenant), DELETE system context only. NULL actor tenant =>
+'   visible to system context only. Policies are not expressible in the .puml generators.
 '
 ' DECISION D-F1-2 — the time series are RELATIONAL here, not TIMESERIES_MEASUREMENT
 '   entities in module 58.
