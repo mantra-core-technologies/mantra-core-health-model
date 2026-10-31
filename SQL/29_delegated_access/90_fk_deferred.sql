@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · módulo 29 · schema delegated_access
+-- SALUD v4.2.81 · módulo 29 · schema delegated_access
 -- Generado de diagram_29_delegated_access.puml — NO editar a mano.
 
 
@@ -176,6 +176,13 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_delegated_permission_set_items_permission_id" FOREIGN KEY ("permission_id")
         REFERENCES "authz"."permissions" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."practitioner_delegate_assignments"
+        ADD CONSTRAINT "fk_practitioner_delegate_assignments_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 
 -- destino: practice.practitioner_role_assignments (requiere schema practice)
 DO $$ BEGIN
@@ -490,13 +497,6 @@ DO $$ BEGIN
     ALTER TABLE "delegated_access"."support_scope_grants"
         ADD CONSTRAINT "fk_support_scope_grants_target_kind_concept_id" FOREIGN KEY ("target_kind_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
-
--- destino: directory.tenants (requiere schema directory)
-DO $$ BEGIN
-    ALTER TABLE "delegated_access"."practitioner_delegate_assignments"
-        ADD CONSTRAINT "fk_practitioner_delegate_assignments_tenant_id" FOREIGN KEY ("tenant_id")
-        REFERENCES "directory"."tenants" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 
 -- destino: practice.practitioner_role_assignments (requiere schema practice)

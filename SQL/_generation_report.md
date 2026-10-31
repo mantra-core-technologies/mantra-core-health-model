@@ -33,7 +33,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 26 | insurance | 33 | 224 | 20 | 244 | 1 |
 | 27 | identity_assurance | 11 | 70 | 1 | 77 | 0 |
 | 28 | telemetry | 15 | 77 | 3 | 95 | 1 |
-| 29 | delegated_access | 33 | 251 | 144 | 282 | 11 |
+| 29 | delegated_access | 27 | 207 | 120 | 235 | 6 |
 | 30 | read_models | 13 | 74 | 0 | 89 | 76 |
 | 31 | integration_contracts | 9 | 48 | 1 | 57 | 0 |
 | 32 | workflow | 8 | 49 | 0 | 55 | 9 |
@@ -75,7 +75,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 68 | qa_execution | 4 | 14 | 6 | 6 | 0 |
 | 69 | pharma_lab | 31 | 182 | 173 | 182 | 1 |
 | 70 | observability | 12 | 13 | 8 | 39 | 2 |
-| **Σ** | **71** | **1348** | | **704** | | **430** |
+| **Σ** | **71** | **1342** | | **680** | | **425** |
 
 ## Detalle de entidades saltadas y avisos
 

@@ -220,7 +220,11 @@ model:
       SQL/patches/2026-10-31_v4281_gobierno_de_datos.sql. (3) Cargas masivas: system_ops.bulk_import_batches y
       bulk_import_batch_rows (lote persistente de bulk_import; clave de confirmación única por organización, hash del
       archivo, sin PII en las columnas de resultado, tenant_isolation).
-      SQL/patches/2026-10-31_v4281_cargas_masivas.sql.
+      SQL/patches/2026-10-31_v4281_cargas_masivas.sql. (4) Motor de aprobación único:
+      delegated_access.four_eyes_requests +subject_entity/subject_id (el kind es un concepto, no un CHECK) y los
+      conceptos
+      FOUR_EYES_KIND_{BULK_IMPORT_CONFIRM,CATALOG_CLASSIFICATION,GOVERNANCE_POLICY_CHANGE,ACCESS_SENSITIVE_CHANGE} y
+      REVIEWER_KIND_PLATFORM_ADMIN. SQL/patches/2026-10-31_v4281_motor_aprobacion.sql.
   materialization_note: >-
     v4.0.1 materializado en el ER (fuente: el vault/grafo). Se añadieron 14
     entidades nuevas (marketing.campaign_schedules/dispatches/dispatch_recipients,
@@ -273,7 +277,7 @@ model:
       (v4.2.80: módulo 70 con 12 tablas + client_error_events en el 28 + los
       stubs y entradas de la matriz del 33): 3144 entity / 1431 table_like /
       81 vistas / 1397 idx / 7581 FK / 235 ref / 59 schemas (tools/model_inventory.py).
-      Recontado el 2026-10-31 con la franja F1b (v4.2.81, entregables 1 a 3): 3188 entity / 1450 table_like /
+      Recontado el 2026-10-31 con la franja F1b (v4.2.81, entregables 1 a 4): 3188 entity / 1450 table_like /
       81 vistas / 1412 idx / 7636 FK / 245 ref / 59 schemas (tools/model_inventory.py).
   database: PostgreSQL canonical + governed specialized stores
   rules:

@@ -84,6 +84,7 @@ psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-10-31_v4280_observabilidad
 psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-10-31_v4281_idempotencia_anonima.sql # telemetría: índice único parcial de los eventos anónimos + deduplicación previa (v4.2.81; los cuatro v4281 se generan con salud-db/gen_v4281_patches.py)
 psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-10-31_v4281_gobierno_de_datos.sql      # gobierno de datos: módulo 67 (12 tablas) + system_ops.governance_policy_revisions (v4.2.81)
 psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-10-31_v4281_cargas_masivas.sql        # lote persistente de bulk_import: system_ops.bulk_import_batches y _rows (v4.2.81)
+psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-10-31_v4281_motor_aprobacion.sql      # motor de aprobación único: four_eyes_requests.subject_entity/subject_id + 4 kind nuevos (v4.2.81)
 ```
 
 Todos son idempotentes (una transacción, re-ejecutables). **Si se vuelve a ejecutar el v4275 después del v4278, hay que volver a

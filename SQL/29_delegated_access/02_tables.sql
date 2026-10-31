@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · módulo 29 · schema delegated_access
+-- SALUD v4.2.81 · módulo 29 · schema delegated_access
 -- Generado de diagram_29_delegated_access.puml — NO editar a mano.
 
 
@@ -363,6 +363,8 @@ CREATE TABLE IF NOT EXISTS "delegated_access"."four_eyes_requests" (
     "subject_user_id" uuid,
     "organization_user_assignment_id" uuid,
     "permission_code" varchar,
+    "subject_entity" varchar,
+    "subject_id" uuid,
     "approver_kind_concept_id" uuid NOT NULL,
     "payload_json" jsonb NOT NULL,
     "payload_hash" varchar NOT NULL,

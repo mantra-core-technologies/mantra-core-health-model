@@ -534,6 +534,8 @@ entity "delegated_access.four_eyes_requests" as delegated_access_four_eyes_reque
   CHECK_SQL : ck_four_eyes_requests_expiry | ("expires_at" > "created_at")
   CHECK_SQL : ck_four_eyes_requests_decision | (("status_concept_id" <> 'a977935a-9073-5113-9644-7df96732e776' OR ("decided_at" IS NULL AND "decided_by_user_id" IS NULL)) AND ("status_concept_id" NOT IN ('1627143e-d273-5fcb-b289-9e59b8b096f2', 'de15c53d-1aa0-5709-8ebd-69e9fd323e31', '013d578f-38af-564c-aff1-e36d1fdec6dd') OR ("decided_at" IS NOT NULL AND "decided_by_user_id" IS NOT NULL)))
   CHECK_SQL : ck_four_eyes_requests_reject_comment | ("status_concept_id" <> 'de15c53d-1aa0-5709-8ebd-69e9fd323e31' OR COALESCE(char_length("decision_comment_text"), 0) >= 5)
+  ' v4.2.81: el sujeto generico (subject_entity, subject_id) va completo o no va (un lote, una anotacion, una politica).
+  CHECK_SQL : ck_four_eyes_requests_subject_pair | (("subject_entity" IS NULL) = ("subject_id" IS NULL))
 }
 
 entity "delegated_access.access_review_campaigns" as delegated_access_access_review_campaigns <<REFERENCE_ONLY>> {
