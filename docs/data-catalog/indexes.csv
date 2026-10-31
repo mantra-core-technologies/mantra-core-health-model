@@ -391,6 +391,7 @@ profiles,jurisdiction_authorizations,ix_jurisdiction_authorizations_jurisdiction
 profiles,jurisdiction_authorizations,ix_jurisdiction_authorizations_practice_scope_concept_id,NO,"""practice_scope_concept_id""",,SQL/05_profiles/04_indexes.sql
 profiles,jurisdiction_authorizations,ix_jurisdiction_authorizations_state_concept_id,NO,"""state_concept_id""",,SQL/05_profiles/04_indexes.sql
 profiles,jurisdiction_authorizations,ix_jurisdiction_authorizations_file_id,NO,"""file_id""",,SQL/05_profiles/04_indexes.sql
+profiles,jurisdiction_authorizations,ix_jurisdiction_authorizations_verified_by_user_id,NO,"""verified_by_user_id""",,SQL/05_profiles/04_indexes.sql
 profiles,jurisdiction_authorizations,ix_jurisdiction_authorizations_created_by_user_id,NO,"""created_by_user_id""",,SQL/05_profiles/04_indexes.sql
 profiles,jurisdiction_authorizations,ix_jurisdiction_authorizations_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/05_profiles/04_indexes.sql
 profiles,practitioner_affiliations,ix_practitioner_affiliations_practitioner_profile_id,NO,"""practitioner_profile_id""",,SQL/05_profiles/04_indexes.sql
@@ -424,6 +425,37 @@ profiles,patient_primary_practitioners,ix_patient_primary_practitioners_created_
 profiles,patient_primary_practitioners,ix_patient_primary_practitioners_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/05_profiles/04_indexes.sql
 profiles,patient_primary_practitioners,uq_patient_primary_practitioners_current,YES,"""patient_profile_id""",WHERE valid_to IS NULL,SQL/05_profiles/04_indexes.sql
 profiles,patient_primary_practitioners,ix_patient_primary_practitioners_practitioner_current,NO,"""practitioner_profile_id"", ""valid_from"" DESC",WHERE valid_to IS NULL,SQL/05_profiles/04_indexes.sql
+profiles,admission_requirements,uq_admission_requirements_type_code,YES,"""admission_type_concept_id"", ""requirement_code""",,SQL/05_profiles/04_indexes.sql
+profiles,admission_requirements,ix_admission_requirements_admission_type_concept_id,NO,"""admission_type_concept_id""",,SQL/05_profiles/04_indexes.sql
+profiles,admission_requirements,ix_admission_requirements_item_type_concept_id,NO,"""item_type_concept_id""",,SQL/05_profiles/04_indexes.sql
+profiles,admission_requirements,ix_admission_requirements_evidence_kind_concept_id,NO,"""evidence_kind_concept_id""",,SQL/05_profiles/04_indexes.sql
+profiles,admission_requirements,ix_admission_requirements_verification_method_concept_id,NO,"""verification_method_concept_id""",,SQL/05_profiles/04_indexes.sql
+profiles,admission_requirements,ix_admission_requirements_created_by_user_id,NO,"""created_by_user_id""",,SQL/05_profiles/04_indexes.sql
+profiles,admission_requirements,ix_admission_requirements_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admissions,uq_practitioner_admissions_open,YES,"""practitioner_profile_id"", ""admission_type_concept_id""",WHERE closed_at IS NULL,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admissions,ix_practitioner_admissions_inbox,NO,"""status_concept_id"", ""due_at"", ""id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admissions,ix_practitioner_admissions_assigned_to_user_id,NO,"""assigned_to_user_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admissions,ix_practitioner_admissions_admission_type_concept_id,NO,"""admission_type_concept_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admissions,ix_practitioner_admissions_decided_by_user_id,NO,"""decided_by_user_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admissions,ix_practitioner_admissions_decision_reason_code_concept_id,NO,"""decision_reason_code_concept_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admissions,ix_practitioner_admissions_info_due_at,NO,"""info_due_at""",WHERE info_due_at IS NOT NULL,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admissions,ix_practitioner_admissions_created_by_user_id,NO,"""created_by_user_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admissions,ix_practitioner_admissions_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admissions,ix_practitioner_admissions_valid_until,NO,"""valid_until""",WHERE valid_until IS NOT NULL,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admission_reviews,uq_practitioner_admission_reviews_item,YES,"""admission_id"", ""requirement_id"", ""item_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admission_reviews,ix_practitioner_admission_reviews_requirement_id,NO,"""requirement_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admission_reviews,ix_practitioner_admission_reviews_admission_status,NO,"""admission_id"", ""status_concept_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admission_reviews,ix_practitioner_admission_reviews_file_id,NO,"""file_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admission_reviews,ix_practitioner_admission_reviews_source_type_concept_id,NO,"""source_type_concept_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admission_reviews,ix_practitioner_admission_reviews_reason_code_concept_id,NO,"""reason_code_concept_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admission_reviews,ix_practitioner_admission_reviews_reviewed_by_user_id,NO,"""reviewed_by_user_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admission_reviews,ix_practitioner_admission_reviews_created_by_user_id,NO,"""created_by_user_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admission_reviews,ix_practitioner_admission_reviews_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admission_events,ix_practitioner_admission_events_admission_occurred,NO,"""admission_id"", ""occurred_at""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admission_events,ix_practitioner_admission_events_event_type_concept_id,NO,"""event_type_concept_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admission_events,ix_practitioner_admission_events_actor_user_id,NO,"""actor_user_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admission_events,ix_practitioner_admission_events_requirement_id,NO,"""requirement_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admission_events,ix_practitioner_admission_events_reason_code_concept_id,NO,"""reason_code_concept_id""",,SQL/05_profiles/04_indexes.sql
 profiles,insurance_representative_profiles,ix_insurance_representative_profiles_representative_ty_e1930540,NO,"""representative_type_concept_id""",,SQL/05_profiles/04_indexes.sql
 profiles,insurance_representative_profiles,ix_insurance_representative_profiles_role_concept_id,NO,"""role_concept_id""",,SQL/05_profiles/04_indexes.sql
 profiles,insurance_representative_profiles,ix_insurance_representative_profiles_created_by_user_id,NO,"""created_by_user_id""",,SQL/05_profiles/04_indexes.sql

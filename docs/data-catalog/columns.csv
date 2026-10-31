@@ -16349,6 +16349,27 @@ profiles,administrator_profiles,5,updated_at,timestamptz,NO,,,,,,SQL/05_profiles
 profiles,administrator_profiles,6,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/05_profiles/02_tables.sql
 profiles,administrator_profiles,7,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/05_profiles/02_tables.sql
 profiles,administrator_profiles,8,row_version,integer,NO,1,,,,,SQL/05_profiles/02_tables.sql
+profiles,admission_requirements,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/05_profiles/02_tables.sql
+profiles,admission_requirements,2,admission_type_concept_id,uuid,NO,,FOREIGN KEY; UNIQUE,terminology,catalog_concepts,id,SQL/05_profiles/02_tables.sql
+profiles,admission_requirements,3,requirement_code,varchar,NO,,UNIQUE,,,,SQL/05_profiles/02_tables.sql
+profiles,admission_requirements,4,label,varchar,NO,,,,,,SQL/05_profiles/02_tables.sql
+profiles,admission_requirements,5,description,text,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,admission_requirements,6,item_type_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/05_profiles/02_tables.sql
+profiles,admission_requirements,7,item_subtype_code,varchar,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,admission_requirements,8,evidence_kind_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/05_profiles/02_tables.sql
+profiles,admission_requirements,9,verification_method_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/05_profiles/02_tables.sql
+profiles,admission_requirements,10,is_required,boolean,NO,true,,,,,SQL/05_profiles/02_tables.sql
+profiles,admission_requirements,11,requires_source_uri,boolean,NO,true,,,,,SQL/05_profiles/02_tables.sql
+profiles,admission_requirements,12,applies_to_profession_group,varchar,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,admission_requirements,13,min_items,smallint,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,admission_requirements,14,max_items,smallint,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,admission_requirements,15,sort_order,integer,NO,,,,,,SQL/05_profiles/02_tables.sql
+profiles,admission_requirements,16,is_active,boolean,NO,true,,,,,SQL/05_profiles/02_tables.sql
+profiles,admission_requirements,17,created_at,timestamptz,NO,,,,,,SQL/05_profiles/02_tables.sql
+profiles,admission_requirements,18,updated_at,timestamptz,NO,,,,,,SQL/05_profiles/02_tables.sql
+profiles,admission_requirements,19,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/05_profiles/02_tables.sql
+profiles,admission_requirements,20,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/05_profiles/02_tables.sql
+profiles,admission_requirements,21,row_version,integer,NO,1,,,,,SQL/05_profiles/02_tables.sql
 profiles,emergency_staff_profiles,1,profile_id,uuid,NO,,FOREIGN KEY; PRIMARY KEY,profiles,persons,id,SQL/05_profiles/02_tables.sql
 profiles,emergency_staff_profiles,2,staff_type_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/05_profiles/02_tables.sql
 profiles,emergency_staff_profiles,3,availability_status_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/05_profiles/02_tables.sql
@@ -16392,11 +16413,15 @@ profiles,jurisdiction_authorizations,7,state_concept_id,uuid,NO,,FOREIGN KEY,ter
 profiles,jurisdiction_authorizations,8,valid_from,date,YES,,,,,,SQL/05_profiles/02_tables.sql
 profiles,jurisdiction_authorizations,9,valid_to,date,YES,,,,,,SQL/05_profiles/02_tables.sql
 profiles,jurisdiction_authorizations,10,file_id,uuid,YES,,FOREIGN KEY,common,files,id,SQL/05_profiles/02_tables.sql
-profiles,jurisdiction_authorizations,11,created_at,timestamptz,NO,,,,,,SQL/05_profiles/02_tables.sql
-profiles,jurisdiction_authorizations,12,updated_at,timestamptz,NO,,,,,,SQL/05_profiles/02_tables.sql
-profiles,jurisdiction_authorizations,13,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/05_profiles/02_tables.sql
-profiles,jurisdiction_authorizations,14,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/05_profiles/02_tables.sql
-profiles,jurisdiction_authorizations,15,row_version,integer,NO,1,,,,,SQL/05_profiles/02_tables.sql
+profiles,jurisdiction_authorizations,11,verified_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/05_profiles/02_tables.sql
+profiles,jurisdiction_authorizations,12,verified_at,timestamptz,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,jurisdiction_authorizations,13,verification_source_uri,text,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,jurisdiction_authorizations,14,rejection_reason_text,text,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,jurisdiction_authorizations,15,created_at,timestamptz,NO,,,,,,SQL/05_profiles/02_tables.sql
+profiles,jurisdiction_authorizations,16,updated_at,timestamptz,NO,,,,,,SQL/05_profiles/02_tables.sql
+profiles,jurisdiction_authorizations,17,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/05_profiles/02_tables.sql
+profiles,jurisdiction_authorizations,18,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/05_profiles/02_tables.sql
+profiles,jurisdiction_authorizations,19,row_version,integer,NO,1,,,,,SQL/05_profiles/02_tables.sql
 profiles,patient_identity_links,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/05_profiles/02_tables.sql
 profiles,patient_identity_links,2,patient_profile_id,uuid,NO,,FOREIGN KEY,profiles,patient_profiles,profile_id,SQL/05_profiles/02_tables.sql
 profiles,patient_identity_links,3,source_tenant_id,uuid,NO,,FOREIGN KEY; UNIQUE,directory,tenants,id,SQL/05_profiles/02_tables.sql
@@ -16507,6 +16532,68 @@ profiles,persons,24,updated_at,timestamptz,NO,,,,,,SQL/05_profiles/02_tables.sql
 profiles,persons,25,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/05_profiles/02_tables.sql
 profiles,persons,26,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/05_profiles/02_tables.sql
 profiles,persons,27,row_version,integer,NO,1,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_events,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_events,2,admission_id,uuid,NO,,FOREIGN KEY,profiles,practitioner_admissions,id,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_events,3,event_type_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_events,4,from_status_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_events,5,to_status_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_events,6,item_type_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_events,7,item_id,uuid,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_events,8,requirement_id,uuid,YES,,FOREIGN KEY,profiles,admission_requirements,id,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_events,9,verification_source_uri,text,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_events,10,reason_code_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_events,11,reason_text,text,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_events,12,actor_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_events,13,actor_role_code,varchar,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_events,14,request_id,uuid,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_events,15,occurred_at,timestamptz,NO,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_reviews,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_reviews,2,admission_id,uuid,NO,,FOREIGN KEY; UNIQUE,profiles,practitioner_admissions,id,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_reviews,3,requirement_id,uuid,NO,,FOREIGN KEY; UNIQUE,profiles,admission_requirements,id,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_reviews,4,item_id,uuid,NO,,UNIQUE,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_reviews,5,status_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_reviews,6,file_id,uuid,YES,,FOREIGN KEY,common,files,id,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_reviews,7,verification_source_uri,text,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_reviews,8,source_type_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_reviews,9,source_ref,text,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_reviews,10,source_consulted_at,timestamptz,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_reviews,11,evidence_sha256,varchar,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_reviews,12,reason_code_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_reviews,13,reason_text,text,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_reviews,14,internal_note,text,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_reviews,15,reviewed_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_reviews,16,reviewed_at,timestamptz,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_reviews,17,created_at,timestamptz,NO,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_reviews,18,updated_at,timestamptz,NO,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_reviews,19,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_reviews,20,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admission_reviews,21,row_version,integer,NO,1,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admissions,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admissions,2,practitioner_profile_id,uuid,NO,,FOREIGN KEY; UNIQUE,profiles,health_practitioner_profiles,profile_id,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admissions,3,admission_type_concept_id,uuid,NO,,FOREIGN KEY; UNIQUE,terminology,catalog_concepts,id,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admissions,4,status_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admissions,5,submitted_at,timestamptz,NO,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admissions,6,due_at,timestamptz,NO,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admissions,7,assigned_to_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admissions,8,decided_at,timestamptz,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admissions,9,decided_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admissions,10,decision_reason_text,text,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admissions,11,decision_reason_code_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admissions,12,internal_note,text,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admissions,13,info_requested_text,text,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admissions,14,info_due_at,timestamptz,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admissions,15,resubmission_count,integer,NO,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admissions,16,valid_until,date,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admissions,17,four_eyes_waived,boolean,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admissions,18,attested_at,timestamptz,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admissions,19,attestation_text_version,varchar,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admissions,20,closed_at,timestamptz,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admissions,21,submitted_snapshot,jsonb,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admissions,22,created_at,timestamptz,NO,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admissions,23,updated_at,timestamptz,NO,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admissions,24,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admissions,25,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/05_profiles/02_tables.sql
+profiles,practitioner_admissions,26,row_version,integer,NO,1,,,,,SQL/05_profiles/02_tables.sql
 profiles,practitioner_affiliations,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/05_profiles/02_tables.sql
 profiles,practitioner_affiliations,2,practitioner_profile_id,uuid,NO,,FOREIGN KEY; UNIQUE,profiles,health_practitioner_profiles,profile_id,SQL/05_profiles/02_tables.sql
 profiles,practitioner_affiliations,3,organization_name,varchar,NO,,UNIQUE,,,,SQL/05_profiles/02_tables.sql
@@ -16543,13 +16630,14 @@ profiles,practitioner_specialties,6,is_primary,boolean,YES,,,,,,SQL/05_profiles/
 profiles,practitioner_specialties,7,board_certified,boolean,YES,,,,,,SQL/05_profiles/02_tables.sql
 profiles,practitioner_specialties,8,practice_scope_text,text,YES,,,,,,SQL/05_profiles/02_tables.sql
 profiles,practitioner_specialties,9,verification_status_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/05_profiles/02_tables.sql
-profiles,practitioner_specialties,10,valid_from,date,YES,,,,,,SQL/05_profiles/02_tables.sql
-profiles,practitioner_specialties,11,valid_to,date,YES,,,,,,SQL/05_profiles/02_tables.sql
-profiles,practitioner_specialties,12,created_at,timestamptz,NO,,,,,,SQL/05_profiles/02_tables.sql
-profiles,practitioner_specialties,13,updated_at,timestamptz,NO,,,,,,SQL/05_profiles/02_tables.sql
-profiles,practitioner_specialties,14,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/05_profiles/02_tables.sql
-profiles,practitioner_specialties,15,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/05_profiles/02_tables.sql
-profiles,practitioner_specialties,16,row_version,integer,NO,1,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_specialties,10,verified_at,timestamptz,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_specialties,11,valid_from,date,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_specialties,12,valid_to,date,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_specialties,13,created_at,timestamptz,NO,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_specialties,14,updated_at,timestamptz,NO,,,,,,SQL/05_profiles/02_tables.sql
+profiles,practitioner_specialties,15,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/05_profiles/02_tables.sql
+profiles,practitioner_specialties,16,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/05_profiles/02_tables.sql
+profiles,practitioner_specialties,17,row_version,integer,NO,1,,,,,SQL/05_profiles/02_tables.sql
 profiles,professional_credentials,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/05_profiles/02_tables.sql
 profiles,professional_credentials,2,practitioner_profile_id,uuid,NO,,FOREIGN KEY,profiles,health_practitioner_profiles,profile_id,SQL/05_profiles/02_tables.sql
 profiles,professional_credentials,3,credential_type_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/05_profiles/02_tables.sql
@@ -16568,11 +16656,12 @@ profiles,professional_credentials,15,file_id,uuid,YES,,FOREIGN KEY,common,files,
 profiles,professional_credentials,16,verification_source_uri,text,YES,,,,,,SQL/05_profiles/02_tables.sql
 profiles,professional_credentials,17,verified_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/05_profiles/02_tables.sql
 profiles,professional_credentials,18,verified_at,timestamptz,YES,,,,,,SQL/05_profiles/02_tables.sql
-profiles,professional_credentials,19,created_at,timestamptz,NO,,,,,,SQL/05_profiles/02_tables.sql
-profiles,professional_credentials,20,updated_at,timestamptz,NO,,,,,,SQL/05_profiles/02_tables.sql
-profiles,professional_credentials,21,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/05_profiles/02_tables.sql
-profiles,professional_credentials,22,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/05_profiles/02_tables.sql
-profiles,professional_credentials,23,row_version,integer,NO,1,,,,,SQL/05_profiles/02_tables.sql
+profiles,professional_credentials,19,rejection_reason_text,text,YES,,,,,,SQL/05_profiles/02_tables.sql
+profiles,professional_credentials,20,created_at,timestamptz,NO,,,,,,SQL/05_profiles/02_tables.sql
+profiles,professional_credentials,21,updated_at,timestamptz,NO,,,,,,SQL/05_profiles/02_tables.sql
+profiles,professional_credentials,22,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/05_profiles/02_tables.sql
+profiles,professional_credentials,23,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/05_profiles/02_tables.sql
+profiles,professional_credentials,24,row_version,integer,NO,1,,,,,SQL/05_profiles/02_tables.sql
 profiles,provider_operator_profiles,1,profile_id,uuid,NO,,FOREIGN KEY; PRIMARY KEY,profiles,persons,id,SQL/05_profiles/02_tables.sql
 profiles,provider_operator_profiles,2,operator_type_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/05_profiles/02_tables.sql
 profiles,provider_operator_profiles,3,role_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/05_profiles/02_tables.sql

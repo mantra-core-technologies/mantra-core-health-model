@@ -228,6 +228,14 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 | `procedures_perioperative.operating_room_block_series` | `REFERENCE_ONLY` | **CHECK_SQL** ck_operating_room_block_series_owner \| ("owner_kind_concept_id" IN ('6b4fd1e9-892f-572b-9e9b-96b321ecdc26', '48a989b7-6300-516d-9982-8f741aaf0758') AND ("owner_kind_concept_id" <> '6b4fd1e9-892f-572b-9e9b-96b321ecdc26' OR "clinical_unit_id" IS NOT NULL OR "surgical_specialty_concept_id" IS NOT NULL) AND ("owner_kind_concept_id" <> '48a989b7-6300-516d-9982-8f741aaf0758' OR "surgeon_profile_id" IS NOT NULL)); **CHECK_SQL** ck_operating_room_block_series_time_order \| ("end_time" > "start_time"); **CHECK_SQL** ck_operating_room_block_series_validity \| ("valid_to" IS NULL OR "valid_to" >= "valid_from"); **CHECK_SQL** ck_operating_room_block_series_weekdays \| (cardinality("weekdays") > 0 AND "weekdays" <@ ARRAY[1, 2, 3, 4, 5, 6, 7]::smallint[]); **CHECK_SQL** ck_operating_room_block_series_release_hours \| ("release_hours" >= 0) |
 | `procedures_perioperative.operating_room_blocks` | `REFERENCE_ONLY` | **EXCLUDE** active operating room block time overlap; **EXCLUDE_SQL** ex_operating_room_blocks_time \| "operating_room_id" WITH =, tstzrange("starts_at", "ends_at", '[)') WITH && \| "status_concept_id" = '762dc30b-3e3c-5e1e-8504-5c511fd1d4a8'; **CHECK_SQL** ck_operating_room_blocks_owner \| ("owner_kind_concept_id" IN ('6b4fd1e9-892f-572b-9e9b-96b321ecdc26', '48a989b7-6300-516d-9982-8f741aaf0758') AND ("owner_kind_concept_id" <> '6b4fd1e9-892f-572b-9e9b-96b321ecdc26' OR "clinical_unit_id" IS NOT NULL OR "surgical_specialty_concept_id" IS NOT NULL) AND ("owner_kind_concept_id" <> '48a989b7-6300-516d-9982-8f741aaf0758' OR "surgeon_profile_id" IS NOT NULL)); **CHECK_SQL** ck_operating_room_blocks_end_after_start \| ("ends_at" > "starts_at"); **CHECK_SQL** ck_operating_room_blocks_release_before_start \| ("release_at" <= "starts_at") |
 
+### Módulo 05 · `profiles`
+
+| Tabla | Estereotipo | Reglas declaradas |
+|-------|-------------|-------------------|
+| `profiles.practitioner_admission_events` | `IMMUTABLE, REFERENCE_ONLY` | **UPDATE_DELETE** forbidden |
+| `profiles.practitioner_admissions` | `REFERENCE_ONLY` | **CHECK_SQL** ck_practitioner_admissions_resubmission_count \| ("resubmission_count" >= 0); **CHECK_SQL** ck_practitioner_admissions_due_after_submit \| ("due_at" >= "submitted_at"); **CHECK_SQL** ck_practitioner_admissions_attestation_version \| ("attested_at" IS NULL OR "attestation_text_version" IS NOT NULL) |
+| `profiles.admission_requirements` | `REFERENCE_ONLY` | **CHECK_SQL** ck_admission_requirements_item_range \| (COALESCE("min_items", 0) >= 0 AND ("max_items" IS NULL OR "max_items" >= COALESCE("min_items", 0))) |
+
 ### Módulo 41 · `scheduling`
 
 | Tabla | Estereotipo | Reglas declaradas |

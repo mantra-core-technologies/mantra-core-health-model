@@ -188,6 +188,8 @@ CREATE INDEX IF NOT EXISTS "ix_jurisdiction_authorizations_state_concept_id" ON 
 
 CREATE INDEX IF NOT EXISTS "ix_jurisdiction_authorizations_file_id" ON "profiles"."jurisdiction_authorizations" ("file_id");
 
+CREATE INDEX IF NOT EXISTS "ix_jurisdiction_authorizations_verified_by_user_id" ON "profiles"."jurisdiction_authorizations" ("verified_by_user_id");
+
 CREATE INDEX IF NOT EXISTS "ix_jurisdiction_authorizations_created_by_user_id" ON "profiles"."jurisdiction_authorizations" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_jurisdiction_authorizations_updated_by_user_id" ON "profiles"."jurisdiction_authorizations" ("updated_by_user_id");
@@ -255,6 +257,68 @@ CREATE INDEX IF NOT EXISTS "ix_patient_primary_practitioners_updated_by_user_id"
 CREATE UNIQUE INDEX IF NOT EXISTS "uq_patient_primary_practitioners_current" ON "profiles"."patient_primary_practitioners" ("patient_profile_id") WHERE valid_to IS NULL;
 
 CREATE INDEX IF NOT EXISTS "ix_patient_primary_practitioners_practitioner_current" ON "profiles"."patient_primary_practitioners" ("practitioner_profile_id", "valid_from" DESC) WHERE valid_to IS NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_admission_requirements_type_code" ON "profiles"."admission_requirements" ("admission_type_concept_id", "requirement_code");
+
+CREATE INDEX IF NOT EXISTS "ix_admission_requirements_admission_type_concept_id" ON "profiles"."admission_requirements" ("admission_type_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_admission_requirements_item_type_concept_id" ON "profiles"."admission_requirements" ("item_type_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_admission_requirements_evidence_kind_concept_id" ON "profiles"."admission_requirements" ("evidence_kind_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_admission_requirements_verification_method_concept_id" ON "profiles"."admission_requirements" ("verification_method_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_admission_requirements_created_by_user_id" ON "profiles"."admission_requirements" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_admission_requirements_updated_by_user_id" ON "profiles"."admission_requirements" ("updated_by_user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_practitioner_admissions_open" ON "profiles"."practitioner_admissions" ("practitioner_profile_id", "admission_type_concept_id") WHERE closed_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_admissions_inbox" ON "profiles"."practitioner_admissions" ("status_concept_id", "due_at", "id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_admissions_assigned_to_user_id" ON "profiles"."practitioner_admissions" ("assigned_to_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_admissions_admission_type_concept_id" ON "profiles"."practitioner_admissions" ("admission_type_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_admissions_decided_by_user_id" ON "profiles"."practitioner_admissions" ("decided_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_admissions_decision_reason_code_concept_id" ON "profiles"."practitioner_admissions" ("decision_reason_code_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_admissions_info_due_at" ON "profiles"."practitioner_admissions" ("info_due_at") WHERE info_due_at IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_admissions_created_by_user_id" ON "profiles"."practitioner_admissions" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_admissions_updated_by_user_id" ON "profiles"."practitioner_admissions" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_admissions_valid_until" ON "profiles"."practitioner_admissions" ("valid_until") WHERE valid_until IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_practitioner_admission_reviews_item" ON "profiles"."practitioner_admission_reviews" ("admission_id", "requirement_id", "item_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_admission_reviews_requirement_id" ON "profiles"."practitioner_admission_reviews" ("requirement_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_admission_reviews_admission_status" ON "profiles"."practitioner_admission_reviews" ("admission_id", "status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_admission_reviews_file_id" ON "profiles"."practitioner_admission_reviews" ("file_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_admission_reviews_source_type_concept_id" ON "profiles"."practitioner_admission_reviews" ("source_type_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_admission_reviews_reason_code_concept_id" ON "profiles"."practitioner_admission_reviews" ("reason_code_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_admission_reviews_reviewed_by_user_id" ON "profiles"."practitioner_admission_reviews" ("reviewed_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_admission_reviews_created_by_user_id" ON "profiles"."practitioner_admission_reviews" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_admission_reviews_updated_by_user_id" ON "profiles"."practitioner_admission_reviews" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_admission_events_admission_occurred" ON "profiles"."practitioner_admission_events" ("admission_id", "occurred_at");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_admission_events_event_type_concept_id" ON "profiles"."practitioner_admission_events" ("event_type_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_admission_events_actor_user_id" ON "profiles"."practitioner_admission_events" ("actor_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_admission_events_requirement_id" ON "profiles"."practitioner_admission_events" ("requirement_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_admission_events_reason_code_concept_id" ON "profiles"."practitioner_admission_events" ("reason_code_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_insurance_representative_profiles_representative_ty_e1930540" ON "profiles"."insurance_representative_profiles" ("representative_type_concept_id");
 

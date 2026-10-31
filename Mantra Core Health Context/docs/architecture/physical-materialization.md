@@ -396,6 +396,48 @@ FK y los totales del reporte. `gen_integrity.py` no cambia nada; `gen_seeds.py -
 **Verificado** sobre la base local del stack Docker (con datos sintéticos): el parche dos veces, y la
 segunda sólo avisa «already exists». La tabla queda con la columna, el índice parcial y la FK. No se
 aplicó contra una base con datos reales.
+### v4.2.67 — Admisiones de profesionales: verificación del alta de médicos (2026-10-29)
+
+**Cambio de esquema: +4 tablas en `profiles` (módulo 05) y +6 columnas en tablas existentes.**
+Parche: `SQL/patches/2026-10-29_v4267_practitioner_admissions.sql` (idempotente, fuera de `apply_all.sql`,
+con backfill). `v4266` ya estaba tomado (consentimiento dirigido), de ahí `v4267`.
+
+- `practitioner_admissions`: la solicitud de admisión (tipo `ALTA_DE_DOCTOR`, estado, `submitted_at`, `due_at`
+  = SLA de 3 días hábiles, asignación, decisión, motivo, `resubmission_count`, `valid_until`, `closed_at` y la
+  foto del formulario enviado `submitted_snapshot`). Es la **fuente de verdad**; `PRACT_VERIF_*` del perfil
+  es su proyección y `ENVIADA` equivale a `PRACT_VERIF_PENDING`. Único parcial
+  `uq_practitioner_admissions_open` (una abierta por médico y tipo) e índice de bandeja
+  `(status_concept_id, due_at, id)`.
+- `admission_requirements`: catálogo de requisitos por tipo de admisión (obligatorio, profesión a la que
+  aplica, documento o dato, método, si exige URI de fuente). Extensible a organización, farmacia,
+  laboratorio y aseguradora sin cambio de esquema. Lo siembra la API (proceso 2.1 del stakeholder).
+- `practitioner_admission_reviews`: estado vigente por requisito/ítem (PENDIENTE, VERIFICADO, RECHAZADO,
+  INFO_REQUERIDA), con archivo, fuente, motivo y quién/cuándo.
+- `practitioner_admission_events`: bitácora **append-only** (`UPDATE_DELETE: forbidden` en el módulo 33, trigger
+  `trg_forbid_mutation`).
+- `jurisdiction_authorizations` + `verified_by_user_id`, `verified_at`, `verification_source_uri`,
+  `rejection_reason_text`; `professional_credentials` + `rejection_reason_text`; `practitioner_specialties` +
+  `verified_at`.
+- Revisión por requisito con **fuente estructurada** (`source_type_concept_id` + `source_ref` +
+  `source_consulted_at`, además de la URL opcional), **huella de la evidencia** (`evidence_sha256`: si el
+  médico cambia algo al reenviar, la revisión vuelve a PENDIENTE), **motivo estructurado**
+  (`reason_code_concept_id`) y `internal_note` que nunca ve el solicitante. Atestación del solicitante
+  (`attested_at`), plazo para responder (`info_due_at`, vencido pasa a `ABANDONADA`) y `four_eyes_waived`.
+  La bitácora suma `request_id` y `actor_role_code`.
+- Los conceptos (`profiles:ADMISSION_*`, `AUTH_REJECTED`, `SPEC_VERIF_REJECTED`) los siembra la API.
+  No cambia el significado de los conceptos existentes ni se migran filas de perfil.
+- **Backfill acotado**: sólo perfiles con cuenta activa vinculada. Los pendientes reciben una admisión
+  `ENVIADA` con `due_at` = ahora + 3 días hábiles; los verificados, una `VERIFICADA` con `valid_until`
+  (vencimiento de la matrícula nacional o hoy + 12 meses). El padrón cargado (sin cuenta) no genera nada.
+  `SET admissions.backfill_dry_run = 'on'` sólo cuenta; `admissions.backfill_max` (default 200 por clase)
+  aborta si el conteo lo excede. Falla con mensaje explícito si los conceptos aún no están sembrados.
+
+**Delta:** +4 tablas, +6 columnas, +32 FK, +37 índices, +4 CHECK, +1 trigger. Total 1265 tablas.
+
+**Verificado** con PostgreSQL 16 en una base descartable: el modelo anterior (`apply_all.sql` +
+`apply_deferred.sql`) + el parche dos veces, y el DDL nuevo desde cero, terminan con el mismo `pg_dump -s`
+salvo el orden de columnas; el backfill se probó con perfiles sintéticos (con y sin cuenta; dry-run, umbral y días hábiles) y
+el trigger rechaza `UPDATE` y `DELETE` sobre la bitácora. No se aplicó contra una base con datos reales.
 
 ### v4.2.65 — Derivación con tipo y servicio de destino (2026-10-28)
 
