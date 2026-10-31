@@ -1,6 +1,6 @@
 model:
   name: SALUD
-  version: 4.2.81
+  version: 4.2.83
   status: canonical-polyglot-nosql-health-platform
   generated_at: '2026-10-31'
   design_patches:
