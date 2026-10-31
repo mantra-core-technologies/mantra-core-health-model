@@ -1,8 +1,8 @@
--- SALUD v4.0.10 · perfil pay · base pay_vault · DDL completo en orden (generado de diagram_79_pay_vault.puml)
+-- SALUD v4.2.79 · perfil pay · base pay_vault · DDL completo en orden (generado de diagram_79_pay_vault.puml)
 -- Archivo SQL plano, apto para `pool.query(readFileSync(...))`. NO editar a mano.
 
 -- >>> 02_tables.sql
--- SALUD v4.0.10 · módulo 79 · schema pay_vault
+-- SALUD v4.2.79 · módulo 79 · schema pay_vault
 -- Generado de diagram_79_pay_vault.puml — NO editar a mano.
 
 
@@ -63,12 +63,12 @@ CREATE TABLE IF NOT EXISTS "idempotency_keys" (
 );
 
 -- >>> 03_fk_intra.sql
--- SALUD v4.0.10 · módulo 79 · schema pay_vault
+-- SALUD v4.2.79 · módulo 79 · schema pay_vault
 -- Generado de diagram_79_pay_vault.puml — NO editar a mano.
 
 
 -- >>> 04_indexes.sql
--- SALUD v4.0.10 · módulo 79 · schema pay_vault
+-- SALUD v4.2.79 · módulo 79 · schema pay_vault
 -- Generado de diagram_79_pay_vault.puml — NO editar a mano.
 
 
@@ -81,7 +81,7 @@ CREATE INDEX IF NOT EXISTS "reveal_audit_token_idx" ON "reveal_audit" ("token", 
 CREATE INDEX IF NOT EXISTS "idempotency_keys_expires_at_idx" ON "idempotency_keys" ("expires_at");
 
 -- >>> 05_constraints.sql
--- SALUD v4.0.10 · perfil pay · módulo 79 · base pay_vault
+-- SALUD v4.2.79 · perfil pay · módulo 79 · base pay_vault
 -- Generado de diagram_79_pay_vault.puml — NO editar a mano.
 
 -- Complementos del perfil pay (gen_ddl_pay.py): funciones, CHECK, FK compuestas y triggers.

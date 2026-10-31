@@ -1,16 +1,16 @@
-# Reporte de generación SQL — SALUD v4.0.10
+# Reporte de generación SQL — SALUD v4.2.79
 
 Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vistas, stubs de cruce y stores no-SQL (Redis/Mongo/OpenSearch/vector/timeseries) se listan como *saltados*. Graph (61) y Lakehouse (63) SÍ se materializan como tablas PG (catálogo del plano de control). Las FK marcadas *inferidas* se resolvieron por convención cuando el vault no tenía destino.
 
 | Mód | Schema | Tablas PG | FK | (inferidas) | Índices | Saltadas |
 |-----|--------|-----------|----|-------------|---------|----------|
 | 00 | platform _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
-| 01 | iam | 14 | 75 | 13 | 65 | 0 |
-| 02 | common | 7 | 49 | 0 | 55 | 0 |
+| 01 | iam | 15 | 80 | 18 | 72 | 0 |
+| 02 | common | 7 | 49 | 0 | 56 | 0 |
 | 03 | terminology | 16 | 80 | 0 | 103 | 0 |
-| 04 | directory | 7 | 59 | 4 | 55 | 0 |
+| 04 | directory | 9 | 72 | 13 | 74 | 2 |
 | 05 | profiles | 20 | 134 | 7 | 145 | 0 |
-| 06 | authz | 15 | 100 | 15 | 90 | 0 |
+| 06 | authz | 15 | 104 | 19 | 95 | 0 |
 | 07 | consent | 10 | 81 | 0 | 103 | 0 |
 | 08 | clinical | 24 | 241 | 9 | 264 | 11 |
 | 09 | forms | 16 | 103 | 0 | 113 | 1 |
@@ -18,12 +18,12 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 11 | system_ops | 29 | 169 | 0 | 178 | 0 |
 | 12 | integrations | 10 | 49 | 0 | 56 | 0 |
 | 13 | geo | 6 | 31 | 0 | 35 | 0 |
-| 14 | practice | 15 | 118 | 33 | 130 | 1 |
+| 14 | practice | 16 | 124 | 37 | 138 | 1 |
 | 15 | chart | 11 | 71 | 0 | 81 | 2 |
 | 16 | accounting | 45 | 316 | 1 | 369 | 15 |
 | 17 | billing | 24 | 156 | 0 | 174 | 21 |
 | 18 | clinical_ext | 14 | 100 | 6 | 112 | 4 |
-| 19 | community | 41 | 254 | 4 | 268 | 9 |
+| 19 | community | 44 | 273 | 17 | 288 | 11 |
 | 20 | diagnostics | 36 | 251 | 0 | 301 | 0 |
 | 21 | deployment _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
 | 22 | organization_extensions | 5 | 51 | 2 | 57 | 0 |
@@ -33,11 +33,11 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 26 | insurance | 33 | 224 | 20 | 244 | 1 |
 | 27 | identity_assurance | 11 | 70 | 1 | 77 | 0 |
 | 28 | telemetry | 14 | 73 | 0 | 83 | 0 |
-| 29 | delegated_access | 9 | 64 | 13 | 74 | 0 |
+| 29 | delegated_access | 33 | 251 | 144 | 282 | 11 |
 | 30 | read_models | 13 | 74 | 0 | 89 | 76 |
 | 31 | integration_contracts | 9 | 48 | 1 | 57 | 0 |
 | 32 | workflow | 8 | 49 | 0 | 55 | 9 |
-| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 51 |
+| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 84 |
 | 34 | portal_catalog _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
 | 35 | messaging | 22 | 142 | 0 | 150 | 0 |
 | 36 | qa_lab | 13 | 79 | 0 | 92 | 0 |
@@ -45,7 +45,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 38 | erp | 51 | 429 | 0 | 494 | 14 |
 | 39 | reporting | 12 | 70 | 0 | 86 | 0 |
 | 40 | auth_providers | 9 | 50 | 0 | 58 | 1 |
-| 41 | scheduling | 19 | 135 | 28 | 139 | 3 |
+| 41 | scheduling | 19 | 140 | 28 | 144 | 6 |
 | 42 | payments | 52 | 349 | 0 | 404 | 6 |
 | 43 | ads | 73 | 388 | 0 | 497 | 0 |
 | 44 | health_context | 10 | 53 | 0 | 62 | 0 |
@@ -74,7 +74,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 67 | data_catalog | 13 | 43 | 23 | 24 | 0 |
 | 68 | qa_execution | 4 | 14 | 6 | 6 | 0 |
 | 69 | pharma_lab | 31 | 182 | 173 | 182 | 1 |
-| **Σ** | **70** | **1288** | | **499** | | **370** |
+| **Σ** | **70** | **1320** | | **664** | | **421** |
 
 ## Detalle de entidades saltadas y avisos
 
@@ -82,6 +82,8 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - ⚠ índice 'gist_addresses_location' omitido: columna(s) inexistente(s) ['geography_point'] en addresses (¿tipo no-SQL descartado? requiere PostGIS)
 
 ### 04 · directory
+- `profiles_persons` — stub de cruce (tabla real en su módulo dueño)
+- `delegated_access_role_templates` — stub de cruce (tabla real en su módulo dueño)
 - ⚠ índice 'gist_branches_location' omitido: columna(s) inexistente(s) ['geography_point'] en branches (¿tipo no-SQL descartado? requiere PostGIS)
 
 ### 05 · profiles
@@ -173,6 +175,8 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - `terminology_catalog_concepts` — stub de cruce (tabla real en su módulo dueño)
 - `iam_users` — stub de cruce (tabla real en su módulo dueño)
 - `rating_aggregates` — vista materializada (sin SELECT en el .puml)
+- `profiles_health_practitioner_profiles` — stub de cruce (tabla real en su módulo dueño)
+- `delegated_access_practitioner_delegate_assignments` — stub de cruce (tabla real en su módulo dueño)
 
 ### 23 · diagnostic_units
 - `directory_tenants` — stub de cruce (tabla real en su módulo dueño)
@@ -195,6 +199,13 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 
 ### 26 · insurance
 - `profiles_health_practitioner_profiles` — stub de cruce (tabla real en su módulo dueño)
+### 29 · delegated_access
+- `practice_practitioner_role_assignments` — stub de cruce (tabla real en su módulo dueño)
+- `practice_healthcare_services` — stub de cruce (tabla real en su módulo dueño)
+- `practice_care_spaces` — stub de cruce (tabla real en su módulo dueño)
+- `practice_practice_sites` — stub de cruce (tabla real en su módulo dueño)
+- `authz_permissions` — stub de cruce (tabla real en su módulo dueño)
+- `profiles_patient_profiles` — stub de cruce (tabla real en su módulo dueño)
 
 ### 30 · read_models
 - `system_admin_dashboard_v` — vista (sin SELECT en el .puml)
@@ -337,6 +348,31 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - `diagnostic_units_diagnostic_equipment` — stub de cruce (tabla real en su módulo dueño)
 - `delegated_access_organization_user_assignments` — stub de cruce (tabla real en su módulo dueño)
 - `delegated_access_shared_access_link_uses` — stub de cruce (tabla real en su módulo dueño)
+- `delegated_access_support_scope_grants` — stub de cruce (tabla real en su módulo dueño)
+- `delegated_access_engagement_request_items` — stub de cruce (tabla real en su módulo dueño)
+- `delegated_access_engagement_requests` — stub de cruce (tabla real en su módulo dueño)
+- `delegated_access_role_templates` — stub de cruce (tabla real en su módulo dueño)
+- `delegated_access_organization_user_assignments` — stub de cruce (tabla real en su módulo dueño)
+- `directory_affiliation_invitations` — stub de cruce (tabla real en su módulo dueño)
+- `practice_practitioner_location_assignments` — stub de cruce (tabla real en su módulo dueño)
+- `iam_session_policies` — stub de cruce (tabla real en su módulo dueño)
+- `community_direct_messages` — stub de cruce (tabla real en su módulo dueño)
+- `authz_permissions` — stub de cruce (tabla real en su módulo dueño)
+- `delegated_access_support_scope_grants` — stub de cruce (tabla real en su módulo dueño)
+- `delegated_access_support_grant_actions` — stub de cruce (tabla real en su módulo dueño)
+- `delegated_access_role_templates` — stub de cruce (tabla real en su módulo dueño)
+- `delegated_access_governance_rules` — stub de cruce (tabla real en su módulo dueño)
+- `delegated_access_sod_rules` — stub de cruce (tabla real en su módulo dueño)
+- `delegated_access_sod_exceptions` — stub de cruce (tabla real en su módulo dueño)
+- `delegated_access_four_eyes_requests` — stub de cruce (tabla real en su módulo dueño)
+- `delegated_access_access_review_campaigns` — stub de cruce (tabla real en su módulo dueño)
+- `delegated_access_access_review_items` — stub de cruce (tabla real en su módulo dueño)
+- `delegated_access_lifecycle_cases` — stub de cruce (tabla real en su módulo dueño)
+- `delegated_access_handover_items` — stub de cruce (tabla real en su módulo dueño)
+- `delegated_access_patient_restriction_flags` — stub de cruce (tabla real en su módulo dueño)
+- `delegated_access_access_decision_log` — stub de cruce (tabla real en su módulo dueño)
+- `delegated_access_grant_usage_stats` — stub de cruce (tabla real en su módulo dueño)
+- `delegated_access_access_anomalies` — stub de cruce (tabla real en su módulo dueño)
 
 ### 35 · messaging
 - ⚠ índice 'uq_adapter_inbound_events_provider_id' omitido: columna(s) inexistente(s) ['received_time_bucket'] en adapter_inbound_events (¿tipo no-SQL descartado? requiere PostGIS)
@@ -368,6 +404,9 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - `forms_form_instances` — stub de cruce (tabla real en su módulo dueño)
 - `scheduling_appointment_bookings` — stub de cruce (tabla real en su módulo dueño)
 - `appointments` — entidad externa
+- `practice_care_spaces` — stub de cruce (tabla real en su módulo dueño)
+- `practice_healthcare_services` — stub de cruce (tabla real en su módulo dueño)
+- `delegated_access_support_scope_grants` — stub de cruce (tabla real en su módulo dueño)
 
 ### 42 · payments
 - `erp_business_partners` — stub de cruce (tabla real en su módulo dueño)

@@ -1,4 +1,4 @@
--- SALUD v4.0.10 · perfil pay · módulo 77 · base pay_schedules
+-- SALUD v4.2.79 · perfil pay · módulo 77 · base pay_schedules
 -- Generado de diagram_77_pay_schedules.puml — NO editar a mano.
 
 -- Sin CREATE SCHEMA a propósito: el módulo es una BASE (una por servicio) y sus objetos van sin calificar,

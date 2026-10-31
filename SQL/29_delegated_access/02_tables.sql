@@ -1,9 +1,10 @@
--- SALUD v4.0.10 · módulo 29 · schema delegated_access
+-- SALUD v4.2.79 · módulo 29 · schema delegated_access
 -- Generado de diagram_29_delegated_access.puml — NO editar a mano.
 
 
 CREATE TABLE IF NOT EXISTS "delegated_access"."organization_user_assignments" (
     "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
     "tenant_membership_id" uuid NOT NULL,
     "practice_id" uuid,
     "practice_site_id" uuid,
@@ -22,6 +23,21 @@ CREATE TABLE IF NOT EXISTS "delegated_access"."organization_user_assignments" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "origin_concept_id" uuid,
+    "owner_kind_concept_id" uuid,
+    "role_template_id" uuid,
+    "recertify_every_months" integer,
+    "next_recertification_at" timestamptz,
+    "ended_reason_text" text,
+    "identity_verified_at" timestamptz,
+    "identity_verified_by_user_id" uuid,
+    "identity_method_concept_id" uuid,
+    "suspended_at" timestamptz,
+    "suspension_reason_concept_id" uuid,
+    "suspension_note_text" text,
+    "onboarding_completed_at" timestamptz,
+    "last_certified_at" timestamptz,
+    "last_active_at" timestamptz,
     CONSTRAINT "pk_organization_user_assignments" PRIMARY KEY ("id")
 );
 
@@ -54,6 +70,7 @@ CREATE TABLE IF NOT EXISTS "delegated_access"."delegated_permission_set_items" (
 
 CREATE TABLE IF NOT EXISTS "delegated_access"."practitioner_delegate_assignments" (
     "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
     "practitioner_role_assignment_id" uuid NOT NULL,
     "delegate_user_assignment_id" uuid NOT NULL,
     "delegated_permission_set_id" uuid NOT NULL,
@@ -71,6 +88,9 @@ CREATE TABLE IF NOT EXISTS "delegated_access"."practitioner_delegate_assignments
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "may_reply_on_behalf" boolean NOT NULL DEFAULT false,
+    "reply_disclosure_concept_id" uuid,
+    "accepted_at" timestamptz,
     CONSTRAINT "pk_practitioner_delegate_assignments" PRIMARY KEY ("id")
 );
 
@@ -158,4 +178,387 @@ CREATE TABLE IF NOT EXISTS "delegated_access"."delegation_events" (
     "occurred_at" timestamptz NOT NULL,
     "created_at" timestamptz NOT NULL,
     CONSTRAINT "pk_delegation_events" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "delegated_access"."role_templates" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid,
+    "code" varchar NOT NULL,
+    "name" varchar NOT NULL,
+    "default_actions_json" jsonb NOT NULL,
+    "status_concept_id" uuid NOT NULL,
+    "version_number" integer NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    "default_conditions_json" jsonb,
+    "ceiling_actions_json" jsonb,
+    CONSTRAINT "pk_role_templates" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "delegated_access"."support_scope_grants" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "organization_user_assignment_id" uuid NOT NULL,
+    "target_kind_concept_id" uuid NOT NULL,
+    "practitioner_role_assignment_id" uuid,
+    "healthcare_service_id" uuid,
+    "care_space_id" uuid,
+    "practice_site_id" uuid,
+    "expansion_mode_concept_id" uuid NOT NULL,
+    "fixed_snapshot_json" jsonb,
+    "valid_from" timestamptz,
+    "valid_to" timestamptz,
+    "status_concept_id" uuid NOT NULL,
+    "approved_by_user_id" uuid,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    "effect_concept_id" uuid NOT NULL DEFAULT '6905e0db-1650-5d49-adca-8b2688ac049c',
+    "condition_json" jsonb,
+    "condition_schema_version" integer,
+    "reason_text" text,
+    "source_role_template_id" uuid,
+    CONSTRAINT "pk_support_scope_grants" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "delegated_access"."support_grant_actions" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "support_scope_grant_id" uuid NOT NULL,
+    "permission_id" uuid NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "condition_json" jsonb,
+    "condition_schema_version" integer,
+    "superseded_at" timestamptz,
+    "updated_at" timestamptz,
+    "updated_by_user_id" uuid,
+    CONSTRAINT "pk_support_grant_actions" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "delegated_access"."engagement_requests" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "requester_user_id" uuid NOT NULL,
+    "direction_concept_id" uuid NOT NULL,
+    "role_template_id" uuid NOT NULL,
+    "parent_assignment_id" uuid,
+    "message_text" text,
+    "status_concept_id" uuid NOT NULL,
+    "expires_at" timestamptz NOT NULL,
+    "decided_at" timestamptz,
+    "decided_by_user_id" uuid,
+    "decision_reason_text" text,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_engagement_requests" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "delegated_access"."engagement_request_items" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "engagement_request_id" uuid NOT NULL,
+    "target_kind_concept_id" uuid NOT NULL,
+    "practitioner_role_assignment_id" uuid,
+    "healthcare_service_id" uuid,
+    "care_space_id" uuid,
+    "practice_site_id" uuid,
+    "proposed_actions_json" jsonb NOT NULL,
+    "decision_concept_id" uuid NOT NULL,
+    "decision_comment_text" text,
+    "resulting_grant_id" uuid,
+    "created_at" timestamptz NOT NULL,
+    CONSTRAINT "pk_engagement_request_items" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "delegated_access"."effective_support_access" (
+    "id" uuid NOT NULL,
+    "user_id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "practitioner_role_assignment_id" uuid,
+    "healthcare_service_id" uuid,
+    "care_space_id" uuid,
+    "permission_code" varchar NOT NULL,
+    "grant_id" uuid NOT NULL,
+    "refreshed_at" timestamptz NOT NULL,
+    CONSTRAINT "pk_effective_support_access" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "delegated_access"."governance_rules" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "rule_kind_concept_id" uuid NOT NULL,
+    "role_template_code" varchar,
+    "permission_pattern" varchar NOT NULL,
+    "rule_json" jsonb,
+    "rule_schema_version" integer,
+    "message_text" text,
+    "status_concept_id" uuid NOT NULL,
+    "valid_from" timestamptz,
+    "valid_to" timestamptz,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_governance_rules" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "delegated_access"."sod_rules" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid,
+    "code" varchar NOT NULL,
+    "name" varchar NOT NULL,
+    "base_rule_id" uuid,
+    "atoms_a_json" jsonb NOT NULL,
+    "atoms_b_json" jsonb NOT NULL,
+    "scope_concept_id" uuid NOT NULL,
+    "action_concept_id" uuid NOT NULL,
+    "is_hard" boolean NOT NULL DEFAULT false,
+    "max_exception_days" integer,
+    "rationale_text" text,
+    "status_concept_id" uuid NOT NULL,
+    "version_number" integer NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_sod_rules" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "delegated_access"."sod_exceptions" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "sod_rule_id" uuid NOT NULL,
+    "organization_user_assignment_id" uuid NOT NULL,
+    "four_eyes_request_id" uuid NOT NULL,
+    "justification_text" text NOT NULL,
+    "valid_from" timestamptz NOT NULL,
+    "valid_to" timestamptz NOT NULL,
+    "status_concept_id" uuid NOT NULL,
+    "revoked_at" timestamptz,
+    "revoked_by_user_id" uuid,
+    "revoke_reason_text" text,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_sod_exceptions" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "delegated_access"."four_eyes_requests" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "kind_concept_id" uuid NOT NULL,
+    "requester_user_id" uuid NOT NULL,
+    "subject_user_id" uuid,
+    "organization_user_assignment_id" uuid,
+    "permission_code" varchar,
+    "approver_kind_concept_id" uuid NOT NULL,
+    "payload_json" jsonb NOT NULL,
+    "payload_hash" varchar NOT NULL,
+    "payload_schema_version" integer NOT NULL,
+    "reason_text" text,
+    "status_concept_id" uuid NOT NULL,
+    "expires_at" timestamptz NOT NULL,
+    "decided_at" timestamptz,
+    "decided_by_user_id" uuid,
+    "decision_comment_text" text,
+    "approved_until" timestamptz,
+    "consumed_at" timestamptz,
+    "executed_at" timestamptz,
+    "execution_result_json" jsonb,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_four_eyes_requests" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "delegated_access"."access_review_campaigns" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "name" varchar NOT NULL,
+    "kind_concept_id" uuid NOT NULL,
+    "scope_json" jsonb NOT NULL,
+    "scope_schema_version" integer NOT NULL,
+    "filters_json" jsonb,
+    "due_at" timestamptz NOT NULL,
+    "grace_days" integer NOT NULL DEFAULT 7,
+    "reminder_days_before_json" jsonb NOT NULL DEFAULT '[7,3,1]',
+    "escalate_after_days" integer NOT NULL DEFAULT 3,
+    "uncertified_action_concept_id" uuid NOT NULL,
+    "owner_user_id" uuid,
+    "status_concept_id" uuid NOT NULL,
+    "launched_at" timestamptz,
+    "closed_at" timestamptz,
+    "cancelled_at" timestamptz,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_access_review_campaigns" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "delegated_access"."access_review_items" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "access_review_campaign_id" uuid NOT NULL,
+    "organization_user_assignment_id" uuid NOT NULL,
+    "support_scope_grant_id" uuid,
+    "reviewer_user_id" uuid,
+    "reviewer_kind_concept_id" uuid NOT NULL,
+    "decision_concept_id" uuid NOT NULL DEFAULT '55a6db07-19e7-5bb4-978a-3d246492f49d',
+    "decided_at" timestamptz,
+    "decided_by_user_id" uuid,
+    "decision_comment_text" text,
+    "adjustment_json" jsonb,
+    "evidence_json" jsonb NOT NULL,
+    "evidence_hash" varchar NOT NULL,
+    "due_at" timestamptz NOT NULL,
+    "reminder_count" integer NOT NULL DEFAULT 0,
+    "last_reminded_at" timestamptz,
+    "escalated_at" timestamptz,
+    "escalated_to_user_id" uuid,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_access_review_items" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "delegated_access"."lifecycle_cases" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "organization_user_assignment_id" uuid NOT NULL,
+    "subject_user_id" uuid NOT NULL,
+    "kind_concept_id" uuid NOT NULL,
+    "status_concept_id" uuid NOT NULL,
+    "opened_by_user_id" uuid,
+    "opened_at" timestamptz NOT NULL,
+    "due_at" timestamptz,
+    "completed_at" timestamptz,
+    "reason_text" text,
+    "checklist_json" jsonb NOT NULL,
+    "details_json" jsonb,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_lifecycle_cases" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "delegated_access"."handover_items" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "lifecycle_case_id" uuid NOT NULL,
+    "item_kind_concept_id" uuid NOT NULL,
+    "source_id" uuid NOT NULL,
+    "from_user_id" uuid NOT NULL,
+    "to_user_id" uuid,
+    "status_concept_id" uuid NOT NULL,
+    "summary_text" varchar,
+    "reassigned_at" timestamptz,
+    "reassigned_by_user_id" uuid,
+    "note_text" text,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_handover_items" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "delegated_access"."patient_restriction_flags" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "patient_profile_id" uuid NOT NULL,
+    "flag_concept_id" uuid NOT NULL,
+    "reason_text" text NOT NULL,
+    "status_concept_id" uuid NOT NULL,
+    "valid_from" timestamptz NOT NULL,
+    "valid_to" timestamptz,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_patient_restriction_flags" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "delegated_access"."access_decision_log" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "user_id" uuid NOT NULL,
+    "permission_code" varchar NOT NULL,
+    "effect_concept_id" uuid NOT NULL,
+    "reason_code" varchar NOT NULL,
+    "grant_id" uuid,
+    "rule_id" uuid,
+    "practitioner_role_assignment_id" uuid,
+    "healthcare_service_id" uuid,
+    "care_space_id" uuid,
+    "patient_profile_id" uuid,
+    "approval_id" uuid,
+    "correlation_id" uuid,
+    "session_id" uuid,
+    "ip" inet,
+    "detail_json" jsonb,
+    "recorded_at" timestamptz NOT NULL,
+    "recorded_by_user_id" uuid,
+    CONSTRAINT "pk_access_decision_log" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "delegated_access"."grant_usage_stats" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "user_id" uuid NOT NULL,
+    "support_scope_grant_id" uuid NOT NULL,
+    "permission_code" varchar NOT NULL,
+    "bucket_start" timestamptz NOT NULL,
+    "permit_count" integer NOT NULL DEFAULT 0,
+    "deny_count" integer NOT NULL DEFAULT 0,
+    "challenge_count" integer NOT NULL DEFAULT 0,
+    "off_hours_count" integer NOT NULL DEFAULT 0,
+    "distinct_patients_in_bucket" integer NOT NULL DEFAULT 0,
+    "last_used_at" timestamptz,
+    "updated_at" timestamptz NOT NULL,
+    CONSTRAINT "pk_grant_usage_stats" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "delegated_access"."access_anomalies" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "user_id" uuid NOT NULL,
+    "organization_user_assignment_id" uuid,
+    "kind_concept_id" uuid NOT NULL,
+    "window_start" timestamptz NOT NULL,
+    "window_end" timestamptz NOT NULL,
+    "observed_value" numeric(12,2) NOT NULL,
+    "baseline_value" numeric(12,2),
+    "threshold_value" numeric(12,2) NOT NULL,
+    "evidence_json" jsonb NOT NULL,
+    "status_concept_id" uuid NOT NULL,
+    "acknowledged_by_user_id" uuid,
+    "acknowledged_at" timestamptz,
+    "resolution_comment_text" text,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_access_anomalies" PRIMARY KEY ("id")
 );

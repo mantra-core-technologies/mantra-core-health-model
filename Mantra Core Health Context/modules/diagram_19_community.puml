@@ -635,6 +635,14 @@ entity direct_messages {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + v4.2.75 (personal de apoyo): el paciente ve al DOCTOR como emisor (sender_profile_id), pero se guarda la
+  ' AUTORA REAL: authored_by_user_id (la persona de apoyo), on_behalf_of_profile_id (el doctor) y
+  ' delegate_assignment_id (el vinculo que lo autoriza). disclosure_shown = el paciente vio 'respondido
+  ' por su equipo'. Solo mensajes administrativos. Nullable: los mensajes existentes no los declaran.
+    authored_by_user_id : uuid <<FK>>
+    on_behalf_of_profile_id : uuid <<FK>>
+    delegate_assignment_id : uuid <<FK>>
+  * disclosure_shown : boolean <<DEFAULT_FALSE>>
 }
 entity message_receipts <<LOG>> {
   * id : uuid <<PK>>
@@ -1223,6 +1231,9 @@ entity "INDEXES · direct_messages" as idxset_direct_messages <<INDEX_SET>> {
   IX ix_direct_messages_created_by_user_id : (created_by_user_id) BTREE
   IX ix_direct_messages_updated_by_user_id : (updated_by_user_id) BTREE
   GIN gin_direct_messages_search : to_tsvector('simple', concat_ws(' ', body_text)) GIN
+IX ix_direct_messages_authored_by_user_id : (authored_by_user_id) BTREE
+IX ix_direct_messages_on_behalf_of_profile_id : (on_behalf_of_profile_id) BTREE
+IX ix_direct_messages_delegate_assignment_id : (delegate_assignment_id) BTREE
 }
 
 direct_messages .. idxset_direct_messages : indexed by
@@ -1540,5 +1551,103 @@ entity "INDEXES · comment_media" as idxset_comment_media <<INDEX_SET>> {
 comment_media .. idxset_comment_media : indexed by
 
 comments ||--o{ comment_media
+
+
+' ==============================================================================
+' v4.2.75 - BANDEJA DE MENSAJES DEL EQUIPO DE APOYO. conversation_assignments dice a que doctor
+' pertenece una conversacion y quien del equipo la tomo; las notas internas son SOLO del equipo
+' (el paciente nunca las ve); reply_templates son respuestas rapidas de la organizacion o de un doctor.
+' ==============================================================================
+entity "profiles.health_practitioner_profiles" as profiles_health_practitioner_profiles <<REFERENCE_ONLY>> {
+  * profile_id : uuid <<PK>>
+}
+entity "delegated_access.practitioner_delegate_assignments" as delegated_access_practitioner_delegate_assignments <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity conversation_assignments {
+  * id : uuid <<PK>>
+  --
+  ' v4.2.76 (hardening): tenant_id ancla la asignacion a la ORGANIZACION cuyo equipo atiende la
+  ' conversacion (conversations.tenant_id suele ser NULL). Si la conversacion SI trae tenant, deben coincidir
+  ' (trigger integrity.trg_support_tenant_consistency).
+  * tenant_id : uuid <<FK>>
+  * conversation_id : uuid <<FK>>
+  * practitioner_profile_id : uuid <<FK>>
+    assigned_user_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    sla_due_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity conversation_internal_notes {
+  * id : uuid <<PK>>
+  --
+  ' v4.2.76: tenant_id = organizacion del equipo que escribe la nota (misma regla que conversation_assignments).
+  * tenant_id : uuid <<FK>>
+  * conversation_id : uuid <<FK>>
+  * author_user_id : uuid <<FK>>
+  * body_text : text
+  * created_at : timestamptz
+}
+
+entity reply_templates {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+    practitioner_profile_id : uuid <<FK>>
+  * category_concept_id : uuid <<FK>>
+  * title : varchar
+  * body_text : text
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+direct_messages }o--o| profiles_health_practitioner_profiles : on_behalf_of_profile_id
+direct_messages }o--o| delegated_access_practitioner_delegate_assignments : delegate_assignment_id
+conversation_assignments }o--|| conversations : conversation_id
+conversation_assignments }o--|| profiles_health_practitioner_profiles : practitioner_profile_id
+conversation_internal_notes }o--|| conversations : conversation_id
+reply_templates }o--o| profiles_health_practitioner_profiles : practitioner_profile_id
+
+entity "INDEXES · conversation_assignments" as idxset_conversation_assignments <<INDEX_SET>> {
+  PK pk_conversation_assignments : (id) UNIQUE BTREE
+  UK uq_conversation_assignments_conversation_id : (conversation_id) UNIQUE BTREE
+  IX ix_conversation_assignments_tenant_id : (tenant_id, status_concept_id) BTREE
+  IX ix_conversation_assignments_practitioner_profile_id : (practitioner_profile_id, status_concept_id) BTREE
+  IX ix_conversation_assignments_assigned_user_id : (assigned_user_id) BTREE
+  IX ix_conversation_assignments_status_concept_id : (status_concept_id) BTREE
+  IX ix_conversation_assignments_sla_due_at : (sla_due_at) BTREE WHERE sla_due_at IS NOT NULL
+  IX ix_conversation_assignments_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_conversation_assignments_updated_by_user_id : (updated_by_user_id) BTREE
+}
+conversation_assignments .. idxset_conversation_assignments : indexed by
+
+entity "INDEXES · conversation_internal_notes" as idxset_conversation_internal_notes <<INDEX_SET>> {
+  PK pk_conversation_internal_notes : (id) UNIQUE BTREE
+  IX ix_conversation_internal_notes_tenant_id : (tenant_id) BTREE
+  IX ix_conversation_internal_notes_conversation_created : (conversation_id, created_at DESC) BTREE
+  IX ix_conversation_internal_notes_author_user_id : (author_user_id) BTREE
+}
+conversation_internal_notes .. idxset_conversation_internal_notes : indexed by
+
+entity "INDEXES · reply_templates" as idxset_reply_templates <<INDEX_SET>> {
+  PK pk_reply_templates : (id) UNIQUE BTREE
+  IX ix_reply_templates_tenant_id : (tenant_id, status_concept_id) BTREE
+  IX ix_reply_templates_practitioner_profile_id : (practitioner_profile_id) BTREE
+  IX ix_reply_templates_category_concept_id : (category_concept_id) BTREE
+  IX ix_reply_templates_status_concept_id : (status_concept_id) BTREE
+  IX ix_reply_templates_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_reply_templates_updated_by_user_id : (updated_by_user_id) BTREE
+}
+reply_templates .. idxset_reply_templates : indexed by
 
 @enduml

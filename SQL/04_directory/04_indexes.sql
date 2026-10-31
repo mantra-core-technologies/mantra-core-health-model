@@ -1,4 +1,4 @@
--- SALUD v4.0.10 · módulo 04 · schema directory
+-- SALUD v4.2.79 · módulo 04 · schema directory
 -- Generado de diagram_04_directory.puml — NO editar a mano.
 
 
@@ -68,6 +68,10 @@ CREATE INDEX IF NOT EXISTS "ix_tenant_memberships_workday_concept_id" ON "direct
 
 CREATE INDEX IF NOT EXISTS "ix_tenant_memberships_responsible_user_id" ON "directory"."tenant_memberships" ("responsible_user_id");
 
+CREATE INDEX IF NOT EXISTS "ix_tenant_memberships_origin_concept_id" ON "directory"."tenant_memberships" ("origin_concept_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_tenant_memberships_active_user_tenant" ON "directory"."tenant_memberships" ("user_id", "tenant_id") WHERE status_concept_id = '13ca1b46-61d5-5c25-9d49-8247bcd7769c';
+
 CREATE INDEX IF NOT EXISTS "ix_branch_memberships_tenant_membership_id" ON "directory"."branch_memberships" ("tenant_membership_id");
 
 CREATE INDEX IF NOT EXISTS "ix_branch_memberships_branch_id" ON "directory"."branch_memberships" ("branch_id");
@@ -113,3 +117,31 @@ CREATE UNIQUE INDEX IF NOT EXISTS "uk_tenant_web_configs_domain" ON "directory".
 CREATE INDEX IF NOT EXISTS "ix_tenant_web_configs_tenant_id" ON "directory"."tenant_web_configs" ("tenant_id");
 
 CREATE INDEX IF NOT EXISTS "ix_tenant_web_configs_primary_language_concept_id" ON "directory"."tenant_web_configs" ("primary_language_concept_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_affiliation_invitations_token_hash" ON "directory"."affiliation_invitations" ("token_hash");
+
+CREATE INDEX IF NOT EXISTS "ix_affiliation_invitations_tenant_id" ON "directory"."affiliation_invitations" ("tenant_id", "status_concept_id", "expires_at");
+
+CREATE INDEX IF NOT EXISTS "ix_affiliation_invitations_kind_concept_id" ON "directory"."affiliation_invitations" ("kind_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_affiliation_invitations_target_person_id" ON "directory"."affiliation_invitations" ("target_person_id");
+
+CREATE INDEX IF NOT EXISTS "ix_affiliation_invitations_role_template_id" ON "directory"."affiliation_invitations" ("role_template_id");
+
+CREATE INDEX IF NOT EXISTS "ix_affiliation_invitations_status_concept_id" ON "directory"."affiliation_invitations" ("status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_affiliation_invitations_created_by_user_id" ON "directory"."affiliation_invitations" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_affiliation_invitations_updated_by_user_id" ON "directory"."affiliation_invitations" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_affiliation_invitation_uses_tenant_id" ON "directory"."affiliation_invitation_uses" ("tenant_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_affiliation_invitation_uses_accepted" ON "directory"."affiliation_invitation_uses" ("affiliation_invitation_id", "used_by_user_id") WHERE outcome_concept_id = '659f9beb-ad4d-583e-828b-05a808ad08dc';
+
+CREATE INDEX IF NOT EXISTS "ix_affiliation_invitation_uses_invitation_occurred" ON "directory"."affiliation_invitation_uses" ("affiliation_invitation_id", "occurred_at" DESC);
+
+CREATE INDEX IF NOT EXISTS "ix_affiliation_invitation_uses_used_by_user_id" ON "directory"."affiliation_invitation_uses" ("used_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_affiliation_invitation_uses_outcome_concept_id" ON "directory"."affiliation_invitation_uses" ("outcome_concept_id");
+
+CREATE INDEX IF NOT EXISTS "brin_affiliation_invitation_uses_occurred_at" ON "directory"."affiliation_invitation_uses" USING brin ("occurred_at") WITH (pages_per_range=128);

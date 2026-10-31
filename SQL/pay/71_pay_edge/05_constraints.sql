@@ -1,4 +1,4 @@
--- SALUD v4.0.10 · perfil pay · módulo 71 · base pay_edge
+-- SALUD v4.2.79 · perfil pay · módulo 71 · base pay_edge
 -- Generado de diagram_71_pay_edge.puml — NO editar a mano.
 
 -- Complementos del perfil pay (gen_ddl_pay.py): funciones, CHECK, FK compuestas y triggers.

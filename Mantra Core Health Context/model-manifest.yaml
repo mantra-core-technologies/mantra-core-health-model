@@ -1,8 +1,8 @@
 model:
   name: SALUD
-  version: 4.0.10
+  version: 4.2.79
   status: canonical-polyglot-nosql-health-platform
-  generated_at: '2026-08-06'
+  generated_at: '2026-10-31'
   design_patches:
   - id: patch-01-plan-scheduled-campaigns-tracking
     role: normative-master-plan
@@ -161,6 +161,27 @@ model:
       retirado (declaraba un flujo por introspección que nunca produjo las
       entidades del repo). Los +2 entity declarations son los stubs de la
       matriz del módulo 33 (audit_log, data_access_log), no tablas nuevas.
+  - id: patch-v4.2.75-v4.2.79-personal-apoyo-gobierno-accesos
+    role: product-features
+    doc: docs/architecture/physical-materialization.md (v4.2.75–v4.2.79)
+    status: materialized-physically
+    summary: >-
+      Personal de apoyo hospitalario (secretaria y otros roles) y gobierno de accesos,
+      portado de #95 sobre v4.2.74 y renumerado (v4.2.69–v4.2.73 → v4.2.75–v4.2.79).
+      La secretaria se registra como cualquier persona (iam.users + directory),
+      se vincula a la organización donde trabaja (organization_user_assignments
+      sobre su membresía), a los doctores que asiste (practitioner_delegate_assignments
+      + support_scope_grants) y a pisos/unidades (support_scope_grants por
+      care_space/sede; care_spaces.location_path), y el acceso nace sólo de una
+      solicitud o invitación aceptada (engagement_requests + engagement_request_items
+      → resulting_grant_id en support_scope_grants; invitación por enlace/QR en
+      directory.affiliation_invitations). +25 tablas (iam 1, directory 2,
+      practice 1, community 3, delegated_access 18), columnas de gobierno en
+      authz.permissions, 73 permisos atómicos, SoD, cuatro ojos, certificación,
+      bitácora WORM. Funciones, disparadores y RLS en
+      SQL/patches/2026-10-31_v4275_personal_apoyo.sql, _v4278_gobierno_de_accesos.sql
+      y _v4279_revision_seguridad_gobierno.sql. Al portar se retiró
+      care_spaces.fhir_physical_type (duplicaba form_concept_id de v4.2.67).
   materialization_note: >-
     v4.0.1 materializado en el ER (fuente: el vault/grafo). Se añadieron 14
     entidades nuevas (marketing.campaign_schedules/dispatches/dispatch_recipients,
@@ -173,12 +194,12 @@ model:
   inventory:
     modules_puml: 70
     schemas: 58
-    entity_declarations_total: 2920
-    table_like_elements: 1348
+    entity_declarations_total: 3105
+    table_like_elements: 1410
     view_elements: 81
-    index_sets: 1323
-    reference_only_stubs: 168
-    fk_references: 7224
+    index_sets: 1384
+    reference_only_stubs: 230
+    fk_references: 7564
     note: >-
       Cifras producidas por tools/model_inventory.py (fuente única reproducible:
       clasifica cada `entity` en una sola clase, suma == total). v4.0 base
@@ -204,7 +225,10 @@ model:
       los servicios recibidos del paciente y la contabilidad simple del
       doctor, P49):
       2920 entity / 1348 table_like / 81 vistas / 1323 idx /
-      7224 FK / 168 ref / 58 schemas; los conteos por módulo de
+      7224 FK / 168 ref / 58 schemas. Recontado el 2026-10-31 sobre dev
+      (v4.2.74) más el personal de apoyo y gobierno de accesos (v4.2.75–v4.2.79):
+      3105 entity / 1410 table_like / 81 vistas / 1384 idx /
+      7564 FK / 230 ref / 58 schemas; los conteos por módulo de
       `modules` salen de la misma corrida.
   database: PostgreSQL canonical + governed specialized stores
   rules:
@@ -250,9 +274,9 @@ modules:
   code: iam
   title: Identity & Access — User Accounts and Security
   file: modules/diagram_01_iam.puml
-  table_like_elements: 14
+  table_like_elements: 15
   view_elements: 0
-  index_sets: 14
+  index_sets: 15
   status: active
 - number: 2
   code: common
@@ -266,25 +290,25 @@ modules:
   code: terminology
   title: Terminology, Value Sets and Dynamic Catalogs
   file: modules/diagram_03_terminology.puml
-  table_like_elements: 15
+  table_like_elements: 16
   view_elements: 0
-  index_sets: 15
+  index_sets: 16
   status: active
 - number: 4
   code: directory
   title: Tenants, Organizations, Sites and Directory
   file: modules/diagram_04_directory.puml
-  table_like_elements: 7
+  table_like_elements: 9
   view_elements: 0
-  index_sets: 7
+  index_sets: 9
   status: active
 - number: 5
   code: profiles
   title: Persons, Patients and Health Workforce
   file: modules/diagram_05_profiles.puml
-  table_like_elements: 19
+  table_like_elements: 20
   view_elements: 0
-  index_sets: 19
+  index_sets: 20
   status: active
 - number: 6
   code: authz
@@ -306,9 +330,9 @@ modules:
   code: clinical
   title: Core Clinical Record, Orders and Encounter Logistics
   file: modules/diagram_08_clinical.puml
-  table_like_elements: 23
+  table_like_elements: 24
   view_elements: 0
-  index_sets: 23
+  index_sets: 24
   status: active
 - number: 9
   code: forms
@@ -354,9 +378,9 @@ modules:
   code: practice
   title: Care Organizations, Sites, Units, Spaces and Workforce
   file: modules/diagram_14_practice.puml
-  table_like_elements: 11
+  table_like_elements: 16
   view_elements: 0
-  index_sets: 11
+  index_sets: 16
   status: active
 - number: 15
   code: chart
@@ -378,9 +402,9 @@ modules:
   code: billing
   title: Billing, Receivables, Payables and Financial Planning
   file: modules/diagram_17_billing.puml
-  table_like_elements: 22
+  table_like_elements: 24
   view_elements: 1
-  index_sets: 22
+  index_sets: 24
   status: active
 - number: 18
   code: clinical_ext
@@ -394,9 +418,9 @@ modules:
   code: community
   title: Public Profiles, Social Graph, Messaging and Moderation
   file: modules/diagram_19_community.puml
-  table_like_elements: 41
+  table_like_elements: 44
   view_elements: 1
-  index_sets: 42
+  index_sets: 45
   status: active
 - number: 20
   code: diagnostics
@@ -434,9 +458,9 @@ modules:
   code: pharmacy
   title: Pharmacy Identity, Sites, Catalog and Pricing
   file: modules/diagram_24_pharmacy.puml
-  table_like_elements: 9
+  table_like_elements: 12
   view_elements: 0
-  index_sets: 9
+  index_sets: 12
   status: active
 - number: 25
   code: pharmacy_inventory
@@ -450,9 +474,9 @@ modules:
   code: insurance
   title: Insurance Networks, Operations, Appeals and Reconciliation
   file: modules/diagram_26_insurance.puml
-  table_like_elements: 32
+  table_like_elements: 33
   view_elements: 0
-  index_sets: 32
+  index_sets: 33
   status: active
 - number: 27
   code: identity_assurance
@@ -474,9 +498,9 @@ modules:
   code: delegated_access
   title: Delegated Access and Scoped Infrastructure Users
   file: modules/diagram_29_delegated_access.puml
-  table_like_elements: 9
+  table_like_elements: 27
   view_elements: 0
-  index_sets: 9
+  index_sets: 27
   status: active
 - number: 30
   code: read_models
@@ -506,7 +530,7 @@ modules:
   code: integrity
   title: Concurrency, Constraints and Integrity Matrix
   file: modules/diagram_33_integrity.puml
-  table_like_elements: 14
+  table_like_elements: 15
   view_elements: 0
   index_sets: 0
   status: active
@@ -570,9 +594,9 @@ modules:
   code: scheduling
   title: Appointments, Availability, Holds and Waitlists
   file: modules/diagram_41_scheduling.puml
-  table_like_elements: 19
+  table_like_elements: 20
   view_elements: 0
-  index_sets: 18
+  index_sets: 19
   status: active
 - number: 42
   code: payments

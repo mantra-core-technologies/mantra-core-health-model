@@ -1,4 +1,4 @@
--- SALUD v4.0.10 · módulo 06 · schema authz
+-- SALUD v4.2.79 · módulo 06 · schema authz
 -- Generado de diagram_06_authz.puml — NO editar a mano.
 
 
@@ -21,6 +21,16 @@ CREATE INDEX IF NOT EXISTS "ix_permissions_state_concept_id" ON "authz"."permiss
 CREATE INDEX IF NOT EXISTS "ix_permissions_created_by_user_id" ON "authz"."permissions" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_permissions_updated_by_user_id" ON "authz"."permissions" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_permissions_sensitivity_concept_id" ON "authz"."permissions" ("sensitivity_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_permissions_approval_mode_concept_id" ON "authz"."permissions" ("approval_mode_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_permissions_purpose_of_use_concept_id" ON "authz"."permissions" ("purpose_of_use_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_permissions_legal_basis_concept_id" ON "authz"."permissions" ("legal_basis_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_permissions_support_assignable" ON "authz"."permissions" ("support_assignable") WHERE support_assignable;
 
 CREATE INDEX IF NOT EXISTS "ix_roles_tenant_id" ON "authz"."roles" ("tenant_id");
 

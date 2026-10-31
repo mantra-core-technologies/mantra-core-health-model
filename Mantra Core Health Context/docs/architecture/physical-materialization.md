@@ -49,6 +49,231 @@ comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_obje
 
 ## 3. Estado actual del build
 
+### v4.2.78 — Gobierno de accesos: permisos de ultra granularidad y gobierno de usuarios (2026-11-02)
+
+**Cambio de esquema: +12 tablas (`delegated_access`), +29 columnas en 5 tablas existentes, +98 FK, +111 índices, +35 CHECK, +1 barrera WORM,
++2 funciones nuevas y 2 reemplazadas (disparadores: +2 propios y +7 de consistencia de tenant); +92 conceptos de módulo (7 `authz`, 1 `audit`, 84 `delegated_access`).** Parche nuevo e
+idempotente: `SQL/patches/2026-10-31_v4278_gobierno_de_accesos.sql` (una transacción; el v4275 debe estar aplicado antes). Contrato:
+`CONTRATO-GOBIERNO.md` §7 y Anexos A y B. Todo es aditivo: sin backfill de negocio y **cero cambio de comportamiento** hasta que la API lea
+los átomos (los alias de los 15 códigos antiguos siguen vivos en las concesiones ya creadas, pero con las obligaciones de sus átomos).
+
+- **`authz.permissions` +8 columnas** (`sensitivity_concept_id`, `requires_reason`, `requires_step_up`, `approval_mode_concept_id`,
+  `purpose_of_use_concept_id`, `legal_basis_concept_id`, `touches_clinical_data`, `support_assignable`) y 73 filas nuevas
+  `módulo.recurso.acción[.campo]` en 7 categorías (`authz.permission_categories`). Los 15 códigos antiguos son ALIAS (misma fila, mismo
+  id): con la sensibilidad de su átomo primario y, desde la revisión de seguridad al portar a dev, **las obligaciones más estrictas de
+  los átomos a los que se expanden** (motivo, paso extra, aprobación) y `support_assignable = false` (las concesiones nuevas usan el átomo).
+- **`delegated_access`**: `governance_rules` (reglas L1 de la organización), `sod_rules` (11 de plataforma sembradas; `tenant_id` NULL =
+  plataforma), `sod_exceptions`, `four_eyes_requests` (la auto-aprobación es imposible en la base: `23514`), `access_review_campaigns`,
+  `access_review_items`, `lifecycle_cases`, `handover_items`, `patient_restriction_flags`, `access_decision_log` (WORM: `REVOKE` +
+  `trg_forbid_mutation`), `grant_usage_stats` y `access_anomalies`. Columnas nuevas: `support_scope_grants` (`effect_concept_id` ALLOW por
+  defecto o DENY, `condition_json`, `condition_schema_version`, `reason_text`, `source_role_template_id`), `support_grant_actions`
+  (`condition_json`, `condition_schema_version`, `superseded_at`, `updated_at`, `updated_by_user_id`), `role_templates`
+  (`default_conditions_json`, `ceiling_actions_json`) y `organization_user_assignments` (identidad verificada, suspensión, incorporación,
+  certificación y última actividad; `supervisor_user_id` pasa a significar «dueño de la cuenta»).
+- **`refresh_effective_support_access` se REEMPLAZA** y ya no materializa una concesión `DENY` ni una acción reemplazada (`superseded_at`):
+  si no, un «no» se leería como un «sí» (H20). Va en el MISMO parche que `effect_concept_id`. `integrity.support_tenant_consistency` se
+  EXTIENDE a las tablas de gobierno con `tenant_id`; `integrity.access_review_reviewer_not_subject` (la persona revisada no se revisa a sí
+  misma) e `integrity.sod_rules_only_stricter` (una regla de la organización endurece a la de plataforma, nunca la afloja: acción, `is_hard`, días de excepción —NULL es sin tope—, átomos A y B ⊇ los de la base y alcance igual o más amplio) son nuevos.
+  Todas fijan `search_path`, no son `SECURITY DEFINER` y no tienen `EXECUTE` para `PUBLIC`.
+- **RLS**: `tenant_isolation` en las 11 tablas con `tenant_id NOT NULL` + `sod_rules` (solo si la base ya usa RLS), y `global_catalog_read`
+  para que toda organización lea las reglas SoD de plataforma.
+- **Semillas** (`gen_seeds.py`, fase `apoyo` y `backend`): 73 átomos, 7 categorías, 11 reglas SoD, 7 plantillas v2 (paquete en átomos + techo
+  + condición por defecto de `view.reason`; las v1 quedan RETIRADAS pero existen), rol de sistema `SUPPORT_STAFF` (no asignable) con su piso
+  de campos y los 92 conceptos (+ los existentes que referencian). `gen_ddl.py` aprende tres defaults literales acotados:
+  `DEFAULT_INT:<n>`, `DEFAULT_UUID:<uuid>` y `DEFAULT_JSON_INTS:<n_n_n>`.
+- **Verificación**: `salud-db/demo/07-gobierno-hospital-piloto.sql` (piloto extendido) y `08-verifica-gobierno.sql` (G1…G10, con `ROLLBACK`);
+  contrato estático `salud-db/tests/test_governance_v4278.py`. Los conteos del DDL (1.286 tablas, 17.836 columnas, 7.469 FK, 8.288
+  índices) están en `docs/data-catalog`.
+
+### v4.2.77 — Origen de la membresía y documento nacional único (revisión de seguridad N10 y N3) (2026-10-30)
+
+**Cambio de esquema: +1 columna, +2 índices (uno único parcial funcional) y +1 FK; +5 conceptos de módulo (módulos 04 y 02).**
+No hay parche nuevo: se EXTIENDE `SQL/patches/2026-10-31_v4275_personal_apoyo.sql` (secciones 2, 3, 4 y la nueva 4c). Todo es aditivo,
+anulable o con guarda: ninguna base existente se rompe.
+
+- **`directory.tenant_memberships.origin_concept_id uuid NULL`** (N10) + FK `fk_tenant_memberships_origin_concept_id` a
+  `terminology.catalog_concepts` + índice `ix_tenant_memberships_origin_concept_id`. Dice POR QUÉ existe la membresía, para que
+  `syncSupportMembership` no cierre la de un empleado normal al que se le dio un vínculo de apoyo: solo una membresía de origen
+  `SUPPORT_ENGAGEMENT` (existe únicamente por un vínculo de apoyo) se cierra al terminar el vínculo. Conceptos (claves y ids en
+  `CONCEPTOS.md`, «Cambios v4.2.77»): `directory:MEMBERSHIP_ORIGIN_OWNER_CREATED`, `_ADMIN_ADDED`, `_INVITATION_REDEEMED`,
+  `_SUPPORT_ENGAGEMENT` y `_UNKNOWN`. **Backfill conservador: las filas existentes quedan en `NULL`, que equivale a desconocido; el parche
+  NO marca ninguna como solo-apoyo** (marcar de más cerraría membresías de empleados reales). Solo la API escribe el origen al crear
+  la membresía. `gen_seeds.py` espeja los 5 conceptos (`MEMBERSHIP_ORIGIN_BACKEND_CONCEPTS`, fase `backend`) con ids uuid5 sobre el
+  namespace del backend.
+- **Único parcial funcional `common.uq_identifiers_national_id_normalized`** (N3) sobre la forma canónica del documento:
+  `coalesce(nullif(regexp_replace(upper(regexp_replace(value, '[\s.-]+', '', 'g')), '^0+', ''), ''), '0')` (mayúsculas, sin puntos,
+  guiones ni espacios, sin ceros a la izquierda; vacío → `'0'`), la MISMA expresión de `normalizeNationalId`
+  (`profiles/domain/national-id.ts`) y de `NORMALIZED_ID` en `SupportPatientsRepository`. Predicado: `type_concept_id` = documento
+  nacional (`common:id-type:national`), `state_concept_id` = `state:active`, `owner_type_concept_id` = `common:owner-type:patient` y
+  `valid_to IS NULL`. Dos decisiones de diseño que se apartan de «solo documento nacional activo» y por qué:
+  1. **Solo `OWNER_PATIENT`.** `createContactPerson` (representantes legales y gerencias de una organización, `OWNER_PERSON`) crea el
+     documento activo SIN buscar duplicado, a propósito («un representante que además sea paciente queda como dos personas»); un único
+     sobre todos los dueños haría fallar el alta de la segunda organización con el mismo representante.
+  2. **Solo filas sin cierre (`valid_to IS NULL`).** Cambiar el número del documento cierra la fila vieja (`valid_to`) y abre otra; y
+     `t07_identifiers_search_index` documenta filas históricas con vigencias superpuestas del mismo tipo+valor. El orden importa: la
+     API debe cerrar la fila vieja (y volcarla) ANTES de insertar la nueva con el mismo canónico; al revés es `23505` (verificado).
+- **Guarda (sección 4c):** si la base ya tiene documentos repetidos, el parche NO falla ni borra nada; emite un `WARNING` con la cantidad de
+  grupos y, en el `HINT`, la consulta de diagnóstico (documento canónico, cuántas filas, dueños), y crea el índice NO único de apoyo
+  `ix_identifiers_national_id_normalized` (misma expresión y predicado) para que las búsquedas por documento sigan usando índice. Se
+  corrigen los datos, se vuelve a correr el parche y se crea el único y se retira el de apoyo. En una base nueva el único ya viene de
+  `apply_all.sql` (`SQL/02_common/04_indexes.sql`, que sale del `UK` del `.puml`).
+- **Plan de la consulta (EXPLAIN, 120 000 filas sintéticas, 100 000 documentos nacionales):** la consulta de duplicado por documento
+  canónico con el mismo predicado (literales, o parámetros con plan personalizado, que es lo que hace un cliente `pg` con sentencia
+  sin nombre) usa `Index Scan using uq_identifiers_national_id_normalized`; con el índice de apoyo (base con duplicados), Bitmap Heap Scan
+  sobre él. Con plan GENÉRICO forzado (sentencia con nombre y `plan_cache_mode = force_generic_plan`) el planificador no puede probar que
+  los parámetros implican el predicado y cae a `ix_identifiers_type_concept_id`; y una consulta solo por la expresión (sin el
+  predicado) hace Seq Scan. La API debe escribir la consulta con el predicado completo.
+- **Propuesta SIN implementar (decisión de producto):** el marcador de verificación del documento y el estado «pendiente de
+  verificación» de las personas relacionadas quedan descritos en `CONCEPTOS.md` («Propuesta pendiente»); no hay columna ni concepto de
+  ellos en el modelo.
+
+**Cómo se generó.** Igual que v4.2.75/70: el modelo vigente y el nuevo se generaron con la misma bóveda (`SALUD_WORKSPACE` apuntando a un
+workspace con la bóveda enlazada) y se aplicó sobre `SQL/` solo la diferencia (`diff -ruN` + `patch -F3`) de `gen_ddl.py all`,
+`gen_integrity.py` y `gen_apply.py`; `apply_all.sql` y `apply_deferred.sql` no cambian. El reporte de generación se ajustó a mano en el
+formato compacto (`| 04 | directory | 9 | 72 | 13 | 74 | 2 |`, `| 02 | common | 7 | 49 | 0 | 56 | 0 |`, Σ inferidas 499). Las semillas
+salieron de `gen_seeds.py --only backend` y `--only meta` (+5 conceptos en `03_terminology`; `checksums.json` y `seed-manifest.json`
+coherentes). Catálogo regenerado con `docs/data-catalog/generate_catalog.py` (+1 columna, +2 índices, +1 FK).
+
+**Verificado** con PostgreSQL 16 en un clúster temporal propio (puerto 5490): `apply_all.sql` + `apply_deferred.sql` limpios (0 FK sin
+validar); el parche dos veces sin avisos; la demo con la bandera dos veces; `05-verifica-hospital-piloto.sql` (29 comprobaciones) y
+`06-verifica-hardening.sql` (ahora con H9 y H10; H7/H8 también con RLS global aplicado); la base construida desde `HEAD` + el parche
+anterior + el parche nuevo, y la construida desde `HEAD` + solo el parche nuevo, tienen el MISMO esquema (`pg_dump -s`, 0 diferencias)
+que la construida desde cero; el escenario con duplicados previos (WARNING, índice de apoyo, idempotente, corrección y creación del único).
+
+### v4.2.76 — Endurecimiento del personal de apoyo (revisión de seguridad independiente) (2026-10-30)
+
+**Cambio de esquema: +7 columnas `tenant_id`, +10 índices y +1 CHECK nuevo, 1 CHECK reforzado, 4 funciones y 8 disparadores (módulos 01, 04, 14, 19, 29 y la matriz 33).**
+No hay parche nuevo: se EXTIENDE `SQL/patches/2026-10-31_v4275_personal_apoyo.sql` (sigue siendo UNA pasada idempotente; el
+v4.2.75 no se había desplegado en ninguna base). Cierra los hallazgos M1, M5, M6, M8 y A5 en lo que toca a la base y B4 en la demo.
+
+- **`tenant_id uuid NOT NULL` + FK a `directory.tenants` + índice en las 7 tablas hijas que no lo tenían** (M8: sin él no hay RLS):
+  `delegated_access.support_scope_grants`, `support_grant_actions`, `engagement_request_items`;
+  `community.conversation_assignments`, `conversation_internal_notes`; `directory.affiliation_invitation_uses`;
+  `practice.practitioner_location_assignments`. Con ellas son 13 las tablas del personal de apoyo con `tenant_id`.
+  Para una base que ya corrió la primera versión del parche, la sección 2b agrega la columna, la rellena desde el padre y la
+  endurece a `NOT NULL` (aborta con el nombre de la tabla si alguna fila no se puede derivar).
+- **El tenant del hijo es el del padre** (disparador `integrity.support_tenant_consistency`, solo en el parche porque un CHECK no
+  puede consultar otra tabla): el permiso = tenant del vínculo (`organization_user_assignments` → `tenant_memberships`) y de cada
+  objetivo (doctor, servicio, espacio, sede, vía `practices.tenant_id`); las acciones = tenant del permiso; las líneas = tenant de la
+  solicitud; los usos = tenant de la invitación; la ubicación del doctor = tenant del doctor y del espacio; las asignaciones y
+  notas de conversación = tenant de la conversación SI esta lo trae (suele ser NULL). Falla cerrado: un padre inexistente o que
+  el RLS le oculta al llamador es `foreign_key_violation`; uno de otro tenant es `check_violation`.
+- **Únicos parciales** (A5/M1, `UK` en los `.puml`): `uq_session_policies_active_tenant_scope(_role)` (una política ACTIVA por
+  organización, alcance y rol; reemplazan a `uq_session_policies_tenant_scope(_role)`, que no miraban el estado y hacían que el
+  segundo PUT del mismo alcance reventara), `uq_organization_user_assignments_active_template` (un vínculo de apoyo activo por
+  membresía + plantilla), `uq_affiliation_invitation_uses_accepted` (un uso ACEPTADO por invitación y usuario; los rechazos se
+  registran cada vez, por eso no es un único total) y `uq_tenant_memberships_active_user_tenant` (una membresía ACTIVA por usuario y
+  organización). En el parche se crean con una guarda: si ya hay datos que los violan avisan con un `WARNING` y la consulta de
+  diagnóstico, no fallan ni borran nada.
+- **CHECK**: `ck_support_scope_grants_fixed_snapshot` reforzado (M6: la foto FIXED es `{"rows":[…]}` con al menos una fila; cada fila es
+  un objeto con solo las claves `practitionerRoleAssignmentId`, `practitionerProfileId`, `healthcareServiceId` y `careSpaceId`,
+  valores uuid o null, y al menos una de las tres dimensiones con uuid: una fila `{}` —el comodín— ya no pasa), y
+  `ck_session_policies_allowed_hours` nuevo (A5: `from`/`to` `HH:mm`, `days` ⊂ 0..6, `timeZone` texto). La zona horaria se valida contra
+  `pg_timezone_names` con el disparador `integrity.session_policies_time_zone`.
+- **Funciones** (M5/M8): las 4 con `SET search_path = pg_catalog, pg_temp`, `REVOKE ALL … FROM PUBLIC` y `GRANT EXECUTE` solo a
+  `mantra_app`; ninguna es `SECURITY DEFINER`. `support_access_allowed` ahora **falla cerrada**: exige la aceptación del doctor de la
+  cita (`practitioner_delegate_assignments.accepted_at`, activa y vigente; `may_reply_on_behalf` para responder en su nombre),
+  la recertificación al día (`next_recertification_at + 15 días`) y la membresía activa, iniciada y sin terminar, releyendo las fuentes
+  (la tabla derivada puede ir atrasada); sin doctor no hay aceptación y se niega. `refresh_effective_support_access` respeta la
+  recertificación vencida y el estado de la membresía; con `NULL` (todas las organizaciones) exige `app.system_context = 'true'` o un
+  rol que ya se salta el RLS, y con un tenant fijado en `app.current_tenant_id` solo recalcula ese tenant.
+- **RLS** (M8): la sección 7 del parche pone la política `tenant_isolation` (y `FORCE`) a las 13 tablas SI la base ya opta por RLS;
+  volver a correr `2026-08-05_tenant_rls.sql` las cubre igual (verificado: las 13 aparecen con `relrowsecurity` y `relforcerowsecurity`).
+- **Demo** (B4): `04-hospital-piloto.sql` ya no crea las 13 cuentas con contraseña conocida «de rebote»: exige `-v demo_accounts=1`
+  (o `\set demo_accounts 1`, o el ajuste `mantra.demo_accounts`) y, sin él, falla con un mensaje claro ANTES de escribir nada. Trae
+  `tenant_id` en sus filas y la aceptación del doctor para TODA persona de apoyo (Lucía → Pérez, Méndez, Vaca; Marcos → Antelo, Suárez,
+  Rojas). `05-verifica-hospital-piloto.sql` suma 17 comprobaciones negativas (doctor sin aceptar, aceptación revocada o vencida, responder
+  sin permiso del doctor, recertificación vencida con y sin refresh, membresía terminada por estado y por `end_date`, acción sin doctor y
+  doctor de otra organización) y el nuevo `06-verifica-hardening.sql` intenta cada violación estructural y exige el SQLSTATE correcto.
+
+**Estado de `effective_support_access` frente a la aceptación y la recertificación.** Antes del endurecimiento la tabla derivada y
+`support_access_allowed` no miraban ni la aceptación del doctor ni la recertificación (la suspensión dependía de que corriera el worker de
+la API) ni el estado de la membresía: fallaban abiertas. Ahora el refresh deja fuera lo vencido por recertificación (+15 días de gracia) y las
+membresías no activas, y la compuerta `support_access_allowed` además exige la aceptación del doctor en cada llamada. La aceptación NO se
+precalcula en la tabla derivada (es por doctor y por persona y cambia sin tocar concesiones): la tabla dice lo que la organización
+CONCEDIÓ, no lo que el doctor ACEPTÓ.
+
+**Cómo se generó.** Igual que v4.2.75: el modelo vigente y el nuevo se generaron con la misma bóveda y se aplicó sobre `SQL/` solo la
+diferencia (`diff -ruN` + `patch -F3`); el reporte de generación se ajustó sumando el delta de cada módulo (la diferencia entre los
+reportes de dev y de la bóveda no permite aplicar el hunk). Catálogo regenerado con `docs/data-catalog/generate_catalog.py`.
+
+**Verificado** con PostgreSQL 16 en bases descartables: `apply_all.sql` + `apply_deferred.sql` limpios (1 274 tablas, 0 FK sin validar) y el
+parche dos veces; la base construida desde `HEAD` más el parche tiene el MISMO esquema (`pg_dump -s`, también funciones y disparadores) que
+la construida desde cero; el parche sobre una base que ya tenía la primera versión y datos de la demo rellena los `tenant_id`; la demo con la
+bandera corre dos veces sin duplicar (sin la bandera falla y no deja nada); `05` (29 comprobaciones) y `06` pasan, con el rol `mantra_app`
+bajo RLS viendo solo su organización.
+
+### v4.2.75 — Personal de apoyo (secretaria y otros roles): Fase 0 + Fase 1 de base de datos (2026-10-30)
+
+**Cambio de esquema: +13 tablas y +20 columnas, en 6 módulos (01, 04, 14, 19, 29, 41) y la matriz 33.**
+Parche: `SQL/patches/2026-10-31_v4275_personal_apoyo.sql` (idempotente, fuera de `apply_all.sql`;
+trae además dos funciones operativas que NO salen de ningún `.puml`). Diseño: el hospital es UNA cuenta de
+organización; quien ayuda a administrar recibe un **vínculo de apoyo** (persona + organización + plantilla de rol
++ vigencia + recertificación) y nadie comparte contraseña. Los permisos son filas con **tipo de objetivo**.
+
+- **Módulo 29 (`delegated_access`)**, 6 tablas nuevas: `role_templates` (paquete de acciones por rol; `tenant_id` NULL =
+  plantilla de plataforma), `support_scope_grants` (un permiso por fila: `PRACTITIONER`, `SERVICE`, `LOCATION`, las tres
+  combinaciones —doctor×servicio, doctor×ubicación, servicio×ubicación— y los cuatro «todos»; varias filas se SUMAN,
+  una fila con dos objetivos se CRUZA), `support_grant_actions` (acciones propias de cada permiso),
+  `engagement_requests` + `engagement_request_items` (solicitud o invitación, decisión por línea, vence a los 15 días)
+  y `effective_support_access` (**tabla derivada**, no fuente de verdad). Columnas nuevas: en
+  `organization_user_assignments` `origin_concept_id`, `owner_kind_concept_id`, `role_template_id`,
+  `recertify_every_months`, `next_recertification_at`, `ended_reason_text` (sus columnas de alcance sueltas quedan
+  DEPRECADAS, no se borran); en `practitioner_delegate_assignments` `may_reply_on_behalf` (NOT NULL, `DEFAULT false`),
+  `reply_disclosure_concept_id`, `accepted_at`.
+- **Módulo 04 (`directory`)**: `affiliation_invitations` (solo el hash del secreto, tope de usos, vencimiento) y
+  `affiliation_invitation_uses` (cada uso, aceptado o no).
+- **Módulo 14 (`practice`)**: `care_spaces` gana `location_path` (la forma edificio/piso/sala/cama es `form_concept_id` de v4.2.67; al portar
+  a dev se retiró la columna `fhir_physical_type` que la duplicaba)
+  (ruta materializada `/siteId/buildingId/levelId/roomId/`) → la jerarquía Sede → Edificio → Piso → Sala/Cama son
+  `care_spaces` anidados y «está dentro de» es un `LIKE 'prefijo%'`. Tabla nueva `practitioner_location_assignments`
+  (dónde atiende cada profesional).
+- **Módulo 41 (`scheduling`)**: `bookable_slots` y `appointment_bookings` ganan `care_space_id` y `healthcare_service_id`
+  (la ubicación se evalúa por el ESPACIO de la cita); `appointment_bookings` gana además `booked_via_grant_id`
+  (el permiso de apoyo con que se creó: su huella cuando el vínculo termina).
+- **Módulo 19 (`community`)**: `conversation_assignments`, `conversation_internal_notes`, `reply_templates` y, en
+  `direct_messages`, `authored_by_user_id`, `on_behalf_of_profile_id`, `delegate_assignment_id`, `disclosure_shown`
+  (NOT NULL, `DEFAULT false`). Quedan listas; las usa la Fase 3 (bandeja de mensajes).
+- **Módulo 01 (`iam`)**: `session_policies` (duración de sesión inactiva, alerta de dispositivo nuevo, horario, IP, MFA
+  por organización).
+- **Módulo 33 (`integrity`)**: 13 `CHECK_SQL` concretos, con los `concept_id` como UUID literales (un CHECK debe ser
+  inmutable): coherencia objetivo/columnas de `support_scope_grants` y `engagement_request_items` según su tipo,
+  vigencia, foto obligatoria si la expansión es FIJA, vencimiento posterior a la creación, recertificación solo a 6 o
+  12 meses, usos de la invitación, formato de `location_path`, `role_code` si y solo si el
+  alcance es un rol, y autora real obligatoria en un mensaje en nombre de un doctor.
+- **Sin `ON DELETE CASCADE`** (regla REDESA del repo). Las 20 columnas `*_concept_id` nuevas apuntan a conceptos de módulo que la API
+  acuña (claves `delegated_access:SUPPORT_TARGET_*`, `directory:AFFILIATION_*`, `community:CONVERSATION_ASSIGNMENT_*`,
+  `iam:SESSION_POLICY_SCOPE_*`, `practice:SPACE_TYPE_*`, …; id = uuid5 de la clave sobre el namespace del backend);
+  `gen_seeds.py` los espeja (`SUPPORT_STAFF_BACKEND_CONCEPTS`, 71 conceptos) para que la FK diferida no rechace filas.
+
+**Funciones operativas (solo en el parche).** `delegated_access.refresh_effective_support_access(tenant)` reconstruye la
+tabla derivada a partir de las concesiones VIGENTES (concesión, vínculo y membresía dentro de su vigencia); cada fila deja
+`NULL` en la dimensión que el permiso no acota y la acción se permite cuando CADA dimensión no nula coincide.
+`delegated_access.support_access_allowed(...)` es la implementación de referencia de `SupportAccessPolicy` sobre esa tabla.
+Fin de vínculo = el vínculo deja de estar activo = sus filas desaparecen en el siguiente refresh; las citas ya creadas no
+se tocan.
+
+**Semillas.** `gen_seeds.py` gana la fase `apoyo` (`--only apoyo`): siembra BOOT los 15 permisos (`schedule.*` ×11,
+`billing.collect`, `billing.issue_receipt`, `patient.register`, `messages.reply_on_behalf`) en el módulo 06 y las 7
+plantillas de rol de plataforma (`SECRETARY`, `MEDICAL_ASSISTANT`, `NURSING`, `FRONT_DESK`, `BILLING_CASHIER`,
+`CALL_CENTER`, `ORG_MANAGEMENT`) con su `default_actions_json` en el módulo 29. Las 12 tablas restantes del diseño las
+escribe el negocio al operar y van en `INTENTIONALLY_EMPTY`. El **Hospital Piloto Mantra** (ficticio) vive en
+`salud-db/demo/04-hospital-piloto.sql` y su verificación en `05-verifica-hospital-piloto.sql`.
+
+**Cómo se generó.** Igual que en v4.2.65: la copia de la bóveda disponible no reproduce byte a byte el `SQL/` de `dev`
+(varios módulos cambian sin tocar ningún `.puml`), así que se generó dos veces con la misma bóveda —el modelo anterior
+y el nuevo— y se aplicó sobre `SQL/` solo la diferencia (`diff -ruN` + `patch -F3`); el reporte de generación se
+actualizó sumando el delta de cada módulo. `gen_seeds.py` completo NO corre sin la bóveda actual (le faltan 8 notas de
+value sets): se corrieron solo las fases `backend`, `apoyo` y `meta`, que no leen value sets (`main()` ya no los carga
+con `--only backend|apoyo|meta`). Deltas: **módulo 01** +1 tabla; **04** +2; **14** +1 y +2 columnas; **19** +3 y +4
+columnas; **29** +6 y +9 columnas; **41** +5 columnas; **33** +9 stubs.
+
+**Verificado** con PostgreSQL 16 en bases descartables: `apply_all.sql` + `apply_deferred.sql` limpios (1 274 tablas,
+7 363 FK, 0 FK sin validar) y dos veces seguidas; la base construida desde `dev` más el parche tiene el MISMO esquema que
+la construida desde cero (`pg_dump -s`, salvo las dos funciones, que solo existen con el parche); el escenario de demo
+corre dos veces sin duplicar y las 12 comprobaciones de `05-verifica-hospital-piloto.sql` pasan (casos 01–08, 11 y 12);
+los CHECK rechazan un objetivo incoherente, una ubicación con espacio y sede a la vez, un `location_path` mal formado y
+una recertificación a 7 meses.
 ### v4.2.74 — Datos de traslado en la derivación (2026-10-31)
 
 **Cambio de esquema.** Parche: `SQL/patches/2026-10-31_v4274_referral_transfer.sql` (idempotente, fuera de

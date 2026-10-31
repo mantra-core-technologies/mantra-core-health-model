@@ -1,4 +1,4 @@
--- SALUD v4.0.10 · módulo 25 · schema pharmacy_inventory
+-- SALUD v4.2.79 · módulo 25 · schema pharmacy_inventory
 -- Generado de diagram_25_pharmacy_inventory.puml — NO editar a mano.
 
 

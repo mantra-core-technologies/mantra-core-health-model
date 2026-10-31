@@ -1,4 +1,4 @@
--- SALUD v4.0.10 · módulo 06 · schema authz
+-- SALUD v4.2.79 · módulo 06 · schema authz
 -- Generado de diagram_06_authz.puml — NO editar a mano.
 
 
@@ -50,6 +50,34 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_permissions_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "authz"."permissions"
+        ADD CONSTRAINT "fk_permissions_sensitivity_concept_id" FOREIGN KEY ("sensitivity_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "authz"."permissions"
+        ADD CONSTRAINT "fk_permissions_approval_mode_concept_id" FOREIGN KEY ("approval_mode_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "authz"."permissions"
+        ADD CONSTRAINT "fk_permissions_purpose_of_use_concept_id" FOREIGN KEY ("purpose_of_use_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "authz"."permissions"
+        ADD CONSTRAINT "fk_permissions_legal_basis_concept_id" FOREIGN KEY ("legal_basis_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 
 -- destino: directory.tenants (requiere schema directory)
 DO $$ BEGIN

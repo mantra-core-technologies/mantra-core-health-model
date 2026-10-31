@@ -1,4 +1,4 @@
--- SALUD v4.0.10 · módulo 04 · schema directory
+-- SALUD v4.2.79 · módulo 04 · schema directory
 -- Generado de diagram_04_directory.puml — NO editar a mano.
 
 
@@ -60,4 +60,22 @@ DO $$ BEGIN
     ALTER TABLE "directory"."tenant_web_configs"
         ADD CONSTRAINT "fk_tenant_web_configs_tenant_id" FOREIGN KEY ("tenant_id")
         REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "directory"."affiliation_invitations"
+        ADD CONSTRAINT "fk_affiliation_invitations_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "directory"."affiliation_invitation_uses"
+        ADD CONSTRAINT "fk_affiliation_invitation_uses_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+DO $$ BEGIN
+    ALTER TABLE "directory"."affiliation_invitation_uses"
+        ADD CONSTRAINT "fk_affiliation_invitation_uses_affiliation_invitation_id" FOREIGN KEY ("affiliation_invitation_id")
+        REFERENCES "directory"."affiliation_invitations" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;

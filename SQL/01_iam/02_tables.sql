@@ -1,4 +1,4 @@
--- SALUD v4.0.10 · módulo 01 · schema iam
+-- SALUD v4.2.79 · módulo 01 · schema iam
 -- Generado de diagram_01_iam.puml — NO editar a mano.
 
 
@@ -242,4 +242,23 @@ CREATE TABLE IF NOT EXISTS "iam"."account_lockouts" (
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
     CONSTRAINT "pk_account_lockouts" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "iam"."session_policies" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "scope_concept_id" uuid NOT NULL,
+    "role_code" varchar,
+    "idle_timeout_minutes" integer NOT NULL,
+    "new_device_alert" boolean NOT NULL,
+    "allowed_hours_json" jsonb,
+    "enforce_ip_rules" boolean NOT NULL,
+    "require_mfa" boolean NOT NULL,
+    "status_concept_id" uuid NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_session_policies" PRIMARY KEY ("id")
 );
