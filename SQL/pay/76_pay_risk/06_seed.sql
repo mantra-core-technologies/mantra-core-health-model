@@ -1,4 +1,4 @@
--- SALUD v4.0.10 · perfil pay · módulo 76 · base pay_risk
+-- SALUD v4.2.68 · perfil pay · módulo 76 · base pay_risk
 -- Generado de diagram_76_pay_risk.puml — NO editar a mano.
 
 -- Filas de configuración declaradas por el modelo (SEED_SQL). Idempotentes.

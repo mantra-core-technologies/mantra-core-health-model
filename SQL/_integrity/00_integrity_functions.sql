@@ -1,4 +1,4 @@
--- SALUD v4.0.10 · guardas de integridad (aplicar antes de los 05_constraints)
+-- SALUD v4.2.68 · guardas de integridad (aplicar antes de los 05_constraints)
 -- Deriva del módulo 33 (Concurrency, Constraints and Integrity Matrix).
 
 CREATE SCHEMA IF NOT EXISTS "integrity";

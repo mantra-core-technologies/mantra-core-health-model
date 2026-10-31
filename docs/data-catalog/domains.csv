@@ -2,13 +2,13 @@ schema,table_count,rationale_count,pending_rationale_count,coverage_percent
 accounting,45,42,3,93.3
 ads,73,73,0,100.0
 audio_assets,4,4,0,100.0
-audit,133,131,2,98.5
+audit,142,140,2,98.6
 auth_providers,9,9,0,100.0
 authz,15,15,0,100.0
 automation,16,16,0,100.0
-billing,24,22,2,91.7
+billing,26,24,2,92.3
 chart,11,11,0,100.0
-clinical,24,22,2,91.7
+clinical,28,26,2,92.9
 clinical_ext,14,13,1,92.9
 common,7,7,0,100.0
 community,41,41,0,100.0
@@ -44,8 +44,8 @@ pharmacy,12,9,3,75.0
 pharmacy_inventory,20,20,0,100.0
 platform_ops,38,38,0,100.0
 polyglot_storage,20,20,0,100.0
-practice,15,15,0,100.0
-procedures_perioperative,35,35,0,100.0
+practice,19,19,0,100.0
+procedures_perioperative,37,37,0,100.0
 profiles,20,19,1,95.0
 promotions,11,11,0,100.0
 qa_execution,4,4,0,100.0

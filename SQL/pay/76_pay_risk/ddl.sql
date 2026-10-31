@@ -1,8 +1,8 @@
--- SALUD v4.0.10 · perfil pay · base pay_risk · DDL completo en orden (generado de diagram_76_pay_risk.puml)
+-- SALUD v4.2.68 · perfil pay · base pay_risk · DDL completo en orden (generado de diagram_76_pay_risk.puml)
 -- Archivo SQL plano, apto para `pool.query(readFileSync(...))`. NO editar a mano.
 
 -- >>> 02_tables.sql
--- SALUD v4.0.10 · módulo 76 · schema pay_risk
+-- SALUD v4.2.68 · módulo 76 · schema pay_risk
 -- Generado de diagram_76_pay_risk.puml — NO editar a mano.
 
 
@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS "idempotency_keys" (
 );
 
 -- >>> 03_fk_intra.sql
--- SALUD v4.0.10 · módulo 76 · schema pay_risk
+-- SALUD v4.2.68 · módulo 76 · schema pay_risk
 -- Generado de diagram_76_pay_risk.puml — NO editar a mano.
 
 
@@ -74,7 +74,7 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- >>> 04_indexes.sql
--- SALUD v4.0.10 · módulo 76 · schema pay_risk
+-- SALUD v4.2.68 · módulo 76 · schema pay_risk
 -- Generado de diagram_76_pay_risk.puml — NO editar a mano.
 
 
@@ -89,7 +89,7 @@ CREATE INDEX IF NOT EXISTS "risk_assessments_intent_idx" ON "risk_assessments" (
 CREATE INDEX IF NOT EXISTS "idempotency_keys_expires_at_idx" ON "idempotency_keys" ("expires_at");
 
 -- >>> 05_constraints.sql
--- SALUD v4.0.10 · perfil pay · módulo 76 · base pay_risk
+-- SALUD v4.2.68 · perfil pay · módulo 76 · base pay_risk
 -- Generado de diagram_76_pay_risk.puml — NO editar a mano.
 
 -- Complementos del perfil pay (gen_ddl_pay.py): funciones, CHECK, FK compuestas y triggers.
@@ -170,7 +170,7 @@ DROP TRIGGER IF EXISTS "risk_assessments_no_truncate" ON "risk_assessments";
 CREATE TRIGGER risk_assessments_no_truncate BEFORE TRUNCATE ON risk_assessments FOR EACH STATEMENT EXECUTE FUNCTION forbid_mutation();
 
 -- >>> 06_seed.sql
--- SALUD v4.0.10 · perfil pay · módulo 76 · base pay_risk
+-- SALUD v4.2.68 · perfil pay · módulo 76 · base pay_risk
 -- Generado de diagram_76_pay_risk.puml — NO editar a mano.
 
 -- Filas de configuración declaradas por el modelo (SEED_SQL). Idempotentes.

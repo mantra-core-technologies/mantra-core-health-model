@@ -1,4 +1,4 @@
--- SALUD v4.0.10 · módulo 01 · schema iam
+-- SALUD v4.2.68 · módulo 01 · schema iam
 -- Generado de diagram_01_iam.puml — NO editar a mano.
 
 

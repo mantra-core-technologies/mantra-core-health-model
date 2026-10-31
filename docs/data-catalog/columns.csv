@@ -270,7 +270,7 @@ accounting,cost_center_maps,8,updated_at,timestamptz,NO,,,,,,SQL/16_accounting/0
 accounting,cost_center_maps,9,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/16_accounting/02_tables.sql
 accounting,cost_center_maps,10,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/16_accounting/02_tables.sql
 accounting,cost_center_maps,11,row_version,integer,NO,1,,,,,SQL/16_accounting/02_tables.sql
-accounting,cost_centers,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/16_accounting/02_tables.sql
+accounting,cost_centers,1,id,uuid,NO,,PRIMARY KEY; UNIQUE,,,,SQL/16_accounting/02_tables.sql
 accounting,cost_centers,2,practice_id,uuid,NO,,FOREIGN KEY,practice,practices,id,SQL/16_accounting/02_tables.sql
 accounting,cost_centers,3,code,varchar,NO,,,,,,SQL/16_accounting/02_tables.sql
 accounting,cost_centers,4,name,varchar,NO,,,,,,SQL/16_accounting/02_tables.sql
@@ -282,6 +282,8 @@ accounting,cost_centers,9,updated_at,timestamptz,NO,,,,,,SQL/16_accounting/02_ta
 accounting,cost_centers,10,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/16_accounting/02_tables.sql
 accounting,cost_centers,11,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/16_accounting/02_tables.sql
 accounting,cost_centers,12,row_version,integer,NO,1,,,,,SQL/16_accounting/02_tables.sql
+accounting,cost_centers,13,tenant_id,uuid,NO,,FOREIGN KEY; UNIQUE,directory,tenants,id,SQL/16_accounting/02_tables.sql
+accounting,cost_centers,14,clinical_unit_id,uuid,YES,,FOREIGN KEY; UNIQUE,practice,clinical_units,id,SQL/16_accounting/02_tables.sql
 accounting,depreciation_areas,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/16_accounting/02_tables.sql
 accounting,depreciation_areas,2,tenant_id,uuid,NO,,FOREIGN KEY; UNIQUE,directory,tenants,id,SQL/16_accounting/02_tables.sql
 accounting,depreciation_areas,3,code,varchar,NO,,UNIQUE,,,,SQL/16_accounting/02_tables.sql
@@ -367,6 +369,8 @@ accounting,infrastructure_items,11,updated_at,timestamptz,NO,,,,,,SQL/16_account
 accounting,infrastructure_items,12,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/16_accounting/02_tables.sql
 accounting,infrastructure_items,13,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/16_accounting/02_tables.sql
 accounting,infrastructure_items,14,row_version,integer,NO,1,,,,,SQL/16_accounting/02_tables.sql
+accounting,infrastructure_items,15,tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/16_accounting/02_tables.sql
+accounting,infrastructure_items,16,care_space_id,uuid,YES,,FOREIGN KEY,practice,care_spaces,id,SQL/16_accounting/02_tables.sql
 accounting,internal_orders,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/16_accounting/02_tables.sql
 accounting,internal_orders,2,controlling_area_id,uuid,NO,,FOREIGN KEY,accounting,controlling_areas,id,SQL/16_accounting/02_tables.sql
 accounting,internal_orders,3,tenant_id,uuid,NO,,FOREIGN KEY; UNIQUE,directory,tenants,id,SQL/16_accounting/02_tables.sql
@@ -1905,6 +1909,28 @@ audit,care_plans_history,7,data_snapshot,jsonb,NO,,,,,,SQL/10_audit/02_tables.sq
 audit,care_plans_history,8,changed_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/10_audit/02_tables.sql
 audit,care_plans_history,9,change_reason_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/10_audit/02_tables.sql
 audit,care_plans_history,10,recorded_at,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,care_space_blocks_history,1,history_id,uuid,NO,,PRIMARY KEY,,,,SQL/10_audit/02_tables.sql
+audit,care_space_blocks_history,2,care_space_block_id,uuid,NO,,FOREIGN KEY,practice,care_space_blocks,id,SQL/10_audit/02_tables.sql
+audit,care_space_blocks_history,3,revision_no,integer,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,care_space_blocks_history,4,operation_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/10_audit/02_tables.sql
+audit,care_space_blocks_history,5,valid_from,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,care_space_blocks_history,6,valid_to,timestamptz,YES,,,,,,SQL/10_audit/02_tables.sql
+audit,care_space_blocks_history,7,data_snapshot,jsonb,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,care_space_blocks_history,8,changed_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/10_audit/02_tables.sql
+audit,care_space_blocks_history,9,change_reason_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/10_audit/02_tables.sql
+audit,care_space_blocks_history,10,recorded_at,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,care_space_blocks_history,11,tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/10_audit/02_tables.sql
+audit,care_space_category_periods_history,1,history_id,uuid,NO,,PRIMARY KEY,,,,SQL/10_audit/02_tables.sql
+audit,care_space_category_periods_history,2,care_space_category_period_id,uuid,NO,,FOREIGN KEY,practice,care_space_category_periods,id,SQL/10_audit/02_tables.sql
+audit,care_space_category_periods_history,3,revision_no,integer,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,care_space_category_periods_history,4,operation_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/10_audit/02_tables.sql
+audit,care_space_category_periods_history,5,valid_from,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,care_space_category_periods_history,6,valid_to,timestamptz,YES,,,,,,SQL/10_audit/02_tables.sql
+audit,care_space_category_periods_history,7,data_snapshot,jsonb,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,care_space_category_periods_history,8,changed_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/10_audit/02_tables.sql
+audit,care_space_category_periods_history,9,change_reason_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/10_audit/02_tables.sql
+audit,care_space_category_periods_history,10,recorded_at,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,care_space_category_periods_history,11,tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/10_audit/02_tables.sql
 audit,care_spaces_history,1,history_id,uuid,NO,,PRIMARY KEY,,,,SQL/10_audit/02_tables.sql
 audit,care_spaces_history,2,care_space_id,uuid,NO,,FOREIGN KEY,practice,care_spaces,id,SQL/10_audit/02_tables.sql
 audit,care_spaces_history,3,revision_no,integer,NO,,,,,,SQL/10_audit/02_tables.sql
@@ -1956,6 +1982,28 @@ audit,certificates_history,7,data_snapshot,jsonb,NO,,,,,,SQL/10_audit/02_tables.
 audit,certificates_history,8,changed_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/10_audit/02_tables.sql
 audit,certificates_history,9,change_reason_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/10_audit/02_tables.sql
 audit,certificates_history,10,recorded_at,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,charge_captures_history,1,history_id,uuid,NO,,PRIMARY KEY,,,,SQL/10_audit/02_tables.sql
+audit,charge_captures_history,2,charge_capture_id,uuid,NO,,FOREIGN KEY,billing,charge_captures,id,SQL/10_audit/02_tables.sql
+audit,charge_captures_history,3,revision_no,integer,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,charge_captures_history,4,operation_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/10_audit/02_tables.sql
+audit,charge_captures_history,5,valid_from,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,charge_captures_history,6,valid_to,timestamptz,YES,,,,,,SQL/10_audit/02_tables.sql
+audit,charge_captures_history,7,data_snapshot,jsonb,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,charge_captures_history,8,changed_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/10_audit/02_tables.sql
+audit,charge_captures_history,9,change_reason_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/10_audit/02_tables.sql
+audit,charge_captures_history,10,recorded_at,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,charge_captures_history,11,tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/10_audit/02_tables.sql
+audit,cleaning_orders_history,1,history_id,uuid,NO,,PRIMARY KEY,,,,SQL/10_audit/02_tables.sql
+audit,cleaning_orders_history,2,cleaning_order_id,uuid,NO,,FOREIGN KEY,practice,cleaning_orders,id,SQL/10_audit/02_tables.sql
+audit,cleaning_orders_history,3,revision_no,integer,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,cleaning_orders_history,4,operation_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/10_audit/02_tables.sql
+audit,cleaning_orders_history,5,valid_from,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,cleaning_orders_history,6,valid_to,timestamptz,YES,,,,,,SQL/10_audit/02_tables.sql
+audit,cleaning_orders_history,7,data_snapshot,jsonb,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,cleaning_orders_history,8,changed_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/10_audit/02_tables.sql
+audit,cleaning_orders_history,9,change_reason_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/10_audit/02_tables.sql
+audit,cleaning_orders_history,10,recorded_at,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,cleaning_orders_history,11,tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/10_audit/02_tables.sql
 audit,clinical_alerts_history,1,history_id,uuid,NO,,PRIMARY KEY,,,,SQL/10_audit/02_tables.sql
 audit,clinical_alerts_history,2,clinical_alert_id,uuid,NO,,FOREIGN KEY,clinical_ext,clinical_alerts,id,SQL/10_audit/02_tables.sql
 audit,clinical_alerts_history,3,revision_no,integer,NO,,,,,,SQL/10_audit/02_tables.sql
@@ -2201,6 +2249,17 @@ audit,employment_records_history,7,data_snapshot,jsonb,NO,,,,,,SQL/10_audit/02_t
 audit,employment_records_history,8,changed_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/10_audit/02_tables.sql
 audit,employment_records_history,9,change_reason_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/10_audit/02_tables.sql
 audit,employment_records_history,10,recorded_at,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,encounter_locations_history,1,history_id,uuid,NO,,PRIMARY KEY,,,,SQL/10_audit/02_tables.sql
+audit,encounter_locations_history,2,encounter_location_id,uuid,NO,,FOREIGN KEY,clinical,encounter_locations,id,SQL/10_audit/02_tables.sql
+audit,encounter_locations_history,3,revision_no,integer,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,encounter_locations_history,4,operation_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/10_audit/02_tables.sql
+audit,encounter_locations_history,5,valid_from,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,encounter_locations_history,6,valid_to,timestamptz,YES,,,,,,SQL/10_audit/02_tables.sql
+audit,encounter_locations_history,7,data_snapshot,jsonb,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,encounter_locations_history,8,changed_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/10_audit/02_tables.sql
+audit,encounter_locations_history,9,change_reason_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/10_audit/02_tables.sql
+audit,encounter_locations_history,10,recorded_at,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,encounter_locations_history,11,tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/10_audit/02_tables.sql
 audit,enrollments_history,1,history_id,uuid,NO,,PRIMARY KEY,,,,SQL/10_audit/02_tables.sql
 audit,enrollments_history,2,enrollments_id,uuid,NO,,FOREIGN KEY,education,enrollments,id,SQL/10_audit/02_tables.sql
 audit,enrollments_history,3,row_version,integer,NO,1,,,,,SQL/10_audit/02_tables.sql
@@ -2489,6 +2548,28 @@ audit,moderation_events,6,policy_version,varchar,YES,,,,,,SQL/10_audit/02_tables
 audit,moderation_events,7,evidence_json,jsonb,YES,,,,,,SQL/10_audit/02_tables.sql
 audit,moderation_events,8,recorded_at,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
 audit,moderation_events,9,recorded_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/10_audit/02_tables.sql
+audit,operating_room_block_series_history,1,history_id,uuid,NO,,PRIMARY KEY,,,,SQL/10_audit/02_tables.sql
+audit,operating_room_block_series_history,2,operating_room_block_series_id,uuid,NO,,FOREIGN KEY,procedures_perioperative,operating_room_block_series,id,SQL/10_audit/02_tables.sql
+audit,operating_room_block_series_history,3,revision_no,integer,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,operating_room_block_series_history,4,operation_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/10_audit/02_tables.sql
+audit,operating_room_block_series_history,5,valid_from,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,operating_room_block_series_history,6,valid_to,timestamptz,YES,,,,,,SQL/10_audit/02_tables.sql
+audit,operating_room_block_series_history,7,data_snapshot,jsonb,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,operating_room_block_series_history,8,changed_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/10_audit/02_tables.sql
+audit,operating_room_block_series_history,9,change_reason_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/10_audit/02_tables.sql
+audit,operating_room_block_series_history,10,recorded_at,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,operating_room_block_series_history,11,tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/10_audit/02_tables.sql
+audit,operating_room_blocks_history,1,history_id,uuid,NO,,PRIMARY KEY,,,,SQL/10_audit/02_tables.sql
+audit,operating_room_blocks_history,2,operating_room_block_id,uuid,NO,,FOREIGN KEY,procedures_perioperative,operating_room_blocks,id,SQL/10_audit/02_tables.sql
+audit,operating_room_blocks_history,3,revision_no,integer,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,operating_room_blocks_history,4,operation_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/10_audit/02_tables.sql
+audit,operating_room_blocks_history,5,valid_from,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,operating_room_blocks_history,6,valid_to,timestamptz,YES,,,,,,SQL/10_audit/02_tables.sql
+audit,operating_room_blocks_history,7,data_snapshot,jsonb,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,operating_room_blocks_history,8,changed_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/10_audit/02_tables.sql
+audit,operating_room_blocks_history,9,change_reason_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/10_audit/02_tables.sql
+audit,operating_room_blocks_history,10,recorded_at,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,operating_room_blocks_history,11,tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/10_audit/02_tables.sql
 audit,opportunities_history,1,history_id,uuid,NO,,PRIMARY KEY,,,,SQL/10_audit/02_tables.sql
 audit,opportunities_history,2,opportunities_id,uuid,NO,,FOREIGN KEY,crm,opportunities,id,SQL/10_audit/02_tables.sql
 audit,opportunities_history,3,row_version,integer,NO,1,,,,,SQL/10_audit/02_tables.sql
@@ -2691,6 +2772,17 @@ audit,pharmacy_product_prices_history,7,data_snapshot,jsonb,NO,,,,,,SQL/10_audit
 audit,pharmacy_product_prices_history,8,changed_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/10_audit/02_tables.sql
 audit,pharmacy_product_prices_history,9,change_reason_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/10_audit/02_tables.sql
 audit,pharmacy_product_prices_history,10,recorded_at,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,placement_incidents_history,1,history_id,uuid,NO,,PRIMARY KEY,,,,SQL/10_audit/02_tables.sql
+audit,placement_incidents_history,2,placement_incident_id,uuid,NO,,FOREIGN KEY,clinical,placement_incidents,id,SQL/10_audit/02_tables.sql
+audit,placement_incidents_history,3,revision_no,integer,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,placement_incidents_history,4,operation_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/10_audit/02_tables.sql
+audit,placement_incidents_history,5,valid_from,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,placement_incidents_history,6,valid_to,timestamptz,YES,,,,,,SQL/10_audit/02_tables.sql
+audit,placement_incidents_history,7,data_snapshot,jsonb,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,placement_incidents_history,8,changed_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/10_audit/02_tables.sql
+audit,placement_incidents_history,9,change_reason_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/10_audit/02_tables.sql
+audit,placement_incidents_history,10,recorded_at,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,placement_incidents_history,11,tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/10_audit/02_tables.sql
 audit,positions_history,1,history_id,uuid,NO,,PRIMARY KEY,,,,SQL/10_audit/02_tables.sql
 audit,positions_history,2,position_id,uuid,NO,,FOREIGN KEY,erp,positions,id,SQL/10_audit/02_tables.sql
 audit,positions_history,3,revision_no,integer,NO,,,,,,SQL/10_audit/02_tables.sql
@@ -2942,6 +3034,17 @@ audit,social_posts_history,7,data_snapshot,jsonb,NO,,,,,,SQL/10_audit/02_tables.
 audit,social_posts_history,8,changed_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/10_audit/02_tables.sql
 audit,social_posts_history,9,change_reason_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/10_audit/02_tables.sql
 audit,social_posts_history,10,recorded_at,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,space_tariffs_history,1,history_id,uuid,NO,,PRIMARY KEY,,,,SQL/10_audit/02_tables.sql
+audit,space_tariffs_history,2,space_tariff_id,uuid,NO,,FOREIGN KEY,billing,space_tariffs,id,SQL/10_audit/02_tables.sql
+audit,space_tariffs_history,3,revision_no,integer,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,space_tariffs_history,4,operation_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/10_audit/02_tables.sql
+audit,space_tariffs_history,5,valid_from,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,space_tariffs_history,6,valid_to,timestamptz,YES,,,,,,SQL/10_audit/02_tables.sql
+audit,space_tariffs_history,7,data_snapshot,jsonb,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,space_tariffs_history,8,changed_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/10_audit/02_tables.sql
+audit,space_tariffs_history,9,change_reason_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/10_audit/02_tables.sql
+audit,space_tariffs_history,10,recorded_at,timestamptz,NO,,,,,,SQL/10_audit/02_tables.sql
+audit,space_tariffs_history,11,tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/10_audit/02_tables.sql
 audit,subscription_plans_history,1,history_id,uuid,NO,,PRIMARY KEY,,,,SQL/10_audit/02_tables.sql
 audit,subscription_plans_history,2,subscription_plans_id,uuid,NO,,FOREIGN KEY,payments,subscription_plans,id,SQL/10_audit/02_tables.sql
 audit,subscription_plans_history,3,row_version,integer,NO,1,,,,,SQL/10_audit/02_tables.sql
@@ -3730,6 +3833,31 @@ billing,budgets,7,updated_at,timestamptz,NO,,,,,,SQL/17_billing/02_tables.sql
 billing,budgets,8,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/17_billing/02_tables.sql
 billing,budgets,9,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/17_billing/02_tables.sql
 billing,budgets,10,row_version,integer,NO,1,,,,,SQL/17_billing/02_tables.sql
+billing,charge_captures,1,id,uuid,NO,,PRIMARY KEY; UNIQUE,,,,SQL/17_billing/02_tables.sql
+billing,charge_captures,2,tenant_id,uuid,NO,,FOREIGN KEY; UNIQUE,directory,tenants,id,SQL/17_billing/02_tables.sql
+billing,charge_captures,3,practice_id,uuid,NO,,FOREIGN KEY,billing,service_catalog,practice_id,SQL/17_billing/02_tables.sql
+billing,charge_captures,4,patient_profile_id,uuid,NO,,FOREIGN KEY,profiles,patient_profiles,profile_id,SQL/17_billing/02_tables.sql
+billing,charge_captures,5,encounter_id,uuid,YES,,FOREIGN KEY,clinical,encounters,id,SQL/17_billing/02_tables.sql
+billing,charge_captures,6,source_kind_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/17_billing/02_tables.sql
+billing,charge_captures,7,source_ref_id,uuid,NO,,,,,,SQL/17_billing/02_tables.sql
+billing,charge_captures,8,service_date,date,NO,,,,,,SQL/17_billing/02_tables.sql
+billing,charge_captures,9,care_space_id,uuid,YES,,FOREIGN KEY,practice,care_spaces,id,SQL/17_billing/02_tables.sql
+billing,charge_captures,10,bed_category_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/17_billing/02_tables.sql
+billing,charge_captures,11,space_tariff_id,uuid,YES,,FOREIGN KEY,billing,space_tariffs,id,SQL/17_billing/02_tables.sql
+billing,charge_captures,12,service_catalog_id,uuid,YES,,FOREIGN KEY,billing,service_catalog,id,SQL/17_billing/02_tables.sql
+billing,charge_captures,13,quantity,numeric,NO,,,,,,SQL/17_billing/02_tables.sql
+billing,charge_captures,14,unit_price,"numeric(20,6)",YES,,,,,,SQL/17_billing/02_tables.sql
+billing,charge_captures,15,currency_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/17_billing/02_tables.sql
+billing,charge_captures,16,cost_center_id,uuid,YES,,FOREIGN KEY,accounting,cost_centers,id,SQL/17_billing/02_tables.sql
+billing,charge_captures,17,status_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/17_billing/02_tables.sql
+billing,charge_captures,18,invoice_line_id,uuid,YES,,FOREIGN KEY,billing,invoice_lines,id,SQL/17_billing/02_tables.sql
+billing,charge_captures,19,void_reason,varchar,YES,,,,,,SQL/17_billing/02_tables.sql
+billing,charge_captures,20,idempotency_key,varchar,NO,,UNIQUE,,,,SQL/17_billing/02_tables.sql
+billing,charge_captures,21,created_at,timestamptz,NO,,,,,,SQL/17_billing/02_tables.sql
+billing,charge_captures,22,updated_at,timestamptz,NO,,,,,,SQL/17_billing/02_tables.sql
+billing,charge_captures,23,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/17_billing/02_tables.sql
+billing,charge_captures,24,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/17_billing/02_tables.sql
+billing,charge_captures,25,row_version,integer,NO,1,,,,,SQL/17_billing/02_tables.sql
 billing,dunning_items,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/17_billing/02_tables.sql
 billing,dunning_items,2,dunning_run_id,uuid,NO,,FOREIGN KEY; UNIQUE,billing,dunning_runs,id,SQL/17_billing/02_tables.sql
 billing,dunning_items,3,invoice_id,uuid,NO,,FOREIGN KEY; UNIQUE,billing,invoices,id,SQL/17_billing/02_tables.sql
@@ -3916,8 +4044,8 @@ billing,reimbursements,8,updated_at,timestamptz,NO,,,,,,SQL/17_billing/02_tables
 billing,reimbursements,9,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/17_billing/02_tables.sql
 billing,reimbursements,10,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/17_billing/02_tables.sql
 billing,reimbursements,11,row_version,integer,NO,1,,,,,SQL/17_billing/02_tables.sql
-billing,service_catalog,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/17_billing/02_tables.sql
-billing,service_catalog,2,practice_id,uuid,NO,,FOREIGN KEY,practice,practices,id,SQL/17_billing/02_tables.sql
+billing,service_catalog,1,id,uuid,NO,,PRIMARY KEY; UNIQUE,,,,SQL/17_billing/02_tables.sql
+billing,service_catalog,2,practice_id,uuid,NO,,FOREIGN KEY; UNIQUE,practice,practices,id,SQL/17_billing/02_tables.sql
 billing,service_catalog,3,code,varchar,NO,,,,,,SQL/17_billing/02_tables.sql
 billing,service_catalog,4,name,varchar,NO,,,,,,SQL/17_billing/02_tables.sql
 billing,service_catalog,5,description_text,text,YES,,,,,,SQL/17_billing/02_tables.sql
@@ -3968,6 +4096,25 @@ billing,siat_simulated_outbox,5,status,varchar(24),NO,,,,,,SQL/17_billing/02_tab
 billing,siat_simulated_outbox,6,siat_mode,varchar(12),NO,'simulated',,,,,SQL/17_billing/02_tables.sql
 billing,siat_simulated_outbox,7,queued_at,timestamptz,NO,,,,,,SQL/17_billing/02_tables.sql
 billing,siat_simulated_outbox,8,created_by_user_id,uuid,YES,,,,,,SQL/17_billing/02_tables.sql
+billing,space_tariffs,1,id,uuid,NO,,PRIMARY KEY; UNIQUE,,,,SQL/17_billing/02_tables.sql
+billing,space_tariffs,2,tenant_id,uuid,NO,,FOREIGN KEY; UNIQUE,directory,tenants,id,SQL/17_billing/02_tables.sql
+billing,space_tariffs,3,practice_id,uuid,NO,,FOREIGN KEY,billing,service_catalog,practice_id,SQL/17_billing/02_tables.sql
+billing,space_tariffs,4,tariff_kind_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/17_billing/02_tables.sql
+billing,space_tariffs,5,bed_category_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/17_billing/02_tables.sql
+billing,space_tariffs,6,care_space_id,uuid,YES,,FOREIGN KEY,practice,care_spaces,id,SQL/17_billing/02_tables.sql
+billing,space_tariffs,7,service_catalog_id,uuid,NO,,FOREIGN KEY,billing,service_catalog,id,SQL/17_billing/02_tables.sql
+billing,space_tariffs,8,unit_minutes,integer,YES,,,,,,SQL/17_billing/02_tables.sql
+billing,space_tariffs,9,minimum_units,integer,YES,,,,,,SQL/17_billing/02_tables.sql
+billing,space_tariffs,10,unit_price,"numeric(20,6)",YES,,,,,,SQL/17_billing/02_tables.sql
+billing,space_tariffs,11,currency_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/17_billing/02_tables.sql
+billing,space_tariffs,12,valid_from,date,NO,,,,,,SQL/17_billing/02_tables.sql
+billing,space_tariffs,13,valid_to,date,YES,,,,,,SQL/17_billing/02_tables.sql
+billing,space_tariffs,14,status_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/17_billing/02_tables.sql
+billing,space_tariffs,15,created_at,timestamptz,NO,,,,,,SQL/17_billing/02_tables.sql
+billing,space_tariffs,16,updated_at,timestamptz,NO,,,,,,SQL/17_billing/02_tables.sql
+billing,space_tariffs,17,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/17_billing/02_tables.sql
+billing,space_tariffs,18,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/17_billing/02_tables.sql
+billing,space_tariffs,19,row_version,integer,NO,1,,,,,SQL/17_billing/02_tables.sql
 billing,tax_codes,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/17_billing/02_tables.sql
 billing,tax_codes,2,practice_id,uuid,NO,,FOREIGN KEY,practice,practices,id,SQL/17_billing/02_tables.sql
 billing,tax_codes,3,code,varchar,NO,,,,,,SQL/17_billing/02_tables.sql
@@ -4186,6 +4333,7 @@ clinical,appointments,13,updated_at,timestamptz,NO,,,,,,SQL/08_clinical/02_table
 clinical,appointments,14,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
 clinical,appointments,15,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
 clinical,appointments,16,row_version,integer,NO,1,,,,,SQL/08_clinical/02_tables.sql
+clinical,appointments,17,care_space_id,uuid,YES,,FOREIGN KEY,practice,care_spaces,id,SQL/08_clinical/02_tables.sql
 clinical,care_episodes,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/08_clinical/02_tables.sql
 clinical,care_episodes,2,patient_profile_id,uuid,NO,,FOREIGN KEY,profiles,patient_profiles,profile_id,SQL/08_clinical/02_tables.sql
 clinical,care_episodes,3,tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/08_clinical/02_tables.sql
@@ -4236,7 +4384,7 @@ clinical,diagnostic_reports,13,updated_at,timestamptz,NO,,,,,,SQL/08_clinical/02
 clinical,diagnostic_reports,14,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
 clinical,diagnostic_reports,15,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
 clinical,diagnostic_reports,16,row_version,integer,NO,1,,,,,SQL/08_clinical/02_tables.sql
-clinical,encounter_locations,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/08_clinical/02_tables.sql
+clinical,encounter_locations,1,id,uuid,NO,,PRIMARY KEY; UNIQUE,,,,SQL/08_clinical/02_tables.sql
 clinical,encounter_locations,2,encounter_id,uuid,NO,,FOREIGN KEY,clinical,encounters,id,SQL/08_clinical/02_tables.sql
 clinical,encounter_locations,3,practice_site_id,uuid,NO,,FOREIGN KEY,practice,practice_sites,id,SQL/08_clinical/02_tables.sql
 clinical,encounter_locations,4,clinical_unit_id,uuid,YES,,FOREIGN KEY,practice,clinical_units,id,SQL/08_clinical/02_tables.sql
@@ -4249,6 +4397,13 @@ clinical,encounter_locations,10,updated_at,timestamptz,NO,,,,,,SQL/08_clinical/0
 clinical,encounter_locations,11,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
 clinical,encounter_locations,12,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
 clinical,encounter_locations,13,row_version,integer,NO,1,,,,,SQL/08_clinical/02_tables.sql
+clinical,encounter_locations,14,tenant_id,uuid,NO,,FOREIGN KEY; UNIQUE,directory,tenants,id,SQL/08_clinical/02_tables.sql
+clinical,encounter_locations,15,is_bed_assignment,boolean,NO,false,,,,,SQL/08_clinical/02_tables.sql
+clinical,encounter_locations,16,movement_type_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/08_clinical/02_tables.sql
+clinical,encounter_locations,17,previous_encounter_location_id,uuid,YES,,FOREIGN KEY,clinical,encounter_locations,id,SQL/08_clinical/02_tables.sql
+clinical,encounter_locations,18,end_reason_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/08_clinical/02_tables.sql
+clinical,encounter_locations,19,bed_category_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/08_clinical/02_tables.sql
+clinical,encounter_locations,20,placement_incident_id,uuid,YES,,FOREIGN KEY,clinical,placement_incidents,id,SQL/08_clinical/02_tables.sql
 clinical,encounter_participants,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/08_clinical/02_tables.sql
 clinical,encounter_participants,2,encounter_id,uuid,NO,,FOREIGN KEY,clinical,encounters,id,SQL/08_clinical/02_tables.sql
 clinical,encounter_participants,3,practitioner_profile_id,uuid,NO,,FOREIGN KEY,profiles,health_practitioner_profiles,profile_id,SQL/08_clinical/02_tables.sql
@@ -4263,10 +4418,10 @@ clinical,encounter_participants,11,updated_at,timestamptz,NO,,,,,,SQL/08_clinica
 clinical,encounter_participants,12,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
 clinical,encounter_participants,13,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
 clinical,encounter_participants,14,row_version,integer,NO,1,,,,,SQL/08_clinical/02_tables.sql
-clinical,encounters,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/08_clinical/02_tables.sql
+clinical,encounters,1,id,uuid,NO,,PRIMARY KEY; UNIQUE,,,,SQL/08_clinical/02_tables.sql
 clinical,encounters,2,patient_profile_id,uuid,NO,,FOREIGN KEY,profiles,patient_profiles,profile_id,SQL/08_clinical/02_tables.sql
 clinical,encounters,3,episode_id,uuid,YES,,FOREIGN KEY,clinical,care_episodes,id,SQL/08_clinical/02_tables.sql
-clinical,encounters,4,tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/08_clinical/02_tables.sql
+clinical,encounters,4,tenant_id,uuid,NO,,FOREIGN KEY; UNIQUE,directory,tenants,id,SQL/08_clinical/02_tables.sql
 clinical,encounters,5,branch_id,uuid,YES,,FOREIGN KEY,directory,branches,id,SQL/08_clinical/02_tables.sql
 clinical,encounters,6,primary_practitioner_id,uuid,YES,,FOREIGN KEY,profiles,health_practitioner_profiles,profile_id,SQL/08_clinical/02_tables.sql
 clinical,encounters,7,class_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/08_clinical/02_tables.sql
@@ -4283,6 +4438,12 @@ clinical,encounters,17,updated_at,timestamptz,NO,,,,,,SQL/08_clinical/02_tables.
 clinical,encounters,18,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
 clinical,encounters,19,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
 clinical,encounters,20,row_version,integer,NO,1,,,,,SQL/08_clinical/02_tables.sql
+clinical,encounters,21,level_of_care_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/08_clinical/02_tables.sql
+clinical,encounters,22,admission_source_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/08_clinical/02_tables.sql
+clinical,encounters,23,discharge_disposition_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/08_clinical/02_tables.sql
+clinical,encounters,24,isolation_precaution_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/08_clinical/02_tables.sql
+clinical,encounters,25,isolation_organism_text,varchar,YES,,,,,,SQL/08_clinical/02_tables.sql
+clinical,encounters,26,expected_discharge_at,timestamptz,YES,,,,,,SQL/08_clinical/02_tables.sql
 clinical,family_member_history,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/08_clinical/02_tables.sql
 clinical,family_member_history,2,custodian_tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/08_clinical/02_tables.sql
 clinical,family_member_history,3,patient_profile_id,uuid,NO,,FOREIGN KEY,profiles,patient_profiles,profile_id,SQL/08_clinical/02_tables.sql
@@ -4313,6 +4474,54 @@ clinical,immunizations,12,updated_at,timestamptz,NO,,,,,,SQL/08_clinical/02_tabl
 clinical,immunizations,13,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
 clinical,immunizations,14,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
 clinical,immunizations,15,row_version,integer,NO,1,,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_adjustments,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_adjustments,2,tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_adjustments,3,census_day_id,uuid,NO,,FOREIGN KEY,clinical,inpatient_census_days,id,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_adjustments,4,field_code,varchar,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_adjustments,5,previous_value,integer,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_adjustments,6,new_value,integer,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_adjustments,7,reason_text,text,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_adjustments,8,entry_ref_id,uuid,YES,,,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_adjustments,9,adjusted_by_user_id,uuid,NO,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_adjustments,10,request_id,varchar,YES,,,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_adjustments,11,created_at,timestamptz,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_days,1,id,uuid,NO,,PRIMARY KEY; UNIQUE,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_days,2,tenant_id,uuid,NO,,FOREIGN KEY; UNIQUE,directory,tenants,id,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_days,3,practice_site_id,uuid,NO,,FOREIGN KEY; UNIQUE,practice,practice_sites,id,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_days,4,clinical_unit_id,uuid,NO,,FOREIGN KEY; UNIQUE,practice,clinical_units,id,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_days,5,census_date,date,NO,,UNIQUE,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_days,6,cutoff_at,timestamptz,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_days,7,status_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_days,8,closed_at,timestamptz,YES,,,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_days,9,closed_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_days,10,beds_censable,integer,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_days,11,beds_available,integer,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_days,12,beds_blocked,integer,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_days,13,patients_at_cutoff,integer,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_days,14,admissions,integer,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_days,15,discharges,integer,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_days,16,deaths,integer,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_days,17,transfers_in,integer,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_days,18,transfers_out,integer,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_days,19,same_day_stays,integer,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_days,20,patient_days,integer,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_days,21,discharge_stay_days,integer,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_days,22,content_hash,varchar,YES,,,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_days,23,created_at,timestamptz,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_days,24,updated_at,timestamptz,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_days,25,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_days,26,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_days,27,row_version,integer,NO,1,,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_entries,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_entries,2,tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_entries,3,census_day_id,uuid,NO,,FOREIGN KEY,clinical,inpatient_census_days,id,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_entries,4,encounter_id,uuid,NO,,FOREIGN KEY,clinical,encounters,id,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_entries,5,patient_profile_id,uuid,NO,,FOREIGN KEY,profiles,patient_profiles,profile_id,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_entries,6,care_space_id,uuid,NO,,FOREIGN KEY,practice,care_spaces,id,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_entries,7,bed_category_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_entries,8,movement_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_entries,9,occurred_at,timestamptz,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,inpatient_census_entries,10,created_at,timestamptz,NO,,,,,,SQL/08_clinical/02_tables.sql
 clinical,medication_records,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/08_clinical/02_tables.sql
 clinical,medication_records,2,custodian_tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/08_clinical/02_tables.sql
 clinical,medication_records,3,patient_profile_id,uuid,NO,,FOREIGN KEY,profiles,patient_profiles,profile_id,SQL/08_clinical/02_tables.sql
@@ -4455,6 +4664,24 @@ clinical,observations,41,updated_at,timestamptz,NO,,,,,,SQL/08_clinical/02_table
 clinical,observations,42,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
 clinical,observations,43,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
 clinical,observations,44,row_version,integer,NO,1,,,,,SQL/08_clinical/02_tables.sql
+clinical,placement_incidents,1,id,uuid,NO,,PRIMARY KEY; UNIQUE,,,,SQL/08_clinical/02_tables.sql
+clinical,placement_incidents,2,tenant_id,uuid,NO,,FOREIGN KEY; UNIQUE,directory,tenants,id,SQL/08_clinical/02_tables.sql
+clinical,placement_incidents,3,encounter_id,uuid,NO,,FOREIGN KEY,clinical,encounters,id,SQL/08_clinical/02_tables.sql
+clinical,placement_incidents,4,encounter_location_id,uuid,YES,,FOREIGN KEY,clinical,encounter_locations,id,SQL/08_clinical/02_tables.sql
+clinical,placement_incidents,5,care_space_id,uuid,NO,,FOREIGN KEY,practice,care_spaces,id,SQL/08_clinical/02_tables.sql
+clinical,placement_incidents,6,patient_profile_id,uuid,NO,,FOREIGN KEY,profiles,patient_profiles,profile_id,SQL/08_clinical/02_tables.sql
+clinical,placement_incidents,7,violations_json,jsonb,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,placement_incidents,8,justification_text,text,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,placement_incidents,9,authorized_by_user_id,uuid,NO,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
+clinical,placement_incidents,10,status_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/08_clinical/02_tables.sql
+clinical,placement_incidents,11,reviewed_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
+clinical,placement_incidents,12,reviewed_at,timestamptz,YES,,,,,,SQL/08_clinical/02_tables.sql
+clinical,placement_incidents,13,review_note,text,YES,,,,,,SQL/08_clinical/02_tables.sql
+clinical,placement_incidents,14,created_at,timestamptz,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,placement_incidents,15,updated_at,timestamptz,NO,,,,,,SQL/08_clinical/02_tables.sql
+clinical,placement_incidents,16,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
+clinical,placement_incidents,17,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
+clinical,placement_incidents,18,row_version,integer,NO,1,,,,,SQL/08_clinical/02_tables.sql
 clinical,prescription_signature_policies,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/08_clinical/02_tables.sql
 clinical,prescription_signature_policies,2,tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/08_clinical/02_tables.sql
 clinical,prescription_signature_policies,3,jurisdiction_code,varchar(16),YES,,,,,,SQL/08_clinical/02_tables.sql
@@ -4547,6 +4774,7 @@ clinical,service_requests,19,updated_at,timestamptz,NO,,,,,,SQL/08_clinical/02_t
 clinical,service_requests,20,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
 clinical,service_requests,21,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
 clinical,service_requests,22,row_version,integer,NO,1,,,,,SQL/08_clinical/02_tables.sql
+clinical,service_requests,23,suggested_care_space_id,uuid,YES,,FOREIGN KEY,practice,care_spaces,id,SQL/08_clinical/02_tables.sql
 clinical,social_history,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/08_clinical/02_tables.sql
 clinical,social_history,2,custodian_tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/08_clinical/02_tables.sql
 clinical,social_history,3,patient_profile_id,uuid,NO,,FOREIGN KEY,profiles,patient_profiles,profile_id,SQL/08_clinical/02_tables.sql
@@ -6617,7 +6845,7 @@ delegated_access,shared_access_links,18,created_by_user_id,uuid,YES,,FOREIGN KEY
 delegated_access,shared_access_links,19,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/29_delegated_access/02_tables.sql
 delegated_access,shared_access_links,20,row_version,integer,NO,1,,,,,SQL/29_delegated_access/02_tables.sql
 diagnostic_units,diagnostic_equipment,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/23_diagnostic_units/02_tables.sql
-diagnostic_units,diagnostic_equipment,2,diagnostic_unit_site_id,uuid,NO,,FOREIGN KEY,diagnostic_units,diagnostic_unit_sites,id,SQL/23_diagnostic_units/02_tables.sql
+diagnostic_units,diagnostic_equipment,2,diagnostic_unit_site_id,uuid,NO,,FOREIGN KEY; UNIQUE,diagnostic_units,diagnostic_unit_sites,id,SQL/23_diagnostic_units/02_tables.sql
 diagnostic_units,diagnostic_equipment,3,equipment_type_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/23_diagnostic_units/02_tables.sql
 diagnostic_units,diagnostic_equipment,4,manufacturer,varchar,YES,,,,,,SQL/23_diagnostic_units/02_tables.sql
 diagnostic_units,diagnostic_equipment,5,model,varchar,YES,,,,,,SQL/23_diagnostic_units/02_tables.sql
@@ -6631,6 +6859,10 @@ diagnostic_units,diagnostic_equipment,12,updated_at,timestamptz,NO,,,,,,SQL/23_d
 diagnostic_units,diagnostic_equipment,13,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/23_diagnostic_units/02_tables.sql
 diagnostic_units,diagnostic_equipment,14,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/23_diagnostic_units/02_tables.sql
 diagnostic_units,diagnostic_equipment,15,row_version,integer,NO,1,,,,,SQL/23_diagnostic_units/02_tables.sql
+diagnostic_units,diagnostic_equipment,16,care_space_id,uuid,YES,,FOREIGN KEY,practice,care_spaces,id,SQL/23_diagnostic_units/02_tables.sql
+diagnostic_units,diagnostic_equipment,17,ae_title,varchar(16),YES,,UNIQUE,,,,SQL/23_diagnostic_units/02_tables.sql
+diagnostic_units,diagnostic_equipment,18,station_name,varchar(16),YES,,,,,,SQL/23_diagnostic_units/02_tables.sql
+diagnostic_units,diagnostic_equipment,19,schedulable_resource_id,uuid,YES,,FOREIGN KEY,scheduling,schedulable_resources,id,SQL/23_diagnostic_units/02_tables.sql
 diagnostic_units,diagnostic_price_schedules,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/23_diagnostic_units/02_tables.sql
 diagnostic_units,diagnostic_price_schedules,2,diagnostic_unit_id,uuid,NO,,FOREIGN KEY,diagnostic_units,diagnostic_units,id,SQL/23_diagnostic_units/02_tables.sql
 diagnostic_units,diagnostic_price_schedules,3,diagnostic_unit_site_id,uuid,YES,,FOREIGN KEY,diagnostic_units,diagnostic_unit_sites,id,SQL/23_diagnostic_units/02_tables.sql
@@ -7076,6 +7308,9 @@ diagnostics,imaging_procedure_steps,14,updated_at,timestamptz,NO,,,,,,SQL/20_dia
 diagnostics,imaging_procedure_steps,15,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/20_diagnostics/02_tables.sql
 diagnostics,imaging_procedure_steps,16,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/20_diagnostics/02_tables.sql
 diagnostics,imaging_procedure_steps,17,row_version,integer,NO,1,,,,,SQL/20_diagnostics/02_tables.sql
+diagnostics,imaging_procedure_steps,18,scheduled_equipment_id,uuid,YES,,FOREIGN KEY,diagnostic_units,diagnostic_equipment,id,SQL/20_diagnostics/02_tables.sql
+diagnostics,imaging_procedure_steps,19,scheduled_care_space_id,uuid,YES,,FOREIGN KEY,practice,care_spaces,id,SQL/20_diagnostics/02_tables.sql
+diagnostics,imaging_procedure_steps,20,scheduled_start_at,timestamptz,YES,,,,,,SQL/20_diagnostics/02_tables.sql
 diagnostics,imaging_selection_items,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/20_diagnostics/02_tables.sql
 diagnostics,imaging_selection_items,2,imaging_selection_id,uuid,NO,,FOREIGN KEY,diagnostics,imaging_selections,id,SQL/20_diagnostics/02_tables.sql
 diagnostics,imaging_selection_items,3,imaging_series_id,uuid,YES,,FOREIGN KEY,diagnostics,imaging_series,id,SQL/20_diagnostics/02_tables.sql
@@ -7253,6 +7488,7 @@ diagnostics,specimen_collection_events,9,fasting_status_concept_id,uuid,YES,,FOR
 diagnostics,specimen_collection_events,10,condition_json,jsonb,YES,,,,,,SQL/20_diagnostics/02_tables.sql
 diagnostics,specimen_collection_events,11,notes,text,YES,,,,,,SQL/20_diagnostics/02_tables.sql
 diagnostics,specimen_collection_events,12,created_at,timestamptz,NO,,,,,,SQL/20_diagnostics/02_tables.sql
+diagnostics,specimen_collection_events,13,collection_care_space_id,uuid,YES,,FOREIGN KEY,practice,care_spaces,id,SQL/20_diagnostics/02_tables.sql
 diagnostics,specimen_container_events,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/20_diagnostics/02_tables.sql
 diagnostics,specimen_container_events,2,specimen_container_id,uuid,NO,,FOREIGN KEY,diagnostics,specimen_containers,id,SQL/20_diagnostics/02_tables.sql
 diagnostics,specimen_container_events,3,occurred_at,timestamptz,NO,,,,,,SQL/20_diagnostics/02_tables.sql
@@ -13148,6 +13384,8 @@ pharmacy_inventory,inventory_locations,11,updated_at,timestamptz,NO,,,,,,SQL/25_
 pharmacy_inventory,inventory_locations,12,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/25_pharmacy_inventory/02_tables.sql
 pharmacy_inventory,inventory_locations,13,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/25_pharmacy_inventory/02_tables.sql
 pharmacy_inventory,inventory_locations,14,row_version,integer,NO,1,,,,,SQL/25_pharmacy_inventory/02_tables.sql
+pharmacy_inventory,inventory_locations,15,care_space_id,uuid,YES,,FOREIGN KEY,practice,care_spaces,id,SQL/25_pharmacy_inventory/02_tables.sql
+pharmacy_inventory,inventory_locations,16,clinical_unit_id,uuid,YES,,FOREIGN KEY; UNIQUE,practice,clinical_units,id,SQL/25_pharmacy_inventory/02_tables.sql
 pharmacy_inventory,inventory_lots,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/25_pharmacy_inventory/02_tables.sql
 pharmacy_inventory,inventory_lots,2,pharmacy_product_id,uuid,NO,,FOREIGN KEY,pharmacy,pharmacy_products,id,SQL/25_pharmacy_inventory/02_tables.sql
 pharmacy_inventory,inventory_lots,3,lot_number,varchar,NO,,,,,,SQL/25_pharmacy_inventory/02_tables.sql
@@ -14113,6 +14351,53 @@ polyglot_storage,tenant_storage_bindings,7,tenant_encryption_key_ref,varchar,NO,
 polyglot_storage,tenant_storage_bindings,8,state,varchar,NO,,,,,,SQL/54_polyglot_storage/02_tables.sql
 polyglot_storage,tenant_storage_bindings,9,created_at,timestamptz,NO,,,,,,SQL/54_polyglot_storage/02_tables.sql
 polyglot_storage,tenant_storage_bindings,10,updated_at,timestamptz,NO,,,,,,SQL/54_polyglot_storage/02_tables.sql
+practice,care_space_blocks,1,id,uuid,NO,,PRIMARY KEY; UNIQUE,,,,SQL/14_practice/02_tables.sql
+practice,care_space_blocks,2,tenant_id,uuid,NO,,FOREIGN KEY; UNIQUE,directory,tenants,id,SQL/14_practice/02_tables.sql
+practice,care_space_blocks,3,care_space_id,uuid,NO,,FOREIGN KEY,practice,care_spaces,id,SQL/14_practice/02_tables.sql
+practice,care_space_blocks,4,kind_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/14_practice/02_tables.sql
+practice,care_space_blocks,5,reason_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/14_practice/02_tables.sql
+practice,care_space_blocks,6,reason_text,varchar,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,care_space_blocks,7,starts_at,timestamptz,NO,,,,,,SQL/14_practice/02_tables.sql
+practice,care_space_blocks,8,expected_end_at,timestamptz,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,care_space_blocks,9,ended_at,timestamptz,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,care_space_blocks,10,ended_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
+practice,care_space_blocks,11,end_note,varchar,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,care_space_blocks,12,cancelled_at,timestamptz,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,care_space_blocks,13,cancel_reason,varchar,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,care_space_blocks,14,work_order_ref,varchar,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,care_space_blocks,15,created_at,timestamptz,NO,,,,,,SQL/14_practice/02_tables.sql
+practice,care_space_blocks,16,updated_at,timestamptz,NO,,,,,,SQL/14_practice/02_tables.sql
+practice,care_space_blocks,17,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
+practice,care_space_blocks,18,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
+practice,care_space_blocks,19,row_version,integer,NO,1,,,,,SQL/14_practice/02_tables.sql
+practice,care_space_category_periods,1,id,uuid,NO,,PRIMARY KEY; UNIQUE,,,,SQL/14_practice/02_tables.sql
+practice,care_space_category_periods,2,tenant_id,uuid,NO,,FOREIGN KEY; UNIQUE,directory,tenants,id,SQL/14_practice/02_tables.sql
+practice,care_space_category_periods,3,care_space_id,uuid,NO,,FOREIGN KEY,practice,care_spaces,id,SQL/14_practice/02_tables.sql
+practice,care_space_category_periods,4,bed_category_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/14_practice/02_tables.sql
+practice,care_space_category_periods,5,valid_from,timestamptz,NO,,,,,,SQL/14_practice/02_tables.sql
+practice,care_space_category_periods,6,valid_to,timestamptz,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,care_space_category_periods,7,created_at,timestamptz,NO,,,,,,SQL/14_practice/02_tables.sql
+practice,care_space_category_periods,8,updated_at,timestamptz,NO,,,,,,SQL/14_practice/02_tables.sql
+practice,care_space_category_periods,9,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
+practice,care_space_category_periods,10,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
+practice,care_space_category_periods,11,row_version,integer,NO,1,,,,,SQL/14_practice/02_tables.sql
+practice,care_space_status_events,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/14_practice/02_tables.sql
+practice,care_space_status_events,2,tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/14_practice/02_tables.sql
+practice,care_space_status_events,3,practice_site_id,uuid,NO,,FOREIGN KEY,practice,practice_sites,id,SQL/14_practice/02_tables.sql
+practice,care_space_status_events,4,care_space_id,uuid,NO,,FOREIGN KEY,practice,care_spaces,id,SQL/14_practice/02_tables.sql
+practice,care_space_status_events,5,axis_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/14_practice/02_tables.sql
+practice,care_space_status_events,6,from_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/14_practice/02_tables.sql
+practice,care_space_status_events,7,to_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/14_practice/02_tables.sql
+practice,care_space_status_events,8,reason_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/14_practice/02_tables.sql
+practice,care_space_status_events,9,reason_text,varchar,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,care_space_status_events,10,expected_until,timestamptz,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,care_space_status_events,11,v2_0116_code,char(1),NO,,,,,,SQL/14_practice/02_tables.sql
+practice,care_space_status_events,12,source_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/14_practice/02_tables.sql
+practice,care_space_status_events,13,source_ref_id,uuid,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,care_space_status_events,14,occurred_at,timestamptz,NO,,,,,,SQL/14_practice/02_tables.sql
+practice,care_space_status_events,15,recorded_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
+practice,care_space_status_events,16,request_id,varchar,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,care_space_status_events,17,created_at,timestamptz,NO,,,,,,SQL/14_practice/02_tables.sql
 practice,care_spaces,1,id,uuid,NO,,PRIMARY KEY; UNIQUE,,,,SQL/14_practice/02_tables.sql
 practice,care_spaces,2,practice_site_id,uuid,NO,,FOREIGN KEY; UNIQUE,practice,practice_sites,id,SQL/14_practice/02_tables.sql
 practice,care_spaces,3,clinical_unit_id,uuid,YES,,FOREIGN KEY,practice,clinical_units,id,SQL/14_practice/02_tables.sql
@@ -14146,6 +14431,44 @@ practice,care_spaces,30,censable,boolean,YES,,,,,,SQL/14_practice/02_tables.sql
 practice,care_spaces,31,gln,varchar(13),YES,,,,,,SQL/14_practice/02_tables.sql
 practice,care_spaces,32,valid_from,timestamptz,YES,,,,,,SQL/14_practice/02_tables.sql
 practice,care_spaces,33,valid_to,timestamptz,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,care_spaces,34,availability_reason_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/14_practice/02_tables.sql
+practice,care_spaces,35,availability_expected_until,timestamptz,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,care_spaces,36,availability_changed_at,timestamptz,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,care_spaces,37,hygiene_status_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/14_practice/02_tables.sql
+practice,care_spaces,38,hygiene_changed_at,timestamptz,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,care_spaces,39,terminal_cleaning_required,boolean,NO,false,,,,,SQL/14_practice/02_tables.sql
+practice,care_spaces,40,isolation_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/14_practice/02_tables.sql
+practice,care_spaces,41,isolation_organism_text,varchar,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,care_spaces,42,isolation_changed_at,timestamptz,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,care_spaces,43,ops_version,integer,NO,,,,,,SQL/14_practice/02_tables.sql
+practice,cleaning_orders,1,id,uuid,NO,,PRIMARY KEY; UNIQUE,,,,SQL/14_practice/02_tables.sql
+practice,cleaning_orders,2,tenant_id,uuid,NO,,FOREIGN KEY; UNIQUE,directory,tenants,id,SQL/14_practice/02_tables.sql
+practice,cleaning_orders,3,practice_site_id,uuid,NO,,FOREIGN KEY,practice,practice_sites,id,SQL/14_practice/02_tables.sql
+practice,cleaning_orders,4,care_space_id,uuid,NO,,FOREIGN KEY,practice,care_spaces,id,SQL/14_practice/02_tables.sql
+practice,cleaning_orders,5,clinical_unit_id,uuid,YES,,FOREIGN KEY,practice,clinical_units,id,SQL/14_practice/02_tables.sql
+practice,cleaning_orders,6,cleaning_type_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/14_practice/02_tables.sql
+practice,cleaning_orders,7,trigger_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/14_practice/02_tables.sql
+practice,cleaning_orders,8,source_ref_id,uuid,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,cleaning_orders,9,previous_order_id,uuid,YES,,FOREIGN KEY,practice,cleaning_orders,id,SQL/14_practice/02_tables.sql
+practice,cleaning_orders,10,priority_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/14_practice/02_tables.sql
+practice,cleaning_orders,11,status_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/14_practice/02_tables.sql
+practice,cleaning_orders,12,requested_at,timestamptz,NO,,,,,,SQL/14_practice/02_tables.sql
+practice,cleaning_orders,13,due_at,timestamptz,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,cleaning_orders,14,assigned_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
+practice,cleaning_orders,15,started_at,timestamptz,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,cleaning_orders,16,started_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
+practice,cleaning_orders,17,finished_at,timestamptz,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,cleaning_orders,18,finished_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
+practice,cleaning_orders,19,inspected_at,timestamptz,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,cleaning_orders,20,inspected_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
+practice,cleaning_orders,21,inspection_result_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/14_practice/02_tables.sql
+practice,cleaning_orders,22,rejection_reason,varchar,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,cleaning_orders,23,cancel_reason,varchar,YES,,,,,,SQL/14_practice/02_tables.sql
+practice,cleaning_orders,24,created_at,timestamptz,NO,,,,,,SQL/14_practice/02_tables.sql
+practice,cleaning_orders,25,updated_at,timestamptz,NO,,,,,,SQL/14_practice/02_tables.sql
+practice,cleaning_orders,26,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
+practice,cleaning_orders,27,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
+practice,cleaning_orders,28,row_version,integer,NO,1,,,,,SQL/14_practice/02_tables.sql
 practice,clinical_units,1,id,uuid,NO,,PRIMARY KEY; UNIQUE,,,,SQL/14_practice/02_tables.sql
 practice,clinical_units,2,practice_site_id,uuid,NO,,FOREIGN KEY,practice,practice_sites,id,SQL/14_practice/02_tables.sql
 practice,clinical_units,3,parent_unit_id,uuid,YES,,FOREIGN KEY,practice,clinical_units,id,SQL/14_practice/02_tables.sql
@@ -14173,7 +14496,7 @@ practice,facility_typology_rules,5,updated_at,timestamptz,NO,,,,,,SQL/14_practic
 practice,facility_typology_rules,6,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
 practice,facility_typology_rules,7,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
 practice,facility_typology_rules,8,row_version,integer,NO,1,,,,,SQL/14_practice/02_tables.sql
-practice,healthcare_services,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/14_practice/02_tables.sql
+practice,healthcare_services,1,id,uuid,NO,,PRIMARY KEY; UNIQUE,,,,SQL/14_practice/02_tables.sql
 practice,healthcare_services,2,practice_id,uuid,NO,,FOREIGN KEY,practice,practices,id,SQL/14_practice/02_tables.sql
 practice,healthcare_services,3,practice_site_id,uuid,YES,,FOREIGN KEY; UNIQUE,practice,practice_sites,id,SQL/14_practice/02_tables.sql
 practice,healthcare_services,4,clinical_unit_id,uuid,YES,,FOREIGN KEY,practice,clinical_units,id,SQL/14_practice/02_tables.sql
@@ -14189,6 +14512,7 @@ practice,healthcare_services,13,updated_at,timestamptz,NO,,,,,,SQL/14_practice/0
 practice,healthcare_services,14,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
 practice,healthcare_services,15,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/14_practice/02_tables.sql
 practice,healthcare_services,16,row_version,integer,NO,1,,,,,SQL/14_practice/02_tables.sql
+practice,healthcare_services,17,tenant_id,uuid,NO,,FOREIGN KEY; UNIQUE,directory,tenants,id,SQL/14_practice/02_tables.sql
 practice,inventory_items,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/14_practice/02_tables.sql
 practice,inventory_items,2,practice_id,uuid,NO,,FOREIGN KEY,practice,practices,id,SQL/14_practice/02_tables.sql
 practice,inventory_items,3,product_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/14_practice/02_tables.sql
@@ -14400,6 +14724,47 @@ procedures_perioperative,implant_identifiers,6,lot_number,varchar,YES,,,,,,SQL/5
 procedures_perioperative,implant_identifiers,7,serial_number,varchar,YES,,,,,,SQL/53_procedures_perioperative/02_tables.sql
 procedures_perioperative,implant_identifiers,8,expiration_date,date,YES,,,,,,SQL/53_procedures_perioperative/02_tables.sql
 procedures_perioperative,implant_identifiers,9,created_at,timestamptz,NO,,,,,,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_block_series,1,id,uuid,NO,,PRIMARY KEY; UNIQUE,,,,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_block_series,2,tenant_id,uuid,NO,,FOREIGN KEY; UNIQUE,directory,tenants,id,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_block_series,3,practice_site_id,uuid,NO,,FOREIGN KEY,practice,practice_sites,id,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_block_series,4,operating_room_id,uuid,NO,,FOREIGN KEY,practice,care_spaces,id,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_block_series,5,owner_kind_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_block_series,6,clinical_unit_id,uuid,YES,,FOREIGN KEY,practice,clinical_units,id,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_block_series,7,surgical_specialty_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_block_series,8,surgeon_profile_id,uuid,YES,,FOREIGN KEY,profiles,health_practitioner_profiles,profile_id,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_block_series,9,weekdays,smallint[],NO,,,,,,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_block_series,10,start_time,time,NO,,,,,,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_block_series,11,end_time,time,NO,,,,,,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_block_series,12,valid_from,date,NO,,,,,,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_block_series,13,valid_to,date,YES,,,,,,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_block_series,14,release_hours,integer,NO,,,,,,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_block_series,15,status_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_block_series,16,created_at,timestamptz,NO,,,,,,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_block_series,17,updated_at,timestamptz,NO,,,,,,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_block_series,18,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_block_series,19,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_block_series,20,row_version,integer,NO,1,,,,,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_blocks,1,id,uuid,NO,,PRIMARY KEY; UNIQUE,,,,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_blocks,2,tenant_id,uuid,NO,,FOREIGN KEY; UNIQUE,directory,tenants,id,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_blocks,3,series_id,uuid,YES,,FOREIGN KEY,procedures_perioperative,operating_room_block_series,id,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_blocks,4,operating_room_id,uuid,NO,,FOREIGN KEY,practice,care_spaces,id,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_blocks,5,owner_kind_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_blocks,6,clinical_unit_id,uuid,YES,,FOREIGN KEY,practice,clinical_units,id,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_blocks,7,surgical_specialty_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_blocks,8,surgeon_profile_id,uuid,YES,,FOREIGN KEY,profiles,health_practitioner_profiles,profile_id,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_blocks,9,starts_at,timestamptz,NO,,,,,,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_blocks,10,ends_at,timestamptz,NO,,,,,,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_blocks,11,release_at,timestamptz,NO,,,,,,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_blocks,12,status_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_blocks,13,released_at,timestamptz,YES,,,,,,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_blocks,14,released_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_blocks,15,release_reason,text,YES,,,,,,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_blocks,16,released_minutes,integer,YES,,,,,,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_blocks,17,created_at,timestamptz,NO,,,,,,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_blocks,18,updated_at,timestamptz,NO,,,,,,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_blocks,19,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_blocks,20,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_blocks,21,row_version,integer,NO,1,,,,,SQL/53_procedures_perioperative/02_tables.sql
 procedures_perioperative,operating_room_utilization_events,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/53_procedures_perioperative/02_tables.sql
 procedures_perioperative,operating_room_utilization_events,2,operating_room_id,uuid,NO,,FOREIGN KEY,practice,care_spaces,id,SQL/53_procedures_perioperative/02_tables.sql
 procedures_perioperative,operating_room_utilization_events,3,procedure_case_id,uuid,YES,,FOREIGN KEY,procedures_perioperative,procedure_cases,id,SQL/53_procedures_perioperative/02_tables.sql
@@ -14411,6 +14776,8 @@ procedures_perioperative,operating_room_utilization_events,8,turnover_category_c
 procedures_perioperative,operating_room_utilization_events,9,recorded_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/53_procedures_perioperative/02_tables.sql
 procedures_perioperative,operating_room_utilization_events,10,details_json,jsonb,YES,,,,,,SQL/53_procedures_perioperative/02_tables.sql
 procedures_perioperative,operating_room_utilization_events,11,created_at,timestamptz,NO,,,,,,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_utilization_events,12,tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,operating_room_utilization_events,13,operating_room_block_id,uuid,YES,,FOREIGN KEY,procedures_perioperative,operating_room_blocks,id,SQL/53_procedures_perioperative/02_tables.sql
 procedures_perioperative,operative_findings,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/53_procedures_perioperative/02_tables.sql
 procedures_perioperative,operative_findings,2,procedure_case_id,uuid,NO,,FOREIGN KEY,procedures_perioperative,procedure_cases,id,SQL/53_procedures_perioperative/02_tables.sql
 procedures_perioperative,operative_findings,3,operative_step_id,uuid,YES,,FOREIGN KEY,procedures_perioperative,operative_steps,id,SQL/53_procedures_perioperative/02_tables.sql
@@ -14655,6 +15022,10 @@ procedures_perioperative,procedure_cases,27,row_version,integer,NO,1,,,,,SQL/53_
 procedures_perioperative,procedure_cases,28,prep_minutes,integer,YES,,,,,,SQL/53_procedures_perioperative/02_tables.sql
 procedures_perioperative,procedure_cases,29,cleanup_minutes,integer,YES,,,,,,SQL/53_procedures_perioperative/02_tables.sql
 procedures_perioperative,procedure_cases,30,version_number,integer,YES,,,,,,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,procedure_cases,31,schedulable_resource_id,uuid,YES,,FOREIGN KEY,scheduling,schedulable_resources,id,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,procedure_cases,32,operating_room_block_id,uuid,YES,,FOREIGN KEY,procedures_perioperative,operating_room_blocks,id,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,procedure_cases,33,reserved_start_at,timestamptz,YES,,,,,,SQL/53_procedures_perioperative/02_tables.sql
+procedures_perioperative,procedure_cases,34,reserved_end_at,timestamptz,YES,,,,,,SQL/53_procedures_perioperative/02_tables.sql
 procedures_perioperative,procedure_charge_items,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/53_procedures_perioperative/02_tables.sql
 procedures_perioperative,procedure_charge_items,2,procedure_case_id,uuid,NO,,FOREIGN KEY,procedures_perioperative,procedure_cases,id,SQL/53_procedures_perioperative/02_tables.sql
 procedures_perioperative,procedure_charge_items,3,procedure_id,uuid,YES,,FOREIGN KEY,clinical,procedures,id,SQL/53_procedures_perioperative/02_tables.sql
@@ -15951,13 +16322,14 @@ scheduling,appointment_payment_states,2,tenant_id,uuid,NO,,FOREIGN KEY,directory
 scheduling,appointment_payment_states,3,appointment_booking_id,uuid,NO,,FOREIGN KEY; UNIQUE,scheduling,appointment_bookings,id,SQL/41_scheduling/02_tables.sql
 scheduling,appointment_payment_states,4,status_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/41_scheduling/02_tables.sql
 scheduling,appointment_payment_states,5,insurance_used,boolean,NO,,,,,,SQL/41_scheduling/02_tables.sql
-scheduling,appointment_payment_states,6,marked_by_user_id,uuid,NO,,FOREIGN KEY,iam,users,id,SQL/41_scheduling/02_tables.sql
-scheduling,appointment_payment_states,7,marked_at,timestamptz,NO,,,,,,SQL/41_scheduling/02_tables.sql
-scheduling,appointment_payment_states,8,created_at,timestamptz,NO,,,,,,SQL/41_scheduling/02_tables.sql
-scheduling,appointment_payment_states,9,updated_at,timestamptz,NO,,,,,,SQL/41_scheduling/02_tables.sql
-scheduling,appointment_payment_states,10,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/41_scheduling/02_tables.sql
-scheduling,appointment_payment_states,11,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/41_scheduling/02_tables.sql
-scheduling,appointment_payment_states,12,row_version,integer,NO,1,,,,,SQL/41_scheduling/02_tables.sql
+scheduling,appointment_payment_states,6,invoice_id,uuid,YES,,FOREIGN KEY; UNIQUE,billing,invoices,id,SQL/41_scheduling/02_tables.sql
+scheduling,appointment_payment_states,7,marked_by_user_id,uuid,NO,,FOREIGN KEY,iam,users,id,SQL/41_scheduling/02_tables.sql
+scheduling,appointment_payment_states,8,marked_at,timestamptz,NO,,,,,,SQL/41_scheduling/02_tables.sql
+scheduling,appointment_payment_states,9,created_at,timestamptz,NO,,,,,,SQL/41_scheduling/02_tables.sql
+scheduling,appointment_payment_states,10,updated_at,timestamptz,NO,,,,,,SQL/41_scheduling/02_tables.sql
+scheduling,appointment_payment_states,11,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/41_scheduling/02_tables.sql
+scheduling,appointment_payment_states,12,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/41_scheduling/02_tables.sql
+scheduling,appointment_payment_states,13,row_version,integer,NO,1,,,,,SQL/41_scheduling/02_tables.sql
 scheduling,appointment_reminders,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/41_scheduling/02_tables.sql
 scheduling,appointment_reminders,2,booking_id,uuid,NO,,FOREIGN KEY,scheduling,appointment_bookings,id,SQL/41_scheduling/02_tables.sql
 scheduling,appointment_reminders,3,channel_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/41_scheduling/02_tables.sql
@@ -15983,6 +16355,8 @@ scheduling,availability_exceptions,9,updated_at,timestamptz,NO,,,,,,SQL/41_sched
 scheduling,availability_exceptions,10,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/41_scheduling/02_tables.sql
 scheduling,availability_exceptions,11,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/41_scheduling/02_tables.sql
 scheduling,availability_exceptions,12,row_version,integer,NO,1,,,,,SQL/41_scheduling/02_tables.sql
+scheduling,availability_exceptions,13,source_kind_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/41_scheduling/02_tables.sql
+scheduling,availability_exceptions,14,source_ref_id,uuid,YES,,,,,,SQL/41_scheduling/02_tables.sql
 scheduling,availability_slots,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/41_scheduling/02_tables.sql
 scheduling,availability_slots,2,schedule_id,uuid,YES,,FOREIGN KEY,scheduling,practitioner_schedules,id,SQL/41_scheduling/02_tables.sql
 scheduling,availability_slots,3,practitioner_profile_id,uuid,NO,,FOREIGN KEY,profiles,health_practitioner_profiles,profile_id,SQL/41_scheduling/02_tables.sql
@@ -16129,8 +16503,8 @@ scheduling,practitioner_service_offerings,14,created_by_user_id,uuid,YES,,FOREIG
 scheduling,practitioner_service_offerings,15,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/41_scheduling/02_tables.sql
 scheduling,practitioner_service_offerings,16,row_version,integer,NO,1,,,,,SQL/41_scheduling/02_tables.sql
 scheduling,practitioner_service_offerings,17,pre_visit_instructions,text,YES,,,,,,SQL/41_scheduling/02_tables.sql
-scheduling,schedulable_resources,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/41_scheduling/02_tables.sql
-scheduling,schedulable_resources,2,tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/41_scheduling/02_tables.sql
+scheduling,schedulable_resources,1,id,uuid,NO,,PRIMARY KEY; UNIQUE,,,,SQL/41_scheduling/02_tables.sql
+scheduling,schedulable_resources,2,tenant_id,uuid,NO,,FOREIGN KEY; UNIQUE,directory,tenants,id,SQL/41_scheduling/02_tables.sql
 scheduling,schedulable_resources,3,practice_id,uuid,YES,,FOREIGN KEY,practice,practices,id,SQL/41_scheduling/02_tables.sql
 scheduling,schedulable_resources,4,resource_type_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/41_scheduling/02_tables.sql
 scheduling,schedulable_resources,5,resource_ref_type,varchar,NO,,,,,,SQL/41_scheduling/02_tables.sql
@@ -16144,6 +16518,7 @@ scheduling,schedulable_resources,12,updated_at,timestamptz,NO,,,,,,SQL/41_schedu
 scheduling,schedulable_resources,13,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/41_scheduling/02_tables.sql
 scheduling,schedulable_resources,14,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/41_scheduling/02_tables.sql
 scheduling,schedulable_resources,15,row_version,integer,NO,1,,,,,SQL/41_scheduling/02_tables.sql
+scheduling,schedulable_resources,16,care_space_id,uuid,YES,,FOREIGN KEY; UNIQUE,practice,care_spaces,id,SQL/41_scheduling/02_tables.sql
 scheduling,schedule_rules,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/41_scheduling/02_tables.sql
 scheduling,schedule_rules,2,schedule_template_id,uuid,NO,,FOREIGN KEY,scheduling,schedule_templates,id,SQL/41_scheduling/02_tables.sql
 scheduling,schedule_rules,3,day_of_week,integer,NO,,,,,,SQL/41_scheduling/02_tables.sql
@@ -16178,6 +16553,7 @@ scheduling,schedule_templates,13,updated_at,timestamptz,NO,,,,,,SQL/41_schedulin
 scheduling,schedule_templates,14,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/41_scheduling/02_tables.sql
 scheduling,schedule_templates,15,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/41_scheduling/02_tables.sql
 scheduling,schedule_templates,16,row_version,integer,NO,1,,,,,SQL/41_scheduling/02_tables.sql
+scheduling,schedule_templates,17,care_space_id,uuid,YES,,FOREIGN KEY,practice,care_spaces,id,SQL/41_scheduling/02_tables.sql
 scheduling,slot_holds,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/41_scheduling/02_tables.sql
 scheduling,slot_holds,2,bookable_slot_id,uuid,NO,,FOREIGN KEY,scheduling,bookable_slots,id,SQL/41_scheduling/02_tables.sql
 scheduling,slot_holds,3,patient_profile_id,uuid,YES,,FOREIGN KEY,profiles,patient_profiles,profile_id,SQL/41_scheduling/02_tables.sql
@@ -16238,21 +16614,22 @@ surveys,survey_invitation_reminders,6,created_at,timestamptz,NO,,,,,,SQL/65_surv
 surveys,survey_invitation_reminders,7,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/65_surveys/02_tables.sql
 surveys,survey_invitations,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/65_surveys/02_tables.sql
 surveys,survey_invitations,2,survey_version_id,uuid,NO,,FOREIGN KEY; UNIQUE,surveys,survey_versions,id,SQL/65_surveys/02_tables.sql
-surveys,survey_invitations,3,survey_assignment_id,uuid,NO,,FOREIGN KEY,surveys,survey_assignments,id,SQL/65_surveys/02_tables.sql
-surveys,survey_invitations,4,tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/65_surveys/02_tables.sql
-surveys,survey_invitations,5,patient_profile_id,uuid,NO,,FOREIGN KEY,profiles,patient_profiles,profile_id,SQL/65_surveys/02_tables.sql
-surveys,survey_invitations,6,appointment_booking_id,uuid,YES,,FOREIGN KEY; UNIQUE,scheduling,appointment_bookings,id,SQL/65_surveys/02_tables.sql
-surveys,survey_invitations,7,subject_type_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/65_surveys/02_tables.sql
-surveys,survey_invitations,8,subject_id,uuid,YES,,,,,,SQL/65_surveys/02_tables.sql
-surveys,survey_invitations,9,status_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/65_surveys/02_tables.sql
-surveys,survey_invitations,10,issued_at,timestamptz,NO,,,,,,SQL/65_surveys/02_tables.sql
-surveys,survey_invitations,11,expires_at,timestamptz,NO,,,,,,SQL/65_surveys/02_tables.sql
-surveys,survey_invitations,12,answered_at,timestamptz,YES,,,,,,SQL/65_surveys/02_tables.sql
-surveys,survey_invitations,13,created_at,timestamptz,NO,,,,,,SQL/65_surveys/02_tables.sql
-surveys,survey_invitations,14,updated_at,timestamptz,NO,,,,,,SQL/65_surveys/02_tables.sql
-surveys,survey_invitations,15,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/65_surveys/02_tables.sql
-surveys,survey_invitations,16,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/65_surveys/02_tables.sql
-surveys,survey_invitations,17,row_version,integer,NO,1,,,,,SQL/65_surveys/02_tables.sql
+surveys,survey_invitations,3,extension_survey_version_id,uuid,YES,,FOREIGN KEY,surveys,survey_versions,id,SQL/65_surveys/02_tables.sql
+surveys,survey_invitations,4,survey_assignment_id,uuid,NO,,FOREIGN KEY,surveys,survey_assignments,id,SQL/65_surveys/02_tables.sql
+surveys,survey_invitations,5,tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/65_surveys/02_tables.sql
+surveys,survey_invitations,6,patient_profile_id,uuid,NO,,FOREIGN KEY,profiles,patient_profiles,profile_id,SQL/65_surveys/02_tables.sql
+surveys,survey_invitations,7,appointment_booking_id,uuid,YES,,FOREIGN KEY; UNIQUE,scheduling,appointment_bookings,id,SQL/65_surveys/02_tables.sql
+surveys,survey_invitations,8,subject_type_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/65_surveys/02_tables.sql
+surveys,survey_invitations,9,subject_id,uuid,YES,,,,,,SQL/65_surveys/02_tables.sql
+surveys,survey_invitations,10,status_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/65_surveys/02_tables.sql
+surveys,survey_invitations,11,issued_at,timestamptz,NO,,,,,,SQL/65_surveys/02_tables.sql
+surveys,survey_invitations,12,expires_at,timestamptz,NO,,,,,,SQL/65_surveys/02_tables.sql
+surveys,survey_invitations,13,answered_at,timestamptz,YES,,,,,,SQL/65_surveys/02_tables.sql
+surveys,survey_invitations,14,created_at,timestamptz,NO,,,,,,SQL/65_surveys/02_tables.sql
+surveys,survey_invitations,15,updated_at,timestamptz,NO,,,,,,SQL/65_surveys/02_tables.sql
+surveys,survey_invitations,16,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/65_surveys/02_tables.sql
+surveys,survey_invitations,17,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/65_surveys/02_tables.sql
+surveys,survey_invitations,18,row_version,integer,NO,1,,,,,SQL/65_surveys/02_tables.sql
 surveys,survey_questions,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/65_surveys/02_tables.sql
 surveys,survey_questions,2,survey_version_id,uuid,NO,,FOREIGN KEY,surveys,survey_versions,id,SQL/65_surveys/02_tables.sql
 surveys,survey_questions,3,position,integer,NO,,,,,,SQL/65_surveys/02_tables.sql
