@@ -1,4 +1,4 @@
-# Reporte de generación — perfil pay (SALUD v4.2.79)
+# Reporte de generación — perfil pay (SALUD v4.2.81)
 
 Generado de `Mantra Core Health Context/pay-modules/*.puml` por `salud-db/gen_ddl_pay.py`. Una BASE por módulo; objetos sin calificar. Las FK de una columna salen del generador base (`fk_<tabla>_<col>`); las compuestas, los CHECK, las funciones y los triggers salen de `PAY_EXTRAS`.
 

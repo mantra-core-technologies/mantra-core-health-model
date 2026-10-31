@@ -1,8 +1,8 @@
--- SALUD v4.2.79 · perfil pay · base pay_settlement · DDL completo en orden (generado de diagram_78_pay_settlement.puml)
+-- SALUD v4.2.81 · perfil pay · base pay_settlement · DDL completo en orden (generado de diagram_78_pay_settlement.puml)
 -- Archivo SQL plano, apto para `pool.query(readFileSync(...))`. NO editar a mano.
 
 -- >>> 02_tables.sql
--- SALUD v4.2.79 · módulo 78 · schema pay_settlement
+-- SALUD v4.2.81 · módulo 78 · schema pay_settlement
 -- Generado de diagram_78_pay_settlement.puml — NO editar a mano.
 
 
@@ -234,7 +234,7 @@ CREATE TABLE IF NOT EXISTS "idempotency_keys" (
 );
 
 -- >>> 03_fk_intra.sql
--- SALUD v4.2.79 · módulo 78 · schema pay_settlement
+-- SALUD v4.2.81 · módulo 78 · schema pay_settlement
 -- Generado de diagram_78_pay_settlement.puml — NO editar a mano.
 
 
@@ -281,7 +281,7 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- >>> 04_indexes.sql
--- SALUD v4.2.79 · módulo 78 · schema pay_settlement
+-- SALUD v4.2.81 · módulo 78 · schema pay_settlement
 -- Generado de diagram_78_pay_settlement.puml — NO editar a mano.
 
 
@@ -312,7 +312,7 @@ CREATE INDEX IF NOT EXISTS "outbox_events_pending_idx" ON "outbox_events" ("seq"
 CREATE INDEX IF NOT EXISTS "idempotency_keys_expires_at_idx" ON "idempotency_keys" ("expires_at");
 
 -- >>> 05_constraints.sql
--- SALUD v4.2.79 · perfil pay · módulo 78 · base pay_settlement
+-- SALUD v4.2.81 · perfil pay · módulo 78 · base pay_settlement
 -- Generado de diagram_78_pay_settlement.puml — NO editar a mano.
 
 -- Complementos del perfil pay (gen_ddl_pay.py): funciones, CHECK, FK compuestas y triggers.

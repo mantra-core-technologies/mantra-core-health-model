@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · perfil pay · módulo 81 · base pay_lib
+-- SALUD v4.2.81 · perfil pay · módulo 81 · base pay_lib
 -- Generado de diagram_81_pay_lib.puml — NO editar a mano.
 
 -- Complementos del perfil pay (gen_ddl_pay.py): funciones, CHECK, FK compuestas y triggers.

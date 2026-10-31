@@ -301,6 +301,104 @@ note as VALUE_SETS_diagram_28b_user_activity_tracking_ext
 end note
 
 
+' ------------------------------------------------------------------------------
+' SOURCE: docs/trabajo/2026-10-31-portal-observabilidad-gobierno/03-uso-errores-heatmap.md
+' §4.3 (decision D-2: own table instead of reusing user_activity_events) · F1 item 2.
+' ------------------------------------------------------------------------------
+note as BIZ_client_error_events
+  BUSINESS PURPOSE
+  Errors of the web portal and the mobile app, grouped by fingerprint, with the screen
+  (route_template), the API route that failed and the request_id that jumps to the server
+  side error of module 70 (observability.error_events). It is its own table because
+  user_activity_events requires a session and the consent gate: a login-screen failure or a
+  chunk that fails to load before hydration would be lost, which is exactly where it hurts.
+  The ingestion endpoint is public and throttled; user/session/tenant are filled from the
+  authenticated actor, never from the body. No PHI by construction: short column lengths,
+  client-side sanitising and the server-side prohibited-value patterns on sanitized_message.
+end note
+
+entity "iam.sessions" as iam_sessions <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity client_error_events <<APPEND_ONLY>> {
+  * id : uuid <<PK>>
+  --
+  * received_at : timestamptz
+  * occurred_at : timestamptz
+  * portal_type_concept_id : uuid <<FK>>
+    actor_tenant_id : uuid
+    user_id : uuid <<FK>>
+    session_id : uuid <<FK>>
+    route_template : varchar(300)
+  * fingerprint : varchar(32)
+  * error_class_concept_id : uuid <<FK>>
+  * error_type : varchar(120)
+    sanitized_message : varchar(500)
+    http_method : varchar(8)
+    api_route_template : varchar(300)
+    http_status : smallint
+    api_error_code : varchar(60)
+    request_id : varchar(80)
+    support_code : varchar(40)
+  * app_version : varchar(40)
+    build_id : varchar(40)
+    screen_size : varchar(12)
+    is_online : boolean
+  * suppressed_count : integer <<DEFAULT_INT:0>>
+}
+
+' Labeled edge: gen_ddl resolves the FK destination of session_id from it (no vault note needed).
+client_error_events }o--o| iam_sessions : session_id
+
+note as DECISIONS_client_error_events
+  DECISIONS (franja F1)
+  - D-F1-6 The tenant of the actor is `actor_tenant_id`, NOT `tenant_id`, on purpose:
+    2026-08-05_tenant_rls.sql puts ROW LEVEL SECURITY on every table with a `tenant_id uuid`
+    column, and the public ingestion endpoint (no tenant context, fail-closed policy) could not
+    insert; the platform-scope reads of the admin panel could not read either. No FK to the
+    tenant: telemetry must not block its deletion.
+  - D-F1-7 session_id and user_id are FKs like in user_activity_events (same exposure).
+  - RETENTION: 90 days, own policy (not the analytics purpose retention). Purged by DELETE
+    on received_at; UPDATE is forbidden (module 33). Sanitised, short-lived, PHI-free.
+  - fingerprint = hash of (error_class, error_type, normalised top frame, route_template),
+    computed by the client SDK; suppressed_count is the number of identical errors the SDK
+    dropped by its own rate limit before sending this one.
+  - error_class: ERROR_CLASS_{JS,PROMISE,HTTP,ROUTE,CHUNK,HYDRATION,TEMPLATE,NATIVE}
+    (concepts telemetry:ERROR_CLASS_*). Portal: the existing telemetry WEB / MOBILE concepts.
+  - http_* / api_* / request_id are set only when the error came from an API response.
+end note
+
+note as VALUE_SETS_client_error_events
+  VALUE SETS
+  error_class->vs_client_error_class{JS,PROMISE,HTTP,ROUTE,CHUNK,HYDRATION,TEMPLATE,NATIVE};
+  portal_type->the existing portal concepts {WEB,MOBILE}.
+end note
+
+' ------------------------------------------------------------------------------
+' v4.2.81 (franja F1b, hallazgo 2 de la revision de codigo del API F0) — idempotencia
+' de los eventos anonimos de user_activity_events.
+' ------------------------------------------------------------------------------
+note as IDEMPOTENCY_user_activity_events
+  IDEMPOTENCY OF ANONYMOUS EVENTS (v4.2.81)
+  - The anonymous event (purpose PLATFORM_USAGE_AGGREGATE) has user_id NULL and keeps an HMAC
+    of (person, organization, client key) in event_idempotency_key. Without a unique index two
+    concurrent batches with the same key both passed the "find, then insert" check.
+  - ux_user_activity_events_anonymous_idempotency is UNIQUE (tenant, key) only for rows with
+    user_id NULL. The tenant is wrapped in COALESCE(tenant_id, zero uuid) on purpose: tenant_id
+    is nullable and PostgreSQL treats NULLs as distinct in a unique index, so an anonymous event
+    without an organization would never collide. The API must infer the conflict with the SAME
+    expression: ON CONFLICT ((COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000'::uuid)),
+    event_idempotency_key) WHERE user_id IS NULL DO NOTHING; or catch SQLSTATE 23505 and count
+    the event as skipped.
+  - Identified events get a lookup index (user_id, event_idempotency_key), partial on user_id NOT
+    NULL, and it is NOT unique: the client chooses that key and the table may already hold
+    repeats, so the identified path stays "find, then insert" and only gains the index.
+  - The patch SQL/patches/2026-10-31_v4281_idempotencia_anonima.sql removes, deterministically,
+    the duplicates that may already exist (keeps the oldest row by created_at, then id) before
+    creating the unique index.
+end note
+
 package "Physical Indexes" {
 entity "INDEXES · tracking_purpose_definitions" as idxset_tracking_purpose_definitions <<INDEX_SET>> {
   PK pk_tracking_purpose_definitions : (id) UNIQUE BTREE
@@ -382,6 +480,10 @@ entity "INDEXES · user_activity_events" as idxset_user_activity_events <<INDEX_
   IX ix_user_activity_events_security_audit_event_id : (security_audit_event_id) BTREE
   IX ix_user_activity_events_tenant_id_created_at : (tenant_id, created_at DESC) BTREE
   BRIN brin_user_activity_events_created_at : (created_at) BRIN pages_per_range=128
+  IX ix_user_activity_events_occurred_at : (occurred_at) BTREE
+  IX ix_user_activity_events_route_template_occurred_at : (route_template, occurred_at) BTREE
+  UX ux_user_activity_events_anonymous_idempotency : (COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000'::uuid), event_idempotency_key) UNIQUE BTREE WHERE user_id IS NULL
+  IX ix_user_activity_events_user_idempotency : (user_id, event_idempotency_key) BTREE WHERE user_id IS NOT NULL
 }
 
 user_activity_events .. idxset_user_activity_events : indexed by
@@ -468,6 +570,20 @@ entity "INDEXES · web_vitals" as idxset_web_vitals <<INDEX_SET>> {
 }
 
 web_vitals .. idxset_web_vitals : indexed by
+
+entity "INDEXES · client_error_events" as idxset_client_error_events <<INDEX_SET>> {
+  PK pk_client_error_events : (id) UNIQUE BTREE
+  IX ix_client_error_events_received_at : (received_at DESC) BTREE
+  IX ix_client_error_events_fingerprint_received_at : (fingerprint, received_at) BTREE
+  IX ix_client_error_events_route_template_received_at : (route_template, received_at) BTREE
+  IX ix_client_error_events_request_id : (request_id) BTREE
+  IX ix_client_error_events_portal_type_concept_id : (portal_type_concept_id) BTREE
+  IX ix_client_error_events_error_class_concept_id : (error_class_concept_id) BTREE
+  IX ix_client_error_events_user_id : (user_id) BTREE
+  IX ix_client_error_events_session_id : (session_id) BTREE
+}
+
+client_error_events .. idxset_client_error_events : indexed by
 }
 
 

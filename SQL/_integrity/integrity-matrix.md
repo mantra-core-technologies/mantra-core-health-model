@@ -1,4 +1,4 @@
-# Matriz de integridad y concurrencia — SALUD v4.2.79 (módulo 33)
+# Matriz de integridad y concurrencia — SALUD v4.2.81 (módulo 33)
 
 El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación cross-dominio. Cada regla se implementa en la **migración de la tabla dueña** (su módulo) y se repite aquí como referencia. Extraído fielmente del `.puml`.
 
@@ -90,6 +90,13 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 | `catalog_annotation_revisions` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden |
 | `catalog_review_decisions` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden |
 | `catalog_evidence_items` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden |
+| `data_catalog.catalog_glossary_term_revisions` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden |
+| `data_catalog.quality_issue_events` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden |
+| `data_catalog.quality_score_snapshots` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden; **CHECK_SQL** ck_quality_score_snapshots_score \| ("score" BETWEEN 0 AND 100) |
+| `data_catalog.catalog_change_acknowledgements` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden |
+| `data_catalog.catalog_stewardships` | `REFERENCE_ONLY` | **CHECK_SQL** ck_catalog_stewardships_scope \| (("scope_kind" = 'DOMAIN' AND "domain_id" IS NOT NULL AND "object_id" IS NULL) OR ("scope_kind" = 'OBJECT' AND "object_id" IS NOT NULL AND "domain_id" IS NULL)); **CHECK_SQL** ck_catalog_stewardships_holder \| ("user_id" IS NOT NULL OR "team_code" IS NOT NULL); **CHECK_SQL** ck_catalog_stewardships_period \| ("valid_to" IS NULL OR "valid_to" >= "valid_from") |
+| `data_catalog.quality_rules` | `REFERENCE_ONLY` | **CHECK_SQL** ck_quality_rules_threshold \| ("threshold_pct" BETWEEN 0 AND 100) |
+| `data_catalog.catalog_certifications` | `REFERENCE_ONLY` | **CHECK_SQL** ck_catalog_certifications_not_self \| ("certified_by_user_id" IS NULL OR "certified_by_user_id" <> "requested_by_user_id"); **CHECK_SQL** ck_catalog_certifications_target \| (num_nonnulls("object_id", "read_model_definition_id", "report_definition_id", "kpi_code") = 1) |
 
 ### Módulo 29 · `delegated_access`
 
@@ -109,7 +116,7 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 | `delegated_access.governance_rules` | `REFERENCE_ONLY` | **CHECK_SQL** ck_governance_rules_pattern \| ("permission_pattern" ~ '^([a-z_]+(\.[a-z_]+){2,3}\|[a-z_]+(\.[a-z_]+){0,2}\.\*)$'); **CHECK_SQL** ck_governance_rules_kind_shape \| (("rule_kind_concept_id" <> 'ce906685-7a58-54e7-b4d2-458062c0c303' OR "role_template_code" IS NOT NULL) AND ("rule_kind_concept_id" <> '1b6db045-2cc5-5985-9c89-18b8ac0969be' OR COALESCE("rule_json" ? 'condition', false)) AND ("rule_kind_concept_id" <> 'f2534b4a-a8cc-5fb1-a431-30e1a750274b' OR COALESCE("rule_json" ->> 'maxVisibility' IN ('PARTIAL', 'REDACT', 'NULLIFY'), false))); **CHECK_SQL** ck_governance_rules_valid_period \| ("valid_from" IS NULL OR "valid_to" IS NULL OR "valid_from" <= "valid_to") |
 | `delegated_access.sod_rules` | `REFERENCE_ONLY` | **CHECK_SQL** ck_sod_rules_sets \| (jsonb_typeof("atoms_a_json") = 'array' AND jsonb_typeof("atoms_b_json") = 'array'); **CHECK_SQL** ck_sod_rules_exception_days \| ("max_exception_days" IS NULL OR "max_exception_days" BETWEEN 1 AND 180); **CHECK_SQL** ck_sod_rules_hard_no_exception \| (NOT ("is_hard" AND "max_exception_days" IS NOT NULL)); **CHECK_SQL** ck_sod_rules_version_number \| ("version_number" >= 1) |
 | `delegated_access.sod_exceptions` | `REFERENCE_ONLY` | **CHECK_SQL** ck_sod_exceptions_period \| ("valid_to" > "valid_from" AND "valid_to" <= "valid_from" + interval '180 days'); **CHECK_SQL** ck_sod_exceptions_justification \| (char_length("justification_text") >= 30) |
-| `delegated_access.four_eyes_requests` | `REFERENCE_ONLY` | **CHECK_SQL** ck_four_eyes_requests_not_self \| ("decided_by_user_id" IS NULL OR ("decided_by_user_id" <> "requester_user_id" AND ("subject_user_id" IS NULL OR "decided_by_user_id" <> "subject_user_id"))); **CHECK_SQL** ck_four_eyes_requests_hash \| ("payload_hash" ~ '^[0-9a-f]{64}$'); **CHECK_SQL** ck_four_eyes_requests_expiry \| ("expires_at" > "created_at"); **CHECK_SQL** ck_four_eyes_requests_decision \| (("status_concept_id" <> 'a977935a-9073-5113-9644-7df96732e776' OR ("decided_at" IS NULL AND "decided_by_user_id" IS NULL)) AND ("status_concept_id" NOT IN ('1627143e-d273-5fcb-b289-9e59b8b096f2', 'de15c53d-1aa0-5709-8ebd-69e9fd323e31', '013d578f-38af-564c-aff1-e36d1fdec6dd') OR ("decided_at" IS NOT NULL AND "decided_by_user_id" IS NOT NULL))); **CHECK_SQL** ck_four_eyes_requests_reject_comment \| ("status_concept_id" <> 'de15c53d-1aa0-5709-8ebd-69e9fd323e31' OR COALESCE(char_length("decision_comment_text"), 0) >= 5) |
+| `delegated_access.four_eyes_requests` | `REFERENCE_ONLY` | **CHECK_SQL** ck_four_eyes_requests_not_self \| ("decided_by_user_id" IS NULL OR ("decided_by_user_id" <> "requester_user_id" AND ("subject_user_id" IS NULL OR "decided_by_user_id" <> "subject_user_id"))); **CHECK_SQL** ck_four_eyes_requests_hash \| ("payload_hash" ~ '^[0-9a-f]{64}$'); **CHECK_SQL** ck_four_eyes_requests_expiry \| ("expires_at" > "created_at"); **CHECK_SQL** ck_four_eyes_requests_decision \| (("status_concept_id" <> 'a977935a-9073-5113-9644-7df96732e776' OR ("decided_at" IS NULL AND "decided_by_user_id" IS NULL)) AND ("status_concept_id" NOT IN ('1627143e-d273-5fcb-b289-9e59b8b096f2', 'de15c53d-1aa0-5709-8ebd-69e9fd323e31', '013d578f-38af-564c-aff1-e36d1fdec6dd') OR ("decided_at" IS NOT NULL AND "decided_by_user_id" IS NOT NULL))); **CHECK_SQL** ck_four_eyes_requests_reject_comment \| ("status_concept_id" <> 'de15c53d-1aa0-5709-8ebd-69e9fd323e31' OR COALESCE(char_length("decision_comment_text"), 0) >= 5); **CHECK_SQL** ck_four_eyes_requests_subject_pair \| (("subject_entity" IS NULL) = ("subject_id" IS NULL)) |
 | `delegated_access.access_review_campaigns` | `REFERENCE_ONLY` | **CHECK_SQL** ck_access_review_campaigns_grace \| ("grace_days" BETWEEN 0 AND 30); **CHECK_SQL** ck_access_review_campaigns_escalate \| ("escalate_after_days" BETWEEN 1 AND 30); **CHECK_SQL** ck_access_review_campaigns_reminders \| (jsonb_typeof("reminder_days_before_json") = 'array'); **CHECK_SQL** ck_access_review_campaigns_due \| ("launched_at" IS NULL OR "due_at" > "launched_at") |
 | `delegated_access.access_review_items` | `REFERENCE_ONLY` | **CHECK_SQL** ck_access_review_items_decided \| (("decision_concept_id" = '55a6db07-19e7-5bb4-978a-3d246492f49d' AND "decided_at" IS NULL) OR ("decision_concept_id" <> '55a6db07-19e7-5bb4-978a-3d246492f49d' AND "decided_at" IS NOT NULL)); **CHECK_SQL** ck_access_review_items_comment \| ("decision_concept_id" NOT IN ('bce72e9a-b3bb-5fab-8e79-85d411ba692c', '26f790b1-6d77-5286-89d5-0e82a4dcfb81') OR COALESCE(char_length("decision_comment_text"), 0) >= 10); **CHECK_SQL** ck_access_review_items_hash \| ("evidence_hash" ~ '^[0-9a-f]{64}$') |
 | `delegated_access.lifecycle_cases` | `REFERENCE_ONLY` | **CHECK_SQL** ck_lifecycle_cases_checklist \| (jsonb_typeof("checklist_json") = 'array'); **CHECK_SQL** ck_lifecycle_cases_completed \| ("status_concept_id" <> '4734035e-72cf-519f-8e27-e6cf25ba557f' OR "completed_at" IS NOT NULL) |
@@ -165,6 +172,20 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 | `medical_groups.groups` | `REFERENCE_ONLY` | **CHECK_SQL** ck_medical_groups_groups_status \| "status" IN ('PENDING_TEAM', 'SCHEDULED', 'RESCHEDULE_PENDING', 'CLOSED') |
 | `medical_groups.group_members` | `REFERENCE_ONLY` | **CHECK_SQL** ck_medical_groups_group_members_invitation_status \| "invitation_status" IN ('PENDING', 'ACCEPTED', 'REJECTED') |
 
+### Módulo 70 · `observability`
+
+| Tabla | Estereotipo | Reglas declaradas |
+|-------|-------------|-------------------|
+| `observability.error_events` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden; **RETENTION** 90 days (drop_chunks; DELETE allowed); **CHECK_SQL** ck_error_events_source \| "source" IN ('api', 'worker', 'web') |
+| `observability.http_request_minute_series` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden; **RETENTION** 14 days raw (drop_chunks; DELETE allowed) |
+| `observability.sql_statement_minute_series` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden; **RETENTION** 14 days (drop_chunks; DELETE allowed) |
+| `observability.worker_tick_minute_series` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden; **RETENTION** 30 days (drop_chunks; DELETE allowed) |
+| `observability.slow_request_samples` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden; **RETENTION** 30 days (drop_chunks; DELETE allowed); **CHECK_SQL** ck_slow_request_samples_sampled_because \| "sampled_because" IN ('slow', 'error', 'random') |
+| `observability.dependency_probe_runs` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden; **RETENTION** 30 days (drop_chunks; DELETE allowed); **CHECK_SQL** ck_dependency_probe_runs_status \| "status" IN ('up', 'degraded', 'down', 'not_probed') |
+| `observability.alert_evaluations` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden; **RETENTION** 400 days (purge job; DELETE allowed) |
+| `observability.error_groups` | `REFERENCE_ONLY` | **CHECK_SQL** ck_error_groups_source \| "source" IN ('api', 'worker', 'web') |
+| `observability.instances` | `REFERENCE_ONLY` | **CHECK_SQL** ck_instances_kind \| "kind" IN ('API', 'WORKER'); **CHECK_SQL** ck_instances_status \| "status" IN ('starting', 'running', 'draining', 'stopped') |
+
 ### Módulo 24 · `pharmacy`
 
 | Tabla | Estereotipo | Reglas declaradas |
@@ -213,6 +234,9 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 
 | Tabla | Estereotipo | Reglas declaradas |
 |-------|-------------|-------------------|
+| `system_ops.governance_policy_revisions` | `REFERENCE_ONLY` | **CHECK_SQL** ck_governance_policy_revisions_not_self \| ("decided_by_user_id" IS NULL OR "decided_by_user_id" <> "submitted_by_user_id"); **CHECK_SQL** ck_governance_policy_revisions_decision \| ("status" NOT IN ('APPROVED', 'REJECTED') OR ("decided_by_user_id" IS NOT NULL AND "decided_at" IS NOT NULL)) |
+| `system_ops.bulk_import_batches` | `REFERENCE_ONLY` | **CHECK_SQL** ck_bulk_import_batches_counts \| ("rows_total" >= 0 AND "rows_valid" >= 0 AND "rows_rejected" >= 0 AND "rows_total" = "rows_valid" + "rows_rejected" AND "processed_rows" BETWEEN 0 AND "rows_total" AND "issues_total" >= 0) |
+| `system_ops.bulk_import_batch_rows` | `REFERENCE_ONLY` | **CHECK_SQL** ck_bulk_import_batch_rows_row_no \| ("row_no" >= 1); **CHECK_SQL** ck_bulk_import_batch_rows_closed_no_data \| ("outcome" IS NULL OR ("row_data_json" IS NULL AND "row_key" IS NULL)) |
 | `system_ops.restore_test_runs` | `REFERENCE_ONLY` | **CHECK_SQL** ck_system_ops_restore_test_runs_objective_status \| "objective_status" IN ('PASSED', 'FAILED', 'NOT_MEASURED') |
 
 ### Módulo 28 · `telemetry`
@@ -220,6 +244,7 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 | Tabla | Estereotipo | Reglas declaradas |
 |-------|-------------|-------------------|
 | `user_activity_events` | `APPEND_ONLY, REFERENCE_ONLY` | **UK** event schema + event idempotency key; **PARTITION** received_at; **RETENTION** purpose-specific |
+| `telemetry.client_error_events` | `APPEND_ONLY, REFERENCE_ONLY` | **UPDATE** forbidden; **RETENTION** 90 days (purge job on received_at; DELETE allowed) |
 
 ## Relaciones de integridad declaradas
 

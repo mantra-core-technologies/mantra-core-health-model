@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · módulo 29 · schema delegated_access
+-- SALUD v4.2.81 · módulo 29 · schema delegated_access
 -- Generado de diagram_29_delegated_access.puml — NO editar a mano.
 
 
@@ -322,6 +322,8 @@ CREATE INDEX IF NOT EXISTS "ix_sod_exceptions_created_by_user_id" ON "delegated_
 
 CREATE INDEX IF NOT EXISTS "ix_sod_exceptions_updated_by_user_id" ON "delegated_access"."sod_exceptions" ("updated_by_user_id");
 
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_four_eyes_requests_tenant_id_id" ON "delegated_access"."four_eyes_requests" ("tenant_id", "id");
+
 CREATE INDEX IF NOT EXISTS "ix_four_eyes_requests_tenant_id" ON "delegated_access"."four_eyes_requests" ("tenant_id", "status_concept_id", "expires_at");
 
 CREATE INDEX IF NOT EXISTS "ix_four_eyes_requests_requester" ON "delegated_access"."four_eyes_requests" ("requester_user_id", "status_concept_id");
@@ -331,6 +333,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS "uq_four_eyes_requests_pending_payload" ON "de
 CREATE INDEX IF NOT EXISTS "ix_four_eyes_requests_kind_concept_id" ON "delegated_access"."four_eyes_requests" ("kind_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_four_eyes_requests_subject_user_id" ON "delegated_access"."four_eyes_requests" ("subject_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_four_eyes_requests_subject" ON "delegated_access"."four_eyes_requests" ("subject_entity", "subject_id") WHERE subject_id IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS "ix_four_eyes_requests_organization_user_assignment_id" ON "delegated_access"."four_eyes_requests" ("organization_user_assignment_id");
 

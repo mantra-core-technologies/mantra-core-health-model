@@ -177,6 +177,102 @@ entity catalog_evidence_items <<LOG, REFERENCE_ONLY>> {
   UPDATE : forbidden
 }
 
+' v4.2.80 (franja F1 del portal de observabilidad) — inmutabilidad de los registros del modulo 70 (observability)
+' y de los errores del cliente del modulo 28. Todo es historia que nunca se reescribe: se prohibe UPDATE y NO el
+' DELETE, porque la retencion (drop_chunks / purga por ventana) borra por antiguedad. Las series por minuto se
+' escriben con INSERT ... ON CONFLICT DO NOTHING (el reintento de un volcado no actualiza nada), asi que ningun
+' camino legitimo necesita UPDATE. Los CHECK_SQL cierran solo los vocabularios que el plan enumera.
+entity "observability.error_events" as observability_error_events <<LOG, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+  RETENTION : 90 days (drop_chunks; DELETE allowed)
+  CHECK_SQL : ck_error_events_source | "source" IN ('api', 'worker', 'web')
+}
+entity "observability.http_request_minute_series" as observability_http_request_minute_series <<LOG, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+  RETENTION : 14 days raw (drop_chunks; DELETE allowed)
+}
+entity "observability.sql_statement_minute_series" as observability_sql_statement_minute_series <<LOG, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+  RETENTION : 14 days (drop_chunks; DELETE allowed)
+}
+entity "observability.worker_tick_minute_series" as observability_worker_tick_minute_series <<LOG, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+  RETENTION : 30 days (drop_chunks; DELETE allowed)
+}
+entity "observability.slow_request_samples" as observability_slow_request_samples <<LOG, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+  RETENTION : 30 days (drop_chunks; DELETE allowed)
+  CHECK_SQL : ck_slow_request_samples_sampled_because | "sampled_because" IN ('slow', 'error', 'random')
+}
+entity "observability.dependency_probe_runs" as observability_dependency_probe_runs <<LOG, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+  RETENTION : 30 days (drop_chunks; DELETE allowed)
+  CHECK_SQL : ck_dependency_probe_runs_status | "status" IN ('up', 'degraded', 'down', 'not_probed')
+}
+entity "observability.alert_evaluations" as observability_alert_evaluations <<LOG, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+  RETENTION : 400 days (purge job; DELETE allowed)
+}
+entity "observability.error_groups" as observability_error_groups <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_error_groups_source | "source" IN ('api', 'worker', 'web')
+}
+entity "observability.instances" as observability_instances <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_instances_kind | "kind" IN ('API', 'WORKER')
+  CHECK_SQL : ck_instances_status | "status" IN ('starting', 'running', 'draining', 'stopped')
+}
+entity "telemetry.client_error_events" as telemetry_client_error_events <<APPEND_ONLY, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+  RETENTION : 90 days (purge job on received_at; DELETE allowed)
+}
+
+' v4.2.81 (franja F1b, gobierno de datos) — inmutabilidad e invariantes de gobierno de los modulos 67 y 11.
+' Inmutables (se prohibe UPDATE y NO el DELETE, igual que las cuatro <<LOG>> previas del modulo 67): revisiones del glosario,
+' eventos de incidencia de calidad, fotos de puntaje y acuses de cambio. El resto del bloque son maquinas de estado y se actualiza.
+' governance_policy_revisions NO esta aqui a proposito (ver D-F1b-7 en el modulo 11): lleva su ciclo de vida en la misma fila y
+' usa un disparador de columnas en el parche v4281_gobierno_de_datos; aqui solo sus CHECK.
+entity "data_catalog.catalog_glossary_term_revisions" as data_catalog_catalog_glossary_term_revisions <<LOG, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+}
+entity "data_catalog.quality_issue_events" as data_catalog_quality_issue_events <<LOG, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+}
+entity "data_catalog.quality_score_snapshots" as data_catalog_quality_score_snapshots <<LOG, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+  CHECK_SQL : ck_quality_score_snapshots_score | ("score" BETWEEN 0 AND 100)
+}
+entity "data_catalog.catalog_change_acknowledgements" as data_catalog_catalog_change_acknowledgements <<LOG, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+}
+entity "data_catalog.catalog_stewardships" as data_catalog_catalog_stewardships <<REFERENCE_ONLY>> {
+  ' El responsable de un dominio no tiene tabla y el de una tabla no tiene dominio: la columna del alcance y el alcance coinciden.
+  CHECK_SQL : ck_catalog_stewardships_scope | (("scope_kind" = 'DOMAIN' AND "domain_id" IS NOT NULL AND "object_id" IS NULL) OR ("scope_kind" = 'OBJECT' AND "object_id" IS NOT NULL AND "domain_id" IS NULL))
+  CHECK_SQL : ck_catalog_stewardships_holder | ("user_id" IS NOT NULL OR "team_code" IS NOT NULL)
+  CHECK_SQL : ck_catalog_stewardships_period | ("valid_to" IS NULL OR "valid_to" >= "valid_from")
+}
+entity "data_catalog.quality_rules" as data_catalog_quality_rules <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_quality_rules_threshold | ("threshold_pct" BETWEEN 0 AND 100)
+}
+' Quien pide la certificacion no la concede (SELF_CERTIFY): lo impone la base, no solo el servicio. Un destino por fila.
+entity "data_catalog.catalog_certifications" as data_catalog_catalog_certifications <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_catalog_certifications_not_self | ("certified_by_user_id" IS NULL OR "certified_by_user_id" <> "requested_by_user_id")
+  CHECK_SQL : ck_catalog_certifications_target | (num_nonnulls("object_id", "read_model_definition_id", "report_definition_id", "kpi_code") = 1)
+}
+' Quien propone una revision de politica no la aprueba (SELF_APPROVAL); una decision tomada lleva decisor y fecha.
+entity "system_ops.governance_policy_revisions" as system_ops_governance_policy_revisions <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_governance_policy_revisions_not_self | ("decided_by_user_id" IS NULL OR "decided_by_user_id" <> "submitted_by_user_id")
+  CHECK_SQL : ck_governance_policy_revisions_decision | ("status" NOT IN ('APPROVED', 'REJECTED') OR ("decided_by_user_id" IS NOT NULL AND "decided_at" IS NOT NULL))
+}
+
+' v4.2.81 (cargas masivas) — el lote persistente de bulk_import (modulo 11). Los contadores cuadran y una fila con resultado ya no guarda
+' datos personales: el procesador escribe el resultado y vacia row_data_json/row_key en la misma sentencia (D-F1b-9).
+entity "system_ops.bulk_import_batches" as system_ops_bulk_import_batches <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_bulk_import_batches_counts | ("rows_total" >= 0 AND "rows_valid" >= 0 AND "rows_rejected" >= 0 AND "rows_total" = "rows_valid" + "rows_rejected" AND "processed_rows" BETWEEN 0 AND "rows_total" AND "issues_total" >= 0)
+}
+entity "system_ops.bulk_import_batch_rows" as system_ops_bulk_import_batch_rows <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_bulk_import_batch_rows_row_no | ("row_no" >= 1)
+  CHECK_SQL : ck_bulk_import_batch_rows_closed_no_data | ("outcome" IS NULL OR ("row_data_json" IS NULL AND "row_key" IS NULL))
+}
+
 inventory_stock_positions --> inventory_ledger_entries : atomic projection
 inventory_reservations --> inventory_ledger_entries : reserve/release
 patient_coverages --> claim_adjudication_versions : adjudication basis
@@ -438,6 +534,8 @@ entity "delegated_access.four_eyes_requests" as delegated_access_four_eyes_reque
   CHECK_SQL : ck_four_eyes_requests_expiry | ("expires_at" > "created_at")
   CHECK_SQL : ck_four_eyes_requests_decision | (("status_concept_id" <> 'a977935a-9073-5113-9644-7df96732e776' OR ("decided_at" IS NULL AND "decided_by_user_id" IS NULL)) AND ("status_concept_id" NOT IN ('1627143e-d273-5fcb-b289-9e59b8b096f2', 'de15c53d-1aa0-5709-8ebd-69e9fd323e31', '013d578f-38af-564c-aff1-e36d1fdec6dd') OR ("decided_at" IS NOT NULL AND "decided_by_user_id" IS NOT NULL)))
   CHECK_SQL : ck_four_eyes_requests_reject_comment | ("status_concept_id" <> 'de15c53d-1aa0-5709-8ebd-69e9fd323e31' OR COALESCE(char_length("decision_comment_text"), 0) >= 5)
+  ' v4.2.81: el sujeto generico (subject_entity, subject_id) va completo o no va (un lote, una anotacion, una politica).
+  CHECK_SQL : ck_four_eyes_requests_subject_pair | (("subject_entity" IS NULL) = ("subject_id" IS NULL))
 }
 
 entity "delegated_access.access_review_campaigns" as delegated_access_access_review_campaigns <<REFERENCE_ONLY>> {

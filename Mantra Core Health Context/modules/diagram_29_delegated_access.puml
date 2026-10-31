@@ -754,6 +754,12 @@ entity sod_exceptions {
   * row_version : integer
 }
 
+' v4.2.81 (motor de aprobacion unico, 06 H3.S1.M1): el vocabulario de `kind` NO es un CHECK sino conceptos (kind_concept_id), asi que agregar
+' un tipo es sembrar un concepto, sin DDL: BULK_IMPORT_CONFIRM, CATALOG_CLASSIFICATION, GOVERNANCE_POLICY_CHANGE y ACCESS_SENSITIVE_CHANGE
+' (delegated_access:FOUR_EYES_KIND_*) y el aprobador de plataforma (REVIEWER_KIND_PLATFORM_ADMIN) los siembra el parche
+' 2026-10-31_v4281_motor_aprobacion.sql. Lo unico que cambia de forma son dos columnas aditivas: el sujeto generico
+' (subject_entity, subject_id) de lo que no es una persona (un lote de carga, una anotacion del catalogo, una politica). `tenant_id` sigue
+' NOT NULL: lotes y clasificaciones siempre tienen tenant; una aprobacion de plataforma usa el tenant de la plataforma.
 ' 4/12 · cuatro ojos generico: una accion sensible, un cambio sobre el techo, una excepcion SoD, una reactivacion o un traslado con mas privilegio
 ' la decide OTRA persona. ck_four_eyes_requests_not_self lo impone la base de datos (23514), no solo el servicio.
 entity four_eyes_requests {
@@ -765,6 +771,8 @@ entity four_eyes_requests {
     subject_user_id : uuid <<FK>>
     organization_user_assignment_id : uuid <<FK>>
     permission_code : varchar
+    subject_entity : varchar
+    subject_id : uuid
   * approver_kind_concept_id : uuid <<FK>>
   * payload_json : jsonb
   * payload_hash : varchar
@@ -1035,11 +1043,13 @@ sod_exceptions .. idxset_sod_exceptions : indexed by
 
 entity "INDEXES · four_eyes_requests" as idxset_four_eyes_requests <<INDEX_SET>> {
   PK pk_four_eyes_requests : (id) UNIQUE BTREE
+  UK uq_four_eyes_requests_tenant_id_id : (tenant_id, id) UNIQUE BTREE
   IX ix_four_eyes_requests_tenant_id : (tenant_id, status_concept_id, expires_at) BTREE
   IX ix_four_eyes_requests_requester : (requester_user_id, status_concept_id) BTREE
   UK uq_four_eyes_requests_pending_payload : (tenant_id, kind_concept_id, requester_user_id, COALESCE(permission_code, ''), payload_hash) UNIQUE BTREE WHERE status_concept_id = 'a977935a-9073-5113-9644-7df96732e776'
   IX ix_four_eyes_requests_kind_concept_id : (kind_concept_id) BTREE
   IX ix_four_eyes_requests_subject_user_id : (subject_user_id) BTREE
+  IX ix_four_eyes_requests_subject : (subject_entity, subject_id) BTREE WHERE subject_id IS NOT NULL
   IX ix_four_eyes_requests_organization_user_assignment_id : (organization_user_assignment_id) BTREE
   IX ix_four_eyes_requests_approver_kind_concept_id : (approver_kind_concept_id) BTREE
   IX ix_four_eyes_requests_status_concept_id : (status_concept_id) BTREE

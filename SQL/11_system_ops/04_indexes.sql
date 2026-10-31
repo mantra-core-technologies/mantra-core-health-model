@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · módulo 11 · schema system_ops
+-- SALUD v4.2.81 · módulo 11 · schema system_ops
 -- Generado de diagram_11_system_ops.puml — NO editar a mano.
 
 
@@ -95,6 +95,8 @@ CREATE INDEX IF NOT EXISTS "ix_governance_change_log_changed_by_user_id" ON "sys
 CREATE INDEX IF NOT EXISTS "ix_governance_change_log_recorded_by_user_id" ON "system_ops"."governance_change_log" ("recorded_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "brin_governance_change_log_recorded_at" ON "system_ops"."governance_change_log" USING brin ("recorded_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_governance_change_log_target_recorded" ON "system_ops"."governance_change_log" ("target_type", "target_id", "recorded_at" DESC);
 
 CREATE INDEX IF NOT EXISTS "ix_record_revisions_operation_concept_id" ON "system_ops"."record_revisions" ("operation_concept_id");
 
@@ -329,6 +331,40 @@ CREATE INDEX IF NOT EXISTS "ix_partition_specs_entity_registry_id" ON "system_op
 CREATE INDEX IF NOT EXISTS "ix_partition_specs_strategy_concept_id" ON "system_ops"."partition_specs" ("partition_strategy_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_partition_specs_retention_policy_id" ON "system_ops"."partition_specs" ("retention_policy_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_governance_policy_revisions_no" ON "system_ops"."governance_policy_revisions" ("policy_type", "policy_id", "revision_no");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_governance_policy_revisions_one_pending" ON "system_ops"."governance_policy_revisions" ("policy_type", "policy_id") WHERE status = 'PENDING_APPROVAL';
+
+CREATE INDEX IF NOT EXISTS "ix_governance_policy_revisions_status_submitted" ON "system_ops"."governance_policy_revisions" ("status", "submitted_at" DESC);
+
+CREATE INDEX IF NOT EXISTS "ix_governance_policy_revisions_submitted_by_user_id" ON "system_ops"."governance_policy_revisions" ("submitted_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_governance_policy_revisions_decided_by_user_id" ON "system_ops"."governance_policy_revisions" ("decided_by_user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_bulk_import_batches_tenant_id_id" ON "system_ops"."bulk_import_batches" ("tenant_id", "id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_bulk_import_batches_confirm_key" ON "system_ops"."bulk_import_batches" ("tenant_id", "confirm_key") WHERE confirm_key IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS "ix_bulk_import_batches_tenant_created" ON "system_ops"."bulk_import_batches" ("tenant_id", "created_at" DESC);
+
+CREATE INDEX IF NOT EXISTS "ix_bulk_import_batches_active" ON "system_ops"."bulk_import_batches" ("status", "created_at") WHERE status IN ('EN_COLA', 'PROCESANDO');
+
+CREATE INDEX IF NOT EXISTS "ix_bulk_import_batches_file_hash" ON "system_ops"."bulk_import_batches" ("tenant_id", "kind", "file_sha256") WHERE file_sha256 IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS "ix_bulk_import_batches_approval_request_id" ON "system_ops"."bulk_import_batches" ("approval_request_id") WHERE approval_request_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS "ix_bulk_import_batches_confirmed_by_user_id" ON "system_ops"."bulk_import_batches" ("confirmed_by_user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_bulk_import_batch_rows_row" ON "system_ops"."bulk_import_batch_rows" ("batch_id", "row_no");
+
+CREATE INDEX IF NOT EXISTS "ix_bulk_import_batch_rows_outcome" ON "system_ops"."bulk_import_batch_rows" ("batch_id", "outcome");
+
+CREATE INDEX IF NOT EXISTS "ix_bulk_import_batch_rows_tenant_id" ON "system_ops"."bulk_import_batch_rows" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_bulk_import_batch_rows_target" ON "system_ops"."bulk_import_batch_rows" ("target_entity", "target_id") WHERE target_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS "ix_bulk_import_batch_rows_pending_data" ON "system_ops"."bulk_import_batch_rows" ("batch_id") WHERE row_data_json IS NOT NULL OR row_key IS NOT NULL;
 
 CREATE UNIQUE INDEX IF NOT EXISTS "uk_encryption_keys_key_alias" ON "system_ops"."encryption_keys" ("key_alias");
 

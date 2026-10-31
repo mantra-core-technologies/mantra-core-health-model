@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · módulo 67 · schema data_catalog
+-- SALUD v4.2.81 · módulo 67 · schema data_catalog
 -- Generado de diagram_67_data_catalog.puml — NO editar a mano.
 
 
@@ -120,4 +120,112 @@ DO $$ BEGIN
     ALTER TABLE "data_catalog"."catalog_process_step_operations"
         ADD CONSTRAINT "fk_catalog_process_step_operations_operation_id" FOREIGN KEY ("operation_id")
         REFERENCES "data_catalog"."catalog_operations" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "data_catalog"."catalog_stewardships"
+        ADD CONSTRAINT "fk_catalog_stewardships_object_id" FOREIGN KEY ("object_id")
+        REFERENCES "data_catalog"."catalog_objects" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "data_catalog"."catalog_glossary_term_revisions"
+        ADD CONSTRAINT "fk_catalog_glossary_term_revisions_term_id" FOREIGN KEY ("term_id")
+        REFERENCES "data_catalog"."catalog_glossary_terms" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "data_catalog"."catalog_glossary_term_links"
+        ADD CONSTRAINT "fk_catalog_glossary_term_links_term_id" FOREIGN KEY ("term_id")
+        REFERENCES "data_catalog"."catalog_glossary_terms" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "data_catalog"."catalog_glossary_term_links"
+        ADD CONSTRAINT "fk_catalog_glossary_term_links_object_id" FOREIGN KEY ("object_id")
+        REFERENCES "data_catalog"."catalog_objects" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "data_catalog"."catalog_glossary_term_links"
+        ADD CONSTRAINT "fk_catalog_glossary_term_links_column_id" FOREIGN KEY ("column_id")
+        REFERENCES "data_catalog"."catalog_columns" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "data_catalog"."quality_rules"
+        ADD CONSTRAINT "fk_quality_rules_object_id" FOREIGN KEY ("object_id")
+        REFERENCES "data_catalog"."catalog_objects" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "data_catalog"."quality_rules"
+        ADD CONSTRAINT "fk_quality_rules_column_id" FOREIGN KEY ("column_id")
+        REFERENCES "data_catalog"."catalog_columns" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "data_catalog"."quality_rule_runs"
+        ADD CONSTRAINT "fk_quality_rule_runs_rule_id" FOREIGN KEY ("rule_id")
+        REFERENCES "data_catalog"."quality_rules" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "data_catalog"."quality_issues"
+        ADD CONSTRAINT "fk_quality_issues_rule_id" FOREIGN KEY ("rule_id")
+        REFERENCES "data_catalog"."quality_rules" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "data_catalog"."quality_issues"
+        ADD CONSTRAINT "fk_quality_issues_object_id" FOREIGN KEY ("object_id")
+        REFERENCES "data_catalog"."catalog_objects" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "data_catalog"."quality_issues"
+        ADD CONSTRAINT "fk_quality_issues_column_id" FOREIGN KEY ("column_id")
+        REFERENCES "data_catalog"."catalog_columns" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "data_catalog"."quality_issues"
+        ADD CONSTRAINT "fk_quality_issues_first_seen_run_id" FOREIGN KEY ("first_seen_run_id")
+        REFERENCES "data_catalog"."quality_rule_runs" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "data_catalog"."quality_issues"
+        ADD CONSTRAINT "fk_quality_issues_last_seen_run_id" FOREIGN KEY ("last_seen_run_id")
+        REFERENCES "data_catalog"."quality_rule_runs" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "data_catalog"."quality_issue_events"
+        ADD CONSTRAINT "fk_quality_issue_events_issue_id" FOREIGN KEY ("issue_id")
+        REFERENCES "data_catalog"."quality_issues" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "data_catalog"."quality_issue_events"
+        ADD CONSTRAINT "fk_quality_issue_events_run_id" FOREIGN KEY ("run_id")
+        REFERENCES "data_catalog"."quality_rule_runs" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "data_catalog"."quality_score_snapshots"
+        ADD CONSTRAINT "fk_quality_score_snapshots_object_id" FOREIGN KEY ("object_id")
+        REFERENCES "data_catalog"."catalog_objects" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "data_catalog"."catalog_certifications"
+        ADD CONSTRAINT "fk_catalog_certifications_object_id" FOREIGN KEY ("object_id")
+        REFERENCES "data_catalog"."catalog_objects" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "data_catalog"."catalog_change_acknowledgements"
+        ADD CONSTRAINT "fk_catalog_change_acknowledgements_change_event_id" FOREIGN KEY ("change_event_id")
+        REFERENCES "data_catalog"."catalog_change_events" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;

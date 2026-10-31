@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · schema delegated_access · constraints de integridad (módulo 33)
+-- SALUD v4.2.81 · schema delegated_access · constraints de integridad (módulo 33)
 -- Aplicar DESPUÉS de 04_indexes.sql y de SQL/_integrity/00_integrity_functions.sql.
 -- Reglas del módulo 33. Las UK/CHECK/EXCLUDE en prosa quedan como comentario:
 -- el modelo no declara su expresión SQL y no se inventa (temperatura-0).
@@ -157,6 +157,10 @@ ALTER TABLE "delegated_access"."four_eyes_requests" ADD CONSTRAINT "ck_four_eyes
 -- CHECK concreto declarado por el modelo (CHECK_SQL).
 ALTER TABLE "delegated_access"."four_eyes_requests" DROP CONSTRAINT IF EXISTS "ck_four_eyes_requests_reject_comment";
 ALTER TABLE "delegated_access"."four_eyes_requests" ADD CONSTRAINT "ck_four_eyes_requests_reject_comment" CHECK (("status_concept_id" <> 'de15c53d-1aa0-5709-8ebd-69e9fd323e31' OR COALESCE(char_length("decision_comment_text"), 0) >= 5));
+
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "delegated_access"."four_eyes_requests" DROP CONSTRAINT IF EXISTS "ck_four_eyes_requests_subject_pair";
+ALTER TABLE "delegated_access"."four_eyes_requests" ADD CONSTRAINT "ck_four_eyes_requests_subject_pair" CHECK ((("subject_entity" IS NULL) = ("subject_id" IS NULL)));
 
 
 -- ═══ access_review_campaigns ═══

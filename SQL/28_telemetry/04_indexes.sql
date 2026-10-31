@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · módulo 28 · schema telemetry
+-- SALUD v4.2.81 · módulo 28 · schema telemetry
 -- Generado de diagram_28_telemetry.puml — NO editar a mano.
 
 
@@ -86,6 +86,14 @@ CREATE INDEX IF NOT EXISTS "ix_user_activity_events_tenant_id_created_at" ON "te
 
 CREATE INDEX IF NOT EXISTS "brin_user_activity_events_created_at" ON "telemetry"."user_activity_events" USING brin ("created_at") WITH (pages_per_range=128);
 
+CREATE INDEX IF NOT EXISTS "ix_user_activity_events_occurred_at" ON "telemetry"."user_activity_events" ("occurred_at");
+
+CREATE INDEX IF NOT EXISTS "ix_user_activity_events_route_template_occurred_at" ON "telemetry"."user_activity_events" ("route_template", "occurred_at");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_user_activity_events_anonymous_idempotency" ON "telemetry"."user_activity_events" (COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000'::uuid), "event_idempotency_key") WHERE user_id IS NULL;
+
+CREATE INDEX IF NOT EXISTS "ix_user_activity_events_user_idempotency" ON "telemetry"."user_activity_events" ("user_id", "event_idempotency_key") WHERE user_id IS NOT NULL;
+
 CREATE INDEX IF NOT EXISTS "ix_user_activity_event_properties_user_activity_event_id" ON "telemetry"."user_activity_event_properties" ("user_activity_event_id");
 
 CREATE INDEX IF NOT EXISTS "ix_user_activity_event_properties_value_type_concept_id" ON "telemetry"."user_activity_event_properties" ("value_type_concept_id");
@@ -167,3 +175,19 @@ CREATE INDEX IF NOT EXISTS "ix_web_vitals_rating_concept_id" ON "telemetry"."web
 CREATE INDEX IF NOT EXISTS "ix_web_vitals_navigation_type_concept_id" ON "telemetry"."web_vitals" ("navigation_type_concept_id");
 
 CREATE INDEX IF NOT EXISTS "brin_web_vitals_created_at" ON "telemetry"."web_vitals" USING brin ("created_at") WITH (pages_per_range=128);
+
+CREATE INDEX IF NOT EXISTS "ix_client_error_events_received_at" ON "telemetry"."client_error_events" ("received_at" DESC);
+
+CREATE INDEX IF NOT EXISTS "ix_client_error_events_fingerprint_received_at" ON "telemetry"."client_error_events" ("fingerprint", "received_at");
+
+CREATE INDEX IF NOT EXISTS "ix_client_error_events_route_template_received_at" ON "telemetry"."client_error_events" ("route_template", "received_at");
+
+CREATE INDEX IF NOT EXISTS "ix_client_error_events_request_id" ON "telemetry"."client_error_events" ("request_id");
+
+CREATE INDEX IF NOT EXISTS "ix_client_error_events_portal_type_concept_id" ON "telemetry"."client_error_events" ("portal_type_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_client_error_events_error_class_concept_id" ON "telemetry"."client_error_events" ("error_class_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_client_error_events_user_id" ON "telemetry"."client_error_events" ("user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_client_error_events_session_id" ON "telemetry"."client_error_events" ("session_id");

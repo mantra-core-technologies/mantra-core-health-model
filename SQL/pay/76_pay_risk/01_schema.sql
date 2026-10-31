@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · perfil pay · módulo 76 · base pay_risk
+-- SALUD v4.2.81 · perfil pay · módulo 76 · base pay_risk
 -- Generado de diagram_76_pay_risk.puml — NO editar a mano.
 
 -- Sin CREATE SCHEMA a propósito: el módulo es una BASE (una por servicio) y sus objetos van sin calificar,

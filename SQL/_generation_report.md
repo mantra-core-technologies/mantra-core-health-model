@@ -1,4 +1,4 @@
-# Reporte de generación SQL — SALUD v4.2.79
+# Reporte de generación SQL — SALUD v4.2.81
 
 Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vistas, stubs de cruce y stores no-SQL (Redis/Mongo/OpenSearch/vector/timeseries) se listan como *saltados*. Graph (61) y Lakehouse (63) SÍ se materializan como tablas PG (catálogo del plano de control). Las FK marcadas *inferidas* se resolvieron por convención cuando el vault no tenía destino.
 
@@ -15,7 +15,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 08 | clinical | 24 | 241 | 9 | 264 | 11 |
 | 09 | forms | 16 | 103 | 0 | 113 | 1 |
 | 10 | audit | 133 | 557 | 43 | 708 | 1 |
-| 11 | system_ops | 29 | 169 | 0 | 178 | 0 |
+| 11 | system_ops | 32 | 178 | 7 | 196 | 1 |
 | 12 | integrations | 10 | 49 | 0 | 56 | 0 |
 | 13 | geo | 6 | 31 | 0 | 35 | 0 |
 | 14 | practice | 16 | 124 | 37 | 138 | 1 |
@@ -32,12 +32,12 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 25 | pharmacy_inventory | 20 | 144 | 0 | 157 | 8 |
 | 26 | insurance | 33 | 224 | 20 | 244 | 1 |
 | 27 | identity_assurance | 11 | 70 | 1 | 77 | 0 |
-| 28 | telemetry | 14 | 73 | 0 | 83 | 0 |
-| 29 | delegated_access | 33 | 251 | 144 | 282 | 11 |
+| 28 | telemetry | 15 | 77 | 3 | 95 | 1 |
+| 29 | delegated_access | 27 | 207 | 120 | 236 | 6 |
 | 30 | read_models | 13 | 74 | 0 | 89 | 76 |
 | 31 | integration_contracts | 9 | 48 | 1 | 57 | 0 |
 | 32 | workflow | 8 | 49 | 0 | 55 | 9 |
-| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 84 |
+| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 86 |
 | 34 | portal_catalog _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
 | 35 | messaging | 22 | 142 | 0 | 150 | 0 |
 | 36 | qa_lab | 13 | 79 | 0 | 92 | 0 |
@@ -71,10 +71,11 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 64 | audio_assets | 4 | 1 | 0 | 10 | 0 |
 | 65 | surveys | 8 | 42 | 5 | 26 | 0 |
 | 66 | medical_groups | 2 | 14 | 0 | 10 | 0 |
-| 67 | data_catalog | 13 | 43 | 23 | 24 | 0 |
+| 67 | data_catalog | 25 | 89 | 45 | 69 | 3 |
 | 68 | qa_execution | 4 | 14 | 6 | 6 | 0 |
 | 69 | pharma_lab | 31 | 182 | 173 | 182 | 1 |
-| **Σ** | **70** | **1320** | | **664** | | **421** |
+| 70 | observability | 12 | 13 | 8 | 39 | 2 |
+| **Σ** | **71** | **1342** | | **680** | | **425** |
 
 ## Detalle de entidades saltadas y avisos
 
@@ -108,6 +109,9 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 
 ### 10 · audit
 - `iam_sessions` — stub de cruce (tabla real en su módulo dueño)
+
+### 11 · system_ops
+- `delegated_access_four_eyes_requests` — stub de cruce (tabla real en su módulo dueño)
 
 ### 13 · geo
 - ⚠ índice 'gist_location_pings_location' omitido: columna(s) inexistente(s) ['geography_point'] en location_pings (¿tipo no-SQL descartado? requiere PostGIS)
@@ -199,6 +203,10 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 
 ### 26 · insurance
 - `profiles_health_practitioner_profiles` — stub de cruce (tabla real en su módulo dueño)
+
+### 28 · telemetry
+- `iam_sessions` — stub de cruce (tabla real en su módulo dueño)
+
 ### 29 · delegated_access
 - `practice_practitioner_role_assignments` — stub de cruce (tabla real en su módulo dueño)
 - `practice_healthcare_services` — stub de cruce (tabla real en su módulo dueño)
@@ -325,6 +333,16 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - `catalog_annotation_revisions` — stub de cruce (tabla real en su módulo dueño)
 - `catalog_review_decisions` — stub de cruce (tabla real en su módulo dueño)
 - `catalog_evidence_items` — stub de cruce (tabla real en su módulo dueño)
+- `observability_error_events` — stub de cruce (tabla real en su módulo dueño)
+- `observability_http_request_minute_series` — stub de cruce (tabla real en su módulo dueño)
+- `observability_sql_statement_minute_series` — stub de cruce (tabla real en su módulo dueño)
+- `observability_worker_tick_minute_series` — stub de cruce (tabla real en su módulo dueño)
+- `observability_slow_request_samples` — stub de cruce (tabla real en su módulo dueño)
+- `observability_dependency_probe_runs` — stub de cruce (tabla real en su módulo dueño)
+- `observability_alert_evaluations` — stub de cruce (tabla real en su módulo dueño)
+- `observability_error_groups` — stub de cruce (tabla real en su módulo dueño)
+- `observability_instances` — stub de cruce (tabla real en su módulo dueño)
+- `telemetry_client_error_events` — stub de cruce (tabla real en su módulo dueño)
 - `billing_quotations` — stub de cruce (tabla real en su módulo dueño)
 - `billing_quotation_installments` — stub de cruce (tabla real en su módulo dueño)
 - `medical_groups_groups` — stub de cruce (tabla real en su módulo dueño)
@@ -575,5 +593,14 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - `health_data_deidentification_runs` — stub de cruce (tabla real en su módulo dueño)
 - `common_files` — stub de cruce (tabla real en su módulo dueño)
 
+### 67 · data_catalog
+- `system_ops_data_domains` — stub de cruce (tabla real en su módulo dueño)
+- `read_models_read_model_definitions` — stub de cruce (tabla real en su módulo dueño)
+- `reporting_report_definitions` — stub de cruce (tabla real en su módulo dueño)
+
 ### 69 · pharma_lab
 - `directory_tenants` — stub de cruce (tabla real en su módulo dueño)
+
+### 70 · observability
+- `platform_ops_service_components` — stub de cruce (tabla real en su módulo dueño)
+- `platform_ops_health_incidents` — stub de cruce (tabla real en su módulo dueño)

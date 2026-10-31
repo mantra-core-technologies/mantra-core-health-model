@@ -1,0 +1,495 @@
+@startuml SALUD_Module_70_observability
+title Module 70 — System Observability: Errors, Latency, SQL, Instances, Dependencies and Alerts
+(schema: observability)
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide circle
+
+' ------------------------------------------------------------------------------
+' Source: docs/trabajo/2026-10-31-portal-observabilidad-gobierno/02-observabilidad-sistema.md
+' §4 (modelo de datos) and PLAN.md §4 F1 (item 1). Franja F1, hito H1.S1 of that plan.
+'
+' WHY THIS MODULE EXISTS. The API measures HTTP traffic into a single jsonb row per
+' minute (time_series.service_sli_series), groups no errors, keeps no per-SQL
+' statistics and has no registry of running processes. This module gives the
+' "System" panel of the observability portal relational, indexed, idempotent tables
+' instead. Every table here is PLATFORM data: there is no tenant dimension.
+'
+' DECISION D-F1-1 — no column is named `tenant_id`.
+'   2026-08-05_tenant_rls.sql enables ROW LEVEL SECURITY (policy tenant_isolation:
+'   tenant_id = app.current_tenant_id OR app.system_context) on EVERY table that has a
+'   `tenant_id uuid` column, nullable or not. A platform row has no tenant, so with
+'   that column name every INSERT by the application role would fail WITH CHECK and
+'   every SELECT would return nothing outside a SYSTEM context. The only tenant these
+'   tables ever carry is the tenant of the ACTOR that caused an error, so it is named
+'   `actor_tenant_id` (plain uuid, no FK: telemetry must survive the deletion of the
+'   tenant and must never block it) and the RLS patch does not reach it. The two tables that DO carry an actor
+'   tenant (error_events here, telemetry.client_error_events) get an explicit policy set in
+'   SQL/patches/2026-10-31_v4280_*.sql §6b (same GUC pattern: app.current_tenant_id /
+'   app.system_context): SELECT own tenant or system context, INSERT unconditional (public
+'   ingestion does not know the tenant), DELETE system context only. NULL actor tenant =>
+'   visible to system context only. Policies are not expressible in the .puml generators.
+'
+' DECISION D-F1-2 — the time series are RELATIONAL here, not TIMESERIES_MEASUREMENT
+'   entities in module 58.
+'   (a) module 58 is emitted by gen_nosql.py as NoSQL/58_time_series_timescaledb/*.sql,
+'       whose first statement is CREATE EXTENSION timescaledb; it is not part of
+'       apply_all.sql, and a plain PostgreSQL (the local and CI environments) cannot
+'       apply it. The relational DDL below applies clean without the extension.
+'   (b) the API converts tables to hypertables at boot (physical.catalog.ts,
+'       TIMESERIES_TABLES, migrate_data => TRUE) when TimescaleDB is present. These
+'       tables are written to be convertible as they are: the partitioning column is
+'       part of every PRIMARY KEY, there is no UNIQUE index without it, and no table
+'       is the target of a foreign key. See the HYPERTABLE POLICY note for the
+'       per-table chunk and retention that the API must register (the retention of
+'       module 58 style: drop_chunks by age; DELETE stays allowed on every <<LOG>>
+'       table, only UPDATE is forbidden — module 33).
+'   (c) the PRIMARY KEY of a minute series IS its idempotency key (the plan's
+'       uq_*_minute_key): the retry of a flush does INSERT ... ON CONFLICT DO NOTHING.
+'       A second UNIQUE index on the same columns would double the write cost of the
+'       hottest table of the module for nothing, so it is not declared.
+'
+' DECISION D-F1-3 — the high-rate series carry instance_id WITHOUT a foreign key.
+'   A flush must never fail because the instance heartbeat row is late or was purged;
+'   losing a minute of metrics is worse than an orphan uuid. error_events, which is
+'   low-rate and joined constantly, DOES reference instances.
+'
+' DECISION D-F1-4 — alert severity reuses platform_ops incident severities
+'   (CONCEPTS.INCIDENT_SEV_* in the API; the column is a plain *_concept_id). No new
+'   severity vocabulary. Alerts open/update platform_ops.health_incidents.
+'
+' DECISION D-F1-5 — `client_error_events` of 02 §4.1 (D-03) is NOT created here. The
+'   browser/mobile error table is telemetry.client_error_events (module 28, per
+'   03-uso-errores-heatmap.md §4.3), with the longer 90-day retention. One table, one owner.
+' ------------------------------------------------------------------------------
+note as BIZ_diagram_70_observability
+  BUSINESS PURPOSE
+  Answers "is the system healthy, what is failing, how often, since when and where
+  does the time go" for platform operators: grouped errors with a fingerprint and a
+  request id to jump to the trace, HTTP latency histograms per route and status,
+  SQL statistics per normalized statement, a registry of API and worker processes
+  with heartbeats, dependency probes, slow-request samples, and threshold alerts that
+  open platform_ops incidents. No PHI: messages are redacted, SQL has no literals,
+  actors appear only as a keyed hash (OBSERVABILITY_ACTOR_HASH_SECRET, D-02).
+end note
+
+entity "platform_ops.service_components" as platform_ops_service_components <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity "platform_ops.health_incidents" as platform_ops_health_incidents <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity instances {
+  * id : uuid <<PK>>
+  --
+  * kind : varchar
+  * name : varchar
+    build_commit : varchar
+    build_version : varchar
+    host_hash : varchar(64)
+  * started_at : timestamptz
+  * last_seen_at : timestamptz
+  * status : varchar
+    last_snapshot_json : jsonb
+    expected : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  * row_version : integer
+}
+
+entity error_groups {
+  * id : uuid <<PK>>
+  --
+  * fingerprint : varchar(64) <<UK>>
+  * source : varchar
+    http_status : integer
+  * error_code : varchar
+    error_reason : varchar
+    exception_type : varchar
+    module_code : varchar
+    operation_key : varchar
+    http_method : varchar
+    route_template : varchar
+  * title : varchar
+    sample_message : text
+    sample_frames_json : jsonb
+  * first_seen_at : timestamptz
+  * last_seen_at : timestamptz
+  * occurrences_total : bigint
+  * occurrences_24h : bigint
+    affected_actors_24h : integer
+  * state_concept_id : uuid <<FK>>
+    assigned_to_user_id : uuid <<FK>>
+    resolved_at : timestamptz
+    resolved_by_user_id : uuid <<FK>>
+    resolution_note : text
+    regressed_at : timestamptz
+    last_request_id : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity error_events <<LOG>> {
+  * id : uuid <<PK>>
+  * occurred_at : timestamptz <<PK>>
+  --
+  * error_group_id : uuid <<FK>>
+    request_id : varchar
+    trace_id : varchar(32)
+  * instance_id : uuid <<FK>>
+  * source : varchar
+    http_status : integer
+  * error_code : varchar
+    error_reason : varchar
+    exception_type : varchar
+    module_code : varchar
+    operation_key : varchar
+    http_method : varchar
+    route_template : varchar
+    actor_tenant_id : uuid
+    actor_hash : varchar(64)
+    duration_ms : integer
+    sqlstate : varchar
+    constraint_name : varchar
+    table_name : varchar
+    column_name : varchar
+    violations_json : jsonb
+    message_redacted : text
+    frames_json : jsonb
+    client_kind : varchar
+  * created_at : timestamptz
+}
+
+entity http_request_minute_series <<LOG>> {
+  * time : timestamptz <<PK>>
+  * instance_id : uuid <<PK>>
+  * flush_seq : integer <<PK>>
+  * http_method : varchar <<PK>>
+  * route_template : varchar <<PK>>
+  * http_status : integer <<PK>>
+  --
+    operation_key : varchar
+    module_code : varchar
+  * requests : integer
+  * sum_ms : double
+  * max_ms : double
+  * le5 : integer
+  * le10 : integer
+  * le25 : integer
+  * le50 : integer
+  * le100 : integer
+  * le250 : integer
+  * le500 : integer
+  * le1000 : integer
+  * le2000 : integer
+  * le5000 : integer
+  * le10000 : integer
+  * created_at : timestamptz
+}
+
+entity sql_statements {
+  * query_hash : varchar(12) <<PK>>
+  --
+  * statement_class : varchar
+    normalized_sql : text
+    primary_table : varchar
+  * first_seen_at : timestamptz
+  * last_seen_at : timestamptz
+  * is_slow_ever : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  * row_version : integer
+}
+
+entity sql_statement_minute_series <<LOG>> {
+  * time : timestamptz <<PK>>
+  * instance_id : uuid <<PK>>
+  * flush_seq : integer <<PK>>
+  * query_hash : varchar(12) <<PK>>
+  * operation_key : varchar <<PK>>
+  --
+    module_code : varchar
+  * executions : integer
+  * sum_ms : double
+  * max_ms : double
+  * slow_count : integer
+  * failed_count : integer
+  * rows_sum : bigint
+  * le1 : integer
+  * le5 : integer
+  * le10 : integer
+  * le25 : integer
+  * le50 : integer
+  * le100 : integer
+  * le250 : integer
+  * le500 : integer
+  * le1000 : integer
+  * le5000 : integer
+  * inf : integer
+  * created_at : timestamptz
+}
+
+entity worker_tick_minute_series <<LOG>> {
+  * time : timestamptz <<PK>>
+  * instance_id : uuid <<PK>>
+  * operation : varchar <<PK>>
+  --
+  * worker_name : varchar
+  * runs : integer
+  * failures : integer
+  * timeouts : integer
+  * skipped : integer
+  * sum_ms : double
+  * max_ms : double
+  * consecutive_failures_max : integer
+  * created_at : timestamptz
+}
+
+entity slow_request_samples <<LOG>> {
+  * id : uuid <<PK>>
+  * time : timestamptz <<PK>>
+  --
+  * request_id : varchar
+    trace_id : varchar(32)
+  * instance_id : uuid
+  * http_method : varchar
+  * route_template : varchar
+    operation_key : varchar
+    module_code : varchar
+  * http_status : integer
+  * duration_ms : integer
+    sql_count : integer
+    sql_total_ms : double
+    sql_top_json : jsonb
+  * sampled_because : varchar
+  * created_at : timestamptz
+}
+
+entity dependency_probe_runs <<LOG>> {
+  * time : timestamptz <<PK>>
+  * instance_id : uuid <<PK>>
+  * dependency_code : varchar <<PK>>
+  --
+    service_component_id : uuid <<FK>>
+  * status : varchar
+    latency_ms : integer
+    error_type : varchar
+  * created_at : timestamptz
+}
+
+entity rollup_watermarks {
+  * rollup_name : varchar <<PK>>
+  --
+  * materialized_until : timestamptz
+    last_run_at : timestamptz
+    last_duration_ms : integer
+    last_error : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  * row_version : integer
+}
+
+entity alert_rules {
+  * id : uuid <<PK>>
+  --
+  * code : varchar <<UK>>
+  * metric : varchar
+  * comparator : varchar
+  * threshold : numeric
+  * for_seconds : integer
+  * severity_concept_id : uuid <<FK>>
+  * enabled : boolean
+    module_code : varchar
+    route_template : varchar
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity alert_evaluations <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * time : timestamptz
+  * alert_rule_id : uuid <<FK>>
+  * observed_value : double
+  * fired : boolean
+    health_incident_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+' Labeled edges: child }o--|| parent : fk_column. gen_ddl resolves the FK destination from them.
+error_events }o--|| error_groups : error_group_id
+error_events }o--|| instances : instance_id
+dependency_probe_runs }o--o| platform_ops_service_components : service_component_id
+alert_evaluations }o--|| alert_rules : alert_rule_id
+alert_evaluations }o--o| platform_ops_health_incidents : health_incident_id
+
+note as HYPERTABLE_POLICY_diagram_70_observability
+  HYPERTABLE POLICY (declared for physical.catalog.ts / TS_RETENTION_POLICIES; the DDL
+  of this module is plain relational and does not require TimescaleDB)
+  table                         time column   chunk   retention (drop_chunks)
+  error_events                  occurred_at   1 day   90 days
+  http_request_minute_series    time          1 day   14 days   (hourly aggregate 400 d, daily 5 y)
+  sql_statement_minute_series   time          1 day   14 days
+  worker_tick_minute_series     time          1 day   30 days
+  slow_request_samples          time          1 day   30 days
+  dependency_probe_runs         time          1 day   30 days
+  alert_evaluations             (ordinary table, not a hypertable)  retention 400 days by job
+  Convertibility contract: every PRIMARY KEY above contains the time column; no UNIQUE
+  index without it; no foreign key points AT these tables (error_events and
+  dependency_probe_runs point out to ordinary tables, which Timescale allows).
+  Planned continuous aggregates (API, F2): observability_http_hourly/_daily,
+  observability_sql_hourly, observability_errors_hourly. Until the worker that refreshes
+  them is deployed (D-04), observability.rollup_watermarks drives manual idempotent rollups.
+end note
+
+note as CAPTURE_RULES_diagram_70_observability
+  CAPTURE RULES (contract with the API)
+  - error_groups.fingerprint = sha256(source|code|reason|exception_type|method|route_template|
+    top-3 own frames). occurrences_total only grows by rows REALLY inserted in error_events.
+  - route_template is always a template, never a URL; sample_message / message_redacted are
+    redacted (500 chars); frames hold relative paths and no code columns; violations_json
+    holds {field, constraint} only.
+  - error_events.actor_hash = HMAC(user_id, secret); the user id is never stored (D-02).
+  - http_status 0 = aborted request. flush_seq is the ordinal of the flush inside the minute
+    for that instance, so a retried flush hits ON CONFLICT DO NOTHING.
+  - operation_key is part of the SQL minute key, so it is NOT NULL: the API writes UNKNOWN when
+    the statement ran outside a controller operation. At most 5000 query_hash per minute per
+    instance; the excess is aggregated under query_hash '__overflow__'.
+  - Histograms are CUMULATIVE ("le" columns); the http `requests` column is the +Inf bucket.
+  - sampled_because: slow | error | random. Dependency status: up | degraded | down | not_probed.
+  - instances.status: starting | running | draining | stopped. instances.kind: API | WORKER.
+  - error_groups.state_concept_id: observability:ERROR_GROUP_STATE_{NEW,SEEN,RESOLVED,IGNORED}.
+  - error_groups.source and error_events.source: api | worker | web.
+end note
+
+package "Physical Indexes" {
+entity "INDEXES · instances" as idxset_instances <<INDEX_SET>> {
+  PK pk_instances : (id) UNIQUE BTREE
+  IX ix_instances_kind_last_seen : (kind, last_seen_at DESC) BTREE
+  IX ix_instances_name : (name) BTREE
+}
+
+instances .. idxset_instances : indexed by
+
+entity "INDEXES · error_groups" as idxset_error_groups <<INDEX_SET>> {
+  PK pk_error_groups : (id) UNIQUE BTREE
+  UK uq_error_groups_fingerprint : (fingerprint) UNIQUE BTREE
+  IX ix_error_groups_state_last_seen : (state_concept_id, last_seen_at DESC) BTREE
+  IX ix_error_groups_module_last_seen : (module_code, last_seen_at DESC) BTREE
+  IX ix_error_groups_code : (error_code, error_reason) BTREE
+  IX ix_error_groups_assigned_to_user_id : (assigned_to_user_id) BTREE
+  IX ix_error_groups_resolved_by_user_id : (resolved_by_user_id) BTREE
+  IX ix_error_groups_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_error_groups_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+error_groups .. idxset_error_groups : indexed by
+
+entity "INDEXES · error_events" as idxset_error_events <<INDEX_SET>> {
+  PK pk_error_events : (id, occurred_at) UNIQUE BTREE
+  IX ix_error_events_group_time : (error_group_id, occurred_at DESC) BTREE
+  IX ix_error_events_module_time : (module_code, occurred_at DESC) BTREE
+  IX ix_error_events_request_id : (request_id, occurred_at DESC) BTREE
+  IX ix_error_events_instance_time : (instance_id, occurred_at DESC) BTREE
+  BRIN brin_error_events_time : (occurred_at) BRIN pages_per_range=128
+}
+
+error_events .. idxset_error_events : indexed by
+
+entity "INDEXES · http_request_minute_series" as idxset_http_request_minute_series <<INDEX_SET>> {
+  PK pk_http_request_minute_series : (time, instance_id, flush_seq, http_method, route_template, http_status) UNIQUE BTREE
+  IX ix_http_minute_module_time : (module_code, time DESC) BTREE
+  IX ix_http_minute_route_time : (route_template, http_method, time DESC) BTREE
+  BRIN brin_http_minute_time : (time) BRIN pages_per_range=128
+}
+
+http_request_minute_series .. idxset_http_request_minute_series : indexed by
+
+entity "INDEXES · sql_statements" as idxset_sql_statements <<INDEX_SET>> {
+  PK pk_sql_statements : (query_hash) UNIQUE BTREE
+  IX ix_sql_statements_primary_table : (primary_table) BTREE
+  IX ix_sql_statements_last_seen : (last_seen_at DESC) BTREE
+}
+
+sql_statements .. idxset_sql_statements : indexed by
+
+entity "INDEXES · sql_statement_minute_series" as idxset_sql_statement_minute_series <<INDEX_SET>> {
+  PK pk_sql_statement_minute_series : (time, instance_id, flush_seq, query_hash, operation_key) UNIQUE BTREE
+  IX ix_sql_minute_hash_time : (query_hash, time DESC) BTREE
+  IX ix_sql_minute_module_time : (module_code, time DESC) BTREE
+  BRIN brin_sql_minute_time : (time) BRIN pages_per_range=128
+}
+
+sql_statement_minute_series .. idxset_sql_statement_minute_series : indexed by
+
+entity "INDEXES · worker_tick_minute_series" as idxset_worker_tick_minute_series <<INDEX_SET>> {
+  PK pk_worker_tick_minute_series : (time, instance_id, operation) UNIQUE BTREE
+  IX ix_worker_tick_worker_time : (worker_name, time DESC) BTREE
+  BRIN brin_worker_tick_time : (time) BRIN pages_per_range=128
+}
+
+worker_tick_minute_series .. idxset_worker_tick_minute_series : indexed by
+
+entity "INDEXES · slow_request_samples" as idxset_slow_request_samples <<INDEX_SET>> {
+  PK pk_slow_request_samples : (id, time) UNIQUE BTREE
+  IX ix_slow_request_request_id : (request_id) BTREE
+  IX ix_slow_request_module_time : (module_code, time DESC) BTREE
+  BRIN brin_slow_request_time : (time) BRIN pages_per_range=128
+}
+
+slow_request_samples .. idxset_slow_request_samples : indexed by
+
+entity "INDEXES · dependency_probe_runs" as idxset_dependency_probe_runs <<INDEX_SET>> {
+  PK pk_dependency_probe_runs : (time, instance_id, dependency_code) UNIQUE BTREE
+  IX ix_dependency_probe_code_time : (dependency_code, time DESC) BTREE
+  IX ix_dependency_probe_service_component_id : (service_component_id) BTREE
+  BRIN brin_dependency_probe_time : (time) BRIN pages_per_range=128
+}
+
+dependency_probe_runs .. idxset_dependency_probe_runs : indexed by
+
+entity "INDEXES · rollup_watermarks" as idxset_rollup_watermarks <<INDEX_SET>> {
+  PK pk_rollup_watermarks : (rollup_name) UNIQUE BTREE
+}
+
+rollup_watermarks .. idxset_rollup_watermarks : indexed by
+
+entity "INDEXES · alert_rules" as idxset_alert_rules <<INDEX_SET>> {
+  PK pk_alert_rules : (id) UNIQUE BTREE
+  UK uq_alert_rules_code : (code) UNIQUE BTREE
+  IX ix_alert_rules_severity_concept_id : (severity_concept_id) BTREE
+  IX ix_alert_rules_enabled_module : (enabled, module_code) BTREE
+  IX ix_alert_rules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_alert_rules_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+alert_rules .. idxset_alert_rules : indexed by
+
+entity "INDEXES · alert_evaluations" as idxset_alert_evaluations <<INDEX_SET>> {
+  PK pk_alert_evaluations : (id) UNIQUE BTREE
+  IX ix_alert_evaluations_rule_time : (alert_rule_id, time DESC) BTREE
+  IX ix_alert_evaluations_health_incident_id : (health_incident_id) BTREE
+  BRIN brin_alert_evaluations_time : (time) BRIN pages_per_range=128
+}
+
+alert_evaluations .. idxset_alert_evaluations : indexed by
+}
+
+note as PHYSICAL_INDEX_POLICY
+  PHYSICAL INDEX POLICY
+  - Primary keys of the series are their idempotency keys (see D-F1-2 c).
+  - Every foreign key has a supporting BTREE index (leading column of a composite counts).
+  - BRIN on the time column of every append-only table for retention scans and wide ranges.
+  - Final inclusion is verified with EXPLAIN (ANALYZE, BUFFERS) on production-like volume;
+    unused or redundant indexes are rejected.
+end note
+
+@enduml

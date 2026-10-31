@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · módulo 11 · schema system_ops
+-- SALUD v4.2.81 · módulo 11 · schema system_ops
 -- Generado de diagram_11_system_ops.puml — NO editar a mano.
 
 
@@ -992,3 +992,66 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_breach_notifications_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "system_ops"."governance_policy_revisions"
+        ADD CONSTRAINT "fk_governance_policy_revisions_submitted_by_user_id" FOREIGN KEY ("submitted_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "system_ops"."governance_policy_revisions"
+        ADD CONSTRAINT "fk_governance_policy_revisions_decided_by_user_id" FOREIGN KEY ("decided_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "system_ops"."bulk_import_batches"
+        ADD CONSTRAINT "fk_bulk_import_batches_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "system_ops"."bulk_import_batches"
+        ADD CONSTRAINT "fk_bulk_import_batches_confirmed_by_user_id" FOREIGN KEY ("confirmed_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- compuesta: system_ops.bulk_import_batches sólo apunta a delegated_access.four_eyes_requests del mismo tenant_id
+DO $$ BEGIN
+    ALTER TABLE "system_ops"."bulk_import_batches"
+        ADD CONSTRAINT "fk_bulk_import_batches_approval_request_id" FOREIGN KEY ("tenant_id", "approval_request_id")
+        REFERENCES "delegated_access"."four_eyes_requests" ("tenant_id", "id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "system_ops"."bulk_import_batches"
+        ADD CONSTRAINT "fk_bulk_import_batches_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "system_ops"."bulk_import_batches"
+        ADD CONSTRAINT "fk_bulk_import_batches_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- compuesta: system_ops.bulk_import_batch_rows sólo apunta a system_ops.bulk_import_batches del mismo tenant_id
+DO $$ BEGIN
+    ALTER TABLE "system_ops"."bulk_import_batch_rows"
+        ADD CONSTRAINT "fk_bulk_import_batch_rows_batch_id" FOREIGN KEY ("tenant_id", "batch_id")
+        REFERENCES "system_ops"."bulk_import_batches" ("tenant_id", "id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "system_ops"."bulk_import_batch_rows"
+        ADD CONSTRAINT "fk_bulk_import_batch_rows_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)

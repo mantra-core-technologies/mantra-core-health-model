@@ -1,6 +1,6 @@
 model:
   name: SALUD
-  version: 4.2.79
+  version: 4.2.81
   status: canonical-polyglot-nosql-health-platform
   generated_at: '2026-10-31'
   design_patches:
@@ -182,6 +182,49 @@ model:
       SQL/patches/2026-10-31_v4275_personal_apoyo.sql, _v4278_gobierno_de_accesos.sql
       y _v4279_revision_seguridad_gobierno.sql. Al portar se retiró
       care_spaces.fhir_physical_type (duplicaba form_concept_id de v4.2.67).
+  - id: patch-v4.2.80-observabilidad-sistema
+    role: product-features
+    doc: docs/trabajo/2026-10-31-portal-observabilidad-gobierno/02-observabilidad-sistema.md (§4) y 03-uso-errores-heatmap.md (§4.3)
+    status: materialized-physically
+    summary: >-
+      Franja F1 del portal de observabilidad y gobierno. Módulo nuevo 70
+      (schema observability, 12 tablas: error_groups, error_events,
+      http_request_minute_series, sql_statements, sql_statement_minute_series,
+      instances, worker_tick_minute_series, slow_request_samples,
+      dependency_probe_runs, rollup_watermarks, alert_rules, alert_evaluations),
+      relacional y aplicable sin TimescaleDB (las series llevan la columna de
+      tiempo en la clave primaria para que la API las convierta en hypertables;
+      chunk y retención declarados en el .puml). Ninguna columna se llama
+      tenant_id: el RLS de 2026-08-05_tenant_rls.sql no las alcanza (el tenant
+      del actor es actor_tenant_id). Módulo 28: +telemetry.client_error_events
+      (append-only, huella, clase, request_id, ruta de API, versión, portal;
+      retención 90 días) y los índices occurred_at y (route_template,
+      occurred_at) de user_activity_events. Módulo 33: UPDATE prohibido en las
+      8 tablas de historia y 6 CHECK de vocabularios cerrados. Conceptos
+      observability:ERROR_GROUP_STATE_* y telemetry:ERROR_CLASS_* sembrados por
+      SQL/patches/2026-10-31_v4280_observabilidad_sistema.sql.
+  - id: patch-v4.2.81-gobierno-de-datos-y-cargas
+    role: product-features
+    doc: docs/trabajo/2026-10-31-portal-observabilidad-gobierno/04-catalogo-y-gobierno.md (§3), 06-cargas-masivas-aprobacion-gobierno-usuarios.md (H2, H3) y evidencia-f0/REVISION-codigo-api.md (hallazgo 2)
+    status: materialized-physically
+    summary: >-
+      Franja F1b del portal de observabilidad y gobierno. (1) Módulo 28: índice único parcial
+      ux_user_activity_events_anonymous_idempotency (tenant con COALESCE, clave) WHERE user_id IS NULL e índice de
+      búsqueda (user_id, clave) para los identificados; el parche deduplica de forma determinista los repetidos
+      previos (SQL/patches/2026-10-31_v4281_idempotencia_anonima.sql). (2) Gobierno de datos: módulo 67 +12 tablas
+      (catalog_stewardships, glosario con revisiones y enlaces,
+      quality_rules/_rule_runs/_issues/_issue_events/_score_snapshots, catalog_lineage_edges, catalog_certifications,
+      catalog_change_acknowledgements) y catalog_objects.domain_id; módulo 11 +governance_policy_revisions
+      (inmutabilidad parcial por disparador de columnas, D-F1b-7) e índice ix_governance_change_log_target_recorded;
+      módulo 33: UPDATE prohibido en 4 tablas y 9 CHECK de gobierno. Sin RLS a propósito (ninguna lleva tenant).
+      SQL/patches/2026-10-31_v4281_gobierno_de_datos.sql. (3) Cargas masivas: system_ops.bulk_import_batches y
+      bulk_import_batch_rows (lote persistente de bulk_import; clave de confirmación única por organización, hash del
+      archivo, sin PII en las columnas de resultado, tenant_isolation).
+      SQL/patches/2026-10-31_v4281_cargas_masivas.sql. (4) Motor de aprobación único:
+      delegated_access.four_eyes_requests +subject_entity/subject_id (el kind es un concepto, no un CHECK) y los
+      conceptos
+      FOUR_EYES_KIND_{BULK_IMPORT_CONFIRM,CATALOG_CLASSIFICATION,GOVERNANCE_POLICY_CHANGE,ACCESS_SENSITIVE_CHANGE} y
+      REVIEWER_KIND_PLATFORM_ADMIN. SQL/patches/2026-10-31_v4281_motor_aprobacion.sql.
   materialization_note: >-
     v4.0.1 materializado en el ER (fuente: el vault/grafo). Se añadieron 14
     entidades nuevas (marketing.campaign_schedules/dispatches/dispatch_recipients,
@@ -192,14 +235,14 @@ model:
     + 10 extensiones de columnas + 11 index sets, en modules 06/30/35/48/49/50.
     Nombres normalizados: audit_events->audit_log, outbox_events->outbox_messages.
   inventory:
-    modules_puml: 70
-    schemas: 58
-    entity_declarations_total: 3105
-    table_like_elements: 1410
+    modules_puml: 71
+    schemas: 59
+    entity_declarations_total: 3188
+    table_like_elements: 1450
     view_elements: 81
-    index_sets: 1384
-    reference_only_stubs: 230
-    fk_references: 7564
+    index_sets: 1412
+    reference_only_stubs: 245
+    fk_references: 7636
     note: >-
       Cifras producidas por tools/model_inventory.py (fuente única reproducible:
       clasifica cada `entity` en una sola clase, suma == total). v4.0 base
@@ -230,6 +273,12 @@ model:
       3105 entity / 1410 table_like / 81 vistas / 1384 idx /
       7564 FK / 230 ref / 58 schemas; los conteos por módulo de
       `modules` salen de la misma corrida.
+      Recontado el 2026-10-31 con la franja F1 del portal de observabilidad
+      (v4.2.80: módulo 70 con 12 tablas + client_error_events en el 28 + los
+      stubs y entradas de la matriz del 33): 3144 entity / 1431 table_like /
+      81 vistas / 1397 idx / 7581 FK / 235 ref / 59 schemas (tools/model_inventory.py).
+      Recontado el 2026-10-31 con la franja F1b (v4.2.81, entregables 1 a 4): 3188 entity / 1450 table_like /
+      81 vistas / 1412 idx / 7636 FK / 245 ref / 59 schemas (tools/model_inventory.py).
   database: PostgreSQL canonical + governed specialized stores
   rules:
     one_puml_per_module: true
@@ -354,9 +403,9 @@ modules:
   code: system_ops
   title: Data Governance and System Operations
   file: modules/diagram_11_system_ops.puml
-  table_like_elements: 29
+  table_like_elements: 32
   view_elements: 0
-  index_sets: 29
+  index_sets: 32
   status: active
 - number: 12
   code: integrations
@@ -490,9 +539,9 @@ modules:
   code: telemetry
   title: User Activity, Consent-Aware Tracking and Analytics
   file: modules/diagram_28_telemetry.puml
-  table_like_elements: 14
+  table_like_elements: 15
   view_elements: 0
-  index_sets: 14
+  index_sets: 15
   status: active
 - number: 29
   code: delegated_access
@@ -530,7 +579,7 @@ modules:
   code: integrity
   title: Concurrency, Constraints and Integrity Matrix
   file: modules/diagram_33_integrity.puml
-  table_like_elements: 15
+  table_like_elements: 27
   view_elements: 0
   index_sets: 0
   status: active
@@ -806,9 +855,9 @@ modules:
   code: data_catalog
   title: Data Catalog and Column Governance
   file: modules/diagram_67_data_catalog.puml
-  table_like_elements: 13
+  table_like_elements: 25
   view_elements: 0
-  index_sets: 13
+  index_sets: 25
   status: active
 
 - number: 68
@@ -829,6 +878,17 @@ modules:
   index_sets: 31
   status: active
 
+- number: 70
+  code: observability
+  title: System Observability (errors, latency, SQL, instances, dependencies, alerts)
+  file: modules/diagram_70_observability.puml
+  table_like_elements: 12
+  view_elements: 0
+  index_sets: 12
+  status: active
+
+# Nota v4.2.80: el módulo SALUD 70 (observability) y la base PAY 70 (pay_connectors) comparten número pero no salida: SALUD escribe en
+# SQL/70_observability/ y PAY en SQL/pay/70_pay_connectors/; los generadores de SALUD nunca leen pay-modules/.
 # Perfil PAY (D-18 de PasarelaPago). Cada módulo de esta lista es una BASE de PostgreSQL (una por microservicio), no un schema de la
 # base de SALUD: por eso NO está en `modules:` (que alimenta a gen_ddl.py, gen_integrity.py, gen_seeds.py, gen_entities.py y a
 # tools/model_inventory.py) y su salida cuelga de SQL/pay/. Se genera con `python salud-db/gen_ddl_pay.py`. Numeración 70-89 reservada.
