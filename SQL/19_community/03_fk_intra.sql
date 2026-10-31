@@ -1,4 +1,4 @@
--- SALUD v4.0.10 · módulo 19 · schema community
+-- SALUD v4.2.79 · módulo 19 · schema community
 -- Generado de diagram_19_community.puml — NO editar a mano.
 
 
@@ -342,4 +342,16 @@ DO $$ BEGIN
     ALTER TABLE "community"."comment_media"
         ADD CONSTRAINT "fk_comment_media_comment_id" FOREIGN KEY ("comment_id")
         REFERENCES "community"."comments" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "community"."conversation_assignments"
+        ADD CONSTRAINT "fk_conversation_assignments_conversation_id" FOREIGN KEY ("conversation_id")
+        REFERENCES "community"."conversations" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "community"."conversation_internal_notes"
+        ADD CONSTRAINT "fk_conversation_internal_notes_conversation_id" FOREIGN KEY ("conversation_id")
+        REFERENCES "community"."conversations" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;

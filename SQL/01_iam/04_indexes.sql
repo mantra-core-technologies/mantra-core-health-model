@@ -1,4 +1,4 @@
--- SALUD v4.0.10 · módulo 01 · schema iam
+-- SALUD v4.2.79 · módulo 01 · schema iam
 -- Generado de diagram_01_iam.puml — NO editar a mano.
 
 
@@ -131,3 +131,17 @@ CREATE INDEX IF NOT EXISTS "ix_account_lockouts_user_id" ON "iam"."account_locko
 CREATE INDEX IF NOT EXISTS "ix_account_lockouts_status_concept_id" ON "iam"."account_lockouts" ("status_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_account_lockouts_locked_until" ON "iam"."account_lockouts" ("locked_until");
+
+CREATE INDEX IF NOT EXISTS "ix_session_policies_tenant_id" ON "iam"."session_policies" ("tenant_id", "status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_session_policies_scope_concept_id" ON "iam"."session_policies" ("scope_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_session_policies_status_concept_id" ON "iam"."session_policies" ("status_concept_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_session_policies_active_tenant_scope" ON "iam"."session_policies" ("tenant_id", "scope_concept_id") WHERE role_code IS NULL AND status_concept_id = '38a1d301-f40d-5b17-a695-5e6d605f8b19';
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_session_policies_active_tenant_scope_role" ON "iam"."session_policies" ("tenant_id", "scope_concept_id", "role_code") WHERE role_code IS NOT NULL AND status_concept_id = '38a1d301-f40d-5b17-a695-5e6d605f8b19';
+
+CREATE INDEX IF NOT EXISTS "ix_session_policies_created_by_user_id" ON "iam"."session_policies" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_session_policies_updated_by_user_id" ON "iam"."session_policies" ("updated_by_user_id");

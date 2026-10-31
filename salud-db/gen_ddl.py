@@ -118,8 +118,8 @@ def scoped_by(markers: set[str]) -> str | None:
 
 
 # Default estructural de versión. Los defaults de negocio sólo se emiten cuando el
-# .puml los declara explícitamente: DEFAULT_TRUE/DEFAULT_FALSE (boolean) o
-# DEFAULT_TEXT:<valor> (texto).
+# .puml los declara explícitamente: DEFAULT_TRUE/DEFAULT_FALSE (boolean), DEFAULT_TEXT:<valor> (texto) o,
+# desde v4.2.78, DEFAULT_INT / DEFAULT_UUID / DEFAULT_JSON_INTS (ver `literal_default`).
 #
 # No se infieren defaults de negocio: sólo se conservan los que el modelo declara.
 # `row_version` sigue siendo el default estructural porque es el contador de bloqueo optimista,
@@ -178,13 +178,59 @@ def text_default(dtype: str, raw: str | None) -> str | None:
     return f"'{match.group(1)}'"
 
 
+# v4.2.78 (gobierno de accesos): tres defaults literales más, igual de acotados que DEFAULT_TEXT —el valor
+# se valida con una expresión regular cerrada, así que no se cuela SQL arbitrario desde el diagrama—:
+#   DEFAULT_INT:<dígitos>          integer/bigint/smallint        →  DEFAULT 7
+#   DEFAULT_UUID:<uuid>            uuid                           →  DEFAULT '6905e0db-…'   (p. ej. el concepto ALLOW)
+#   DEFAULT_JSON_INTS:<n_n_n>      jsonb                          →  DEFAULT '[7,3,1]'      (arreglo de enteros)
+# (los guiones bajos separan los enteros porque la coma ya separa los estereotipos).
+_INT_DEFAULT_RE = re.compile(r"^DEFAULT_INT:(\d{1,9})$")
+_UUID_DEFAULT_RE = re.compile(r"^DEFAULT_UUID:([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$")
+_JSON_INTS_DEFAULT_RE = re.compile(r"^DEFAULT_JSON_INTS:(\d{1,6}(?:_\d{1,6})*)$")
+_INT_TYPES = ("integer", "bigint", "smallint")
+
+
+def _declared_markers(raw: str | None, prefix: str) -> list[str]:
+    if not raw:
+        return []
+    return [s.strip() for s in raw.strip("<>").split(",") if s.strip().upper().startswith(prefix)]
+
+
+def literal_default(dtype: str, raw: str | None) -> str | None:
+    """Default declarado con DEFAULT_INT / DEFAULT_UUID / DEFAULT_JSON_INTS, sin inferir valores."""
+    out = None
+    for prefix, rx, types, render in (
+        ("DEFAULT_INT", _INT_DEFAULT_RE, _INT_TYPES, lambda v: v),
+        ("DEFAULT_UUID", _UUID_DEFAULT_RE, ("uuid",), lambda v: f"'{v}'"),
+        ("DEFAULT_JSON_INTS", _JSON_INTS_DEFAULT_RE, ("jsonb",),
+         lambda v: "'[" + ",".join(v.split("_")) + "]'"),
+    ):
+        declared = _declared_markers(raw, prefix)
+        # DEFAULT_INT no debe confundirse con DEFAULT_INT… de otro marcador: el prefijo es exacto hasta ':'
+        declared = [d for d in declared if d.upper().split(":", 1)[0] == prefix]
+        if not declared:
+            continue
+        if len(declared) != 1:
+            raise ValueError(f"{prefix} admite un solo valor")
+        match = rx.match(declared[0])
+        if not match:
+            raise ValueError(f"{prefix} inválido: {declared[0]!r}")
+        if dtype not in types:
+            raise ValueError(f"{prefix} requiere una columna {'/'.join(types)}")
+        if out is not None:
+            raise ValueError("una columna no puede declarar dos defaults literales")
+        out = render(match.group(1))
+    return out
+
+
 def declared_default(dtype: str, raw: str | None) -> str | None:
-    """Único default de negocio que declara la columna (booleano o de texto)."""
+    """Único default de negocio que declara la columna (booleano, de texto o literal numérico/uuid/json)."""
     boolean = boolean_default(dtype, stereotypes(raw))
     text = text_default(dtype, raw)
-    if boolean is not None and text is not None:
-        raise ValueError("una columna no puede declarar DEFAULT_TRUE/FALSE y DEFAULT_TEXT a la vez")
-    return boolean if boolean is not None else text
+    literal = literal_default(dtype, raw)
+    if sum(v is not None for v in (boolean, text, literal)) > 1:
+        raise ValueError("una columna no puede declarar dos defaults de negocio a la vez")
+    return boolean if boolean is not None else text if text is not None else literal
 
 
 # --- identificadores > 63 bytes --------------------------------------------------

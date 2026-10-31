@@ -39,7 +39,7 @@ Qué hace (cada fase es independiente e idempotente):
                     entity_seed_policies, seed-manifest.json y checksums.json.
 
 Uso:  python salud-db/gen_seeds.py [--dry] [--only <fase>]
-      fases: valuesets | backend | tables | notnull | bindings | unique | meta   (por defecto: todas)
+      fases: valuesets | backend | tables | apoyo | notnull | bindings | unique | meta   (por defecto: todas)
 """
 from __future__ import annotations
 
@@ -713,6 +713,244 @@ TENANT_TYPE_BACKEND_CONCEPTS = [
     ("directory:tenant-type:health-other", "HEALTH_OTHER", "Other health institution"),
 ]
 BACKEND_CONCEPTS += TENANT_TYPE_BACKEND_CONCEPTS
+
+# --- v4.2.75 · personal de apoyo (secretaria y otros roles) -------------------------
+# Conceptos NUEVOS de módulo que introducen los módulos 01/04/14/19/29 (columnas
+# `*_concept_id` de support_scope_grants, engagement_*, role_templates, session_policies,
+# affiliation_invitations, conversation_assignments, reply_templates, organization_user_assignments,
+# practitioner_delegate_assignments y care_spaces.space_type). Misma regla que los demás de
+# módulo: el `code` almacenado es la CLAVE de derivación y los servicios comparan por id; la API
+# debe declararlos con ESTAS claves en `<modulo>.concepts.ts` (defineModuleConcepts) para que los
+# ids coincidan. El display es el literal en inglés.
+SUPPORT_STAFF_BACKEND_CONCEPTS = [
+    (key, key, display) for key, display in [
+            ("delegated_access:SUPPORT_TARGET_PRACTITIONER", "Support grant target: practitioner"),
+            ("delegated_access:SUPPORT_TARGET_SERVICE", "Support grant target: service"),
+            ("delegated_access:SUPPORT_TARGET_LOCATION", "Support grant target: location"),
+            ("delegated_access:SUPPORT_TARGET_PRACTITIONER_SERVICE", "Support grant target: practitioner service"),
+            ("delegated_access:SUPPORT_TARGET_PRACTITIONER_LOCATION", "Support grant target: practitioner location"),
+            ("delegated_access:SUPPORT_TARGET_SERVICE_LOCATION", "Support grant target: service location"),
+            ("delegated_access:SUPPORT_TARGET_ALL_PRACTITIONERS", "Support grant target: all practitioners"),
+            ("delegated_access:SUPPORT_TARGET_ALL_SERVICES", "Support grant target: all services"),
+            ("delegated_access:SUPPORT_TARGET_ALL_LOCATIONS", "Support grant target: all locations"),
+            ("delegated_access:SUPPORT_TARGET_ALL", "Support grant target: all"),
+            ("delegated_access:SUPPORT_EXPANSION_DYNAMIC", "Support grant expansion: dynamic (follows the organization)"),
+            ("delegated_access:SUPPORT_EXPANSION_FIXED", "Support grant expansion: fixed snapshot"),
+            ("delegated_access:SUPPORT_GRANT_ACTIVE", "Support grant active"),
+            ("delegated_access:SUPPORT_GRANT_SUSPENDED", "Support grant suspended"),
+            ("delegated_access:SUPPORT_GRANT_REVOKED", "Support grant revoked"),
+            ("delegated_access:SUPPORT_GRANT_EXPIRED", "Support grant expired"),
+            ("delegated_access:ENGAGEMENT_DIRECTION_REQUEST", "Engagement direction: person asks the organization"),
+            ("delegated_access:ENGAGEMENT_DIRECTION_INVITATION", "Engagement direction: organization invites the person"),
+            ("delegated_access:ENGAGEMENT_STATUS_PENDING", "Engagement request pending"),
+            ("delegated_access:ENGAGEMENT_STATUS_APPROVED", "Engagement request approved"),
+            ("delegated_access:ENGAGEMENT_STATUS_REJECTED", "Engagement request rejected"),
+            ("delegated_access:ENGAGEMENT_STATUS_EXPIRED", "Engagement request expired"),
+            ("delegated_access:ENGAGEMENT_STATUS_CANCELLED", "Engagement request cancelled"),
+            ("delegated_access:ENGAGEMENT_DECISION_PENDING", "Engagement item decision pending"),
+            ("delegated_access:ENGAGEMENT_DECISION_APPROVED", "Engagement item approved"),
+            ("delegated_access:ENGAGEMENT_DECISION_ADJUSTED", "Engagement item approved with adjustments"),
+            ("delegated_access:ENGAGEMENT_DECISION_REJECTED", "Engagement item rejected"),
+            ("delegated_access:ENGAGEMENT_ORIGIN_REQUEST", "Engagement origin: request"),
+            ("delegated_access:ENGAGEMENT_ORIGIN_INVITATION", "Engagement origin: invitation"),
+            ("delegated_access:ENGAGEMENT_ORIGIN_QR", "Engagement origin: QR code"),
+            ("delegated_access:OWNER_KIND_ORGANIZATION", "Support owner: organization"),
+            ("delegated_access:OWNER_KIND_PRIVATE_PRACTICE", "Support owner: private practice"),
+            ("delegated_access:REPLY_DISCLOSURE_SHOW", "Show that the care team replied"),
+            ("delegated_access:REPLY_DISCLOSURE_HIDE", "Hide that the care team replied"),
+            ("delegated_access:ROLE_TEMPLATE_ACTIVE", "Role template active"),
+            ("delegated_access:ROLE_TEMPLATE_RETIRED", "Role template retired"),
+            ("delegated_access:ASSIGN_ROLE_FRONT_DESK", "Front desk assignment"),
+            ("delegated_access:ASSIGN_ROLE_CALL_CENTER", "Call center assignment"),
+            ("delegated_access:ASSIGN_ROLE_ORG_MANAGEMENT", "Organization management assignment"),
+            ("delegated_access:DELEGATE_TYPE_FRONT_DESK", "Front desk delegate type"),
+            ("delegated_access:DELEGATE_TYPE_CALL_CENTER", "Call center delegate type"),
+            ("delegated_access:DELEGATE_TYPE_ORG_MANAGEMENT", "Organization management delegate type"),
+            ("practice:SPACE_TYPE_BUILDING", "Building care space type"),
+            ("practice:SPACE_TYPE_LEVEL", "Level (floor) care space type"),
+            ("practice:SPACE_TYPE_WING", "Wing care space type"),
+            ("practice:SPACE_TYPE_CONSULTING_ROOM", "Consulting room care space type"),
+            ("practice:SPACE_TYPE_OPERATING_ROOM", "Operating room care space type"),
+            ("practice:SPACE_TYPE_PROCEDURE_ROOM", "Procedure room care space type"),
+            ("practice:SPACE_TYPE_BED", "Bed care space type"),
+            ("directory:AFFILIATION_INVITE_KIND_PRACTITIONER", "Affiliation invitation for a practitioner"),
+            ("directory:AFFILIATION_INVITE_KIND_SUPPORT_STAFF", "Affiliation invitation for support staff"),
+            ("directory:AFFILIATION_INVITE_ACTIVE", "Affiliation invitation active"),
+            ("directory:AFFILIATION_INVITE_REVOKED", "Affiliation invitation revoked"),
+            ("directory:AFFILIATION_INVITE_EXPIRED", "Affiliation invitation expired"),
+            ("directory:AFFILIATION_INVITE_EXHAUSTED", "Affiliation invitation exhausted"),
+            ("directory:AFFILIATION_USE_ACCEPTED", "Invitation use accepted"),
+            ("directory:AFFILIATION_USE_REJECTED_EXPIRED", "Invitation use rejected: expired"),
+            ("directory:AFFILIATION_USE_REJECTED_EXHAUSTED", "Invitation use rejected: exhausted"),
+            ("directory:AFFILIATION_USE_REJECTED_REVOKED", "Invitation use rejected: revoked"),
+            ("directory:AFFILIATION_USE_ALREADY_MEMBER", "Invitation use rejected: already a member"),
+            ("community:CONVERSATION_ASSIGNMENT_NEW", "Conversation assignment new"),
+            ("community:CONVERSATION_ASSIGNMENT_TAKEN", "Conversation assignment taken"),
+            ("community:CONVERSATION_ASSIGNMENT_WAITING_DOCTOR", "Conversation assignment waiting for the doctor"),
+            ("community:CONVERSATION_ASSIGNMENT_RESOLVED", "Conversation assignment resolved"),
+            ("community:REPLY_TEMPLATE_CATEGORY_GENERAL", "Reply template category: general"),
+            ("community:REPLY_TEMPLATE_CATEGORY_SCHEDULING", "Reply template category: scheduling"),
+            ("community:REPLY_TEMPLATE_CATEGORY_BILLING", "Reply template category: billing"),
+            ("community:REPLY_TEMPLATE_CATEGORY_PREPARATION", "Reply template category: visit preparation"),
+            ("iam:SESSION_POLICY_SCOPE_ALL_ACCOUNTS", "Session policy scope: all accounts"),
+            ("iam:SESSION_POLICY_SCOPE_ORG_STAFF", "Session policy scope: organization staff"),
+            ("iam:SESSION_POLICY_SCOPE_ROLE", "Session policy scope: one role"),
+        ]
+]
+BACKEND_CONCEPTS += SUPPORT_STAFF_BACKEND_CONCEPTS
+
+# --- v4.2.77 · origen de la membresía (revisión de seguridad N10) ---------------------
+# `directory.tenant_memberships.origin_concept_id` (NULL = desconocido: las filas anteriores
+# NO se marcan como solo-apoyo). Misma regla que los demás de módulo: el `code` almacenado es la
+# CLAVE de derivación; la API los declara en `directory.concepts.ts` con `defineModuleConcepts`
+# ('directory', { MEMBERSHIP_ORIGIN_* }) para que los ids coincidan.
+MEMBERSHIP_ORIGIN_BACKEND_CONCEPTS = [
+    (key, key, display) for key, display in [
+        ("directory:MEMBERSHIP_ORIGIN_OWNER_CREATED", "Membership origin: created by the organization owner"),
+        ("directory:MEMBERSHIP_ORIGIN_ADMIN_ADDED", "Membership origin: added by an organization administrator"),
+        ("directory:MEMBERSHIP_ORIGIN_INVITATION_REDEEMED", "Membership origin: invitation redeemed"),
+        ("directory:MEMBERSHIP_ORIGIN_SUPPORT_ENGAGEMENT", "Membership origin: exists only through a support engagement"),
+        ("directory:MEMBERSHIP_ORIGIN_UNKNOWN", "Membership origin: unknown"),
+    ]
+]
+BACKEND_CONCEPTS += MEMBERSHIP_ORIGIN_BACKEND_CONCEPTS
+
+# Conceptos EXISTENTES de la API que las filas boot nuevas referencian (permisos y plantillas de
+# rol). Se espejan igual que los demás: sin ellos la FK diferida rechazaría la fila al cargar en
+# una base donde la app todavía no arrancó. Displays literales de `authz.concepts.ts`.
+SUPPORT_STAFF_EXISTING_CONCEPTS = [
+    (key, key, display) for key, display in [
+        ("authz:ACTION_READ", "Read"),
+        ("authz:ACTION_WRITE", "Write"),
+        ("authz:ACTION_CREATE", "Create"),
+        ("authz:ACTION_EXECUTE", "Execute"),
+        ("authz:SCOPE_TENANT", "Tenant scope"),
+    ]
+]
+BACKEND_CONCEPTS += SUPPORT_STAFF_EXISTING_CONCEPTS
+
+# --- v4.2.78 · gobierno de accesos (permisos de ultra granularidad + IGA) ---------------------
+# 92 conceptos NUEVOS (7 de `authz`, 1 de `audit`, 84 de `delegated_access`): sensibilidad y modo de aprobación de un permiso,
+# base legal de operaciones, tipos y estados de las reglas, SoD, cuatro ojos, campañas, ciclo de vida, traspaso, banderas de
+# pacientes, bitácora de decisiones y anomalías. Misma regla que los demás de módulo: el `code` almacenado es la CLAVE de derivación
+# y la API los declara con `defineModuleConcepts` (`authz.concepts.ts`, `audit.concepts.ts`, `delegated_access.concepts.ts`) con ESTAS
+# claves; ids = uuid5(3f2b6c14-…, clave) (Anexo B del contrato). El display es el literal en inglés.
+GOVERNANCE_BACKEND_CONCEPTS = [
+    (key, key, display) for key, display in [
+        ('authz:SENSITIVITY_LOW', 'Permission sensitivity: low'),
+        ('authz:SENSITIVITY_MEDIUM', 'Permission sensitivity: medium'),
+        ('authz:SENSITIVITY_HIGH', 'Permission sensitivity: high'),
+        ('authz:SENSITIVITY_CRITICAL', 'Permission sensitivity: critical'),
+        ('authz:APPROVAL_DOCTOR', 'Approval required from the practitioner'),
+        ('authz:APPROVAL_SECOND_APPROVER', 'Approval required from a second approver (four eyes)'),
+        ('authz:APPROVAL_SERVICE_HEAD', 'Approval required from the head of the service'),
+        ('audit:LEGAL_BASIS_HEALTHCARE_OPERATIONS', 'Legal basis: healthcare operations'),
+        ('delegated_access:GOV_RULE_DENY_PERMISSION', 'Governance rule: deny a permission to a role'),
+        ('delegated_access:GOV_RULE_CEILING', 'Governance rule: delegation ceiling'),
+        ('delegated_access:GOV_RULE_REQUIRE_CONDITION', 'Governance rule: mandatory condition'),
+        ('delegated_access:GOV_RULE_FIELD_FLOOR', 'Governance rule: field visibility floor'),
+        ('delegated_access:SOD_ACTION_BLOCK', 'SoD action: block'),
+        ('delegated_access:SOD_ACTION_REQUIRE_APPROVAL', 'SoD action: require approval'),
+        ('delegated_access:SOD_ACTION_WARN', 'SoD action: warn'),
+        ('delegated_access:SOD_SCOPE_PERSON', 'SoD scope: same person'),
+        ('delegated_access:SOD_SCOPE_PERSON_OVERLAP', 'SoD scope: same person, overlapping coverage'),
+        ('delegated_access:SOD_SCOPE_TRANSACTION', 'SoD scope: same transaction'),
+        ('delegated_access:FOUR_EYES_PENDING', 'Four-eyes request pending'),
+        ('delegated_access:FOUR_EYES_APPROVED', 'Four-eyes request approved'),
+        ('delegated_access:FOUR_EYES_REJECTED', 'Four-eyes request rejected'),
+        ('delegated_access:FOUR_EYES_EXPIRED', 'Four-eyes request expired'),
+        ('delegated_access:FOUR_EYES_CANCELLED', 'Four-eyes request cancelled'),
+        ('delegated_access:FOUR_EYES_EXECUTED', 'Four-eyes request executed'),
+        ('delegated_access:FOUR_EYES_KIND_ACTION', 'Four-eyes kind: sensitive action'),
+        ('delegated_access:FOUR_EYES_KIND_GRANT_CHANGE', 'Four-eyes kind: grant change above the ceiling'),
+        ('delegated_access:FOUR_EYES_KIND_SOD_EXCEPTION', 'Four-eyes kind: SoD exception'),
+        ('delegated_access:FOUR_EYES_KIND_REACTIVATION', 'Four-eyes kind: reactivation'),
+        ('delegated_access:FOUR_EYES_KIND_ENGAGEMENT_MOVE', 'Four-eyes kind: engagement move with more privilege'),
+        ('delegated_access:REVIEW_KIND_PERIODIC', 'Access review kind: periodic'),
+        ('delegated_access:REVIEW_KIND_RECERTIFICATION', 'Access review kind: recertification'),
+        ('delegated_access:REVIEW_KIND_MOVER', 'Access review kind: after a role/scope change'),
+        ('delegated_access:REVIEW_KIND_TARGETED', 'Access review kind: targeted'),
+        ('delegated_access:REVIEW_KIND_REMEDIATION', 'Access review kind: remediation (above ceiling / SoD)'),
+        ('delegated_access:REVIEW_CAMPAIGN_DRAFT', 'Access review campaign draft'),
+        ('delegated_access:REVIEW_CAMPAIGN_OPEN', 'Access review campaign open'),
+        ('delegated_access:REVIEW_CAMPAIGN_CLOSED', 'Access review campaign closed'),
+        ('delegated_access:REVIEW_CAMPAIGN_CANCELLED', 'Access review campaign cancelled'),
+        ('delegated_access:REVIEW_ITEM_PENDING', 'Access review item pending'),
+        ('delegated_access:REVIEW_ITEM_CERTIFIED', 'Access review item certified'),
+        ('delegated_access:REVIEW_ITEM_REVOKED', 'Access review item revoked'),
+        ('delegated_access:REVIEW_ITEM_ADJUSTED', 'Access review item adjusted'),
+        ('delegated_access:REVIEW_ITEM_AUTO_REVOKED', 'Access review item auto-revoked (not certified)'),
+        ('delegated_access:REVIEW_ITEM_SKIPPED', 'Access review item skipped'),
+        ('delegated_access:REVIEWER_KIND_DOCTOR_OWNER', 'Reviewer: the practitioner'),
+        ('delegated_access:REVIEWER_KIND_SERVICE_HEAD', 'Reviewer: head of service'),
+        ('delegated_access:REVIEWER_KIND_SUPERVISOR', 'Reviewer: supervisor of the account'),
+        ('delegated_access:REVIEWER_KIND_ADMIN', 'Reviewer: organization administrator'),
+        ('delegated_access:UNCERTIFIED_REVOKE', 'Not certified: revoke'),
+        ('delegated_access:UNCERTIFIED_ESCALATE', 'Not certified: escalate only'),
+        ('delegated_access:LIFECYCLE_JOINER', 'Lifecycle case: joiner'),
+        ('delegated_access:LIFECYCLE_MOVER', 'Lifecycle case: mover'),
+        ('delegated_access:LIFECYCLE_LEAVER', 'Lifecycle case: leaver'),
+        ('delegated_access:LIFECYCLE_SUSPENSION', 'Lifecycle case: suspension'),
+        ('delegated_access:LIFECYCLE_REACTIVATION', 'Lifecycle case: reactivation'),
+        ('delegated_access:LIFECYCLE_OPEN', 'Lifecycle case open'),
+        ('delegated_access:LIFECYCLE_COMPLETED', 'Lifecycle case completed'),
+        ('delegated_access:LIFECYCLE_CANCELLED', 'Lifecycle case cancelled'),
+        ('delegated_access:HANDOVER_CONVERSATION', 'Handover item: conversation'),
+        ('delegated_access:HANDOVER_WORKFLOW_TASK', 'Handover item: workflow task'),
+        ('delegated_access:HANDOVER_SUPERVISED_ENGAGEMENT', 'Handover item: supervised account'),
+        ('delegated_access:HANDOVER_PENDING_BOOKING', 'Handover item: pending booking (informative)'),
+        ('delegated_access:HANDOVER_PENDING', 'Handover pending'),
+        ('delegated_access:HANDOVER_REASSIGNED', 'Handover reassigned'),
+        ('delegated_access:HANDOVER_RETURNED_TO_POOL', 'Handover returned to the reception pool'),
+        ('delegated_access:HANDOVER_CLOSED', 'Handover closed without action'),
+        ('delegated_access:SUSPENSION_MANUAL', 'Suspension reason: manual'),
+        ('delegated_access:SUSPENSION_LEAVE', 'Suspension reason: leave of absence'),
+        ('delegated_access:SUSPENSION_INVESTIGATION', 'Suspension reason: under investigation'),
+        ('delegated_access:SUSPENSION_INACTIVITY', 'Suspension reason: inactivity'),
+        ('delegated_access:SUSPENSION_RECERTIFICATION_LAPSED', 'Suspension reason: recertification lapsed'),
+        ('delegated_access:IDENTITY_METHOD_IN_PERSON', 'Identity verified in person with a document'),
+        ('delegated_access:IDENTITY_METHOD_DOCUMENT_UPLOAD', 'Identity verified from an uploaded document'),
+        ('delegated_access:IDENTITY_METHOD_PLATFORM', 'Identity already verified by the platform'),
+        ('delegated_access:PATIENT_FLAG_VIP', 'Patient restriction: VIP'),
+        ('delegated_access:PATIENT_FLAG_CONFIDENTIAL', 'Patient restriction: confidential'),
+        ('delegated_access:PATIENT_FLAG_STAFF_RELATIVE', 'Patient restriction: relative of staff'),
+        ('delegated_access:PATIENT_FLAG_PROTECTED', 'Patient restriction: protected (safety)'),
+        ('delegated_access:DECISION_EFFECT_PERMIT', 'Access decision: permit'),
+        ('delegated_access:DECISION_EFFECT_DENY', 'Access decision: deny'),
+        ('delegated_access:DECISION_EFFECT_CHALLENGE', 'Access decision: challenge (reason, step-up or approval)'),
+        ('delegated_access:ANOMALY_SEARCH_SPIKE', 'Anomaly: spike of patient searches'),
+        ('delegated_access:ANOMALY_CANCEL_SPIKE', 'Anomaly: spike of cancellations'),
+        ('delegated_access:ANOMALY_OFF_HOURS', 'Anomaly: sensitive activity off hours'),
+        ('delegated_access:ANOMALY_DENIED_BURST', 'Anomaly: burst of denied attempts'),
+        ('delegated_access:ANOMALY_BROWSE_PATIENTS', 'Anomaly: many distinct patients viewed'),
+        ('delegated_access:ANOMALY_INACTIVE_ACCOUNT', 'Anomaly: inactive account with live access'),
+        ('delegated_access:ANOMALY_PRIVILEGE_CREEP', 'Anomaly: privilege accumulation'),
+        ('delegated_access:ANOMALY_OPEN', 'Anomaly open'),
+        ('delegated_access:ANOMALY_ACKNOWLEDGED', 'Anomaly acknowledged'),
+        ('delegated_access:ANOMALY_DISMISSED', 'Anomaly dismissed'),
+        ('delegated_access:ANOMALY_ESCALATED', 'Anomaly escalated'),
+    ]
+]
+BACKEND_CONCEPTS += GOVERNANCE_BACKEND_CONCEPTS
+
+# Conceptos EXISTENTES de la API que referencian las filas boot nuevas (acciones, propósito de uso, base legal, efecto, rol base). Se
+# espejan igual que los demás: sin ellos la FK diferida rechazaría el permiso o la regla al cargar en una base donde la app no arrancó.
+GOVERNANCE_EXISTING_CONCEPTS = [
+    (key, key, display) for key, display in [
+        ("authz:ACTION_DELETE", "Delete"),
+        ("authz:ACTION_APPROVE", "Approve"),
+        ("authz:PURPOSE_TREATMENT", "Treatment"),
+        ("authz:PURPOSE_PAYMENT", "Payment"),
+        ("authz:PURPOSE_OPERATIONS", "Operations"),
+        ("authz:EFFECT_ALLOW", "Allow"),
+        ("authz:EFFECT_DENY", "Deny"),
+        ("authz:BASE_ROLE_STAFF", "Staff base role"),
+        ("audit:LEGAL_BASIS_TREATMENT", "Treatment legal basis"),
+        ("audit:LEGAL_BASIS_CONSENT", "Consent legal basis"),
+        ("audit:LEGAL_BASIS_LEGAL_OBLIGATION", "Legal obligation basis"),
+    ]
+]
+BACKEND_CONCEPTS += GOVERNANCE_EXISTING_CONCEPTS
 
 # Anclas del catálogo del backend (SEED de concepts.ts) — mismos ids y literales.
 BACKEND_SEED = dict(
@@ -4013,6 +4251,38 @@ def is_intentionally_empty(tkey: str) -> bool:
 
 
 INTENTIONALLY_EMPTY = {
+    # v4.2.75 — personal de apoyo. Todo esto lo escribe el negocio al operar (una persona pide
+    # o recibe una invitación, la organización decide y concede permisos, el equipo atiende la
+    # bandeja, la organización fija sus políticas): sembrarlo daría vínculos, permisos y
+    # mensajes que nadie concedió ni escribió. `effective_support_access` es derivada y la
+    # reconstruye la API. Las plantillas de rol (`role_templates`) y los permisos que usan SÍ van
+    # en boot (ver `phase_support_staff`); el hospital piloto vive en `salud-db/demo/`.
+    "delegated_access.support_scope_grants",
+    "delegated_access.support_grant_actions",
+    "delegated_access.engagement_requests",
+    "delegated_access.engagement_request_items",
+    "delegated_access.effective_support_access",
+    # v4.2.78 — gobierno de accesos: todo esto lo escribe el negocio al operar (una organización fija sus reglas, pide excepciones,
+    # lanza campañas, da de baja a alguien, marca pacientes; el motor registra decisiones, uso y anomalías). Solo `sod_rules`
+    # (catálogo de plataforma, tenant NULL) va en boot: ver `phase_governance`.
+    "delegated_access.governance_rules",
+    "delegated_access.sod_exceptions",
+    "delegated_access.four_eyes_requests",
+    "delegated_access.access_review_campaigns",
+    "delegated_access.access_review_items",
+    "delegated_access.lifecycle_cases",
+    "delegated_access.handover_items",
+    "delegated_access.patient_restriction_flags",
+    "delegated_access.access_decision_log",
+    "delegated_access.grant_usage_stats",
+    "delegated_access.access_anomalies",
+    "directory.affiliation_invitations",
+    "directory.affiliation_invitation_uses",
+    "practice.practitioner_location_assignments",
+    "community.conversation_assignments",
+    "community.conversation_internal_notes",
+    "community.reply_templates",
+    "iam.session_policies",
     # v4.2.30 — datos que crea un usuario o la app al operar (cotizaciones y cuotas,
     # respuestas automáticas y adjuntos de comentario, campañas y aliados de una
     # aseguradora, grupos médicos y su membresía, el estado de pago de una cita).
@@ -4417,6 +4687,580 @@ def phase_unique_within(docs, ddl, uniques, fks) -> dict:
 
 
 # ============================================================ fase 5 · metadatos
+
+# --- v4.2.75 · personal de apoyo: catálogo de permisos y plantillas de rol ----------
+# Los 15 permisos de agenda/cobro/registro/mensajes que se conceden a una persona de apoyo
+# (13 de agenda y cobro + `patient.register` + `messages.reply_on_behalf`). Código y orden
+# son contrato compartido con la API (`SupportAccessPolicy`). El id es el mismo que deriva la API
+# para un permiso de sistema (`platformPermissionId`: `seed:authz-permission:<code>`), así los dos
+# lados insertan por id sin duplicar.
+# (código, nombre, recurso, acción authz)
+SUPPORT_PERMISSIONS = [
+    ("schedule.view", "Ver la agenda", "scheduling.appointment", "READ"),
+    ("schedule.create", "Crear citas", "scheduling.appointment", "CREATE"),
+    ("schedule.reschedule", "Reprogramar citas", "scheduling.appointment", "WRITE"),
+    ("schedule.cancel", "Cancelar citas", "scheduling.appointment", "WRITE"),
+    ("schedule.confirm", "Confirmar citas", "scheduling.appointment", "EXECUTE"),
+    ("schedule.check_in", "Registrar la llegada del paciente", "scheduling.appointment", "EXECUTE"),
+    ("schedule.walk_in", "Atender paciente sin cita previa", "scheduling.appointment", "CREATE"),
+    ("schedule.waitlist", "Gestionar la lista de espera", "scheduling.waitlist_entry", "WRITE"),
+    ("schedule.send_reminders", "Enviar recordatorios de cita", "scheduling.appointment_reminder", "EXECUTE"),
+    ("schedule.block_time", "Bloquear horarios de la agenda", "scheduling.availability_exception", "WRITE"),
+    ("schedule.edit_hours", "Editar los horarios de atención", "scheduling.schedule_template", "WRITE"),
+    ("billing.collect", "Cobrar la atención", "billing.payment", "EXECUTE"),
+    ("billing.issue_receipt", "Emitir comprobantes", "billing.receipt", "CREATE"),
+    ("patient.register", "Registrar pacientes", "profiles.patient_profile", "CREATE"),
+    ("messages.reply_on_behalf", "Responder mensajes administrativos en nombre del profesional",
+     "community.direct_message", "CREATE"),
+]
+
+# Paquete de acciones por defecto de cada plantilla de rol. Fuera del paquete por defecto, pero
+# otorgables a mano: schedule.block_time, schedule.edit_hours y billing.*.
+_SECRETARY_ACTIONS = [
+    "schedule.view", "schedule.create", "schedule.reschedule", "schedule.cancel", "schedule.confirm",
+    "schedule.check_in", "schedule.walk_in", "schedule.waitlist", "schedule.send_reminders",
+    "patient.register", "messages.reply_on_behalf",
+]
+SUPPORT_ROLE_TEMPLATES = [
+    # (código, nombre, acciones por defecto)
+    ("SECRETARY", "Secretaria", _SECRETARY_ACTIONS),
+    ("MEDICAL_ASSISTANT", "Asistente médico", _SECRETARY_ACTIONS),
+    ("NURSING", "Enfermería", ["schedule.view", "schedule.check_in", "schedule.waitlist"]),
+    ("FRONT_DESK", "Recepción",
+     ["schedule.view", "schedule.check_in", "schedule.walk_in", "patient.register"]),
+    ("BILLING_CASHIER", "Facturación y caja",
+     ["schedule.view", "billing.collect", "billing.issue_receipt"]),
+    ("CALL_CENTER", "Central telefónica",
+     ["schedule.view", "schedule.create", "schedule.reschedule", "schedule.cancel"]),
+    ("ORG_MANAGEMENT", "Gestión de la organización",
+     ["schedule.view", "schedule.create", "schedule.reschedule", "schedule.cancel", "schedule.confirm",
+      "schedule.check_in", "schedule.walk_in", "schedule.waitlist", "schedule.send_reminders",
+      "schedule.block_time", "schedule.edit_hours", "patient.register"]),
+]
+
+
+def support_permission_id(code: str) -> str:
+    """Id determinista de un permiso de apoyo — espejo de `platformPermissionId()` de la API."""
+    return backend_id("seed:authz-permission:" + code)
+
+
+def support_role_template_id(code: str, version: int = 1) -> str:
+    """Id determinista de una plantilla de rol de plataforma (tenant NULL)."""
+    return backend_id(f"seed:delegated-access-role-template:{code}:v{version}")
+
+
+
+
+# --- v4.2.78 · gobierno de accesos: catálogo de 73 átomos, SoD, plantillas v2 y rol SUPPORT_STAFF ------------------------
+# Fuente de verdad de los DATOS de arranque del gobierno (el contrato es CONTRATO-GOBIERNO.md §2, §6.3 y Anexos A-B; los
+# ids son deterministas y los comparte la API en `authz.support-atoms.seed.ts`). Un cambio de sensibilidad, obligación o
+# asignabilidad se hace aquí (o en `authz.permissions` de una base viva), nunca en código de decisión.
+GOV_CATEGORIES = [
+    ("SUPPORT_AGENDA", "Agenda"), ("SUPPORT_PATIENTS", "Pacientes"), ("SUPPORT_MESSAGING", "Mensajería"),
+    ("SUPPORT_BILLING", "Facturación y caja"), ("SUPPORT_REPORTS", "Reportes"), ("SUPPORT_TEAM", "Equipo de apoyo"),
+    ("SUPPORT_AUDIT", "Auditoría y explicación"),
+]
+_GOV_CATEGORY_BY_MODULE = {"agenda": "SUPPORT_AGENDA", "patients": "SUPPORT_PATIENTS", "messages": "SUPPORT_MESSAGING",
+                           "billing": "SUPPORT_BILLING", "reports": "SUPPORT_REPORTS", "team": "SUPPORT_TEAM",
+                           "audit": "SUPPORT_AUDIT"}
+# (código, nombre simple, acción, sensibilidad, banderas, aprobación, propósito de uso, base legal)
+# banderas: R motivo · M paso extra · C clínico · F de campo · X NO asignable a personal de apoyo
+_GOV_ATOM_ROWS = [
+    ('agenda.appointment.view', 'Ver la agenda (horarios y estado de las citas)', 'READ', 'LOW', '', '', 'TREATMENT', 'TREATMENT'),
+    ('agenda.appointment.view.patient_name', 'Ver el nombre del paciente en la cita', 'READ', 'MEDIUM', 'F', '', 'TREATMENT', 'TREATMENT'),
+    ('agenda.appointment.view.patient_phone', 'Ver el teléfono del paciente en la cita', 'READ', 'MEDIUM', 'F', '', 'TREATMENT', 'TREATMENT'),
+    ('agenda.appointment.view.patient_document', 'Ver el documento del paciente en la cita', 'READ', 'HIGH', 'F', '', 'TREATMENT', 'TREATMENT'),
+    ('agenda.appointment.view.reason', 'Ver el motivo de consulta', 'READ', 'HIGH', 'CF', '', 'TREATMENT', 'TREATMENT'),
+    ('agenda.appointment.view.insurance', 'Ver la aseguradora del paciente en la cita', 'READ', 'MEDIUM', 'F', '', 'PAYMENT', 'TREATMENT'),
+    ('agenda.appointment.view.price', 'Ver el precio de la cita', 'READ', 'LOW', 'F', '', 'PAYMENT', 'TREATMENT'),
+    ('agenda.appointment.create', 'Crear citas', 'CREATE', 'MEDIUM', '', '', 'TREATMENT', 'TREATMENT'),
+    ('agenda.appointment.create.overbook', 'Crear citas con sobrecupo', 'CREATE', 'HIGH', 'R', 'DOCTOR', 'TREATMENT', 'TREATMENT'),
+    ('agenda.appointment.reschedule', 'Reprogramar citas', 'WRITE', 'MEDIUM', 'R', '', 'TREATMENT', 'TREATMENT'),
+    ('agenda.appointment.cancel', 'Cancelar citas', 'WRITE', 'MEDIUM', 'R', '', 'TREATMENT', 'TREATMENT'),
+    ('agenda.appointment.confirm', 'Confirmar citas', 'EXECUTE', 'LOW', '', '', 'TREATMENT', 'TREATMENT'),
+    ('agenda.appointment.check_in', 'Registrar la llegada del paciente', 'EXECUTE', 'LOW', '', '', 'TREATMENT', 'TREATMENT'),
+    ('agenda.appointment.no_show', 'Marcar al paciente como ausente', 'EXECUTE', 'MEDIUM', '', '', 'TREATMENT', 'TREATMENT'),
+    ('agenda.appointment.walk_in', 'Atender a un paciente sin cita previa', 'CREATE', 'MEDIUM', '', '', 'TREATMENT', 'TREATMENT'),
+    ('agenda.waitlist.manage', 'Gestionar la lista de espera', 'WRITE', 'LOW', '', '', 'TREATMENT', 'TREATMENT'),
+    ('agenda.reminder.send', 'Enviar recordatorios de cita', 'EXECUTE', 'LOW', '', '', 'TREATMENT', 'TREATMENT'),
+    ('agenda.block.create', 'Bloquear horarios de la agenda', 'CREATE', 'MEDIUM', 'R', '', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('agenda.block.remove', 'Quitar bloqueos de la agenda', 'DELETE', 'MEDIUM', '', '', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('agenda.hours.edit', 'Cambiar los horarios de atención del doctor', 'WRITE', 'HIGH', 'RM', 'DOCTOR', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('patients.search.exact', 'Buscar pacientes (búsqueda exacta)', 'READ', 'MEDIUM', '', '', 'TREATMENT', 'TREATMENT'),
+    ('patients.profile.view_basic', 'Ver la ficha básica del paciente (nombre, edad, contacto parcial)', 'READ', 'MEDIUM', '', '', 'TREATMENT', 'TREATMENT'),
+    ('patients.profile.view.phone_full', 'Ver el teléfono completo del paciente', 'READ', 'MEDIUM', 'F', '', 'TREATMENT', 'TREATMENT'),
+    ('patients.profile.view.document_full', 'Ver el documento completo del paciente', 'READ', 'HIGH', 'RF', '', 'TREATMENT', 'TREATMENT'),
+    ('patients.coverage.view', 'Ver la cobertura o seguro vigente del paciente', 'READ', 'MEDIUM', '', '', 'PAYMENT', 'TREATMENT'),
+    ('patients.profile.register', 'Registrar pacientes nuevos', 'CREATE', 'MEDIUM', '', '', 'TREATMENT', 'TREATMENT'),
+    ('patients.guardian.record', 'Anotar al representante de un menor (queda pendiente de verificación)', 'CREATE', 'MEDIUM', '', '', 'TREATMENT', 'TREATMENT'),
+    ('patients.profile.edit_contact', 'Corregir datos de contacto del paciente', 'WRITE', 'MEDIUM', 'R', '', 'TREATMENT', 'TREATMENT'),
+    ('patients.profile.edit_verified', 'Corregir datos verificados (nombre, documento, nacimiento)', 'WRITE', 'CRITICAL', 'RM', 'SECOND_APPROVER', 'TREATMENT', 'LEGAL_OBLIGATION'),
+    ('patients.profile.merge_request', 'Pedir la fusión de fichas duplicadas', 'EXECUTE', 'HIGH', 'R', 'SECOND_APPROVER', 'TREATMENT', 'TREATMENT'),
+    ('patients.clinical.request_temporary_access', 'Pedir acceso clínico temporal a un paciente', 'EXECUTE', 'HIGH', 'RMC', 'DOCTOR', 'TREATMENT', 'CONSENT'),
+    ('messages.inbox.view', 'Ver la bandeja de mensajes del doctor', 'READ', 'MEDIUM', '', '', 'TREATMENT', 'TREATMENT'),
+    ('messages.conversation.reply_on_behalf', 'Responder mensajes administrativos en nombre del doctor', 'CREATE', 'MEDIUM', '', '', 'TREATMENT', 'TREATMENT'),
+    ('messages.conversation.assign', 'Asignar conversaciones a una persona del equipo', 'WRITE', 'LOW', '', '', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('messages.conversation.resolve', 'Marcar conversaciones como resueltas', 'WRITE', 'LOW', '', '', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('messages.note.create_internal', 'Escribir notas internas del equipo', 'CREATE', 'LOW', '', '', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('messages.template.use', 'Usar respuestas preparadas', 'EXECUTE', 'LOW', '', '', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('messages.template.manage', 'Administrar respuestas preparadas', 'WRITE', 'MEDIUM', '', '', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('messages.attachment.send', 'Enviar archivos adjuntos a pacientes', 'CREATE', 'HIGH', '', '', 'TREATMENT', 'TREATMENT'),
+    ('messages.broadcast.send', 'Enviar mensajes masivos a pacientes', 'EXECUTE', 'HIGH', 'R', 'SECOND_APPROVER', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('billing.invoice.view', 'Ver cobros y comprobantes emitidos', 'READ', 'MEDIUM', '', '', 'PAYMENT', 'LEGAL_OBLIGATION'),
+    ('billing.payment.collect', 'Cobrar la atención', 'CREATE', 'HIGH', '', '', 'PAYMENT', 'LEGAL_OBLIGATION'),
+    ('billing.receipt.issue', 'Emitir comprobantes', 'CREATE', 'HIGH', '', '', 'PAYMENT', 'LEGAL_OBLIGATION'),
+    ('billing.receipt.void', 'Anular comprobantes', 'WRITE', 'CRITICAL', 'RM', 'SECOND_APPROVER', 'PAYMENT', 'LEGAL_OBLIGATION'),
+    ('billing.payment.refund', 'Devolver pagos', 'EXECUTE', 'CRITICAL', 'RM', 'SECOND_APPROVER', 'PAYMENT', 'LEGAL_OBLIGATION'),
+    ('billing.discount.apply', 'Aplicar descuentos', 'EXECUTE', 'HIGH', 'R', '', 'PAYMENT', 'LEGAL_OBLIGATION'),
+    ('billing.cashbox.close', 'Cerrar la caja del día', 'EXECUTE', 'HIGH', 'M', '', 'PAYMENT', 'LEGAL_OBLIGATION'),
+    ('reports.agenda.view', 'Ver reportes de agenda (sin datos de pacientes)', 'READ', 'LOW', '', '', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('reports.agenda.export', 'Exportar listados de agenda con pacientes', 'EXECUTE', 'HIGH', 'RM', '', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('reports.billing.view', 'Ver reportes de caja', 'READ', 'MEDIUM', '', '', 'PAYMENT', 'LEGAL_OBLIGATION'),
+    ('reports.billing.export', 'Exportar reportes de caja', 'EXECUTE', 'HIGH', 'RM', '', 'PAYMENT', 'LEGAL_OBLIGATION'),
+    ('team.members.view', 'Ver al equipo de apoyo y sus permisos', 'READ', 'MEDIUM', '', '', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('team.invitations.create', 'Invitar personas al equipo (código o QR)', 'CREATE', 'HIGH', 'R', '', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('team.requests.decide', 'Resolver solicitudes de acceso del equipo', 'APPROVE', 'HIGH', 'R', '', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('team.grants.assign', 'Otorgar permisos al equipo (dentro de su techo)', 'WRITE', 'HIGH', 'RM', '', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('team.grants.revoke', 'Quitar permisos del equipo', 'DELETE', 'HIGH', 'R', '', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('team.engagement.recertify', 'Confirmar vínculos del equipo (recertificar)', 'EXECUTE', 'MEDIUM', '', '', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('team.engagement.suspend', 'Suspender a una persona del equipo', 'EXECUTE', 'HIGH', 'R', '', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('team.engagement.reactivate', 'Pedir la reactivación de una persona suspendida', 'EXECUTE', 'HIGH', 'R', 'SECOND_APPROVER', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('team.engagement.end', 'Dar de baja a una persona del equipo', 'EXECUTE', 'HIGH', 'R', '', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('team.handover.execute', 'Reasignar el trabajo de quien se va', 'EXECUTE', 'HIGH', 'R', '', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('team.campaigns.review', 'Revisar accesos en campañas de certificación', 'APPROVE', 'MEDIUM', '', '', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('team.campaigns.manage', 'Crear y lanzar campañas de certificación', 'WRITE', 'HIGH', 'R', '', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('team.sod.exception.request', 'Pedir una excepción de separación de funciones', 'CREATE', 'HIGH', 'R', 'SECOND_APPROVER', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('team.templates.manage', 'Administrar plantillas de rol de la organización', 'WRITE', 'HIGH', 'RMX', '', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('team.guardrails.manage', 'Administrar reglas y techos de la organización', 'WRITE', 'CRITICAL', 'RMX', '', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('team.sod.manage', 'Administrar reglas de separación de funciones', 'WRITE', 'CRITICAL', 'RMX', '', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('team.sessionpolicy.manage', 'Administrar políticas de sesión y reglas de red', 'WRITE', 'CRITICAL', 'RMX', '', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('audit.activity.view_team', 'Ver la actividad del equipo', 'READ', 'MEDIUM', '', '', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('audit.activity.view_org', 'Ver la actividad de toda la organización', 'READ', 'HIGH', '', '', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('audit.activity.export', 'Exportar la actividad', 'EXECUTE', 'HIGH', 'RM', '', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('audit.decisions.explain', 'Explicar y simular permisos', 'READ', 'MEDIUM', '', '', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+    ('audit.reports.governance.view', 'Ver los tableros de gobierno de accesos', 'READ', 'HIGH', '', '', 'OPERATIONS', 'HEALTHCARE_OPERATIONS'),
+]
+# Los 15 códigos antiguos son ALIAS: se expanden a estos átomos al leer (§2.3). Siguen siendo filas de authz.permissions.
+GOV_LEGACY = {
+    "schedule.view": ["agenda.appointment.view", "agenda.appointment.view.patient_name"],
+    "schedule.create": ["agenda.appointment.create", "patients.search.exact", "patients.profile.view_basic"],
+    "schedule.reschedule": ["agenda.appointment.reschedule", "patients.search.exact", "patients.profile.view_basic"],
+    "schedule.cancel": ["agenda.appointment.cancel"],
+    "schedule.confirm": ["agenda.appointment.confirm"],
+    "schedule.check_in": ["agenda.appointment.check_in", "patients.search.exact", "patients.profile.view_basic"],
+    "schedule.walk_in": ["agenda.appointment.walk_in", "patients.search.exact", "patients.profile.view_basic"],
+    "schedule.waitlist": ["agenda.waitlist.manage"],
+    "schedule.send_reminders": ["agenda.reminder.send"],
+    "schedule.block_time": ["agenda.block.create", "agenda.block.remove"],
+    "schedule.edit_hours": ["agenda.hours.edit"],
+    "billing.collect": ["billing.payment.collect"],
+    "billing.issue_receipt": ["billing.receipt.issue"],
+    "patient.register": ["patients.profile.register", "patients.guardian.record", "patients.search.exact",
+                         "patients.profile.view_basic"],
+    "messages.reply_on_behalf": ["messages.inbox.view", "messages.conversation.reply_on_behalf",
+                                 "messages.conversation.assign", "messages.note.create_internal", "messages.template.use"],
+}
+# Categoría que el parche asigna a cada código antiguo (no tenían): la de su átomo primario.
+GOV_LEGACY_CATEGORY = {"schedule.": "SUPPORT_AGENDA", "billing.": "SUPPORT_BILLING", "patient.": "SUPPORT_PATIENTS",
+                       "messages.": "SUPPORT_MESSAGING"}
+GOV_TEMPLATES = ["SECRETARY", "MEDICAL_ASSISTANT", "NURSING", "FRONT_DESK", "BILLING_CASHIER", "CALL_CENTER",
+                 "ORG_MANAGEMENT"]
+_GOV_V1_PACKAGES = {
+    "SECRETARY": ["schedule.view", "schedule.create", "schedule.reschedule", "schedule.cancel", "schedule.confirm",
+                  "schedule.check_in", "schedule.walk_in", "schedule.waitlist", "schedule.send_reminders",
+                  "patient.register", "messages.reply_on_behalf"],
+    "NURSING": ["schedule.view", "schedule.check_in", "schedule.waitlist"],
+    "FRONT_DESK": ["schedule.view", "schedule.check_in", "schedule.walk_in", "patient.register"],
+    "BILLING_CASHIER": ["schedule.view", "billing.collect", "billing.issue_receipt"],
+    "CALL_CENTER": ["schedule.view", "schedule.create", "schedule.reschedule", "schedule.cancel"],
+    "ORG_MANAGEMENT": ["schedule.view", "schedule.create", "schedule.reschedule", "schedule.cancel", "schedule.confirm",
+                       "schedule.check_in", "schedule.walk_in", "schedule.waitlist", "schedule.send_reminders",
+                       "schedule.block_time", "schedule.edit_hours", "patient.register"],
+}
+_GOV_V1_PACKAGES["MEDICAL_ASSISTANT"] = _GOV_V1_PACKAGES["SECRETARY"]
+# Lo NUEVO que trae el paquete por defecto de la v2 respecto de la v1 expandida (DECISIÓN DEL USUARIO D-01 para `view.reason`).
+_GOV_V2_EXTRA = {
+    "SECRETARY": ["agenda.appointment.view.reason", "patients.profile.view_basic"],
+    "MEDICAL_ASSISTANT": ["agenda.appointment.view.reason", "patients.profile.view_basic"],
+    "NURSING": ["agenda.appointment.view.reason", "patients.search.exact", "patients.profile.view_basic"],
+    "FRONT_DESK": ["patients.profile.view_basic"],
+    "BILLING_CASHIER": ["agenda.appointment.view.patient_name", "billing.invoice.view"],
+    "CALL_CENTER": ["patients.search.exact", "patients.profile.view_basic", "agenda.appointment.view.patient_name"],
+    "ORG_MANAGEMENT": ["team.members.view", "audit.activity.view_team", "audit.decisions.explain", "reports.agenda.view"],
+}
+# Condición por defecto de `view.reason` (D-01): ventana de citas ayer→+14 días y máscara PARCIAL (40 caracteres).
+GOV_REASON_DEFAULT_CONDITION = {
+    "schemaVersion": 1,
+    "appointment": {"window": {"daysBefore": 1, "daysAfter": 14}},
+    "fields": {"agenda.appointment.view.reason": {"mask": "PARTIAL"}},
+}
+GOV_TEMPLATE_DEFAULT_CONDITIONS = {
+    t: {"agenda.appointment.view.reason": GOV_REASON_DEFAULT_CONDITION} for t in ("SECRETARY", "MEDICAL_ASSISTANT", "NURSING")
+}
+
+
+def _build_gov_atoms() -> list:
+    atoms = []
+    legacy_of = {}
+    for alias, expanded in GOV_LEGACY.items():
+        for code in expanded:
+            legacy_of.setdefault(code, alias)
+    for code, name, action, sens, flags, approval, purpose, basis in _GOV_ATOM_ROWS:
+        module, resource = code.split(".")[:2]
+        atoms.append({
+            "code": code, "name": name, "action": action, "resource": f"{module}.{resource}",
+            "category": _GOV_CATEGORY_BY_MODULE[module], "sensitivity": sens,
+            "requires_reason": "R" in flags, "requires_step_up": "M" in flags, "approval": approval or None,
+            "purpose": purpose, "legal_basis": basis, "touches_clinical_data": "C" in flags,
+            "is_field_level": "F" in flags, "support_assignable": "X" not in flags,
+            "is_dangerous": sens in ("HIGH", "CRITICAL"), "legacy": legacy_of.get(code),
+        })
+    return atoms
+
+
+GOV_ATOMS = _build_gov_atoms()
+_GOV_CODES = [a["code"] for a in GOV_ATOMS]
+_GOV_BY_CODE = {a["code"]: a for a in GOV_ATOMS}
+
+
+def _build_gov_defaults() -> dict:
+    out = {}
+    for tpl in GOV_TEMPLATES:
+        expanded = []
+        for alias in _GOV_V1_PACKAGES[tpl]:
+            for code in GOV_LEGACY[alias]:
+                if code not in expanded:
+                    expanded.append(code)
+        for code in _GOV_V2_EXTRA[tpl]:
+            if code not in expanded:
+                expanded.append(code)
+        out[tpl] = [c for c in _GOV_CODES if c in expanded]   # orden canónico del catálogo
+    return out
+
+
+def _gov_ceiling(tpl: str) -> list:
+    """Techo máximo de una plantilla (reglas R1-R10 del §2.4)."""
+    ceiling = set()
+    for code in _GOV_CODES:
+        if not _GOV_BY_CODE[code]["support_assignable"]:
+            continue                                          # R1: los cuatro team.* de seguridad no van a ninguna plantilla
+        if code.startswith(("team.", "audit.")):
+            ok = tpl == "ORG_MANAGEMENT"                      # R5
+        elif code in ("billing.receipt.void", "billing.payment.refund", "billing.discount.apply", "billing.cashbox.close"):
+            ok = tpl in ("BILLING_CASHIER", "ORG_MANAGEMENT")  # R2
+        elif code in ("billing.payment.collect", "billing.receipt.issue", "billing.invoice.view"):
+            ok = tpl in ("BILLING_CASHIER", "ORG_MANAGEMENT", "SECRETARY", "MEDICAL_ASSISTANT", "FRONT_DESK")   # R3
+        elif code in ("reports.billing.export", "reports.billing.view"):
+            ok = tpl in ("BILLING_CASHIER", "ORG_MANAGEMENT")  # R4
+        elif code == "reports.agenda.export":
+            ok = tpl == "ORG_MANAGEMENT"                      # R4
+        elif code == "reports.agenda.view":
+            ok = tpl != "BILLING_CASHIER"                     # R4
+        elif code in ("agenda.hours.edit", "agenda.block.create", "agenda.block.remove", "agenda.appointment.create.overbook"):
+            ok = tpl in ("SECRETARY", "MEDICAL_ASSISTANT", "ORG_MANAGEMENT")   # R6
+        elif code in ("agenda.appointment.view.reason", "patients.clinical.request_temporary_access"):
+            ok = tpl in ("SECRETARY", "MEDICAL_ASSISTANT", "NURSING", "ORG_MANAGEMENT")   # R7
+        elif code in ("patients.profile.view.document_full", "patients.profile.merge_request",
+                      "agenda.appointment.view.patient_document"):
+            ok = tpl in ("SECRETARY", "MEDICAL_ASSISTANT", "FRONT_DESK", "ORG_MANAGEMENT")   # R8
+        elif code == "patients.profile.edit_verified":
+            ok = tpl == "ORG_MANAGEMENT"                      # R1
+        elif code == "messages.broadcast.send":
+            ok = tpl == "ORG_MANAGEMENT"                      # R9
+        elif code == "messages.template.manage":
+            ok = tpl in ("SECRETARY", "MEDICAL_ASSISTANT", "ORG_MANAGEMENT")
+        elif code == "messages.attachment.send":
+            ok = tpl in ("SECRETARY", "MEDICAL_ASSISTANT", "FRONT_DESK", "ORG_MANAGEMENT")   # R9
+        elif code.startswith("messages."):
+            if tpl == "BILLING_CASHIER":
+                ok = False
+            elif tpl == "NURSING":
+                ok = code in ("messages.inbox.view", "messages.note.create_internal", "messages.template.use")
+            else:
+                ok = True
+        elif code.startswith("patients."):
+            if tpl == "BILLING_CASHIER":
+                ok = code in ("patients.search.exact", "patients.coverage.view", "patients.profile.view_basic")
+            elif tpl == "NURSING":
+                ok = code in ("patients.search.exact", "patients.profile.view_basic", "patients.coverage.view",
+                              "patients.clinical.request_temporary_access")
+            elif tpl == "CALL_CENTER":
+                ok = code in ("patients.search.exact", "patients.profile.view_basic", "patients.profile.register",
+                              "patients.guardian.record", "patients.profile.edit_contact", "patients.coverage.view",
+                              "patients.profile.view.phone_full")
+            else:
+                ok = True
+        elif code.startswith("agenda."):
+            if tpl == "BILLING_CASHIER":
+                ok = code in ("agenda.appointment.view", "agenda.appointment.view.patient_name",
+                              "agenda.appointment.view.insurance", "agenda.appointment.view.price")
+            elif tpl == "NURSING":
+                ok = code in ("agenda.appointment.view", "agenda.appointment.view.patient_name",
+                              "agenda.appointment.view.patient_phone", "agenda.appointment.view.reason",
+                              "agenda.appointment.view.insurance", "agenda.appointment.check_in",
+                              "agenda.appointment.no_show", "agenda.waitlist.manage", "agenda.appointment.walk_in")
+            elif tpl == "CALL_CENTER":
+                ok = code not in ("agenda.appointment.walk_in", "agenda.appointment.check_in",
+                                  "agenda.appointment.view.reason", "agenda.appointment.view.patient_document")
+            else:
+                ok = True
+        else:
+            ok = False
+        if ok:
+            ceiling.add(code)
+    return [c for c in _GOV_CODES if c in ceiling]
+
+
+GOV_TEMPLATE_DEFAULTS = _build_gov_defaults()
+GOV_TEMPLATE_CEILINGS = {t: _gov_ceiling(t) for t in GOV_TEMPLATES}
+for _t in GOV_TEMPLATES:   # todo paquete por defecto cabe en su techo (aserción del contrato §2.4)
+    assert set(GOV_TEMPLATE_DEFAULTS[_t]) <= set(GOV_TEMPLATE_CEILINGS[_t]), _t
+
+# Reglas de segregación de funciones de PLATAFORMA (§6.3). Los conjuntos de las reglas TRANSACTION sin átomo usan marcadores `@…`:
+# las impone el servicio al ejecutar (`SodTransactionGuard`), no el otorgamiento.
+GOV_SOD_RULES = [
+    {"code": "SOD-BILL-01", "name": "Cobrar y anular", "a": ["billing.payment.collect"], "b": ["billing.receipt.void"],
+      "scope": "PERSON", "action": "BLOCK", "is_hard": True, "max_exception_days": None,
+      "rationale": "Quien cobra no debe poder anular el comprobante de lo que cobró."},
+    {"code": "SOD-BILL-02", "name": "Cobrar y devolver", "a": ["billing.payment.collect"], "b": ["billing.payment.refund"],
+      "scope": "PERSON", "action": "BLOCK", "is_hard": True, "max_exception_days": None,
+      "rationale": "Quien cobra no debe poder devolver el dinero que cobró."},
+    {"code": "SOD-BILL-03", "name": "Crear citas y emitir comprobantes",
+      "a": ["agenda.appointment.create", "agenda.appointment.walk_in"], "b": ["billing.receipt.issue"],
+      "scope": "PERSON", "action": "REQUIRE_APPROVAL", "is_hard": False, "max_exception_days": 90,
+      "rationale": "Crear una atención y facturarla en una sola persona permite cobros ficticios; en consultorios pequeños se admite con excepción (D-05)."},
+    {"code": "SOD-BILL-04", "name": "Descontar y cobrar", "a": ["billing.discount.apply"], "b": ["billing.payment.collect"],
+      "scope": "PERSON", "action": "WARN", "is_hard": False, "max_exception_days": None,
+      "rationale": "Quien aplica descuentos y también cobra puede quedarse con la diferencia: se advierte y aparece en el tablero."},
+    {"code": "SOD-BILL-05", "name": "Emitir y anular el mismo comprobante", "a": ["billing.receipt.issue"],
+      "b": ["billing.receipt.void"], "scope": "TRANSACTION", "action": "BLOCK", "is_hard": True, "max_exception_days": None,
+      "rationale": "Una misma persona no puede emitir y anular un mismo comprobante (lo impone el servicio al ejecutar)."},
+    {"code": "SOD-PAT-01", "name": "Registrar pacientes y corregir datos verificados",
+      "a": ["patients.profile.register", "patients.guardian.record"], "b": ["patients.profile.edit_verified"],
+      "scope": "PERSON", "action": "BLOCK", "is_hard": True, "max_exception_days": None,
+      "rationale": "Quien registra una identidad no debe poder corregirla después de verificada (cierra el hallazgo N1/N3)."},
+    {"code": "SOD-PAT-02", "name": "Registrar y fusionar fichas", "a": ["patients.profile.register"],
+      "b": ["patients.profile.merge_request"], "scope": "PERSON", "action": "REQUIRE_APPROVAL", "is_hard": False,
+      "max_exception_days": 90, "rationale": "Registrar y fusionar fichas en una sola persona facilita ocultar duplicados."},
+    {"code": "SOD-GOV-01", "name": "Solicitar y aprobar (acceso)", "a": ["@request"], "b": ["@decide"],
+      "scope": "TRANSACTION", "action": "BLOCK", "is_hard": True, "max_exception_days": None,
+      "rationale": "Nadie aprueba su propia solicitud de acceso (generaliza SUPPORT_DECISION_SELF)."},
+    {"code": "SOD-GOV-02", "name": "Otorgar y certificar", "a": ["team.grants.assign"], "b": ["team.campaigns.review"],
+      "scope": "TRANSACTION", "action": "BLOCK", "is_hard": True, "max_exception_days": None,
+      "rationale": "Quien otorgó o aprobó una concesión no la certifica en la campaña."},
+    {"code": "SOD-GOV-03", "name": "Administrar el equipo y manejar caja",
+      "a": ["team.grants.assign", "team.requests.decide"], "b": ["billing.payment.collect", "billing.receipt.issue"],
+      "scope": "PERSON", "action": "REQUIRE_APPROVAL", "is_hard": False, "max_exception_days": 90,
+      "rationale": "Quien reparte permisos no debería manejar dinero con los suyos."},
+    {"code": "SOD-AUD-01", "name": "Auditar y operar",
+      "a": ["audit.activity.view_org", "audit.activity.export", "audit.reports.governance.view"],
+      "b": ["billing.payment.collect", "billing.receipt.void", "agenda.appointment.cancel", "patients.profile.edit_verified"],
+      "scope": "PERSON", "action": "REQUIRE_APPROVAL", "is_hard": False, "max_exception_days": 90,
+      "rationale": "Quien audita la actividad no debe ser quien la produce."},
+]
+for _r in GOV_SOD_RULES:
+    assert not (_r["is_hard"] and _r["max_exception_days"]), _r["code"]
+
+# Piso de plataforma del rol de sistema SUPPORT_STAFF (GP-3): columnas clínicas que el apoyo no lee ni escribe por ningún camino.
+# Mismo vocabulario que `SUPPORT_STAFF_FIELD_FLOOR` de authz.support-atoms.seed.ts.
+GOV_SUPPORT_STAFF_FIELD_FLOOR = [
+    ("clinical.conditions", "code_concept_id"), ("clinical.conditions", "note_text"),
+    ("chart.clinical_note_versions", "subjective_text"), ("chart.clinical_note_versions", "objective_text"),
+    ("chart.clinical_note_versions", "assessment_text"), ("chart.clinical_note_versions", "plan_text"),
+    ("chart.clinical_note_versions", "entries_json"), ("clinical.observations", "value_text"),
+    ("clinical.observations", "value_decimal"), ("clinical.observations", "interpretation_concept_id"),
+    ("clinical.medication_requests", "medication_concept_id"), ("clinical.medication_requests", "indication_text"),
+]
+
+
+def governance_permission_id(code: str) -> str:
+    """Id determinista de un permiso atómico — igual que `platformPermissionId` (el de un alias antiguo no cambia)."""
+    return backend_id("seed:authz-permission:" + code)
+
+
+def governance_category_id(code: str) -> str:
+    """Id determinista de una categoría de permisos (patrón NUEVO `seed:authz-permission-category:<code>`)."""
+    return backend_id("seed:authz-permission-category:" + code)
+
+
+def sod_rule_id(code: str, version: int = 1) -> str:
+    """Id determinista de una regla SoD de plataforma."""
+    return backend_id(f"seed:sod-rule:{code}:v{version}")
+
+
+def support_staff_role_id() -> str:
+    """Id del rol de sistema SUPPORT_STAFF (`clinicalRoleId('SUPPORT_STAFF')` de la API)."""
+    return backend_id("seed:authz-role:SUPPORT_STAFF")
+
+
+def phase_support_staff(docs, ddl, uniques) -> dict:
+    """v4.2.75 — siembra BOOT los 15 permisos de apoyo (módulo 06) y las 7 plantillas de rol de
+    plataforma (módulo 29). Todo lo demás del módulo (concesiones, solicitudes, invitaciones,
+    bandeja de mensajes, políticas de sesión) lo crea el negocio al operar: va declarado en
+    INTENTIONALLY_EMPTY. Los datos de demostración del hospital piloto NO van al paquete: viven en
+    `salud-db/demo/04-hospital-piloto.sql`. Determinista e idempotente (upsert por id)."""
+    stats = {"permissions": 0, "role_templates": 0}
+    if not all(c in docs for c in ("06", "29")):
+        return stats
+    stamp = iso(det_time(BOOT_BASE, "support-staff"))
+    action_ids = {a: backend_id("authz:ACTION_" + a) for a in ("READ", "WRITE", "CREATE", "EXECUTE")}
+    scope_tenant = backend_id("authz:SCOPE_TENANT")
+    active = backend_id("state:active")
+
+    perms = [OrderedDict([
+        ("id", support_permission_id(code)), ("code", code), ("category_id", None), ("name", name),
+        ("resource", resource), ("action_concept_id", action_ids[action]),
+        ("default_scope_concept_id", scope_tenant), ("is_field_level", False),
+        ("is_dangerous", False), ("state_concept_id", active), ("created_at", stamp),
+        ("updated_at", stamp), ("created_by_user_id", SEED_USER_ID),
+        ("updated_by_user_id", SEED_USER_ID), ("row_version", 1), ("is_role_restricted", False),
+        ("required_role_code", None), ("allow_direct_user_grant", False)])
+        for code, name, resource, action in SUPPORT_PERMISSIONS]
+    stats["permissions"] = upsert_rows(docs["06"], "boot", "permissions", perms)
+
+    template_active = backend_id("delegated_access:ROLE_TEMPLATE_ACTIVE")
+    templates = [OrderedDict([
+        ("id", support_role_template_id(code)), ("tenant_id", None), ("code", code), ("name", name),
+        ("default_actions_json", list(actions)), ("status_concept_id", template_active),
+        ("version_number", 1), ("created_at", stamp), ("updated_at", stamp),
+        ("created_by_user_id", SEED_USER_ID), ("updated_by_user_id", SEED_USER_ID),
+        ("row_version", 1)])
+        for code, name, actions in SUPPORT_ROLE_TEMPLATES]
+    stats["role_templates"] = upsert_rows(docs["29"], "boot", "role_templates", templates)
+    ensure_policy(docs["29"], "role_templates", ddl["delegated_access.role_templates"], "id",
+                  uniques.get("delegated_access.role_templates", []), "RELATIONAL_TABLE",
+                  boot=True, mock=False)
+    return stats
+
+
+
+def phase_governance(docs, ddl, uniques) -> dict:
+    """v4.2.78 — siembra BOOT el catálogo de gobierno: 73 átomos + 7 categorías (módulo 06), metadatos de los 15 códigos
+    antiguos (alias: NO asignables a apoyo, con la sensibilidad de su átomo primario y las obligaciones de sus átomos), el rol de sistema
+    SUPPORT_STAFF con su piso de campos (módulo 06), 11 reglas SoD de plataforma y las 7 plantillas de rol v2 con su techo
+    (módulo 29; las v1 quedan RETIRADAS pero existen: los vínculos ya creados las siguen usando).
+    Determinista e idempotente (upsert por id, las filas propias se reescriben)."""
+    stats = {"permissions": 0, "categories": 0, "legacy": 0, "roles": 0, "field_floor": 0, "sod_rules": 0,
+             "templates_v2": 0}
+    if not all(c in docs for c in ("06", "29")):
+        return stats
+    # la sal "governance-v4272" (número de #95) conserva las fechas ya sembradas
+    stamp = iso(det_time(BOOT_BASE, "governance-v4272"))
+    old_stamp = iso(det_time(BOOT_BASE, "support-staff"))
+    cid = backend_id
+    active = cid("state:active")
+    sens = {k: cid("authz:SENSITIVITY_" + k) for k in ("LOW", "MEDIUM", "HIGH", "CRITICAL")}
+    approval = {k: cid("authz:APPROVAL_" + k) for k in ("DOCTOR", "SECOND_APPROVER")}
+    purpose = {k: cid("authz:PURPOSE_" + k) for k in ("TREATMENT", "PAYMENT", "OPERATIONS")}
+    basis = {"TREATMENT": cid("audit:LEGAL_BASIS_TREATMENT"), "CONSENT": cid("audit:LEGAL_BASIS_CONSENT"),
+             "LEGAL_OBLIGATION": cid("audit:LEGAL_BASIS_LEGAL_OBLIGATION"),
+             "HEALTHCARE_OPERATIONS": cid("audit:LEGAL_BASIS_HEALTHCARE_OPERATIONS")}
+    action_ids = {a: cid("authz:ACTION_" + a) for a in ("READ", "WRITE", "CREATE", "DELETE", "EXECUTE", "APPROVE")}
+    scope_tenant = cid("authz:SCOPE_TENANT")
+
+    categories = [OrderedDict([
+        ("id", governance_category_id(code)), ("code", code), ("name", name), ("description", None), ("ordinal", i + 1),
+        ("created_at", stamp), ("updated_at", stamp), ("created_by_user_id", SEED_USER_ID),
+        ("updated_by_user_id", SEED_USER_ID), ("row_version", 1)]) for i, (code, name) in enumerate(GOV_CATEGORIES)]
+    stats["categories"] = upsert_rows(docs["06"], "boot", "permission_categories", categories, update=True)
+
+    def perm_row(pid, code, name, resource, action, category_id, field_level, dangerous, ts, gov):
+        return OrderedDict([
+            ("id", pid), ("code", code), ("category_id", category_id), ("name", name), ("resource", resource),
+            ("action_concept_id", action_ids[action]), ("default_scope_concept_id", scope_tenant),
+            ("is_field_level", field_level), ("is_dangerous", dangerous), ("state_concept_id", active),
+            ("created_at", ts), ("updated_at", ts), ("created_by_user_id", SEED_USER_ID),
+            ("updated_by_user_id", SEED_USER_ID), ("row_version", 1), ("is_role_restricted", False),
+            ("required_role_code", None), ("allow_direct_user_grant", False),
+            ("sensitivity_concept_id", gov["sensitivity"]), ("requires_reason", gov["requires_reason"]),
+            ("requires_step_up", gov["requires_step_up"]), ("approval_mode_concept_id", gov["approval"]),
+            ("purpose_of_use_concept_id", gov["purpose"]), ("legal_basis_concept_id", gov["legal_basis"]),
+            ("touches_clinical_data", gov["clinical"]), ("support_assignable", gov["assignable"])])
+
+    atom_rows = [perm_row(
+        governance_permission_id(a["code"]), a["code"], a["name"], a["resource"], a["action"],
+        governance_category_id(a["category"]), a["is_field_level"], a["is_dangerous"], stamp,
+        {"sensitivity": sens[a["sensitivity"]], "requires_reason": a["requires_reason"],
+         "requires_step_up": a["requires_step_up"], "approval": approval[a["approval"]] if a["approval"] else None,
+         "purpose": purpose[a["purpose"]], "legal_basis": basis[a["legal_basis"]],
+         "clinical": a["touches_clinical_data"], "assignable": a["support_assignable"]}) for a in GOV_ATOMS]
+    stats["permissions"] = upsert_rows(docs["06"], "boot", "permissions", atom_rows, update=True)
+
+    # los 15 códigos antiguos: categoría + sensibilidad del átomo primario y las OBLIGACIONES más estrictas de los átomos
+    # a los que se expanden (motivo, paso extra, aprobación: SECOND_APPROVER > DOCTOR). Un alias no puede saltarse lo que
+    # exige su átomo. Tampoco se asigna a personal de apoyo (support_assignable = false): las concesiones nuevas usan el
+    # átomo; las filas alias ya creadas siguen vivas (revisión de seguridad v4.2.79).
+    approval_rank = {None: 0, "DOCTOR": 1, "SECOND_APPROVER": 2}
+    primary = {"schedule.view": "agenda.appointment.view", "billing.collect": "billing.payment.collect",
+               "billing.issue_receipt": "billing.receipt.issue", "patient.register": "patients.profile.register",
+               "messages.reply_on_behalf": "messages.conversation.reply_on_behalf"}
+    legacy_rows = []
+    for code, name, resource, action in SUPPORT_PERMISSIONS:
+        first = primary.get(code, GOV_LEGACY[code][0])
+        cat = next(c for prefix, c in GOV_LEGACY_CATEGORY.items() if code.startswith(prefix))
+        expanded = [_GOV_BY_CODE[c] for c in GOV_LEGACY[code]]
+        strictest = max((e["approval"] for e in expanded), key=lambda k: approval_rank[k])
+        legacy_rows.append(perm_row(
+            support_permission_id(code), code, name, resource, action, governance_category_id(cat), False, False, old_stamp,
+            {"sensitivity": sens[_GOV_BY_CODE[first]["sensitivity"]],
+             "requires_reason": any(e["requires_reason"] for e in expanded),
+             "requires_step_up": any(e["requires_step_up"] for e in expanded),
+             "approval": approval[strictest] if strictest else None, "purpose": None, "legal_basis": None,
+             "clinical": False, "assignable": False}))
+    upsert_rows(docs["06"], "boot", "permissions", legacy_rows, update=True)
+    stats["legacy"] = len(legacy_rows)
+
+    # rol de sistema SUPPORT_STAFF (no asignable: es un claim de ejecución) y su piso de campos
+    role = OrderedDict([
+        ("id", support_staff_role_id()), ("tenant_id", None), ("code", "SUPPORT_STAFF"), ("name", "Personal de apoyo"),
+        ("parent_role_id", None), ("base_role_concept_id", cid("authz:BASE_ROLE_STAFF")), ("scope_concept_id", scope_tenant),
+        ("is_system", True), ("is_assignable", False), ("priority", None), ("state_concept_id", active),
+        ("created_at", stamp), ("updated_at", stamp), ("created_by_user_id", SEED_USER_ID),
+        ("updated_by_user_id", SEED_USER_ID), ("row_version", 1)])
+    stats["roles"] = upsert_rows(docs["06"], "boot", "roles", [role], update=True)
+    floor = [OrderedDict([
+        ("id", backend_id(f"seed:authz-field-permission:SUPPORT_STAFF:{entity}.{column}")), ("role_id", support_staff_role_id()),
+        ("entity", entity), ("column_name", column), ("can_read", False), ("can_write", False),
+        ("mask_strategy_concept_id", None), ("condition_json", None), ("created_at", stamp), ("updated_at", stamp),
+        ("created_by_user_id", SEED_USER_ID), ("updated_by_user_id", SEED_USER_ID), ("row_version", 1)])
+        for entity, column in GOV_SUPPORT_STAFF_FIELD_FLOOR]
+    stats["field_floor"] = upsert_rows(docs["06"], "boot", "field_permissions", floor, update=True)
+
+    # reglas SoD de plataforma (tenant NULL)
+    scope_ids = {k: cid("delegated_access:SOD_SCOPE_" + k) for k in ("PERSON", "PERSON_OVERLAP", "TRANSACTION")}
+    action_sod = {k: cid("delegated_access:SOD_ACTION_" + k) for k in ("BLOCK", "REQUIRE_APPROVAL", "WARN")}
+    sod = [OrderedDict([
+        ("id", sod_rule_id(r["code"])), ("tenant_id", None), ("code", r["code"]), ("name", r["name"]), ("base_rule_id", None),
+        ("atoms_a_json", list(r["a"])), ("atoms_b_json", list(r["b"])), ("scope_concept_id", scope_ids[r["scope"]]),
+        ("action_concept_id", action_sod[r["action"]]), ("is_hard", r["is_hard"]),
+        ("max_exception_days", r["max_exception_days"]), ("rationale_text", r["rationale"]), ("status_concept_id", active),
+        ("version_number", 1), ("created_at", stamp), ("updated_at", stamp), ("created_by_user_id", SEED_USER_ID),
+        ("updated_by_user_id", SEED_USER_ID), ("row_version", 1)]) for r in GOV_SOD_RULES]
+    stats["sod_rules"] = upsert_rows(docs["29"], "boot", "sod_rules", sod, update=True)
+    ensure_policy(docs["29"], "sod_rules", ddl["delegated_access.sod_rules"], "id",
+                  uniques.get("delegated_access.sod_rules", []), "RELATIONAL_TABLE", boot=True, mock=False)
+
+    # plantillas v2 (átomos + techo + condiciones por defecto); las v1 se retiran (siguen existiendo)
+    names = {code: name for code, name, _ in SUPPORT_ROLE_TEMPLATES}
+    retired = cid("delegated_access:ROLE_TEMPLATE_RETIRED")
+    tpl_active = cid("delegated_access:ROLE_TEMPLATE_ACTIVE")
+    v1_rows = docs["29"]["boot"]["records"].get("role_templates", [])
+    for row in v1_rows:
+        if row.get("tenant_id") is None and row.get("version_number") == 1 and row.get("code") in GOV_TEMPLATES:
+            row["status_concept_id"] = retired
+            row.setdefault("default_conditions_json", None)
+            row.setdefault("ceiling_actions_json", None)
+    v2 = [OrderedDict([
+        ("id", support_role_template_id(code, 2)), ("tenant_id", None), ("code", code), ("name", names[code]),
+        ("default_actions_json", list(GOV_TEMPLATE_DEFAULTS[code])),
+        ("default_conditions_json", GOV_TEMPLATE_DEFAULT_CONDITIONS.get(code)),
+        ("ceiling_actions_json", list(GOV_TEMPLATE_CEILINGS[code])), ("status_concept_id", tpl_active),
+        ("version_number", 2), ("created_at", stamp), ("updated_at", stamp), ("created_by_user_id", SEED_USER_ID),
+        ("updated_by_user_id", SEED_USER_ID), ("row_version", 1)]) for code in GOV_TEMPLATES]
+    stats["templates_v2"] = upsert_rows(docs["29"], "boot", "role_templates", v2, update=True)
+    return stats
+
+
 
 def phase_meta(docs) -> dict:
     """Versión del modelo, conteos, summary y manifest/checksums coherentes."""
@@ -5078,14 +5922,15 @@ def main() -> None:
     ap.add_argument("--dry", action="store_true", help="no escribe; solo informa")
     ap.add_argument("--only",
                     choices=["valuesets", "backend", "tables", "targets", "insights", "notnull",
-                             "bindings", "unique", "meta"],
+                             "bindings", "unique", "apoyo", "meta"],
                     help="ejecuta una sola fase")
     args = ap.parse_args()
 
     ddl, fks, uniques = parse_ddl(), parse_fks(), parse_unique()
-    # `--only insights` es autosuficiente: sus value sets no viven en el vault, así que corre
-    # también donde la bóveda hermana no está clonada.
-    value_sets = load_value_sets() if args.only != "insights" else None
+    # `--only insights` es autosuficiente (sus value sets no viven en el vault) y las fases
+    # `backend`, `apoyo` y `meta` no leen los value sets: con `--only` no exigen la bóveda
+    # (que es otro repositorio y a veces no está clonada completa).
+    value_sets = load_value_sets() if args.only not in ("insights", "backend", "apoyo", "meta") else {}
     codes = sorted(p.stem.split("_")[0] for p in MODULES_DIR.glob("*.seeds.json"))
     docs = {c: load_module(c) for c in codes}
     assert_anchors(docs)
@@ -5136,6 +5981,15 @@ def main() -> None:
                                         len(vacias) - len(sin_declarar), len(sin_declarar)))
         for t in sin_declarar:
             print("      SIN DECLARAR {:<50}".format(t))
+    if args.only in (None, "tables", "apoyo"):
+        s = phase_support_staff(docs, ddl, uniques)
+        print("[2f] v4.2.75 personal de apoyo · {} permisos · {} plantillas de rol (boot)".format(
+            s["permissions"], s["role_templates"]))
+        g = phase_governance(docs, ddl, uniques)
+        print("[2g] v4.2.78 gobierno de accesos · {} átomos nuevos · {} categorías · {} alias marcados · {} rol · {} filas de piso "
+              "de campos · {} reglas SoD · {} plantillas v2 (boot)".format(
+                  g["permissions"], g["categories"], g["legacy"], g["roles"], g["field_floor"], g["sod_rules"],
+                  g["templates_v2"]))
     if run("targets"):
         s = phase_v4266_consent_targets(docs)
         print("[2e] v4.2.66 · {} consentimientos dirigidos · {} derivaciones con servicio y "

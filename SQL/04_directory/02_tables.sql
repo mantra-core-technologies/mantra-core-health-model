@@ -1,4 +1,4 @@
--- SALUD v4.0.10 · módulo 04 · schema directory
+-- SALUD v4.2.79 · módulo 04 · schema directory
 -- Generado de diagram_04_directory.puml — NO editar a mano.
 
 
@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS "directory"."tenant_memberships" (
     "row_version" integer NOT NULL DEFAULT 1,
     "workday_concept_id" uuid,
     "responsible_user_id" uuid,
+    "origin_concept_id" uuid,
     CONSTRAINT "pk_tenant_memberships" PRIMARY KEY ("id")
 );
 
@@ -149,4 +150,33 @@ CREATE TABLE IF NOT EXISTS "directory"."tenant_web_configs" (
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
     CONSTRAINT "pk_tenant_web_configs" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "directory"."affiliation_invitations" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "kind_concept_id" uuid NOT NULL,
+    "target_person_id" uuid,
+    "token_hash" varchar NOT NULL,
+    "max_uses" integer NOT NULL,
+    "uses_count" integer NOT NULL,
+    "expires_at" timestamptz NOT NULL,
+    "role_template_id" uuid,
+    "status_concept_id" uuid NOT NULL,
+    "created_by_user_id" uuid NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_affiliation_invitations" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "directory"."affiliation_invitation_uses" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "affiliation_invitation_id" uuid NOT NULL,
+    "used_by_user_id" uuid NOT NULL,
+    "occurred_at" timestamptz NOT NULL,
+    "outcome_concept_id" uuid NOT NULL,
+    CONSTRAINT "pk_affiliation_invitation_uses" PRIMARY KEY ("id")
 );

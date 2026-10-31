@@ -150,3 +150,14 @@ BEGIN
       array_length(sin_rls, 1), array_to_string(sin_rls, ', ');
   END IF;
 END $$;
+
+-- 4. Tablas append-only: la aplicación NO puede UPDATE/DELETE/TRUNCATE -------
+-- Los GRANT de arriba (ON ALL TABLES + privilegios por defecto) se re-ejecutan en cada despliegue y devolverían UPDATE y DELETE a
+-- `mantra_app` sobre la bitácora WORM de decisiones del personal de apoyo (v4.2.79, revisión de seguridad A-B2). El disparador de fila ya
+-- los frena; esto además quita el privilegio. Solo si la tabla existe (el parche v4278 puede no estar aplicado todavía).
+DO $$
+BEGIN
+  IF to_regclass('delegated_access.access_decision_log') IS NOT NULL THEN
+    REVOKE UPDATE, DELETE, TRUNCATE ON delegated_access.access_decision_log FROM mantra_app;
+  END IF;
+END $$;

@@ -1,8 +1,8 @@
--- SALUD v4.0.10 · perfil pay · base pay_payments · DDL completo en orden (generado de diagram_74_pay_payments.puml)
+-- SALUD v4.2.79 · perfil pay · base pay_payments · DDL completo en orden (generado de diagram_74_pay_payments.puml)
 -- Archivo SQL plano, apto para `pool.query(readFileSync(...))`. NO editar a mano.
 
 -- >>> 02_tables.sql
--- SALUD v4.0.10 · módulo 74 · schema pay_payments
+-- SALUD v4.2.79 · módulo 74 · schema pay_payments
 -- Generado de diagram_74_pay_payments.puml — NO editar a mano.
 
 
@@ -160,7 +160,7 @@ CREATE TABLE IF NOT EXISTS "idempotency_keys" (
 );
 
 -- >>> 03_fk_intra.sql
--- SALUD v4.0.10 · módulo 74 · schema pay_payments
+-- SALUD v4.2.79 · módulo 74 · schema pay_payments
 -- Generado de diagram_74_pay_payments.puml — NO editar a mano.
 
 
@@ -183,7 +183,7 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- >>> 04_indexes.sql
--- SALUD v4.0.10 · módulo 74 · schema pay_payments
+-- SALUD v4.2.79 · módulo 74 · schema pay_payments
 -- Generado de diagram_74_pay_payments.puml — NO editar a mano.
 
 
@@ -212,7 +212,7 @@ CREATE INDEX IF NOT EXISTS "outbox_events_pending_idx" ON "outbox_events" ("seq"
 CREATE INDEX IF NOT EXISTS "idempotency_keys_expires_at_idx" ON "idempotency_keys" ("expires_at");
 
 -- >>> 05_constraints.sql
--- SALUD v4.0.10 · perfil pay · módulo 74 · base pay_payments
+-- SALUD v4.2.79 · perfil pay · módulo 74 · base pay_payments
 -- Generado de diagram_74_pay_payments.puml — NO editar a mano.
 
 -- Complementos del perfil pay (gen_ddl_pay.py): funciones, CHECK, FK compuestas y triggers.

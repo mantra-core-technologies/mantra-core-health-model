@@ -185,6 +185,12 @@ entity care_spaces {
     gln : varchar(13)
     valid_from : timestamptz
     valid_to : timestamptz
+  ' + v4.2.75 (jerarquia de ubicaciones): Sede (practice_sites) -> Edificio -> Piso -> Sala/Cama, todo como
+  ' care_spaces anidados por parent_space_id. La FORMA (edificio, piso, ala, sala, cama) es la de v4.2.67:
+  ' form_concept_id (LOC_FORM_bu|lvl|wi|ro|bd); no se agrega una segunda columna de tipo. location_path: ruta MATERIALIZADA de ids
+  ' desde la sede, '/siteId/buildingId/levelId/roomId/' (termina en '/'); permite 'esta dentro de' con
+  ' LIKE 'prefijo%' sin recursion. La mantiene la API al crear/mover un espacio.
+    location_path : varchar
 }
 
 ' + v4.2.67 (infraestructura F1): vínculo espacio físico ↔ unidad organizativa, con
@@ -483,6 +489,7 @@ entity "INDEXES · care_spaces" as idxset_care_spaces <<INDEX_SET>> {
   IX ix_care_spaces_bed_category_concept_id : (bed_category_concept_id) BTREE
   UX ux_care_spaces_site_code : (practice_site_id, code) UNIQUE BTREE
   UX ux_care_spaces_tenant_id_id : (tenant_id, id) UNIQUE BTREE
+  IX ix_care_spaces_location_path : (location_path varchar_pattern_ops) BTREE
 }
 
 care_spaces .. idxset_care_spaces : indexed by
@@ -615,5 +622,42 @@ note as PHYSICAL_INDEX_POLICY
   - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
     cardinality and production-like load tests; unused/redundant indexes are rejected.
 end note
+
+
+' ==============================================================================
+' v4.2.75 - DONDE ATIENDE CADA PROFESIONAL. Un profesional (su vinculo practitioner_role_assignments)
+' atiende en uno o varios espacios (consultorio, quirofano, cama...). Es lo que ubica a un doctor
+' para los permisos por ubicacion y para la agenda combinada.
+' ==============================================================================
+entity practitioner_location_assignments {
+  * id : uuid <<PK>>
+  --
+  ' v4.2.76 (hardening): tenant_id = tenant del profesional y del espacio (trigger integrity.trg_support_tenant_consistency).
+  * tenant_id : uuid <<FK>>
+  * practitioner_role_assignment_id : uuid <<FK>>
+  * care_space_id : uuid <<FK>>
+    valid_from : date
+    valid_to : date
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+practitioner_location_assignments }o--|| practitioner_role_assignments : practitioner_role_assignment_id
+practitioner_location_assignments }o--|| care_spaces : care_space_id
+
+entity "INDEXES · practitioner_location_assignments" as idxset_practitioner_location_assignments <<INDEX_SET>> {
+  PK pk_practitioner_location_assignments : (id) UNIQUE BTREE
+  IX ix_practitioner_location_assignments_tenant_id : (tenant_id, status_concept_id) BTREE
+  IX ix_practitioner_location_assignments_practitioner_role_a_id : (practitioner_role_assignment_id) BTREE
+  IX ix_practitioner_location_assignments_care_space_id : (care_space_id) BTREE
+  IX ix_practitioner_location_assignments_status_concept_id : (status_concept_id) BTREE
+  UK uq_practitioner_location_assignments_current : (practitioner_role_assignment_id, care_space_id) UNIQUE BTREE WHERE valid_to IS NULL
+  IX ix_practitioner_location_assignments_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_practitioner_location_assignments_updated_by_user_id : (updated_by_user_id) BTREE
+}
+practitioner_location_assignments .. idxset_practitioner_location_assignments : indexed by
 
 @enduml

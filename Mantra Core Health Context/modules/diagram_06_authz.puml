@@ -50,6 +50,17 @@ entity permissions {
   * is_role_restricted : boolean
     required_role_code : varchar
   * allow_direct_user_grant : boolean
+  ' + v4.2.78 (gobierno de accesos): metadatos de cada permiso. Un permiso es un ATOMO `modulo.recurso.accion[.campo]`.
+  ' sensibilidad: authz:SENSITIVITY_LOW|MEDIUM|HIGH|CRITICAL. requires_reason / requires_step_up / approval_mode son las
+  ' OBLIGACIONES que el motor exige al ejercerlo (motivo, MFA fresco, cuatro ojos). Los 15 codigos antiguos quedan como alias.
+    sensitivity_concept_id : uuid <<FK>>
+  * requires_reason : boolean <<DEFAULT_FALSE>>
+  * requires_step_up : boolean <<DEFAULT_FALSE>>
+    approval_mode_concept_id : uuid <<FK>>
+    purpose_of_use_concept_id : uuid <<FK>>
+    legal_basis_concept_id : uuid <<FK>>
+  * touches_clinical_data : boolean <<DEFAULT_FALSE>>
+  * support_assignable : boolean <<DEFAULT_FALSE>>
 }
 entity roles {
   * id : uuid <<PK>>
@@ -244,6 +255,11 @@ entity "INDEXES · permissions" as idxset_permissions <<INDEX_SET>> {
   IX ix_permissions_state_concept_id : (state_concept_id) BTREE
   IX ix_permissions_created_by_user_id : (created_by_user_id) BTREE
   IX ix_permissions_updated_by_user_id : (updated_by_user_id) BTREE
+IX ix_permissions_sensitivity_concept_id : (sensitivity_concept_id) BTREE
+IX ix_permissions_approval_mode_concept_id : (approval_mode_concept_id) BTREE
+IX ix_permissions_purpose_of_use_concept_id : (purpose_of_use_concept_id) BTREE
+IX ix_permissions_legal_basis_concept_id : (legal_basis_concept_id) BTREE
+IX ix_permissions_support_assignable : (support_assignable) BTREE WHERE support_assignable
 }
 
 permissions .. idxset_permissions : indexed by
