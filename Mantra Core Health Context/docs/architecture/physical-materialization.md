@@ -49,6 +49,28 @@ comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_obje
 
 ## 3. Estado actual del build
 
+### v4.2.74 — Datos de traslado en la derivación (2026-10-31)
+
+**Cambio de esquema.** Parche: `SQL/patches/2026-10-31_v4274_referral_transfer.sql` (idempotente, fuera de
+`apply_all.sql`). Origen: brecha B8, Norma Nacional de Referencia y Contrarreferencia (MSD Bolivia, 2.ª ed. 2013).
+
+- `clinical_ext.referrals` suma 24 columnas NULLABLE: `transfer_required`, `transport_mode`/`transport_detail`,
+  `companion_name`/`_relationship`/`_phone`, `escort_professional_name`/`_role`, `departure_condition`,
+  `vitals_recorded_at` y los siete `vital_*` (PA sistólica y diastólica, FC, FR, temperatura en °C, SpO2, Glasgow),
+  `receiver_contacted`/`receiver_contact_name`/`receiver_contacted_at`, `departed_at`, y del lado del destino
+  `arrived_at`, `arrival_condition`, `arrival_notes`.
+- 12 CHECK declarados en `diagram_33` (→ `SQL/18_clinical_ext/05_constraints.sql`): las tres enumeraciones, el rango
+  de cada signo vital, `vital_diastolic_bp < vital_systolic_bp` y `arrived_at >= departed_at` cuando vienen ambos.
+  Las reglas cruzadas (ambulancia y personal de salud si el paciente sale inestable o crítico, aviso al receptor en la
+  urgencia) las exige la API.
+- Seeds: la fase 2g de `gen_seeds.py` agrega las columnas a las 16 derivaciones mock; tres llevan datos (internación
+  urgente en ambulancia avanzada con signos vitales y aviso al receptor, tratamiento programado en vehículo
+  particular, estudio programado sin traslado).
+
+**Verificado (2026-10-31)** en PostgreSQL 16.15 local: el DDL de `dev` + el parche dos veces (exit 0) da el mismo
+`pg_dump -s` que el DDL nuevo desde cero, salvo el orden de columnas de `referrals`; los INSERT fuera de rango los
+rechaza el CHECK correspondiente. `pytest salud-db/tests` 39 passed.
+
 ### v4.2.67b — Infraestructura F1b: endurecimiento de seguridad (2026-10-29)
 
 **Cambio de esquema sobre v4.2.67, antes de mergear.** Parche: `SQL/patches/2026-10-29_infraestructura_f1b_seguridad.sql`

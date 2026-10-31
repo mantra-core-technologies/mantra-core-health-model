@@ -299,6 +299,23 @@ entity "consent.treatment_informed_consents" as consent_treatment_informed_conse
   CHECK_SQL : ck_treatment_informed_consents_channel | "channel" IN ('IN_PERSON','TELEHEALTH')
   CHECK_SQL : ck_treatment_informed_consents_exception_type | "exception_type" IN ('EMERGENCY','PUBLIC_HEALTH_RISK','PATIENT_WAIVER')
 }
+' + v4.2.74 — datos de traslado de la derivación: enumeraciones varchar + CHECK, rangos
+' fisiológicos plausibles de los signos vitales, diastólica < sistólica y llegada ≥ salida.
+' Un NULL pasa cada CHECK: filas legadas válidas. Mismos nombres que el parche 2026-10-31_v4274.
+entity "clinical_ext.referrals" as clinical_ext_referrals <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_referrals_transport_mode | "transport_mode" IN ('AMBULANCE_BASIC','AMBULANCE_ADVANCED','AIR_AMBULANCE','RIVER','PRIVATE_VEHICLE','PUBLIC_TRANSPORT','ON_FOOT','OTHER')
+  CHECK_SQL : ck_referrals_departure_condition | "departure_condition" IN ('STABLE','UNSTABLE','CRITICAL')
+  CHECK_SQL : ck_referrals_arrival_condition | "arrival_condition" IN ('STABLE','UNSTABLE','CRITICAL','DECEASED')
+  CHECK_SQL : ck_referrals_vital_systolic_bp_range | "vital_systolic_bp" BETWEEN 40 AND 300
+  CHECK_SQL : ck_referrals_vital_diastolic_bp_range | "vital_diastolic_bp" BETWEEN 20 AND 200
+  CHECK_SQL : ck_referrals_vital_heart_rate_range | "vital_heart_rate" BETWEEN 20 AND 300
+  CHECK_SQL : ck_referrals_vital_respiratory_rate_range | "vital_respiratory_rate" BETWEEN 4 AND 80
+  CHECK_SQL : ck_referrals_vital_temperature_c_range | "vital_temperature_c" BETWEEN 30.0 AND 45.0
+  CHECK_SQL : ck_referrals_vital_oxygen_saturation_range | "vital_oxygen_saturation" BETWEEN 50 AND 100
+  CHECK_SQL : ck_referrals_vital_glasgow_range | "vital_glasgow" BETWEEN 3 AND 15
+  CHECK_SQL : ck_referrals_vital_bp_order | ("vital_diastolic_bp" IS NULL OR "vital_systolic_bp" IS NULL OR "vital_diastolic_bp" < "vital_systolic_bp")
+  CHECK_SQL : ck_referrals_arrival_after_departure | ("arrived_at" IS NULL OR "departed_at" IS NULL OR "arrived_at" >= "departed_at")
+}
 ' + infraestructura hospitalaria F5 (operaciones, 2026-10-29) — CONTRATO-F2-F5 F5a/F5c/F5g.
 ' UUID literales (el predicado de un EXCLUDE debe ser IMMUTABLE), derivados con
 ' deterministicId() de la API:

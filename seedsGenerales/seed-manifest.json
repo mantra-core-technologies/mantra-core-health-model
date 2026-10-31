@@ -175,8 +175,8 @@
       "file": "modules/18_clinical_ext.seeds.json",
       "boot_records": 50,
       "mock_records": 192,
-      "line_count": 5072,
-      "sha256": "6c6c80236180dcb0adc098b13addf1a5c60452e3a0826ef60e4bafd400204438"
+      "line_count": 5456,
+      "sha256": "a12e2b6c9af9015c2e9abb744ab57cf0fb425a2481666b2041b8f2bfb27b2a44"
     },
     {
       "number": 19,

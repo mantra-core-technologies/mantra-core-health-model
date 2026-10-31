@@ -59,6 +59,16 @@ entity care_team_members {
 ' consentimiento dirigido a esta derivación; reject_reason y counter_referral_* cierran el
 ' circuito referencia/contrarreferencia. Todas NULLABLE. Mismo contrato que el parche
 ' 2026-10-28_v4266.
+' + v4.2.74 (2026-10-31) — DATOS DE TRASLADO en la derivación (brecha B8; Norma Nacional de
+' Referencia y Contrarreferencia, MSD Bolivia 2.ª ed. 2013). transfer_required dice si el paciente
+' se traslada físicamente; transport_mode/_detail el medio (enumeración varchar + CHECK, ver
+' diagram_33); companion_* el familiar que acompaña y escort_professional_* el personal de salud;
+' departure_condition y vital_* (vitals_recorded_at, PA sistólica/diastólica, FC, FR, T °C, SpO2,
+' Glasgow) el estado al referir; receiver_contacted/_contact_name/_contacted_at la comunicación
+' previa con el receptor; departed_at la salida. arrived_at, arrival_condition y arrival_notes los
+' anota el destino. Todas NULLABLE. Rangos, diastólica < sistólica y llegada ≥ salida en
+' diagram_33; las reglas cruzadas (ambulancia y escolta si el paciente sale inestable, aviso al
+' receptor en la urgencia) las exige la API. Mismo contrato que el parche 2026-10-31_v4274.
 entity referrals {
   * id : uuid <<PK>>
   --
@@ -89,6 +99,30 @@ entity referrals {
     reject_reason : text
     counter_referral_text : text
     counter_referral_at : timestamptz
+    transfer_required : boolean
+    transport_mode : varchar(24)
+    transport_detail : varchar(200)
+    companion_name : varchar(200)
+    companion_relationship : varchar(80)
+    companion_phone : varchar(40)
+    escort_professional_name : varchar(200)
+    escort_professional_role : varchar(80)
+    departure_condition : varchar(16)
+    vitals_recorded_at : timestamptz
+    vital_systolic_bp : smallint
+    vital_diastolic_bp : smallint
+    vital_heart_rate : smallint
+    vital_respiratory_rate : smallint
+    vital_temperature_c : numeric(4,1)
+    vital_oxygen_saturation : smallint
+    vital_glasgow : smallint
+    receiver_contacted : boolean
+    receiver_contact_name : varchar(200)
+    receiver_contacted_at : timestamptz
+    departed_at : timestamptz
+    arrived_at : timestamptz
+    arrival_condition : varchar(16)
+    arrival_notes : text
   * created_at : timestamptz
   * updated_at : timestamptz
     created_by_user_id : uuid <<FK>>
