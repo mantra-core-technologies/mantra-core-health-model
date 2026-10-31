@@ -22,14 +22,15 @@
 --   3 CHECK que el modelo puede decir sin leer conceptos (el cruce con la categoría de la
 --   orden lo valida la API: muestra sólo en laboratorio, imagen sólo en imagenología).
 --   Índices de bandeja del ejecutor y de agrupación por solicitud.
---   Política RLS: el ejecutor de la orden lee sus componentes (espejo de v4.2.36).
+--   RLS: aislamiento por custodio (ENABLE+FORCE) en la misma transacción, y lectura del
+--   ejecutor de la orden (espejo de v4.2.36). Disparador: el custodio del componente es el de su orden.
 --
 -- POR QUÉ NULLABLE Y SIN BACKFILL. Una orden anterior no declaró muestra ni región y
 -- reconstruirlas sería fabricar un dato clínico. La API las expone como "estudio completo,
 -- sin detalle". Las órdenes nuevas sí escriben su detalle.
 --
--- DESPUÉS de aplicar este parche, re-ejecutar 2026-09-26_v4226_custodian_tenant_rls.sql
--- (descubre dinámicamente las tablas con custodian_tenant_id y cubre la nueva).
+-- v4.2.26 sigue descubriendo la tabla en una reconstrucción completa; ya no hace falta
+-- re-ejecutarlo tras este parche (la tabla nace con su aislamiento).
 --
 -- DELTAS ESPERADOS sobre la base viva:
 --   columnas de clinical.service_requests              +6
@@ -37,7 +38,8 @@
 --   FKs                                                +8 (5 en service_requests, 3 en la tabla nueva) +1 intra
 --   índices                                            +12
 --   CHECK                                              +3
---   políticas RLS                                      +1 (service_request_components_performer_read, si el RLS está habilitado en la tabla)
+--   RLS en la tabla nueva                              ENABLE+FORCE, políticas +2 (custodian_tenant_isolation, service_request_components_performer_read)
+--   disparador de coherencia custodio hijo = padre     +1 (trg_service_request_component_tenant)
 -- ============================================================================
 
 BEGIN;
@@ -118,11 +120,24 @@ ALTER TABLE "clinical"."service_requests" ADD CONSTRAINT "ck_service_requests_co
     CHECK (("contrast_concept_id" IS NULL OR "modality_concept_id" IS NOT NULL));
 
 -- ------------------------------------------------------------------- F. RLS
--- El ejecutor de la orden lee los componentes de las órdenes que puede leer
--- (espejo de service_requests_performer_read, v4.2.36). Sólo SELECT. La política de
--- aislamiento por custodio la crea v4.2.26 al re-ejecutarse; esta sólo agrega la lectura.
--- Si la tabla todavía no tiene RLS habilitado la política queda definida y se aplica
--- cuando v4.2.26 lo habilite.
+-- 1) Aislamiento por custodio, en ESTA transacción (no se deja para cuando se
+--    re-ejecute v4.2.26): la tabla no queda abierta ni un instante. Misma política que v4.2.26.
+ALTER TABLE "clinical"."service_request_components" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "clinical"."service_request_components" FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS custodian_tenant_isolation ON clinical.service_request_components;
+CREATE POLICY custodian_tenant_isolation ON clinical.service_request_components
+    USING (
+        custodian_tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+        OR current_setting('app.system_context', true) = 'true'
+    )
+    WITH CHECK (
+        custodian_tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+        OR current_setting('app.system_context', true) = 'true'
+    );
+
+-- 2) El ejecutor de la orden lee los componentes de las órdenes que puede leer
+--    (espejo de service_requests_performer_read, v4.2.36). Sólo SELECT. Exige que el
+--    custodio del componente sea el de la orden (ver el disparador de abajo).
 DROP POLICY IF EXISTS service_request_components_performer_read ON clinical.service_request_components;
 CREATE POLICY service_request_components_performer_read ON clinical.service_request_components
     FOR SELECT
@@ -130,10 +145,37 @@ CREATE POLICY service_request_components_performer_read ON clinical.service_requ
         EXISTS (
             SELECT 1 FROM clinical.service_requests sr
             WHERE sr.id = service_request_components.service_request_id
+              AND sr.custodian_tenant_id = service_request_components.custodian_tenant_id
               AND sr.performer_tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
         )
         OR current_setting('app.system_context', true) = 'true'
     );
+
+-- ------------------------------------------------- F bis. coherencia hijo/padre
+-- custodian_tenant_id del componente DEBE ser el de su orden: sin esto, un componente
+-- podría colgarse de la orden de otro tenant con su propio custodio y filtrar por la
+-- política de lectura del ejecutor. SECURITY DEFINER para leer la orden aunque el RLS
+-- del que escribe no la deje ver; search_path fijo.
+CREATE SCHEMA IF NOT EXISTS "integrity";
+CREATE OR REPLACE FUNCTION "integrity"."service_request_component_tenant"()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public AS $$
+DECLARE
+    padre uuid;
+BEGIN
+    SELECT sr.custodian_tenant_id INTO padre
+      FROM clinical.service_requests sr WHERE sr.id = NEW.service_request_id;
+    IF padre IS NULL OR padre IS DISTINCT FROM NEW.custodian_tenant_id THEN
+        RAISE EXCEPTION 'service_request_components.custodian_tenant_id debe ser el de su orden (service_request_id=%)', NEW.service_request_id
+            USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION "integrity"."service_request_component_tenant"() FROM PUBLIC;
+
+DROP TRIGGER IF EXISTS trg_service_request_component_tenant ON "clinical"."service_request_components";
+CREATE TRIGGER trg_service_request_component_tenant
+    BEFORE INSERT OR UPDATE OF service_request_id, custodian_tenant_id ON "clinical"."service_request_components"
+    FOR EACH ROW EXECUTE FUNCTION "integrity"."service_request_component_tenant"();
 
 -- ------------------------------------------------------------ G. verificación
 DO $$
@@ -164,6 +206,18 @@ BEGIN
                    AND tablename = 'service_request_components'
                    AND policyname = 'service_request_components_performer_read') THEN
         faltan := faltan || ' politica:service_request_components_performer_read';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+                   WHERE n.nspname = 'clinical' AND c.relname = 'service_request_components'
+                   AND c.relrowsecurity AND c.relforcerowsecurity) THEN
+        faltan := faltan || ' rls:service_request_components(enable+force)';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'clinical'
+                   AND tablename = 'service_request_components' AND policyname = 'custodian_tenant_isolation') THEN
+        faltan := faltan || ' politica:custodian_tenant_isolation';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_service_request_component_tenant' AND NOT tgisinternal) THEN
+        faltan := faltan || ' trigger:trg_service_request_component_tenant';
     END IF;
     IF faltan <> '' THEN
         RAISE EXCEPTION 'v4.2.80 incompleto:%', faltan;
