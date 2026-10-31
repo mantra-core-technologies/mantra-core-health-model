@@ -2,7 +2,7 @@
   "package": "SALUD_v4.0_module_seeds_enhanced",
   "seed_revision": "2.8.1-v4.2.50",
   "module_count": 64,
-  "boot_record_count": 83624,
+  "boot_record_count": 83941,
   "mock_record_count": 19472,
   "validation_status": "PASS",
   "mock_production_policy": "hard-fail",
@@ -38,10 +38,10 @@
       "number": 3,
       "code": "terminology",
       "file": "modules/03_terminology.seeds.json",
-      "boot_records": 4538,
+      "boot_records": 4722,
       "mock_records": 180,
-      "line_count": 69823,
-      "sha256": "cea2d231f368fd3de24febceb0ab9a7f865760bad4fd1d0fa05a0421c0ced746"
+      "line_count": 71847,
+      "sha256": "eb53c5b000e839210f3800b8baa24aef9fd79097a3946e3f07396c0cf00f8196"
     },
     {
       "number": 4,
@@ -65,10 +65,10 @@
       "number": 6,
       "code": "authz",
       "file": "modules/06_authz.seeds.json",
-      "boot_records": 393,
+      "boot_records": 501,
       "mock_records": 184,
-      "line_count": 11255,
-      "sha256": "d9fc3c223a876503c85025f5817ad2a80fe073165903b1fc9734820fa0f17961"
+      "line_count": 14001,
+      "sha256": "ade3ec2c58c8bc3a1937ac7395e406c1563ef37b27eaa8b2c33c04adf379349b"
     },
     {
       "number": 7,
@@ -272,10 +272,10 @@
       "number": 29,
       "code": "delegated_access",
       "file": "modules/29_delegated_access.seeds.json",
-      "boot_records": 20,
+      "boot_records": 45,
       "mock_records": 112,
-      "line_count": 2493,
-      "sha256": "508478292ec0ad93d3a9326352b40d16eef813db1373efa1f2dea944a2e67d6f"
+      "line_count": 3541,
+      "sha256": "3a251bb0a6721827fdaf2a15aacace88d772e984be12b7b55d2bb2aadd2996b0"
     },
     {
       "number": 30,

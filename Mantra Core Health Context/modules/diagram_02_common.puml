@@ -226,6 +226,14 @@ entity "INDEXES · identifiers" as idxset_identifiers <<INDEX_SET>> {
   IX ix_identifiers_state_concept_id : (state_concept_id) BTREE
   IX ix_identifiers_created_by_user_id : (created_by_user_id) BTREE
   IX ix_identifiers_updated_by_user_id : (updated_by_user_id) BTREE
+  ' v4.2.71 (revision de seguridad N3): un documento nacional ACTIVO de paciente no se repite, comparado en su
+  ' forma canonica (mayusculas, sin puntos, guiones ni espacios, sin ceros a la izquierda). La expresion es la
+  ' MISMA de la API: normalizeNationalId (profiles/domain/national-id.ts) y NORMALIZED_ID de
+  ' SupportPatientsRepository. Solo OWNER_PATIENT (common:owner-type:patient): las personas de contacto
+  ' (representantes legales, OWNER_PERSON) se crean sin buscar duplicado y pueden repetir documento. Solo filas
+  ' sin cierre (valid_to IS NULL): el cambio de numero cierra la fila vieja y abre otra. En una base con
+  ' duplicados previos el parche NO crea este unico: avisa con WARNING y deja el indice de apoyo no unico.
+  UK uq_identifiers_national_id_normalized : (coalesce(nullif(regexp_replace(upper(regexp_replace(value, '[\s.-]+', '', 'g')), '^0+', ''), ''), '0')) UNIQUE BTREE WHERE type_concept_id = '595e7a3d-ba37-5014-9a72-635363b94864' AND state_concept_id = '38a1d301-f40d-5b17-a695-5e6d605f8b19' AND owner_type_concept_id = '350a0150-c27c-5241-b5d8-78daa13bed34' AND valid_to IS NULL
 }
 
 identifiers .. idxset_identifiers : indexed by

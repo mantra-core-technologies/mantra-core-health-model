@@ -70,6 +70,30 @@ python salud-db/rebuild_stack.py --yes   # ciclo limpio del stack (down -v → u
 Los generadores se validan **regenerando y diffeando**, nunca leyendo su código: si el diff
 sale vacío, el cambio no rompió nada.
 
+## Parches sobre una base viva y verificación SQL (personal de apoyo y gobierno de accesos)
+
+El DDL de `SQL/<NN>_<schema>/` sale de los `.puml`; lo que **no** sale de ellos (funciones, disparadores, RLS y semillas de
+arranque de los parches) vive en `SQL/patches/` y se aplica **después** del esquema, en este orden:
+
+```bash
+psql -v ON_ERROR_STOP=1 -d <base> -f SQL/apply_all.sql && psql -v ON_ERROR_STOP=1 -d <base> -f SQL/apply_deferred.sql
+psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-10-30_v4269_personal_apoyo.sql     # personal de apoyo (v4.2.69 → v4.2.71)
+psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-02_v4272_gobierno_de_accesos.sql # gobierno de accesos (v4.2.72)
+psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-03_v4273_revision_seguridad_gobierno.sql # revisión de seguridad ronda 1 (v4.2.73)
+```
+
+Todos son idempotentes (una transacción, re-ejecutables). **Si se vuelve a ejecutar el v4269 después del v4272, hay que volver a
+ejecutar el v4272 y el v4273**: el v4269 restituye las versiones anteriores de `refresh_effective_support_access` (que ya no excluiría un
+`DENY`) y de `integrity.support_tenant_consistency`, y el v4273 (que extiende esta última y reescribe `support_access_allowed`) las deja completas.
+El v4.2.73 agrega `tenant_id` + disparador + RLS a `organization_user_assignments` y `practitioner_delegate_assignments`, quita
+`UPDATE/DELETE/TRUNCATE` de `access_decision_log` (también a `mantra_app`), hace que `support_access_allowed` respete un `DENY` y
+**obliga** a que el v4269 y el v4272 creen sus políticas RLS (antes solo avisaban si la base no tenía RLS). El v4.2.72 agrega 73 permisos atómicos (los 15 códigos antiguos siguen como alias), 11 reglas SoD de
+plataforma, 7 plantillas de rol v2, 12 tablas de gobierno en `delegated_access` y el rol de sistema `SUPPORT_STAFF`; detalle en
+[`Mantra Core Health Context/docs/architecture/physical-materialization.md`](Mantra%20Core%20Health%20Context/docs/architecture/physical-materialization.md)
+y datos de demostración + verificaciones en [`salud-db/demo/README.md`](salud-db/demo/README.md) (`04` → `05` → `06` → `07` → `08`).
+
+Pruebas estáticas del modelo (sin base de datos): `python -m unittest discover -s salud-db/tests`.
+
 ## El corpus MeSH (`seedsProd/`)
 
 Son 501 MB de shards JSON (MeSH 2026 v6.1, 1 441 367 filas) que casi nunca cambian y que el

@@ -19,7 +19,7 @@ registra como `PENDING_REVIEW`; no se rellena con una frase genérica.
   `04_indexes.sql` y `05_constraints.sql`.
 - Inventario PostgreSQL canónico: los scripts `02_tables.sql` de los módulos. Los archivos de
   `SQL/patches/` son ALTERs/seeds incrementales y no se cuentan como tablas del rebuild canónico.
-- El inventario incluye **1.230 tablas, 16.851 columnas, 7.069 FK y 7.836 índices** en 57 schemas.
+- El inventario incluye **1.286 tablas, 17.836 columnas, 7.469 FK y 8.288 índices** en 61 schemas.
   Estos conteos describen el contenido leído hoy; prevalecen sobre
   los conteos históricos que aún aparecen en algunos encabezados de `SQL/`.
 - Fuera de este catálogo relacional: stores no relacionales de `NoSQL/`, vistas y metadata observada
@@ -59,9 +59,13 @@ esté vacío o su estado sea `PENDING_REVIEW`.
 
 ## Piloto y avance
 
-Las **1.230 tablas** tienen un motivo de existencia inicial respaldado por su diagrama de módulo y
-quedan con estado `DOMAIN_CURATED_DRAFT`: el motivo es del modelo, no una aprobación del
-responsable de dominio. `domains.csv`
+Las **1.255 de las 1.286 tablas** tienen un motivo de existencia inicial respaldado por su diagrama
+de módulo y quedan con estado `DOMAIN_CURATED_DRAFT`: el motivo es del modelo, no una aprobación del
+responsable de dominio. Las 31 restantes son las del módulo 69 (`pharma_lab`), que entraron al DDL
+después de la última curaduría y siguen en `PENDING_REVIEW`. Las 13 tablas del diseño de personal
+de apoyo (v4.2.69: `delegated_access`, `directory`, `practice`, `community` e `iam`) y las 12 del gobierno de accesos
+(v4.2.72: reglas, segregación de funciones, cuatro ojos, campañas, ciclo de vida, traspaso, banderas de pacientes, bitácora de
+decisiones, uso y anomalías, todas en `delegated_access`) ya traen su motivo. `domains.csv`
 resume la cobertura por schema y `tables.csv` permite filtrar las narrativas.
 
 ## Criterios por ficha de tabla

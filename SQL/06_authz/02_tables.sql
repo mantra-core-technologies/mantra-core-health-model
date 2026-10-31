@@ -35,6 +35,14 @@ CREATE TABLE IF NOT EXISTS "authz"."permissions" (
     "is_role_restricted" boolean NOT NULL,
     "required_role_code" varchar,
     "allow_direct_user_grant" boolean NOT NULL,
+    "sensitivity_concept_id" uuid,
+    "requires_reason" boolean NOT NULL DEFAULT false,
+    "requires_step_up" boolean NOT NULL DEFAULT false,
+    "approval_mode_concept_id" uuid,
+    "purpose_of_use_concept_id" uuid,
+    "legal_basis_concept_id" uuid,
+    "touches_clinical_data" boolean NOT NULL DEFAULT false,
+    "support_assignable" boolean NOT NULL DEFAULT false,
     CONSTRAINT "pk_permissions" PRIMARY KEY ("id")
 );
 

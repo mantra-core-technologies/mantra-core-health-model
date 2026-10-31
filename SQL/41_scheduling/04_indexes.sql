@@ -112,6 +112,10 @@ CREATE INDEX IF NOT EXISTS "ix_bookable_slots_created_by_user_id" ON "scheduling
 
 CREATE INDEX IF NOT EXISTS "ix_bookable_slots_updated_by_user_id" ON "scheduling"."bookable_slots" ("updated_by_user_id");
 
+CREATE INDEX IF NOT EXISTS "ix_bookable_slots_care_space_id" ON "scheduling"."bookable_slots" ("care_space_id");
+
+CREATE INDEX IF NOT EXISTS "ix_bookable_slots_healthcare_service_id" ON "scheduling"."bookable_slots" ("healthcare_service_id");
+
 CREATE UNIQUE INDEX IF NOT EXISTS "uq_slot_holds_hold_token" ON "scheduling"."slot_holds" ("hold_token");
 
 CREATE INDEX IF NOT EXISTS "ix_slot_holds_bookable_slot_id" ON "scheduling"."slot_holds" ("bookable_slot_id");
@@ -175,6 +179,12 @@ CREATE INDEX IF NOT EXISTS "ix_appointment_bookings_updated_by_user_id" ON "sche
 CREATE INDEX IF NOT EXISTS "ix_appointment_bookings_tenant_id_status_concept_id" ON "scheduling"."appointment_bookings" ("tenant_id", "status_concept_id", "updated_at" DESC);
 
 CREATE INDEX IF NOT EXISTS "ix_appointment_bookings_patient_profile_id_updated_at" ON "scheduling"."appointment_bookings" ("tenant_id", "patient_profile_id", "updated_at" DESC);
+
+CREATE INDEX IF NOT EXISTS "ix_appointment_bookings_care_space_id" ON "scheduling"."appointment_bookings" ("care_space_id");
+
+CREATE INDEX IF NOT EXISTS "ix_appointment_bookings_healthcare_service_id" ON "scheduling"."appointment_bookings" ("healthcare_service_id");
+
+CREATE INDEX IF NOT EXISTS "ix_appointment_bookings_booked_via_grant_id" ON "scheduling"."appointment_bookings" ("booked_via_grant_id");
 
 CREATE INDEX IF NOT EXISTS "ix_booking_reschedules_booking_id" ON "scheduling"."booking_reschedules" ("booking_id");
 

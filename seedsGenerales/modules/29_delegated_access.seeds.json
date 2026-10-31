@@ -43,9 +43,11 @@
   "boot": {
     "load_order": [
       "delegated_permission_sets",
-      "delegated_permission_set_items"
+      "delegated_permission_set_items",
+      "role_templates",
+      "sod_rules"
     ],
-    "record_count": 20,
+    "record_count": 45,
     "records": {
       "organization_user_assignments": [],
       "delegated_permission_sets": [
@@ -375,7 +377,968 @@
       "practitioner_delegate_assignments": [],
       "delegated_access_grants": [],
       "delegated_access_approval_requests": [],
-      "delegation_events": []
+      "delegation_events": [],
+      "role_templates": [
+        {
+          "id": "e6868a49-9408-50e0-8ea8-c3d79ff435f8",
+          "tenant_id": null,
+          "code": "SECRETARY",
+          "name": "Secretaria",
+          "default_actions_json": [
+            "schedule.view",
+            "schedule.create",
+            "schedule.reschedule",
+            "schedule.cancel",
+            "schedule.confirm",
+            "schedule.check_in",
+            "schedule.walk_in",
+            "schedule.waitlist",
+            "schedule.send_reminders",
+            "patient.register",
+            "messages.reply_on_behalf"
+          ],
+          "status_concept_id": "f2889c99-ac92-52a0-94dc-db6fed4edad8",
+          "version_number": 1,
+          "created_at": "2026-10-03T03:13:00Z",
+          "updated_at": "2026-10-03T03:13:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1,
+          "default_conditions_json": null,
+          "ceiling_actions_json": null
+        },
+        {
+          "id": "8575c6d9-8bd2-5977-a80f-b76969071953",
+          "tenant_id": null,
+          "code": "MEDICAL_ASSISTANT",
+          "name": "Asistente médico",
+          "default_actions_json": [
+            "schedule.view",
+            "schedule.create",
+            "schedule.reschedule",
+            "schedule.cancel",
+            "schedule.confirm",
+            "schedule.check_in",
+            "schedule.walk_in",
+            "schedule.waitlist",
+            "schedule.send_reminders",
+            "patient.register",
+            "messages.reply_on_behalf"
+          ],
+          "status_concept_id": "f2889c99-ac92-52a0-94dc-db6fed4edad8",
+          "version_number": 1,
+          "created_at": "2026-10-03T03:13:00Z",
+          "updated_at": "2026-10-03T03:13:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1,
+          "default_conditions_json": null,
+          "ceiling_actions_json": null
+        },
+        {
+          "id": "7986bb01-1a6c-50af-b0c2-0b6bc28d5a65",
+          "tenant_id": null,
+          "code": "NURSING",
+          "name": "Enfermería",
+          "default_actions_json": [
+            "schedule.view",
+            "schedule.check_in",
+            "schedule.waitlist"
+          ],
+          "status_concept_id": "f2889c99-ac92-52a0-94dc-db6fed4edad8",
+          "version_number": 1,
+          "created_at": "2026-10-03T03:13:00Z",
+          "updated_at": "2026-10-03T03:13:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1,
+          "default_conditions_json": null,
+          "ceiling_actions_json": null
+        },
+        {
+          "id": "a210d088-6991-5250-b8c9-299875747d59",
+          "tenant_id": null,
+          "code": "FRONT_DESK",
+          "name": "Recepción",
+          "default_actions_json": [
+            "schedule.view",
+            "schedule.check_in",
+            "schedule.walk_in",
+            "patient.register"
+          ],
+          "status_concept_id": "f2889c99-ac92-52a0-94dc-db6fed4edad8",
+          "version_number": 1,
+          "created_at": "2026-10-03T03:13:00Z",
+          "updated_at": "2026-10-03T03:13:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1,
+          "default_conditions_json": null,
+          "ceiling_actions_json": null
+        },
+        {
+          "id": "6b5c8b0f-87b1-531c-86fd-01b0c1021bc0",
+          "tenant_id": null,
+          "code": "BILLING_CASHIER",
+          "name": "Facturación y caja",
+          "default_actions_json": [
+            "schedule.view",
+            "billing.collect",
+            "billing.issue_receipt"
+          ],
+          "status_concept_id": "f2889c99-ac92-52a0-94dc-db6fed4edad8",
+          "version_number": 1,
+          "created_at": "2026-10-03T03:13:00Z",
+          "updated_at": "2026-10-03T03:13:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1,
+          "default_conditions_json": null,
+          "ceiling_actions_json": null
+        },
+        {
+          "id": "da9a9ff5-16ec-55f0-a56a-44183573326a",
+          "tenant_id": null,
+          "code": "CALL_CENTER",
+          "name": "Central telefónica",
+          "default_actions_json": [
+            "schedule.view",
+            "schedule.create",
+            "schedule.reschedule",
+            "schedule.cancel"
+          ],
+          "status_concept_id": "f2889c99-ac92-52a0-94dc-db6fed4edad8",
+          "version_number": 1,
+          "created_at": "2026-10-03T03:13:00Z",
+          "updated_at": "2026-10-03T03:13:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1,
+          "default_conditions_json": null,
+          "ceiling_actions_json": null
+        },
+        {
+          "id": "105d71e7-338b-579e-9194-65b97372f332",
+          "tenant_id": null,
+          "code": "ORG_MANAGEMENT",
+          "name": "Gestión de la organización",
+          "default_actions_json": [
+            "schedule.view",
+            "schedule.create",
+            "schedule.reschedule",
+            "schedule.cancel",
+            "schedule.confirm",
+            "schedule.check_in",
+            "schedule.walk_in",
+            "schedule.waitlist",
+            "schedule.send_reminders",
+            "schedule.block_time",
+            "schedule.edit_hours",
+            "patient.register"
+          ],
+          "status_concept_id": "f2889c99-ac92-52a0-94dc-db6fed4edad8",
+          "version_number": 1,
+          "created_at": "2026-10-03T03:13:00Z",
+          "updated_at": "2026-10-03T03:13:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1,
+          "default_conditions_json": null,
+          "ceiling_actions_json": null
+        },
+        {
+          "id": "473b58e0-2a4f-5985-98eb-6d5fcc513a23",
+          "tenant_id": null,
+          "code": "SECRETARY",
+          "name": "Secretaria",
+          "default_actions_json": [
+            "agenda.appointment.view",
+            "agenda.appointment.view.patient_name",
+            "agenda.appointment.view.reason",
+            "agenda.appointment.create",
+            "agenda.appointment.reschedule",
+            "agenda.appointment.cancel",
+            "agenda.appointment.confirm",
+            "agenda.appointment.check_in",
+            "agenda.appointment.walk_in",
+            "agenda.waitlist.manage",
+            "agenda.reminder.send",
+            "patients.search.exact",
+            "patients.profile.view_basic",
+            "patients.profile.register",
+            "patients.guardian.record",
+            "messages.inbox.view",
+            "messages.conversation.reply_on_behalf",
+            "messages.conversation.assign",
+            "messages.note.create_internal",
+            "messages.template.use"
+          ],
+          "default_conditions_json": {
+            "agenda.appointment.view.reason": {
+              "schemaVersion": 1,
+              "appointment": {
+                "window": {
+                  "daysBefore": 1,
+                  "daysAfter": 14
+                }
+              },
+              "fields": {
+                "agenda.appointment.view.reason": {
+                  "mask": "PARTIAL"
+                }
+              }
+            }
+          },
+          "ceiling_actions_json": [
+            "agenda.appointment.view",
+            "agenda.appointment.view.patient_name",
+            "agenda.appointment.view.patient_phone",
+            "agenda.appointment.view.patient_document",
+            "agenda.appointment.view.reason",
+            "agenda.appointment.view.insurance",
+            "agenda.appointment.view.price",
+            "agenda.appointment.create",
+            "agenda.appointment.create.overbook",
+            "agenda.appointment.reschedule",
+            "agenda.appointment.cancel",
+            "agenda.appointment.confirm",
+            "agenda.appointment.check_in",
+            "agenda.appointment.no_show",
+            "agenda.appointment.walk_in",
+            "agenda.waitlist.manage",
+            "agenda.reminder.send",
+            "agenda.block.create",
+            "agenda.block.remove",
+            "agenda.hours.edit",
+            "patients.search.exact",
+            "patients.profile.view_basic",
+            "patients.profile.view.phone_full",
+            "patients.profile.view.document_full",
+            "patients.coverage.view",
+            "patients.profile.register",
+            "patients.guardian.record",
+            "patients.profile.edit_contact",
+            "patients.profile.merge_request",
+            "patients.clinical.request_temporary_access",
+            "messages.inbox.view",
+            "messages.conversation.reply_on_behalf",
+            "messages.conversation.assign",
+            "messages.conversation.resolve",
+            "messages.note.create_internal",
+            "messages.template.use",
+            "messages.template.manage",
+            "messages.attachment.send",
+            "billing.invoice.view",
+            "billing.payment.collect",
+            "billing.receipt.issue",
+            "reports.agenda.view"
+          ],
+          "status_concept_id": "6b070aec-a5af-52bc-8462-55be0d26298a",
+          "version_number": 2,
+          "created_at": "2026-08-28T18:59:00Z",
+          "updated_at": "2026-08-28T18:59:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "409ce186-d1ad-5e94-a1ad-21eef9580b92",
+          "tenant_id": null,
+          "code": "MEDICAL_ASSISTANT",
+          "name": "Asistente médico",
+          "default_actions_json": [
+            "agenda.appointment.view",
+            "agenda.appointment.view.patient_name",
+            "agenda.appointment.view.reason",
+            "agenda.appointment.create",
+            "agenda.appointment.reschedule",
+            "agenda.appointment.cancel",
+            "agenda.appointment.confirm",
+            "agenda.appointment.check_in",
+            "agenda.appointment.walk_in",
+            "agenda.waitlist.manage",
+            "agenda.reminder.send",
+            "patients.search.exact",
+            "patients.profile.view_basic",
+            "patients.profile.register",
+            "patients.guardian.record",
+            "messages.inbox.view",
+            "messages.conversation.reply_on_behalf",
+            "messages.conversation.assign",
+            "messages.note.create_internal",
+            "messages.template.use"
+          ],
+          "default_conditions_json": {
+            "agenda.appointment.view.reason": {
+              "schemaVersion": 1,
+              "appointment": {
+                "window": {
+                  "daysBefore": 1,
+                  "daysAfter": 14
+                }
+              },
+              "fields": {
+                "agenda.appointment.view.reason": {
+                  "mask": "PARTIAL"
+                }
+              }
+            }
+          },
+          "ceiling_actions_json": [
+            "agenda.appointment.view",
+            "agenda.appointment.view.patient_name",
+            "agenda.appointment.view.patient_phone",
+            "agenda.appointment.view.patient_document",
+            "agenda.appointment.view.reason",
+            "agenda.appointment.view.insurance",
+            "agenda.appointment.view.price",
+            "agenda.appointment.create",
+            "agenda.appointment.create.overbook",
+            "agenda.appointment.reschedule",
+            "agenda.appointment.cancel",
+            "agenda.appointment.confirm",
+            "agenda.appointment.check_in",
+            "agenda.appointment.no_show",
+            "agenda.appointment.walk_in",
+            "agenda.waitlist.manage",
+            "agenda.reminder.send",
+            "agenda.block.create",
+            "agenda.block.remove",
+            "agenda.hours.edit",
+            "patients.search.exact",
+            "patients.profile.view_basic",
+            "patients.profile.view.phone_full",
+            "patients.profile.view.document_full",
+            "patients.coverage.view",
+            "patients.profile.register",
+            "patients.guardian.record",
+            "patients.profile.edit_contact",
+            "patients.profile.merge_request",
+            "patients.clinical.request_temporary_access",
+            "messages.inbox.view",
+            "messages.conversation.reply_on_behalf",
+            "messages.conversation.assign",
+            "messages.conversation.resolve",
+            "messages.note.create_internal",
+            "messages.template.use",
+            "messages.template.manage",
+            "messages.attachment.send",
+            "billing.invoice.view",
+            "billing.payment.collect",
+            "billing.receipt.issue",
+            "reports.agenda.view"
+          ],
+          "status_concept_id": "6b070aec-a5af-52bc-8462-55be0d26298a",
+          "version_number": 2,
+          "created_at": "2026-08-28T18:59:00Z",
+          "updated_at": "2026-08-28T18:59:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "bb877c7b-6e11-5d8c-a2dd-6b578c8eeb57",
+          "tenant_id": null,
+          "code": "NURSING",
+          "name": "Enfermería",
+          "default_actions_json": [
+            "agenda.appointment.view",
+            "agenda.appointment.view.patient_name",
+            "agenda.appointment.view.reason",
+            "agenda.appointment.check_in",
+            "agenda.waitlist.manage",
+            "patients.search.exact",
+            "patients.profile.view_basic"
+          ],
+          "default_conditions_json": {
+            "agenda.appointment.view.reason": {
+              "schemaVersion": 1,
+              "appointment": {
+                "window": {
+                  "daysBefore": 1,
+                  "daysAfter": 14
+                }
+              },
+              "fields": {
+                "agenda.appointment.view.reason": {
+                  "mask": "PARTIAL"
+                }
+              }
+            }
+          },
+          "ceiling_actions_json": [
+            "agenda.appointment.view",
+            "agenda.appointment.view.patient_name",
+            "agenda.appointment.view.patient_phone",
+            "agenda.appointment.view.reason",
+            "agenda.appointment.view.insurance",
+            "agenda.appointment.check_in",
+            "agenda.appointment.no_show",
+            "agenda.appointment.walk_in",
+            "agenda.waitlist.manage",
+            "patients.search.exact",
+            "patients.profile.view_basic",
+            "patients.coverage.view",
+            "patients.clinical.request_temporary_access",
+            "messages.inbox.view",
+            "messages.note.create_internal",
+            "messages.template.use",
+            "reports.agenda.view"
+          ],
+          "status_concept_id": "6b070aec-a5af-52bc-8462-55be0d26298a",
+          "version_number": 2,
+          "created_at": "2026-08-28T18:59:00Z",
+          "updated_at": "2026-08-28T18:59:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "2b7d9162-b5fb-512c-bfc3-1ed863d704ff",
+          "tenant_id": null,
+          "code": "FRONT_DESK",
+          "name": "Recepción",
+          "default_actions_json": [
+            "agenda.appointment.view",
+            "agenda.appointment.view.patient_name",
+            "agenda.appointment.check_in",
+            "agenda.appointment.walk_in",
+            "patients.search.exact",
+            "patients.profile.view_basic",
+            "patients.profile.register",
+            "patients.guardian.record"
+          ],
+          "default_conditions_json": null,
+          "ceiling_actions_json": [
+            "agenda.appointment.view",
+            "agenda.appointment.view.patient_name",
+            "agenda.appointment.view.patient_phone",
+            "agenda.appointment.view.patient_document",
+            "agenda.appointment.view.insurance",
+            "agenda.appointment.view.price",
+            "agenda.appointment.create",
+            "agenda.appointment.reschedule",
+            "agenda.appointment.cancel",
+            "agenda.appointment.confirm",
+            "agenda.appointment.check_in",
+            "agenda.appointment.no_show",
+            "agenda.appointment.walk_in",
+            "agenda.waitlist.manage",
+            "agenda.reminder.send",
+            "patients.search.exact",
+            "patients.profile.view_basic",
+            "patients.profile.view.phone_full",
+            "patients.profile.view.document_full",
+            "patients.coverage.view",
+            "patients.profile.register",
+            "patients.guardian.record",
+            "patients.profile.edit_contact",
+            "patients.profile.merge_request",
+            "messages.inbox.view",
+            "messages.conversation.reply_on_behalf",
+            "messages.conversation.assign",
+            "messages.conversation.resolve",
+            "messages.note.create_internal",
+            "messages.template.use",
+            "messages.attachment.send",
+            "billing.invoice.view",
+            "billing.payment.collect",
+            "billing.receipt.issue",
+            "reports.agenda.view"
+          ],
+          "status_concept_id": "6b070aec-a5af-52bc-8462-55be0d26298a",
+          "version_number": 2,
+          "created_at": "2026-08-28T18:59:00Z",
+          "updated_at": "2026-08-28T18:59:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "0856c6ec-216d-5d47-9c24-4f62a46925ee",
+          "tenant_id": null,
+          "code": "BILLING_CASHIER",
+          "name": "Facturación y caja",
+          "default_actions_json": [
+            "agenda.appointment.view",
+            "agenda.appointment.view.patient_name",
+            "billing.invoice.view",
+            "billing.payment.collect",
+            "billing.receipt.issue"
+          ],
+          "default_conditions_json": null,
+          "ceiling_actions_json": [
+            "agenda.appointment.view",
+            "agenda.appointment.view.patient_name",
+            "agenda.appointment.view.insurance",
+            "agenda.appointment.view.price",
+            "patients.search.exact",
+            "patients.profile.view_basic",
+            "patients.coverage.view",
+            "billing.invoice.view",
+            "billing.payment.collect",
+            "billing.receipt.issue",
+            "billing.receipt.void",
+            "billing.payment.refund",
+            "billing.discount.apply",
+            "billing.cashbox.close",
+            "reports.billing.view",
+            "reports.billing.export"
+          ],
+          "status_concept_id": "6b070aec-a5af-52bc-8462-55be0d26298a",
+          "version_number": 2,
+          "created_at": "2026-08-28T18:59:00Z",
+          "updated_at": "2026-08-28T18:59:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "8c162d64-2b36-57b4-94c7-c034d6c3b26c",
+          "tenant_id": null,
+          "code": "CALL_CENTER",
+          "name": "Central telefónica",
+          "default_actions_json": [
+            "agenda.appointment.view",
+            "agenda.appointment.view.patient_name",
+            "agenda.appointment.create",
+            "agenda.appointment.reschedule",
+            "agenda.appointment.cancel",
+            "patients.search.exact",
+            "patients.profile.view_basic"
+          ],
+          "default_conditions_json": null,
+          "ceiling_actions_json": [
+            "agenda.appointment.view",
+            "agenda.appointment.view.patient_name",
+            "agenda.appointment.view.patient_phone",
+            "agenda.appointment.view.insurance",
+            "agenda.appointment.view.price",
+            "agenda.appointment.create",
+            "agenda.appointment.reschedule",
+            "agenda.appointment.cancel",
+            "agenda.appointment.confirm",
+            "agenda.appointment.no_show",
+            "agenda.waitlist.manage",
+            "agenda.reminder.send",
+            "patients.search.exact",
+            "patients.profile.view_basic",
+            "patients.profile.view.phone_full",
+            "patients.coverage.view",
+            "patients.profile.register",
+            "patients.guardian.record",
+            "patients.profile.edit_contact",
+            "messages.inbox.view",
+            "messages.conversation.reply_on_behalf",
+            "messages.conversation.assign",
+            "messages.conversation.resolve",
+            "messages.note.create_internal",
+            "messages.template.use",
+            "reports.agenda.view"
+          ],
+          "status_concept_id": "6b070aec-a5af-52bc-8462-55be0d26298a",
+          "version_number": 2,
+          "created_at": "2026-08-28T18:59:00Z",
+          "updated_at": "2026-08-28T18:59:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "ce7f96dd-6f85-5121-a4ca-f5b4877f7267",
+          "tenant_id": null,
+          "code": "ORG_MANAGEMENT",
+          "name": "Gestión de la organización",
+          "default_actions_json": [
+            "agenda.appointment.view",
+            "agenda.appointment.view.patient_name",
+            "agenda.appointment.create",
+            "agenda.appointment.reschedule",
+            "agenda.appointment.cancel",
+            "agenda.appointment.confirm",
+            "agenda.appointment.check_in",
+            "agenda.appointment.walk_in",
+            "agenda.waitlist.manage",
+            "agenda.reminder.send",
+            "agenda.block.create",
+            "agenda.block.remove",
+            "agenda.hours.edit",
+            "patients.search.exact",
+            "patients.profile.view_basic",
+            "patients.profile.register",
+            "patients.guardian.record",
+            "reports.agenda.view",
+            "team.members.view",
+            "audit.activity.view_team",
+            "audit.decisions.explain"
+          ],
+          "default_conditions_json": null,
+          "ceiling_actions_json": [
+            "agenda.appointment.view",
+            "agenda.appointment.view.patient_name",
+            "agenda.appointment.view.patient_phone",
+            "agenda.appointment.view.patient_document",
+            "agenda.appointment.view.reason",
+            "agenda.appointment.view.insurance",
+            "agenda.appointment.view.price",
+            "agenda.appointment.create",
+            "agenda.appointment.create.overbook",
+            "agenda.appointment.reschedule",
+            "agenda.appointment.cancel",
+            "agenda.appointment.confirm",
+            "agenda.appointment.check_in",
+            "agenda.appointment.no_show",
+            "agenda.appointment.walk_in",
+            "agenda.waitlist.manage",
+            "agenda.reminder.send",
+            "agenda.block.create",
+            "agenda.block.remove",
+            "agenda.hours.edit",
+            "patients.search.exact",
+            "patients.profile.view_basic",
+            "patients.profile.view.phone_full",
+            "patients.profile.view.document_full",
+            "patients.coverage.view",
+            "patients.profile.register",
+            "patients.guardian.record",
+            "patients.profile.edit_contact",
+            "patients.profile.edit_verified",
+            "patients.profile.merge_request",
+            "patients.clinical.request_temporary_access",
+            "messages.inbox.view",
+            "messages.conversation.reply_on_behalf",
+            "messages.conversation.assign",
+            "messages.conversation.resolve",
+            "messages.note.create_internal",
+            "messages.template.use",
+            "messages.template.manage",
+            "messages.attachment.send",
+            "messages.broadcast.send",
+            "billing.invoice.view",
+            "billing.payment.collect",
+            "billing.receipt.issue",
+            "billing.receipt.void",
+            "billing.payment.refund",
+            "billing.discount.apply",
+            "billing.cashbox.close",
+            "reports.agenda.view",
+            "reports.agenda.export",
+            "reports.billing.view",
+            "reports.billing.export",
+            "team.members.view",
+            "team.invitations.create",
+            "team.requests.decide",
+            "team.grants.assign",
+            "team.grants.revoke",
+            "team.engagement.recertify",
+            "team.engagement.suspend",
+            "team.engagement.reactivate",
+            "team.engagement.end",
+            "team.handover.execute",
+            "team.campaigns.review",
+            "team.campaigns.manage",
+            "team.sod.exception.request",
+            "audit.activity.view_team",
+            "audit.activity.view_org",
+            "audit.activity.export",
+            "audit.decisions.explain",
+            "audit.reports.governance.view"
+          ],
+          "status_concept_id": "6b070aec-a5af-52bc-8462-55be0d26298a",
+          "version_number": 2,
+          "created_at": "2026-08-28T18:59:00Z",
+          "updated_at": "2026-08-28T18:59:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        }
+      ],
+      "sod_rules": [
+        {
+          "id": "b25947c7-9ed0-5345-8896-f2088d0186aa",
+          "tenant_id": null,
+          "code": "SOD-BILL-01",
+          "name": "Cobrar y anular",
+          "base_rule_id": null,
+          "atoms_a_json": [
+            "billing.payment.collect"
+          ],
+          "atoms_b_json": [
+            "billing.receipt.void"
+          ],
+          "scope_concept_id": "0fb8d904-8d4c-5ff5-972e-b0968cadc699",
+          "action_concept_id": "d317a334-2e99-5361-836c-674cbeec5d26",
+          "is_hard": true,
+          "max_exception_days": null,
+          "rationale_text": "Quien cobra no debe poder anular el comprobante de lo que cobró.",
+          "status_concept_id": "38a1d301-f40d-5b17-a695-5e6d605f8b19",
+          "version_number": 1,
+          "created_at": "2026-08-28T18:59:00Z",
+          "updated_at": "2026-08-28T18:59:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "167e3be5-0125-5522-b737-f1cf0dbdd952",
+          "tenant_id": null,
+          "code": "SOD-BILL-02",
+          "name": "Cobrar y devolver",
+          "base_rule_id": null,
+          "atoms_a_json": [
+            "billing.payment.collect"
+          ],
+          "atoms_b_json": [
+            "billing.payment.refund"
+          ],
+          "scope_concept_id": "0fb8d904-8d4c-5ff5-972e-b0968cadc699",
+          "action_concept_id": "d317a334-2e99-5361-836c-674cbeec5d26",
+          "is_hard": true,
+          "max_exception_days": null,
+          "rationale_text": "Quien cobra no debe poder devolver el dinero que cobró.",
+          "status_concept_id": "38a1d301-f40d-5b17-a695-5e6d605f8b19",
+          "version_number": 1,
+          "created_at": "2026-08-28T18:59:00Z",
+          "updated_at": "2026-08-28T18:59:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "091d7679-9a72-5c7d-8c36-d94cedc0d385",
+          "tenant_id": null,
+          "code": "SOD-BILL-03",
+          "name": "Crear citas y emitir comprobantes",
+          "base_rule_id": null,
+          "atoms_a_json": [
+            "agenda.appointment.create",
+            "agenda.appointment.walk_in"
+          ],
+          "atoms_b_json": [
+            "billing.receipt.issue"
+          ],
+          "scope_concept_id": "0fb8d904-8d4c-5ff5-972e-b0968cadc699",
+          "action_concept_id": "117ffae4-a53b-5f5a-a927-d625ae57ad67",
+          "is_hard": false,
+          "max_exception_days": 90,
+          "rationale_text": "Crear una atención y facturarla en una sola persona permite cobros ficticios; en consultorios pequeños se admite con excepción (D-05).",
+          "status_concept_id": "38a1d301-f40d-5b17-a695-5e6d605f8b19",
+          "version_number": 1,
+          "created_at": "2026-08-28T18:59:00Z",
+          "updated_at": "2026-08-28T18:59:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "f36f83a9-59da-5bb6-b6b1-0fd487a21f0c",
+          "tenant_id": null,
+          "code": "SOD-BILL-04",
+          "name": "Descontar y cobrar",
+          "base_rule_id": null,
+          "atoms_a_json": [
+            "billing.discount.apply"
+          ],
+          "atoms_b_json": [
+            "billing.payment.collect"
+          ],
+          "scope_concept_id": "0fb8d904-8d4c-5ff5-972e-b0968cadc699",
+          "action_concept_id": "156a7df4-b47c-52d3-9646-9f201757db51",
+          "is_hard": false,
+          "max_exception_days": null,
+          "rationale_text": "Quien aplica descuentos y también cobra puede quedarse con la diferencia: se advierte y aparece en el tablero.",
+          "status_concept_id": "38a1d301-f40d-5b17-a695-5e6d605f8b19",
+          "version_number": 1,
+          "created_at": "2026-08-28T18:59:00Z",
+          "updated_at": "2026-08-28T18:59:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "19b22747-8186-5e30-91bf-8d01c0fac74a",
+          "tenant_id": null,
+          "code": "SOD-BILL-05",
+          "name": "Emitir y anular el mismo comprobante",
+          "base_rule_id": null,
+          "atoms_a_json": [
+            "billing.receipt.issue"
+          ],
+          "atoms_b_json": [
+            "billing.receipt.void"
+          ],
+          "scope_concept_id": "926b5260-3468-5925-9aae-6ebbd4942fea",
+          "action_concept_id": "d317a334-2e99-5361-836c-674cbeec5d26",
+          "is_hard": true,
+          "max_exception_days": null,
+          "rationale_text": "Una misma persona no puede emitir y anular un mismo comprobante (lo impone el servicio al ejecutar).",
+          "status_concept_id": "38a1d301-f40d-5b17-a695-5e6d605f8b19",
+          "version_number": 1,
+          "created_at": "2026-08-28T18:59:00Z",
+          "updated_at": "2026-08-28T18:59:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "ad0a3d50-e98f-56ec-905a-de9fe008f38e",
+          "tenant_id": null,
+          "code": "SOD-PAT-01",
+          "name": "Registrar pacientes y corregir datos verificados",
+          "base_rule_id": null,
+          "atoms_a_json": [
+            "patients.profile.register",
+            "patients.guardian.record"
+          ],
+          "atoms_b_json": [
+            "patients.profile.edit_verified"
+          ],
+          "scope_concept_id": "0fb8d904-8d4c-5ff5-972e-b0968cadc699",
+          "action_concept_id": "d317a334-2e99-5361-836c-674cbeec5d26",
+          "is_hard": true,
+          "max_exception_days": null,
+          "rationale_text": "Quien registra una identidad no debe poder corregirla después de verificada (cierra el hallazgo N1/N3).",
+          "status_concept_id": "38a1d301-f40d-5b17-a695-5e6d605f8b19",
+          "version_number": 1,
+          "created_at": "2026-08-28T18:59:00Z",
+          "updated_at": "2026-08-28T18:59:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "4c597985-64bc-5e15-ab5f-fde3fbf4f4d1",
+          "tenant_id": null,
+          "code": "SOD-PAT-02",
+          "name": "Registrar y fusionar fichas",
+          "base_rule_id": null,
+          "atoms_a_json": [
+            "patients.profile.register"
+          ],
+          "atoms_b_json": [
+            "patients.profile.merge_request"
+          ],
+          "scope_concept_id": "0fb8d904-8d4c-5ff5-972e-b0968cadc699",
+          "action_concept_id": "117ffae4-a53b-5f5a-a927-d625ae57ad67",
+          "is_hard": false,
+          "max_exception_days": 90,
+          "rationale_text": "Registrar y fusionar fichas en una sola persona facilita ocultar duplicados.",
+          "status_concept_id": "38a1d301-f40d-5b17-a695-5e6d605f8b19",
+          "version_number": 1,
+          "created_at": "2026-08-28T18:59:00Z",
+          "updated_at": "2026-08-28T18:59:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "e9a28b9e-a09e-56d6-ac31-fd9f5035d5e9",
+          "tenant_id": null,
+          "code": "SOD-GOV-01",
+          "name": "Solicitar y aprobar (acceso)",
+          "base_rule_id": null,
+          "atoms_a_json": [
+            "@request"
+          ],
+          "atoms_b_json": [
+            "@decide"
+          ],
+          "scope_concept_id": "926b5260-3468-5925-9aae-6ebbd4942fea",
+          "action_concept_id": "d317a334-2e99-5361-836c-674cbeec5d26",
+          "is_hard": true,
+          "max_exception_days": null,
+          "rationale_text": "Nadie aprueba su propia solicitud de acceso (generaliza SUPPORT_DECISION_SELF).",
+          "status_concept_id": "38a1d301-f40d-5b17-a695-5e6d605f8b19",
+          "version_number": 1,
+          "created_at": "2026-08-28T18:59:00Z",
+          "updated_at": "2026-08-28T18:59:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "5ff5d9a4-3b7a-5c8d-b746-873669247e03",
+          "tenant_id": null,
+          "code": "SOD-GOV-02",
+          "name": "Otorgar y certificar",
+          "base_rule_id": null,
+          "atoms_a_json": [
+            "team.grants.assign"
+          ],
+          "atoms_b_json": [
+            "team.campaigns.review"
+          ],
+          "scope_concept_id": "926b5260-3468-5925-9aae-6ebbd4942fea",
+          "action_concept_id": "d317a334-2e99-5361-836c-674cbeec5d26",
+          "is_hard": true,
+          "max_exception_days": null,
+          "rationale_text": "Quien otorgó o aprobó una concesión no la certifica en la campaña.",
+          "status_concept_id": "38a1d301-f40d-5b17-a695-5e6d605f8b19",
+          "version_number": 1,
+          "created_at": "2026-08-28T18:59:00Z",
+          "updated_at": "2026-08-28T18:59:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "d003dffd-cd20-5ff4-b3d1-43648214c17f",
+          "tenant_id": null,
+          "code": "SOD-GOV-03",
+          "name": "Administrar el equipo y manejar caja",
+          "base_rule_id": null,
+          "atoms_a_json": [
+            "team.grants.assign",
+            "team.requests.decide"
+          ],
+          "atoms_b_json": [
+            "billing.payment.collect",
+            "billing.receipt.issue"
+          ],
+          "scope_concept_id": "0fb8d904-8d4c-5ff5-972e-b0968cadc699",
+          "action_concept_id": "117ffae4-a53b-5f5a-a927-d625ae57ad67",
+          "is_hard": false,
+          "max_exception_days": 90,
+          "rationale_text": "Quien reparte permisos no debería manejar dinero con los suyos.",
+          "status_concept_id": "38a1d301-f40d-5b17-a695-5e6d605f8b19",
+          "version_number": 1,
+          "created_at": "2026-08-28T18:59:00Z",
+          "updated_at": "2026-08-28T18:59:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        },
+        {
+          "id": "1a32689a-98d2-5102-a6ff-337e4110f310",
+          "tenant_id": null,
+          "code": "SOD-AUD-01",
+          "name": "Auditar y operar",
+          "base_rule_id": null,
+          "atoms_a_json": [
+            "audit.activity.view_org",
+            "audit.activity.export",
+            "audit.reports.governance.view"
+          ],
+          "atoms_b_json": [
+            "billing.payment.collect",
+            "billing.receipt.void",
+            "agenda.appointment.cancel",
+            "patients.profile.edit_verified"
+          ],
+          "scope_concept_id": "0fb8d904-8d4c-5ff5-972e-b0968cadc699",
+          "action_concept_id": "117ffae4-a53b-5f5a-a927-d625ae57ad67",
+          "is_hard": false,
+          "max_exception_days": 90,
+          "rationale_text": "Quien audita la actividad no debe ser quien la produce.",
+          "status_concept_id": "38a1d301-f40d-5b17-a695-5e6d605f8b19",
+          "version_number": 1,
+          "created_at": "2026-08-28T18:59:00Z",
+          "updated_at": "2026-08-28T18:59:00Z",
+          "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
+          "row_version": 1
+        }
+      ]
     },
     "entity_seed_policies": [
       {
@@ -518,11 +1481,64 @@
         "primary_key_fields": [
           "id"
         ]
+      },
+      {
+        "entity": "role_templates",
+        "stereotype": "RELATIONAL_TABLE",
+        "boot_seeded": true,
+        "mock_seeded": false,
+        "rationale": "Entidad incorporada en la materialización v4.0.7 de los patches v4.0.2–v4.0.6; campos obligatorios tomados del DDL generado.",
+        "required_fields": [
+          "id",
+          "code",
+          "name",
+          "default_actions_json",
+          "status_concept_id",
+          "version_number",
+          "created_at",
+          "updated_at"
+        ],
+        "unique_fields": [
+          "code",
+          "tenant_id",
+          "version_number"
+        ],
+        "primary_key_fields": [
+          "id"
+        ]
+      },
+      {
+        "entity": "sod_rules",
+        "stereotype": "RELATIONAL_TABLE",
+        "boot_seeded": true,
+        "mock_seeded": false,
+        "rationale": "Entidad incorporada en la materialización v4.0.7 de los patches v4.0.2–v4.0.6; campos obligatorios tomados del DDL generado.",
+        "required_fields": [
+          "id",
+          "code",
+          "name",
+          "atoms_a_json",
+          "atoms_b_json",
+          "scope_concept_id",
+          "action_concept_id",
+          "status_concept_id",
+          "version_number",
+          "created_at",
+          "updated_at"
+        ],
+        "unique_fields": [
+          "code",
+          "tenant_id",
+          "version_number"
+        ],
+        "primary_key_fields": [
+          "id"
+        ]
       }
     ],
     "summary": {
-      "record_count": 20,
-      "entity_count": 2,
+      "record_count": 45,
+      "entity_count": 4,
       "populated_entity_count": 2,
       "scenario_count": null,
       "seed_revision": "2.0.0-enhanced"
@@ -553,6 +1569,7 @@
       "organization_user_assignments": [
         {
           "id": "660bc4ac-5a7f-5913-b76c-081fcfe7185a",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
           "tenant_membership_id": "e8d53b54-9fb5-5e2d-a2a0-c64bdf125454",
           "practice_id": "8d74979f-c71b-5be4-ba3b-ea3841c055b9",
           "practice_site_id": "00ddfdb5-7fdd-5ad4-8755-bedb8f5c45cb",
@@ -574,6 +1591,7 @@
         },
         {
           "id": "81090a65-5963-5cf3-ac3f-b90395ed3a33",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
           "tenant_membership_id": "e8d53b54-9fb5-5e2d-a2a0-c64bdf125454",
           "practice_id": "8d74979f-c71b-5be4-ba3b-ea3841c055b9",
           "practice_site_id": "00ddfdb5-7fdd-5ad4-8755-bedb8f5c45cb",
@@ -595,6 +1613,7 @@
         },
         {
           "id": "698dd73f-2b5e-5db3-ab67-e8b162a8a6f2",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
           "tenant_membership_id": "77fc70d5-935f-5e2c-995e-a26a5586c40f",
           "practice_id": "692e83c7-efe5-50e2-ace6-cbcf770ff507",
           "practice_site_id": "aee07ad3-94a2-5496-be16-09a1ac1cf83d",
@@ -616,6 +1635,7 @@
         },
         {
           "id": "28152f01-2c02-51f7-be8b-11d63c2e637b",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
           "tenant_membership_id": "ccb6dc6d-b096-5426-b8c6-33a9c37028e5",
           "practice_id": "75037a36-ee8c-519d-b202-0f3846b81a13",
           "practice_site_id": "537a72f5-3701-546b-8ba7-6f9dcc90853e",
@@ -637,6 +1657,7 @@
         },
         {
           "id": "4261b389-bd6b-55eb-b7e5-38e3a0417da4",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
           "tenant_membership_id": "863565d8-64ae-5a9f-83cd-10a4f3683081",
           "practice_id": "6d0374f2-8145-5c06-9478-848a5c1efcf8",
           "practice_site_id": "1014f406-aa31-5906-8aef-33c9286b5d44",
@@ -658,6 +1679,7 @@
         },
         {
           "id": "032ca662-f617-5a15-b4c0-ad9c91428de3",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
           "tenant_membership_id": "185efda6-fa81-5ab9-953f-749b74007b1e",
           "practice_id": "9b526024-683b-5dfa-920d-6cf135d07fa9",
           "practice_site_id": "1304de49-f804-5825-ab0f-eecfb614103c",
@@ -679,6 +1701,7 @@
         },
         {
           "id": "da0da234-9c54-5203-8057-d850bf96113c",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
           "tenant_membership_id": "96d8a037-3cd2-5b89-a33f-bb27b84805ce",
           "practice_id": "06faaf7d-80eb-56d9-8230-730816823d82",
           "practice_site_id": "643faa43-9332-523c-a7ab-fce221be8372",
@@ -700,6 +1723,7 @@
         },
         {
           "id": "1c7d617f-f6ef-5fb6-a072-3265eed1a5c0",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
           "tenant_membership_id": "5d73b523-ffb6-59e5-9dbe-7d4357d6b727",
           "practice_id": "4422be2f-ac71-5d91-be8e-23fc7d4de75e",
           "practice_site_id": "1f0231e1-d948-5712-add9-9e9337a7bb3a",
@@ -721,6 +1745,7 @@
         },
         {
           "id": "0fb8fd68-0170-5c7a-9cc2-668bb143c63a",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
           "tenant_membership_id": "e8d53b54-9fb5-5e2d-a2a0-c64bdf125454",
           "practice_id": "8d74979f-c71b-5be4-ba3b-ea3841c055b9",
           "practice_site_id": "00ddfdb5-7fdd-5ad4-8755-bedb8f5c45cb",
@@ -742,6 +1767,7 @@
         },
         {
           "id": "42366673-48d4-5dc2-92de-17514106a863",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
           "tenant_membership_id": "e8d53b54-9fb5-5e2d-a2a0-c64bdf125454",
           "practice_id": "8d74979f-c71b-5be4-ba3b-ea3841c055b9",
           "practice_site_id": "00ddfdb5-7fdd-5ad4-8755-bedb8f5c45cb",
@@ -763,6 +1789,7 @@
         },
         {
           "id": "9e046f5e-c3a1-5a1a-888c-6521632bdedf",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
           "tenant_membership_id": "77fc70d5-935f-5e2c-995e-a26a5586c40f",
           "practice_id": "692e83c7-efe5-50e2-ace6-cbcf770ff507",
           "practice_site_id": "aee07ad3-94a2-5496-be16-09a1ac1cf83d",
@@ -784,6 +1811,7 @@
         },
         {
           "id": "574bb1e2-8501-5bda-b8ca-f7d6556a5e5e",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
           "tenant_membership_id": "ccb6dc6d-b096-5426-b8c6-33a9c37028e5",
           "practice_id": "75037a36-ee8c-519d-b202-0f3846b81a13",
           "practice_site_id": "537a72f5-3701-546b-8ba7-6f9dcc90853e",
@@ -805,6 +1833,7 @@
         },
         {
           "id": "142e116d-c595-5c57-a477-459906f8a6ae",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
           "tenant_membership_id": "863565d8-64ae-5a9f-83cd-10a4f3683081",
           "practice_id": "6d0374f2-8145-5c06-9478-848a5c1efcf8",
           "practice_site_id": "1014f406-aa31-5906-8aef-33c9286b5d44",
@@ -826,6 +1855,7 @@
         },
         {
           "id": "4a772aba-00ea-5e04-ae8f-ba9089acc4a7",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
           "tenant_membership_id": "185efda6-fa81-5ab9-953f-749b74007b1e",
           "practice_id": "9b526024-683b-5dfa-920d-6cf135d07fa9",
           "practice_site_id": "1304de49-f804-5825-ab0f-eecfb614103c",
@@ -847,6 +1877,7 @@
         },
         {
           "id": "251741f0-4d08-5449-a8e1-d9f4a0ae9d0b",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
           "tenant_membership_id": "96d8a037-3cd2-5b89-a33f-bb27b84805ce",
           "practice_id": "06faaf7d-80eb-56d9-8230-730816823d82",
           "practice_site_id": "643faa43-9332-523c-a7ab-fce221be8372",
@@ -868,6 +1899,7 @@
         },
         {
           "id": "36f8d8b3-9b5e-5a60-bb86-844a087cd37c",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
           "tenant_membership_id": "5d73b523-ffb6-59e5-9dbe-7d4357d6b727",
           "practice_id": "4422be2f-ac71-5d91-be8e-23fc7d4de75e",
           "practice_site_id": "1f0231e1-d948-5712-add9-9e9337a7bb3a",
@@ -1407,6 +2439,7 @@
       "practitioner_delegate_assignments": [
         {
           "id": "971486ae-d8b8-599a-8131-f1d1fb8a7d31",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
           "practitioner_role_assignment_id": "ec6c483c-7d4b-5169-a83b-ed3d2aeb9bf1",
           "delegate_user_assignment_id": "660bc4ac-5a7f-5913-b76c-081fcfe7185a",
           "delegated_permission_set_id": "902f74a3-9219-55fb-9835-e7f9a4e23757",
@@ -1427,6 +2460,7 @@
         },
         {
           "id": "e0b57f6a-6374-57fe-bffd-dee52426d3d3",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
           "practitioner_role_assignment_id": "ec6c483c-7d4b-5169-a83b-ed3d2aeb9bf1",
           "delegate_user_assignment_id": "660bc4ac-5a7f-5913-b76c-081fcfe7185a",
           "delegated_permission_set_id": "902f74a3-9219-55fb-9835-e7f9a4e23757",
@@ -1447,6 +2481,7 @@
         },
         {
           "id": "08bc08c1-b799-5c3b-ab36-dea4eb7e9a3e",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
           "practitioner_role_assignment_id": "75940921-ba0b-592b-a57e-2281088fc094",
           "delegate_user_assignment_id": "698dd73f-2b5e-5db3-ab67-e8b162a8a6f2",
           "delegated_permission_set_id": "ee3af734-11bd-560d-9769-8db5d8d2e95c",
@@ -1467,6 +2502,7 @@
         },
         {
           "id": "76046014-a814-554f-a71e-aa4a8857d47b",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
           "practitioner_role_assignment_id": "cb028cef-bf55-5f11-90e3-3fba6de41d30",
           "delegate_user_assignment_id": "28152f01-2c02-51f7-be8b-11d63c2e637b",
           "delegated_permission_set_id": "062deba1-c441-5580-ba0a-9649cdfa7d40",
@@ -1487,6 +2523,7 @@
         },
         {
           "id": "bb32a7c1-d4cb-5343-a4be-6be322c7843d",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
           "practitioner_role_assignment_id": "77a525c0-b8a0-54f0-b77a-da8b7fc64af7",
           "delegate_user_assignment_id": "4261b389-bd6b-55eb-b7e5-38e3a0417da4",
           "delegated_permission_set_id": "3cbdac03-fd1c-593c-9ce0-bac66ca0fea8",
@@ -1507,6 +2544,7 @@
         },
         {
           "id": "b0ff6bdb-dc7f-571b-98a9-96a0178ef7aa",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
           "practitioner_role_assignment_id": "d2ebbea1-4e82-5987-8bc1-c9d016e89a5c",
           "delegate_user_assignment_id": "032ca662-f617-5a15-b4c0-ad9c91428de3",
           "delegated_permission_set_id": "5a825fbc-c715-5751-81d4-87f42b36aaa7",
@@ -1527,6 +2565,7 @@
         },
         {
           "id": "84ced554-deef-597d-8646-1a102f1fc3a7",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
           "practitioner_role_assignment_id": "251f5dd3-e2c9-526e-8d00-52e0faa13a72",
           "delegate_user_assignment_id": "da0da234-9c54-5203-8057-d850bf96113c",
           "delegated_permission_set_id": "c64c655b-1ee8-57cf-b98b-86102a616d8b",
@@ -1547,6 +2586,7 @@
         },
         {
           "id": "f4a076df-e69d-55fb-bc75-a9d037c0a2e9",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
           "practitioner_role_assignment_id": "cac15ef1-e650-5feb-82c2-41ac07ae70df",
           "delegate_user_assignment_id": "1c7d617f-f6ef-5fb6-a072-3265eed1a5c0",
           "delegated_permission_set_id": "c0279a02-ef70-58b5-bdae-e07303848504",
@@ -1567,6 +2607,7 @@
         },
         {
           "id": "942ba376-c19b-588b-a317-df0c3db7718b",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
           "practitioner_role_assignment_id": "ec6c483c-7d4b-5169-a83b-ed3d2aeb9bf1",
           "delegate_user_assignment_id": "660bc4ac-5a7f-5913-b76c-081fcfe7185a",
           "delegated_permission_set_id": "902f74a3-9219-55fb-9835-e7f9a4e23757",
@@ -1587,6 +2628,7 @@
         },
         {
           "id": "2cbbf540-971b-55b8-b5fd-2b390b2cfa2e",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9",
           "practitioner_role_assignment_id": "ec6c483c-7d4b-5169-a83b-ed3d2aeb9bf1",
           "delegate_user_assignment_id": "660bc4ac-5a7f-5913-b76c-081fcfe7185a",
           "delegated_permission_set_id": "902f74a3-9219-55fb-9835-e7f9a4e23757",
@@ -1607,6 +2649,7 @@
         },
         {
           "id": "10a31420-2eb7-56bb-ad91-41971eac67b4",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0",
           "practitioner_role_assignment_id": "75940921-ba0b-592b-a57e-2281088fc094",
           "delegate_user_assignment_id": "698dd73f-2b5e-5db3-ab67-e8b162a8a6f2",
           "delegated_permission_set_id": "ee3af734-11bd-560d-9769-8db5d8d2e95c",
@@ -1627,6 +2670,7 @@
         },
         {
           "id": "87b6d4d2-ab75-5861-8200-5545379ad910",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a",
           "practitioner_role_assignment_id": "cb028cef-bf55-5f11-90e3-3fba6de41d30",
           "delegate_user_assignment_id": "28152f01-2c02-51f7-be8b-11d63c2e637b",
           "delegated_permission_set_id": "062deba1-c441-5580-ba0a-9649cdfa7d40",
@@ -1647,6 +2691,7 @@
         },
         {
           "id": "9a432a18-a31c-55e4-887b-b66c8e597dee",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06",
           "practitioner_role_assignment_id": "77a525c0-b8a0-54f0-b77a-da8b7fc64af7",
           "delegate_user_assignment_id": "4261b389-bd6b-55eb-b7e5-38e3a0417da4",
           "delegated_permission_set_id": "3cbdac03-fd1c-593c-9ce0-bac66ca0fea8",
@@ -1667,6 +2712,7 @@
         },
         {
           "id": "f5409b38-dacf-5666-afe8-032ac4711c86",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1",
           "practitioner_role_assignment_id": "d2ebbea1-4e82-5987-8bc1-c9d016e89a5c",
           "delegate_user_assignment_id": "032ca662-f617-5a15-b4c0-ad9c91428de3",
           "delegated_permission_set_id": "5a825fbc-c715-5751-81d4-87f42b36aaa7",
@@ -1687,6 +2733,7 @@
         },
         {
           "id": "d77c7641-368c-5518-ae57-f6b22bbe6b17",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c",
           "practitioner_role_assignment_id": "251f5dd3-e2c9-526e-8d00-52e0faa13a72",
           "delegate_user_assignment_id": "da0da234-9c54-5203-8057-d850bf96113c",
           "delegated_permission_set_id": "c64c655b-1ee8-57cf-b98b-86102a616d8b",
@@ -1707,6 +2754,7 @@
         },
         {
           "id": "71468f6e-c931-58cd-ae1f-507690c24457",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824",
           "practitioner_role_assignment_id": "cac15ef1-e650-5feb-82c2-41ac07ae70df",
           "delegate_user_assignment_id": "1c7d617f-f6ef-5fb6-a072-3265eed1a5c0",
           "delegated_permission_set_id": "c0279a02-ef70-58b5-bdae-e07303848504",

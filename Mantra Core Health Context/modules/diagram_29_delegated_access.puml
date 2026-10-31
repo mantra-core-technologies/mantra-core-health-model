@@ -18,6 +18,9 @@ end note
 entity organization_user_assignments {
   * id : uuid <<PK>>
   --
+  ' + v4.2.73 (revision de seguridad A-M1): tenant_id ancla el vinculo a la organizacion para RLS. Debe ser el tenant de
+  ' su membresia y de cada nodo de alcance que traiga (trigger integrity.support_tenant_consistency).
+  * tenant_id : uuid <<FK>>
   * tenant_membership_id : uuid <<FK>>
     practice_id : uuid <<FK>>
     practice_site_id : uuid <<FK>>
@@ -36,6 +39,27 @@ entity organization_user_assignments {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + v4.2.69 (personal de apoyo): el vinculo de apoyo es persona + organizacion + plantilla + vigencia +
+  ' recertificacion. Las columnas de alcance sueltas de arriba (practice_site_id, clinical_unit_id,
+  ' care_space_id, diagnostic_unit_id, pharmacy_id) quedan DEPRECADAS: el alcance ahora son filas de
+  ' support_scope_grants. No se borran todavia. Todas nullable: los vinculos existentes no las declaran.
+    origin_concept_id : uuid <<FK>>
+    owner_kind_concept_id : uuid <<FK>>
+    role_template_id : uuid <<FK>>
+    recertify_every_months : integer
+    next_recertification_at : timestamptz
+    ended_reason_text : text
+  ' + v4.2.72 (gobierno de accesos): verificacion de identidad, suspension, incorporacion y certificacion del vinculo.
+  ' supervisor_user_id pasa a significar DUENO DE LA CUENTA (sin renombrar la columna).
+    identity_verified_at : timestamptz
+    identity_verified_by_user_id : uuid <<FK>>
+    identity_method_concept_id : uuid <<FK>>
+    suspended_at : timestamptz
+    suspension_reason_concept_id : uuid <<FK>>
+    suspension_note_text : text
+    onboarding_completed_at : timestamptz
+    last_certified_at : timestamptz
+    last_active_at : timestamptz
 }
 
 entity delegated_permission_sets {
@@ -68,6 +92,9 @@ entity delegated_permission_set_items {
 entity practitioner_delegate_assignments {
   * id : uuid <<PK>>
   --
+  ' + v4.2.73 (revision de seguridad A-M1): tenant_id ancla la delegacion a la organizacion para RLS. Debe ser el tenant de
+  ' su set de permisos, de su vinculo y de su doctor (trigger integrity.support_tenant_consistency).
+  * tenant_id : uuid <<FK>>
   * practitioner_role_assignment_id : uuid <<FK>>
   * delegate_user_assignment_id : uuid <<FK>>
   * delegated_permission_set_id : uuid <<FK>>
@@ -85,6 +112,12 @@ entity practitioner_delegate_assignments {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + v4.2.69 (personal de apoyo): el doctor acepta UNA vez al afiliarse (clausula de personal de apoyo) y,
+  ' para que la persona responda mensajes en su nombre, la acepta a ELLA (may_reply_on_behalf).
+  ' reply_disclosure_concept_id: SHOW = el paciente ve 'respondido por su equipo' (activo por defecto).
+  * may_reply_on_behalf : boolean <<DEFAULT_FALSE>>
+    reply_disclosure_concept_id : uuid <<FK>>
+    accepted_at : timestamptz
 }
 
 ' + v4.2.49 (A-12 / PAC-DIAG-012 / DOC-RX-029, issue #59): compartir TEMPORALMENTE un estudio o una
@@ -203,6 +236,7 @@ end note
 package "Physical Indexes" {
 entity "INDEXES · organization_user_assignments" as idxset_organization_user_assignments <<INDEX_SET>> {
   PK pk_organization_user_assignments : (id) UNIQUE BTREE
+  IX ix_organization_user_assignments_tenant_id : (tenant_id, status_concept_id) BTREE
   IX ix_organization_user_assignments_tenant_membership_id : (tenant_membership_id) BTREE
   IX ix_organization_user_assignments_practice_id : (practice_id) BTREE
   IX ix_organization_user_assignments_practice_site_id : (practice_site_id) BTREE
@@ -217,6 +251,18 @@ entity "INDEXES · organization_user_assignments" as idxset_organization_user_as
   IX ix_organization_user_assignments_created_by_user_id : (created_by_user_id) BTREE
   IX ix_organization_user_assignments_updated_by_user_id : (updated_by_user_id) BTREE
   GIST gist_organization_user_assignments_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+IX ix_organization_user_assignments_origin_concept_id : (origin_concept_id) BTREE
+IX ix_organization_user_assignments_owner_kind_concept_id : (owner_kind_concept_id) BTREE
+IX ix_organization_user_assignments_role_template_id : (role_template_id) BTREE
+IX ix_organization_user_assignments_next_recertification : (next_recertification_at) BTREE WHERE next_recertification_at IS NOT NULL
+' v4.2.70: un solo vinculo de apoyo ACTIVO por membresia (persona + organizacion) y plantilla. Solo para los
+' vinculos del modelo nuevo (role_template_id NOT NULL): los heredados, sin plantilla, pueden repetir rol por alcance.
+UK uq_organization_user_assignments_active_template : (tenant_membership_id, role_template_id) UNIQUE BTREE WHERE role_template_id IS NOT NULL AND status_concept_id = '38a1d301-f40d-5b17-a695-5e6d605f8b19'
+IX ix_organization_user_assignments_identity_verified_by_user_id : (identity_verified_by_user_id) BTREE
+IX ix_organization_user_assignments_identity_method_concept_id : (identity_method_concept_id) BTREE
+IX ix_organization_user_assignments_suspension_reason_concept_id : (suspension_reason_concept_id) BTREE
+' v4.2.72: la bandeja de 'cuentas sin dueno' y 'mis cuentas' filtra por dueno.
+IX ix_organization_user_assignments_supervisor : (supervisor_user_id) BTREE WHERE supervisor_user_id IS NOT NULL
 }
 
 organization_user_assignments .. idxset_organization_user_assignments : indexed by
@@ -243,6 +289,7 @@ delegated_permission_set_items .. idxset_delegated_permission_set_items : indexe
 
 entity "INDEXES · practitioner_delegate_assignments" as idxset_practitioner_delegate_assignments <<INDEX_SET>> {
   PK pk_practitioner_delegate_assignments : (id) UNIQUE BTREE
+  IX ix_practitioner_delegate_assignments_tenant_id : (tenant_id, status_concept_id) BTREE
   IX ix_practitioner_delegate_assignments_practitioner_role_5ab23b12 : (practitioner_role_assignment_id) BTREE
   IX ix_practitioner_delegate_assignments_delegate_user_ass_52dcb36c : (delegate_user_assignment_id) BTREE
   IX ix_practitioner_delegate_assignments_delegated_permiss_e45e3818 : (delegated_permission_set_id) BTREE
@@ -253,6 +300,7 @@ entity "INDEXES · practitioner_delegate_assignments" as idxset_practitioner_del
   IX ix_practitioner_delegate_assignments_created_by_user_id : (created_by_user_id) BTREE
   IX ix_practitioner_delegate_assignments_updated_by_user_id : (updated_by_user_id) BTREE
   GIST gist_practitioner_delegate_assignments_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+IX ix_practitioner_delegate_assignments_reply_disclosure_concept_id : (reply_disclosure_concept_id) BTREE
 }
 
 practitioner_delegate_assignments .. idxset_practitioner_delegate_assignments : indexed by
@@ -341,5 +389,759 @@ note as PHYSICAL_INDEX_POLICY
   - Final inclusion is verified with representative EXPLAIN (ANALYZE, BUFFERS), write cost,
     cardinality and production-like load tests; unused/redundant indexes are rejected.
 end note
+
+
+' ==============================================================================
+' v4.2.69 - PERSONAL DE APOYO (secretaria y otros roles). Permisos = filas de
+' support_scope_grants con TIPO DE OBJETIVO; varias filas se SUMAN; una fila con dos
+' objetivos (doctor x servicio, doctor x ubicacion, servicio x ubicacion) se CRUZA.
+' "Todos" existe por nivel (ALL_PRACTITIONERS, ALL_SERVICES, ALL_LOCATIONS, ALL).
+' Un permiso por ubicacion (piso/edificio/sede) cubre una cita solo si el ESPACIO de la
+' cita esta dentro de esa ubicacion (care_spaces.location_path). Permiso por doctor cubre
+' todos sus lugares. Permiso por servicio cubre ese servicio. Cada permiso trae sus
+' propias acciones (support_grant_actions). Sin ON DELETE CASCADE.
+' ==============================================================================
+
+' Destinos de las FK de este bloque, declarados en su modulo dueno.
+entity "practice.practitioner_role_assignments" as practice_practitioner_role_assignments <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity "practice.healthcare_services" as practice_healthcare_services <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity "practice.care_spaces" as practice_care_spaces <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity "practice.practice_sites" as practice_practice_sites <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity "authz.permissions" as authz_permissions <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+' Plantilla de rol: paquete de acciones por defecto (SECRETARY, MEDICAL_ASSISTANT, NURSING,
+' FRONT_DESK, BILLING_CASHIER, CALL_CENTER, ORG_MANAGEMENT). tenant_id NULL = plantilla de
+' plataforma; con tenant_id, plantilla propia de la organizacion. default_actions_json es
+' un arreglo de codigos de authz.permissions (p. ej. ["schedule.view","schedule.create"]).
+entity role_templates {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+  * default_actions_json : jsonb
+  * status_concept_id : uuid <<FK>>
+  * version_number : integer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+  ' + v4.2.72: default_conditions_json = mapa atomo -> condicion v1 que recibe una concesion NUEVA; ceiling_actions_json = arreglo de
+  ' atomos o `prefijo.*` que la plantilla puede otorgar como maximo (NULL = sin techo propio). Las plantillas de plataforma v2 los traen.
+    default_conditions_json : jsonb
+    ceiling_actions_json : jsonb
+}
+
+' Un permiso concedido a un vinculo de apoyo. target_kind_concept_id dice que columnas
+' de objetivo deben venir llenas (ver ck_support_scope_grants_target_coherent en el modulo 33).
+' LOCATION usa care_space_id (edificio/piso/sala) O practice_site_id (sede), exactamente uno.
+' expansion_mode DYNAMIC: sigue lo que haya en la organizacion al evaluar (doctores/salas nuevos
+' entran solos). FIXED: congela la lista en fixed_snapshot_json
+' ({"rows":[{"practitionerRoleAssignmentId":..,"healthcareServiceId":..,"careSpaceId":..}]}).
+entity support_scope_grants {
+  * id : uuid <<PK>>
+  --
+  ' v4.2.70 (hardening): tenant_id ancla la fila a la organizacion para RLS. Debe ser el tenant del
+  ' vinculo (organization_user_assignments -> tenant_memberships) y el de cada objetivo que traiga
+  ' (doctor, servicio, espacio, sede): lo exige el trigger integrity.trg_support_tenant_consistency.
+  * tenant_id : uuid <<FK>>
+  * organization_user_assignment_id : uuid <<FK>>
+  * target_kind_concept_id : uuid <<FK>>
+    practitioner_role_assignment_id : uuid <<FK>>
+    healthcare_service_id : uuid <<FK>>
+    care_space_id : uuid <<FK>>
+    practice_site_id : uuid <<FK>>
+  * expansion_mode_concept_id : uuid <<FK>>
+    fixed_snapshot_json : jsonb
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * status_concept_id : uuid <<FK>>
+    approved_by_user_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+  ' + v4.2.72: efecto ALLOW (por defecto) o DENY. Un DENY NO es un permiso: refresh_effective_support_access y EffectiveSupportAccessService
+  ' lo excluyen de la derivada. condition_json = condiciones ABAC v1 de la concesion (su version va en condition_schema_version).
+  * effect_concept_id : uuid <<FK, DEFAULT_UUID:6905e0db-1650-5d49-adca-8b2688ac049c>>
+    condition_json : jsonb
+    condition_schema_version : integer
+    reason_text : text
+    source_role_template_id : uuid <<FK>>
+}
+
+entity support_grant_actions {
+  * id : uuid <<PK>>
+  --
+  ' v4.2.70: tenant_id = tenant del permiso (trigger integrity.trg_support_tenant_consistency).
+  * tenant_id : uuid <<FK>>
+  * support_scope_grant_id : uuid <<FK>>
+  * permission_id : uuid <<FK>>
+  * created_at : timestamptz
+  ' + v4.2.72: condicion propia del atomo y marca de fila REEMPLAZADA por normalize-legacy (superseded_at: se ignora al evaluar, no se borra).
+    condition_json : jsonb
+    condition_schema_version : integer
+    superseded_at : timestamptz
+    updated_at : timestamptz
+    updated_by_user_id : uuid <<FK>>
+}
+
+' Solicitud (la persona pide a la organizacion) o invitacion (la organizacion invita a la
+' persona, directamente o por QR/enlace). Vence a los 15 dias (expires_at). parent_assignment_id
+' marca una AMPLIACION de un vinculo existente.
+entity engagement_requests {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * requester_user_id : uuid <<FK>>
+  * direction_concept_id : uuid <<FK>>
+  * role_template_id : uuid <<FK>>
+    parent_assignment_id : uuid <<FK>>
+    message_text : text
+  * status_concept_id : uuid <<FK>>
+  * expires_at : timestamptz
+    decided_at : timestamptz
+    decided_by_user_id : uuid <<FK>>
+    decision_reason_text : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' Una linea por objetivo pedido. La decision es por linea (aprobar, ajustar, rechazar);
+' resulting_grant_id enlaza la fila de support_scope_grants que nace de ella.
+entity engagement_request_items {
+  * id : uuid <<PK>>
+  --
+  ' v4.2.70: tenant_id = tenant de la solicitud (trigger integrity.trg_support_tenant_consistency).
+  * tenant_id : uuid <<FK>>
+  * engagement_request_id : uuid <<FK>>
+  * target_kind_concept_id : uuid <<FK>>
+    practitioner_role_assignment_id : uuid <<FK>>
+    healthcare_service_id : uuid <<FK>>
+    care_space_id : uuid <<FK>>
+    practice_site_id : uuid <<FK>>
+  * proposed_actions_json : jsonb
+  * decision_concept_id : uuid <<FK>>
+    decision_comment_text : text
+    resulting_grant_id : uuid <<FK>>
+  * created_at : timestamptz
+}
+
+' Tabla DERIVADA (no es fuente de verdad): el calculo de "que puede hacer cada persona de apoyo
+' y sobre que" a partir de support_scope_grants + support_grant_actions, expandido segun
+' expansion_mode. La reconstruye la API (SupportAccessPolicy) o la funcion operativa
+' delegated_access.refresh_effective_support_access() del parche v4269.
+' Semantica de una fila: la persona user_id puede hacer permission_code en la organizacion
+' tenant_id cuando CADA dimension no nula coincide con la de la accion; NULL = cualquiera.
+' No tiene created_at/updated_at: refreshed_at es su unico sello.
+entity effective_support_access <<DERIVED>> {
+  * id : uuid <<PK>>
+  --
+  * user_id : uuid <<FK>>
+  * tenant_id : uuid <<FK>>
+    practitioner_role_assignment_id : uuid <<FK>>
+    healthcare_service_id : uuid <<FK>>
+    care_space_id : uuid <<FK>>
+  * permission_code : varchar
+  * grant_id : uuid <<FK>>
+  * refreshed_at : timestamptz
+}
+
+organization_user_assignments }o--o| role_templates : role_template_id
+support_scope_grants }o--|| organization_user_assignments : organization_user_assignment_id
+support_grant_actions }o--|| support_scope_grants : support_scope_grant_id
+support_scope_grants }o--o| practice_practitioner_role_assignments : practitioner_role_assignment_id
+support_scope_grants }o--o| practice_healthcare_services : healthcare_service_id
+support_scope_grants }o--o| practice_care_spaces : care_space_id
+support_scope_grants }o--o| practice_practice_sites : practice_site_id
+support_grant_actions }o--|| authz_permissions : permission_id
+engagement_requests }o--|| role_templates : role_template_id
+engagement_requests }o--o| organization_user_assignments : parent_assignment_id
+engagement_request_items }o--|| engagement_requests : engagement_request_id
+engagement_request_items }o--o| practice_practitioner_role_assignments : practitioner_role_assignment_id
+engagement_request_items }o--o| practice_healthcare_services : healthcare_service_id
+engagement_request_items }o--o| practice_care_spaces : care_space_id
+engagement_request_items }o--o| practice_practice_sites : practice_site_id
+engagement_request_items }o--o| support_scope_grants : resulting_grant_id
+effective_support_access }o--|| support_scope_grants : grant_id
+effective_support_access }o--o| practice_practitioner_role_assignments : practitioner_role_assignment_id
+effective_support_access }o--o| practice_healthcare_services : healthcare_service_id
+effective_support_access }o--o| practice_care_spaces : care_space_id
+support_scope_grants }o--o| role_templates : source_role_template_id
+
+' ===== v4.2.69 (personal de apoyo) ===== (index sets)
+
+entity "INDEXES · role_templates" as idxset_role_templates <<INDEX_SET>> {
+  PK pk_role_templates : (id) UNIQUE BTREE
+  IX ix_role_templates_tenant_id : (tenant_id) BTREE
+  IX ix_role_templates_status_concept_id : (status_concept_id) BTREE
+  UK uq_role_templates_platform_code_version : (code, version_number) UNIQUE BTREE WHERE tenant_id IS NULL
+  UK uq_role_templates_tenant_code_version : (tenant_id, code, version_number) UNIQUE BTREE WHERE tenant_id IS NOT NULL
+  IX ix_role_templates_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_role_templates_updated_by_user_id : (updated_by_user_id) BTREE
+}
+role_templates .. idxset_role_templates : indexed by
+
+entity "INDEXES · support_scope_grants" as idxset_support_scope_grants <<INDEX_SET>> {
+  PK pk_support_scope_grants : (id) UNIQUE BTREE
+  IX ix_support_scope_grants_tenant_id : (tenant_id, status_concept_id) BTREE
+  IX ix_support_scope_grants_org_user_assignment_id : (organization_user_assignment_id, status_concept_id) BTREE
+  IX ix_support_scope_grants_target_kind_concept_id : (target_kind_concept_id) BTREE
+  IX ix_support_scope_grants_practitioner_role_assignment_id : (practitioner_role_assignment_id) BTREE
+  IX ix_support_scope_grants_healthcare_service_id : (healthcare_service_id) BTREE
+  IX ix_support_scope_grants_care_space_id : (care_space_id) BTREE
+  IX ix_support_scope_grants_practice_site_id : (practice_site_id) BTREE
+  IX ix_support_scope_grants_expansion_mode_concept_id : (expansion_mode_concept_id) BTREE
+  IX ix_support_scope_grants_status_concept_id : (status_concept_id) BTREE
+  IX ix_support_scope_grants_approved_by_user_id : (approved_by_user_id) BTREE
+  GIST gist_support_scope_grants_effective_period : tstzrange(valid_from, valid_to, '[)') GIST
+  IX ix_support_scope_grants_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_support_scope_grants_updated_by_user_id : (updated_by_user_id) BTREE
+IX ix_support_scope_grants_effect : (tenant_id, effect_concept_id, status_concept_id) BTREE
+IX ix_support_scope_grants_source_role_template_id : (source_role_template_id) BTREE
+}
+support_scope_grants .. idxset_support_scope_grants : indexed by
+
+entity "INDEXES · support_grant_actions" as idxset_support_grant_actions <<INDEX_SET>> {
+  PK pk_support_grant_actions : (id) UNIQUE BTREE
+  IX ix_support_grant_actions_tenant_id : (tenant_id) BTREE
+  IX ix_support_grant_actions_permission_id : (permission_id) BTREE
+  UK uq_support_grant_actions_grant_permission : (support_scope_grant_id, permission_id) UNIQUE BTREE
+IX ix_support_grant_actions_updated_by_user_id : (updated_by_user_id) BTREE
+IX ix_support_grant_actions_active : (support_scope_grant_id) BTREE WHERE superseded_at IS NULL
+}
+support_grant_actions .. idxset_support_grant_actions : indexed by
+
+entity "INDEXES · engagement_requests" as idxset_engagement_requests <<INDEX_SET>> {
+  PK pk_engagement_requests : (id) UNIQUE BTREE
+  IX ix_engagement_requests_tenant_id : (tenant_id, status_concept_id, expires_at) BTREE
+  IX ix_engagement_requests_requester_user_id : (requester_user_id) BTREE
+  IX ix_engagement_requests_direction_concept_id : (direction_concept_id) BTREE
+  IX ix_engagement_requests_role_template_id : (role_template_id) BTREE
+  IX ix_engagement_requests_parent_assignment_id : (parent_assignment_id) BTREE
+  IX ix_engagement_requests_status_concept_id : (status_concept_id) BTREE
+  IX ix_engagement_requests_decided_by_user_id : (decided_by_user_id) BTREE
+  IX ix_engagement_requests_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_engagement_requests_updated_by_user_id : (updated_by_user_id) BTREE
+}
+engagement_requests .. idxset_engagement_requests : indexed by
+
+entity "INDEXES · engagement_request_items" as idxset_engagement_request_items <<INDEX_SET>> {
+  PK pk_engagement_request_items : (id) UNIQUE BTREE
+  IX ix_engagement_request_items_tenant_id : (tenant_id) BTREE
+  IX ix_engagement_request_items_engagement_request_id : (engagement_request_id) BTREE
+  IX ix_engagement_request_items_target_kind_concept_id : (target_kind_concept_id) BTREE
+  IX ix_engagement_request_items_practitioner_role_assign_id : (practitioner_role_assignment_id) BTREE
+  IX ix_engagement_request_items_healthcare_service_id : (healthcare_service_id) BTREE
+  IX ix_engagement_request_items_care_space_id : (care_space_id) BTREE
+  IX ix_engagement_request_items_practice_site_id : (practice_site_id) BTREE
+  IX ix_engagement_request_items_decision_concept_id : (decision_concept_id) BTREE
+  IX ix_engagement_request_items_resulting_grant_id : (resulting_grant_id) BTREE
+}
+engagement_request_items .. idxset_engagement_request_items : indexed by
+
+entity "INDEXES · effective_support_access" as idxset_effective_support_access <<INDEX_SET>> {
+  PK pk_effective_support_access : (id) UNIQUE BTREE
+  IX ix_effective_support_access_lookup : (user_id, tenant_id, permission_code) BTREE
+  IX ix_effective_support_access_tenant_id : (tenant_id) BTREE
+  IX ix_effective_support_access_grant_id : (grant_id) BTREE
+  IX ix_effective_support_access_practitioner_role_assign_id : (practitioner_role_assignment_id) BTREE
+  IX ix_effective_support_access_healthcare_service_id : (healthcare_service_id) BTREE
+  IX ix_effective_support_access_care_space_id : (care_space_id) BTREE
+}
+effective_support_access .. idxset_effective_support_access : indexed by
+
+' ==============================================================================
+' v4.2.72 - GOBIERNO DE ACCESOS: permisos de ultra granularidad (condiciones ABAC, denegaciones, techos) y gobierno de usuarios (IGA):
+' reglas de la organizacion, segregacion de funciones, cuatro ojos, campanas de certificacion, ciclo de vida, traspaso, banderas de pacientes,
+' bitacora de decisiones y anomalias. 12 tablas nuevas; lo consume SupportAccessPolicy y el modulo de gobierno. Sin ON DELETE CASCADE.
+' Los ids de concepto de los CHECK/indices parciales son los deterministas de `delegated_access:*` y `state:*` (uuid5 sobre el namespace del backend).
+' ==============================================================================
+
+entity "profiles.patient_profiles" as profiles_patient_profiles <<REFERENCE_ONLY>> {
+  * profile_id : uuid <<PK>>
+}
+
+' 1/12 · reglas de la ORGANIZACION (capa L1): techo de delegacion, denegacion por rol, condicion obligatoria, piso de campo. NO se usa
+' authz.access_policies: el PDP aplicaria el efecto sin mirar la condicion y una barandilla 'solo recepcion' negaria a todos.
+entity governance_rules {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * rule_kind_concept_id : uuid <<FK>>
+    role_template_code : varchar
+  * permission_pattern : varchar
+    rule_json : jsonb
+    rule_schema_version : integer
+    message_text : text
+  * status_concept_id : uuid <<FK>>
+    valid_from : timestamptz
+    valid_to : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' 2/12 · segregacion de funciones. tenant_id NULL = regla de PLATAFORMA (sembrada); con tenant_id, regla de la organizacion, que puede
+' ENDURECER una de plataforma (base_rule_id) pero nunca aflojarla (integrity.sod_rules_only_stricter).
+entity sod_rules {
+  * id : uuid <<PK>>
+  --
+    tenant_id : uuid <<FK>>
+  * code : varchar
+  * name : varchar
+    base_rule_id : uuid <<FK>>
+  * atoms_a_json : jsonb
+  * atoms_b_json : jsonb
+  * scope_concept_id : uuid <<FK>>
+  * action_concept_id : uuid <<FK>>
+  * is_hard : boolean <<DEFAULT_FALSE>>
+    max_exception_days : integer
+    rationale_text : text
+  * status_concept_id : uuid <<FK>>
+  * version_number : integer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' 3/12 · excepciones justificadas y con vencimiento a una regla SoD (nacen de un cuatro ojos aprobado).
+entity sod_exceptions {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * sod_rule_id : uuid <<FK>>
+  * organization_user_assignment_id : uuid <<FK>>
+  * four_eyes_request_id : uuid <<FK>>
+  * justification_text : text
+  * valid_from : timestamptz
+  * valid_to : timestamptz
+  * status_concept_id : uuid <<FK>>
+    revoked_at : timestamptz
+    revoked_by_user_id : uuid <<FK>>
+    revoke_reason_text : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' 4/12 · cuatro ojos generico: una accion sensible, un cambio sobre el techo, una excepcion SoD, una reactivacion o un traslado con mas privilegio
+' la decide OTRA persona. ck_four_eyes_requests_not_self lo impone la base de datos (23514), no solo el servicio.
+entity four_eyes_requests {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * kind_concept_id : uuid <<FK>>
+  * requester_user_id : uuid <<FK>>
+    subject_user_id : uuid <<FK>>
+    organization_user_assignment_id : uuid <<FK>>
+    permission_code : varchar
+  * approver_kind_concept_id : uuid <<FK>>
+  * payload_json : jsonb
+  * payload_hash : varchar
+  * payload_schema_version : integer
+    reason_text : text
+  * status_concept_id : uuid <<FK>>
+  * expires_at : timestamptz
+    decided_at : timestamptz
+    decided_by_user_id : uuid <<FK>>
+    decision_comment_text : text
+    approved_until : timestamptz
+    consumed_at : timestamptz
+    executed_at : timestamptz
+    execution_result_json : jsonb
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' 5/12 · campanas de certificacion de accesos (periodica, recertificacion, tras un cambio de rol, dirigida, de remediacion).
+entity access_review_campaigns {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * name : varchar
+  * kind_concept_id : uuid <<FK>>
+  * scope_json : jsonb
+  * scope_schema_version : integer
+    filters_json : jsonb
+  * due_at : timestamptz
+  * grace_days : integer <<DEFAULT_INT:7>>
+  * reminder_days_before_json : jsonb <<DEFAULT_JSON_INTS:7_3_1>>
+  * escalate_after_days : integer <<DEFAULT_INT:3>>
+  * uncertified_action_concept_id : uuid <<FK>>
+    owner_user_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    launched_at : timestamptz
+    closed_at : timestamptz
+    cancelled_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' 6/12 · una tarea de certificar, revocar o ajustar: un vinculo (support_scope_grant_id NULL) o una concesion. La evidencia queda sellada con su hash.
+entity access_review_items {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * access_review_campaign_id : uuid <<FK>>
+  * organization_user_assignment_id : uuid <<FK>>
+    support_scope_grant_id : uuid <<FK>>
+    reviewer_user_id : uuid <<FK>>
+  * reviewer_kind_concept_id : uuid <<FK>>
+  * decision_concept_id : uuid <<FK, DEFAULT_UUID:55a6db07-19e7-5bb4-978a-3d246492f49d>>
+    decided_at : timestamptz
+    decided_by_user_id : uuid <<FK>>
+    decision_comment_text : text
+    adjustment_json : jsonb
+  * evidence_json : jsonb
+  * evidence_hash : varchar
+  * due_at : timestamptz
+  * reminder_count : integer <<DEFAULT_INT:0>>
+    last_reminded_at : timestamptz
+    escalated_at : timestamptz
+    escalated_to_user_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' 7/12 · ingreso, cambio, baja, suspension y reactivacion de una persona de apoyo, con su lista de pasos.
+entity lifecycle_cases {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * organization_user_assignment_id : uuid <<FK>>
+  * subject_user_id : uuid <<FK>>
+  * kind_concept_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    opened_by_user_id : uuid <<FK>>
+  * opened_at : timestamptz
+    due_at : timestamptz
+    completed_at : timestamptz
+    reason_text : text
+  * checklist_json : jsonb
+    details_json : jsonb
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' 8/12 · traspaso del trabajo de quien se va: conversaciones, tareas, vinculos supervisados y citas pendientes (registro de transferencia).
+entity handover_items {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * lifecycle_case_id : uuid <<FK>>
+  * item_kind_concept_id : uuid <<FK>>
+  * source_id : uuid
+  * from_user_id : uuid <<FK>>
+    to_user_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+    summary_text : varchar
+    reassigned_at : timestamptz
+    reassigned_by_user_id : uuid <<FK>>
+    note_text : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' 9/12 · pacientes VIP / confidenciales / familiares del personal / protegidos, POR organizacion. No es un dato clinico: es una marca de acceso.
+entity patient_restriction_flags {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * patient_profile_id : uuid <<FK>>
+  * flag_concept_id : uuid <<FK>>
+  * reason_text : text
+  * status_concept_id : uuid <<FK>>
+  * valid_from : timestamptz
+    valid_to : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' 10/12 · bitacora WORM de decisiones (cierra el hallazgo M7): todo DENY y CHALLENGE, y todo PERMIT de sensibilidad >= ALTA o con obligacion cumplida.
+' Sin updated_at ni row_version: append-only (REVOKE + trg_forbid_mutation). rule_id, practitioner_role_assignment_id, healthcare_service_id,
+' care_space_id y patient_profile_id son identificadores SIN FK a proposito: la bitacora debe sobrevivir al retiro del objeto. detail_json guarda
+' identificadores y numeros, NUNCA texto libre ni datos del paciente.
+entity access_decision_log <<IMMUTABLE>> {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * user_id : uuid <<FK>>
+  * permission_code : varchar
+  * effect_concept_id : uuid <<FK>>
+  * reason_code : varchar
+    grant_id : uuid <<FK>>
+    rule_id : uuid
+    practitioner_role_assignment_id : uuid
+    healthcare_service_id : uuid
+    care_space_id : uuid
+    patient_profile_id : uuid
+    approval_id : uuid <<FK>>
+    correlation_id : uuid
+    session_id : uuid
+    ip : inet
+    detail_json : jsonb
+  * recorded_at : timestamptz
+    recorded_by_user_id : uuid <<FK>>
+}
+
+' 11/12 · uso agregado por hora de cada concesion (derivada, no WORM): la escribe un buffer en proceso; perder <= 30 s de estadistica es aceptable.
+entity grant_usage_stats {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * user_id : uuid <<FK>>
+  * support_scope_grant_id : uuid <<FK>>
+  * permission_code : varchar
+  * bucket_start : timestamptz
+  * permit_count : integer <<DEFAULT_INT:0>>
+  * deny_count : integer <<DEFAULT_INT:0>>
+  * challenge_count : integer <<DEFAULT_INT:0>>
+  * off_hours_count : integer <<DEFAULT_INT:0>>
+  * distinct_patients_in_bucket : integer <<DEFAULT_INT:0>>
+    last_used_at : timestamptz
+  * updated_at : timestamptz
+}
+
+' 12/12 · anomalias de actividad detectadas por reglas deterministas (sin aprendizaje automatico).
+entity access_anomalies {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * user_id : uuid <<FK>>
+    organization_user_assignment_id : uuid <<FK>>
+  * kind_concept_id : uuid <<FK>>
+  * window_start : timestamptz
+  * window_end : timestamptz
+  * observed_value : numeric(12,2)
+    baseline_value : numeric(12,2)
+  * threshold_value : numeric(12,2)
+  * evidence_json : jsonb
+  * status_concept_id : uuid <<FK>>
+    acknowledged_by_user_id : uuid <<FK>>
+    acknowledged_at : timestamptz
+    resolution_comment_text : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' --- relaciones de las tablas nuevas
+sod_rules }o--o| sod_rules : base_rule_id
+sod_exceptions }o--|| sod_rules : sod_rule_id
+sod_exceptions }o--|| organization_user_assignments : organization_user_assignment_id
+sod_exceptions }o--|| four_eyes_requests : four_eyes_request_id
+four_eyes_requests }o--o| organization_user_assignments : organization_user_assignment_id
+access_review_items }o--|| access_review_campaigns : access_review_campaign_id
+access_review_items }o--|| organization_user_assignments : organization_user_assignment_id
+access_review_items }o--o| support_scope_grants : support_scope_grant_id
+lifecycle_cases }o--|| organization_user_assignments : organization_user_assignment_id
+handover_items }o--|| lifecycle_cases : lifecycle_case_id
+patient_restriction_flags }o--|| profiles_patient_profiles : patient_profile_id
+access_decision_log }o--o| support_scope_grants : grant_id
+access_decision_log }o--o| four_eyes_requests : approval_id
+grant_usage_stats }o--|| support_scope_grants : support_scope_grant_id
+access_anomalies }o--o| organization_user_assignments : organization_user_assignment_id
+
+' ===== v4.2.72 (gobierno de accesos) ===== (index sets)
+
+entity "INDEXES · governance_rules" as idxset_governance_rules <<INDEX_SET>> {
+  PK pk_governance_rules : (id) UNIQUE BTREE
+  IX ix_governance_rules_tenant_id : (tenant_id, status_concept_id) BTREE
+  UK uq_governance_rules_active : (tenant_id, rule_kind_concept_id, COALESCE(role_template_code, ''), permission_pattern) UNIQUE BTREE WHERE status_concept_id = '38a1d301-f40d-5b17-a695-5e6d605f8b19'
+  IX ix_governance_rules_rule_kind_concept_id : (rule_kind_concept_id) BTREE
+  IX ix_governance_rules_status_concept_id : (status_concept_id) BTREE
+  IX ix_governance_rules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_governance_rules_updated_by_user_id : (updated_by_user_id) BTREE
+}
+governance_rules .. idxset_governance_rules : indexed by
+
+entity "INDEXES · sod_rules" as idxset_sod_rules <<INDEX_SET>> {
+  PK pk_sod_rules : (id) UNIQUE BTREE
+  IX ix_sod_rules_tenant_id : (tenant_id) BTREE
+  UK uq_sod_rules_platform_code_version : (code, version_number) UNIQUE BTREE WHERE tenant_id IS NULL
+  UK uq_sod_rules_tenant_code_version : (tenant_id, code, version_number) UNIQUE BTREE WHERE tenant_id IS NOT NULL
+  IX ix_sod_rules_base_rule_id : (base_rule_id) BTREE
+  IX ix_sod_rules_scope_concept_id : (scope_concept_id) BTREE
+  IX ix_sod_rules_action_concept_id : (action_concept_id) BTREE
+  IX ix_sod_rules_status_concept_id : (status_concept_id) BTREE
+  IX ix_sod_rules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_sod_rules_updated_by_user_id : (updated_by_user_id) BTREE
+}
+sod_rules .. idxset_sod_rules : indexed by
+
+entity "INDEXES · sod_exceptions" as idxset_sod_exceptions <<INDEX_SET>> {
+  PK pk_sod_exceptions : (id) UNIQUE BTREE
+  IX ix_sod_exceptions_tenant_id : (tenant_id, status_concept_id) BTREE
+  UK uq_sod_exceptions_active : (sod_rule_id, organization_user_assignment_id) UNIQUE BTREE WHERE status_concept_id = '38a1d301-f40d-5b17-a695-5e6d605f8b19'
+  IX ix_sod_exceptions_valid_to : (valid_to) BTREE WHERE status_concept_id = '38a1d301-f40d-5b17-a695-5e6d605f8b19'
+  IX ix_sod_exceptions_organization_user_assignment_id : (organization_user_assignment_id) BTREE
+  IX ix_sod_exceptions_four_eyes_request_id : (four_eyes_request_id) BTREE
+  IX ix_sod_exceptions_status_concept_id : (status_concept_id) BTREE
+  IX ix_sod_exceptions_revoked_by_user_id : (revoked_by_user_id) BTREE
+  IX ix_sod_exceptions_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_sod_exceptions_updated_by_user_id : (updated_by_user_id) BTREE
+}
+sod_exceptions .. idxset_sod_exceptions : indexed by
+
+entity "INDEXES · four_eyes_requests" as idxset_four_eyes_requests <<INDEX_SET>> {
+  PK pk_four_eyes_requests : (id) UNIQUE BTREE
+  IX ix_four_eyes_requests_tenant_id : (tenant_id, status_concept_id, expires_at) BTREE
+  IX ix_four_eyes_requests_requester : (requester_user_id, status_concept_id) BTREE
+  UK uq_four_eyes_requests_pending_payload : (tenant_id, kind_concept_id, requester_user_id, COALESCE(permission_code, ''), payload_hash) UNIQUE BTREE WHERE status_concept_id = 'a977935a-9073-5113-9644-7df96732e776'
+  IX ix_four_eyes_requests_kind_concept_id : (kind_concept_id) BTREE
+  IX ix_four_eyes_requests_subject_user_id : (subject_user_id) BTREE
+  IX ix_four_eyes_requests_organization_user_assignment_id : (organization_user_assignment_id) BTREE
+  IX ix_four_eyes_requests_approver_kind_concept_id : (approver_kind_concept_id) BTREE
+  IX ix_four_eyes_requests_status_concept_id : (status_concept_id) BTREE
+  IX ix_four_eyes_requests_decided_by_user_id : (decided_by_user_id) BTREE
+  IX ix_four_eyes_requests_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_four_eyes_requests_updated_by_user_id : (updated_by_user_id) BTREE
+}
+four_eyes_requests .. idxset_four_eyes_requests : indexed by
+
+entity "INDEXES · access_review_campaigns" as idxset_access_review_campaigns <<INDEX_SET>> {
+  PK pk_access_review_campaigns : (id) UNIQUE BTREE
+  IX ix_access_review_campaigns_tenant_id : (tenant_id, status_concept_id, due_at) BTREE
+  UK uq_access_review_campaigns_recert_month : (tenant_id, name) UNIQUE BTREE WHERE kind_concept_id = '9f831109-61d2-54d4-8e67-7ad04ac9a315' AND status_concept_id IN ('743d9f11-b186-5547-ae3d-cc44d94724bd', 'faa5c9bf-5300-5e43-8829-19a9f0e94fef')
+  IX ix_access_review_campaigns_kind_concept_id : (kind_concept_id) BTREE
+  IX ix_access_review_campaigns_uncertified_action_concept_id : (uncertified_action_concept_id) BTREE
+  IX ix_access_review_campaigns_owner_user_id : (owner_user_id) BTREE
+  IX ix_access_review_campaigns_status_concept_id : (status_concept_id) BTREE
+  IX ix_access_review_campaigns_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_access_review_campaigns_updated_by_user_id : (updated_by_user_id) BTREE
+}
+access_review_campaigns .. idxset_access_review_campaigns : indexed by
+
+entity "INDEXES · access_review_items" as idxset_access_review_items <<INDEX_SET>> {
+  PK pk_access_review_items : (id) UNIQUE BTREE
+  IX ix_access_review_items_tenant_id : (tenant_id, decision_concept_id) BTREE
+  UK uq_access_review_items_campaign_grant : (access_review_campaign_id, organization_user_assignment_id, COALESCE(support_scope_grant_id, '00000000-0000-0000-0000-000000000000'::uuid)) UNIQUE BTREE
+  IX ix_access_review_items_reviewer_pending : (reviewer_user_id, due_at) BTREE WHERE decision_concept_id = '55a6db07-19e7-5bb4-978a-3d246492f49d'
+  IX ix_access_review_items_organization_user_assignment_id : (organization_user_assignment_id) BTREE
+  IX ix_access_review_items_reviewer_kind_concept_id : (reviewer_kind_concept_id) BTREE
+  IX ix_access_review_items_decision_concept_id : (decision_concept_id) BTREE
+  IX ix_access_review_items_decided_by_user_id : (decided_by_user_id) BTREE
+  IX ix_access_review_items_escalated_to_user_id : (escalated_to_user_id) BTREE
+  IX ix_access_review_items_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_access_review_items_updated_by_user_id : (updated_by_user_id) BTREE
+}
+access_review_items .. idxset_access_review_items : indexed by
+
+entity "INDEXES · lifecycle_cases" as idxset_lifecycle_cases <<INDEX_SET>> {
+  PK pk_lifecycle_cases : (id) UNIQUE BTREE
+  IX ix_lifecycle_cases_tenant_id : (tenant_id, kind_concept_id, status_concept_id) BTREE
+  UK uq_lifecycle_cases_open_joiner : (organization_user_assignment_id) UNIQUE BTREE WHERE kind_concept_id = 'c2a9a59d-c88c-5e87-9065-1e0e068c479d' AND status_concept_id = '4f73e30c-25ba-52ff-969e-862e588cce13'
+  UK uq_lifecycle_cases_open_suspension : (organization_user_assignment_id) UNIQUE BTREE WHERE kind_concept_id = '767afaf6-3161-56ee-8c96-5e9386804fc0' AND status_concept_id = '4f73e30c-25ba-52ff-969e-862e588cce13'
+  IX ix_lifecycle_cases_subject_user_id : (subject_user_id) BTREE
+  IX ix_lifecycle_cases_kind_concept_id : (kind_concept_id) BTREE
+  IX ix_lifecycle_cases_status_concept_id : (status_concept_id) BTREE
+  IX ix_lifecycle_cases_opened_by_user_id : (opened_by_user_id) BTREE
+  IX ix_lifecycle_cases_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_lifecycle_cases_updated_by_user_id : (updated_by_user_id) BTREE
+}
+lifecycle_cases .. idxset_lifecycle_cases : indexed by
+
+entity "INDEXES · handover_items" as idxset_handover_items <<INDEX_SET>> {
+  PK pk_handover_items : (id) UNIQUE BTREE
+  IX ix_handover_items_tenant_id : (tenant_id, status_concept_id) BTREE
+  UK uq_handover_items_case_source : (lifecycle_case_id, item_kind_concept_id, source_id) UNIQUE BTREE
+  IX ix_handover_items_item_kind_concept_id : (item_kind_concept_id) BTREE
+  IX ix_handover_items_from_user_id : (from_user_id) BTREE
+  IX ix_handover_items_to_user_id : (to_user_id) BTREE
+  IX ix_handover_items_status_concept_id : (status_concept_id) BTREE
+  IX ix_handover_items_reassigned_by_user_id : (reassigned_by_user_id) BTREE
+  IX ix_handover_items_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_handover_items_updated_by_user_id : (updated_by_user_id) BTREE
+}
+handover_items .. idxset_handover_items : indexed by
+
+entity "INDEXES · patient_restriction_flags" as idxset_patient_restriction_flags <<INDEX_SET>> {
+  PK pk_patient_restriction_flags : (id) UNIQUE BTREE
+  UK uq_patient_restriction_flags_active : (tenant_id, patient_profile_id, flag_concept_id) UNIQUE BTREE WHERE status_concept_id = '38a1d301-f40d-5b17-a695-5e6d605f8b19'
+  IX ix_patient_restriction_flags_lookup : (tenant_id, patient_profile_id) BTREE WHERE status_concept_id = '38a1d301-f40d-5b17-a695-5e6d605f8b19'
+  IX ix_patient_restriction_flags_patient_profile_id : (patient_profile_id) BTREE
+  IX ix_patient_restriction_flags_flag_concept_id : (flag_concept_id) BTREE
+  IX ix_patient_restriction_flags_status_concept_id : (status_concept_id) BTREE
+  IX ix_patient_restriction_flags_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_patient_restriction_flags_updated_by_user_id : (updated_by_user_id) BTREE
+}
+patient_restriction_flags .. idxset_patient_restriction_flags : indexed by
+
+entity "INDEXES · access_decision_log" as idxset_access_decision_log <<INDEX_SET>> {
+  PK pk_access_decision_log : (id) UNIQUE BTREE
+  IX ix_access_decision_log_tenant_time : (tenant_id, recorded_at DESC) BTREE
+  IX ix_access_decision_log_user_time : (user_id, recorded_at DESC) BTREE
+  IX ix_access_decision_log_grant : (grant_id) BTREE WHERE grant_id IS NOT NULL
+  IX ix_access_decision_log_effect : (tenant_id, effect_concept_id, recorded_at DESC) BTREE
+  IX ix_access_decision_log_effect_concept_id : (effect_concept_id) BTREE
+  IX ix_access_decision_log_approval_id : (approval_id) BTREE
+  IX ix_access_decision_log_recorded_by_user_id : (recorded_by_user_id) BTREE
+}
+access_decision_log .. idxset_access_decision_log : indexed by
+
+entity "INDEXES · grant_usage_stats" as idxset_grant_usage_stats <<INDEX_SET>> {
+  PK pk_grant_usage_stats : (id) UNIQUE BTREE
+  UK uq_grant_usage_stats_bucket : (tenant_id, support_scope_grant_id, permission_code, bucket_start) UNIQUE BTREE
+  IX ix_grant_usage_stats_user : (tenant_id, user_id, bucket_start) BTREE
+  IX ix_grant_usage_stats_grant : (support_scope_grant_id, last_used_at) BTREE
+  IX ix_grant_usage_stats_user_id : (user_id) BTREE
+}
+grant_usage_stats .. idxset_grant_usage_stats : indexed by
+
+entity "INDEXES · access_anomalies" as idxset_access_anomalies <<INDEX_SET>> {
+  PK pk_access_anomalies : (id) UNIQUE BTREE
+  IX ix_access_anomalies_tenant_id : (tenant_id, status_concept_id, created_at DESC) BTREE
+  UK uq_access_anomalies_window : (tenant_id, user_id, kind_concept_id, window_start) UNIQUE BTREE
+  IX ix_access_anomalies_user_id : (user_id) BTREE
+  IX ix_access_anomalies_organization_user_assignment_id : (organization_user_assignment_id) BTREE
+  IX ix_access_anomalies_kind_concept_id : (kind_concept_id) BTREE
+  IX ix_access_anomalies_status_concept_id : (status_concept_id) BTREE
+  IX ix_access_anomalies_acknowledged_by_user_id : (acknowledged_by_user_id) BTREE
+  IX ix_access_anomalies_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_access_anomalies_updated_by_user_id : (updated_by_user_id) BTREE
+}
+access_anomalies .. idxset_access_anomalies : indexed by
 
 @enduml

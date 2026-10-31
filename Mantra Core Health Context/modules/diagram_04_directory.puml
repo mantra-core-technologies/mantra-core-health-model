@@ -83,6 +83,11 @@ entity tenant_memberships {
   ' quien responde por el. Nullable: los vinculos existentes no los declaran.
     workday_concept_id : uuid <<FK>>
     responsible_user_id : uuid <<FK>>
+  ' + v4.2.71 (revision de seguridad N10): origen de la membresia (directory:MEMBERSHIP_ORIGIN_*:
+  ' creada por el dueno, anadida por un administrador, canje de invitacion, SOLO por un vinculo de
+  ' apoyo, o desconocido). Nullable: las filas existentes quedan en NULL (= desconocido); NUNCA se
+  ' marcan como solo-apoyo por backfill. Lo escribe la API al crear la membresia.
+    origin_concept_id : uuid <<FK>>
 }
 entity branch_memberships {
   * id : uuid <<PK>>
@@ -166,6 +171,9 @@ entity "INDEXES · tenant_memberships" as idxset_tenant_memberships <<INDEX_SET>
   IX ix_tenant_memberships_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
   IX ix_tenant_memberships_workday_concept_id : (workday_concept_id) BTREE
   IX ix_tenant_memberships_responsible_user_id : (responsible_user_id) BTREE
+  IX ix_tenant_memberships_origin_concept_id : (origin_concept_id) BTREE
+  ' v4.2.70: una sola membresia ACTIVA por (usuario, organizacion). Las terminadas o suspendidas no cuentan.
+  UK uq_tenant_memberships_active_user_tenant : (user_id, tenant_id) UNIQUE BTREE WHERE status_concept_id = '13ca1b46-61d5-5c25-9d49-8247bcd7769c'
 }
 
 tenant_memberships .. idxset_tenant_memberships : indexed by
@@ -314,5 +322,81 @@ tenant_web_configs .. idxset_tenant_web_configs : indexed by
 tenants ||--o{ tenant_legal_representatives
 
 tenants ||--o{ tenant_web_configs
+
+
+' ==============================================================================
+' v4.2.69 - INVITACIONES DE AFILIACION (enlace/QR). Una invitacion deja que una persona se
+' afilie a una organizacion como profesional o como personal de apoyo. En la base solo
+' vive el hash del secreto (token_hash); el id de la fila NO es el secreto. Tiene tope de
+' usos (max_uses / uses_count), vence (expires_at) y cada uso, aceptado o no, deja una fila
+' en affiliation_invitation_uses. target_person_id fija la invitacion a UNA persona (opcional).
+' ==============================================================================
+entity "profiles.persons" as profiles_persons <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity "delegated_access.role_templates" as delegated_access_role_templates <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+entity affiliation_invitations {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * kind_concept_id : uuid <<FK>>
+    target_person_id : uuid <<FK>>
+  * token_hash : varchar <<UK>>
+  * max_uses : integer
+  * uses_count : integer
+  * expires_at : timestamptz
+    role_template_id : uuid <<FK>>
+  * status_concept_id : uuid <<FK>>
+  * created_by_user_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity affiliation_invitation_uses <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  ' v4.2.70 (hardening): tenant_id = tenant de la invitacion (trigger integrity.trg_support_tenant_consistency).
+  * tenant_id : uuid <<FK>>
+  * affiliation_invitation_id : uuid <<FK>>
+  * used_by_user_id : uuid <<FK>>
+  * occurred_at : timestamptz
+  * outcome_concept_id : uuid <<FK>>
+}
+
+affiliation_invitations }o--|| tenants : tenant_id
+affiliation_invitations }o--o| profiles_persons : target_person_id
+affiliation_invitations }o--o| delegated_access_role_templates : role_template_id
+affiliation_invitation_uses }o--|| affiliation_invitations : affiliation_invitation_id
+
+entity "INDEXES · affiliation_invitations" as idxset_affiliation_invitations <<INDEX_SET>> {
+  PK pk_affiliation_invitations : (id) UNIQUE BTREE
+  UK uq_affiliation_invitations_token_hash : (token_hash) UNIQUE BTREE
+  IX ix_affiliation_invitations_tenant_id : (tenant_id, status_concept_id, expires_at) BTREE
+  IX ix_affiliation_invitations_kind_concept_id : (kind_concept_id) BTREE
+  IX ix_affiliation_invitations_target_person_id : (target_person_id) BTREE
+  IX ix_affiliation_invitations_role_template_id : (role_template_id) BTREE
+  IX ix_affiliation_invitations_status_concept_id : (status_concept_id) BTREE
+  IX ix_affiliation_invitations_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_affiliation_invitations_updated_by_user_id : (updated_by_user_id) BTREE
+}
+affiliation_invitations .. idxset_affiliation_invitations : indexed by
+
+entity "INDEXES · affiliation_invitation_uses" as idxset_affiliation_invitation_uses <<INDEX_SET>> {
+  PK pk_affiliation_invitation_uses : (id) UNIQUE BTREE
+  IX ix_affiliation_invitation_uses_tenant_id : (tenant_id) BTREE
+  ' v4.2.70: una persona se afilia UNA vez por invitacion. Solo cuenta el uso ACEPTADO: los rechazos
+  ' (vencida, agotada, revocada, ya miembro) se registran cada vez que se intentan.
+  UK uq_affiliation_invitation_uses_accepted : (affiliation_invitation_id, used_by_user_id) UNIQUE BTREE WHERE outcome_concept_id = '659f9beb-ad4d-583e-828b-05a808ad08dc'
+  IX ix_affiliation_invitation_uses_invitation_occurred : (affiliation_invitation_id, occurred_at DESC) BTREE
+  IX ix_affiliation_invitation_uses_used_by_user_id : (used_by_user_id) BTREE
+  IX ix_affiliation_invitation_uses_outcome_concept_id : (outcome_concept_id) BTREE
+  BRIN brin_affiliation_invitation_uses_occurred_at : (occurred_at) BRIN pages_per_range=128
+}
+affiliation_invitation_uses .. idxset_affiliation_invitation_uses : indexed by
 
 @enduml

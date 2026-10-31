@@ -22,6 +22,8 @@ CREATE INDEX IF NOT EXISTS "ix_identifiers_created_by_user_id" ON "common"."iden
 
 CREATE INDEX IF NOT EXISTS "ix_identifiers_updated_by_user_id" ON "common"."identifiers" ("updated_by_user_id");
 
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_identifiers_national_id_normalized" ON "common"."identifiers" (coalesce(nullif(regexp_replace(upper(regexp_replace(value, '[\s.-]+', '', 'g')), '^0+', ''), ''), '0')) WHERE type_concept_id = '595e7a3d-ba37-5014-9a72-635363b94864' AND state_concept_id = '38a1d301-f40d-5b17-a695-5e6d605f8b19' AND owner_type_concept_id = '350a0150-c27c-5241-b5d8-78daa13bed34' AND valid_to IS NULL;
+
 CREATE INDEX IF NOT EXISTS "ix_contact_points_owner_type_concept_id" ON "common"."contact_points" ("owner_type_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_contact_points_system_concept_id" ON "common"."contact_points" ("system_concept_id");

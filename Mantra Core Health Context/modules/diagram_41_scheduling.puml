@@ -200,6 +200,10 @@ entity bookable_slots {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + v4.2.69 (personal de apoyo): ubicacion y servicio de la cupo/cita. Son los que permiten decidir si un
+  ' permiso por ubicacion o por servicio cubre la cita (la ubicacion se evalua por el ESPACIO de la cita).
+    care_space_id : uuid <<FK>>
+    healthcare_service_id : uuid <<FK>>
 }
 entity slot_holds {
   * id : uuid <<PK>>
@@ -289,6 +293,13 @@ entity appointment_bookings {
   ' (dentro de `followUpOf`, junto a follow_up_of_booking_id). Nullable y sin backfill.
   ' FK → forms.form_instances.
     form_instance_id : uuid <<FK>>
+  ' + v4.2.69 (personal de apoyo): ubicacion y servicio de la cupo/cita. Son los que permiten decidir si un
+  ' permiso por ubicacion o por servicio cubre la cita (la ubicacion se evalua por el ESPACIO de la cita).
+    care_space_id : uuid <<FK>>
+    healthcare_service_id : uuid <<FK>>
+  ' booked_via_grant_id: el permiso de apoyo con el que una persona de apoyo creo la reserva (NULL = la
+  ' creo el paciente o el profesional). Es la huella de 'quien gestiona esta cita' si el vinculo termina.
+    booked_via_grant_id : uuid <<FK>>
 }
 
 ' + v4.2.40 — Oferta de servicio de un profesional: «cómo ofrece ESTE médico ESTE servicio».
@@ -555,6 +566,8 @@ entity "INDEXES · bookable_slots" as idxset_bookable_slots <<INDEX_SET>> {
   IX ix_bookable_slots_status_concept_id : (status_concept_id) BTREE
   IX ix_bookable_slots_created_by_user_id : (created_by_user_id) BTREE
   IX ix_bookable_slots_updated_by_user_id : (updated_by_user_id) BTREE
+IX ix_bookable_slots_care_space_id : (care_space_id) BTREE
+IX ix_bookable_slots_healthcare_service_id : (healthcare_service_id) BTREE
 }
 
 bookable_slots .. idxset_bookable_slots : indexed by
@@ -605,6 +618,9 @@ entity "INDEXES · appointment_bookings" as idxset_appointment_bookings <<INDEX_
   IX ix_appointment_bookings_updated_by_user_id : (updated_by_user_id) BTREE
   IX ix_appointment_bookings_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
   IX ix_appointment_bookings_patient_profile_id_updated_at : (tenant_id, patient_profile_id, updated_at DESC) BTREE
+IX ix_appointment_bookings_care_space_id : (care_space_id) BTREE
+IX ix_appointment_bookings_healthcare_service_id : (healthcare_service_id) BTREE
+IX ix_appointment_bookings_booked_via_grant_id : (booked_via_grant_id) BTREE
 }
 
 appointment_bookings .. idxset_appointment_bookings : indexed by
@@ -858,5 +874,23 @@ appointment_payment_receipts .. idxset_appointment_payment_receipts : indexed by
 ' ===== v4.2.64 (comprobantes de pago que sube el paciente) ===== (relaciones)
 
 appointment_bookings ||--o{ appointment_payment_receipts
+
+
+' v4.2.69 (personal de apoyo): destinos de las FK nuevas, declarados en su modulo dueno.
+entity "practice.care_spaces" as practice_care_spaces <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity "practice.healthcare_services" as practice_healthcare_services <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity "delegated_access.support_scope_grants" as delegated_access_support_scope_grants <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+
+bookable_slots }o--o| practice_care_spaces : care_space_id
+bookable_slots }o--o| practice_healthcare_services : healthcare_service_id
+appointment_bookings }o--o| practice_care_spaces : care_space_id
+appointment_bookings }o--o| practice_healthcare_services : healthcare_service_id
+appointment_bookings }o--o| delegated_access_support_scope_grants : booked_via_grant_id
 
 @enduml

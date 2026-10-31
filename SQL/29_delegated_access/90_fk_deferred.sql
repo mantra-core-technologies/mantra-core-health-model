@@ -2,6 +2,13 @@
 -- Generado de diagram_29_delegated_access.puml — NO editar a mano.
 
 
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."organization_user_assignments"
+        ADD CONSTRAINT "fk_organization_user_assignments_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
 -- destino: directory.tenant_memberships (requiere schema directory)
 DO $$ BEGIN
     ALTER TABLE "delegated_access"."organization_user_assignments"
@@ -93,6 +100,41 @@ DO $$ BEGIN
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."organization_user_assignments"
+        ADD CONSTRAINT "fk_organization_user_assignments_origin_concept_id" FOREIGN KEY ("origin_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."organization_user_assignments"
+        ADD CONSTRAINT "fk_organization_user_assignments_owner_kind_concept_id" FOREIGN KEY ("owner_kind_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."organization_user_assignments"
+        ADD CONSTRAINT "fk_organization_user_assignments_identity_verified_by_user_id" FOREIGN KEY ("identity_verified_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."organization_user_assignments"
+        ADD CONSTRAINT "fk_organization_user_assignments_identity_method_concept_id" FOREIGN KEY ("identity_method_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."organization_user_assignments"
+        ADD CONSTRAINT "fk_organization_user_assignments_suspension_reason_concept_id" FOREIGN KEY ("suspension_reason_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
 -- destino: directory.tenants (requiere schema directory)
 DO $$ BEGIN
     ALTER TABLE "delegated_access"."delegated_permission_sets"
@@ -183,6 +225,13 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_practitioner_delegate_assignments_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."practitioner_delegate_assignments"
+        ADD CONSTRAINT "fk_practitioner_delegate_assignments_reply_disclosure__d918f1cb" FOREIGN KEY ("reply_disclosure_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 
 -- destino: directory.tenants (requiere schema directory)
 DO $$ BEGIN
@@ -400,3 +449,794 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_delegation_events_reason_concept_id" FOREIGN KEY ("reason_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."role_templates"
+        ADD CONSTRAINT "fk_role_templates_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."role_templates"
+        ADD CONSTRAINT "fk_role_templates_status_concept_id" FOREIGN KEY ("status_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."role_templates"
+        ADD CONSTRAINT "fk_role_templates_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."role_templates"
+        ADD CONSTRAINT "fk_role_templates_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."support_scope_grants"
+        ADD CONSTRAINT "fk_support_scope_grants_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."support_scope_grants"
+        ADD CONSTRAINT "fk_support_scope_grants_target_kind_concept_id" FOREIGN KEY ("target_kind_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."practitioner_delegate_assignments"
+        ADD CONSTRAINT "fk_practitioner_delegate_assignments_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: practice.practitioner_role_assignments (requiere schema practice)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."support_scope_grants"
+        ADD CONSTRAINT "fk_support_scope_grants_practitioner_role_assignment_id" FOREIGN KEY ("practitioner_role_assignment_id")
+        REFERENCES "practice"."practitioner_role_assignments" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: practice.healthcare_services (requiere schema practice)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."support_scope_grants"
+        ADD CONSTRAINT "fk_support_scope_grants_healthcare_service_id" FOREIGN KEY ("healthcare_service_id")
+        REFERENCES "practice"."healthcare_services" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: practice.care_spaces (requiere schema practice)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."support_scope_grants"
+        ADD CONSTRAINT "fk_support_scope_grants_care_space_id" FOREIGN KEY ("care_space_id")
+        REFERENCES "practice"."care_spaces" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: practice.practice_sites (requiere schema practice)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."support_scope_grants"
+        ADD CONSTRAINT "fk_support_scope_grants_practice_site_id" FOREIGN KEY ("practice_site_id")
+        REFERENCES "practice"."practice_sites" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."support_scope_grants"
+        ADD CONSTRAINT "fk_support_scope_grants_expansion_mode_concept_id" FOREIGN KEY ("expansion_mode_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."support_scope_grants"
+        ADD CONSTRAINT "fk_support_scope_grants_status_concept_id" FOREIGN KEY ("status_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."support_scope_grants"
+        ADD CONSTRAINT "fk_support_scope_grants_approved_by_user_id" FOREIGN KEY ("approved_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."support_scope_grants"
+        ADD CONSTRAINT "fk_support_scope_grants_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."support_scope_grants"
+        ADD CONSTRAINT "fk_support_scope_grants_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."support_scope_grants"
+        ADD CONSTRAINT "fk_support_scope_grants_effect_concept_id" FOREIGN KEY ("effect_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."support_grant_actions"
+        ADD CONSTRAINT "fk_support_grant_actions_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: authz.permissions (requiere schema authz)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."support_grant_actions"
+        ADD CONSTRAINT "fk_support_grant_actions_permission_id" FOREIGN KEY ("permission_id")
+        REFERENCES "authz"."permissions" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."support_grant_actions"
+        ADD CONSTRAINT "fk_support_grant_actions_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."engagement_requests"
+        ADD CONSTRAINT "fk_engagement_requests_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."engagement_requests"
+        ADD CONSTRAINT "fk_engagement_requests_requester_user_id" FOREIGN KEY ("requester_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."engagement_requests"
+        ADD CONSTRAINT "fk_engagement_requests_direction_concept_id" FOREIGN KEY ("direction_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."engagement_requests"
+        ADD CONSTRAINT "fk_engagement_requests_status_concept_id" FOREIGN KEY ("status_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."engagement_requests"
+        ADD CONSTRAINT "fk_engagement_requests_decided_by_user_id" FOREIGN KEY ("decided_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."engagement_requests"
+        ADD CONSTRAINT "fk_engagement_requests_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."engagement_requests"
+        ADD CONSTRAINT "fk_engagement_requests_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."engagement_request_items"
+        ADD CONSTRAINT "fk_engagement_request_items_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."engagement_request_items"
+        ADD CONSTRAINT "fk_engagement_request_items_target_kind_concept_id" FOREIGN KEY ("target_kind_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: practice.practitioner_role_assignments (requiere schema practice)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."engagement_request_items"
+        ADD CONSTRAINT "fk_engagement_request_items_practitioner_role_assignment_id" FOREIGN KEY ("practitioner_role_assignment_id")
+        REFERENCES "practice"."practitioner_role_assignments" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: practice.healthcare_services (requiere schema practice)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."engagement_request_items"
+        ADD CONSTRAINT "fk_engagement_request_items_healthcare_service_id" FOREIGN KEY ("healthcare_service_id")
+        REFERENCES "practice"."healthcare_services" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: practice.care_spaces (requiere schema practice)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."engagement_request_items"
+        ADD CONSTRAINT "fk_engagement_request_items_care_space_id" FOREIGN KEY ("care_space_id")
+        REFERENCES "practice"."care_spaces" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: practice.practice_sites (requiere schema practice)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."engagement_request_items"
+        ADD CONSTRAINT "fk_engagement_request_items_practice_site_id" FOREIGN KEY ("practice_site_id")
+        REFERENCES "practice"."practice_sites" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."engagement_request_items"
+        ADD CONSTRAINT "fk_engagement_request_items_decision_concept_id" FOREIGN KEY ("decision_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."effective_support_access"
+        ADD CONSTRAINT "fk_effective_support_access_user_id" FOREIGN KEY ("user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."effective_support_access"
+        ADD CONSTRAINT "fk_effective_support_access_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: practice.practitioner_role_assignments (requiere schema practice)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."effective_support_access"
+        ADD CONSTRAINT "fk_effective_support_access_practitioner_role_assignment_id" FOREIGN KEY ("practitioner_role_assignment_id")
+        REFERENCES "practice"."practitioner_role_assignments" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: practice.healthcare_services (requiere schema practice)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."effective_support_access"
+        ADD CONSTRAINT "fk_effective_support_access_healthcare_service_id" FOREIGN KEY ("healthcare_service_id")
+        REFERENCES "practice"."healthcare_services" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: practice.care_spaces (requiere schema practice)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."effective_support_access"
+        ADD CONSTRAINT "fk_effective_support_access_care_space_id" FOREIGN KEY ("care_space_id")
+        REFERENCES "practice"."care_spaces" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."governance_rules"
+        ADD CONSTRAINT "fk_governance_rules_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."governance_rules"
+        ADD CONSTRAINT "fk_governance_rules_rule_kind_concept_id" FOREIGN KEY ("rule_kind_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."governance_rules"
+        ADD CONSTRAINT "fk_governance_rules_status_concept_id" FOREIGN KEY ("status_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."governance_rules"
+        ADD CONSTRAINT "fk_governance_rules_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."governance_rules"
+        ADD CONSTRAINT "fk_governance_rules_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."sod_rules"
+        ADD CONSTRAINT "fk_sod_rules_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."sod_rules"
+        ADD CONSTRAINT "fk_sod_rules_scope_concept_id" FOREIGN KEY ("scope_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."sod_rules"
+        ADD CONSTRAINT "fk_sod_rules_action_concept_id" FOREIGN KEY ("action_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."sod_rules"
+        ADD CONSTRAINT "fk_sod_rules_status_concept_id" FOREIGN KEY ("status_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."sod_rules"
+        ADD CONSTRAINT "fk_sod_rules_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."sod_rules"
+        ADD CONSTRAINT "fk_sod_rules_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."sod_exceptions"
+        ADD CONSTRAINT "fk_sod_exceptions_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."sod_exceptions"
+        ADD CONSTRAINT "fk_sod_exceptions_status_concept_id" FOREIGN KEY ("status_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."sod_exceptions"
+        ADD CONSTRAINT "fk_sod_exceptions_revoked_by_user_id" FOREIGN KEY ("revoked_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."sod_exceptions"
+        ADD CONSTRAINT "fk_sod_exceptions_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."sod_exceptions"
+        ADD CONSTRAINT "fk_sod_exceptions_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."four_eyes_requests"
+        ADD CONSTRAINT "fk_four_eyes_requests_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."four_eyes_requests"
+        ADD CONSTRAINT "fk_four_eyes_requests_kind_concept_id" FOREIGN KEY ("kind_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."four_eyes_requests"
+        ADD CONSTRAINT "fk_four_eyes_requests_requester_user_id" FOREIGN KEY ("requester_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."four_eyes_requests"
+        ADD CONSTRAINT "fk_four_eyes_requests_subject_user_id" FOREIGN KEY ("subject_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."four_eyes_requests"
+        ADD CONSTRAINT "fk_four_eyes_requests_approver_kind_concept_id" FOREIGN KEY ("approver_kind_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."four_eyes_requests"
+        ADD CONSTRAINT "fk_four_eyes_requests_status_concept_id" FOREIGN KEY ("status_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."four_eyes_requests"
+        ADD CONSTRAINT "fk_four_eyes_requests_decided_by_user_id" FOREIGN KEY ("decided_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."four_eyes_requests"
+        ADD CONSTRAINT "fk_four_eyes_requests_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."four_eyes_requests"
+        ADD CONSTRAINT "fk_four_eyes_requests_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."access_review_campaigns"
+        ADD CONSTRAINT "fk_access_review_campaigns_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."access_review_campaigns"
+        ADD CONSTRAINT "fk_access_review_campaigns_kind_concept_id" FOREIGN KEY ("kind_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."access_review_campaigns"
+        ADD CONSTRAINT "fk_access_review_campaigns_uncertified_action_concept_id" FOREIGN KEY ("uncertified_action_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."access_review_campaigns"
+        ADD CONSTRAINT "fk_access_review_campaigns_owner_user_id" FOREIGN KEY ("owner_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."access_review_campaigns"
+        ADD CONSTRAINT "fk_access_review_campaigns_status_concept_id" FOREIGN KEY ("status_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."access_review_campaigns"
+        ADD CONSTRAINT "fk_access_review_campaigns_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."access_review_campaigns"
+        ADD CONSTRAINT "fk_access_review_campaigns_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."access_review_items"
+        ADD CONSTRAINT "fk_access_review_items_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."access_review_items"
+        ADD CONSTRAINT "fk_access_review_items_reviewer_user_id" FOREIGN KEY ("reviewer_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."access_review_items"
+        ADD CONSTRAINT "fk_access_review_items_reviewer_kind_concept_id" FOREIGN KEY ("reviewer_kind_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."access_review_items"
+        ADD CONSTRAINT "fk_access_review_items_decision_concept_id" FOREIGN KEY ("decision_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."access_review_items"
+        ADD CONSTRAINT "fk_access_review_items_decided_by_user_id" FOREIGN KEY ("decided_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."access_review_items"
+        ADD CONSTRAINT "fk_access_review_items_escalated_to_user_id" FOREIGN KEY ("escalated_to_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."access_review_items"
+        ADD CONSTRAINT "fk_access_review_items_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."access_review_items"
+        ADD CONSTRAINT "fk_access_review_items_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."lifecycle_cases"
+        ADD CONSTRAINT "fk_lifecycle_cases_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."lifecycle_cases"
+        ADD CONSTRAINT "fk_lifecycle_cases_subject_user_id" FOREIGN KEY ("subject_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."lifecycle_cases"
+        ADD CONSTRAINT "fk_lifecycle_cases_kind_concept_id" FOREIGN KEY ("kind_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."lifecycle_cases"
+        ADD CONSTRAINT "fk_lifecycle_cases_status_concept_id" FOREIGN KEY ("status_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."lifecycle_cases"
+        ADD CONSTRAINT "fk_lifecycle_cases_opened_by_user_id" FOREIGN KEY ("opened_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."lifecycle_cases"
+        ADD CONSTRAINT "fk_lifecycle_cases_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."lifecycle_cases"
+        ADD CONSTRAINT "fk_lifecycle_cases_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."handover_items"
+        ADD CONSTRAINT "fk_handover_items_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."handover_items"
+        ADD CONSTRAINT "fk_handover_items_item_kind_concept_id" FOREIGN KEY ("item_kind_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."handover_items"
+        ADD CONSTRAINT "fk_handover_items_from_user_id" FOREIGN KEY ("from_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."handover_items"
+        ADD CONSTRAINT "fk_handover_items_to_user_id" FOREIGN KEY ("to_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."handover_items"
+        ADD CONSTRAINT "fk_handover_items_status_concept_id" FOREIGN KEY ("status_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."handover_items"
+        ADD CONSTRAINT "fk_handover_items_reassigned_by_user_id" FOREIGN KEY ("reassigned_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."handover_items"
+        ADD CONSTRAINT "fk_handover_items_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."handover_items"
+        ADD CONSTRAINT "fk_handover_items_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."patient_restriction_flags"
+        ADD CONSTRAINT "fk_patient_restriction_flags_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: profiles.patient_profiles (requiere schema profiles)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."patient_restriction_flags"
+        ADD CONSTRAINT "fk_patient_restriction_flags_patient_profile_id" FOREIGN KEY ("patient_profile_id")
+        REFERENCES "profiles"."patient_profiles" ("profile_id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."patient_restriction_flags"
+        ADD CONSTRAINT "fk_patient_restriction_flags_flag_concept_id" FOREIGN KEY ("flag_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."patient_restriction_flags"
+        ADD CONSTRAINT "fk_patient_restriction_flags_status_concept_id" FOREIGN KEY ("status_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."patient_restriction_flags"
+        ADD CONSTRAINT "fk_patient_restriction_flags_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."patient_restriction_flags"
+        ADD CONSTRAINT "fk_patient_restriction_flags_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."access_decision_log"
+        ADD CONSTRAINT "fk_access_decision_log_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."access_decision_log"
+        ADD CONSTRAINT "fk_access_decision_log_user_id" FOREIGN KEY ("user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."access_decision_log"
+        ADD CONSTRAINT "fk_access_decision_log_effect_concept_id" FOREIGN KEY ("effect_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."access_decision_log"
+        ADD CONSTRAINT "fk_access_decision_log_recorded_by_user_id" FOREIGN KEY ("recorded_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."grant_usage_stats"
+        ADD CONSTRAINT "fk_grant_usage_stats_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."grant_usage_stats"
+        ADD CONSTRAINT "fk_grant_usage_stats_user_id" FOREIGN KEY ("user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."access_anomalies"
+        ADD CONSTRAINT "fk_access_anomalies_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."access_anomalies"
+        ADD CONSTRAINT "fk_access_anomalies_user_id" FOREIGN KEY ("user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."access_anomalies"
+        ADD CONSTRAINT "fk_access_anomalies_kind_concept_id" FOREIGN KEY ("kind_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."access_anomalies"
+        ADD CONSTRAINT "fk_access_anomalies_status_concept_id" FOREIGN KEY ("status_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."access_anomalies"
+        ADD CONSTRAINT "fk_access_anomalies_acknowledged_by_user_id" FOREIGN KEY ("acknowledged_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."access_anomalies"
+        ADD CONSTRAINT "fk_access_anomalies_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "delegated_access"."access_anomalies"
+        ADD CONSTRAINT "fk_access_anomalies_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)

@@ -282,6 +282,9 @@ entity "procedures_perioperative.procedure_cases" as procedures_perioperative_pr
 }
 entity "practice.care_spaces" as practice_care_spaces <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_care_spaces_buffers | (COALESCE("prep_minutes", 0) >= 0 AND COALESCE("cleanup_minutes", 0) >= 0)
+  ' v4.2.69: jerarquia de ubicaciones. NULL pasa (espacios anteriores a la jerarquia).
+  CHECK_SQL : ck_care_spaces_fhir_physical_type | ("fhir_physical_type" IS NULL OR "fhir_physical_type" IN ('bu', 'lvl', 'wi', 'ro', 'bd', 'si'))
+  CHECK_SQL : ck_care_spaces_location_path | ("location_path" IS NULL OR "location_path" ~ '^/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/)+$')
 }
 entity "scheduling.booking_policies" as scheduling_booking_policies <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_booking_policies_no_show_fee_percentage | ("no_show_fee_percentage" IS NULL OR ("no_show_fee_percentage" >= 0 AND "no_show_fee_percentage" <= 100))
@@ -303,4 +306,147 @@ entity "delegated_access.shared_access_link_uses" as delegated_access_shared_acc
   ' A-12: el rastro de uso de un token compartido no se reescribe (UPDATE prohibido, DELETE libre para la retencion).
   UPDATE : forbidden
 }
+
+' + v4.2.69 — personal de apoyo (secretaria y otros roles). Todo CHECK_SQL lleva la expresion concreta;
+' los concept_id van como UUID literales (el predicado de un CHECK debe ser inmutable): son los
+' ids deterministas de `delegated_access:SUPPORT_TARGET_*`, `SUPPORT_EXPANSION_FIXED` e
+' `iam:SESSION_POLICY_SCOPE_ROLE` (uuid5 sobre el namespace del backend).
+entity "delegated_access.support_scope_grants" as delegated_access_support_scope_grants <<REFERENCE_ONLY>> {
+  ' El objetivo debe ser coherente con su tipo: PRACTITIONER solo doctor; SERVICE solo servicio; LOCATION
+  ' exactamente un espacio O una sede; las combinaciones piden sus dos objetivos; ALL_* ninguno.
+  CHECK_SQL : ck_support_scope_grants_target_coherent | ("target_kind_concept_id" = '785d1671-5754-58d3-b1a3-e3cd467b82b7' AND "practitioner_role_assignment_id" IS NOT NULL AND "healthcare_service_id" IS NULL AND "care_space_id" IS NULL AND "practice_site_id" IS NULL) OR ("target_kind_concept_id" = '953e4408-5e19-521b-a25a-3d062d788911' AND "practitioner_role_assignment_id" IS NULL AND "healthcare_service_id" IS NOT NULL AND "care_space_id" IS NULL AND "practice_site_id" IS NULL) OR ("target_kind_concept_id" = '10510d38-c6cf-5243-9327-5cefc6c3aee5' AND "practitioner_role_assignment_id" IS NULL AND "healthcare_service_id" IS NULL AND num_nonnulls("care_space_id", "practice_site_id") = 1) OR ("target_kind_concept_id" = '19ff6b5b-b998-54bb-af93-573b96764a6c' AND "practitioner_role_assignment_id" IS NOT NULL AND "healthcare_service_id" IS NOT NULL AND "care_space_id" IS NULL AND "practice_site_id" IS NULL) OR ("target_kind_concept_id" = '2ed23be8-884f-5e75-bd63-a1ff92f42e89' AND "practitioner_role_assignment_id" IS NOT NULL AND "healthcare_service_id" IS NULL AND num_nonnulls("care_space_id", "practice_site_id") = 1) OR ("target_kind_concept_id" = 'cf017e3e-4c7f-5e2f-a7ca-2f2078eb89b3' AND "practitioner_role_assignment_id" IS NULL AND "healthcare_service_id" IS NOT NULL AND num_nonnulls("care_space_id", "practice_site_id") = 1) OR ("target_kind_concept_id" = '81f2ac43-a9ba-5043-b455-ed71b2d7e59f' AND "practitioner_role_assignment_id" IS NULL AND "healthcare_service_id" IS NULL AND "care_space_id" IS NULL AND "practice_site_id" IS NULL) OR ("target_kind_concept_id" = '3df7a566-22b8-512d-85a7-4b89604cb26b' AND "practitioner_role_assignment_id" IS NULL AND "healthcare_service_id" IS NULL AND "care_space_id" IS NULL AND "practice_site_id" IS NULL) OR ("target_kind_concept_id" = 'cf4de420-16da-57f8-8c3a-f6ff717fc59e' AND "practitioner_role_assignment_id" IS NULL AND "healthcare_service_id" IS NULL AND "care_space_id" IS NULL AND "practice_site_id" IS NULL) OR ("target_kind_concept_id" = 'b1330928-a076-5348-bffd-154144fadc85' AND "practitioner_role_assignment_id" IS NULL AND "healthcare_service_id" IS NULL AND "care_space_id" IS NULL AND "practice_site_id" IS NULL)
+  CHECK_SQL : ck_support_scope_grants_valid_period | ("valid_from" IS NULL OR "valid_to" IS NULL OR "valid_from" <= "valid_to")
+  ' Un permiso de expansion FIJA exige su foto (v4.2.70, M6): fixed_snapshot_json = {"rows":[...]} con al menos una fila;
+  ' cada fila es un objeto cuyas claves son practitionerRoleAssignmentId, practitionerProfileId, healthcareServiceId o
+  ' careSpaceId (valores uuid o null) y trae AL MENOS UNA de las tres dimensiones con uuid. Una fila vacia {} (comodin)
+  ' o una clave desconocida se rechazan: FIXED jamas equivale a DYNAMIC. Va envuelto en IS TRUE para que un JSON sin
+  ' 'rows' (NULL) no pase por la regla de tres valores del CHECK.
+  CHECK_SQL : ck_support_scope_grants_fixed_snapshot | ("expansion_mode_concept_id" <> '4f47115f-54ad-564f-bcd4-f06a0a0c13cd' OR (jsonb_typeof("fixed_snapshot_json" -> 'rows') = 'array' AND jsonb_array_length("fixed_snapshot_json" -> 'rows') > 0 AND NOT jsonb_path_exists("fixed_snapshot_json", '$.rows[*] ? (@.type() != "object" || exists(@.keyvalue() ? (@.key != "practitionerRoleAssignmentId" && @.key != "practitionerProfileId" && @.key != "healthcareServiceId" && @.key != "careSpaceId" || @.value.type() != "null" && !(@.value.type() == "string" && @.value like_regex "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"))) || !(exists(@.practitionerRoleAssignmentId ? (@.type() == "string" && @ like_regex "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$")) || exists(@.healthcareServiceId ? (@.type() == "string" && @ like_regex "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$")) || exists(@.careSpaceId ? (@.type() == "string" && @ like_regex "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"))))')) IS TRUE)
+}
+entity "delegated_access.engagement_request_items" as delegated_access_engagement_request_items <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_engagement_request_items_target_coherent | ("target_kind_concept_id" = '785d1671-5754-58d3-b1a3-e3cd467b82b7' AND "practitioner_role_assignment_id" IS NOT NULL AND "healthcare_service_id" IS NULL AND "care_space_id" IS NULL AND "practice_site_id" IS NULL) OR ("target_kind_concept_id" = '953e4408-5e19-521b-a25a-3d062d788911' AND "practitioner_role_assignment_id" IS NULL AND "healthcare_service_id" IS NOT NULL AND "care_space_id" IS NULL AND "practice_site_id" IS NULL) OR ("target_kind_concept_id" = '10510d38-c6cf-5243-9327-5cefc6c3aee5' AND "practitioner_role_assignment_id" IS NULL AND "healthcare_service_id" IS NULL AND num_nonnulls("care_space_id", "practice_site_id") = 1) OR ("target_kind_concept_id" = '19ff6b5b-b998-54bb-af93-573b96764a6c' AND "practitioner_role_assignment_id" IS NOT NULL AND "healthcare_service_id" IS NOT NULL AND "care_space_id" IS NULL AND "practice_site_id" IS NULL) OR ("target_kind_concept_id" = '2ed23be8-884f-5e75-bd63-a1ff92f42e89' AND "practitioner_role_assignment_id" IS NOT NULL AND "healthcare_service_id" IS NULL AND num_nonnulls("care_space_id", "practice_site_id") = 1) OR ("target_kind_concept_id" = 'cf017e3e-4c7f-5e2f-a7ca-2f2078eb89b3' AND "practitioner_role_assignment_id" IS NULL AND "healthcare_service_id" IS NOT NULL AND num_nonnulls("care_space_id", "practice_site_id") = 1) OR ("target_kind_concept_id" = '81f2ac43-a9ba-5043-b455-ed71b2d7e59f' AND "practitioner_role_assignment_id" IS NULL AND "healthcare_service_id" IS NULL AND "care_space_id" IS NULL AND "practice_site_id" IS NULL) OR ("target_kind_concept_id" = '3df7a566-22b8-512d-85a7-4b89604cb26b' AND "practitioner_role_assignment_id" IS NULL AND "healthcare_service_id" IS NULL AND "care_space_id" IS NULL AND "practice_site_id" IS NULL) OR ("target_kind_concept_id" = 'cf4de420-16da-57f8-8c3a-f6ff717fc59e' AND "practitioner_role_assignment_id" IS NULL AND "healthcare_service_id" IS NULL AND "care_space_id" IS NULL AND "practice_site_id" IS NULL) OR ("target_kind_concept_id" = 'b1330928-a076-5348-bffd-154144fadc85' AND "practitioner_role_assignment_id" IS NULL AND "healthcare_service_id" IS NULL AND "care_space_id" IS NULL AND "practice_site_id" IS NULL)
+}
+entity "delegated_access.engagement_requests" as delegated_access_engagement_requests <<REFERENCE_ONLY>> {
+  ' Las solicitudes vencen a los 15 dias; el vencimiento es siempre posterior a la creacion.
+  CHECK_SQL : ck_engagement_requests_expires_after_created | "expires_at" > "created_at"
+}
+entity "delegated_access.role_templates" as delegated_access_role_templates <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_role_templates_version_number | "version_number" >= 1
+}
+entity "delegated_access.organization_user_assignments" as delegated_access_organization_user_assignments <<REFERENCE_ONLY>> {
+  ' Recertificacion cada 6 o 12 meses (NULL = sin recertificacion periodica).
+  CHECK_SQL : ck_organization_user_assignments_recertify_months | ("recertify_every_months" IS NULL OR "recertify_every_months" IN (6, 12))
+}
+entity "directory.affiliation_invitations" as directory_affiliation_invitations <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_affiliation_invitations_uses | ("max_uses" >= 1 AND "uses_count" >= 0 AND "uses_count" <= "max_uses")
+}
+entity "practice.practitioner_location_assignments" as practice_practitioner_location_assignments <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_practitioner_location_assignments_period | ("valid_from" IS NULL OR "valid_to" IS NULL OR "valid_from" <= "valid_to")
+}
+entity "iam.session_policies" as iam_session_policies <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_session_policies_idle_timeout | ("idle_timeout_minutes" > 0 AND "idle_timeout_minutes" <= 1440)
+  ' v4.2.70 (A5): allowed_hours_json = {from, to HH:mm, days? [0-6], timeZone?}. La zona IANA se valida con el trigger
+  ' integrity.trg_session_policies_time_zone (un CHECK no puede consultar pg_timezone_names).
+  CHECK_SQL : ck_session_policies_allowed_hours | ("allowed_hours_json" IS NULL OR (jsonb_typeof("allowed_hours_json") = 'object' AND jsonb_path_exists("allowed_hours_json", '$ ? (@.from.type() == "string" && @.from like_regex "^([01][0-9]|2[0-3]):[0-5][0-9]$" && @.to.type() == "string" && @.to like_regex "^([01][0-9]|2[0-3]):[0-5][0-9]$")') AND ("allowed_hours_json" -> 'days' IS NULL OR jsonb_typeof("allowed_hours_json" -> 'days') = 'array') AND NOT jsonb_path_exists("allowed_hours_json", '$.days[*] ? (@.type() != "number" || @ < 0 || @ > 6 || @ != @.floor())') AND ("allowed_hours_json" -> 'timeZone' IS NULL OR jsonb_typeof("allowed_hours_json" -> 'timeZone') IN ('string', 'null'))) IS TRUE)
+  ' role_code va si y solo si el alcance es un rol.
+  CHECK_SQL : ck_session_policies_role_code | (("scope_concept_id" = 'b9137390-37e5-5de6-95cf-fc53860563fe') = ("role_code" IS NOT NULL))
+}
+entity "community.direct_messages" as community_direct_messages <<REFERENCE_ONLY>> {
+  ' Un mensaje en nombre de un doctor siempre conserva a su autora real.
+  CHECK_SQL : ck_direct_messages_on_behalf_has_author | ("on_behalf_of_profile_id" IS NULL OR "authored_by_user_id" IS NOT NULL)
+}
+
+' v4.2.72 - gobierno de accesos. Todo CHECK_SQL lleva la expresion concreta; los concept_id van como UUID literales (el predicado de un CHECK
+' debe ser inmutable): son los ids deterministas de `delegated_access:*`, `state:*` y `authz:EFFECT_*` (uuid5 sobre el namespace del backend).
+entity "authz.permissions" as authz_permissions <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_permissions_approval_needs_sensitivity | ("approval_mode_concept_id" IS NULL OR "sensitivity_concept_id" IS NOT NULL)
+}
+
+entity "delegated_access.support_scope_grants" as delegated_access_support_scope_grants <<REFERENCE_ONLY>> {
+  ' El efecto es ALLOW o DENY (authz:EFFECT_*); la condicion v1 es un objeto de a lo mas 8 KiB cuya schemaVersion coincide con la columna.
+  CHECK_SQL : ck_support_scope_grants_effect_valid | ("effect_concept_id" IN ('6905e0db-1650-5d49-adca-8b2688ac049c', 'b038e546-a6ba-5848-9cd2-04b02ccb22b0'))
+  CHECK_SQL : ck_support_scope_grants_condition | (("condition_json" IS NULL AND "condition_schema_version" IS NULL) OR (jsonb_typeof("condition_json") = 'object' AND "condition_schema_version" IS NOT NULL AND ("condition_json" ->> 'schemaVersion') = ("condition_schema_version")::text AND octet_length("condition_json"::text) <= 8192))
+}
+
+entity "delegated_access.support_grant_actions" as delegated_access_support_grant_actions <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_support_grant_actions_condition | (("condition_json" IS NULL AND "condition_schema_version" IS NULL) OR (jsonb_typeof("condition_json") = 'object' AND "condition_schema_version" IS NOT NULL AND ("condition_json" ->> 'schemaVersion') = ("condition_schema_version")::text AND octet_length("condition_json"::text) <= 8192))
+}
+
+entity "delegated_access.role_templates" as delegated_access_role_templates <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_role_templates_ceiling_array | ("ceiling_actions_json" IS NULL OR jsonb_typeof("ceiling_actions_json") = 'array')
+  CHECK_SQL : ck_role_templates_default_conditions_object | ("default_conditions_json" IS NULL OR jsonb_typeof("default_conditions_json") = 'object')
+}
+
+' Reglas de la organizacion (L1): el patron es un atomo o `prefijo.*`; un techo exige plantilla; una condicion obligatoria trae `condition`; un piso de campo trae maxVisibility.
+entity "delegated_access.governance_rules" as delegated_access_governance_rules <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_governance_rules_pattern | ("permission_pattern" ~ '^([a-z_]+(\.[a-z_]+){2,3}|[a-z_]+(\.[a-z_]+){0,2}\.\*)$')
+  CHECK_SQL : ck_governance_rules_kind_shape | (("rule_kind_concept_id" <> 'ce906685-7a58-54e7-b4d2-458062c0c303' OR "role_template_code" IS NOT NULL) AND ("rule_kind_concept_id" <> '1b6db045-2cc5-5985-9c89-18b8ac0969be' OR COALESCE("rule_json" ? 'condition', false)) AND ("rule_kind_concept_id" <> 'f2534b4a-a8cc-5fb1-a431-30e1a750274b' OR COALESCE("rule_json" ->> 'maxVisibility' IN ('PARTIAL', 'REDACT', 'NULLIFY'), false)))
+  CHECK_SQL : ck_governance_rules_valid_period | ("valid_from" IS NULL OR "valid_to" IS NULL OR "valid_from" <= "valid_to")
+}
+
+entity "delegated_access.sod_rules" as delegated_access_sod_rules <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_sod_rules_sets | (jsonb_typeof("atoms_a_json") = 'array' AND jsonb_typeof("atoms_b_json") = 'array')
+  CHECK_SQL : ck_sod_rules_exception_days | ("max_exception_days" IS NULL OR "max_exception_days" BETWEEN 1 AND 180)
+  CHECK_SQL : ck_sod_rules_hard_no_exception | (NOT ("is_hard" AND "max_exception_days" IS NOT NULL))
+  CHECK_SQL : ck_sod_rules_version_number | ("version_number" >= 1)
+}
+
+entity "delegated_access.sod_exceptions" as delegated_access_sod_exceptions <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_sod_exceptions_period | ("valid_to" > "valid_from" AND "valid_to" <= "valid_from" + interval '180 days')
+  CHECK_SQL : ck_sod_exceptions_justification | (char_length("justification_text") >= 30)
+}
+
+entity "delegated_access.four_eyes_requests" as delegated_access_four_eyes_requests <<REFERENCE_ONLY>> {
+  ' Nadie aprueba lo propio ni lo que le toca a el: el decisor no es quien pide ni la persona afectada (23514).
+  CHECK_SQL : ck_four_eyes_requests_not_self | ("decided_by_user_id" IS NULL OR ("decided_by_user_id" <> "requester_user_id" AND ("subject_user_id" IS NULL OR "decided_by_user_id" <> "subject_user_id")))
+  CHECK_SQL : ck_four_eyes_requests_hash | ("payload_hash" ~ '^[0-9a-f]{64}$')
+  CHECK_SQL : ck_four_eyes_requests_expiry | ("expires_at" > "created_at")
+  CHECK_SQL : ck_four_eyes_requests_decision | (("status_concept_id" <> 'a977935a-9073-5113-9644-7df96732e776' OR ("decided_at" IS NULL AND "decided_by_user_id" IS NULL)) AND ("status_concept_id" NOT IN ('1627143e-d273-5fcb-b289-9e59b8b096f2', 'de15c53d-1aa0-5709-8ebd-69e9fd323e31', '013d578f-38af-564c-aff1-e36d1fdec6dd') OR ("decided_at" IS NOT NULL AND "decided_by_user_id" IS NOT NULL)))
+  CHECK_SQL : ck_four_eyes_requests_reject_comment | ("status_concept_id" <> 'de15c53d-1aa0-5709-8ebd-69e9fd323e31' OR COALESCE(char_length("decision_comment_text"), 0) >= 5)
+}
+
+entity "delegated_access.access_review_campaigns" as delegated_access_access_review_campaigns <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_access_review_campaigns_grace | ("grace_days" BETWEEN 0 AND 30)
+  CHECK_SQL : ck_access_review_campaigns_escalate | ("escalate_after_days" BETWEEN 1 AND 30)
+  CHECK_SQL : ck_access_review_campaigns_reminders | (jsonb_typeof("reminder_days_before_json") = 'array')
+  CHECK_SQL : ck_access_review_campaigns_due | ("launched_at" IS NULL OR "due_at" > "launched_at")
+}
+
+' El revisor no puede ser el titular del vinculo: integrity.access_review_reviewer_not_subject (23514), en el parche.
+entity "delegated_access.access_review_items" as delegated_access_access_review_items <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_access_review_items_decided | (("decision_concept_id" = '55a6db07-19e7-5bb4-978a-3d246492f49d' AND "decided_at" IS NULL) OR ("decision_concept_id" <> '55a6db07-19e7-5bb4-978a-3d246492f49d' AND "decided_at" IS NOT NULL))
+  CHECK_SQL : ck_access_review_items_comment | ("decision_concept_id" NOT IN ('bce72e9a-b3bb-5fab-8e79-85d411ba692c', '26f790b1-6d77-5286-89d5-0e82a4dcfb81') OR COALESCE(char_length("decision_comment_text"), 0) >= 10)
+  CHECK_SQL : ck_access_review_items_hash | ("evidence_hash" ~ '^[0-9a-f]{64}$')
+}
+
+entity "delegated_access.lifecycle_cases" as delegated_access_lifecycle_cases <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_lifecycle_cases_checklist | (jsonb_typeof("checklist_json") = 'array')
+  CHECK_SQL : ck_lifecycle_cases_completed | ("status_concept_id" <> '4734035e-72cf-519f-8e27-e6cf25ba557f' OR "completed_at" IS NOT NULL)
+}
+
+entity "delegated_access.handover_items" as delegated_access_handover_items <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_handover_items_reassigned | ("status_concept_id" <> '57d9c373-5a94-5fd6-bf9c-bd6a95cb2a91' OR ("to_user_id" IS NOT NULL AND "reassigned_at" IS NOT NULL))
+  CHECK_SQL : ck_handover_items_not_self | ("to_user_id" IS NULL OR "to_user_id" <> "from_user_id")
+}
+
+entity "delegated_access.patient_restriction_flags" as delegated_access_patient_restriction_flags <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_patient_restriction_flags_reason | (char_length("reason_text") >= 10)
+}
+
+entity "delegated_access.access_decision_log" as delegated_access_access_decision_log <<IMMUTABLE, REFERENCE_ONLY>> {
+  ' WORM: ni UPDATE ni DELETE (REVOKE + disparador trg_forbid_mutation). La retencion de 24 meses la hace un trabajo SYSTEM que descarta particiones.
+  UPDATE_DELETE : forbidden
+  ' v4.2.73 (revision de seguridad A-B2): tampoco TRUNCATE (REVOKE + disparador de sentencia trg_forbid_truncate); el dueño de la tabla ya no puede vaciarla por accidente.
+  TRUNCATE : forbidden
+}
+
+entity "delegated_access.grant_usage_stats" as delegated_access_grant_usage_stats <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_grant_usage_stats_counts | ("permit_count" >= 0 AND "deny_count" >= 0 AND "challenge_count" >= 0 AND "off_hours_count" >= 0 AND "distinct_patients_in_bucket" >= 0)
+}
+
+entity "delegated_access.access_anomalies" as delegated_access_access_anomalies <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_access_anomalies_window | ("window_end" > "window_start")
+  CHECK_SQL : ck_access_anomalies_dismiss_comment | ("status_concept_id" <> '1c8f5b91-371b-5967-b8fd-98d08f80ac9c' OR COALESCE(char_length("resolution_comment_text"), 0) >= 10)
+}
+
 @enduml

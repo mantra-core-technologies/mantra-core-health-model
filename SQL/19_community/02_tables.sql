@@ -441,6 +441,10 @@ CREATE TABLE IF NOT EXISTS "community"."direct_messages" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "authored_by_user_id" uuid,
+    "on_behalf_of_profile_id" uuid,
+    "delegate_assignment_id" uuid,
+    "disclosure_shown" boolean NOT NULL DEFAULT false,
     CONSTRAINT "pk_direct_messages" PRIMARY KEY ("id")
 );
 
@@ -699,4 +703,46 @@ CREATE TABLE IF NOT EXISTS "community"."comment_media" (
     "created_at" timestamptz NOT NULL,
     "created_by_user_id" uuid,
     CONSTRAINT "pk_comment_media" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "community"."conversation_assignments" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "conversation_id" uuid NOT NULL,
+    "practitioner_profile_id" uuid NOT NULL,
+    "assigned_user_id" uuid,
+    "status_concept_id" uuid NOT NULL,
+    "sla_due_at" timestamptz,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_conversation_assignments" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "community"."conversation_internal_notes" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "conversation_id" uuid NOT NULL,
+    "author_user_id" uuid NOT NULL,
+    "body_text" text NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    CONSTRAINT "pk_conversation_internal_notes" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "community"."reply_templates" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "practitioner_profile_id" uuid,
+    "category_concept_id" uuid NOT NULL,
+    "title" varchar NOT NULL,
+    "body_text" text NOT NULL,
+    "status_concept_id" uuid NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_reply_templates" PRIMARY KEY ("id")
 );

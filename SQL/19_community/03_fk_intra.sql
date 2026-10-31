@@ -343,3 +343,15 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_comment_media_comment_id" FOREIGN KEY ("comment_id")
         REFERENCES "community"."comments" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "community"."conversation_assignments"
+        ADD CONSTRAINT "fk_conversation_assignments_conversation_id" FOREIGN KEY ("conversation_id")
+        REFERENCES "community"."conversations" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "community"."conversation_internal_notes"
+        ADD CONSTRAINT "fk_conversation_internal_notes_conversation_id" FOREIGN KEY ("conversation_id")
+        REFERENCES "community"."conversations" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;

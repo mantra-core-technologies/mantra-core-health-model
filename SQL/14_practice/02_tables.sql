@@ -113,6 +113,8 @@ CREATE TABLE IF NOT EXISTS "practice"."care_spaces" (
     "row_version" integer NOT NULL DEFAULT 1,
     "prep_minutes" integer,
     "cleanup_minutes" integer,
+    "fhir_physical_type" varchar,
+    "location_path" varchar,
     CONSTRAINT "pk_care_spaces" PRIMARY KEY ("id")
 );
 
@@ -209,4 +211,20 @@ CREATE TABLE IF NOT EXISTS "practice"."practice_settings" (
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
     CONSTRAINT "pk_practice_settings" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "practice"."practitioner_location_assignments" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "practitioner_role_assignment_id" uuid NOT NULL,
+    "care_space_id" uuid NOT NULL,
+    "valid_from" date,
+    "valid_to" date,
+    "status_concept_id" uuid NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_practitioner_location_assignments" PRIMARY KEY ("id")
 );

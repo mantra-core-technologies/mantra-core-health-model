@@ -96,6 +96,8 @@ CREATE INDEX IF NOT EXISTS "ix_care_spaces_created_by_user_id" ON "practice"."ca
 
 CREATE INDEX IF NOT EXISTS "ix_care_spaces_updated_by_user_id" ON "practice"."care_spaces" ("updated_by_user_id");
 
+CREATE INDEX IF NOT EXISTS "ix_care_spaces_location_path" ON "practice"."care_spaces" (location_path varchar_pattern_ops);
+
 CREATE INDEX IF NOT EXISTS "ix_healthcare_services_practice_id" ON "practice"."healthcare_services" ("practice_id");
 
 CREATE INDEX IF NOT EXISTS "ix_healthcare_services_practice_site_id" ON "practice"."healthcare_services" ("practice_site_id");
@@ -179,3 +181,17 @@ CREATE INDEX IF NOT EXISTS "ix_practice_settings_category_concept_id" ON "practi
 CREATE INDEX IF NOT EXISTS "ix_practice_settings_created_by_user_id" ON "practice"."practice_settings" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_practice_settings_updated_by_user_id" ON "practice"."practice_settings" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_location_assignments_tenant_id" ON "practice"."practitioner_location_assignments" ("tenant_id", "status_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_location_assignments_practitioner_role_a_id" ON "practice"."practitioner_location_assignments" ("practitioner_role_assignment_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_location_assignments_care_space_id" ON "practice"."practitioner_location_assignments" ("care_space_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_location_assignments_status_concept_id" ON "practice"."practitioner_location_assignments" ("status_concept_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_practitioner_location_assignments_current" ON "practice"."practitioner_location_assignments" ("practitioner_role_assignment_id", "care_space_id") WHERE valid_to IS NULL;
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_location_assignments_created_by_user_id" ON "practice"."practitioner_location_assignments" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_practitioner_location_assignments_updated_by_user_id" ON "practice"."practitioner_location_assignments" ("updated_by_user_id");

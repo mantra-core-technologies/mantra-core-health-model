@@ -502,5 +502,45 @@ users ||--o{ account_lockouts
 
 users ||--o{ api_keys
 
+
+' ==============================================================================
+' v4.2.69 - POLITICAS DE SESION POR ORGANIZACION. Una organizacion fija cuanto dura una sesion
+' inactiva, si avisa de un dispositivo nuevo, en que horario se puede entrar, si aplica sus reglas
+' de IP y si exige MFA, para todas las cuentas, solo para su personal, o para un rol (role_code).
+' Ningun valor tiene DEFAULT: la API siempre los envia.
+' ==============================================================================
+entity session_policies {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * scope_concept_id : uuid <<FK>>
+    role_code : varchar
+  * idle_timeout_minutes : integer
+  * new_device_alert : boolean
+    allowed_hours_json : jsonb
+  * enforce_ip_rules : boolean
+  * require_mfa : boolean
+  * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity "INDEXES · session_policies" as idxset_session_policies <<INDEX_SET>> {
+  PK pk_session_policies : (id) UNIQUE BTREE
+  IX ix_session_policies_tenant_id : (tenant_id, status_concept_id) BTREE
+  IX ix_session_policies_scope_concept_id : (scope_concept_id) BTREE
+  IX ix_session_policies_status_concept_id : (status_concept_id) BTREE
+  ' v4.2.70: unico SOLO entre las politicas ACTIVAS (state:active). Las retiradas (state:revoked) se conservan como
+  ' historial y no bloquean al siguiente PUT del mismo alcance. Reemplazan a uq_session_policies_tenant_scope(_role).
+  UK uq_session_policies_active_tenant_scope : (tenant_id, scope_concept_id) UNIQUE BTREE WHERE role_code IS NULL AND status_concept_id = '38a1d301-f40d-5b17-a695-5e6d605f8b19'
+  UK uq_session_policies_active_tenant_scope_role : (tenant_id, scope_concept_id, role_code) UNIQUE BTREE WHERE role_code IS NOT NULL AND status_concept_id = '38a1d301-f40d-5b17-a695-5e6d605f8b19'
+  IX ix_session_policies_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_session_policies_updated_by_user_id : (updated_by_user_id) BTREE
+}
+session_policies .. idxset_session_policies : indexed by
+
 @enduml
 

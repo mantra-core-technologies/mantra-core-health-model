@@ -115,3 +115,15 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_practice_settings_practice_id" FOREIGN KEY ("practice_id")
         REFERENCES "practice"."practices" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "practice"."practitioner_location_assignments"
+        ADD CONSTRAINT "fk_practitioner_location_assignments_practitioner_role_7cd3d7ce" FOREIGN KEY ("practitioner_role_assignment_id")
+        REFERENCES "practice"."practitioner_role_assignments" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "practice"."practitioner_location_assignments"
+        ADD CONSTRAINT "fk_practitioner_location_assignments_care_space_id" FOREIGN KEY ("care_space_id")
+        REFERENCES "practice"."care_spaces" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;

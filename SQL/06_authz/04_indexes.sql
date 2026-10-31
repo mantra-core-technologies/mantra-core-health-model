@@ -22,6 +22,16 @@ CREATE INDEX IF NOT EXISTS "ix_permissions_created_by_user_id" ON "authz"."permi
 
 CREATE INDEX IF NOT EXISTS "ix_permissions_updated_by_user_id" ON "authz"."permissions" ("updated_by_user_id");
 
+CREATE INDEX IF NOT EXISTS "ix_permissions_sensitivity_concept_id" ON "authz"."permissions" ("sensitivity_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_permissions_approval_mode_concept_id" ON "authz"."permissions" ("approval_mode_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_permissions_purpose_of_use_concept_id" ON "authz"."permissions" ("purpose_of_use_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_permissions_legal_basis_concept_id" ON "authz"."permissions" ("legal_basis_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_permissions_support_assignable" ON "authz"."permissions" ("support_assignable") WHERE support_assignable;
+
 CREATE INDEX IF NOT EXISTS "ix_roles_tenant_id" ON "authz"."roles" ("tenant_id");
 
 CREATE INDEX IF NOT EXISTS "ix_roles_parent_role_id" ON "authz"."roles" ("parent_role_id");

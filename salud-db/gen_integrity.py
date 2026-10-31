@@ -94,7 +94,25 @@ def write_functions():
         "BEGIN\n"
         "    RAISE EXCEPTION 'append-only/immutable: % no permitido en %.%',\n"
         "        TG_OP, TG_TABLE_SCHEMA, TG_TABLE_NAME USING ERRCODE = 'restrict_violation';\n"
+        "END $$;\n\n"
+        "-- Barrera física contra TRUNCATE (TRUNCATE: forbidden). Un disparador de fila no ve el TRUNCATE:\n"
+        "-- hace falta uno de sentencia. Lo engancha `truncate_guard` a las tablas append-only que lo declaran.\n"
+        'CREATE OR REPLACE FUNCTION "integrity"."forbid_truncate"() RETURNS trigger\n'
+        "LANGUAGE plpgsql AS $$\n"
+        "BEGIN\n"
+        "    RAISE EXCEPTION 'append-only/immutable: TRUNCATE no permitido en %.%',\n"
+        "        TG_TABLE_SCHEMA, TG_TABLE_NAME USING ERRCODE = 'restrict_violation';\n"
         "END $$;\n", encoding="utf-8")
+
+
+def truncate_guard(schema, table):
+    """Barrera física contra TRUNCATE: REVOKE al público y disparador de sentencia."""
+    t = f'"{schema}"."{table}"'
+    return ("-- TRUNCATE: forbidden → barrera física (append-only)\n"
+            f"REVOKE TRUNCATE ON {t} FROM PUBLIC;\n"
+            f'DROP TRIGGER IF EXISTS trg_forbid_truncate ON {t};\n'
+            f"CREATE TRIGGER trg_forbid_truncate BEFORE TRUNCATE ON {t}\n"
+            f'    FOR EACH STATEMENT EXECUTE FUNCTION "integrity"."forbid_truncate"();\n')
 
 
 def immutability_guard(schema, table, ops=("UPDATE", "DELETE")):
@@ -222,6 +240,8 @@ def entity_block(e):
         lines.append(immutability_guard(sch, tbl))
     elif update_only:
         lines.append(immutability_guard(sch, tbl, ops=("UPDATE",)))
+    if any(k == "TRUNCATE" and "forbid" in v.lower() for k, v in e["rules"]):
+        lines.append(truncate_guard(sch, tbl))
     return lines
 
 
