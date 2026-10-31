@@ -753,6 +753,11 @@ entity inpatient_census_days {
 ' depende de que el paciente tenga cuenta: se vincula sola cuando la active (es por
 ' persona). origin: ADM_ORIGIN_EMERGENCY | REFERRAL | SCHEDULED | TRANSFER_IN.
 ' identity_verification_method: IDV_CI | IDV_PASSPORT | IDV_FOREIGN_ID | IDV_BIRTH_CERT | IDV_OTHER.
+' El número del documento NO se guarda: sólo el tipo, los últimos 4 y un HMAC-SHA256 del número
+' normalizado con una clave que vive fuera de la base (API: ADMISSION_ID_HMAC_KEY).
+' La derivación (referral_id) tiene que ser del mismo paciente y dirigida a este tenant:
+' FK compuesta (referral_id, patient_profile_id, tenant_id) → referrals (id, patient_profile_id,
+' target_tenant_id), patch 2026-10-31_admision_crea_el_vinculo_b.sql.
 entity patient_admission_footprints <<APPEND_ONLY>> {
   * id : uuid <<PK>>
   --
@@ -762,7 +767,9 @@ entity patient_admission_footprints <<APPEND_ONLY>> {
   * practice_site_id : uuid <<FK>>
   * admission_origin_concept_id : uuid <<FK>>
   * identity_verification_method_concept_id : uuid <<FK>>
-  * identity_document_reference : varchar(64)
+  * identity_document_type : varchar(32)
+  * identity_document_last4 : varchar(4)
+  * identity_document_hmac : varchar(64)
     referral_id : uuid <<FK>>
   * recorded_by_user_id : uuid <<FK>>
   * created_at : timestamptz

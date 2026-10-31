@@ -30,7 +30,7 @@
 --   - No toca filas existentes (la tabla es nueva).
 --
 -- DELTAS ESPERADOS sobre la base viva (antes de este patch):
---   tablas +1 · FKs +10 (8 generadas + 2 compuestas) · índices +9 (8 + PK) · triggers +2
+--   tablas +1 · FKs +10 (8 generadas + 2 compuestas; el patch _b suma la de la derivación) · índices +9 (8 + PK) · triggers +2
 --   · políticas RLS +1
 -- ============================================================================
 
@@ -188,8 +188,8 @@ BEGIN
        AND tgname IN ('trg_forbid_mutation', 'trg_patient_matches_encounter');
     SELECT count(*) INTO n_rls FROM pg_policies
      WHERE schemaname = 'clinical' AND tablename = 'patient_admission_footprints' AND policyname = 'tenant_isolation';
-    IF n_fk <> 10 OR n_ix <> 9 OR n_trg <> 2 OR n_rls <> 1 THEN
-        RAISE EXCEPTION 'patient_admission_footprints: FKs % (esperadas 10), índices % (9), triggers % (2), RLS % (1)',
+    IF n_fk < 10 OR n_ix < 9 OR n_trg <> 2 OR n_rls <> 1 THEN
+        RAISE EXCEPTION 'patient_admission_footprints: FKs % (al menos 10), índices % (al menos 9), triggers % (2), RLS % (1)',
             n_fk, n_ix, n_trg, n_rls;
     END IF;
 END $$;

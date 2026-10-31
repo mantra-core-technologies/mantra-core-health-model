@@ -429,6 +429,7 @@ care_team_members .. idxset_care_team_members : indexed by
 
 entity "INDEXES · referrals" as idxset_referrals <<INDEX_SET>> {
   PK pk_referrals : (id) UNIQUE BTREE
+  UX ux_referrals_id_patient_target : (id, patient_profile_id, target_tenant_id) UNIQUE BTREE
   IX ix_referrals_patient_profile_id : (patient_profile_id) BTREE
   IX ix_referrals_source_encounter_id : (source_encounter_id) BTREE
   IX ix_referrals_referring_profile_id : (referring_profile_id) BTREE
