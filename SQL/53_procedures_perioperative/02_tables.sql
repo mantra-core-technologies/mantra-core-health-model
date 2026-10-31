@@ -1,4 +1,4 @@
--- SALUD v4.0.10 · módulo 53 · schema procedures_perioperative
+-- SALUD v4.2.68 · módulo 53 · schema procedures_perioperative
 -- Generado de diagram_53_procedures_perioperative.puml — NO editar a mano.
 
 
@@ -577,7 +577,7 @@ CREATE TABLE IF NOT EXISTS "procedures_perioperative"."operating_room_utilizatio
     "recorded_by_user_id" uuid,
     "details_json" jsonb,
     "created_at" timestamptz NOT NULL,
-    "tenant_id" uuid,
+    "tenant_id" uuid NOT NULL,
     "operating_room_block_id" uuid,
     CONSTRAINT "pk_operating_room_utilization_events" PRIMARY KEY ("id")
 );

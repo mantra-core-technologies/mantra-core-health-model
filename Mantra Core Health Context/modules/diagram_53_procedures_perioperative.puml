@@ -641,7 +641,10 @@ entity operating_room_utilization_events <<LOG>> {
   * created_at : timestamptz
   ' + infraestructura F4 (2026-10-29): tenant (backfill desde la sala; RLS) y bloque al que
   ' se imputa el evento (utilización por bloque).
-    tenant_id : uuid <<FK>>
+  ' + integración F2–F5 (2026-10-31): tenant_id NOT NULL; lo completa desde la sala
+  ' trg_operating_room_utilization_events_fill_tenant (patch …_f2_f5_integracion.sql). Con NULL,
+  ' la FK compuesta (tenant_id, operating_room_id) no se evaluaba (MATCH SIMPLE).
+  * tenant_id : uuid <<FK>>
     operating_room_block_id : uuid <<FK>>
 }
 
