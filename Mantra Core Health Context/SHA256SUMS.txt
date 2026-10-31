@@ -1,7 +1,7 @@
 981722f8674a8efb6abc794f032aba8c16f5d7141597f925b8a9655bbaa57da6 *./README.md
 65fd3069cb01dcd8f2e8f14d0175da32bccb3a00205bc9f057b2d8be74b24de4 *./docs/architecture/README-context.md
 13060b6aa1d5e7410e0cc6fca85112cf9fa7fade32851e5d59d9434b0739977a *./docs/architecture/corrections.md
-a83385049aebeebab19a903f31e75bb080764f0e5d850be7d2a4669475334990 *./docs/architecture/ddl-sources.md
+6e4685235b7250d19a2da2ab26fa8a45d96b8ae8e96d16ba8f0361364e6af7ac *./docs/architecture/ddl-sources.md
 15668791c4034b392281721a49249f0c7168758f75056ab93aff0d172ab6eed2 *./docs/architecture/development-principles.md
 18634a9dd0ffe7538c5f83478060b19a506a567c9c076ab7acc5c76c8f7a1448 *./docs/architecture/erp-crm-association-audit.md
 cdeaee54e5bc27fbfccfde0286db1c4202203a16b7b4ffa437bddd9914c51405 *./docs/architecture/indexing-strategy.md
