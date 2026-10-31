@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · schema scheduling · constraints de integridad (módulo 33)
+-- SALUD v4.2.81 · schema scheduling · constraints de integridad (módulo 33)
 -- Aplicar DESPUÉS de 04_indexes.sql y de SQL/_integrity/00_integrity_functions.sql.
 -- Reglas del módulo 33. Las UK/CHECK/EXCLUDE en prosa quedan como comentario:
 -- el modelo no declara su expresión SQL y no se inventa (temperatura-0).
@@ -13,6 +13,12 @@ ALTER TABLE "scheduling"."practitioner_service_offerings" ADD CONSTRAINT "ck_pra
 -- CHECK concreto declarado por el modelo (CHECK_SQL).
 ALTER TABLE "scheduling"."practitioner_service_offerings" DROP CONSTRAINT IF EXISTS "ck_practitioner_service_offerings_buffers";
 ALTER TABLE "scheduling"."practitioner_service_offerings" ADD CONSTRAINT "ck_practitioner_service_offerings_buffers" CHECK ((COALESCE("prep_minutes", 0) >= 0 AND COALESCE("cleanup_minutes", 0) >= 0));
+
+
+-- ═══ schedulable_resources ═══
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "scheduling"."schedulable_resources" DROP CONSTRAINT IF EXISTS "ck_schedulable_resources_care_space_ref";
+ALTER TABLE "scheduling"."schedulable_resources" ADD CONSTRAINT "ck_schedulable_resources_care_space_ref" CHECK (("resource_ref_type" <> 'care_spaces' OR "care_space_id" = "resource_ref_id"));
 
 
 -- ═══ booking_policies ═══

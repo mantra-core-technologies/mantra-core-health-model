@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · módulo 14 · schema practice
+-- SALUD v4.2.81 · módulo 14 · schema practice
 -- Generado de diagram_14_practice.puml — NO editar a mano.
 
 
@@ -47,6 +47,54 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN
     ALTER TABLE "practice"."care_spaces"
         ADD CONSTRAINT "fk_care_spaces_parent_space_id" FOREIGN KEY ("parent_space_id")
+        REFERENCES "practice"."care_spaces" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "practice"."care_space_status_events"
+        ADD CONSTRAINT "fk_care_space_status_events_practice_site_id" FOREIGN KEY ("practice_site_id")
+        REFERENCES "practice"."practice_sites" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "practice"."care_space_status_events"
+        ADD CONSTRAINT "fk_care_space_status_events_care_space_id" FOREIGN KEY ("care_space_id")
+        REFERENCES "practice"."care_spaces" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "practice"."care_space_blocks"
+        ADD CONSTRAINT "fk_care_space_blocks_care_space_id" FOREIGN KEY ("care_space_id")
+        REFERENCES "practice"."care_spaces" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "practice"."cleaning_orders"
+        ADD CONSTRAINT "fk_cleaning_orders_practice_site_id" FOREIGN KEY ("practice_site_id")
+        REFERENCES "practice"."practice_sites" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "practice"."cleaning_orders"
+        ADD CONSTRAINT "fk_cleaning_orders_care_space_id" FOREIGN KEY ("care_space_id")
+        REFERENCES "practice"."care_spaces" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "practice"."cleaning_orders"
+        ADD CONSTRAINT "fk_cleaning_orders_clinical_unit_id" FOREIGN KEY ("clinical_unit_id")
+        REFERENCES "practice"."clinical_units" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "practice"."cleaning_orders"
+        ADD CONSTRAINT "fk_cleaning_orders_previous_order_id" FOREIGN KEY ("previous_order_id")
+        REFERENCES "practice"."cleaning_orders" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "practice"."care_space_category_periods"
+        ADD CONSTRAINT "fk_care_space_category_periods_care_space_id" FOREIGN KEY ("care_space_id")
         REFERENCES "practice"."care_spaces" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 

@@ -1,6 +1,12 @@
--- SALUD v4.2.79 · módulo 53 · schema procedures_perioperative
+-- SALUD v4.2.81 · módulo 53 · schema procedures_perioperative
 -- Generado de diagram_53_procedures_perioperative.puml — NO editar a mano.
 
+
+DO $$ BEGIN
+    ALTER TABLE "procedures_perioperative"."procedure_cases"
+        ADD CONSTRAINT "fk_procedure_cases_operating_room_block_id" FOREIGN KEY ("operating_room_block_id")
+        REFERENCES "procedures_perioperative"."operating_room_blocks" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "procedures_perioperative"."procedure_case_diagnoses"
@@ -210,6 +216,18 @@ DO $$ BEGIN
     ALTER TABLE "procedures_perioperative"."operating_room_utilization_events"
         ADD CONSTRAINT "fk_operating_room_utilization_events_procedure_case_id" FOREIGN KEY ("procedure_case_id")
         REFERENCES "procedures_perioperative"."procedure_cases" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "procedures_perioperative"."operating_room_utilization_events"
+        ADD CONSTRAINT "fk_operating_room_utilization_events_operating_room_block_id" FOREIGN KEY ("operating_room_block_id")
+        REFERENCES "procedures_perioperative"."operating_room_blocks" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "procedures_perioperative"."operating_room_blocks"
+        ADD CONSTRAINT "fk_operating_room_blocks_series_id" FOREIGN KEY ("series_id")
+        REFERENCES "procedures_perioperative"."operating_room_block_series" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN

@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · módulo 03 · schema terminology
+-- SALUD v4.2.81 · módulo 03 · schema terminology
 -- Generado de diagram_03_terminology.puml — NO editar a mano.
 
 

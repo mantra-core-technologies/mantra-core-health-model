@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · módulo 20 · schema diagnostics
+-- SALUD v4.2.81 · módulo 20 · schema diagnostics
 -- Generado de diagram_20_diagnostics.puml — NO editar a mano.
 
 
@@ -262,6 +262,7 @@ CREATE TABLE IF NOT EXISTS "diagnostics"."specimen_collection_events" (
     "condition_json" jsonb,
     "notes" text,
     "created_at" timestamptz NOT NULL,
+    "collection_care_space_id" uuid,
     CONSTRAINT "pk_specimen_collection_events" PRIMARY KEY ("id")
 );
 
@@ -495,6 +496,9 @@ CREATE TABLE IF NOT EXISTS "diagnostics"."imaging_procedure_steps" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "scheduled_equipment_id" uuid,
+    "scheduled_care_space_id" uuid,
+    "scheduled_start_at" timestamptz,
     CONSTRAINT "pk_imaging_procedure_steps" PRIMARY KEY ("id")
 );
 

@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · módulo 12 · schema integrations
+-- SALUD v4.2.81 · módulo 12 · schema integrations
 -- Generado de diagram_12_integrations.puml — NO editar a mano.
 
 

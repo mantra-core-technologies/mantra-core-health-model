@@ -25,6 +25,18 @@ class ConcreteIntegrityTests(unittest.TestCase):
             with self.subTest(declaration=declaration), self.assertRaises(ValueError):
                 gen_integrity.concrete_check('insurance', 'insurance_claims', declaration)
 
+    def test_exclude_accepts_only_literal_deferral_clauses(self):
+        decl = ('ex_bed | "care_space_id" WITH =, tstzrange("a", "b", \'[)\') WITH && '
+                '| "is_bed" | DEFERRABLE INITIALLY IMMEDIATE')
+        sql = gen_integrity.exclude_concreto('clinical', 'encounter_locations', decl)
+        self.assertIn('WHERE ("is_bed") DEFERRABLE INITIALLY IMMEDIATE;', sql)
+        plain = gen_integrity.exclude_concreto('clinical', 'encounter_locations',
+                                               'ex_bed | "care_space_id" WITH = | "is_bed"')
+        self.assertTrue(plain.rstrip().endswith('WHERE ("is_bed");'))
+        with self.assertRaises(ValueError):
+            gen_integrity.exclude_concreto('clinical', 'encounter_locations',
+                                           'ex_bed | "care_space_id" WITH = | "is_bed" | NOT VALID')
+
     def test_prose_rules_stay_as_comments_and_list_existing_uniques(self):
         entity = {'name': 'inventory_reservations', 'stereo': 'REFERENCE_ONLY',
                   'owner': ('pharmacy_inventory', 'inventory_reservations'),
