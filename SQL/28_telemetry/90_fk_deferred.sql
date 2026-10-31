@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · módulo 28 · schema telemetry
+-- SALUD v4.2.80 · módulo 28 · schema telemetry
 -- Generado de diagram_28_telemetry.puml — NO editar a mano.
 
 
@@ -355,3 +355,31 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_web_vitals_navigation_type_concept_id" FOREIGN KEY ("navigation_type_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "telemetry"."client_error_events"
+        ADD CONSTRAINT "fk_client_error_events_portal_type_concept_id" FOREIGN KEY ("portal_type_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "telemetry"."client_error_events"
+        ADD CONSTRAINT "fk_client_error_events_user_id" FOREIGN KEY ("user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.sessions (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "telemetry"."client_error_events"
+        ADD CONSTRAINT "fk_client_error_events_session_id" FOREIGN KEY ("session_id")
+        REFERENCES "iam"."sessions" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "telemetry"."client_error_events"
+        ADD CONSTRAINT "fk_client_error_events_error_class_concept_id" FOREIGN KEY ("error_class_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)

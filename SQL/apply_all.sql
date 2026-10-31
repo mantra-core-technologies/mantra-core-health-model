@@ -677,5 +677,17 @@
 \echo >>> 69_pharma_lab/04_indexes.sql
 \ir 69_pharma_lab/04_indexes.sql
 
+-- ═══ módulo 70_observability ═══
+\echo >>> 70_observability/01_schema.sql
+\ir 70_observability/01_schema.sql
+\echo >>> 70_observability/02_tables.sql
+\ir 70_observability/02_tables.sql
+\echo >>> 70_observability/03_fk_intra.sql
+\ir 70_observability/03_fk_intra.sql
+\echo >>> 70_observability/04_indexes.sql
+\ir 70_observability/04_indexes.sql
+\echo >>> 70_observability/05_constraints.sql
+\ir 70_observability/05_constraints.sql
+
 -- 90_fk_deferred.sql OMITIDOS a propósito.
 \echo === apply_all completado (sin 90_fk_deferred) ===

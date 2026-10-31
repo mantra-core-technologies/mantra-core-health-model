@@ -177,6 +177,54 @@ entity catalog_evidence_items <<LOG, REFERENCE_ONLY>> {
   UPDATE : forbidden
 }
 
+' v4.2.80 (franja F1 del portal de observabilidad) — inmutabilidad de los registros del modulo 70 (observability)
+' y de los errores del cliente del modulo 28. Todo es historia que nunca se reescribe: se prohibe UPDATE y NO el
+' DELETE, porque la retencion (drop_chunks / purga por ventana) borra por antiguedad. Las series por minuto se
+' escriben con INSERT ... ON CONFLICT DO NOTHING (el reintento de un volcado no actualiza nada), asi que ningun
+' camino legitimo necesita UPDATE. Los CHECK_SQL cierran solo los vocabularios que el plan enumera.
+entity "observability.error_events" as observability_error_events <<LOG, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+  RETENTION : 90 days (drop_chunks; DELETE allowed)
+  CHECK_SQL : ck_error_events_source | "source" IN ('api', 'worker', 'web')
+}
+entity "observability.http_request_minute_series" as observability_http_request_minute_series <<LOG, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+  RETENTION : 14 days raw (drop_chunks; DELETE allowed)
+}
+entity "observability.sql_statement_minute_series" as observability_sql_statement_minute_series <<LOG, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+  RETENTION : 14 days (drop_chunks; DELETE allowed)
+}
+entity "observability.worker_tick_minute_series" as observability_worker_tick_minute_series <<LOG, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+  RETENTION : 30 days (drop_chunks; DELETE allowed)
+}
+entity "observability.slow_request_samples" as observability_slow_request_samples <<LOG, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+  RETENTION : 30 days (drop_chunks; DELETE allowed)
+  CHECK_SQL : ck_slow_request_samples_sampled_because | "sampled_because" IN ('slow', 'error', 'random')
+}
+entity "observability.dependency_probe_runs" as observability_dependency_probe_runs <<LOG, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+  RETENTION : 30 days (drop_chunks; DELETE allowed)
+  CHECK_SQL : ck_dependency_probe_runs_status | "status" IN ('up', 'degraded', 'down', 'not_probed')
+}
+entity "observability.alert_evaluations" as observability_alert_evaluations <<LOG, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+  RETENTION : 400 days (purge job; DELETE allowed)
+}
+entity "observability.error_groups" as observability_error_groups <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_error_groups_source | "source" IN ('api', 'worker', 'web')
+}
+entity "observability.instances" as observability_instances <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_instances_kind | "kind" IN ('API', 'WORKER')
+  CHECK_SQL : ck_instances_status | "status" IN ('starting', 'running', 'draining', 'stopped')
+}
+entity "telemetry.client_error_events" as telemetry_client_error_events <<APPEND_ONLY, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+  RETENTION : 90 days (purge job on received_at; DELETE allowed)
+}
+
 inventory_stock_positions --> inventory_ledger_entries : atomic projection
 inventory_reservations --> inventory_ledger_entries : reserve/release
 patient_coverages --> claim_adjudication_versions : adjudication basis

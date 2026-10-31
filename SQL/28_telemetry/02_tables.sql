@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · módulo 28 · schema telemetry
+-- SALUD v4.2.80 · módulo 28 · schema telemetry
 -- Generado de diagram_28_telemetry.puml — NO editar a mano.
 
 
@@ -228,4 +228,31 @@ CREATE TABLE IF NOT EXISTS "telemetry"."web_vitals" (
     "measured_at" timestamptz,
     "created_at" timestamptz NOT NULL,
     CONSTRAINT "pk_web_vitals" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "telemetry"."client_error_events" (
+    "id" uuid NOT NULL,
+    "received_at" timestamptz NOT NULL,
+    "occurred_at" timestamptz NOT NULL,
+    "portal_type_concept_id" uuid NOT NULL,
+    "actor_tenant_id" uuid,
+    "user_id" uuid,
+    "session_id" uuid,
+    "route_template" varchar(300),
+    "fingerprint" varchar(32) NOT NULL,
+    "error_class_concept_id" uuid NOT NULL,
+    "error_type" varchar(120) NOT NULL,
+    "sanitized_message" varchar(500),
+    "http_method" varchar(8),
+    "api_route_template" varchar(300),
+    "http_status" smallint,
+    "api_error_code" varchar(60),
+    "request_id" varchar(80),
+    "support_code" varchar(40),
+    "app_version" varchar(40) NOT NULL,
+    "build_id" varchar(40),
+    "screen_size" varchar(12),
+    "is_online" boolean,
+    "suppressed_count" integer NOT NULL DEFAULT 0,
+    CONSTRAINT "pk_client_error_events" PRIMARY KEY ("id")
 );

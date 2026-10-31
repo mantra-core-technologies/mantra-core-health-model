@@ -1,4 +1,4 @@
-# Matriz de integridad y concurrencia — SALUD v4.2.79 (módulo 33)
+# Matriz de integridad y concurrencia — SALUD v4.2.80 (módulo 33)
 
 El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación cross-dominio. Cada regla se implementa en la **migración de la tabla dueña** (su módulo) y se repite aquí como referencia. Extraído fielmente del `.puml`.
 
@@ -165,6 +165,20 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 | `medical_groups.groups` | `REFERENCE_ONLY` | **CHECK_SQL** ck_medical_groups_groups_status \| "status" IN ('PENDING_TEAM', 'SCHEDULED', 'RESCHEDULE_PENDING', 'CLOSED') |
 | `medical_groups.group_members` | `REFERENCE_ONLY` | **CHECK_SQL** ck_medical_groups_group_members_invitation_status \| "invitation_status" IN ('PENDING', 'ACCEPTED', 'REJECTED') |
 
+### Módulo 70 · `observability`
+
+| Tabla | Estereotipo | Reglas declaradas |
+|-------|-------------|-------------------|
+| `observability.error_events` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden; **RETENTION** 90 days (drop_chunks; DELETE allowed); **CHECK_SQL** ck_error_events_source \| "source" IN ('api', 'worker', 'web') |
+| `observability.http_request_minute_series` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden; **RETENTION** 14 days raw (drop_chunks; DELETE allowed) |
+| `observability.sql_statement_minute_series` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden; **RETENTION** 14 days (drop_chunks; DELETE allowed) |
+| `observability.worker_tick_minute_series` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden; **RETENTION** 30 days (drop_chunks; DELETE allowed) |
+| `observability.slow_request_samples` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden; **RETENTION** 30 days (drop_chunks; DELETE allowed); **CHECK_SQL** ck_slow_request_samples_sampled_because \| "sampled_because" IN ('slow', 'error', 'random') |
+| `observability.dependency_probe_runs` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden; **RETENTION** 30 days (drop_chunks; DELETE allowed); **CHECK_SQL** ck_dependency_probe_runs_status \| "status" IN ('up', 'degraded', 'down', 'not_probed') |
+| `observability.alert_evaluations` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden; **RETENTION** 400 days (purge job; DELETE allowed) |
+| `observability.error_groups` | `REFERENCE_ONLY` | **CHECK_SQL** ck_error_groups_source \| "source" IN ('api', 'worker', 'web') |
+| `observability.instances` | `REFERENCE_ONLY` | **CHECK_SQL** ck_instances_kind \| "kind" IN ('API', 'WORKER'); **CHECK_SQL** ck_instances_status \| "status" IN ('starting', 'running', 'draining', 'stopped') |
+
 ### Módulo 24 · `pharmacy`
 
 | Tabla | Estereotipo | Reglas declaradas |
@@ -220,6 +234,7 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 | Tabla | Estereotipo | Reglas declaradas |
 |-------|-------------|-------------------|
 | `user_activity_events` | `APPEND_ONLY, REFERENCE_ONLY` | **UK** event schema + event idempotency key; **PARTITION** received_at; **RETENTION** purpose-specific |
+| `telemetry.client_error_events` | `APPEND_ONLY, REFERENCE_ONLY` | **UPDATE** forbidden; **RETENTION** 90 days (purge job on received_at; DELETE allowed) |
 
 ## Relaciones de integridad declaradas
 
