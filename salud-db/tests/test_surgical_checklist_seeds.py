@@ -12,6 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SEEDS = ROOT / "seedsGenerales" / "modules" / "53_procedures_perioperative.seeds.json"
+PRACTICE = ROOT / "seedsGenerales" / "modules" / "14_practice.seeds.json"
 INDEXES = ROOT / "SQL" / "53_procedures_perioperative" / "04_indexes.sql"
 
 
@@ -33,6 +34,20 @@ class SurgicalChecklistSeeds(unittest.TestCase):
                  for r in doc.get(s, {}).get("records", {}).get("procedure_cases", [])}
         for r in doc["mock"]["records"]["surgical_safety_checklists"]:
             self.assertIn(r["procedure_case_id"], cases)
+
+    def test_case_site_and_room_belong_to_the_custodian(self):
+        # FK compuestas (custodian_tenant_id, practice_site_id / operating_room_id) del patch F4.
+        practice = json.loads(PRACTICE.read_text(encoding="utf-8"))
+        tenant_of = {r["id"]: r.get("tenant_id") for s in ("boot", "mock")
+                     for t in ("practice_sites", "care_spaces")
+                     for r in practice.get(s, {}).get("records", {}).get(t, [])}
+        doc = json.loads(SEEDS.read_text(encoding="utf-8"))
+        for s in ("boot", "mock"):
+            for case in doc.get(s, {}).get("records", {}).get("procedure_cases", []):
+                for col in ("practice_site_id", "operating_room_id"):
+                    ref = case.get(col)
+                    if ref is not None and ref in tenant_of:
+                        self.assertEqual(tenant_of[ref], case["custodian_tenant_id"], (case["id"], col))
 
 
 if __name__ == "__main__":
