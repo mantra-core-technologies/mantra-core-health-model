@@ -534,4 +534,94 @@ entity "INDEXES · patient_legal_representations" as idxset_patient_legal_repres
 }
 patient_legal_representations .. idxset_patient_legal_representations : indexed by
 
+' ===== post-v4.2.81 (visibilidad de la interfaz; sin version asignada aun) =====
+' Fuente: mantra-core-health/docs/trabajo/2026-10-31-visibilidad-rbac/CONTRATO.md.
+' LA VISIBILIDAD NO ES AUTORIZACION: estas tablas deciden que se PRESENTA, jamas conceden acceso. La API sigue autorizando
+' cada peticion con authz.* (RBAC/PDP). Un elemento oculto cuyo endpoint esta permitido se puede llamar, y es correcto.
+'
+' DECISION D-UV-1 — catalogo de PLATAFORMA, sin columna `tenant_id`.
+'   2026-08-05_tenant_rls.sql activa RLS (tenant_isolation) en TODA tabla con una columna `tenant_id uuid`. El catalogo de
+'   elementos es del producto (lo registra el front por `elements/sync`), no de una organizacion: con esa columna cada
+'   INSERT de la aplicacion fallaria el WITH CHECK. Las reglas tampoco la llevan: la organizacion que las ACOTA se llama
+'   `scope_tenant_id` (uuid simple, sin FK: borrar una organizacion no puede quedar bloqueado por una regla de
+'   presentacion) y el parche de RLS no la alcanza. `scope_tenant_id IS NULL` = regla de plataforma (la crea SUPERADMIN);
+'   NOT NULL = regla creada por el administrador de ESA organizacion, que solo puede verla y tocarla el.
+'
+' DECISION D-UV-2 — `subject_id` es texto, segun `subject_type`:
+'   USER -> iam.users.id (uuid en texto) · TENANT -> directory.tenants.id (uuid en texto) · ROLE -> authz.roles.code
+'   · ORG_TYPE -> codigo del concepto de tipo de organizacion (p. ej. CLINIC) · ALL -> NULL. No es FK porque apunta a
+'   cuatro tablas distintas; la API valida la existencia del sujeto antes de escribir y el CHECK cierra la forma.
+'
+' DECISION D-UV-3 — las reglas NO se borran: se TERMINAN (`ended_at` = `valid_to` = ahora) y quedan, junto con la
+'   auditoria. La unicidad de la terna elemento+sujeto es sobre las reglas NO terminadas (indice unico parcial
+'   `ended_at IS NULL`); una vigencia que ya caduco por fecha ocupa la terna hasta que alguien la termine.
+'
+' DECISION D-UV-4 — vocabularios cerrados como CHECK (diagram_33), no como conceptos: son 4 listas de contrato
+'   (kind, source, status, effect, subject_type) que el front comparte como tipos literales; un concepto por valor
+'   obligaria a sembrar terminologia para algo que nunca se ensancha sin cambiar el contrato.
+entity ui_visibility_elements {
+  * id : uuid <<PK>>
+  --
+  * key : varchar(160) <<UK>>
+  * kind : varchar(20)
+  * module_code : varchar(80)
+    parent_element_id : uuid <<FK>>
+  * label : varchar(200)
+    description : varchar(500)
+  * default_visible : boolean <<DEFAULT_TRUE>>
+  * source : varchar(10)
+  * status : varchar(10)
+    retired_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity ui_visibility_rules {
+  * id : uuid <<PK>>
+  --
+  * element_id : uuid <<FK>>
+  * effect : varchar(4)
+  * subject_type : varchar(10)
+    subject_id : varchar(160)
+    scope_tenant_id : uuid
+    valid_from : timestamptz
+    valid_to : timestamptz
+    ended_at : timestamptz
+  * reason : varchar(500)
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity "INDEXES · ui_visibility_elements" as idxset_ui_visibility_elements <<INDEX_SET>> {
+  PK pk_ui_visibility_elements : (id) UNIQUE BTREE
+  UK uq_ui_visibility_elements_key : (key) UNIQUE BTREE
+  IX ix_ui_visibility_elements_module_kind : (module_code, kind) BTREE
+  IX ix_ui_visibility_elements_parent_element_id : (parent_element_id) BTREE
+  IX ix_ui_visibility_elements_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_ui_visibility_elements_updated_by_user_id : (updated_by_user_id) BTREE
+}
+ui_visibility_elements .. idxset_ui_visibility_elements : indexed by
+
+entity "INDEXES · ui_visibility_rules" as idxset_ui_visibility_rules <<INDEX_SET>> {
+  PK pk_ui_visibility_rules : (id) UNIQUE BTREE
+  UK uq_ui_visibility_rules_open_subject : (element_id, subject_type, subject_id) UNIQUE BTREE WHERE ended_at IS NULL AND subject_id IS NOT NULL
+  UK uq_ui_visibility_rules_open_all : (element_id) UNIQUE BTREE WHERE ended_at IS NULL AND subject_type = 'ALL'
+  IX ix_ui_visibility_rules_open_subject : (subject_type, subject_id) BTREE WHERE ended_at IS NULL
+  IX ix_ui_visibility_rules_scope_tenant_id : (scope_tenant_id) BTREE WHERE scope_tenant_id IS NOT NULL
+  IX ix_ui_visibility_rules_created_at_id : (created_at DESC, id DESC) BTREE
+  IX ix_ui_visibility_rules_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_ui_visibility_rules_updated_by_user_id : (updated_by_user_id) BTREE
+}
+ui_visibility_rules .. idxset_ui_visibility_rules : indexed by
+
+' Labeled edges: child }o--|| parent : fk_column. gen_ddl resolves the FK destination from them.
+ui_visibility_elements }o--o| ui_visibility_elements : parent_element_id
+ui_visibility_rules }o--|| ui_visibility_elements : element_id
+
 @enduml
