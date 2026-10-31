@@ -177,7 +177,8 @@ model:
       o trigger de mismo tenant, RLS tenant_isolation e historias audit.*_history de solo
       inserción + cierre de valid_to. Las FK compuestas, triggers y RLS viven en
       SQL/patches/2026-10-29_infraestructura_*.sql y
-      2026-10-31_infraestructura_f2_f5_integracion.sql (gen_ddl no los expresa).
+      2026-10-31_infraestructura_f2_f5_integracion.sql y su corrección
+      2026-10-31_infraestructura_f2_f5_integracion_b.sql (gen_ddl no los expresa).
   materialization_note: >-
     v4.0.1 materializado en el ER (fuente: el vault/grafo). Se añadieron 14
     entidades nuevas (marketing.campaign_schedules/dispatches/dispatch_recipients,
