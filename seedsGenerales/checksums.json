@@ -2,7 +2,7 @@
   "modules/00_platform.seeds.json": "60b29e99410f819ffbb3f546165ca6438fd350a8ddfafd6cfe2b51fb32c49f12",
   "modules/01_iam.seeds.json": "324750876db0de1f1e9b8ef067a1f528f8e9505eaca1786ec69e3c9d447b9012",
   "modules/02_common.seeds.json": "9b36432f9ee9bfc45a42f15c35cfb474b97463c02764301edc5c758ec81deb53",
-  "modules/03_terminology.seeds.json": "ac791f8a583c157c8b2f5d4759430d609807d00f1e0e744ba0aedbcc488564a3",
+  "modules/03_terminology.seeds.json": "6ba9b5c3086a42a46256b2c0088c24497052e104d861cbc3eff93adf7ad8ba8a",
   "modules/04_directory.seeds.json": "90e878bbbf66ae1b7aeb1ab9caeab3b1fb38c248328ffa8f892586e3515da360",
   "modules/05_profiles.seeds.json": "25d0da2a4ec9d003893a93fae4258022e92025910e75fa851eb3ac7a20902ee8",
   "modules/06_authz.seeds.json": "d9fc3c223a876503c85025f5817ad2a80fe073165903b1fc9734820fa0f17961",

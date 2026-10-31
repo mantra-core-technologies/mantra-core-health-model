@@ -504,6 +504,13 @@ BACKEND_CONCEPTS = [
     ("common:owner-type:tenant", "OWNER_TENANT", "Tenant"),
     ("common:id-type:tax", "TAX_ID", "Tax identification number"),
     ("common:use:official", "OFFICIAL", "Official"),
+    # v4.2.75 — el idioma y el dominio que el alta de profesional escribe por defecto
+    # (`PROF.LANGUAGE_SPANISH`, `PROF.LANG_PROFICIENCY_NATIVE`). Son miembros de
+    # VS_LANGUAGE y VS_LANGUAGE_PROFICIENCY (fase 1d): sin ellos, lo que el alta deja
+    # no aparecería entre las opciones del editor del perfil. Módulo de dominio: el
+    # code almacenado es la clave. El display es el del backend (profiles.concepts.ts).
+    ("profiles:LANGUAGE_SPANISH", "profiles:LANGUAGE_SPANISH", "Español"),
+    ("profiles:LANG_PROFICIENCY_NATIVE", "profiles:LANG_PROFICIENCY_NATIVE", "Nativo"),
 ]
 
 # --- v4.2.29 · catálogos del cierre M7 (CL-25 y jurisdicciones) ---------------
@@ -4669,6 +4676,170 @@ def phase_iso_countries(doc03: dict) -> int:
     return upsert_rows(doc03, "boot", "value_set_members", members)
 
 
+# ============================================================ fase 1d · v4.2.75 idiomas del perfil profesional
+
+PATCH_LANGUAGES = "4.2.75"
+
+# Los idiomas en los que un profesional puede declarar que atiende (VS_LANGUAGE). Hasta
+# v4.2.74 el set tenía UN miembro incluido —`EN`, que se leía «En»— y el editor del perfil
+# no podía ofrecer otra cosa. El código es el de ISO 639 (639-1 si existe, si no 639-3);
+# la etiqueta, el nombre en castellano. El castellano no está acá: es el concepto del
+# backend `profiles:LANGUAGE_SPANISH`, el que el alta escribe por defecto, y va primero.
+# El resto sale en orden alfabético castellano, así que uno nuevo se agrega en cualquier
+# lugar de la lista.
+PRACTITIONER_LANGUAGES = [
+    ("qu", "Quechua"),
+    ("ay", "Aymara"),
+    ("gn", "Guaraní"),
+    ("cax", "Bésiro (chiquitano)"),
+    ("trn", "Mojeño trinitario"),
+    ("bvl", "Lengua de señas boliviana"),
+    ("pdt", "Plautdietsch (menonita)"),
+    ("en", "Inglés"),
+    ("pt", "Portugués"),
+    ("fr", "Francés"),
+    ("de", "Alemán"),
+    ("it", "Italiano"),
+    ("zh", "Chino mandarín"),
+    ("ja", "Japonés"),
+    ("ko", "Coreano"),
+    ("ru", "Ruso"),
+    ("ar", "Árabe"),
+]
+
+# El dominio de un idioma (VS_LANGUAGE_PROFICIENCY), de mayor a menor. «Nativo» es el
+# concepto del backend que el alta escribe junto al castellano. Los otros tres agrupan
+# los niveles del MCER para que nadie tenga que saber qué es un B2.
+LANGUAGE_PROFICIENCY_LEVELS = [
+    ("advanced", "Avanzado", "Usa el idioma con soltura en la consulta (MCER C1–C2)."),
+    ("intermediate", "Intermedio", "Sostiene una conversación cotidiana (MCER B1–B2)."),
+    ("basic", "Básico", "Entiende y dice frases sencillas (MCER A1–A2)."),
+]
+
+
+def phase_practitioner_languages(doc03: dict) -> dict:
+    """VS_LANGUAGE con los idiomas reales y VS_LANGUAGE_PROFICIENCY, que no existía.
+
+    El editor del perfil profesional (front, «Idiomas en los que atiende») lee los dos
+    catálogos por `internal_code`. VS_LANGUAGE traía sólo `EN` («En») y VS_LANGUAGE_PROFICIENCY
+    no estaba sembrado: el médico no podía declarar otro idioma, ni el castellano que el
+    alta le había dejado.
+
+    - VS_LANGUAGE es del paquete (03), así que se completa en su versión vigente, como
+      VS_COUNTRY. El miembro `EN` genérico se EXCLUYE (no se borra: algún mock puede
+      apuntarle) para que «Inglés» no salga dos veces.
+    - Los conceptos nuevos nacen en una versión propia de SALUD_CORE para que `en`, `pt`…
+      no choquen con `uq_catalog_concepts_version_code`.
+    - VS_LANGUAGE_PROFICIENCY se crea con ids de `vs_ids`, dueño el módulo 05 (declara
+      `practitioner_languages`). La API no lo siembra: no hay dos dueños.
+    """
+    boot = doc03["boot"]["records"]
+    who = [("created_by_user_id", SEED_USER_ID), ("updated_by_user_id", SEED_USER_ID),
+           ("row_version", 1)]
+    stats = {"conceptos": 0, "miembros": 0, "excluidos": 0, "value_sets": 0}
+
+    vs = next((v for v in boot["value_sets"] if v["internal_code"] == "VS_LANGUAGE"), None)
+    if vs is None:
+        sys.exit("VS_LANGUAGE no está en el paquete (03_terminology)")
+    versions = [v for v in boot["value_set_versions"] if v["value_set_id"] == vs["id"]]
+    vsv = next((v for v in versions if v.get("is_default")), versions[0])
+
+    def new_id(table: str, *parts) -> str:
+        return stable_uuid("SALUD", PATCH_LANGUAGES, "boot", "03", table, *parts)
+
+    csv_id = new_id("terminology.code_system_versions", "vs_language")
+    t0 = det_time(BOOT_BASE, "vs_language", PATCH_LANGUAGES)
+    upsert_rows(doc03, "boot", "code_system_versions", [OrderedDict([
+        ("id", csv_id), ("code_system_id", CODE_SYSTEM_ID),
+        ("version", "1.0.0-vs_language-iso639"), ("published_at", iso(t0)),
+        ("valid_from", iso(t0)), ("valid_to", None),
+        ("checksum", hashlib.sha256("|".join(
+            c for c, _ in PRACTITIONER_LANGUAGES).encode()).hexdigest()),
+        ("is_default", False), ("state_concept_id", CONCEPT_ACTIVE),
+        ("created_at", iso(t0)), ("updated_at", iso(t0 + timedelta(minutes=20))), *who])])
+
+    def concept_rows(vs_name: str, code: str, display: str, definition: str):
+        cid = new_id("terminology.catalog_concepts", vs_name, code)
+        ct = det_time(BOOT_BASE, vs_name, code)
+        cs, cs2 = iso(ct), iso(ct + timedelta(minutes=20))
+        concept = OrderedDict([
+            ("id", cid), ("code_system_version_id", csv_id), ("code", code),
+            ("display", display), ("definition", definition),
+            ("abstract", False), ("selectable", True),
+            ("valid_from", cs), ("valid_to", None), ("replaced_by_concept_id", None),
+            ("state_concept_id", CONCEPT_ACTIVE),
+            ("created_at", cs), ("updated_at", cs2), *who])
+        designation = OrderedDict([
+            ("id", new_id("terminology.concept_designations", vs_name, code)),
+            ("concept_id", cid), ("language_concept_id", LANGUAGE_CONCEPT_ID),
+            ("designation_type_concept_id", DESIGNATION_TYPE_CONCEPT_ID),
+            ("value", display), ("preferred", True),
+            ("created_at", cs), ("updated_at", cs2), *who])
+        return cid, concept, designation
+
+    def member(vs_name: str, version_id: str, key: str, cid: str, ordinal: int):
+        mt = det_time(BOOT_BASE, vs_name, "member", key)
+        return OrderedDict([
+            ("id", new_id("terminology.value_set_members", vs_name, key)),
+            ("value_set_version_id", version_id), ("concept_id", cid),
+            ("included", True), ("ordinal", ordinal),
+            ("created_at", iso(mt)), ("updated_at", iso(mt + timedelta(minutes=20))), *who])
+
+    concepts, designations, members = [], [], []
+
+    # --- VS_LANGUAGE ------------------------------------------------------
+    members.append(member("vs_language", vsv["id"], "profiles:LANGUAGE_SPANISH",
+                          backend_id("profiles:LANGUAGE_SPANISH"), 1))
+    idiomas = sorted(PRACTITIONER_LANGUAGES, key=lambda par: _sort_key_es(par[1]))
+    for i, (code, display) in enumerate(idiomas, start=2):
+        cid, concept, designation = concept_rows(
+            "vs_language", code, display, "Idioma {} (ISO 639: {}).".format(display, code))
+        concepts.append(concept)
+        designations.append(designation)
+        members.append(member("vs_language", vsv["id"], code, cid, i))
+
+    # El `EN` genérico del set (display «En») queda fuera de la expansión.
+    viejos = [dict(m, included=False) for m in boot["value_set_members"]
+              if m["value_set_version_id"] == vsv["id"] and m["included"]
+              and m["id"] not in {x["id"] for x in members}]
+    stats["excluidos"] = len(viejos)
+    upsert_rows(doc03, "boot", "value_set_members",
+                [OrderedDict(m) for m in viejos], update=True)
+
+    # --- VS_LANGUAGE_PROFICIENCY -----------------------------------------
+    meta = {"patch": PATCH_LANGUAGES, "module": "05"}
+    vs_id, vsv_id = vs_ids("vs_language_proficiency", meta)
+    t = det_time(BOOT_BASE, "vs_language_proficiency")
+    stamp, stamp2 = iso(t), iso(t + timedelta(minutes=20))
+    stats["value_sets"] = upsert_rows(doc03, "boot", "value_sets", [OrderedDict([
+        ("id", vs_id), ("internal_code", "VS_LANGUAGE_PROFICIENCY"),
+        ("name", "Dominio del idioma"),
+        ("canonical_url", "https://salud.example.invalid/fhir/ValueSet/vs_language_proficiency"),
+        ("description", ("Qué tan bien habla un profesional un idioma en el que atiende "
+                         "(`profiles.practitioner_languages.proficiency_concept_id`).")),
+        ("jurisdiction_concept_id", JURISDICTION_CONCEPT_ID),
+        ("state_concept_id", CONCEPT_ACTIVE),
+        ("created_at", stamp), ("updated_at", stamp2), *who])])
+    upsert_rows(doc03, "boot", "value_set_versions", [OrderedDict([
+        ("id", vsv_id), ("value_set_id", vs_id), ("version", "1.0.0"),
+        ("valid_from", stamp), ("valid_to", None), ("is_default", True),
+        ("state_concept_id", CONCEPT_ACTIVE),
+        ("created_at", stamp), ("updated_at", stamp2), *who])])
+    members.append(member("vs_language_proficiency", vsv_id, "profiles:LANG_PROFICIENCY_NATIVE",
+                          backend_id("profiles:LANG_PROFICIENCY_NATIVE"), 1))
+    for i, (code, display, definition) in enumerate(LANGUAGE_PROFICIENCY_LEVELS, start=2):
+        cid, concept, designation = concept_rows(
+            "vs_language_proficiency", code, display, definition)
+        concepts.append(concept)
+        designations.append(designation)
+        members.append(member("vs_language_proficiency", vsv_id, code, cid, i))
+
+    stats["conceptos"] = upsert_rows(doc03, "boot", "catalog_concepts", concepts)
+    upsert_rows(doc03, "boot", "concept_designations", designations)
+    stats["miembros"] = upsert_rows(doc03, "boot", "value_set_members", members)
+    return stats
+
+
 # ============================================================ fase 2e · v4.2.66 consentimiento dirigido
 
 PATCH_V4266 = "4.2.66"
@@ -5077,15 +5248,15 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="Actualiza seedsGenerales/ al modelo SALUD v4.0.8")
     ap.add_argument("--dry", action="store_true", help="no escribe; solo informa")
     ap.add_argument("--only",
-                    choices=["valuesets", "backend", "tables", "targets", "insights", "notnull",
-                             "bindings", "unique", "meta"],
+                    choices=["valuesets", "languages", "backend", "tables", "targets", "insights",
+                             "notnull", "bindings", "unique", "meta"],
                     help="ejecuta una sola fase")
     args = ap.parse_args()
 
     ddl, fks, uniques = parse_ddl(), parse_fks(), parse_unique()
     # `--only insights` es autosuficiente: sus value sets no viven en el vault, así que corre
     # también donde la bóveda hermana no está clonada.
-    value_sets = load_value_sets() if args.only != "insights" else None
+    value_sets = load_value_sets() if args.only not in ("insights", "languages") else None
     codes = sorted(p.stem.split("_")[0] for p in MODULES_DIR.glob("*.seeds.json"))
     docs = {c: load_module(c) for c in codes}
     assert_anchors(docs)
@@ -5101,7 +5272,12 @@ def main() -> None:
         print("[1c] catálogos M7 · {} value sets · {} miembros · {} enums · {} bindings · "
               "{} países ISO 3166-1".format(s["value_sets"], s["miembros"], s["enums"],
                                              s["bindings"], s["paises"]))
-    if args.only in (None, "tables", "backend"):
+    if args.only in (None, "valuesets", "languages"):
+        s = phase_practitioner_languages(docs["03"])
+        print("[1d] idiomas del perfil · {} conceptos · {} miembros · {} miembro(s) viejo(s) "
+              "excluido(s) · {} value set nuevo".format(s["conceptos"], s["miembros"],
+                                                        s["excluidos"], s["value_sets"]))
+    if args.only in (None, "tables", "backend", "languages"):
         s = phase_backend_bridge(docs)
         print("[1b] puente backend · {} filas espejadas ({} conceptos)".format(
             sum(s.values()), s["catalog_concepts"]))
@@ -5152,6 +5328,9 @@ def main() -> None:
         if args.only == "insights":
             phase_meta(docs)
             print("[5] metadatos · conteos del módulo 50 recalculados")
+    if args.only == "languages":
+        phase_meta(docs)
+        print("[5] metadatos · conteos recalculados")
     if run("notnull"):
         s = phase_notnull(docs, ddl, fks, value_sets)
         print("[3] NOT NULL · {} columnas rellenadas en {} pares tabla/columna".format(
