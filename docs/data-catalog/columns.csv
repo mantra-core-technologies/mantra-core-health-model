@@ -8240,6 +8240,36 @@ directory,tenant_legal_representatives,13,updated_at,timestamptz,NO,,,,,,SQL/04_
 directory,tenant_legal_representatives,14,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/04_directory/02_tables.sql
 directory,tenant_legal_representatives,15,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/04_directory/02_tables.sql
 directory,tenant_legal_representatives,16,row_version,integer,NO,1,,,,,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facilities,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facilities,2,tenant_id,uuid,NO,,FOREIGN KEY; UNIQUE,directory,tenants,id,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facilities,3,tax_identifier_number,varchar(20),NO,,,,,,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facilities,4,health_facility_registration_number,varchar(50),NO,,,,,,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facilities,5,medical_director_name,varchar,NO,,,,,,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facilities,6,medical_director_middle_name,varchar,YES,,,,,,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facilities,7,medical_director_last_name,varchar,NO,,,,,,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facilities,8,medical_director_mother_last_name,varchar,YES,,,,,,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facilities,9,medical_director_license_number,varchar(50),NO,,,,,,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facilities,10,medical_director_email,varchar,NO,,,,,,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facilities,11,medical_director_phone,varchar,YES,,,,,,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facilities,12,created_at,timestamptz,NO,,,,,,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facilities,13,updated_at,timestamptz,NO,,,,,,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facilities,14,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facilities,15,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facilities,16,row_version,integer,NO,1,,,,,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facility_sites,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facility_sites,2,tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facility_sites,3,medical_facility_id,uuid,NO,,FOREIGN KEY; UNIQUE,directory,tenant_medical_facilities,id,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facility_sites,4,site_kind,varchar,NO,,,,,,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facility_sites,5,ordinal,integer,NO,,UNIQUE,,,,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facility_sites,6,name,varchar(200),NO,,,,,,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facility_sites,7,address_lines,varchar[],NO,,,,,,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facility_sites,8,latitude,numeric,YES,,,,,,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facility_sites,9,longitude,numeric,YES,,,,,,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facility_sites,10,created_at,timestamptz,NO,,,,,,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facility_sites,11,updated_at,timestamptz,NO,,,,,,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facility_sites,12,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facility_sites,13,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/04_directory/02_tables.sql
+directory,tenant_medical_facility_sites,14,row_version,integer,NO,1,,,,,SQL/04_directory/02_tables.sql
 directory,tenant_memberships,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/04_directory/02_tables.sql
 directory,tenant_memberships,2,user_id,uuid,NO,,FOREIGN KEY; UNIQUE,iam,users,id,SQL/04_directory/02_tables.sql
 directory,tenant_memberships,3,tenant_id,uuid,NO,,FOREIGN KEY; UNIQUE,directory,tenants,id,SQL/04_directory/02_tables.sql

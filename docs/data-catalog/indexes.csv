@@ -291,6 +291,17 @@ directory,affiliation_invitation_uses,uq_affiliation_invitation_uses_accepted,YE
 directory,affiliation_invitation_uses,ix_affiliation_invitation_uses_invitation_occurred,NO,"""affiliation_invitation_id"", ""occurred_at"" DESC",,SQL/04_directory/04_indexes.sql
 directory,affiliation_invitation_uses,ix_affiliation_invitation_uses_used_by_user_id,NO,"""used_by_user_id""",,SQL/04_directory/04_indexes.sql
 directory,affiliation_invitation_uses,ix_affiliation_invitation_uses_outcome_concept_id,NO,"""outcome_concept_id""",,SQL/04_directory/04_indexes.sql
+directory,tenant_medical_facilities,uk_tenant_medical_facilities_tenant,YES,"""tenant_id""",,SQL/04_directory/04_indexes.sql
+directory,tenant_medical_facilities,ix_tenant_medical_facilities_registration_number,NO,"""health_facility_registration_number""",,SQL/04_directory/04_indexes.sql
+directory,tenant_medical_facilities,ix_tenant_medical_facilities_tax_identifier_number,NO,"""tax_identifier_number""",,SQL/04_directory/04_indexes.sql
+directory,tenant_medical_facilities,ix_tenant_medical_facilities_created_by_user_id,NO,"""created_by_user_id""",,SQL/04_directory/04_indexes.sql
+directory,tenant_medical_facilities,ix_tenant_medical_facilities_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/04_directory/04_indexes.sql
+directory,tenant_medical_facility_sites,ix_tenant_medical_facility_sites_tenant_id,NO,"""tenant_id""",,SQL/04_directory/04_indexes.sql
+directory,tenant_medical_facility_sites,ix_tenant_medical_facility_sites_medical_facility_id,NO,"""medical_facility_id""",,SQL/04_directory/04_indexes.sql
+directory,tenant_medical_facility_sites,ux_tenant_medical_facility_sites_facility_ordinal,YES,"""medical_facility_id"", ""ordinal""",,SQL/04_directory/04_indexes.sql
+directory,tenant_medical_facility_sites,ux_tenant_medical_facility_sites_one_headquarters,YES,"""medical_facility_id""",WHERE site_kind = 'headquarters',SQL/04_directory/04_indexes.sql
+directory,tenant_medical_facility_sites,ix_tenant_medical_facility_sites_created_by_user_id,NO,"""created_by_user_id""",,SQL/04_directory/04_indexes.sql
+directory,tenant_medical_facility_sites,ix_tenant_medical_facility_sites_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/04_directory/04_indexes.sql
 profiles,persons,ix_persons_person_status_concept_id,NO,"""person_status_concept_id""",,SQL/05_profiles/04_indexes.sql
 profiles,persons,ix_persons_administrative_gender_concept_id,NO,"""administrative_gender_concept_id""",,SQL/05_profiles/04_indexes.sql
 profiles,persons,ix_persons_sex_at_birth_concept_id,NO,"""sex_at_birth_concept_id""",,SQL/05_profiles/04_indexes.sql

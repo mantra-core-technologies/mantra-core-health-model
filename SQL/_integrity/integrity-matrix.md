@@ -145,6 +145,8 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 | Tabla | Estereotipo | Reglas declaradas |
 |-------|-------------|-------------------|
 | `directory.affiliation_invitations` | `REFERENCE_ONLY` | **CHECK_SQL** ck_affiliation_invitations_uses \| ("max_uses" >= 1 AND "uses_count" >= 0 AND "uses_count" <= "max_uses") |
+| `directory.tenant_medical_facilities` | `REFERENCE_ONLY` | **CHECK_SQL** ck_tenant_medical_facilities_tax_identifier_format \| "tax_identifier_number" ~ '^[0-9][0-9-]{3,19}$'; **CHECK_SQL** ck_tenant_medical_facilities_registration_format \| "health_facility_registration_number" ~ '^[A-Za-z0-9./-]{3,50}$'; **CHECK_SQL** ck_tenant_medical_facilities_director_license \| char_length(btrim("medical_director_license_number")) BETWEEN 3 AND 50 |
+| `directory.tenant_medical_facility_sites` | `REFERENCE_ONLY` | **CHECK_SQL** ck_tenant_medical_facility_sites_kind_ordinal \| ("site_kind" = 'headquarters' AND "ordinal" = 0) OR ("site_kind" = 'branch' AND "ordinal" BETWEEN 1 AND 50); **CHECK_SQL** ck_tenant_medical_facility_sites_address_lines \| cardinality("address_lines") >= 1; **CHECK_SQL** ck_tenant_medical_facility_sites_geo \| (("latitude" IS NULL) = ("longitude" IS NULL)) AND ("latitude" IS NULL OR ("latitude" BETWEEN -90 AND 90 AND "longitude" BETWEEN -180 AND 180)) |
 
 ### Módulo 01 · `iam`
 

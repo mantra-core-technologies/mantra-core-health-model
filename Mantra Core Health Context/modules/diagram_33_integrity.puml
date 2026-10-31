@@ -678,4 +678,19 @@ entity "delegated_access.access_anomalies" as delegated_access_access_anomalies 
   CHECK_SQL : ck_access_anomalies_dismiss_comment | ("status_concept_id" <> '1c8f5b91-371b-5967-b8fd-98d08f80ac9c' OR COALESCE(char_length("resolution_comment_text"), 0) >= 10)
 }
 
+' + v4.2.63 — bloque medicalFacility del alta de organización médica (módulo 04). Formatos que
+' el contrato del API ya valida (NIT `^[0-9][0-9-]{3,19}$`; número de habilitación
+' `^[A-Za-z0-9./-]{3,50}$`; matrícula 3..50): la base los repite porque son datos DECLARADOS que
+' alimentan la verificación. La casa central es el ordinal 0 y las sucursales 1..50, así el tope
+' de 50 sucursales y la única casa central los impone la base. Coordenadas: ambas o ninguna.
+entity "directory.tenant_medical_facilities" as directory_tenant_medical_facilities <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_tenant_medical_facilities_tax_identifier_format | "tax_identifier_number" ~ '^[0-9][0-9-]{3,19}$'
+  CHECK_SQL : ck_tenant_medical_facilities_registration_format | "health_facility_registration_number" ~ '^[A-Za-z0-9./-]{3,50}$'
+  CHECK_SQL : ck_tenant_medical_facilities_director_license | char_length(btrim("medical_director_license_number")) BETWEEN 3 AND 50
+}
+entity "directory.tenant_medical_facility_sites" as directory_tenant_medical_facility_sites <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_tenant_medical_facility_sites_kind_ordinal | ("site_kind" = 'headquarters' AND "ordinal" = 0) OR ("site_kind" = 'branch' AND "ordinal" BETWEEN 1 AND 50)
+  CHECK_SQL : ck_tenant_medical_facility_sites_address_lines | cardinality("address_lines") >= 1
+  CHECK_SQL : ck_tenant_medical_facility_sites_geo | (("latitude" IS NULL) = ("longitude" IS NULL)) AND ("latitude" IS NULL OR ("latitude" BETWEEN -90 AND 90 AND "longitude" BETWEEN -180 AND 180))
+}
 @enduml

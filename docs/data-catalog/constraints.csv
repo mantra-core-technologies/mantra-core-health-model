@@ -4444,6 +4444,24 @@ directory,tenant_legal_representatives,fk_tenant_legal_representatives_status_co
 directory,tenant_legal_representatives,fk_tenant_legal_representatives_created_by_user_id,FOREIGN KEY,created_by_user_id,FOREIGN KEY (created_by_user_id) REFERENCES iam.users (id),SQL/04_directory/90_fk_deferred.sql
 directory,tenant_legal_representatives,fk_tenant_legal_representatives_updated_by_user_id,FOREIGN KEY,updated_by_user_id,FOREIGN KEY (updated_by_user_id) REFERENCES iam.users (id),SQL/04_directory/90_fk_deferred.sql
 directory,tenant_legal_representatives,uk_tenant_legal_representatives_primary,UNIQUE INDEX,"""tenant_id"", ""is_primary""","UNIQUE INDEX (""tenant_id"", ""is_primary"")",SQL/04_directory/04_indexes.sql
+directory,tenant_medical_facilities,pk_tenant_medical_facilities,PRIMARY KEY,id,PRIMARY KEY (id),SQL/04_directory/02_tables.sql
+directory,tenant_medical_facilities,fk_tenant_medical_facilities_tenant_id,FOREIGN KEY,tenant_id,FOREIGN KEY (tenant_id) REFERENCES directory.tenants (id),SQL/04_directory/03_fk_intra.sql
+directory,tenant_medical_facilities,fk_tenant_medical_facilities_created_by_user_id,FOREIGN KEY,created_by_user_id,FOREIGN KEY (created_by_user_id) REFERENCES iam.users (id),SQL/04_directory/90_fk_deferred.sql
+directory,tenant_medical_facilities,fk_tenant_medical_facilities_updated_by_user_id,FOREIGN KEY,updated_by_user_id,FOREIGN KEY (updated_by_user_id) REFERENCES iam.users (id),SQL/04_directory/90_fk_deferred.sql
+directory,tenant_medical_facilities,uk_tenant_medical_facilities_tenant,UNIQUE INDEX,"""tenant_id""","UNIQUE INDEX (""tenant_id"")",SQL/04_directory/04_indexes.sql
+directory,tenant_medical_facilities,ck_tenant_medical_facilities_tax_identifier_format,CHECK,,"CHECK (""tax_identifier_number"" ~ '^[0-9][0-9-]{3,19}$')",SQL/04_directory/05_constraints.sql
+directory,tenant_medical_facilities,ck_tenant_medical_facilities_registration_format,CHECK,,"CHECK (""health_facility_registration_number"" ~ '^[A-Za-z0-9./-]{3,50}$')",SQL/04_directory/05_constraints.sql
+directory,tenant_medical_facilities,ck_tenant_medical_facilities_director_license,CHECK,,"CHECK (char_length(btrim(""medical_director_license_number"")) BETWEEN 3 AND 50)",SQL/04_directory/05_constraints.sql
+directory,tenant_medical_facility_sites,pk_tenant_medical_facility_sites,PRIMARY KEY,id,PRIMARY KEY (id),SQL/04_directory/02_tables.sql
+directory,tenant_medical_facility_sites,fk_tenant_medical_facility_sites_tenant_id,FOREIGN KEY,tenant_id,FOREIGN KEY (tenant_id) REFERENCES directory.tenants (id),SQL/04_directory/03_fk_intra.sql
+directory,tenant_medical_facility_sites,fk_tenant_medical_facility_sites_medical_facility_id,FOREIGN KEY,medical_facility_id,FOREIGN KEY (medical_facility_id) REFERENCES directory.tenant_medical_facilities (id),SQL/04_directory/03_fk_intra.sql
+directory,tenant_medical_facility_sites,fk_tenant_medical_facility_sites_created_by_user_id,FOREIGN KEY,created_by_user_id,FOREIGN KEY (created_by_user_id) REFERENCES iam.users (id),SQL/04_directory/90_fk_deferred.sql
+directory,tenant_medical_facility_sites,fk_tenant_medical_facility_sites_updated_by_user_id,FOREIGN KEY,updated_by_user_id,FOREIGN KEY (updated_by_user_id) REFERENCES iam.users (id),SQL/04_directory/90_fk_deferred.sql
+directory,tenant_medical_facility_sites,ux_tenant_medical_facility_sites_facility_ordinal,UNIQUE INDEX,"""medical_facility_id"", ""ordinal""","UNIQUE INDEX (""medical_facility_id"", ""ordinal"")",SQL/04_directory/04_indexes.sql
+directory,tenant_medical_facility_sites,ux_tenant_medical_facility_sites_one_headquarters,UNIQUE INDEX,"""medical_facility_id""","UNIQUE INDEX (""medical_facility_id"") WHERE site_kind = 'headquarters'",SQL/04_directory/04_indexes.sql
+directory,tenant_medical_facility_sites,ck_tenant_medical_facility_sites_kind_ordinal,CHECK,,"CHECK ((""site_kind"" = 'headquarters' AND ""ordinal"" = 0) OR (""site_kind"" = 'branch' AND ""ordinal"" BETWEEN 1 AND 50))",SQL/04_directory/05_constraints.sql
+directory,tenant_medical_facility_sites,ck_tenant_medical_facility_sites_address_lines,CHECK,,"CHECK (cardinality(""address_lines"") >= 1)",SQL/04_directory/05_constraints.sql
+directory,tenant_medical_facility_sites,ck_tenant_medical_facility_sites_geo,CHECK,,"CHECK (((""latitude"" IS NULL) = (""longitude"" IS NULL)) AND (""latitude"" IS NULL OR (""latitude"" BETWEEN -90 AND 90 AND ""longitude"" BETWEEN -180 AND 180)))",SQL/04_directory/05_constraints.sql
 directory,tenant_memberships,pk_tenant_memberships,PRIMARY KEY,id,PRIMARY KEY (id),SQL/04_directory/02_tables.sql
 directory,tenant_memberships,fk_tenant_memberships_tenant_id,FOREIGN KEY,tenant_id,FOREIGN KEY (tenant_id) REFERENCES directory.tenants (id),SQL/04_directory/03_fk_intra.sql
 directory,tenant_memberships,fk_tenant_memberships_primary_branch_id,FOREIGN KEY,primary_branch_id,FOREIGN KEY (primary_branch_id) REFERENCES directory.branches (id),SQL/04_directory/03_fk_intra.sql
