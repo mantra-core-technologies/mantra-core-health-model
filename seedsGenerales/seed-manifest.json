@@ -2,8 +2,8 @@
   "package": "SALUD_v4.0_module_seeds_enhanced",
   "seed_revision": "2.8.1-v4.2.50",
   "module_count": 64,
-  "boot_record_count": 83624,
-  "mock_record_count": 19472,
+  "boot_record_count": 83742,
+  "mock_record_count": 20207,
   "validation_status": "PASS",
   "mock_production_policy": "hard-fail",
   "modules": [
@@ -38,10 +38,10 @@
       "number": 3,
       "code": "terminology",
       "file": "modules/03_terminology.seeds.json",
-      "boot_records": 4538,
+      "boot_records": 4592,
       "mock_records": 180,
-      "line_count": 69823,
-      "sha256": "cea2d231f368fd3de24febceb0ab9a7f865760bad4fd1d0fa05a0421c0ced746"
+      "line_count": 70601,
+      "sha256": "ac791f8a583c157c8b2f5d4759430d609807d00f1e0e744ba0aedbcc488564a3"
     },
     {
       "number": 4,
@@ -416,10 +416,10 @@
       "number": 45,
       "code": "system_context",
       "file": "modules/45_system_context.seeds.json",
-      "boot_records": 809,
+      "boot_records": 831,
       "mock_records": 144,
-      "line_count": 16275,
-      "sha256": "2f1a4e40df61779b407367165286c949e4ed437dce2a7f859d28b62d37e2f145"
+      "line_count": 16627,
+      "sha256": "d0ae05a78d8584babc0ebf0ca5204b2e32abc4d7da0a75f0a134c700ffebcaeb"
     },
     {
       "number": 46,
@@ -461,10 +461,10 @@
       "number": 50,
       "code": "marketing",
       "file": "modules/50_marketing.seeds.json",
-      "boot_records": 40,
-      "mock_records": 176,
-      "line_count": 5146,
-      "sha256": "90fe355af7517b0a8f7d00a8d4a95d7b56fac5eb8c4dc9d6dfeb106966927fa3"
+      "boot_records": 82,
+      "mock_records": 911,
+      "line_count": 22168,
+      "sha256": "ebad31f10df5afae29f0c8035b39235b595bd6aa4ec0d822f3ebb07f9bd08ccd"
     },
     {
       "number": 51,

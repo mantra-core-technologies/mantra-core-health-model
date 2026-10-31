@@ -4826,6 +4826,158 @@ def phase_v4266_consent_targets(docs) -> dict:
     return stats
 
 
+# ============================================================ fase 2f · AloVida Insights (v4.2.69)
+
+PATCH_INSIGHTS = "4.2.69"
+MODULE_INSIGHTS = "50"
+INSIGHTS_GOLDEN_FILE = MODULES_DIR / "50_marketing.insights-golden.json"
+
+# Value sets propios del portal (`diagram_50_marketing.puml`, nota INSIGHTS_diagram_50_marketing).
+# No viven en el vault: se declaran acá con el mismo `meta` que un set del vault y se siembran con
+# `phase_valuesets` (code system, value set, versión, conceptos, designaciones, miembros y enum
+# dinámico). Cada código va AL FINAL si se agrega uno: el orden es el ordinal sembrado.
+INSIGHTS_VALUE_SETS = OrderedDict([
+    ("vs_insights_campaign_status", ("planned", "active", "ended")),
+    ("vs_insights_data_source_status", ("connected", "delayed", "disconnected")),
+    ("vs_insights_alert_severity", ("critical", "risk", "anomaly", "opportunity")),
+    ("vs_insights_alert_status", ("new", "seen", "in_progress", "resolved")),
+])
+VS_DISPLAY.update({
+    "vs_insights_campaign_status": {"planned": "Planificada", "active": "Activa",
+                                    "ended": "Finalizada"},
+    "vs_insights_data_source_status": {"connected": "Conectada", "delayed": "Con retraso",
+                                       "disconnected": "Desconectada"},
+    "vs_insights_alert_severity": {"critical": "Crítica", "risk": "Riesgo",
+                                   "anomaly": "Anomalía", "opportunity": "Oportunidad"},
+    "vs_insights_alert_status": {"new": "Nueva", "seen": "Vista", "in_progress": "En curso",
+                                 "resolved": "Resuelta"},
+})
+
+
+def insights_value_sets() -> dict:
+    return OrderedDict(
+        (name, {"patch": PATCH_INSIGHTS, "module": MODULE_INSIGHTS, "codes": list(codes)})
+        for name, codes in INSIGHTS_VALUE_SETS.items())
+
+
+def phase_v4269_marketing_insights(docs, ddl, uniques) -> dict:
+    """v4.2.69 — datos de demostración de AloVida Insights en el módulo 50.
+
+    Los siembra el puerto Python del simulador del front (`insights_demo.py`): campañas (4),
+    creativos (uno por campaña × canal), hitos (6), fuentes de datos (6), reglas de alerta (7) y
+    value sets → `boot`; hechos diarios (735 filas, ventana 2026-09-01..2026-10-29) → `mock`.
+
+    `creative_id` NUNCA va NULL: la UK (fact_date, campaign_id, channel_code, creative_id) no
+    deduplica con NULL en PostgreSQL y el simulador no tiene creativo. Se siembra el creativo
+    «Todos los creativos» (`<campaña>-<canal>-all`) por cada par campaña × canal con hechos.
+
+    Determinista e idempotente (ids uuid5 de `stable_uuid`; `update=True` reescribe la fila si el
+    generador cambia). Escribe también el golden de sumas de control.
+    """
+    import insights_demo as demo
+
+    vsets = insights_value_sets()
+    stats = {"value_sets": phase_valuesets(docs, vsets)["value_sets"]}
+    doc = docs[MODULE_INSIGHTS]
+
+    def cid(vs: str, code: str) -> str:
+        return concept_id(vs, code, vsets[vs])
+
+    def rid(section: str, table: str, *key) -> str:
+        return stable_uuid("SALUD", PATCH_INSIGHTS, section, MODULE_INSIGHTS,
+                           "marketing." + table, *key)
+
+    def audit(section: str, table: str, *key):
+        t = det_time(BOOT_BASE if section == "boot" else MOCK_BASE, table, *key)
+        return [("created_at", iso(t)), ("updated_at", iso(t + timedelta(minutes=20))),
+                ("created_by_user_id", SEED_USER_ID), ("updated_by_user_id", SEED_USER_ID),
+                ("row_version", 1)]
+
+    bob = package_concept(docs, "VS_CURRENCY", "BOB")
+    if not bob:
+        sys.exit("v4.2.69: falta el concepto BOB de vs_currency en el módulo 03")
+    active = cid("vs_insights_campaign_status", "active")
+
+    campaign_id = {c["code"]: rid("boot", "insights_campaigns", c["code"]) for c in demo.CAMPAIGNS}
+    camps, creatives, creative_id = [], [], {}
+    for c in demo.CAMPAIGNS:
+        camps.append(OrderedDict([
+            ("id", campaign_id[c["code"]]), ("code", c["code"]), ("name", c["name"]),
+            ("short_name", c["short_name"]), ("kind_code", c["kind_code"]),
+            ("objective_text", c["objective"]), ("audience_text", c["audience"]),
+            ("start_on", c["start"]), ("end_on", c["end"]),
+            ("budget_cents", c["budget_cents"]), ("currency_concept_id", bob),
+            ("ltv_cents", None),
+            ("revenue_per_conversion_cents", c["revenue_per_conversion_cents"]),
+            ("owner_team_code", None), ("targets_json", dict(c["targets"])),
+            ("marketing_campaign_id", None),
+            ("status_concept_id", cid("vs_insights_campaign_status", c["status"])),
+            *audit("boot", "insights_campaigns", c["code"])]))
+        for ch in c["channels"]:
+            code = "{}-{}-all".format(c["code"], ch)
+            creative_id[(c["code"], ch)] = rid("boot", "insights_creatives", c["code"], code)
+            creatives.append(OrderedDict([
+                ("id", creative_id[(c["code"], ch)]), ("campaign_id", campaign_id[c["code"]]),
+                ("channel_code", ch), ("code", code), ("name", "Todos los creativos"),
+                ("format_code", None), ("audience_code", None), ("cta_code", None),
+                ("status_concept_id", active),
+                *audit("boot", "insights_creatives", c["code"], code)]))
+
+    milestones = [OrderedDict([
+        ("id", rid("boot", "insights_milestones", m["date"], m["campaign"], m["kind"])),
+        ("occurred_on", m["date"]), ("label", m["label"]),
+        ("campaign_id", campaign_id[m["campaign"]]), ("kind_code", m["kind"]),
+        *audit("boot", "insights_milestones", m["date"], m["campaign"], m["kind"])])
+        for m in demo.MILESTONES]
+
+    received = demo.CUTOFF + "T23:00:00Z"
+    sources = [OrderedDict([
+        ("id", rid("boot", "insights_data_sources", code)), ("code", code), ("name", name),
+        ("last_received_at", received),
+        ("status_concept_id", cid("vs_insights_data_source_status", "connected")),
+        ("dataset_code", "demo"),
+        *audit("boot", "insights_data_sources", code)])
+        for code, name in demo.DATA_SOURCES]
+
+    rules = [OrderedDict([
+        ("id", rid("boot", "insights_alert_rules", code)), ("code", code), ("name", name),
+        ("description", desc), ("severity_concept_id", cid("vs_insights_alert_severity", sev)),
+        ("unit", unit), ("default_threshold", thr), ("threshold", thr), ("direction", direction),
+        ("enabled", True), ("min_sample_json", None),
+        *audit("boot", "insights_alert_rules", code)])
+        for code, name, desc, sev, unit, thr, direction in demo.ALERT_RULES]
+
+    facts_src = demo.build_daily_facts()
+    facts = []
+    for f in facts_src:
+        row = OrderedDict([
+            ("id", rid("mock", "insights_campaign_daily_facts", f["date"], f["campaign"],
+                       f["channel"], f["campaign"] + "-" + f["channel"] + "-all")),
+            ("fact_date", f["date"]), ("campaign_id", campaign_id[f["campaign"]]),
+            ("channel_code", f["channel"]),
+            ("creative_id", creative_id[(f["campaign"], f["channel"])])])
+        for k in demo.MEASURES:
+            row[k] = f[k]
+        row["recorded_at"] = f["date"] + "T23:00:00Z"
+        facts.append(row)
+
+    plan = [("boot", "insights_campaigns", camps), ("boot", "insights_creatives", creatives),
+            ("boot", "insights_milestones", milestones),
+            ("boot", "insights_data_sources", sources),
+            ("boot", "insights_alert_rules", rules),
+            ("mock", "insights_campaign_daily_facts", facts)]
+    for section, entity, rows in plan:
+        stats[entity] = upsert_rows(doc, section, entity, rows, update=True)
+        tkey = "marketing." + entity
+        ensure_policy(doc, entity, ddl[tkey], "id", uniques.get(tkey, []),
+                      "RELATIONAL_TABLE", section == "boot", section == "mock")
+
+    golden = json.dumps(demo.golden(facts_src), ensure_ascii=False, indent=2) + "\n"
+    if not INSIGHTS_GOLDEN_FILE.exists() or INSIGHTS_GOLDEN_FILE.read_text(encoding="utf-8") != golden:
+        INSIGHTS_GOLDEN_FILE.write_text(golden, encoding="utf-8", newline="\n")
+    return stats
+
+
 def main() -> None:
     try:
         sys.stdout.reconfigure(encoding="utf-8")
@@ -4834,13 +4986,15 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="Actualiza seedsGenerales/ al modelo SALUD v4.0.8")
     ap.add_argument("--dry", action="store_true", help="no escribe; solo informa")
     ap.add_argument("--only",
-                    choices=["valuesets", "backend", "tables", "targets", "notnull", "bindings", "unique",
-                             "meta"],
+                    choices=["valuesets", "backend", "tables", "targets", "insights", "notnull",
+                             "bindings", "unique", "meta"],
                     help="ejecuta una sola fase")
     args = ap.parse_args()
 
     ddl, fks, uniques = parse_ddl(), parse_fks(), parse_unique()
-    value_sets = load_value_sets()
+    # `--only insights` es autosuficiente: sus value sets no viven en el vault, así que corre
+    # también donde la bóveda hermana no está clonada.
+    value_sets = load_value_sets() if args.only != "insights" else None
     codes = sorted(p.stem.split("_")[0] for p in MODULES_DIR.glob("*.seeds.json"))
     docs = {c: load_module(c) for c in codes}
     assert_anchors(docs)
@@ -4896,6 +5050,13 @@ def main() -> None:
         print("[2e] v4.2.66 · {} consentimientos dirigidos · {} derivaciones con servicio y "
               "destino · {} derivaciones enlazadas a su consentimiento".format(
                   s["consentimientos"], s["derivaciones"], s["enlaces"]))
+    if run("insights"):
+        s = phase_v4269_marketing_insights(docs, ddl, uniques)
+        print("[2f] v4.2.69 · AloVida Insights · {} value sets · {}".format(
+            s.pop("value_sets"), " · ".join("{} {}".format(k, v) for k, v in s.items())))
+        if args.only == "insights":
+            phase_meta(docs)
+            print("[5] metadatos · conteos del módulo 50 recalculados")
     if run("notnull"):
         s = phase_notnull(docs, ddl, fks, value_sets)
         print("[3] NOT NULL · {} columnas rellenadas en {} pares tabla/columna".format(
