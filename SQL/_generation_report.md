@@ -8,7 +8,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 01 | iam | 15 | 80 | 18 | 72 | 0 |
 | 02 | common | 7 | 49 | 0 | 56 | 0 |
 | 03 | terminology | 16 | 80 | 0 | 103 | 0 |
-| 04 | directory | 9 | 72 | 13 | 74 | 2 |
+| 04 | directory | 9 | 71 | 12 | 71 | 2 |
 | 05 | profiles | 20 | 134 | 7 | 145 | 0 |
 | 06 | authz | 15 | 104 | 19 | 95 | 0 |
 | 07 | consent | 10 | 81 | 0 | 103 | 0 |
@@ -37,7 +37,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 30 | read_models | 13 | 74 | 0 | 89 | 76 |
 | 31 | integration_contracts | 9 | 48 | 1 | 57 | 0 |
 | 32 | workflow | 8 | 49 | 0 | 55 | 9 |
-| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 86 |
+| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 96 |
 | 34 | portal_catalog _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
 | 35 | messaging | 22 | 142 | 0 | 150 | 0 |
 | 36 | qa_lab | 13 | 79 | 0 | 92 | 0 |
@@ -75,7 +75,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 68 | qa_execution | 4 | 14 | 6 | 6 | 0 |
 | 69 | pharma_lab | 31 | 182 | 173 | 182 | 1 |
 | 70 | observability | 12 | 13 | 8 | 39 | 2 |
-| **Σ** | **71** | **1342** | | **680** | | **425** |
+| **Σ** | **71** | **1341** | | **680** | | **435** |
 
 ## Detalle de entidades saltadas y avisos
 
@@ -343,6 +343,16 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - `observability_error_groups` — stub de cruce (tabla real en su módulo dueño)
 - `observability_instances` — stub de cruce (tabla real en su módulo dueño)
 - `telemetry_client_error_events` — stub de cruce (tabla real en su módulo dueño)
+- `data_catalog_catalog_glossary_term_revisions` — stub de cruce (tabla real en su módulo dueño)
+- `data_catalog_quality_issue_events` — stub de cruce (tabla real en su módulo dueño)
+- `data_catalog_quality_score_snapshots` — stub de cruce (tabla real en su módulo dueño)
+- `data_catalog_catalog_change_acknowledgements` — stub de cruce (tabla real en su módulo dueño)
+- `data_catalog_catalog_stewardships` — stub de cruce (tabla real en su módulo dueño)
+- `data_catalog_quality_rules` — stub de cruce (tabla real en su módulo dueño)
+- `data_catalog_catalog_certifications` — stub de cruce (tabla real en su módulo dueño)
+- `system_ops_governance_policy_revisions` — stub de cruce (tabla real en su módulo dueño)
+- `system_ops_bulk_import_batches` — stub de cruce (tabla real en su módulo dueño)
+- `system_ops_bulk_import_batch_rows` — stub de cruce (tabla real en su módulo dueño)
 - `billing_quotations` — stub de cruce (tabla real en su módulo dueño)
 - `billing_quotation_installments` — stub de cruce (tabla real en su módulo dueño)
 - `medical_groups_groups` — stub de cruce (tabla real en su módulo dueño)

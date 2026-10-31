@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · módulo 02 · schema common
+-- SALUD v4.2.81 · módulo 02 · schema common
 -- Generado de diagram_02_common.puml — NO editar a mano.
 
 CREATE SCHEMA IF NOT EXISTS "common";

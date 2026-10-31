@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · módulo 27 · schema identity_assurance
+-- SALUD v4.2.81 · módulo 27 · schema identity_assurance
 -- Generado de diagram_27_identity_assurance.puml — NO editar a mano.
 
 

@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · módulo 19 · schema community
+-- SALUD v4.2.81 · módulo 19 · schema community
 -- Generado de diagram_19_community.puml — NO editar a mano.
 
 
@@ -1402,6 +1402,13 @@ DO $$ BEGIN
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "community"."conversation_assignments"
+        ADD CONSTRAINT "fk_conversation_assignments_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
 -- destino: profiles.health_practitioner_profiles (requiere schema profiles)
 DO $$ BEGIN
     ALTER TABLE "community"."conversation_assignments"
@@ -1437,6 +1444,13 @@ DO $$ BEGIN
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "community"."conversation_internal_notes"
+        ADD CONSTRAINT "fk_conversation_internal_notes_tenant_id" FOREIGN KEY ("tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "community"."conversation_internal_notes"
@@ -1448,13 +1462,6 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención
 DO $$ BEGIN
     ALTER TABLE "community"."reply_templates"
         ADD CONSTRAINT "fk_reply_templates_tenant_id" FOREIGN KEY ("tenant_id")
-        REFERENCES "directory"."tenants" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
-
--- destino: directory.tenants (requiere schema directory)
-DO $$ BEGIN
-    ALTER TABLE "community"."conversation_assignments"
-        ADD CONSTRAINT "fk_conversation_assignments_tenant_id" FOREIGN KEY ("tenant_id")
         REFERENCES "directory"."tenants" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 
@@ -1484,13 +1491,6 @@ DO $$ BEGIN
     ALTER TABLE "community"."reply_templates"
         ADD CONSTRAINT "fk_reply_templates_created_by_user_id" FOREIGN KEY ("created_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
-
--- destino: directory.tenants (requiere schema directory)
-DO $$ BEGIN
-    ALTER TABLE "community"."conversation_internal_notes"
-        ADD CONSTRAINT "fk_conversation_internal_notes_tenant_id" FOREIGN KEY ("tenant_id")
-        REFERENCES "directory"."tenants" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 
 -- destino: iam.users (requiere schema iam)

@@ -1,0 +1,133 @@
+# CI del modelo: que la fuente y lo derivado coincidan, y que el DDL se aplique
+# sobre un PostgreSQL vacío. Cada paso es un comando que ya se corre a mano
+# (README.md, «Uso»); este archivo no agrega lógica propia salvo el orden de
+# aplicación, que vive en `.github/scripts/apply-clean-db.sh`.
+#
+# Layout: los generadores esperan repos HERMANOS (`salud-db/paths.py`), así que
+# todo se clona bajo `ws/`:
+#   ws/mantra-core-health-model/   este repo
+#   ws/Mantra Core Health Vault/   la bóveda (solo `SALUD/`): `gen_ddl.py` lee
+#                                  las notas `FK/` y `gen_seeds.py` los value
+#                                  sets. Sin ella el DDL regenerado difiere.
+# La API NO se clona a propósito: `check_ddl_sources.py` compararía su copia de
+# despliegue (`database/SQL`), que se sincroniza desde la API con
+# `yarn db:vendor` y se verifica en el CI de ese repo, no en este.
+#
+# Requiere el secreto `VAULT_READ_TOKEN`: un token con lectura de
+# `mdavila-2001/mantra_core_technologies_health_docs` (repositorio privado).
+name: ci
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [dev]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  modelo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        # La misma imagen que `postgres` en mantra-core-health-api/docker-compose.yml:
+        # trae TimescaleDB (NoSQL/58) y pgvector (NoSQL/59).
+        image: timescale/timescaledb-ha:pg18
+        env:
+          POSTGRES_USER: salud
+          POSTGRES_PASSWORD: salud_ci
+          POSTGRES_DB: salud
+        ports:
+          - 5432:5432
+        # timescaledb-ha reinicia Postgres tras el primer initdb: los reintentos
+        # cubren esa ventana.
+        options: >-
+          --health-cmd "pg_isready -U salud -d salud"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 30
+
+    env:
+      SALUD_WORKSPACE: ${{ github.workspace }}/ws
+      PYTHONUTF8: "1"
+
+    defaults:
+      run:
+        working-directory: ws/mantra-core-health-model
+
+    steps:
+      - name: Checkout del modelo
+        uses: actions/checkout@v4
+        with:
+          path: ws/mantra-core-health-model
+
+      - name: Verificar el secreto de la bóveda
+        working-directory: ${{ github.workspace }}
+        env:
+          VAULT_READ_TOKEN: ${{ secrets.VAULT_READ_TOKEN }}
+        run: |
+          if [ -z "$VAULT_READ_TOKEN" ]; then
+            echo "::error::Falta el secreto VAULT_READ_TOKEN (lectura de mdavila-2001/mantra_core_technologies_health_docs). Sin la bóveda, gen_ddl.py no resuelve las FK y el diff de regeneración no es fiable."
+            exit 1
+          fi
+
+      - name: Checkout de la bóveda (solo SALUD/)
+        uses: actions/checkout@v4
+        with:
+          repository: mdavila-2001/mantra_core_technologies_health_docs
+          ref: dev
+          token: ${{ secrets.VAULT_READ_TOKEN }}
+          path: ws/Mantra Core Health Vault
+          sparse-checkout: SALUD
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: 1 · Fuentes de DDL
+        run: python salud-db/check_ddl_sources.py
+
+      - name: 2 · DDL regenerado == DDL versionado
+        run: |
+          python salud-db/gen_ddl.py all
+          if ! git diff --exit-code --stat SQL/ NoSQL/ || [ -n "$(git status --porcelain SQL/ NoSQL/)" ]; then
+            git status --porcelain SQL/ NoSQL/
+            echo "::error::SQL/ o NoSQL/ no coinciden con lo que genera gen_ddl.py desde los .puml. Corré 'python salud-db/gen_ddl.py all' y versioná el resultado (lo derivado no se edita a mano)."
+            exit 1
+          fi
+
+      - name: 3 · Seeds (simulacro)
+        run: python salud-db/gen_seeds.py --dry
+
+      - name: Cliente psql
+        run: |
+          command -v psql >/dev/null || { sudo apt-get update && sudo apt-get install -y postgresql-client; }
+          psql --version
+
+      - name: 4 · DDL sobre PostgreSQL limpio (ON_ERROR_STOP=1)
+        env:
+          PGHOST: localhost
+          PGPORT: "5432"
+          PGUSER: salud
+          PGPASSWORD: salud_ci
+          PGDATABASE: salud
+          PGOPTIONS: -c client_min_messages=warning
+        run: |
+          # Tres respuestas seguidas: el healthcheck puede pasar durante el
+          # servidor temporal de initdb, antes del reinicio de timescaledb-ha.
+          ok=0
+          for _ in $(seq 1 60); do
+            if pg_isready -q; then ok=$((ok + 1)); else ok=0; fi
+            [ "$ok" -ge 3 ] && break
+            sleep 2
+          done
+          [ "$ok" -ge 3 ] || { echo "::error::PostgreSQL no quedó estable"; exit 1; }
+          bash .github/scripts/apply-clean-db.sh
