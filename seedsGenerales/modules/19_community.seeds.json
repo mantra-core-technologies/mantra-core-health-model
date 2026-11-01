@@ -343870,7 +343870,9 @@
           "updated_at": "2026-06-11T10:31:00Z",
           "created_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
           "updated_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
-          "row_version": 1
+          "row_version": 1,
+          "is_favorite": false,
+          "is_pinned": false
         },
         {
           "id": "5b543e0a-5e96-5315-880f-c46bcf68e0ce",
@@ -343885,7 +343887,9 @@
           "updated_at": "2026-06-16T10:43:00Z",
           "created_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
           "updated_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
-          "row_version": 1
+          "row_version": 1,
+          "is_favorite": false,
+          "is_pinned": false
         },
         {
           "id": "2a33ad5b-e5f2-5f24-95b8-a4fd86821cc2",
@@ -343900,7 +343904,9 @@
           "updated_at": "2026-06-21T10:55:00Z",
           "created_by_user_id": "b408997d-9c68-5589-961f-eb5b2aece582",
           "updated_by_user_id": "b408997d-9c68-5589-961f-eb5b2aece582",
-          "row_version": 1
+          "row_version": 1,
+          "is_favorite": false,
+          "is_pinned": false
         },
         {
           "id": "debcc60a-ac98-5173-881e-89b705eaa87e",
@@ -343915,7 +343921,9 @@
           "updated_at": "2026-06-26T11:07:00Z",
           "created_by_user_id": "55224953-7ad5-5e7b-b070-8beb020555d5",
           "updated_by_user_id": "55224953-7ad5-5e7b-b070-8beb020555d5",
-          "row_version": 1
+          "row_version": 1,
+          "is_favorite": false,
+          "is_pinned": false
         },
         {
           "id": "99befcdd-cb7e-5158-b780-158e8100f74d",
@@ -343930,7 +343938,9 @@
           "updated_at": "2026-07-01T11:19:00Z",
           "created_by_user_id": "b8b57fec-d512-5793-b297-c39d389f96b2",
           "updated_by_user_id": "b8b57fec-d512-5793-b297-c39d389f96b2",
-          "row_version": 1
+          "row_version": 1,
+          "is_favorite": false,
+          "is_pinned": false
         },
         {
           "id": "3a5101d6-513c-5886-879b-184f1853826f",
@@ -343945,7 +343955,9 @@
           "updated_at": "2026-07-06T11:31:00Z",
           "created_by_user_id": "e926fb49-acc4-5184-a3ab-7a8f13540da6",
           "updated_by_user_id": "e926fb49-acc4-5184-a3ab-7a8f13540da6",
-          "row_version": 1
+          "row_version": 1,
+          "is_favorite": false,
+          "is_pinned": false
         },
         {
           "id": "f272984d-9720-57fa-a0c3-4ef34d997448",
@@ -343960,7 +343972,9 @@
           "updated_at": "2026-07-11T11:43:00Z",
           "created_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
           "updated_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
-          "row_version": 1
+          "row_version": 1,
+          "is_favorite": false,
+          "is_pinned": false
         },
         {
           "id": "3c15c6a9-d29e-52ff-8b48-ca5e2f4c0e91",
@@ -343975,7 +343989,9 @@
           "updated_at": "2026-07-16T11:55:00Z",
           "created_by_user_id": "7fc77350-0e92-5d7a-a2fb-e6277505c00e",
           "updated_by_user_id": "7fc77350-0e92-5d7a-a2fb-e6277505c00e",
-          "row_version": 1
+          "row_version": 1,
+          "is_favorite": false,
+          "is_pinned": false
         },
         {
           "id": "20c4359a-2b2b-5974-a49b-0e6f4498d616",
@@ -343990,7 +344006,9 @@
           "updated_at": "2026-12-13T14:25:00Z",
           "created_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
           "updated_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
-          "row_version": 1
+          "row_version": 1,
+          "is_favorite": false,
+          "is_pinned": false
         },
         {
           "id": "45862c57-2c91-526a-aef6-4bf88b773ca3",
@@ -344005,7 +344023,9 @@
           "updated_at": "2026-07-24T03:42:00Z",
           "created_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
           "updated_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
-          "row_version": 1
+          "row_version": 1,
+          "is_favorite": false,
+          "is_pinned": false
         },
         {
           "id": "29107505-1464-5382-9dbe-f4007e70678b",
@@ -344020,7 +344040,9 @@
           "updated_at": "2026-02-08T16:59:00Z",
           "created_by_user_id": "b408997d-9c68-5589-961f-eb5b2aece582",
           "updated_by_user_id": "b408997d-9c68-5589-961f-eb5b2aece582",
-          "row_version": 1
+          "row_version": 1,
+          "is_favorite": false,
+          "is_pinned": false
         },
         {
           "id": "5dc3e59c-fc5a-5138-8cd9-94238d6cd8ae",
@@ -344035,7 +344057,9 @@
           "updated_at": "2026-09-19T05:16:00Z",
           "created_by_user_id": "55224953-7ad5-5e7b-b070-8beb020555d5",
           "updated_by_user_id": "55224953-7ad5-5e7b-b070-8beb020555d5",
-          "row_version": 1
+          "row_version": 1,
+          "is_favorite": false,
+          "is_pinned": false
         },
         {
           "id": "9f5f525f-7d1d-5e34-944f-83b8d7c84d2b",
@@ -344050,7 +344074,9 @@
           "updated_at": "2026-04-03T18:33:00Z",
           "created_by_user_id": "b8b57fec-d512-5793-b297-c39d389f96b2",
           "updated_by_user_id": "b8b57fec-d512-5793-b297-c39d389f96b2",
-          "row_version": 1
+          "row_version": 1,
+          "is_favorite": false,
+          "is_pinned": false
         },
         {
           "id": "207eaeb5-fc39-5fdd-9a39-d8b690d420f7",
@@ -344065,7 +344091,9 @@
           "updated_at": "2026-11-14T07:50:00Z",
           "created_by_user_id": "e926fb49-acc4-5184-a3ab-7a8f13540da6",
           "updated_by_user_id": "e926fb49-acc4-5184-a3ab-7a8f13540da6",
-          "row_version": 1
+          "row_version": 1,
+          "is_favorite": false,
+          "is_pinned": false
         },
         {
           "id": "635c27d7-3309-56f3-b19e-3984518254da",
@@ -344080,7 +344108,9 @@
           "updated_at": "2026-06-25T20:07:00Z",
           "created_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
           "updated_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
-          "row_version": 1
+          "row_version": 1,
+          "is_favorite": false,
+          "is_pinned": false
         },
         {
           "id": "b8049830-7744-5e11-b2f6-1d8581ed2951",
@@ -344095,7 +344125,9 @@
           "updated_at": "2026-01-09T09:24:00Z",
           "created_by_user_id": "7fc77350-0e92-5d7a-a2fb-e6277505c00e",
           "updated_by_user_id": "7fc77350-0e92-5d7a-a2fb-e6277505c00e",
-          "row_version": 1
+          "row_version": 1,
+          "is_favorite": false,
+          "is_pinned": false
         }
       ],
       "direct_messages": [
