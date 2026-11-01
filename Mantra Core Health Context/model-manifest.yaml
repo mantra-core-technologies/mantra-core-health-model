@@ -225,6 +225,65 @@ model:
       conceptos
       FOUR_EYES_KIND_{BULK_IMPORT_CONFIRM,CATALOG_CLASSIFICATION,GOVERNANCE_POLICY_CHANGE,ACCESS_SENSITIVE_CHANGE} y
       REVIEWER_KIND_PLATFORM_ADMIN. SQL/patches/2026-10-31_v4281_motor_aprobacion.sql.
+  - id: patch-v4.2.68-infraestructura-hospitalaria-f1-f5
+    role: product-features
+    doc: SALUD/Arquitectura/infraestructura-hospitalaria/CONTRATO-F0-F1.md y CONTRATO-F2-F5.md (repositorio de documentación, «Desvíos»)
+    status: materialized-physically
+    summary: >-
+      Infraestructura hospitalaria F1–F5 integrada (v4.2.67 → v4.2.68): árbol físico y
+      organizativo con tenant (F1, F1b, F1c), operación de espacios —ejes, eventos A20,
+      bloqueos, limpieza— (F2), internación/ADT con cama exclusiva diferible para el
+      intercambio A17, incidentes de ubicación y censo diario (F3), quirófanos con ventana
+      reservada (preparación/limpieza), bloques y series (F4), y la integración F5:
+      imagenología, puntos de toma, botiquín por unidad, agenda por sala, tarifas y cargos
+      por espacio, centros de costo y activos, acceso delegado por espacio. Aislamiento
+      entre tenants en la base: UNIQUE (tenant_id, id), FK compuestas (tenant_id, x_id)
+      o trigger de mismo tenant, RLS tenant_isolation e historias audit.*_history de solo
+      inserción + cierre de valid_to. Las FK compuestas, triggers y RLS viven en
+      SQL/patches/2026-10-29_infraestructura_*.sql y
+      2026-10-31_infraestructura_f2_f5_integracion.sql y su corrección
+      2026-10-31_infraestructura_f2_f5_integracion_b.sql (gen_ddl no los expresa).
+  - id: patch-v4.2.82-iniciador-vinculos-secretaria
+    role: product-features
+    doc: docs/architecture/physical-materialization.md (v4.2.82)
+    status: materialized-physically
+    summary: >-
+      Quién inició cada vínculo de la secretaria (alta por solicitud y aceptación:
+      decide la parte que no inició). initiated_by_party_concept_id uuid NULL con FK
+      a terminology.catalog_concepts en delegated_access.organization_user_assignments
+      y practice.practitioner_support_assignments; conceptos
+      delegated_access:INITIATOR_SUPPORT_STAFF | _ORGANIZATION | _PRACTITIONER
+      (códigos DA_INITIATOR_*). Parche SQL/patches/2026-10-31_secretaria_iniciador_vinculos.sql.
+  - id: patch-v4.2.82-detalle-orden-estudios
+    role: product-features
+    doc: docs/architecture/physical-materialization.md (v4.2.82)
+    status: materialized-physically
+    summary: >-
+      Detalle de la orden de estudios: clinical.service_requests +6 columnas NULLABLE
+      (requisition_id, specimen_type, modality, body_site, laterality y contrast
+      _concept_id) y la tabla nueva clinical.service_request_components (componentes
+      marcados de un panel), con 3 CHECK en el módulo 33. RLS por custodio, lectura del
+      ejecutor y disparador de custodio hijo = padre en
+      SQL/patches/2026-11-01_v4282_service_request_detalle.sql (escrito primero en la API,
+      cb63a0cdc; gen_ddl no los expresa). Las dos entradas v4.2.82 entran juntas por model#102.
+  - id: patch-ui-visibility
+    role: product-features
+    doc: README.md (orden de parches)
+    status: materialized-physically
+    summary: >-
+      Visibilidad de la interfaz: authz.ui_visibility_elements y authz.ui_visibility_rules
+      (módulo 6) y sus reglas del módulo 33. Parche idempotente
+      SQL/patches/2026-10-31_ui_visibility.sql, generado con salud-db/gen_ui_visibility_patch.py.
+  - id: patch-v4.2.83-pharmacy-connection-fk
+    role: product-features
+    doc: docs/architecture/physical-materialization.md (v4.2.83)
+    status: materialized-physically
+    summary: >-
+      pharmacy.pharmacy_integration_connections.connection_id deja de apuntar a su propia
+      tabla y referencia integrations.provider_connections (id); pasa a NULL (nulo = sin
+      sistema externo configurado, modo manual, UC-24-07). Parche
+      SQL/patches/2026-10-31_v4283_pharmacy_connection_fk.sql, mismo nombre y contenido que
+      en la API (a07d17ac6).
   materialization_note: >-
     v4.0.1 materializado en el ER (fuente: el vault/grafo). Se añadieron 14
     entidades nuevas (marketing.campaign_schedules/dispatches/dispatch_recipients,
@@ -237,12 +296,12 @@ model:
   inventory:
     modules_puml: 71
     schemas: 59
-    entity_declarations_total: 3188
-    table_like_elements: 1450
+    entity_declarations_total: 3290
+    table_like_elements: 1486
     view_elements: 81
-    index_sets: 1412
-    reference_only_stubs: 245
-    fk_references: 7636
+    index_sets: 1443
+    reference_only_stubs: 280
+    fk_references: 7880
     note: >-
       Cifras producidas por tools/model_inventory.py (fuente única reproducible:
       clasifica cada `entity` en una sola clase, suma == total). v4.0 base
@@ -271,7 +330,8 @@ model:
       7224 FK / 168 ref / 58 schemas. Recontado el 2026-10-31 sobre dev
       (v4.2.74) más el personal de apoyo y gobierno de accesos (v4.2.75–v4.2.79):
       3105 entity / 1410 table_like / 81 vistas / 1384 idx /
-      7564 FK / 230 ref / 58 schemas; los conteos por módulo de
+      7564 FK / 230 ref / 58 schemas; con v4.2.80 (2 columnas de iniciador del
+      vínculo) 7566 FK; los conteos por módulo de
       `modules` salen de la misma corrida.
       Recontado el 2026-10-31 con la franja F1 del portal de observabilidad
       (v4.2.80: módulo 70 con 12 tablas + client_error_events en el 28 + los
@@ -279,6 +339,14 @@ model:
       81 vistas / 1397 idx / 7581 FK / 235 ref / 59 schemas (tools/model_inventory.py).
       Recontado el 2026-10-31 con la franja F1b (v4.2.81, entregables 1 a 4): 3188 entity / 1450 table_like /
       81 vistas / 1412 idx / 7636 FK / 245 ref / 59 schemas (tools/model_inventory.py).
+      Recontado el 2026-10-31 por model#102 (sobre v4.2.81: infraestructura F1c–F5 e integración
+      F2–F5 de v4.2.68, admisión crea el vínculo, medicalFacility v4.2.63, admisiones v4.2.67 y
+      las dos entradas v4.2.82): 3283 entity / 1484 table_like / 81 vistas / 1441 idx / 7874 FK /
+      277 ref / 59 schemas (tools/model_inventory.py).
+      Recontado el 2026-11-01 por model#110 (merge de dev: authz.ui_visibility_elements y
+      _rules y v4.2.83, connection_id de farmacia hacia integrations.provider_connections):
+      3290 entity / 1486 table_like / 81 vistas / 1443 idx / 7880 FK / 280 ref / 59 schemas
+      (tools/model_inventory.py).
   database: PostgreSQL canonical + governed specialized stores
   rules:
     one_puml_per_module: true
@@ -347,25 +415,25 @@ modules:
   code: directory
   title: Tenants, Organizations, Sites and Directory
   file: modules/diagram_04_directory.puml
-  table_like_elements: 9
+  table_like_elements: 11
   view_elements: 0
-  index_sets: 9
+  index_sets: 11
   status: active
 - number: 5
   code: profiles
   title: Persons, Patients and Health Workforce
   file: modules/diagram_05_profiles.puml
-  table_like_elements: 20
+  table_like_elements: 24
   view_elements: 0
-  index_sets: 20
+  index_sets: 24
   status: active
 - number: 6
   code: authz
   title: Authorization, Purpose of Use and Field Masking
   file: modules/diagram_06_authz.puml
-  table_like_elements: 15
+  table_like_elements: 17
   view_elements: 0
-  index_sets: 15
+  index_sets: 17
   status: active
 - number: 7
   code: consent
@@ -379,9 +447,9 @@ modules:
   code: clinical
   title: Core Clinical Record, Orders and Encounter Logistics
   file: modules/diagram_08_clinical.puml
-  table_like_elements: 24
+  table_like_elements: 30
   view_elements: 0
-  index_sets: 24
+  index_sets: 30
   status: active
 - number: 9
   code: forms
@@ -395,9 +463,9 @@ modules:
   code: audit
   title: Audit, Provenance and Version Histories
   file: modules/diagram_10_audit.puml
-  table_like_elements: 133
+  table_like_elements: 142
   view_elements: 0
-  index_sets: 133
+  index_sets: 142
   status: active
 - number: 11
   code: system_ops
@@ -427,9 +495,9 @@ modules:
   code: practice
   title: Care Organizations, Sites, Units, Spaces and Workforce
   file: modules/diagram_14_practice.puml
-  table_like_elements: 16
+  table_like_elements: 20
   view_elements: 0
-  index_sets: 16
+  index_sets: 20
   status: active
 - number: 15
   code: chart
@@ -451,9 +519,9 @@ modules:
   code: billing
   title: Billing, Receivables, Payables and Financial Planning
   file: modules/diagram_17_billing.puml
-  table_like_elements: 24
+  table_like_elements: 26
   view_elements: 1
-  index_sets: 24
+  index_sets: 26
   status: active
 - number: 18
   code: clinical_ext
@@ -579,7 +647,7 @@ modules:
   code: integrity
   title: Concurrency, Constraints and Integrity Matrix
   file: modules/diagram_33_integrity.puml
-  table_like_elements: 27
+  table_like_elements: 32
   view_elements: 0
   index_sets: 0
   status: active
@@ -740,9 +808,9 @@ modules:
   title: Medical Interventions, Surgery and Perioperative Care
   file: modules/diagram_53_procedures_perioperative.puml
   status: active
-  table_like_elements: 35
+  table_like_elements: 37
   view_elements: 0
-  index_sets: 35
+  index_sets: 37
 - number: 54
   code: polyglot_storage
   title: Polyglot Storage Governance and Data Placement

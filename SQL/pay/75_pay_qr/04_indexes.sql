@@ -1,4 +1,4 @@
--- SALUD v4.2.82 · módulo 75 · schema pay_qr
+-- SALUD v4.2.83 · módulo 75 · schema pay_qr
 -- Generado de diagram_75_pay_qr.puml — NO editar a mano.
 
 

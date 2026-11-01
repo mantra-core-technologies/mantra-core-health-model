@@ -1,4 +1,4 @@
--- SALUD v4.2.82 · perfil pay · módulo 72 · base pay_ledger
+-- SALUD v4.2.83 · perfil pay · módulo 72 · base pay_ledger
 -- Generado de diagram_72_pay_ledger.puml — NO editar a mano.
 
 -- Complementos del perfil pay (gen_ddl_pay.py): funciones, CHECK, FK compuestas y triggers.

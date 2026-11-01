@@ -27,7 +27,7 @@ ba27af699b353d75f41b27debb314584338649f87de16ea21cebbac797b9c23f *./docs/archite
 ea66825089c41332d50f6cd226db2e0fadebd048be9cd5af02658d33c5cb29c9 *./docs/frontend/v3.8-operational-clinical-views.md
 e153a9a29ac769da018ebca705168953593cabf90e923d27618a980e78e9e958 *./docs/validation/nosql-validation-report.md
 b2936da29e2f234cce26f672ca53f779394e9cab128bcabab09dcb0d5e4dc365 *./docs/validation/validation-report.md
-b54c20b9273d16cd07994a0ce26990f3c0bfe336026c18b994b533205343d454 *./model-manifest.yaml
+6d6ffaaab2e17f1effb936f935cd8812aa7737f20e6fd43c1b7d84befbd15e92 *./model-manifest.yaml
 5bd755a02517519c59917eeb8a39dd10fe580cbeaf0eacd26bedecdb2aa62c2d *./modules/diagram_00_platform.puml
 3223ef10fb08b45c429ec7e4a77cb8824d06cf84ab83c8eb028e2d8271e96345 *./modules/diagram_01_iam.puml
 33003e4e867c75115f18de3ca56627c0626ec1ee3865cf325c8d656f2f068bc5 *./modules/diagram_02_common.puml

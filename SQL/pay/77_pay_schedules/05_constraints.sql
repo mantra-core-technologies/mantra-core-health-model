@@ -1,4 +1,4 @@
--- SALUD v4.2.82 · perfil pay · módulo 77 · base pay_schedules
+-- SALUD v4.2.83 · perfil pay · módulo 77 · base pay_schedules
 -- Generado de diagram_77_pay_schedules.puml — NO editar a mano.
 
 -- Complementos del perfil pay (gen_ddl_pay.py): funciones, CHECK, FK compuestas y triggers.
