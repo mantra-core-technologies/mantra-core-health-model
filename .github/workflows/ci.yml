@@ -104,8 +104,17 @@ jobs:
             exit 1
           fi
 
-      - name: 3 · Seeds (simulacro)
-        run: python salud-db/gen_seeds.py --dry
+      # La corrida COMPLETA (sin `--only`) tiene que reproducir el paquete versionado byte a
+      # byte: una corrección hecha con `--only` o a mano que el generador no conoce aparece acá
+      # (model#109).
+      - name: 3 · Seeds regenerados == seedsGenerales/ versionado
+        run: |
+          python salud-db/gen_seeds.py
+          if ! git diff --exit-code --stat seedsGenerales/ || [ -n "$(git status --porcelain seedsGenerales/)" ]; then
+            git status --porcelain seedsGenerales/
+            echo "::error::seedsGenerales/ no coincide con lo que genera 'python salud-db/gen_seeds.py' (corrida completa). La corrección tiene que vivir en el generador: corrélo sin --only y versioná el resultado."
+            exit 1
+          fi
 
       - name: Cliente psql
         run: |
