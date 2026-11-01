@@ -283,3 +283,42 @@ CREATE TABLE IF NOT EXISTS "authz"."patient_legal_representations" (
     "row_version" integer NOT NULL DEFAULT 1,
     CONSTRAINT "pk_patient_legal_representations" PRIMARY KEY ("id")
 );
+
+CREATE TABLE IF NOT EXISTS "authz"."ui_visibility_elements" (
+    "id" uuid NOT NULL,
+    "key" varchar(160) NOT NULL,
+    "kind" varchar(20) NOT NULL,
+    "module_code" varchar(80) NOT NULL,
+    "parent_element_id" uuid,
+    "label" varchar(200) NOT NULL,
+    "description" varchar(500),
+    "default_visible" boolean NOT NULL DEFAULT true,
+    "source" varchar(10) NOT NULL,
+    "status" varchar(10) NOT NULL,
+    "retired_at" timestamptz,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_ui_visibility_elements" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "authz"."ui_visibility_rules" (
+    "id" uuid NOT NULL,
+    "element_id" uuid NOT NULL,
+    "effect" varchar(4) NOT NULL,
+    "subject_type" varchar(10) NOT NULL,
+    "subject_id" varchar(160),
+    "scope_tenant_id" uuid,
+    "valid_from" timestamptz,
+    "valid_to" timestamptz,
+    "ended_at" timestamptz,
+    "reason" varchar(500) NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_ui_visibility_rules" PRIMARY KEY ("id")
+);

@@ -191,3 +191,27 @@ CREATE INDEX IF NOT EXISTS "ix_care_relationships_practitioner_profile_id" ON "a
 CREATE INDEX IF NOT EXISTS "ix_patient_legal_representations_tenant_id" ON "authz"."patient_legal_representations" ("tenant_id");
 
 CREATE INDEX IF NOT EXISTS "ix_patient_legal_representations_patient_profile_id" ON "authz"."patient_legal_representations" ("patient_profile_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_ui_visibility_elements_key" ON "authz"."ui_visibility_elements" ("key");
+
+CREATE INDEX IF NOT EXISTS "ix_ui_visibility_elements_module_kind" ON "authz"."ui_visibility_elements" ("module_code", "kind");
+
+CREATE INDEX IF NOT EXISTS "ix_ui_visibility_elements_parent_element_id" ON "authz"."ui_visibility_elements" ("parent_element_id");
+
+CREATE INDEX IF NOT EXISTS "ix_ui_visibility_elements_created_by_user_id" ON "authz"."ui_visibility_elements" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_ui_visibility_elements_updated_by_user_id" ON "authz"."ui_visibility_elements" ("updated_by_user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_ui_visibility_rules_open_subject" ON "authz"."ui_visibility_rules" ("element_id", "subject_type", "subject_id") WHERE ended_at IS NULL AND subject_id IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_ui_visibility_rules_open_all" ON "authz"."ui_visibility_rules" ("element_id") WHERE ended_at IS NULL AND subject_type = 'ALL';
+
+CREATE INDEX IF NOT EXISTS "ix_ui_visibility_rules_open_subject" ON "authz"."ui_visibility_rules" ("subject_type", "subject_id") WHERE ended_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS "ix_ui_visibility_rules_scope_tenant_id" ON "authz"."ui_visibility_rules" ("scope_tenant_id") WHERE scope_tenant_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS "ix_ui_visibility_rules_created_at_id" ON "authz"."ui_visibility_rules" ("created_at" DESC, "id" DESC);
+
+CREATE INDEX IF NOT EXISTS "ix_ui_visibility_rules_created_by_user_id" ON "authz"."ui_visibility_rules" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_ui_visibility_rules_updated_by_user_id" ON "authz"."ui_visibility_rules" ("updated_by_user_id");
