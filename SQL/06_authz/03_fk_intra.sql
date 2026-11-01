@@ -1,4 +1,4 @@
--- SALUD v4.2.82 · módulo 06 · schema authz
+-- SALUD v4.2.83 · módulo 06 · schema authz
 -- Generado de diagram_06_authz.puml — NO editar a mano.
 
 
@@ -54,4 +54,16 @@ DO $$ BEGIN
     ALTER TABLE "authz"."break_glass_sessions"
         ADD CONSTRAINT "fk_break_glass_sessions_granted_by_policy_id" FOREIGN KEY ("granted_by_policy_id")
         REFERENCES "authz"."access_policies" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "authz"."ui_visibility_elements"
+        ADD CONSTRAINT "fk_ui_visibility_elements_parent_element_id" FOREIGN KEY ("parent_element_id")
+        REFERENCES "authz"."ui_visibility_elements" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "authz"."ui_visibility_rules"
+        ADD CONSTRAINT "fk_ui_visibility_rules_element_id" FOREIGN KEY ("element_id")
+        REFERENCES "authz"."ui_visibility_elements" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;

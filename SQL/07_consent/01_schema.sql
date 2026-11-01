@@ -1,4 +1,4 @@
--- SALUD v4.2.82 · módulo 07 · schema consent
+-- SALUD v4.2.83 · módulo 07 · schema consent
 -- Generado de diagram_07_consent.puml — NO editar a mano.
 
 CREATE SCHEMA IF NOT EXISTS "consent";

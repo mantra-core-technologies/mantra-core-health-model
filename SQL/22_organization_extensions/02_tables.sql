@@ -1,4 +1,4 @@
--- SALUD v4.2.82 · módulo 22 · schema organization_extensions
+-- SALUD v4.2.83 · módulo 22 · schema organization_extensions
 -- Generado de diagram_22_organization_extensions.puml — NO editar a mano.
 
 
