@@ -1,4 +1,4 @@
--- SALUD v4.2.82 · módulo 29 · schema delegated_access
+-- SALUD v4.2.83 · módulo 29 · schema delegated_access
 -- Generado de diagram_29_delegated_access.puml — NO editar a mano.
 
 
