@@ -47,15 +47,19 @@ DO $$
 DECLARE
     n_columnas integer;
 BEGIN
-    -- 20: el total de columnas de clinical.encounters tras sumar las 2 nuevas.
+    -- Las 2 columnas de este patch. (Hasta 2026-10-29 contaba el TOTAL de columnas de
+    -- clinical.encounters, = 20; eso rompía el arranque desde cero apenas el modelo le
+    -- sumaba otra columna a la tabla —infraestructura F3 le agrega 6—, porque el
+    -- CREATE TABLE generado ya las trae y este patch corre después.)
     SELECT count(*) INTO n_columnas
     FROM information_schema.columns
     WHERE table_schema = 'clinical'
-      AND table_name = 'encounters';
+      AND table_name = 'encounters'
+      AND column_name IN ('content_hash', 'sealed_at');
 
-    IF n_columnas <> 20 THEN
+    IF n_columnas <> 2 THEN
         RAISE EXCEPTION
-            'v4.2.16 incompleto: columnas=% (esperado 20)',
+            'v4.2.16 incompleto: columnas=% (esperado 2)',
             n_columnas;
     END IF;
 

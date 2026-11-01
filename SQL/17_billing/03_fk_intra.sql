@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · módulo 17 · schema billing
+-- SALUD v4.2.82 · módulo 17 · schema billing
 -- Generado de diagram_17_billing.puml — NO editar a mano.
 
 
@@ -6,6 +6,18 @@ DO $$ BEGIN
     ALTER TABLE "billing"."service_catalog"
         ADD CONSTRAINT "fk_service_catalog_tax_code_id" FOREIGN KEY ("tax_code_id")
         REFERENCES "billing"."tax_codes" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "billing"."charge_captures"
+        ADD CONSTRAINT "fk_charge_captures_space_tariff_id" FOREIGN KEY ("space_tariff_id")
+        REFERENCES "billing"."space_tariffs" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "billing"."charge_captures"
+        ADD CONSTRAINT "fk_charge_captures_invoice_line_id" FOREIGN KEY ("invoice_line_id")
+        REFERENCES "billing"."invoice_lines" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN

@@ -1,4 +1,4 @@
--- SALUD v4.2.79 · módulo 04 · schema directory
+-- SALUD v4.2.82 · módulo 04 · schema directory
 -- Generado de diagram_04_directory.puml — NO editar a mano.
 
 
@@ -145,3 +145,25 @@ CREATE INDEX IF NOT EXISTS "ix_affiliation_invitation_uses_used_by_user_id" ON "
 CREATE INDEX IF NOT EXISTS "ix_affiliation_invitation_uses_outcome_concept_id" ON "directory"."affiliation_invitation_uses" ("outcome_concept_id");
 
 CREATE INDEX IF NOT EXISTS "brin_affiliation_invitation_uses_occurred_at" ON "directory"."affiliation_invitation_uses" USING brin ("occurred_at") WITH (pages_per_range=128);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uk_tenant_medical_facilities_tenant" ON "directory"."tenant_medical_facilities" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_tenant_medical_facilities_registration_number" ON "directory"."tenant_medical_facilities" ("health_facility_registration_number");
+
+CREATE INDEX IF NOT EXISTS "ix_tenant_medical_facilities_tax_identifier_number" ON "directory"."tenant_medical_facilities" ("tax_identifier_number");
+
+CREATE INDEX IF NOT EXISTS "ix_tenant_medical_facilities_created_by_user_id" ON "directory"."tenant_medical_facilities" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_tenant_medical_facilities_updated_by_user_id" ON "directory"."tenant_medical_facilities" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_tenant_medical_facility_sites_tenant_id" ON "directory"."tenant_medical_facility_sites" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_tenant_medical_facility_sites_medical_facility_id" ON "directory"."tenant_medical_facility_sites" ("medical_facility_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_tenant_medical_facility_sites_facility_ordinal" ON "directory"."tenant_medical_facility_sites" ("medical_facility_id", "ordinal");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_tenant_medical_facility_sites_one_headquarters" ON "directory"."tenant_medical_facility_sites" ("medical_facility_id") WHERE site_kind = 'headquarters';
+
+CREATE INDEX IF NOT EXISTS "ix_tenant_medical_facility_sites_created_by_user_id" ON "directory"."tenant_medical_facility_sites" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_tenant_medical_facility_sites_updated_by_user_id" ON "directory"."tenant_medical_facility_sites" ("updated_by_user_id");

@@ -116,10 +116,10 @@ desde una fuente equivocada produce una base que parece correcta, y descubrirlo
 después de cargar el corpus MeSH cuesta varios minutos. También está disponible
 como `yarn ddl:sources`.
 
-> [!note] No hay CI en este repositorio
-> No existe `.github/`, así que este chequeo no bloquea ningún pipeline. Vale por
-> estar en el camino que la gente sí ejecuta —el rebuild—, no por ser una barrera
-> automática. Si algún día hay CI, este es el primer candidato a incluir.
+> [!note] CI
+> `.github/workflows/ci.yml` corre este chequeo, la regeneración de `SQL/` (diff vacío),
+> `gen_seeds.py --dry` y la aplicación del DDL sobre una base limpia. Requiere el secreto
+> `VAULT_READ_TOKEN` para clonar la bóveda, de donde `gen_ddl.py` resuelve las FK.
 
 ## Documentación retirada
 
