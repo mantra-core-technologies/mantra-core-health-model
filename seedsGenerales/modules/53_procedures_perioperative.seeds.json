@@ -1239,8 +1239,8 @@
           "requested_by_profile_id": null,
           "primary_surgeon_profile_id": null,
           "anesthesiologist_profile_id": null,
-          "practice_site_id": "97fc668f-f09b-5e41-a4f8-a530b7e63591",
-          "operating_room_id": "bf732059-384a-5a5d-a137-bc28809759ee",
+          "practice_site_id": null,
+          "operating_room_id": null,
           "scheduled_start_at": "2026-10-02T10:05:00Z",
           "scheduled_end_at": "2026-10-02T10:05:00Z",
           "actual_start_at": "2026-10-02T10:05:00Z",
@@ -3445,7 +3445,7 @@
         },
         {
           "id": "344bd006-99a9-58d6-b1e7-88ca4ef735b4",
-          "procedure_case_id": "e7e67a5d-b85f-585b-9f76-5618c6174d91",
+          "procedure_case_id": "684d2585-d866-509d-b986-88d7da61a16f",
           "checklist_type_concept_id": "16df6464-573a-511d-af78-737fe1bfe8be",
           "checklist_version": "1.0.0_01",
           "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
@@ -3543,7 +3543,7 @@
         },
         {
           "id": "a4527d5c-5669-5f5c-acfa-6de931b9e997",
-          "procedure_case_id": "e7e67a5d-b85f-585b-9f76-5618c6174d91",
+          "procedure_case_id": "a667caf9-4088-564d-8e72-665d69edc6ad",
           "checklist_type_concept_id": "16df6464-573a-511d-af78-737fe1bfe8be",
           "checklist_version": "1.0.0_01_02",
           "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
@@ -3557,7 +3557,7 @@
         },
         {
           "id": "580cc39a-2075-50e3-b69b-e7ead793eaf0",
-          "procedure_case_id": "e7e67a5d-b85f-585b-9f76-5618c6174d91",
+          "procedure_case_id": "79dab7f1-c6e4-5354-a114-049cb358f651",
           "checklist_type_concept_id": "16df6464-573a-511d-af78-737fe1bfe8be",
           "checklist_version": "1.0.0_01_02_03",
           "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
@@ -3571,7 +3571,7 @@
         },
         {
           "id": "6384ad77-1fd6-5723-b1a8-d6e7945109a5",
-          "procedure_case_id": "350f016d-662d-5fc3-ab0a-694f7b8861df",
+          "procedure_case_id": "03a15ad9-7676-5582-89cc-858bfe2624e7",
           "checklist_type_concept_id": "16df6464-573a-511d-af78-737fe1bfe8be",
           "checklist_version": "1.0.0_01",
           "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
@@ -3585,7 +3585,7 @@
         },
         {
           "id": "f13bcc2f-b9f4-5021-811e-4cf5e21714b9",
-          "procedure_case_id": "db948d5c-7342-5447-aa9c-e100a55e5f60",
+          "procedure_case_id": "c9afa6cf-52b8-5ac3-9ec7-20a5def05f76",
           "checklist_type_concept_id": "16df6464-573a-511d-af78-737fe1bfe8be",
           "checklist_version": "1.0.0_01",
           "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
@@ -3599,7 +3599,7 @@
         },
         {
           "id": "3e2ee48f-46a4-5b36-8a02-13dab617bf37",
-          "procedure_case_id": "a72a8b73-7a79-5828-86cd-6a3dbfc8fa3e",
+          "procedure_case_id": "27331fc1-6baf-5b22-b408-931e0ebf67c7",
           "checklist_type_concept_id": "16df6464-573a-511d-af78-737fe1bfe8be",
           "checklist_version": "1.0.0_01",
           "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
@@ -3613,7 +3613,7 @@
         },
         {
           "id": "eff3991c-8d12-5196-a6a3-8a02a5186e6a",
-          "procedure_case_id": "cdc9598c-3662-50bf-af52-bf1d20a188cf",
+          "procedure_case_id": "9318d0bc-a68c-5645-922e-e5bd75b68554",
           "checklist_type_concept_id": "16df6464-573a-511d-af78-737fe1bfe8be",
           "checklist_version": "1.0.0_01",
           "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
@@ -3627,7 +3627,7 @@
         },
         {
           "id": "3452bdb6-e5e1-5342-aadb-04ec2bcbcba6",
-          "procedure_case_id": "30b7e990-15d4-52e6-b70e-04d80d74a1ee",
+          "procedure_case_id": "b85bd295-9f94-54ef-90fd-55065c0207a4",
           "checklist_type_concept_id": "16df6464-573a-511d-af78-737fe1bfe8be",
           "checklist_version": "1.0.0_01",
           "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",
@@ -3641,7 +3641,7 @@
         },
         {
           "id": "6334c77e-4493-575c-9816-5e7784de4c63",
-          "procedure_case_id": "2a58fd96-36ae-5e7b-b567-51c9070364fa",
+          "procedure_case_id": "b201a03a-3296-5e5e-bbee-dec8a48e556c",
           "checklist_type_concept_id": "16df6464-573a-511d-af78-737fe1bfe8be",
           "checklist_version": "1.0.0_01",
           "status_concept_id": "d0f53ea3-7e50-5578-add3-270341b1186c",

@@ -1,4 +1,4 @@
-# Matriz de integridad y concurrencia — SALUD v4.2.81 (módulo 33)
+# Matriz de integridad y concurrencia — SALUD v4.2.82 (módulo 33)
 
 El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación cross-dominio. Cada regla se implementa en la **migración de la tabla dueña** (su módulo) y se repite aquí como referencia. Extraído fielmente del `.puml`.
 
@@ -56,14 +56,21 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 | `siat_simulated_outbox` | `REFERENCE_ONLY` | **CHECK_SQL** ck_siat_simulated_outbox_status \| "status" = 'NOT_SENT_SIMULATED'; **CHECK_SQL** ck_siat_simulated_outbox_siat_mode \| "siat_mode" IN ('simulated','real') |
 | `billing.quotations` | `REFERENCE_ONLY` | **CHECK_SQL** chk_quotations_payment_frequency \| "payment_frequency" IN ('WEEKLY', 'BIWEEKLY', 'MONTHLY'); **CHECK_SQL** chk_quotations_down_payment_range \| ("down_payment_amount" >= 0 AND "down_payment_amount" <= "offered_price") |
 | `billing.quotation_installments` | `REFERENCE_ONLY` | **CHECK_SQL** chk_quotation_installments_amount_positive \| "amount" > 0 |
+| `billing.space_tariffs` | `REFERENCE_ONLY` | **EXCLUDE** one tariff per practice, kind, bed category, room and date; **EXCLUDE_SQL** ex_space_tariffs_validity \| "practice_id" WITH =, "tariff_kind_concept_id" WITH =, coalesce("bed_category_concept_id", '00000000-0000-0000-0000-000000000000'::uuid) WITH =, coalesce("care_space_id", '00000000-0000-0000-0000-000000000000'::uuid) WITH =, daterange("valid_from", "valid_to", '[)') WITH &&; **CHECK_SQL** ck_space_tariffs_or_time_unit_minutes \| ("tariff_kind_concept_id" <> '25eb53f6-8006-5959-bee9-65b16117bc9b' OR ("unit_minutes" IS NOT NULL AND "unit_minutes" > 0)); **CHECK_SQL** ck_space_tariffs_valid_period \| ("valid_to" IS NULL OR "valid_to" > "valid_from") |
 
 ### Módulo 08 · `clinical`
 
 | Tabla | Estereotipo | Reglas declaradas |
 |-------|-------------|-------------------|
-| `service_requests` | `REFERENCE_ONLY` | **CHECK_SQL** ck_service_requests_override_reason_requires_previous_report \| ("duplicate_override_reason" IS NULL OR "previous_diagnostic_report_id" IS NOT NULL) |
+| `service_requests` | `REFERENCE_ONLY` | **CHECK_SQL** ck_service_requests_override_reason_requires_previous_report \| ("duplicate_override_reason" IS NULL OR "previous_diagnostic_report_id" IS NOT NULL); **CHECK_SQL** ck_service_requests_specimen_xor_imaging \| ("specimen_type_concept_id" IS NULL OR ("modality_concept_id" IS NULL AND "body_site_concept_id" IS NULL AND "laterality_concept_id" IS NULL AND "contrast_concept_id" IS NULL)); **CHECK_SQL** ck_service_requests_laterality_requires_site \| ("laterality_concept_id" IS NULL OR "body_site_concept_id" IS NOT NULL); **CHECK_SQL** ck_service_requests_contrast_requires_modality \| ("contrast_concept_id" IS NULL OR "modality_concept_id" IS NOT NULL) |
 | `received_services` | `REFERENCE_ONLY` | **CHECK_SQL** ck_received_services_has_source \| ("source_procedure_id" IS NOT NULL OR "source_immunization_id" IS NOT NULL OR "procedure_case_id" IS NOT NULL) |
-| `appointments` | `REFERENCE_ONLY` | **EXCLUDE** practitioner/location time overlap; **EXCLUDE_SQL** ex_appointments_practitioner_time \| "practitioner_profile_id" WITH =, tstzrange("start_at", "end_at", '[)') WITH && \| "practitioner_profile_id" IS NOT NULL AND "end_at" IS NOT NULL AND "status_concept_id" IN ('51530fd7-05b1-5c29-80c4-da740ede4d27', '37dded87-7a7a-5a24-86f6-0ef48cccb482'); **LOCK** reservation confirmation transaction |
+| `appointments` | `REFERENCE_ONLY` | **EXCLUDE** practitioner/location time overlap; **EXCLUDE_SQL** ex_appointments_practitioner_time \| "practitioner_profile_id" WITH =, tstzrange("start_at", "end_at", '[)') WITH && \| "practitioner_profile_id" IS NOT NULL AND "end_at" IS NOT NULL AND "status_concept_id" IN ('51530fd7-05b1-5c29-80c4-da740ede4d27', '37dded87-7a7a-5a24-86f6-0ef48cccb482'); **LOCK** reservation confirmation transaction; **EXCLUDE_SQL** ex_appointments_care_space_time \| "care_space_id" WITH =, tstzrange("start_at", "end_at", '[)') WITH && \| "care_space_id" IS NOT NULL AND "end_at" IS NOT NULL AND "status_concept_id" IN ('51530fd7-05b1-5c29-80c4-da740ede4d27', '37dded87-7a7a-5a24-86f6-0ef48cccb482') |
+| `clinical.encounter_locations` | `REFERENCE_ONLY` | **CHECK_SQL** ck_encounter_locations_bed_period \| (NOT "is_bed_assignment" OR ("period_start" IS NOT NULL AND "care_space_id" IS NOT NULL)); **EXCLUDE_SQL** ex_encounter_locations_bed_occupancy \| "care_space_id" WITH =, tstzrange("period_start", "period_end", '[)') WITH && \| "is_bed_assignment" AND "location_status_concept_id" IN ('809db700-0627-5fe3-8278-4f038f4475b3', 'cdd86257-4297-5941-8ae8-b95e11439a48', '8cf00069-81ca-56e1-8e71-9e16333a1f6c') \| DEFERRABLE INITIALLY IMMEDIATE; **EXCLUDE_SQL** ex_encounter_locations_encounter_single_bed \| "encounter_id" WITH =, tstzrange("period_start", "period_end", '[)') WITH && \| "is_bed_assignment" AND "location_status_concept_id" IN ('809db700-0627-5fe3-8278-4f038f4475b3', '8cf00069-81ca-56e1-8e71-9e16333a1f6c') \| DEFERRABLE INITIALLY IMMEDIATE |
+| `clinical.placement_incidents` | `REFERENCE_ONLY` | **CHECK_SQL** ck_placement_incidents_justification_length \| (char_length("justification_text") >= 20) |
+| `clinical.inpatient_census_days` | `REFERENCE_ONLY` | **UK** site + unit + census_date; **GUARD** UPDATE/DELETE rechazados cuando OLD.status_concept_id = CENSUS_CLOSED (trigger trg_inpatient_census_days_closed_guard, patch 2026-10-29_infraestructura_f3_clinical.sql) |
+| `clinical.inpatient_census_entries` | `IMMUTABLE, REFERENCE_ONLY` | **UPDATE_DELETE** forbidden |
+| `clinical.inpatient_census_adjustments` | `IMMUTABLE, REFERENCE_ONLY` | **UPDATE_DELETE** forbidden; **CHECK_SQL** ck_inpatient_census_adjustments_field_code \| "field_code" IN ('beds_censable', 'beds_available', 'beds_blocked', 'patients_at_cutoff', 'admissions', 'discharges', 'deaths', 'transfers_in', 'transfers_out', 'same_day_stays', 'patient_days', 'discharge_stay_days') |
+| `clinical.patient_admission_footprints` | `IMMUTABLE, REFERENCE_ONLY` | **UPDATE_DELETE** forbidden |
 
 ### Módulo 18 · `clinical_ext`
 
@@ -140,6 +147,8 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 | Tabla | Estereotipo | Reglas declaradas |
 |-------|-------------|-------------------|
 | `directory.affiliation_invitations` | `REFERENCE_ONLY` | **CHECK_SQL** ck_affiliation_invitations_uses \| ("max_uses" >= 1 AND "uses_count" >= 0 AND "uses_count" <= "max_uses") |
+| `directory.tenant_medical_facilities` | `REFERENCE_ONLY` | **CHECK_SQL** ck_tenant_medical_facilities_tax_identifier_format \| "tax_identifier_number" ~ '^[0-9][0-9-]{3,19}$'; **CHECK_SQL** ck_tenant_medical_facilities_registration_format \| "health_facility_registration_number" ~ '^[A-Za-z0-9./-]{3,50}$'; **CHECK_SQL** ck_tenant_medical_facilities_director_license \| char_length(btrim("medical_director_license_number")) BETWEEN 3 AND 50 |
+| `directory.tenant_medical_facility_sites` | `REFERENCE_ONLY` | **CHECK_SQL** ck_tenant_medical_facility_sites_kind_ordinal \| ("site_kind" = 'headquarters' AND "ordinal" = 0) OR ("site_kind" = 'branch' AND "ordinal" BETWEEN 1 AND 50); **CHECK_SQL** ck_tenant_medical_facility_sites_address_lines \| cardinality("address_lines") >= 1; **CHECK_SQL** ck_tenant_medical_facility_sites_geo \| (("latitude" IS NULL) = ("longitude" IS NULL)) AND ("latitude" IS NULL OR ("latitude" BETWEEN -90 AND 90 AND "longitude" BETWEEN -180 AND 180)) |
 
 ### Módulo 01 · `iam`
 
@@ -207,19 +216,34 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 | Tabla | Estereotipo | Reglas declaradas |
 |-------|-------------|-------------------|
 | `practice.care_spaces` | `REFERENCE_ONLY` | **CHECK_SQL** ck_care_spaces_buffers \| (COALESCE("prep_minutes", 0) >= 0 AND COALESCE("cleanup_minutes", 0) >= 0); **CHECK_SQL** ck_care_spaces_location_path \| ("location_path" IS NULL OR "location_path" ~ '^/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/)+$') |
+| `practice.care_space_status_events` | `IMMUTABLE, REFERENCE_ONLY` | **UPDATE_DELETE** forbidden; **CHECK_SQL** ck_care_space_status_events_v2_0116_code \| "v2_0116_code" IN ('C','H','I','K','O','U','R') |
+| `practice.care_space_blocks` | `REFERENCE_ONLY` | **EXCLUDE** one non-cancelled block per space and time; **EXCLUDE_SQL** ex_care_space_blocks_time \| "care_space_id" WITH =, tstzrange("starts_at", "ended_at", '[)') WITH && \| "cancelled_at" IS NULL; **CHECK_SQL** ck_care_space_blocks_maintenance_eta \| ("kind_concept_id" <> 'b0516b50-47c6-5fdb-b1e7-6ae060fbb4c0' OR "expected_end_at" IS NOT NULL); **CHECK_SQL** ck_care_space_blocks_end_after_start \| (("ended_at" IS NULL OR "ended_at" > "starts_at") AND ("expected_end_at" IS NULL OR "expected_end_at" > "starts_at")) |
+| `practice.cleaning_orders` | `REFERENCE_ONLY` | **CHECK_SQL** ck_cleaning_orders_inspector_differs \| ("inspected_by_user_id" IS NULL OR "inspected_by_user_id" <> "finished_by_user_id") |
+| `practice.care_space_category_periods` | `REFERENCE_ONLY` | **EXCLUDE** one bed category per space and time; **EXCLUDE_SQL** ex_care_space_category_periods_validity \| "care_space_id" WITH =, tstzrange("valid_from", "valid_to", '[)') WITH &&; **CHECK_SQL** ck_care_space_category_periods_valid_period \| ("valid_to" IS NULL OR "valid_to" > "valid_from") |
 | `practice.practitioner_location_assignments` | `REFERENCE_ONLY` | **CHECK_SQL** ck_practitioner_location_assignments_period \| ("valid_from" IS NULL OR "valid_to" IS NULL OR "valid_from" <= "valid_to") |
 
 ### Módulo 53 · `procedures_perioperative`
 
 | Tabla | Estereotipo | Reglas declaradas |
 |-------|-------------|-------------------|
-| `procedures_perioperative.procedure_cases` | `REFERENCE_ONLY` | **EXCLUDE** operating room time overlap; **EXCLUDE_SQL** ex_procedure_cases_operating_room_time \| "operating_room_id" WITH =, tstzrange("scheduled_start_at", "scheduled_end_at", '[)') WITH && \| "operating_room_id" IS NOT NULL AND "scheduled_start_at" IS NOT NULL AND "scheduled_end_at" IS NOT NULL AND "status_concept_id" IN ('6fe38139-ad1d-5214-84c1-8c184e4e58fb', 'f6985cd5-f867-5d76-b70c-1138667fd2ab', 'fdc78cc9-eda6-5625-9a26-1bdcec4dc203'); **CHECK_SQL** ck_procedure_cases_buffers \| (COALESCE("prep_minutes", 0) >= 0 AND COALESCE("cleanup_minutes", 0) >= 0) |
+| `procedures_perioperative.procedure_cases` | `REFERENCE_ONLY` | **EXCLUDE** operating room reserved window overlap (scheduled +/- prep/cleanup); **EXCLUDE_SQL** ex_procedure_cases_operating_room_time \| "operating_room_id" WITH =, tstzrange("reserved_start_at", "reserved_end_at", '[)') WITH && \| "operating_room_id" IS NOT NULL AND "reserved_start_at" IS NOT NULL AND "reserved_end_at" IS NOT NULL AND "status_concept_id" IN ('6fe38139-ad1d-5214-84c1-8c184e4e58fb', 'f6985cd5-f867-5d76-b70c-1138667fd2ab', 'fdc78cc9-eda6-5625-9a26-1bdcec4dc203'); **CHECK_SQL** ck_procedure_cases_buffers \| (COALESCE("prep_minutes", 0) >= 0 AND COALESCE("cleanup_minutes", 0) >= 0) |
+| `procedures_perioperative.operating_room_block_series` | `REFERENCE_ONLY` | **CHECK_SQL** ck_operating_room_block_series_owner \| ("owner_kind_concept_id" IN ('6b4fd1e9-892f-572b-9e9b-96b321ecdc26', '48a989b7-6300-516d-9982-8f741aaf0758') AND ("owner_kind_concept_id" <> '6b4fd1e9-892f-572b-9e9b-96b321ecdc26' OR "clinical_unit_id" IS NOT NULL OR "surgical_specialty_concept_id" IS NOT NULL) AND ("owner_kind_concept_id" <> '48a989b7-6300-516d-9982-8f741aaf0758' OR "surgeon_profile_id" IS NOT NULL)); **CHECK_SQL** ck_operating_room_block_series_time_order \| ("end_time" > "start_time"); **CHECK_SQL** ck_operating_room_block_series_validity \| ("valid_to" IS NULL OR "valid_to" >= "valid_from"); **CHECK_SQL** ck_operating_room_block_series_weekdays \| (cardinality("weekdays") > 0 AND "weekdays" <@ ARRAY[1, 2, 3, 4, 5, 6, 7]::smallint[]); **CHECK_SQL** ck_operating_room_block_series_release_hours \| ("release_hours" >= 0) |
+| `procedures_perioperative.operating_room_blocks` | `REFERENCE_ONLY` | **EXCLUDE** active operating room block time overlap; **EXCLUDE_SQL** ex_operating_room_blocks_time \| "operating_room_id" WITH =, tstzrange("starts_at", "ends_at", '[)') WITH && \| "status_concept_id" = '762dc30b-3e3c-5e1e-8504-5c511fd1d4a8'; **CHECK_SQL** ck_operating_room_blocks_owner \| ("owner_kind_concept_id" IN ('6b4fd1e9-892f-572b-9e9b-96b321ecdc26', '48a989b7-6300-516d-9982-8f741aaf0758') AND ("owner_kind_concept_id" <> '6b4fd1e9-892f-572b-9e9b-96b321ecdc26' OR "clinical_unit_id" IS NOT NULL OR "surgical_specialty_concept_id" IS NOT NULL) AND ("owner_kind_concept_id" <> '48a989b7-6300-516d-9982-8f741aaf0758' OR "surgeon_profile_id" IS NOT NULL)); **CHECK_SQL** ck_operating_room_blocks_end_after_start \| ("ends_at" > "starts_at"); **CHECK_SQL** ck_operating_room_blocks_release_before_start \| ("release_at" <= "starts_at") |
+
+### Módulo 05 · `profiles`
+
+| Tabla | Estereotipo | Reglas declaradas |
+|-------|-------------|-------------------|
+| `profiles.practitioner_admission_events` | `IMMUTABLE, REFERENCE_ONLY` | **UPDATE_DELETE** forbidden |
+| `profiles.practitioner_admissions` | `REFERENCE_ONLY` | **CHECK_SQL** ck_practitioner_admissions_resubmission_count \| ("resubmission_count" >= 0); **CHECK_SQL** ck_practitioner_admissions_due_after_submit \| ("due_at" >= "submitted_at"); **CHECK_SQL** ck_practitioner_admissions_attestation_version \| ("attested_at" IS NULL OR "attestation_text_version" IS NOT NULL) |
+| `profiles.admission_requirements` | `REFERENCE_ONLY` | **CHECK_SQL** ck_admission_requirements_item_range \| (COALESCE("min_items", 0) >= 0 AND ("max_items" IS NULL OR "max_items" >= COALESCE("min_items", 0))) |
 
 ### Módulo 41 · `scheduling`
 
 | Tabla | Estereotipo | Reglas declaradas |
 |-------|-------------|-------------------|
 | `practitioner_service_offerings` | `REFERENCE_ONLY` | **CHECK_SQL** ck_practitioner_service_offerings_duration_range \| ("min_duration_minutes" > 0 AND "min_duration_minutes" <= "max_duration_minutes" AND "max_duration_minutes" <= 720); **CHECK_SQL** ck_practitioner_service_offerings_buffers \| (COALESCE("prep_minutes", 0) >= 0 AND COALESCE("cleanup_minutes", 0) >= 0) |
+| `scheduling.schedulable_resources` | `REFERENCE_ONLY` | **CHECK_SQL** ck_schedulable_resources_care_space_ref \| ("resource_ref_type" <> 'care_spaces' OR "care_space_id" = "resource_ref_id") |
 | `scheduling.booking_policies` | `REFERENCE_ONLY` | **CHECK_SQL** ck_booking_policies_no_show_fee_percentage \| ("no_show_fee_percentage" IS NULL OR ("no_show_fee_percentage" >= 0 AND "no_show_fee_percentage" <= 100)) |
 
 ### Módulo 65 · `surveys`

@@ -1,4 +1,4 @@
--- SALUD v4.2.81 · módulo 29 · schema delegated_access
+-- SALUD v4.2.82 · módulo 29 · schema delegated_access
 -- Generado de diagram_29_delegated_access.puml — NO editar a mano.
 
 
@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS "delegated_access"."organization_user_assignments" (
     "recertify_every_months" integer,
     "next_recertification_at" timestamptz,
     "ended_reason_text" text,
+    "initiated_by_party_concept_id" uuid,
     "identity_verified_at" timestamptz,
     "identity_verified_by_user_id" uuid,
     "identity_method_concept_id" uuid,

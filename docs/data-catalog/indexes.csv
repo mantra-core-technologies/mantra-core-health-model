@@ -291,6 +291,17 @@ directory,affiliation_invitation_uses,uq_affiliation_invitation_uses_accepted,YE
 directory,affiliation_invitation_uses,ix_affiliation_invitation_uses_invitation_occurred,NO,"""affiliation_invitation_id"", ""occurred_at"" DESC",,SQL/04_directory/04_indexes.sql
 directory,affiliation_invitation_uses,ix_affiliation_invitation_uses_used_by_user_id,NO,"""used_by_user_id""",,SQL/04_directory/04_indexes.sql
 directory,affiliation_invitation_uses,ix_affiliation_invitation_uses_outcome_concept_id,NO,"""outcome_concept_id""",,SQL/04_directory/04_indexes.sql
+directory,tenant_medical_facilities,uk_tenant_medical_facilities_tenant,YES,"""tenant_id""",,SQL/04_directory/04_indexes.sql
+directory,tenant_medical_facilities,ix_tenant_medical_facilities_registration_number,NO,"""health_facility_registration_number""",,SQL/04_directory/04_indexes.sql
+directory,tenant_medical_facilities,ix_tenant_medical_facilities_tax_identifier_number,NO,"""tax_identifier_number""",,SQL/04_directory/04_indexes.sql
+directory,tenant_medical_facilities,ix_tenant_medical_facilities_created_by_user_id,NO,"""created_by_user_id""",,SQL/04_directory/04_indexes.sql
+directory,tenant_medical_facilities,ix_tenant_medical_facilities_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/04_directory/04_indexes.sql
+directory,tenant_medical_facility_sites,ix_tenant_medical_facility_sites_tenant_id,NO,"""tenant_id""",,SQL/04_directory/04_indexes.sql
+directory,tenant_medical_facility_sites,ix_tenant_medical_facility_sites_medical_facility_id,NO,"""medical_facility_id""",,SQL/04_directory/04_indexes.sql
+directory,tenant_medical_facility_sites,ux_tenant_medical_facility_sites_facility_ordinal,YES,"""medical_facility_id"", ""ordinal""",,SQL/04_directory/04_indexes.sql
+directory,tenant_medical_facility_sites,ux_tenant_medical_facility_sites_one_headquarters,YES,"""medical_facility_id""",WHERE site_kind = 'headquarters',SQL/04_directory/04_indexes.sql
+directory,tenant_medical_facility_sites,ix_tenant_medical_facility_sites_created_by_user_id,NO,"""created_by_user_id""",,SQL/04_directory/04_indexes.sql
+directory,tenant_medical_facility_sites,ix_tenant_medical_facility_sites_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/04_directory/04_indexes.sql
 profiles,persons,ix_persons_person_status_concept_id,NO,"""person_status_concept_id""",,SQL/05_profiles/04_indexes.sql
 profiles,persons,ix_persons_administrative_gender_concept_id,NO,"""administrative_gender_concept_id""",,SQL/05_profiles/04_indexes.sql
 profiles,persons,ix_persons_sex_at_birth_concept_id,NO,"""sex_at_birth_concept_id""",,SQL/05_profiles/04_indexes.sql
@@ -380,6 +391,7 @@ profiles,jurisdiction_authorizations,ix_jurisdiction_authorizations_jurisdiction
 profiles,jurisdiction_authorizations,ix_jurisdiction_authorizations_practice_scope_concept_id,NO,"""practice_scope_concept_id""",,SQL/05_profiles/04_indexes.sql
 profiles,jurisdiction_authorizations,ix_jurisdiction_authorizations_state_concept_id,NO,"""state_concept_id""",,SQL/05_profiles/04_indexes.sql
 profiles,jurisdiction_authorizations,ix_jurisdiction_authorizations_file_id,NO,"""file_id""",,SQL/05_profiles/04_indexes.sql
+profiles,jurisdiction_authorizations,ix_jurisdiction_authorizations_verified_by_user_id,NO,"""verified_by_user_id""",,SQL/05_profiles/04_indexes.sql
 profiles,jurisdiction_authorizations,ix_jurisdiction_authorizations_created_by_user_id,NO,"""created_by_user_id""",,SQL/05_profiles/04_indexes.sql
 profiles,jurisdiction_authorizations,ix_jurisdiction_authorizations_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/05_profiles/04_indexes.sql
 profiles,practitioner_affiliations,ix_practitioner_affiliations_practitioner_profile_id,NO,"""practitioner_profile_id""",,SQL/05_profiles/04_indexes.sql
@@ -413,6 +425,37 @@ profiles,patient_primary_practitioners,ix_patient_primary_practitioners_created_
 profiles,patient_primary_practitioners,ix_patient_primary_practitioners_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/05_profiles/04_indexes.sql
 profiles,patient_primary_practitioners,uq_patient_primary_practitioners_current,YES,"""patient_profile_id""",WHERE valid_to IS NULL,SQL/05_profiles/04_indexes.sql
 profiles,patient_primary_practitioners,ix_patient_primary_practitioners_practitioner_current,NO,"""practitioner_profile_id"", ""valid_from"" DESC",WHERE valid_to IS NULL,SQL/05_profiles/04_indexes.sql
+profiles,admission_requirements,uq_admission_requirements_type_code,YES,"""admission_type_concept_id"", ""requirement_code""",,SQL/05_profiles/04_indexes.sql
+profiles,admission_requirements,ix_admission_requirements_admission_type_concept_id,NO,"""admission_type_concept_id""",,SQL/05_profiles/04_indexes.sql
+profiles,admission_requirements,ix_admission_requirements_item_type_concept_id,NO,"""item_type_concept_id""",,SQL/05_profiles/04_indexes.sql
+profiles,admission_requirements,ix_admission_requirements_evidence_kind_concept_id,NO,"""evidence_kind_concept_id""",,SQL/05_profiles/04_indexes.sql
+profiles,admission_requirements,ix_admission_requirements_verification_method_concept_id,NO,"""verification_method_concept_id""",,SQL/05_profiles/04_indexes.sql
+profiles,admission_requirements,ix_admission_requirements_created_by_user_id,NO,"""created_by_user_id""",,SQL/05_profiles/04_indexes.sql
+profiles,admission_requirements,ix_admission_requirements_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admissions,uq_practitioner_admissions_open,YES,"""practitioner_profile_id"", ""admission_type_concept_id""",WHERE closed_at IS NULL,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admissions,ix_practitioner_admissions_inbox,NO,"""status_concept_id"", ""due_at"", ""id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admissions,ix_practitioner_admissions_assigned_to_user_id,NO,"""assigned_to_user_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admissions,ix_practitioner_admissions_admission_type_concept_id,NO,"""admission_type_concept_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admissions,ix_practitioner_admissions_decided_by_user_id,NO,"""decided_by_user_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admissions,ix_practitioner_admissions_decision_reason_code_concept_id,NO,"""decision_reason_code_concept_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admissions,ix_practitioner_admissions_info_due_at,NO,"""info_due_at""",WHERE info_due_at IS NOT NULL,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admissions,ix_practitioner_admissions_created_by_user_id,NO,"""created_by_user_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admissions,ix_practitioner_admissions_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admissions,ix_practitioner_admissions_valid_until,NO,"""valid_until""",WHERE valid_until IS NOT NULL,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admission_reviews,uq_practitioner_admission_reviews_item,YES,"""admission_id"", ""requirement_id"", ""item_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admission_reviews,ix_practitioner_admission_reviews_requirement_id,NO,"""requirement_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admission_reviews,ix_practitioner_admission_reviews_admission_status,NO,"""admission_id"", ""status_concept_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admission_reviews,ix_practitioner_admission_reviews_file_id,NO,"""file_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admission_reviews,ix_practitioner_admission_reviews_source_type_concept_id,NO,"""source_type_concept_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admission_reviews,ix_practitioner_admission_reviews_reason_code_concept_id,NO,"""reason_code_concept_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admission_reviews,ix_practitioner_admission_reviews_reviewed_by_user_id,NO,"""reviewed_by_user_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admission_reviews,ix_practitioner_admission_reviews_created_by_user_id,NO,"""created_by_user_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admission_reviews,ix_practitioner_admission_reviews_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admission_events,ix_practitioner_admission_events_admission_occurred,NO,"""admission_id"", ""occurred_at""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admission_events,ix_practitioner_admission_events_event_type_concept_id,NO,"""event_type_concept_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admission_events,ix_practitioner_admission_events_actor_user_id,NO,"""actor_user_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admission_events,ix_practitioner_admission_events_requirement_id,NO,"""requirement_id""",,SQL/05_profiles/04_indexes.sql
+profiles,practitioner_admission_events,ix_practitioner_admission_events_reason_code_concept_id,NO,"""reason_code_concept_id""",,SQL/05_profiles/04_indexes.sql
 profiles,insurance_representative_profiles,ix_insurance_representative_profiles_representative_ty_e1930540,NO,"""representative_type_concept_id""",,SQL/05_profiles/04_indexes.sql
 profiles,insurance_representative_profiles,ix_insurance_representative_profiles_role_concept_id,NO,"""role_concept_id""",,SQL/05_profiles/04_indexes.sql
 profiles,insurance_representative_profiles,ix_insurance_representative_profiles_created_by_user_id,NO,"""created_by_user_id""",,SQL/05_profiles/04_indexes.sql
@@ -666,6 +709,11 @@ clinical,encounters,ix_encounters_created_by_user_id,NO,"""created_by_user_id"""
 clinical,encounters,ix_encounters_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/08_clinical/04_indexes.sql
 clinical,encounters,ix_encounters_tenant_id_status_concept_id,NO,"""tenant_id"", ""status_concept_id"", ""updated_at"" DESC",,SQL/08_clinical/04_indexes.sql
 clinical,encounters,ix_encounters_patient_profile_id_updated_at,NO,"""tenant_id"", ""patient_profile_id"", ""updated_at"" DESC",,SQL/08_clinical/04_indexes.sql
+clinical,encounters,ix_encounters_level_of_care_concept_id,NO,"""level_of_care_concept_id""",,SQL/08_clinical/04_indexes.sql
+clinical,encounters,ix_encounters_admission_source_concept_id,NO,"""admission_source_concept_id""",,SQL/08_clinical/04_indexes.sql
+clinical,encounters,ix_encounters_discharge_disposition_concept_id,NO,"""discharge_disposition_concept_id""",,SQL/08_clinical/04_indexes.sql
+clinical,encounters,ix_encounters_isolation_precaution_concept_id,NO,"""isolation_precaution_concept_id""",,SQL/08_clinical/04_indexes.sql
+clinical,encounters,ux_encounters_tenant_id_id,YES,"""tenant_id"", ""id""",,SQL/08_clinical/04_indexes.sql
 clinical,observations,ix_observations_custodian_tenant_id,NO,"""custodian_tenant_id""",,SQL/08_clinical/04_indexes.sql
 clinical,observations,ix_observations_patient_profile_id,NO,"""patient_profile_id""",,SQL/08_clinical/04_indexes.sql
 clinical,observations,ix_observations_encounter_id,NO,"""encounter_id""",,SQL/08_clinical/04_indexes.sql
@@ -758,6 +806,14 @@ clinical,service_requests,ix_service_requests_created_by_user_id,NO,"""created_b
 clinical,service_requests,ix_service_requests_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/08_clinical/04_indexes.sql
 clinical,service_requests,ix_service_requests_custodian_tenant_id_status_concept_id,NO,"""custodian_tenant_id"", ""status_concept_id"", ""updated_at"" DESC",,SQL/08_clinical/04_indexes.sql
 clinical,service_requests,ix_service_requests_patient_profile_id_updated_at,NO,"""custodian_tenant_id"", ""patient_profile_id"", ""updated_at"" DESC",,SQL/08_clinical/04_indexes.sql
+clinical,service_requests,ix_service_requests_suggested_care_space_id,NO,"""suggested_care_space_id""",,SQL/08_clinical/04_indexes.sql
+clinical,service_requests,ix_service_requests_specimen_type_concept_id,NO,"""specimen_type_concept_id""",,SQL/08_clinical/04_indexes.sql
+clinical,service_requests,ix_service_requests_modality_concept_id,NO,"""modality_concept_id""",,SQL/08_clinical/04_indexes.sql
+clinical,service_requests,ix_service_requests_body_site_concept_id,NO,"""body_site_concept_id""",,SQL/08_clinical/04_indexes.sql
+clinical,service_requests,ix_service_requests_laterality_concept_id,NO,"""laterality_concept_id""",,SQL/08_clinical/04_indexes.sql
+clinical,service_requests,ix_service_requests_contrast_concept_id,NO,"""contrast_concept_id""",,SQL/08_clinical/04_indexes.sql
+clinical,service_requests,ix_service_requests_requisition_id,NO,"""custodian_tenant_id"", ""requisition_id""",,SQL/08_clinical/04_indexes.sql
+clinical,service_requests,ix_service_requests_performer_inbox,NO,"""performer_tenant_id"", ""status_concept_id"", ""created_at"", ""id""",,SQL/08_clinical/04_indexes.sql
 clinical,diagnostic_reports,ix_diagnostic_reports_custodian_tenant_id,NO,"""custodian_tenant_id""",,SQL/08_clinical/04_indexes.sql
 clinical,diagnostic_reports,ix_diagnostic_reports_patient_profile_id,NO,"""patient_profile_id""",,SQL/08_clinical/04_indexes.sql
 clinical,diagnostic_reports,ix_diagnostic_reports_service_request_id,NO,"""service_request_id""",,SQL/08_clinical/04_indexes.sql
@@ -856,6 +912,7 @@ clinical,appointments,ix_appointments_updated_by_user_id,NO,"""updated_by_user_i
 clinical,appointments,ix_appointments_tenant_id_status_concept_id,NO,"""tenant_id"", ""status_concept_id"", ""updated_at"" DESC",,SQL/08_clinical/04_indexes.sql
 clinical,appointments,ix_appointments_patient_profile_id_updated_at,NO,"""tenant_id"", ""patient_profile_id"", ""updated_at"" DESC",,SQL/08_clinical/04_indexes.sql
 clinical,appointments,ix_appointments_patient_start,NO,"""patient_profile_id"", ""start_at"" DESC",,SQL/08_clinical/04_indexes.sql
+clinical,appointments,ix_appointments_care_space_id,NO,"""care_space_id""",,SQL/08_clinical/04_indexes.sql
 clinical,encounter_participants,ix_encounter_participants_encounter_id,NO,"""encounter_id""",,SQL/08_clinical/04_indexes.sql
 clinical,encounter_participants,ix_encounter_participants_practitioner_profile_id,NO,"""practitioner_profile_id""",,SQL/08_clinical/04_indexes.sql
 clinical,encounter_participants,ix_encounter_participants_participant_role_concept_id,NO,"""participant_role_concept_id""",,SQL/08_clinical/04_indexes.sql
@@ -870,6 +927,52 @@ clinical,encounter_locations,ix_encounter_locations_care_space_id,NO,"""care_spa
 clinical,encounter_locations,ix_encounter_locations_location_status_concept_id,NO,"""location_status_concept_id""",,SQL/08_clinical/04_indexes.sql
 clinical,encounter_locations,ix_encounter_locations_created_by_user_id,NO,"""created_by_user_id""",,SQL/08_clinical/04_indexes.sql
 clinical,encounter_locations,ix_encounter_locations_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/08_clinical/04_indexes.sql
+clinical,encounter_locations,ix_encounter_locations_tenant_id,NO,"""tenant_id""",,SQL/08_clinical/04_indexes.sql
+clinical,encounter_locations,ix_encounter_locations_movement_type_concept_id,NO,"""movement_type_concept_id""",,SQL/08_clinical/04_indexes.sql
+clinical,encounter_locations,ix_encounter_locations_previous_encounter_location_id,NO,"""previous_encounter_location_id""",,SQL/08_clinical/04_indexes.sql
+clinical,encounter_locations,ix_encounter_locations_end_reason_concept_id,NO,"""end_reason_concept_id""",,SQL/08_clinical/04_indexes.sql
+clinical,encounter_locations,ix_encounter_locations_bed_category_concept_id,NO,"""bed_category_concept_id""",,SQL/08_clinical/04_indexes.sql
+clinical,encounter_locations,ix_encounter_locations_placement_incident_id,NO,"""placement_incident_id""",,SQL/08_clinical/04_indexes.sql
+clinical,encounter_locations,ix_encounter_locations_bed_period,NO,"""care_space_id"", ""period_start"" DESC",WHERE is_bed_assignment,SQL/08_clinical/04_indexes.sql
+clinical,encounter_locations,ux_encounter_locations_tenant_id_id,YES,"""tenant_id"", ""id""",,SQL/08_clinical/04_indexes.sql
+clinical,placement_incidents,ix_placement_incidents_tenant_id,NO,"""tenant_id""",,SQL/08_clinical/04_indexes.sql
+clinical,placement_incidents,ix_placement_incidents_encounter_id,NO,"""encounter_id""",,SQL/08_clinical/04_indexes.sql
+clinical,placement_incidents,ix_placement_incidents_encounter_location_id,NO,"""encounter_location_id""",,SQL/08_clinical/04_indexes.sql
+clinical,placement_incidents,ix_placement_incidents_care_space_id,NO,"""care_space_id""",,SQL/08_clinical/04_indexes.sql
+clinical,placement_incidents,ix_placement_incidents_patient_profile_id,NO,"""patient_profile_id""",,SQL/08_clinical/04_indexes.sql
+clinical,placement_incidents,ix_placement_incidents_authorized_by_user_id,NO,"""authorized_by_user_id""",,SQL/08_clinical/04_indexes.sql
+clinical,placement_incidents,ix_placement_incidents_status_concept_id,NO,"""status_concept_id""",,SQL/08_clinical/04_indexes.sql
+clinical,placement_incidents,ix_placement_incidents_reviewed_by_user_id,NO,"""reviewed_by_user_id""",,SQL/08_clinical/04_indexes.sql
+clinical,placement_incidents,ix_placement_incidents_created_by_user_id,NO,"""created_by_user_id""",,SQL/08_clinical/04_indexes.sql
+clinical,placement_incidents,ix_placement_incidents_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/08_clinical/04_indexes.sql
+clinical,placement_incidents,ux_placement_incidents_tenant_id_id,YES,"""tenant_id"", ""id""",,SQL/08_clinical/04_indexes.sql
+clinical,inpatient_census_days,ux_inpatient_census_days_site_unit_date,YES,"""practice_site_id"", ""clinical_unit_id"", ""census_date""",,SQL/08_clinical/04_indexes.sql
+clinical,inpatient_census_days,ix_inpatient_census_days_tenant_id,NO,"""tenant_id""",,SQL/08_clinical/04_indexes.sql
+clinical,inpatient_census_days,ix_inpatient_census_days_clinical_unit_id,NO,"""clinical_unit_id""",,SQL/08_clinical/04_indexes.sql
+clinical,inpatient_census_days,ix_inpatient_census_days_status_concept_id,NO,"""status_concept_id""",,SQL/08_clinical/04_indexes.sql
+clinical,inpatient_census_days,ix_inpatient_census_days_closed_by_user_id,NO,"""closed_by_user_id""",,SQL/08_clinical/04_indexes.sql
+clinical,inpatient_census_days,ix_inpatient_census_days_created_by_user_id,NO,"""created_by_user_id""",,SQL/08_clinical/04_indexes.sql
+clinical,inpatient_census_days,ix_inpatient_census_days_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/08_clinical/04_indexes.sql
+clinical,inpatient_census_days,ix_inpatient_census_days_site_date,NO,"""practice_site_id"", ""census_date"" DESC",,SQL/08_clinical/04_indexes.sql
+clinical,inpatient_census_days,ux_inpatient_census_days_tenant_id_id,YES,"""tenant_id"", ""id""",,SQL/08_clinical/04_indexes.sql
+clinical,patient_admission_footprints,ux_patient_admission_footprints_tenant_patient,YES,"""tenant_id"", ""patient_profile_id""",,SQL/08_clinical/04_indexes.sql
+clinical,patient_admission_footprints,ix_patient_admission_footprints_patient_profile_id,NO,"""patient_profile_id""",,SQL/08_clinical/04_indexes.sql
+clinical,patient_admission_footprints,ix_patient_admission_footprints_encounter_id,NO,"""encounter_id""",,SQL/08_clinical/04_indexes.sql
+clinical,patient_admission_footprints,ix_patient_admission_footprints_practice_site_id,NO,"""practice_site_id""",,SQL/08_clinical/04_indexes.sql
+clinical,patient_admission_footprints,ix_patient_admission_footprints_admission_origin_concept_id,NO,"""admission_origin_concept_id""",,SQL/08_clinical/04_indexes.sql
+clinical,patient_admission_footprints,ix_patient_admission_footprints_identity_verification__51230394,NO,"""identity_verification_method_concept_id""",,SQL/08_clinical/04_indexes.sql
+clinical,patient_admission_footprints,ix_patient_admission_footprints_referral_id,NO,"""referral_id""",,SQL/08_clinical/04_indexes.sql
+clinical,patient_admission_footprints,ix_patient_admission_footprints_recorded_by_user_id,NO,"""recorded_by_user_id""",,SQL/08_clinical/04_indexes.sql
+clinical,inpatient_census_entries,ix_inpatient_census_entries_tenant_id,NO,"""tenant_id""",,SQL/08_clinical/04_indexes.sql
+clinical,inpatient_census_entries,ix_inpatient_census_entries_census_day_id,NO,"""census_day_id""",,SQL/08_clinical/04_indexes.sql
+clinical,inpatient_census_entries,ix_inpatient_census_entries_encounter_id,NO,"""encounter_id""",,SQL/08_clinical/04_indexes.sql
+clinical,inpatient_census_entries,ix_inpatient_census_entries_patient_profile_id,NO,"""patient_profile_id""",,SQL/08_clinical/04_indexes.sql
+clinical,inpatient_census_entries,ix_inpatient_census_entries_care_space_id,NO,"""care_space_id""",,SQL/08_clinical/04_indexes.sql
+clinical,inpatient_census_entries,ix_inpatient_census_entries_bed_category_concept_id,NO,"""bed_category_concept_id""",,SQL/08_clinical/04_indexes.sql
+clinical,inpatient_census_entries,ix_inpatient_census_entries_movement_concept_id,NO,"""movement_concept_id""",,SQL/08_clinical/04_indexes.sql
+clinical,inpatient_census_adjustments,ix_inpatient_census_adjustments_tenant_id,NO,"""tenant_id""",,SQL/08_clinical/04_indexes.sql
+clinical,inpatient_census_adjustments,ix_inpatient_census_adjustments_census_day_id,NO,"""census_day_id"", ""created_at""",,SQL/08_clinical/04_indexes.sql
+clinical,inpatient_census_adjustments,ix_inpatient_census_adjustments_adjusted_by_user_id,NO,"""adjusted_by_user_id""",,SQL/08_clinical/04_indexes.sql
 clinical,observation_performers,ix_observation_performers_observation_id,NO,"""observation_id""",,SQL/08_clinical/04_indexes.sql
 clinical,observation_performers,ix_observation_performers_performer_type_concept_id,NO,"""performer_type_concept_id""",,SQL/08_clinical/04_indexes.sql
 clinical,observation_performers,ix_observation_performers_performer_role_concept_id,NO,"""performer_role_concept_id""",,SQL/08_clinical/04_indexes.sql
@@ -878,6 +981,11 @@ clinical,service_request_notes,ux_service_request_notes_request_note,YES,"""serv
 clinical,service_request_notes,ix_service_request_notes_service_request_id,NO,"""service_request_id""",,SQL/08_clinical/04_indexes.sql
 clinical,service_request_notes,ix_service_request_notes_clinical_note_header_id,NO,"""clinical_note_header_id""",,SQL/08_clinical/04_indexes.sql
 clinical,service_request_notes,ix_service_request_notes_created_by_user_id,NO,"""created_by_user_id""",,SQL/08_clinical/04_indexes.sql
+clinical,service_request_components,ux_service_request_components_request_component,YES,"""service_request_id"", ""component_concept_id""",,SQL/08_clinical/04_indexes.sql
+clinical,service_request_components,ix_service_request_components_service_request_id,NO,"""service_request_id""",,SQL/08_clinical/04_indexes.sql
+clinical,service_request_components,ix_service_request_components_custodian_tenant_id,NO,"""custodian_tenant_id""",,SQL/08_clinical/04_indexes.sql
+clinical,service_request_components,ix_service_request_components_component_concept_id,NO,"""component_concept_id""",,SQL/08_clinical/04_indexes.sql
+clinical,service_request_components,ix_service_request_components_created_by_user_id,NO,"""created_by_user_id""",,SQL/08_clinical/04_indexes.sql
 clinical,observation_reference_ranges,ix_observation_reference_ranges_observation_id,NO,"""observation_id""",,SQL/08_clinical/04_indexes.sql
 clinical,observation_reference_ranges,ix_observation_reference_ranges_observation_component_id,NO,"""observation_component_id""",,SQL/08_clinical/04_indexes.sql
 clinical,observation_reference_ranges,ix_observation_reference_ranges_unit_concept_id,NO,"""unit_concept_id""",,SQL/08_clinical/04_indexes.sql
@@ -1072,6 +1180,51 @@ audit,care_spaces_history,ix_care_spaces_history_operation_concept_id,NO,"""oper
 audit,care_spaces_history,ix_care_spaces_history_changed_by_user_id,NO,"""changed_by_user_id""",,SQL/10_audit/04_indexes.sql
 audit,care_spaces_history,ix_care_spaces_history_change_reason_concept_id,NO,"""change_reason_concept_id""",,SQL/10_audit/04_indexes.sql
 audit,care_spaces_history,ix_care_spaces_history_tenant_id,NO,"""tenant_id""",,SQL/10_audit/04_indexes.sql
+audit,operating_room_block_series_history,ix_operating_room_block_series_history_operating_room__bd611718,NO,"""operating_room_block_series_id""",,SQL/10_audit/04_indexes.sql
+audit,operating_room_block_series_history,ix_operating_room_block_series_history_operation_concept_id,NO,"""operation_concept_id""",,SQL/10_audit/04_indexes.sql
+audit,operating_room_block_series_history,ix_operating_room_block_series_history_changed_by_user_id,NO,"""changed_by_user_id""",,SQL/10_audit/04_indexes.sql
+audit,operating_room_block_series_history,ix_operating_room_block_series_history_change_reason_concept_id,NO,"""change_reason_concept_id""",,SQL/10_audit/04_indexes.sql
+audit,operating_room_block_series_history,ix_operating_room_block_series_history_tenant_id,NO,"""tenant_id""",,SQL/10_audit/04_indexes.sql
+audit,operating_room_blocks_history,ix_operating_room_blocks_history_operating_room_block_id,NO,"""operating_room_block_id""",,SQL/10_audit/04_indexes.sql
+audit,operating_room_blocks_history,ix_operating_room_blocks_history_operation_concept_id,NO,"""operation_concept_id""",,SQL/10_audit/04_indexes.sql
+audit,operating_room_blocks_history,ix_operating_room_blocks_history_changed_by_user_id,NO,"""changed_by_user_id""",,SQL/10_audit/04_indexes.sql
+audit,operating_room_blocks_history,ix_operating_room_blocks_history_change_reason_concept_id,NO,"""change_reason_concept_id""",,SQL/10_audit/04_indexes.sql
+audit,operating_room_blocks_history,ix_operating_room_blocks_history_tenant_id,NO,"""tenant_id""",,SQL/10_audit/04_indexes.sql
+audit,encounter_locations_history,ix_encounter_locations_history_encounter_location_id,NO,"""encounter_location_id""",,SQL/10_audit/04_indexes.sql
+audit,encounter_locations_history,ix_encounter_locations_history_operation_concept_id,NO,"""operation_concept_id""",,SQL/10_audit/04_indexes.sql
+audit,encounter_locations_history,ix_encounter_locations_history_changed_by_user_id,NO,"""changed_by_user_id""",,SQL/10_audit/04_indexes.sql
+audit,encounter_locations_history,ix_encounter_locations_history_change_reason_concept_id,NO,"""change_reason_concept_id""",,SQL/10_audit/04_indexes.sql
+audit,encounter_locations_history,ix_encounter_locations_history_tenant_id,NO,"""tenant_id""",,SQL/10_audit/04_indexes.sql
+audit,placement_incidents_history,ix_placement_incidents_history_placement_incident_id,NO,"""placement_incident_id""",,SQL/10_audit/04_indexes.sql
+audit,placement_incidents_history,ix_placement_incidents_history_operation_concept_id,NO,"""operation_concept_id""",,SQL/10_audit/04_indexes.sql
+audit,placement_incidents_history,ix_placement_incidents_history_changed_by_user_id,NO,"""changed_by_user_id""",,SQL/10_audit/04_indexes.sql
+audit,placement_incidents_history,ix_placement_incidents_history_change_reason_concept_id,NO,"""change_reason_concept_id""",,SQL/10_audit/04_indexes.sql
+audit,placement_incidents_history,ix_placement_incidents_history_tenant_id,NO,"""tenant_id""",,SQL/10_audit/04_indexes.sql
+audit,care_space_blocks_history,ix_care_space_blocks_history_care_space_block_id,NO,"""care_space_block_id""",,SQL/10_audit/04_indexes.sql
+audit,care_space_blocks_history,ix_care_space_blocks_history_operation_concept_id,NO,"""operation_concept_id""",,SQL/10_audit/04_indexes.sql
+audit,care_space_blocks_history,ix_care_space_blocks_history_changed_by_user_id,NO,"""changed_by_user_id""",,SQL/10_audit/04_indexes.sql
+audit,care_space_blocks_history,ix_care_space_blocks_history_change_reason_concept_id,NO,"""change_reason_concept_id""",,SQL/10_audit/04_indexes.sql
+audit,care_space_blocks_history,ix_care_space_blocks_history_tenant_id,NO,"""tenant_id""",,SQL/10_audit/04_indexes.sql
+audit,cleaning_orders_history,ix_cleaning_orders_history_cleaning_order_id,NO,"""cleaning_order_id""",,SQL/10_audit/04_indexes.sql
+audit,cleaning_orders_history,ix_cleaning_orders_history_operation_concept_id,NO,"""operation_concept_id""",,SQL/10_audit/04_indexes.sql
+audit,cleaning_orders_history,ix_cleaning_orders_history_changed_by_user_id,NO,"""changed_by_user_id""",,SQL/10_audit/04_indexes.sql
+audit,cleaning_orders_history,ix_cleaning_orders_history_change_reason_concept_id,NO,"""change_reason_concept_id""",,SQL/10_audit/04_indexes.sql
+audit,cleaning_orders_history,ix_cleaning_orders_history_tenant_id,NO,"""tenant_id""",,SQL/10_audit/04_indexes.sql
+audit,care_space_category_periods_history,ix_care_space_category_periods_history_care_space_cate_fc6e2c97,NO,"""care_space_category_period_id""",,SQL/10_audit/04_indexes.sql
+audit,care_space_category_periods_history,ix_care_space_category_periods_history_operation_concept_id,NO,"""operation_concept_id""",,SQL/10_audit/04_indexes.sql
+audit,care_space_category_periods_history,ix_care_space_category_periods_history_changed_by_user_id,NO,"""changed_by_user_id""",,SQL/10_audit/04_indexes.sql
+audit,care_space_category_periods_history,ix_care_space_category_periods_history_change_reason_concept_id,NO,"""change_reason_concept_id""",,SQL/10_audit/04_indexes.sql
+audit,care_space_category_periods_history,ix_care_space_category_periods_history_tenant_id,NO,"""tenant_id""",,SQL/10_audit/04_indexes.sql
+audit,space_tariffs_history,ix_space_tariffs_history_space_tariff_id,NO,"""space_tariff_id""",,SQL/10_audit/04_indexes.sql
+audit,space_tariffs_history,ix_space_tariffs_history_operation_concept_id,NO,"""operation_concept_id""",,SQL/10_audit/04_indexes.sql
+audit,space_tariffs_history,ix_space_tariffs_history_changed_by_user_id,NO,"""changed_by_user_id""",,SQL/10_audit/04_indexes.sql
+audit,space_tariffs_history,ix_space_tariffs_history_change_reason_concept_id,NO,"""change_reason_concept_id""",,SQL/10_audit/04_indexes.sql
+audit,space_tariffs_history,ix_space_tariffs_history_tenant_id,NO,"""tenant_id""",,SQL/10_audit/04_indexes.sql
+audit,charge_captures_history,ix_charge_captures_history_charge_capture_id,NO,"""charge_capture_id""",,SQL/10_audit/04_indexes.sql
+audit,charge_captures_history,ix_charge_captures_history_operation_concept_id,NO,"""operation_concept_id""",,SQL/10_audit/04_indexes.sql
+audit,charge_captures_history,ix_charge_captures_history_changed_by_user_id,NO,"""changed_by_user_id""",,SQL/10_audit/04_indexes.sql
+audit,charge_captures_history,ix_charge_captures_history_change_reason_concept_id,NO,"""change_reason_concept_id""",,SQL/10_audit/04_indexes.sql
+audit,charge_captures_history,ix_charge_captures_history_tenant_id,NO,"""tenant_id""",,SQL/10_audit/04_indexes.sql
 audit,diagnostic_reports_history,ix_diagnostic_reports_history_diagnostic_report_id,NO,"""diagnostic_report_id""",,SQL/10_audit/04_indexes.sql
 audit,diagnostic_reports_history,ix_diagnostic_reports_history_operation_concept_id,NO,"""operation_concept_id""",,SQL/10_audit/04_indexes.sql
 audit,diagnostic_reports_history,ix_diagnostic_reports_history_changed_by_user_id,NO,"""changed_by_user_id""",,SQL/10_audit/04_indexes.sql
@@ -1606,6 +1759,7 @@ system_ops,retention_executions,ix_retention_executions_recorded_by_user_id,NO,"
 system_ops,governance_change_log,ix_governance_change_log_action_concept_id,NO,"""action_concept_id""",,SQL/11_system_ops/04_indexes.sql
 system_ops,governance_change_log,ix_governance_change_log_changed_by_user_id,NO,"""changed_by_user_id""",,SQL/11_system_ops/04_indexes.sql
 system_ops,governance_change_log,ix_governance_change_log_recorded_by_user_id,NO,"""recorded_by_user_id""",,SQL/11_system_ops/04_indexes.sql
+system_ops,governance_change_log,ix_governance_change_log_target_recorded,NO,"""target_type"", ""target_id"", ""recorded_at"" DESC",,SQL/11_system_ops/04_indexes.sql
 system_ops,record_revisions,ix_record_revisions_operation_concept_id,NO,"""operation_concept_id""",,SQL/11_system_ops/04_indexes.sql
 system_ops,record_revisions,ix_record_revisions_changed_by_user_id,NO,"""changed_by_user_id""",,SQL/11_system_ops/04_indexes.sql
 system_ops,record_revisions,ix_record_revisions_change_reason_concept_id,NO,"""change_reason_concept_id""",,SQL/11_system_ops/04_indexes.sql
@@ -1720,6 +1874,23 @@ system_ops,partition_specs,uk_partition_specs_table,YES,"""schema_name"", ""tabl
 system_ops,partition_specs,ix_partition_specs_entity_registry_id,NO,"""entity_registry_id""",,SQL/11_system_ops/04_indexes.sql
 system_ops,partition_specs,ix_partition_specs_strategy_concept_id,NO,"""partition_strategy_concept_id""",,SQL/11_system_ops/04_indexes.sql
 system_ops,partition_specs,ix_partition_specs_retention_policy_id,NO,"""retention_policy_id""",,SQL/11_system_ops/04_indexes.sql
+system_ops,governance_policy_revisions,ux_governance_policy_revisions_no,YES,"""policy_type"", ""policy_id"", ""revision_no""",,SQL/11_system_ops/04_indexes.sql
+system_ops,governance_policy_revisions,ux_governance_policy_revisions_one_pending,YES,"""policy_type"", ""policy_id""",WHERE status = 'PENDING_APPROVAL',SQL/11_system_ops/04_indexes.sql
+system_ops,governance_policy_revisions,ix_governance_policy_revisions_status_submitted,NO,"""status"", ""submitted_at"" DESC",,SQL/11_system_ops/04_indexes.sql
+system_ops,governance_policy_revisions,ix_governance_policy_revisions_submitted_by_user_id,NO,"""submitted_by_user_id""",,SQL/11_system_ops/04_indexes.sql
+system_ops,governance_policy_revisions,ix_governance_policy_revisions_decided_by_user_id,NO,"""decided_by_user_id""",,SQL/11_system_ops/04_indexes.sql
+system_ops,bulk_import_batches,uq_bulk_import_batches_tenant_id_id,YES,"""tenant_id"", ""id""",,SQL/11_system_ops/04_indexes.sql
+system_ops,bulk_import_batches,ux_bulk_import_batches_confirm_key,YES,"""tenant_id"", ""confirm_key""",WHERE confirm_key IS NOT NULL,SQL/11_system_ops/04_indexes.sql
+system_ops,bulk_import_batches,ix_bulk_import_batches_tenant_created,NO,"""tenant_id"", ""created_at"" DESC",,SQL/11_system_ops/04_indexes.sql
+system_ops,bulk_import_batches,ix_bulk_import_batches_active,NO,"""status"", ""created_at"") WHERE status IN ('EN_COLA', 'PROCESANDO'",,SQL/11_system_ops/04_indexes.sql
+system_ops,bulk_import_batches,ix_bulk_import_batches_file_hash,NO,"""tenant_id"", ""kind"", ""file_sha256""",WHERE file_sha256 IS NOT NULL,SQL/11_system_ops/04_indexes.sql
+system_ops,bulk_import_batches,ix_bulk_import_batches_approval_request_id,NO,"""approval_request_id""",WHERE approval_request_id IS NOT NULL,SQL/11_system_ops/04_indexes.sql
+system_ops,bulk_import_batches,ix_bulk_import_batches_confirmed_by_user_id,NO,"""confirmed_by_user_id""",,SQL/11_system_ops/04_indexes.sql
+system_ops,bulk_import_batch_rows,ux_bulk_import_batch_rows_row,YES,"""batch_id"", ""row_no""",,SQL/11_system_ops/04_indexes.sql
+system_ops,bulk_import_batch_rows,ix_bulk_import_batch_rows_outcome,NO,"""batch_id"", ""outcome""",,SQL/11_system_ops/04_indexes.sql
+system_ops,bulk_import_batch_rows,ix_bulk_import_batch_rows_tenant_id,NO,"""tenant_id""",,SQL/11_system_ops/04_indexes.sql
+system_ops,bulk_import_batch_rows,ix_bulk_import_batch_rows_target,NO,"""target_entity"", ""target_id""",WHERE target_id IS NOT NULL,SQL/11_system_ops/04_indexes.sql
+system_ops,bulk_import_batch_rows,ix_bulk_import_batch_rows_pending_data,NO,"""batch_id""",WHERE row_data_json IS NOT NULL OR row_key IS NOT NULL,SQL/11_system_ops/04_indexes.sql
 system_ops,encryption_keys,uk_encryption_keys_key_alias,YES,"""key_alias""",,SQL/11_system_ops/04_indexes.sql
 system_ops,encryption_keys,ix_encryption_keys_purpose_concept_id,NO,"""key_purpose_concept_id""",,SQL/11_system_ops/04_indexes.sql
 system_ops,encryption_keys,ix_encryption_keys_next_rotation_at,NO,"""next_rotation_at""",,SQL/11_system_ops/04_indexes.sql
@@ -1891,6 +2062,51 @@ practice,care_spaces,ix_care_spaces_bed_category_concept_id,NO,"""bed_category_c
 practice,care_spaces,ux_care_spaces_site_code,YES,"""practice_site_id"", ""code""",,SQL/14_practice/04_indexes.sql
 practice,care_spaces,ux_care_spaces_tenant_id_id,YES,"""tenant_id"", ""id""",,SQL/14_practice/04_indexes.sql
 practice,care_spaces,ix_care_spaces_location_path,NO,location_path varchar_pattern_ops,,SQL/14_practice/04_indexes.sql
+practice,care_spaces,ix_care_spaces_availability_reason_concept_id,NO,"""availability_reason_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,care_spaces,ix_care_spaces_hygiene_status_concept_id,NO,"""hygiene_status_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,care_spaces,ix_care_spaces_isolation_concept_id,NO,"""isolation_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,care_space_status_events,ix_care_space_status_events_tenant_id,NO,"""tenant_id""",,SQL/14_practice/04_indexes.sql
+practice,care_space_status_events,ix_care_space_status_events_space_occurred,NO,"""care_space_id"", ""occurred_at"" DESC",,SQL/14_practice/04_indexes.sql
+practice,care_space_status_events,ix_care_space_status_events_site_occurred,NO,"""practice_site_id"", ""occurred_at"" DESC",,SQL/14_practice/04_indexes.sql
+practice,care_space_status_events,ix_care_space_status_events_axis_concept_id,NO,"""axis_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,care_space_status_events,ix_care_space_status_events_from_concept_id,NO,"""from_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,care_space_status_events,ix_care_space_status_events_to_concept_id,NO,"""to_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,care_space_status_events,ix_care_space_status_events_reason_concept_id,NO,"""reason_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,care_space_status_events,ix_care_space_status_events_source_concept_id,NO,"""source_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,care_space_status_events,ix_care_space_status_events_recorded_by_user_id,NO,"""recorded_by_user_id""",,SQL/14_practice/04_indexes.sql
+practice,care_space_blocks,ix_care_space_blocks_tenant_id,NO,"""tenant_id""",,SQL/14_practice/04_indexes.sql
+practice,care_space_blocks,ix_care_space_blocks_care_space_id,NO,"""care_space_id""",,SQL/14_practice/04_indexes.sql
+practice,care_space_blocks,ix_care_space_blocks_kind_concept_id,NO,"""kind_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,care_space_blocks,ix_care_space_blocks_reason_concept_id,NO,"""reason_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,care_space_blocks,ix_care_space_blocks_ended_by_user_id,NO,"""ended_by_user_id""",,SQL/14_practice/04_indexes.sql
+practice,care_space_blocks,ix_care_space_blocks_created_by_user_id,NO,"""created_by_user_id""",,SQL/14_practice/04_indexes.sql
+practice,care_space_blocks,ix_care_space_blocks_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/14_practice/04_indexes.sql
+practice,care_space_blocks,ux_care_space_blocks_tenant_id_id,YES,"""tenant_id"", ""id""",,SQL/14_practice/04_indexes.sql
+practice,cleaning_orders,ix_cleaning_orders_tenant_id,NO,"""tenant_id""",,SQL/14_practice/04_indexes.sql
+practice,cleaning_orders,ix_cleaning_orders_practice_site_id,NO,"""practice_site_id""",,SQL/14_practice/04_indexes.sql
+practice,cleaning_orders,ix_cleaning_orders_care_space_id,NO,"""care_space_id""",,SQL/14_practice/04_indexes.sql
+practice,cleaning_orders,ix_cleaning_orders_clinical_unit_id,NO,"""clinical_unit_id""",,SQL/14_practice/04_indexes.sql
+practice,cleaning_orders,ix_cleaning_orders_cleaning_type_concept_id,NO,"""cleaning_type_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,cleaning_orders,ix_cleaning_orders_trigger_concept_id,NO,"""trigger_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,cleaning_orders,ix_cleaning_orders_previous_order_id,NO,"""previous_order_id""",,SQL/14_practice/04_indexes.sql
+practice,cleaning_orders,ix_cleaning_orders_priority_concept_id,NO,"""priority_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,cleaning_orders,ix_cleaning_orders_status_concept_id,NO,"""status_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,cleaning_orders,ix_cleaning_orders_assigned_user_id,NO,"""assigned_user_id""",,SQL/14_practice/04_indexes.sql
+practice,cleaning_orders,ix_cleaning_orders_started_by_user_id,NO,"""started_by_user_id""",,SQL/14_practice/04_indexes.sql
+practice,cleaning_orders,ix_cleaning_orders_finished_by_user_id,NO,"""finished_by_user_id""",,SQL/14_practice/04_indexes.sql
+practice,cleaning_orders,ix_cleaning_orders_inspected_by_user_id,NO,"""inspected_by_user_id""",,SQL/14_practice/04_indexes.sql
+practice,cleaning_orders,ix_cleaning_orders_inspection_result_concept_id,NO,"""inspection_result_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,cleaning_orders,ix_cleaning_orders_created_by_user_id,NO,"""created_by_user_id""",,SQL/14_practice/04_indexes.sql
+practice,cleaning_orders,ix_cleaning_orders_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/14_practice/04_indexes.sql
+practice,cleaning_orders,ix_cleaning_orders_site_status_requested,NO,"""practice_site_id"", ""status_concept_id"", ""requested_at""",,SQL/14_practice/04_indexes.sql
+practice,cleaning_orders,ux_cleaning_orders_tenant_id_id,YES,"""tenant_id"", ""id""",,SQL/14_practice/04_indexes.sql
+practice,cleaning_orders,ux_cleaning_orders_one_open_per_space,YES,"""care_space_id"") WHERE status_concept_id IN ('c0c5918f-cf97-51e1-9ede-72d856e61c93', '60ff8df8-4ba5-591c-b092-e8da81187539', '334b9e1f-b123-5477-a22e-2dd1b838c2fa'",,SQL/14_practice/04_indexes.sql
+practice,care_space_category_periods,ix_care_space_category_periods_tenant_id,NO,"""tenant_id""",,SQL/14_practice/04_indexes.sql
+practice,care_space_category_periods,ix_care_space_category_periods_care_space_id,NO,"""care_space_id""",,SQL/14_practice/04_indexes.sql
+practice,care_space_category_periods,ix_care_space_category_periods_bed_category_concept_id,NO,"""bed_category_concept_id""",,SQL/14_practice/04_indexes.sql
+practice,care_space_category_periods,ix_care_space_category_periods_created_by_user_id,NO,"""created_by_user_id""",,SQL/14_practice/04_indexes.sql
+practice,care_space_category_periods,ix_care_space_category_periods_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/14_practice/04_indexes.sql
+practice,care_space_category_periods,ux_care_space_category_periods_tenant_id_id,YES,"""tenant_id"", ""id""",,SQL/14_practice/04_indexes.sql
 practice,space_unit_assignments,ix_space_unit_assignments_tenant_id,NO,"""tenant_id""",,SQL/14_practice/04_indexes.sql
 practice,space_unit_assignments,ix_space_unit_assignments_care_space_id,NO,"""care_space_id""",,SQL/14_practice/04_indexes.sql
 practice,space_unit_assignments,ix_space_unit_assignments_clinical_unit_id,NO,"""clinical_unit_id""",,SQL/14_practice/04_indexes.sql
@@ -1921,6 +2137,8 @@ practice,healthcare_services,ix_healthcare_services_service_catalog_id,NO,"""ser
 practice,healthcare_services,ux_healthcare_services_site_service,YES,"""practice_site_id"", ""service_concept_id""",,SQL/14_practice/04_indexes.sql
 practice,healthcare_services,ix_healthcare_services_created_by_user_id,NO,"""created_by_user_id""",,SQL/14_practice/04_indexes.sql
 practice,healthcare_services,ix_healthcare_services_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/14_practice/04_indexes.sql
+practice,healthcare_services,ix_healthcare_services_tenant_id,NO,"""tenant_id""",,SQL/14_practice/04_indexes.sql
+practice,healthcare_services,ux_healthcare_services_tenant_id_id,YES,"""tenant_id"", ""id""",,SQL/14_practice/04_indexes.sql
 practice,practitioner_role_assignments,ix_practitioner_role_assignments_practitioner_profile_id,NO,"""practitioner_profile_id""",,SQL/14_practice/04_indexes.sql
 practice,practitioner_role_assignments,ix_practitioner_role_assignments_practice_id,NO,"""practice_id""",,SQL/14_practice/04_indexes.sql
 practice,practitioner_role_assignments,ix_practitioner_role_assignments_practice_site_id,NO,"""practice_site_id""",,SQL/14_practice/04_indexes.sql
@@ -1939,6 +2157,7 @@ practice,practitioner_support_assignments,ix_practitioner_support_assignments_sc
 practice,practitioner_support_assignments,ix_practitioner_support_assignments_status_concept_id,NO,"""status_concept_id""",,SQL/14_practice/04_indexes.sql
 practice,practitioner_support_assignments,ix_practitioner_support_assignments_created_by_user_id,NO,"""created_by_user_id""",,SQL/14_practice/04_indexes.sql
 practice,practitioner_support_assignments,ix_practitioner_support_assignments_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/14_practice/04_indexes.sql
+practice,practitioner_support_assignments,ix_prac_support_assignments_initiated_by_party,NO,"""initiated_by_party_concept_id""",,SQL/14_practice/04_indexes.sql
 practice,practice_accreditations,ix_practice_accreditations_practice_id,NO,"""practice_id""",,SQL/14_practice/04_indexes.sql
 practice,practice_accreditations,ix_practice_accreditations_practice_site_id,NO,"""practice_site_id""",,SQL/14_practice/04_indexes.sql
 practice,practice_accreditations,ix_practice_accreditations_accreditation_type_concept_id,NO,"""accreditation_type_concept_id""",,SQL/14_practice/04_indexes.sql
@@ -2304,6 +2523,10 @@ accounting,cost_centers,ix_cost_centers_practitioner_profile_id,NO,"""practition
 accounting,cost_centers,ix_cost_centers_status_concept_id,NO,"""status_concept_id""",,SQL/16_accounting/04_indexes.sql
 accounting,cost_centers,ix_cost_centers_created_by_user_id,NO,"""created_by_user_id""",,SQL/16_accounting/04_indexes.sql
 accounting,cost_centers,ix_cost_centers_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/16_accounting/04_indexes.sql
+accounting,cost_centers,ix_cost_centers_tenant_id,NO,"""tenant_id""",,SQL/16_accounting/04_indexes.sql
+accounting,cost_centers,ix_cost_centers_clinical_unit_id,NO,"""clinical_unit_id""",,SQL/16_accounting/04_indexes.sql
+accounting,cost_centers,ux_cost_centers_tenant_id_id,YES,"""tenant_id"", ""id""",,SQL/16_accounting/04_indexes.sql
+accounting,cost_centers,ux_cost_centers_unit_active,YES,"""clinical_unit_id""",WHERE clinical_unit_id IS NOT NULL AND status_concept_id = '38a1d301-f40d-5b17-a695-5e6d605f8b19',SQL/16_accounting/04_indexes.sql
 accounting,cost_center_maps,ix_cost_center_maps_practice_id,NO,"""practice_id""",,SQL/16_accounting/04_indexes.sql
 accounting,cost_center_maps,ix_cost_center_maps_source_type_concept_id,NO,"""source_type_concept_id""",,SQL/16_accounting/04_indexes.sql
 accounting,cost_center_maps,ix_cost_center_maps_cost_center_id,NO,"""cost_center_id""",,SQL/16_accounting/04_indexes.sql
@@ -2375,6 +2598,8 @@ accounting,infrastructure_items,ix_infrastructure_items_branch_id,NO,"""branch_i
 accounting,infrastructure_items,ix_infrastructure_items_status_concept_id,NO,"""status_concept_id""",,SQL/16_accounting/04_indexes.sql
 accounting,infrastructure_items,ix_infrastructure_items_created_by_user_id,NO,"""created_by_user_id""",,SQL/16_accounting/04_indexes.sql
 accounting,infrastructure_items,ix_infrastructure_items_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/16_accounting/04_indexes.sql
+accounting,infrastructure_items,ix_infrastructure_items_tenant_id,NO,"""tenant_id""",,SQL/16_accounting/04_indexes.sql
+accounting,infrastructure_items,ix_infrastructure_items_care_space_id,NO,"""care_space_id""",,SQL/16_accounting/04_indexes.sql
 accounting,employee_payments,ix_employee_payments_employee_id,NO,"""employee_id""",,SQL/16_accounting/04_indexes.sql
 accounting,employee_payments,ix_employee_payments_fiscal_period_id,NO,"""fiscal_period_id""",,SQL/16_accounting/04_indexes.sql
 accounting,employee_payments,ix_employee_payments_transaction_id,NO,"""transaction_id""",,SQL/16_accounting/04_indexes.sql
@@ -2453,6 +2678,36 @@ billing,service_catalog,ix_service_catalog_tax_code_id,NO,"""tax_code_id""",,SQL
 billing,service_catalog,ix_service_catalog_income_account_id,NO,"""income_account_id""",,SQL/17_billing/04_indexes.sql
 billing,service_catalog,ix_service_catalog_created_by_user_id,NO,"""created_by_user_id""",,SQL/17_billing/04_indexes.sql
 billing,service_catalog,ix_service_catalog_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/17_billing/04_indexes.sql
+billing,service_catalog,ux_service_catalog_practice_id_id,YES,"""practice_id"", ""id""",,SQL/17_billing/04_indexes.sql
+billing,space_tariffs,ix_space_tariffs_tenant_id,NO,"""tenant_id""",,SQL/17_billing/04_indexes.sql
+billing,space_tariffs,ix_space_tariffs_practice_id,NO,"""practice_id""",,SQL/17_billing/04_indexes.sql
+billing,space_tariffs,ix_space_tariffs_tariff_kind_concept_id,NO,"""tariff_kind_concept_id""",,SQL/17_billing/04_indexes.sql
+billing,space_tariffs,ix_space_tariffs_bed_category_concept_id,NO,"""bed_category_concept_id""",,SQL/17_billing/04_indexes.sql
+billing,space_tariffs,ix_space_tariffs_care_space_id,NO,"""care_space_id""",,SQL/17_billing/04_indexes.sql
+billing,space_tariffs,ix_space_tariffs_service_catalog_id,NO,"""service_catalog_id""",,SQL/17_billing/04_indexes.sql
+billing,space_tariffs,ix_space_tariffs_currency_concept_id,NO,"""currency_concept_id""",,SQL/17_billing/04_indexes.sql
+billing,space_tariffs,ix_space_tariffs_status_concept_id,NO,"""status_concept_id""",,SQL/17_billing/04_indexes.sql
+billing,space_tariffs,ix_space_tariffs_created_by_user_id,NO,"""created_by_user_id""",,SQL/17_billing/04_indexes.sql
+billing,space_tariffs,ix_space_tariffs_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/17_billing/04_indexes.sql
+billing,space_tariffs,ux_space_tariffs_tenant_id_id,YES,"""tenant_id"", ""id""",,SQL/17_billing/04_indexes.sql
+billing,charge_captures,uq_charge_captures_idempotency_key,YES,"""idempotency_key""",,SQL/17_billing/04_indexes.sql
+billing,charge_captures,ix_charge_captures_tenant_id,NO,"""tenant_id""",,SQL/17_billing/04_indexes.sql
+billing,charge_captures,ix_charge_captures_practice_id,NO,"""practice_id""",,SQL/17_billing/04_indexes.sql
+billing,charge_captures,ix_charge_captures_patient_profile_id,NO,"""patient_profile_id""",,SQL/17_billing/04_indexes.sql
+billing,charge_captures,ix_charge_captures_encounter_id,NO,"""encounter_id""",,SQL/17_billing/04_indexes.sql
+billing,charge_captures,ix_charge_captures_source_kind_concept_id,NO,"""source_kind_concept_id""",,SQL/17_billing/04_indexes.sql
+billing,charge_captures,ix_charge_captures_care_space_id,NO,"""care_space_id""",,SQL/17_billing/04_indexes.sql
+billing,charge_captures,ix_charge_captures_bed_category_concept_id,NO,"""bed_category_concept_id""",,SQL/17_billing/04_indexes.sql
+billing,charge_captures,ix_charge_captures_space_tariff_id,NO,"""space_tariff_id""",,SQL/17_billing/04_indexes.sql
+billing,charge_captures,ix_charge_captures_service_catalog_id,NO,"""service_catalog_id""",,SQL/17_billing/04_indexes.sql
+billing,charge_captures,ix_charge_captures_currency_concept_id,NO,"""currency_concept_id""",,SQL/17_billing/04_indexes.sql
+billing,charge_captures,ix_charge_captures_cost_center_id,NO,"""cost_center_id""",,SQL/17_billing/04_indexes.sql
+billing,charge_captures,ix_charge_captures_status_concept_id,NO,"""status_concept_id""",,SQL/17_billing/04_indexes.sql
+billing,charge_captures,ix_charge_captures_invoice_line_id,NO,"""invoice_line_id""",,SQL/17_billing/04_indexes.sql
+billing,charge_captures,ix_charge_captures_created_by_user_id,NO,"""created_by_user_id""",,SQL/17_billing/04_indexes.sql
+billing,charge_captures,ix_charge_captures_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/17_billing/04_indexes.sql
+billing,charge_captures,ix_charge_captures_encounter_status,NO,"""encounter_id"", ""status_concept_id""",,SQL/17_billing/04_indexes.sql
+billing,charge_captures,ux_charge_captures_tenant_id_id,YES,"""tenant_id"", ""id""",,SQL/17_billing/04_indexes.sql
 billing,invoices,uq_invoices_invoice_number,YES,"""invoice_number""",,SQL/17_billing/04_indexes.sql
 billing,invoices,ix_invoices_practice_id,NO,"""practice_id""",,SQL/17_billing/04_indexes.sql
 billing,invoices,ix_invoices_patient_profile_id,NO,"""patient_profile_id""",,SQL/17_billing/04_indexes.sql
@@ -2582,6 +2837,7 @@ clinical_ext,care_team_members,ix_care_team_members_member_role_concept_id,NO,""
 clinical_ext,care_team_members,ix_care_team_members_status_concept_id,NO,"""status_concept_id""",,SQL/18_clinical_ext/04_indexes.sql
 clinical_ext,care_team_members,ix_care_team_members_created_by_user_id,NO,"""created_by_user_id""",,SQL/18_clinical_ext/04_indexes.sql
 clinical_ext,care_team_members,ix_care_team_members_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/18_clinical_ext/04_indexes.sql
+clinical_ext,referrals,ux_referrals_id_patient_target,YES,"""id"", ""patient_profile_id"", ""target_tenant_id""",,SQL/18_clinical_ext/04_indexes.sql
 clinical_ext,referrals,ix_referrals_patient_profile_id,NO,"""patient_profile_id""",,SQL/18_clinical_ext/04_indexes.sql
 clinical_ext,referrals,ix_referrals_source_encounter_id,NO,"""source_encounter_id""",,SQL/18_clinical_ext/04_indexes.sql
 clinical_ext,referrals,ix_referrals_referring_profile_id,NO,"""referring_profile_id""",,SQL/18_clinical_ext/04_indexes.sql
@@ -3077,6 +3333,7 @@ diagnostics,specimen_collection_events,ix_specimen_collection_events_collection_
 diagnostics,specimen_collection_events,ix_specimen_collection_events_body_site_concept_id,NO,"""body_site_concept_id""",,SQL/20_diagnostics/04_indexes.sql
 diagnostics,specimen_collection_events,ix_specimen_collection_events_method_concept_id,NO,"""method_concept_id""",,SQL/20_diagnostics/04_indexes.sql
 diagnostics,specimen_collection_events,ix_specimen_collection_events_fasting_status_concept_id,NO,"""fasting_status_concept_id""",,SQL/20_diagnostics/04_indexes.sql
+diagnostics,specimen_collection_events,ix_specimen_collection_events_collection_care_space_id,NO,"""collection_care_space_id""",,SQL/20_diagnostics/04_indexes.sql
 diagnostics,specimen_containers,ix_specimen_containers_specimen_id,NO,"""specimen_id""",,SQL/20_diagnostics/04_indexes.sql
 diagnostics,specimen_containers,ix_specimen_containers_container_type_concept_id,NO,"""container_type_concept_id""",,SQL/20_diagnostics/04_indexes.sql
 diagnostics,specimen_containers,ix_specimen_containers_additive_concept_id,NO,"""additive_concept_id""",,SQL/20_diagnostics/04_indexes.sql
@@ -3191,6 +3448,8 @@ diagnostics,imaging_procedure_steps,ix_imaging_procedure_steps_status_concept_id
 diagnostics,imaging_procedure_steps,ix_imaging_procedure_steps_created_by_user_id,NO,"""created_by_user_id""",,SQL/20_diagnostics/04_indexes.sql
 diagnostics,imaging_procedure_steps,ix_imaging_procedure_steps_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/20_diagnostics/04_indexes.sql
 diagnostics,imaging_procedure_steps,uk_imaging_procedure_steps_study_step,YES,"""imaging_study_id"", ""step_number""",,SQL/20_diagnostics/04_indexes.sql
+diagnostics,imaging_procedure_steps,ix_imaging_procedure_steps_scheduled_equipment_id,NO,"""scheduled_equipment_id""",,SQL/20_diagnostics/04_indexes.sql
+diagnostics,imaging_procedure_steps,ix_imaging_procedure_steps_scheduled_care_space_id,NO,"""scheduled_care_space_id"", ""scheduled_start_at""",,SQL/20_diagnostics/04_indexes.sql
 diagnostics,imaging_selections,ix_imaging_selections_custodian_tenant_id,NO,"""custodian_tenant_id""",,SQL/20_diagnostics/04_indexes.sql
 diagnostics,imaging_selections,ix_imaging_selections_imaging_study_id,NO,"""imaging_study_id""",,SQL/20_diagnostics/04_indexes.sql
 diagnostics,imaging_selections,ix_imaging_selections_author_profile_id,NO,"""author_profile_id""",,SQL/20_diagnostics/04_indexes.sql
@@ -4019,6 +4278,10 @@ telemetry,user_activity_events,ix_user_activity_events_target_type_concept_id,NO
 telemetry,user_activity_events,ix_user_activity_events_consent_snapshot_id,NO,"""consent_snapshot_id""",,SQL/28_telemetry/04_indexes.sql
 telemetry,user_activity_events,ix_user_activity_events_security_audit_event_id,NO,"""security_audit_event_id""",,SQL/28_telemetry/04_indexes.sql
 telemetry,user_activity_events,ix_user_activity_events_tenant_id_created_at,NO,"""tenant_id"", ""created_at"" DESC",,SQL/28_telemetry/04_indexes.sql
+telemetry,user_activity_events,ix_user_activity_events_occurred_at,NO,"""occurred_at""",,SQL/28_telemetry/04_indexes.sql
+telemetry,user_activity_events,ix_user_activity_events_route_template_occurred_at,NO,"""route_template"", ""occurred_at""",,SQL/28_telemetry/04_indexes.sql
+telemetry,user_activity_events,ux_user_activity_events_anonymous_idempotency,YES,"COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000'::uuid), ""event_idempotency_key""",WHERE user_id IS NULL,SQL/28_telemetry/04_indexes.sql
+telemetry,user_activity_events,ix_user_activity_events_user_idempotency,NO,"""user_id"", ""event_idempotency_key""",WHERE user_id IS NOT NULL,SQL/28_telemetry/04_indexes.sql
 telemetry,user_activity_event_properties,ix_user_activity_event_properties_user_activity_event_id,NO,"""user_activity_event_id""",,SQL/28_telemetry/04_indexes.sql
 telemetry,user_activity_event_properties,ix_user_activity_event_properties_value_type_concept_id,NO,"""value_type_concept_id""",,SQL/28_telemetry/04_indexes.sql
 telemetry,user_activity_event_properties,ix_user_activity_event_properties_value_concept_id,NO,"""value_concept_id""",,SQL/28_telemetry/04_indexes.sql
@@ -4059,6 +4322,14 @@ telemetry,web_vitals,ix_web_vitals_portal_type_concept_id,NO,"""portal_type_conc
 telemetry,web_vitals,ix_web_vitals_metric_concept_id,NO,"""metric_concept_id""",,SQL/28_telemetry/04_indexes.sql
 telemetry,web_vitals,ix_web_vitals_rating_concept_id,NO,"""rating_concept_id""",,SQL/28_telemetry/04_indexes.sql
 telemetry,web_vitals,ix_web_vitals_navigation_type_concept_id,NO,"""navigation_type_concept_id""",,SQL/28_telemetry/04_indexes.sql
+telemetry,client_error_events,ix_client_error_events_received_at,NO,"""received_at"" DESC",,SQL/28_telemetry/04_indexes.sql
+telemetry,client_error_events,ix_client_error_events_fingerprint_received_at,NO,"""fingerprint"", ""received_at""",,SQL/28_telemetry/04_indexes.sql
+telemetry,client_error_events,ix_client_error_events_route_template_received_at,NO,"""route_template"", ""received_at""",,SQL/28_telemetry/04_indexes.sql
+telemetry,client_error_events,ix_client_error_events_request_id,NO,"""request_id""",,SQL/28_telemetry/04_indexes.sql
+telemetry,client_error_events,ix_client_error_events_portal_type_concept_id,NO,"""portal_type_concept_id""",,SQL/28_telemetry/04_indexes.sql
+telemetry,client_error_events,ix_client_error_events_error_class_concept_id,NO,"""error_class_concept_id""",,SQL/28_telemetry/04_indexes.sql
+telemetry,client_error_events,ix_client_error_events_user_id,NO,"""user_id""",,SQL/28_telemetry/04_indexes.sql
+telemetry,client_error_events,ix_client_error_events_session_id,NO,"""session_id""",,SQL/28_telemetry/04_indexes.sql
 delegated_access,organization_user_assignments,ix_organization_user_assignments_tenant_id,NO,"""tenant_id"", ""status_concept_id""",,SQL/29_delegated_access/04_indexes.sql
 delegated_access,organization_user_assignments,ix_organization_user_assignments_tenant_membership_id,NO,"""tenant_membership_id""",,SQL/29_delegated_access/04_indexes.sql
 delegated_access,organization_user_assignments,ix_organization_user_assignments_practice_id,NO,"""practice_id""",,SQL/29_delegated_access/04_indexes.sql
@@ -4077,6 +4348,7 @@ delegated_access,organization_user_assignments,ix_organization_user_assignments_
 delegated_access,organization_user_assignments,ix_organization_user_assignments_owner_kind_concept_id,NO,"""owner_kind_concept_id""",,SQL/29_delegated_access/04_indexes.sql
 delegated_access,organization_user_assignments,ix_organization_user_assignments_role_template_id,NO,"""role_template_id""",,SQL/29_delegated_access/04_indexes.sql
 delegated_access,organization_user_assignments,ix_organization_user_assignments_next_recertification,NO,"""next_recertification_at""",WHERE next_recertification_at IS NOT NULL,SQL/29_delegated_access/04_indexes.sql
+delegated_access,organization_user_assignments,ix_org_user_assignments_initiated_by_party,NO,"""initiated_by_party_concept_id""",,SQL/29_delegated_access/04_indexes.sql
 delegated_access,organization_user_assignments,uq_organization_user_assignments_active_template,YES,"""tenant_membership_id"", ""role_template_id""",WHERE role_template_id IS NOT NULL AND status_concept_id = '38a1d301-f40d-5b17-a695-5e6d605f8b19',SQL/29_delegated_access/04_indexes.sql
 delegated_access,organization_user_assignments,ix_organization_user_assignments_identity_verified_by_user_id,NO,"""identity_verified_by_user_id""",,SQL/29_delegated_access/04_indexes.sql
 delegated_access,organization_user_assignments,ix_organization_user_assignments_identity_method_concept_id,NO,"""identity_method_concept_id""",,SQL/29_delegated_access/04_indexes.sql
@@ -4214,11 +4486,13 @@ delegated_access,sod_exceptions,ix_sod_exceptions_status_concept_id,NO,"""status
 delegated_access,sod_exceptions,ix_sod_exceptions_revoked_by_user_id,NO,"""revoked_by_user_id""",,SQL/29_delegated_access/04_indexes.sql
 delegated_access,sod_exceptions,ix_sod_exceptions_created_by_user_id,NO,"""created_by_user_id""",,SQL/29_delegated_access/04_indexes.sql
 delegated_access,sod_exceptions,ix_sod_exceptions_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/29_delegated_access/04_indexes.sql
+delegated_access,four_eyes_requests,uq_four_eyes_requests_tenant_id_id,YES,"""tenant_id"", ""id""",,SQL/29_delegated_access/04_indexes.sql
 delegated_access,four_eyes_requests,ix_four_eyes_requests_tenant_id,NO,"""tenant_id"", ""status_concept_id"", ""expires_at""",,SQL/29_delegated_access/04_indexes.sql
 delegated_access,four_eyes_requests,ix_four_eyes_requests_requester,NO,"""requester_user_id"", ""status_concept_id""",,SQL/29_delegated_access/04_indexes.sql
 delegated_access,four_eyes_requests,uq_four_eyes_requests_pending_payload,YES,"""tenant_id"", ""kind_concept_id"", ""requester_user_id"", COALESCE(permission_code, ''), ""payload_hash""",WHERE status_concept_id = 'a977935a-9073-5113-9644-7df96732e776',SQL/29_delegated_access/04_indexes.sql
 delegated_access,four_eyes_requests,ix_four_eyes_requests_kind_concept_id,NO,"""kind_concept_id""",,SQL/29_delegated_access/04_indexes.sql
 delegated_access,four_eyes_requests,ix_four_eyes_requests_subject_user_id,NO,"""subject_user_id""",,SQL/29_delegated_access/04_indexes.sql
+delegated_access,four_eyes_requests,ix_four_eyes_requests_subject,NO,"""subject_entity"", ""subject_id""",WHERE subject_id IS NOT NULL,SQL/29_delegated_access/04_indexes.sql
 delegated_access,four_eyes_requests,ix_four_eyes_requests_organization_user_assignment_id,NO,"""organization_user_assignment_id""",,SQL/29_delegated_access/04_indexes.sql
 delegated_access,four_eyes_requests,ix_four_eyes_requests_approver_kind_concept_id,NO,"""approver_kind_concept_id""",,SQL/29_delegated_access/04_indexes.sql
 delegated_access,four_eyes_requests,ix_four_eyes_requests_status_concept_id,NO,"""status_concept_id""",,SQL/29_delegated_access/04_indexes.sql
@@ -5419,6 +5693,9 @@ scheduling,schedulable_resources,ix_schedulable_resources_state_concept_id,NO,""
 scheduling,schedulable_resources,ix_schedulable_resources_created_by_user_id,NO,"""created_by_user_id""",,SQL/41_scheduling/04_indexes.sql
 scheduling,schedulable_resources,ix_schedulable_resources_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/41_scheduling/04_indexes.sql
 scheduling,schedulable_resources,ix_schedulable_resources_tenant_id_state_concept_id,NO,"""tenant_id"", ""state_concept_id"", ""updated_at"" DESC",,SQL/41_scheduling/04_indexes.sql
+scheduling,schedulable_resources,ix_schedulable_resources_care_space_id,NO,"""care_space_id""",,SQL/41_scheduling/04_indexes.sql
+scheduling,schedulable_resources,ux_schedulable_resources_tenant_id_id,YES,"""tenant_id"", ""id""",,SQL/41_scheduling/04_indexes.sql
+scheduling,schedulable_resources,ux_schedulable_resources_care_space_active,YES,"""care_space_id""",WHERE care_space_id IS NOT NULL AND state_concept_id = '38a1d301-f40d-5b17-a695-5e6d605f8b19',SQL/41_scheduling/04_indexes.sql
 scheduling,schedule_templates,ix_schedule_templates_resource_id,NO,"""resource_id""",,SQL/41_scheduling/04_indexes.sql
 scheduling,schedule_templates,ix_schedule_templates_practitioner_schedule_id,NO,"""practitioner_schedule_id""",,SQL/41_scheduling/04_indexes.sql
 scheduling,schedule_templates,ix_schedule_templates_service_concept_id,NO,"""service_concept_id""",,SQL/41_scheduling/04_indexes.sql
@@ -5426,6 +5703,7 @@ scheduling,schedule_templates,ix_schedule_templates_booking_policy_id,NO,"""book
 scheduling,schedule_templates,ix_schedule_templates_status_concept_id,NO,"""status_concept_id""",,SQL/41_scheduling/04_indexes.sql
 scheduling,schedule_templates,ix_schedule_templates_created_by_user_id,NO,"""created_by_user_id""",,SQL/41_scheduling/04_indexes.sql
 scheduling,schedule_templates,ix_schedule_templates_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/41_scheduling/04_indexes.sql
+scheduling,schedule_templates,ix_schedule_templates_care_space_id,NO,"""care_space_id""",,SQL/41_scheduling/04_indexes.sql
 scheduling,schedule_rules,ix_schedule_rules_schedule_template_id,NO,"""schedule_template_id""",,SQL/41_scheduling/04_indexes.sql
 scheduling,schedule_rules,ix_schedule_rules_booking_mode_concept_id,NO,"""booking_mode_concept_id""",,SQL/41_scheduling/04_indexes.sql
 scheduling,schedule_rules,ix_schedule_rules_created_by_user_id,NO,"""created_by_user_id""",,SQL/41_scheduling/04_indexes.sql
@@ -5434,6 +5712,8 @@ scheduling,availability_exceptions,ix_availability_exceptions_resource_id,NO,"""
 scheduling,availability_exceptions,ix_availability_exceptions_exception_type_concept_id,NO,"""exception_type_concept_id""",,SQL/41_scheduling/04_indexes.sql
 scheduling,availability_exceptions,ix_availability_exceptions_created_by_user_id,NO,"""created_by_user_id""",,SQL/41_scheduling/04_indexes.sql
 scheduling,availability_exceptions,ix_availability_exceptions_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/41_scheduling/04_indexes.sql
+scheduling,availability_exceptions,ix_availability_exceptions_source_kind_concept_id,NO,"""source_kind_concept_id""",,SQL/41_scheduling/04_indexes.sql
+scheduling,availability_exceptions,ix_availability_exceptions_source_ref,NO,"""source_ref_id""",WHERE source_ref_id IS NOT NULL,SQL/41_scheduling/04_indexes.sql
 scheduling,bookable_slots,ix_bookable_slots_resource_id,NO,"""resource_id""",,SQL/41_scheduling/04_indexes.sql
 scheduling,bookable_slots,ix_bookable_slots_schedule_template_id,NO,"""schedule_template_id""",,SQL/41_scheduling/04_indexes.sql
 scheduling,bookable_slots,ix_bookable_slots_service_concept_id,NO,"""service_concept_id""",,SQL/41_scheduling/04_indexes.sql
@@ -7757,6 +8037,8 @@ procedures_perioperative,procedure_cases,ix_procedure_cases_updated_by_user_id,N
 procedures_perioperative,procedure_cases,uk_procedure_cases_tenant_number,YES,"""custodian_tenant_id"", ""case_number""",,SQL/53_procedures_perioperative/04_indexes.sql
 procedures_perioperative,procedure_cases,ix_procedure_cases_room_schedule,NO,"""operating_room_id"", ""scheduled_start_at"", ""scheduled_end_at""",,SQL/53_procedures_perioperative/04_indexes.sql
 procedures_perioperative,procedure_cases,ix_procedure_cases_patient_time,NO,"""custodian_tenant_id"", ""patient_profile_id"", ""scheduled_start_at"" DESC",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,procedure_cases,ix_procedure_cases_schedulable_resource_id,NO,"""schedulable_resource_id""",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,procedure_cases,ix_procedure_cases_operating_room_block_id,NO,"""operating_room_block_id""",,SQL/53_procedures_perioperative/04_indexes.sql
 procedures_perioperative,procedure_case_diagnoses,ix_procedure_case_diagnoses_procedure_case_id,NO,"""procedure_case_id""",,SQL/53_procedures_perioperative/04_indexes.sql
 procedures_perioperative,procedure_case_diagnoses,ix_procedure_case_diagnoses_condition_id,NO,"""condition_id""",,SQL/53_procedures_perioperative/04_indexes.sql
 procedures_perioperative,procedure_case_diagnoses,ix_procedure_case_diagnoses_diagnosis_role_concept_id,NO,"""diagnosis_role_concept_id""",,SQL/53_procedures_perioperative/04_indexes.sql
@@ -7812,6 +8094,7 @@ procedures_perioperative,surgical_safety_checklists,ix_surgical_safety_checklist
 procedures_perioperative,surgical_safety_checklists,ix_surgical_safety_checklists_status_concept_id,NO,"""status_concept_id""",,SQL/53_procedures_perioperative/04_indexes.sql
 procedures_perioperative,surgical_safety_checklists,ix_surgical_safety_checklists_coordinator_profile_id,NO,"""coordinator_profile_id""",,SQL/53_procedures_perioperative/04_indexes.sql
 procedures_perioperative,surgical_safety_checklists,uk_surgical_safety_checklists_case_type_version,YES,"""procedure_case_id"", ""checklist_type_concept_id"", ""checklist_version""",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,surgical_safety_checklists,ux_surgical_safety_checklists_case_type,YES,"""procedure_case_id"", ""checklist_type_concept_id""",,SQL/53_procedures_perioperative/04_indexes.sql
 procedures_perioperative,surgical_safety_items,ix_surgical_safety_items_checklist_type_concept_id,NO,"""checklist_type_concept_id""",,SQL/53_procedures_perioperative/04_indexes.sql
 procedures_perioperative,surgical_safety_items,ix_surgical_safety_items_phase_concept_id,NO,"""phase_concept_id""",,SQL/53_procedures_perioperative/04_indexes.sql
 procedures_perioperative,surgical_safety_items,ix_surgical_safety_items_response_type_concept_id,NO,"""response_type_concept_id""",,SQL/53_procedures_perioperative/04_indexes.sql
@@ -7977,6 +8260,33 @@ procedures_perioperative,operating_room_utilization_events,ix_operating_room_uti
 procedures_perioperative,operating_room_utilization_events,ix_operating_room_utilization_events_turnover_category_21fa0c9f,NO,"""turnover_category_concept_id""",,SQL/53_procedures_perioperative/04_indexes.sql
 procedures_perioperative,operating_room_utilization_events,ix_operating_room_utilization_events_recorded_by_user_id,NO,"""recorded_by_user_id""",,SQL/53_procedures_perioperative/04_indexes.sql
 procedures_perioperative,operating_room_utilization_events,ix_or_utilization_room_time,NO,"""operating_room_id"", ""occurred_at"" DESC",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,operating_room_utilization_events,ix_operating_room_utilization_events_tenant_id,NO,"""tenant_id""",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,operating_room_utilization_events,ix_operating_room_utilization_events_operating_room_block_id,NO,"""operating_room_block_id""",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,operating_room_block_series,ix_operating_room_block_series_tenant_id,NO,"""tenant_id""",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,operating_room_block_series,ix_operating_room_block_series_practice_site_id,NO,"""practice_site_id""",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,operating_room_block_series,ix_operating_room_block_series_operating_room_id,NO,"""operating_room_id""",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,operating_room_block_series,ix_operating_room_block_series_owner_kind_concept_id,NO,"""owner_kind_concept_id""",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,operating_room_block_series,ix_operating_room_block_series_clinical_unit_id,NO,"""clinical_unit_id""",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,operating_room_block_series,ix_operating_room_block_series_surgical_specialty_concept_id,NO,"""surgical_specialty_concept_id""",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,operating_room_block_series,ix_operating_room_block_series_surgeon_profile_id,NO,"""surgeon_profile_id""",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,operating_room_block_series,ix_operating_room_block_series_status_concept_id,NO,"""status_concept_id""",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,operating_room_block_series,ix_operating_room_block_series_created_by_user_id,NO,"""created_by_user_id""",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,operating_room_block_series,ix_operating_room_block_series_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,operating_room_block_series,ux_operating_room_block_series_tenant_id_id,YES,"""tenant_id"", ""id""",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,operating_room_blocks,ix_operating_room_blocks_tenant_id,NO,"""tenant_id""",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,operating_room_blocks,ix_operating_room_blocks_series_id,NO,"""series_id""",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,operating_room_blocks,ix_operating_room_blocks_operating_room_id,NO,"""operating_room_id""",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,operating_room_blocks,ix_operating_room_blocks_owner_kind_concept_id,NO,"""owner_kind_concept_id""",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,operating_room_blocks,ix_operating_room_blocks_clinical_unit_id,NO,"""clinical_unit_id""",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,operating_room_blocks,ix_operating_room_blocks_surgical_specialty_concept_id,NO,"""surgical_specialty_concept_id""",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,operating_room_blocks,ix_operating_room_blocks_surgeon_profile_id,NO,"""surgeon_profile_id""",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,operating_room_blocks,ix_operating_room_blocks_status_concept_id,NO,"""status_concept_id""",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,operating_room_blocks,ix_operating_room_blocks_released_by_user_id,NO,"""released_by_user_id""",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,operating_room_blocks,ix_operating_room_blocks_created_by_user_id,NO,"""created_by_user_id""",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,operating_room_blocks,ix_operating_room_blocks_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,operating_room_blocks,ix_operating_room_blocks_room_time,NO,"""operating_room_id"", ""starts_at"", ""ends_at""",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,operating_room_blocks,ix_operating_room_blocks_release_due,NO,"""status_concept_id"", ""release_at""",,SQL/53_procedures_perioperative/04_indexes.sql
+procedures_perioperative,operating_room_blocks,ux_operating_room_blocks_tenant_id_id,YES,"""tenant_id"", ""id""",,SQL/53_procedures_perioperative/04_indexes.sql
 procedures_perioperative,sterility_verification_checks,ix_sterility_verification_checks_procedure_case_id,NO,"""procedure_case_id""",,SQL/53_procedures_perioperative/04_indexes.sql
 procedures_perioperative,sterility_verification_checks,ix_sterility_verification_checks_check_type_concept_id,NO,"""check_type_concept_id""",,SQL/53_procedures_perioperative/04_indexes.sql
 procedures_perioperative,sterility_verification_checks,ix_sterility_verification_checks_checked_by_profile_id,NO,"""checked_by_profile_id""",,SQL/53_procedures_perioperative/04_indexes.sql
@@ -8212,6 +8522,7 @@ data_catalog,catalog_scan_runs,ux_data_catalog_scan_runs_one_active,YES,"""sourc
 data_catalog,catalog_scan_runs,ux_data_catalog_scan_runs_idempotency,YES,"""requested_by_user_id"", ""idempotency_key""",WHERE idempotency_key IS NOT NULL,SQL/67_data_catalog/04_indexes.sql
 data_catalog,catalog_objects,ux_data_catalog_objects_identity,YES,"""source_code"", ""schema_name"", ""object_name""",,SQL/67_data_catalog/04_indexes.sql
 data_catalog,catalog_objects,ix_data_catalog_objects_observation_status,NO,"""observation_status""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,catalog_objects,ix_data_catalog_objects_domain_id,NO,"""domain_id""",,SQL/67_data_catalog/04_indexes.sql
 data_catalog,catalog_columns,ux_data_catalog_columns_identity,YES,"""object_id"", ""column_name""",,SQL/67_data_catalog/04_indexes.sql
 data_catalog,catalog_change_events,ix_data_catalog_change_events_scan_run_id,NO,"""scan_run_id""",,SQL/67_data_catalog/04_indexes.sql
 data_catalog,catalog_change_events,ix_data_catalog_change_events_object_created,NO,"""object_id"", ""created_at""",,SQL/67_data_catalog/04_indexes.sql
@@ -8231,6 +8542,50 @@ data_catalog,catalog_process_steps,ux_data_catalog_process_steps_ordinal,YES,"""
 data_catalog,catalog_process_step_operations,ux_data_catalog_process_step_operations_pair,YES,"""step_id"", ""operation_id""",,SQL/67_data_catalog/04_indexes.sql
 data_catalog,catalog_process_step_operations,ix_data_catalog_process_step_operations_step_id,NO,"""step_id""",,SQL/67_data_catalog/04_indexes.sql
 data_catalog,catalog_process_step_operations,ix_data_catalog_process_step_operations_operation_id,NO,"""operation_id""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,catalog_stewardships,ux_data_catalog_stewardships_active_role,YES,"""scope_kind"", COALESCE(domain_id, object_id), ""role_kind""",WHERE valid_to IS NULL,SQL/67_data_catalog/04_indexes.sql
+data_catalog,catalog_stewardships,ix_data_catalog_stewardships_user_id,NO,"""user_id""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,catalog_stewardships,ix_data_catalog_stewardships_object_id,NO,"""object_id""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,catalog_stewardships,ix_data_catalog_stewardships_domain_id,NO,"""domain_id""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,catalog_glossary_terms,ux_data_catalog_glossary_terms_code,YES,"""term_code""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,catalog_glossary_terms,ix_data_catalog_glossary_terms_status,NO,"""status""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,catalog_glossary_terms,ix_data_catalog_glossary_terms_domain_id,NO,"""domain_id""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,catalog_glossary_term_revisions,ux_data_catalog_glossary_term_revisions_no,YES,"""term_id"", ""revision_no""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,catalog_glossary_term_links,ux_data_catalog_glossary_term_links_pair,YES,"""term_id"", ""object_id"", COALESCE(column_id, '00000000-0000-0000-0000-000000000000'::uuid)",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,catalog_glossary_term_links,ix_data_catalog_glossary_term_links_column_id,NO,"""column_id""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,catalog_glossary_term_links,ix_data_catalog_glossary_term_links_object_id,NO,"""object_id""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,quality_rules,ux_data_catalog_quality_rules_code,YES,"""rule_code""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,quality_rules,ix_data_catalog_quality_rules_object_id,NO,"""object_id""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,quality_rules,ix_data_catalog_quality_rules_column_id,NO,"""column_id""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,quality_rules,ix_data_catalog_quality_rules_due,NO,"""enabled"", ""schedule_minutes""",WHERE enabled,SQL/67_data_catalog/04_indexes.sql
+data_catalog,quality_rules,ix_data_catalog_quality_rules_owner_user_id,NO,"""owner_user_id""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,quality_rule_runs,ux_data_catalog_quality_rule_runs_one_active,YES,"""rule_id"") WHERE status IN ('QUEUED', 'RUNNING'",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,quality_rule_runs,ux_data_catalog_quality_rule_runs_idempotency,YES,"""requested_by_user_id"", ""idempotency_key""",WHERE idempotency_key IS NOT NULL,SQL/67_data_catalog/04_indexes.sql
+data_catalog,quality_rule_runs,ix_data_catalog_quality_rule_runs_rule_created,NO,"""rule_id"", ""created_at"" DESC",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,quality_rule_runs,ix_data_catalog_quality_rule_runs_status_created,NO,"""status"", ""created_at""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,quality_issues,ux_data_catalog_quality_issues_live,YES,"""fingerprint"") WHERE status IN ('OPEN', 'ACKNOWLEDGED'",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,quality_issues,ix_data_catalog_quality_issues_status_severity,NO,"""status"", ""severity""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,quality_issues,ix_data_catalog_quality_issues_object_id,NO,"""object_id""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,quality_issues,ix_data_catalog_quality_issues_rule_id,NO,"""rule_id""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,quality_issues,ix_data_catalog_quality_issues_column_id,NO,"""column_id""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,quality_issues,ix_data_catalog_quality_issues_first_seen_run_id,NO,"""first_seen_run_id""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,quality_issues,ix_data_catalog_quality_issues_last_seen_run_id,NO,"""last_seen_run_id""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,quality_issue_events,ix_data_catalog_quality_issue_events_issue_created,NO,"""issue_id"", ""created_at""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,quality_issue_events,ix_data_catalog_quality_issue_events_run_id,NO,"""run_id""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,quality_score_snapshots,ux_data_catalog_quality_score_snapshots_scope_asof,YES,"""scope_kind"", COALESCE(object_id, domain_id, '00000000-0000-0000-0000-000000000000'::uuid), ""as_of""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,quality_score_snapshots,ix_data_catalog_quality_score_snapshots_object_asof,NO,"""object_id"", ""as_of"" DESC",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,quality_score_snapshots,ix_data_catalog_quality_score_snapshots_domain_asof,NO,"""domain_id"", ""as_of"" DESC",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,catalog_lineage_edges,ux_data_catalog_lineage_edges_identity,YES,"""source_kind"", ""source_ref"", ""target_kind"", ""target_ref"", ""edge_kind"", ""origin""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,catalog_lineage_edges,ix_data_catalog_lineage_edges_source,NO,"""source_kind"", ""source_ref""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,catalog_lineage_edges,ix_data_catalog_lineage_edges_target,NO,"""target_kind"", ""target_ref""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,catalog_lineage_edges,ix_data_catalog_lineage_edges_official,NO,"""source_kind"", ""source_ref""",WHERE is_official,SQL/67_data_catalog/04_indexes.sql
+data_catalog,catalog_certifications,ux_data_catalog_certifications_live,YES,"""target_kind"", COALESCE(object_id, read_model_definition_id, report_definition_id, '00000000-0000-0000-0000-000000000000'::uuid), COALESCE(kpi_code, '')) WHERE status IN ('REQUESTED', 'CERTIFIED'",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,catalog_certifications,ix_data_catalog_certifications_status_expires,NO,"""status"", ""expires_at""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,catalog_certifications,ix_data_catalog_certifications_object_id,NO,"""object_id""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,catalog_certifications,ix_data_catalog_certifications_read_model_definition_id,NO,"""read_model_definition_id""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,catalog_certifications,ix_data_catalog_certifications_report_definition_id,NO,"""report_definition_id""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,catalog_certifications,ix_data_catalog_certifications_requested_by_user_id,NO,"""requested_by_user_id""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,catalog_change_acknowledgements,ux_data_catalog_change_acknowledgements_event,YES,"""change_event_id""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,catalog_change_acknowledgements,ix_data_catalog_change_acknowledgements_user_id,NO,"""user_id""",,SQL/67_data_catalog/04_indexes.sql
 qa_execution,execution_targets,ux_qa_execution_targets_environment,YES,"""environment_id""",,SQL/68_qa_execution/04_indexes.sql
 qa_execution,execution_plans,ix_qa_execution_plans_status_created,NO,"""status"", ""created_at""",,SQL/68_qa_execution/04_indexes.sql
 qa_execution,execution_plans,ix_qa_execution_plans_run_id,NO,"""run_id""",,SQL/68_qa_execution/04_indexes.sql
@@ -8419,3 +8774,35 @@ pharma_lab,visitor_post_submissions,ix_visitor_post_submissions_decided_by_user_
 pharma_lab,visitor_post_submissions,ix_visitor_post_submissions_social_post_id,NO,"""social_post_id""",,SQL/69_pharma_lab/04_indexes.sql
 pharma_lab,visitor_post_submissions,ix_visitor_post_submissions_created_by_user_id,NO,"""created_by_user_id""",,SQL/69_pharma_lab/04_indexes.sql
 pharma_lab,visitor_post_submissions,ix_visitor_post_submissions_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/69_pharma_lab/04_indexes.sql
+observability,instances,ix_instances_kind_last_seen,NO,"""kind"", ""last_seen_at"" DESC",,SQL/70_observability/04_indexes.sql
+observability,instances,ix_instances_name,NO,"""name""",,SQL/70_observability/04_indexes.sql
+observability,error_groups,uq_error_groups_fingerprint,YES,"""fingerprint""",,SQL/70_observability/04_indexes.sql
+observability,error_groups,ix_error_groups_state_last_seen,NO,"""state_concept_id"", ""last_seen_at"" DESC",,SQL/70_observability/04_indexes.sql
+observability,error_groups,ix_error_groups_module_last_seen,NO,"""module_code"", ""last_seen_at"" DESC",,SQL/70_observability/04_indexes.sql
+observability,error_groups,ix_error_groups_code,NO,"""error_code"", ""error_reason""",,SQL/70_observability/04_indexes.sql
+observability,error_groups,ix_error_groups_assigned_to_user_id,NO,"""assigned_to_user_id""",,SQL/70_observability/04_indexes.sql
+observability,error_groups,ix_error_groups_resolved_by_user_id,NO,"""resolved_by_user_id""",,SQL/70_observability/04_indexes.sql
+observability,error_groups,ix_error_groups_created_by_user_id,NO,"""created_by_user_id""",,SQL/70_observability/04_indexes.sql
+observability,error_groups,ix_error_groups_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/70_observability/04_indexes.sql
+observability,error_events,ix_error_events_group_time,NO,"""error_group_id"", ""occurred_at"" DESC",,SQL/70_observability/04_indexes.sql
+observability,error_events,ix_error_events_module_time,NO,"""module_code"", ""occurred_at"" DESC",,SQL/70_observability/04_indexes.sql
+observability,error_events,ix_error_events_request_id,NO,"""request_id"", ""occurred_at"" DESC",,SQL/70_observability/04_indexes.sql
+observability,error_events,ix_error_events_instance_time,NO,"""instance_id"", ""occurred_at"" DESC",,SQL/70_observability/04_indexes.sql
+observability,http_request_minute_series,ix_http_minute_module_time,NO,"""module_code"", ""time"" DESC",,SQL/70_observability/04_indexes.sql
+observability,http_request_minute_series,ix_http_minute_route_time,NO,"""route_template"", ""http_method"", ""time"" DESC",,SQL/70_observability/04_indexes.sql
+observability,sql_statements,ix_sql_statements_primary_table,NO,"""primary_table""",,SQL/70_observability/04_indexes.sql
+observability,sql_statements,ix_sql_statements_last_seen,NO,"""last_seen_at"" DESC",,SQL/70_observability/04_indexes.sql
+observability,sql_statement_minute_series,ix_sql_minute_hash_time,NO,"""query_hash"", ""time"" DESC",,SQL/70_observability/04_indexes.sql
+observability,sql_statement_minute_series,ix_sql_minute_module_time,NO,"""module_code"", ""time"" DESC",,SQL/70_observability/04_indexes.sql
+observability,worker_tick_minute_series,ix_worker_tick_worker_time,NO,"""worker_name"", ""time"" DESC",,SQL/70_observability/04_indexes.sql
+observability,slow_request_samples,ix_slow_request_request_id,NO,"""request_id""",,SQL/70_observability/04_indexes.sql
+observability,slow_request_samples,ix_slow_request_module_time,NO,"""module_code"", ""time"" DESC",,SQL/70_observability/04_indexes.sql
+observability,dependency_probe_runs,ix_dependency_probe_code_time,NO,"""dependency_code"", ""time"" DESC",,SQL/70_observability/04_indexes.sql
+observability,dependency_probe_runs,ix_dependency_probe_service_component_id,NO,"""service_component_id""",,SQL/70_observability/04_indexes.sql
+observability,alert_rules,uq_alert_rules_code,YES,"""code""",,SQL/70_observability/04_indexes.sql
+observability,alert_rules,ix_alert_rules_severity_concept_id,NO,"""severity_concept_id""",,SQL/70_observability/04_indexes.sql
+observability,alert_rules,ix_alert_rules_enabled_module,NO,"""enabled"", ""module_code""",,SQL/70_observability/04_indexes.sql
+observability,alert_rules,ix_alert_rules_created_by_user_id,NO,"""created_by_user_id""",,SQL/70_observability/04_indexes.sql
+observability,alert_rules,ix_alert_rules_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/70_observability/04_indexes.sql
+observability,alert_evaluations,ix_alert_evaluations_rule_time,NO,"""alert_rule_id"", ""time"" DESC",,SQL/70_observability/04_indexes.sql
+observability,alert_evaluations,ix_alert_evaluations_health_incident_id,NO,"""health_incident_id""",,SQL/70_observability/04_indexes.sql

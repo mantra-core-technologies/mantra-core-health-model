@@ -39,7 +39,7 @@ Qué hace (cada fase es independiente e idempotente):
                     entity_seed_policies, seed-manifest.json y checksums.json.
 
 Uso:  python salud-db/gen_seeds.py [--dry] [--only <fase>]
-      fases: valuesets | backend | tables | apoyo | notnull | bindings | unique | meta   (por defecto: todas)
+      fases: valuesets | backend | tables | apoyo | notnull | bindings | unique | tenancy | meta   (por defecto: todas)
 """
 from __future__ import annotations
 
@@ -814,6 +814,19 @@ MEMBERSHIP_ORIGIN_BACKEND_CONCEPTS = [
     ]
 ]
 BACKEND_CONCEPTS += MEMBERSHIP_ORIGIN_BACKEND_CONCEPTS
+
+# --- v4.2.82 · quién inició un vínculo de la secretaria -------------------------------
+# `delegated_access.organization_user_assignments.initiated_by_party_concept_id` y
+# `practice.practitioner_support_assignments.initiated_by_party_concept_id` (NULL = no decidible:
+# la API falla cerrada). La API los declara en `delegated_access.concepts.ts` con
+# defineModuleConcepts('delegated_access', { INITIATOR_* }): clave `delegated_access:INITIATOR_*`,
+# código almacenado `DA_INITIATOR_*` (el estilo DA_* del módulo).
+INITIATOR_BACKEND_CONCEPTS = [
+    ("delegated_access:INITIATOR_SUPPORT_STAFF", "DA_INITIATOR_SUPPORT_STAFF", "Initiated by the support staff member"),
+    ("delegated_access:INITIATOR_ORGANIZATION", "DA_INITIATOR_ORGANIZATION", "Initiated by an organization administrator"),
+    ("delegated_access:INITIATOR_PRACTITIONER", "DA_INITIATOR_PRACTITIONER", "Initiated by the practitioner"),
+]
+BACKEND_CONCEPTS += INITIATOR_BACKEND_CONCEPTS
 
 # Conceptos EXISTENTES de la API que las filas boot nuevas referencian (permisos y plantillas de
 # rol). Se espejan igual que los demás: sin ellos la FK diferida rechazaría la fila al cargar en
@@ -5694,6 +5707,50 @@ def _v4274_at(base: str, minutes: int) -> str:
     return (t + timedelta(minutes=minutes)).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def phase_f4_case_space_tenant(docs) -> dict:
+    """model#102 — la sede y el quirófano de un caso quirúrgico son de SU tenant.
+
+    2026-10-29_infraestructura_f4_quirofanos.sql crea las FK compuestas
+    (custodian_tenant_id, practice_site_id) → practice_sites (tenant_id, id) y
+    (custodian_tenant_id, operating_room_id) → care_spaces (tenant_id, id), y antes se niega a
+    seguir —sin tocar datos— si encuentra un caso que apunta a un espacio de OTRO tenant.
+    El mock tenía uno (PROCEDUR-PROCEDURE_CA-000010): custodio y orden de un tenant, sede y
+    quirófano de otro. Su cadena clínica (orden, encuentro) es del custodio, así que lo que se
+    corrige es el espacio: se reapunta a una sede del custodio (y a un espacio de esa sede si lo
+    hay) y, si el custodio no tiene sedes en el paquete, ambas columnas quedan NULL (las dos son
+    NULLABLE: el caso existe antes de tener quirófano). No se cambia el tenant del caso.
+    """
+    recs = lambda code, sec: docs[code].get(sec, {}).get("records", {})
+    sites, spaces = {}, {}
+    for sec in ("boot", "mock"):
+        for r in recs("14", sec).get("practice_sites", []):
+            sites[r["id"]] = r
+        for r in recs("14", sec).get("care_spaces", []):
+            spaces[r["id"]] = r
+    stats = {"casos": 0, "reapuntados": 0, "sin_espacio": 0}
+    for sec in ("boot", "mock"):
+        for case in recs("53", sec).get("procedure_cases", []):
+            tenant = case.get("custodian_tenant_id")
+            site, room = sites.get(case.get("practice_site_id")), spaces.get(case.get("operating_room_id"))
+            if not tenant or ((site is None or site.get("tenant_id") == tenant)
+                              and (room is None or room.get("tenant_id") == tenant)):
+                continue
+            stats["casos"] += 1
+            own = sorted((s for s in sites.values() if s.get("tenant_id") == tenant), key=lambda s: s["id"])
+            if not own:
+                case["practice_site_id"] = None
+                case["operating_room_id"] = None
+                stats["sin_espacio"] += 1
+                continue
+            new_site = site if site is not None and site.get("tenant_id") == tenant else own[0]
+            in_site = sorted((s for s in spaces.values() if s.get("tenant_id") == tenant
+                              and s.get("practice_site_id") == new_site["id"]), key=lambda s: s["id"])
+            case["practice_site_id"] = new_site["id"]
+            case["operating_room_id"] = in_site[0]["id"] if in_site else None
+            stats["reapuntados"] += 1
+    return stats
+
+
 def phase_v4274_referral_transfer(docs) -> dict:
     """v4.2.74 — datos de traslado en la derivación (Norma Nacional de Referencia y
     Contrarreferencia, MSD Bolivia 2013). Todas las derivaciones mock reciben las columnas
@@ -5922,7 +5979,7 @@ def main() -> None:
     ap.add_argument("--dry", action="store_true", help="no escribe; solo informa")
     ap.add_argument("--only",
                     choices=["valuesets", "backend", "tables", "targets", "insights", "notnull",
-                             "bindings", "unique", "apoyo", "meta"],
+                             "bindings", "unique", "apoyo", "tenancy", "meta"],
                     help="ejecuta una sola fase")
     args = ap.parse_args()
 
@@ -5930,7 +5987,7 @@ def main() -> None:
     # `--only insights` es autosuficiente (sus value sets no viven en el vault) y las fases
     # `backend`, `apoyo` y `meta` no leen los value sets: con `--only` no exigen la bóveda
     # (que es otro repositorio y a veces no está clonada completa).
-    value_sets = load_value_sets() if args.only not in ("insights", "backend", "apoyo", "meta") else {}
+    value_sets = load_value_sets() if args.only not in ("insights", "backend", "apoyo", "tenancy", "meta") else {}
     codes = sorted(p.stem.split("_")[0] for p in MODULES_DIR.glob("*.seeds.json"))
     docs = {c: load_module(c) for c in codes}
     assert_anchors(docs)
@@ -5999,6 +6056,11 @@ def main() -> None:
         print("[2g] v4.2.74 · {} derivaciones con columnas de traslado · {} con traslado · "
               "{} sin traslado físico".format(s["derivaciones"], s["con_traslado"],
                                               s["sin_traslado"]))
+    if run("tenancy"):
+        s = phase_f4_case_space_tenant(docs)
+        print("[2h] model#102 · casos quirúrgicos con sede/quirófano de otro tenant: {} · {} "
+              "reapuntados a su tenant · {} sin espacio (custodio sin sedes)".format(
+                  s["casos"], s["reapuntados"], s["sin_espacio"]))
     if run("insights"):
         s = phase_v4269_marketing_insights(docs, ddl, uniques)
         print("[2f] v4.2.69 · AloVida Insights · {} value sets · {}".format(

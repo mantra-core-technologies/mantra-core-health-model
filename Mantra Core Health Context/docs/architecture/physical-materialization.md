@@ -49,6 +49,36 @@ comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_obje
 
 ## 3. Estado actual del build
 
+### v4.2.82 — Detalle de la orden de estudios (2026-11-01)
+
+**Cambio de esquema: +6 columnas NULLABLE en `clinical.service_requests`, +1 tabla (`clinical.service_request_components`), +9 FK,
++12 índices, +3 CHECK.** Parche idempotente: `SQL/patches/2026-11-01_v4282_service_request_detalle.sql`, escrito primero en la API
+(cb63a0cdc) y traído al modelo con el mismo nombre y contenido. El médico pide qué muestra se analiza, qué componentes de un panel
+y, en imagen, la modalidad, la parte del cuerpo, la lateralidad y el contraste.
+
+- `requisition_id` agrupa los renglones pedidos juntos (sin FK). `specimen_type_concept_id`, `modality_concept_id`,
+  `body_site_concept_id`, `laterality_concept_id` y `contrast_concept_id` con FK a `terminology.catalog_concepts`. Sin backfill:
+  una orden anterior se expone como «estudio completo, sin detalle».
+- `service_request_components`: append-only, `UNIQUE (service_request_id, component_concept_id)`; `custodian_tenant_id` repetido
+  para el RLS. El parche crea RLS por custodio (ENABLE+FORCE), la lectura del ejecutor (`service_request_components_performer_read`)
+  y el disparador `trg_service_request_component_tenant` (custodio del componente = el de su orden), que `gen_ddl.py` no expresa.
+- CHECK en el módulo 33: `ck_service_requests_specimen_xor_imaging`, `_laterality_requires_site`, `_contrast_requires_modality`.
+
+### v4.2.82 — Quién inició cada vínculo de la secretaria (2026-10-31)
+
+**Cambio de esquema: +2 columnas NULLABLE, +2 FK, +2 índices, +3 conceptos de módulo.** Parche idempotente:
+`SQL/patches/2026-10-31_secretaria_iniciador_vinculos.sql` (el nombre es el del parche que la API escribió a mano, 819487e82, al que reemplaza; sobre una base viva va después del v4279). Lo pide la API de la secretaria (alta por
+solicitud y aceptación): decide la parte que NO inició el vínculo, y eso no se deduce de `created_by_user_id`.
+
+- `delegated_access.organization_user_assignments.initiated_by_party_concept_id` y
+  `practice.practitioner_support_assignments.initiated_by_party_concept_id` (`uuid NULL`, FK a
+  `terminology.catalog_concepts`). Conceptos `delegated_access:INITIATOR_SUPPORT_STAFF | _ORGANIZATION | _PRACTITIONER`
+  (códigos almacenados `DA_INITIATOR_*`, como los declara `delegated_access.concepts.ts`). NULL = no decidible: la API
+  falla cerrada. Sin backfill.
+- Índices `ix_org_user_assignments_initiated_by_party` e `ix_prac_support_assignments_initiated_by_party` (mismos nombres
+  que el parche de la API); las FK llevan el nombre de `gen_ddl.py` y el parche no agrega una segunda si ya hay una.
+- La API no usa `engagement_requests` para este flujo: la solicitud/aceptación vive en las dos tablas de vínculo.
+
 ### v4.2.78 — Gobierno de accesos: permisos de ultra granularidad y gobierno de usuarios (2026-11-02)
 
 **Cambio de esquema: +12 tablas (`delegated_access`), +29 columnas en 5 tablas existentes, +98 FK, +111 índices, +35 CHECK, +1 barrera WORM,
@@ -396,6 +426,48 @@ FK y los totales del reporte. `gen_integrity.py` no cambia nada; `gen_seeds.py -
 **Verificado** sobre la base local del stack Docker (con datos sintéticos): el parche dos veces, y la
 segunda sólo avisa «already exists». La tabla queda con la columna, el índice parcial y la FK. No se
 aplicó contra una base con datos reales.
+### v4.2.67 — Admisiones de profesionales: verificación del alta de médicos (2026-10-29)
+
+**Cambio de esquema: +4 tablas en `profiles` (módulo 05) y +6 columnas en tablas existentes.**
+Parche: `SQL/patches/2026-10-29_v4267_practitioner_admissions.sql` (idempotente, fuera de `apply_all.sql`,
+con backfill). `v4266` ya estaba tomado (consentimiento dirigido), de ahí `v4267`.
+
+- `practitioner_admissions`: la solicitud de admisión (tipo `ALTA_DE_DOCTOR`, estado, `submitted_at`, `due_at`
+  = SLA de 3 días hábiles, asignación, decisión, motivo, `resubmission_count`, `valid_until`, `closed_at` y la
+  foto del formulario enviado `submitted_snapshot`). Es la **fuente de verdad**; `PRACT_VERIF_*` del perfil
+  es su proyección y `ENVIADA` equivale a `PRACT_VERIF_PENDING`. Único parcial
+  `uq_practitioner_admissions_open` (una abierta por médico y tipo) e índice de bandeja
+  `(status_concept_id, due_at, id)`.
+- `admission_requirements`: catálogo de requisitos por tipo de admisión (obligatorio, profesión a la que
+  aplica, documento o dato, método, si exige URI de fuente). Extensible a organización, farmacia,
+  laboratorio y aseguradora sin cambio de esquema. Lo siembra la API (proceso 2.1 del stakeholder).
+- `practitioner_admission_reviews`: estado vigente por requisito/ítem (PENDIENTE, VERIFICADO, RECHAZADO,
+  INFO_REQUERIDA), con archivo, fuente, motivo y quién/cuándo.
+- `practitioner_admission_events`: bitácora **append-only** (`UPDATE_DELETE: forbidden` en el módulo 33, trigger
+  `trg_forbid_mutation`).
+- `jurisdiction_authorizations` + `verified_by_user_id`, `verified_at`, `verification_source_uri`,
+  `rejection_reason_text`; `professional_credentials` + `rejection_reason_text`; `practitioner_specialties` +
+  `verified_at`.
+- Revisión por requisito con **fuente estructurada** (`source_type_concept_id` + `source_ref` +
+  `source_consulted_at`, además de la URL opcional), **huella de la evidencia** (`evidence_sha256`: si el
+  médico cambia algo al reenviar, la revisión vuelve a PENDIENTE), **motivo estructurado**
+  (`reason_code_concept_id`) y `internal_note` que nunca ve el solicitante. Atestación del solicitante
+  (`attested_at`), plazo para responder (`info_due_at`, vencido pasa a `ABANDONADA`) y `four_eyes_waived`.
+  La bitácora suma `request_id` y `actor_role_code`.
+- Los conceptos (`profiles:ADMISSION_*`, `AUTH_REJECTED`, `SPEC_VERIF_REJECTED`) los siembra la API.
+  No cambia el significado de los conceptos existentes ni se migran filas de perfil.
+- **Backfill acotado**: sólo perfiles con cuenta activa vinculada. Los pendientes reciben una admisión
+  `ENVIADA` con `due_at` = ahora + 3 días hábiles; los verificados, una `VERIFICADA` con `valid_until`
+  (vencimiento de la matrícula nacional o hoy + 12 meses). El padrón cargado (sin cuenta) no genera nada.
+  `SET admissions.backfill_dry_run = 'on'` sólo cuenta; `admissions.backfill_max` (default 200 por clase)
+  aborta si el conteo lo excede. Falla con mensaje explícito si los conceptos aún no están sembrados.
+
+**Delta:** +4 tablas, +6 columnas, +32 FK, +37 índices, +4 CHECK, +1 trigger. Total 1265 tablas.
+
+**Verificado** con PostgreSQL 16 en una base descartable: el modelo anterior (`apply_all.sql` +
+`apply_deferred.sql`) + el parche dos veces, y el DDL nuevo desde cero, terminan con el mismo `pg_dump -s`
+salvo el orden de columnas; el backfill se probó con perfiles sintéticos (con y sin cuenta; dry-run, umbral y días hábiles) y
+el trigger rechaza `UPDATE` y `DELETE` sobre la bitácora. No se aplicó contra una base con datos reales.
 
 ### v4.2.65 — Derivación con tipo y servicio de destino (2026-10-28)
 
@@ -451,6 +523,46 @@ Parche: `SQL/patches/2026-10-27_v4264_comprobantes_logo_flexible.sql` (idempoten
 - Base limpia con `apply_all.sql` + `apply_deferred.sql` de esta versión: **1 260 · 7 265 · 9 752**, y
   su `pg_dump -s` coincide con el de la base parcheada salvo el orden de las dos columnas nuevas.
 - `rebuild_stack.py --yes` **no se corrió** (necesita el stack completo de contenedores): BLOCKED.
+### v4.2.63 — Alta de organización médica: bloque `medicalFacility` (2026-10-28)
+
+Dos tablas nuevas en `directory`, sin tocar ninguna existente. Es un registro **declarado** por el
+titular y **pendiente de verificación**: no crea práctica ni sede operativa (eso sigue siendo
+`medical-center-setup` tras la verificación).
+
+| Tabla | Qué guarda | Claves |
+|---|---|---|
+| `directory.tenant_medical_facilities` | NIT declarado, número de registro/habilitación ante la autoridad sanitaria (SEDES en Bolivia) y director médico (nombre en partes, matrícula profesional, correo, teléfono) | 1 fila por tenant: `uk_tenant_medical_facilities_tenant` |
+| `directory.tenant_medical_facility_sites` | Casa central (`ordinal` 0) y 0..50 sucursales declaradas, con líneas de dirección y coordenadas opcionales | `(medical_facility_id, ordinal)` único; una sola casa central |
+
+Decisiones que conviene no revertir sin leer el porqué (están comentadas en `diagram_04_directory.puml`):
+
+- **Ni el NIT ni el número de habilitación son UNIQUE.** Son datos sin verificar: un UNIQUE deja que el
+  primero que los tipea, aunque sean falsos, bloquee al titular real. Llevan índice para detectar
+  duplicados en la bandeja de verificación. Una UNIQUE parcial sobre filas verificadas queda para
+  cuando exista la verificación del número. País y jurisdicción son los del tenant.
+- **El director médico no es una `persons`.** `profiles.persons` es identidad maestra (merge,
+  anonimización) y no se crea una con datos sin verificar; la matrícula tampoco cabe en
+  `professional_credentials`, que exige un `health_practitioner_profile`. No es una cuenta de la
+  plataforma. El representante legal y las gerencias siguen en `persons` + `tenant_legal_representatives`.
+- **Las sedes declaradas no son `directory.branches`.** Aquellas son operativas; estas pre-llenan el
+  `medical-center-setup` y las revisa el equipo de verificación.
+- **El tope de 50 sucursales lo impone la base**: `ck_tenant_medical_facility_sites_kind_ordinal`
+  admite sólo `headquarters` con `ordinal = 0` y `branch` con `ordinal` 1..50. Las coordenadas van
+  ambas o ninguna (`ck_tenant_medical_facility_sites_geo`).
+- Ambas tablas llevan `tenant_id`, así que `SQL/patches/2026-08-05_tenant_rls.sql` (genérico) les
+  aplica RLS; volver a correrlo en una base viva.
+
+**Verificación (2026-10-28, PostgreSQL 16 desechable):**
+- `SQL/patches/2026-10-28_v4263_medical_facility.sql` aplicado dos veces sobre una base que sólo
+  tenía `directory.tenants` e `iam.users`: 0 errores; deltas +2 tablas, +30 columnas, +7 FK, +11
+  índices, +6 CHECK.
+- Esa base y otra construida con `SQL/04_directory/01..05` tienen las dos tablas con las mismas
+  columnas y CHECK; las 7 FK del archivo generado se crean en cuanto existen los schemas destino.
+- Probados 17 casos de borde: NIT con letras, número de habilitación con espacio, matrícula corta,
+  segunda casa central, sucursal 0 y 51, solo latitud, latitud fuera de rango, dirección vacía,
+  `site_kind` desconocido, segundo bloque del mismo tenant (rechazadas) y 50 sucursales, mismo NIT
+  en dos tenants y casa central con coordenadas (aceptadas).
+- Sin seeds: son datos que declara el titular, no catálogo.
 
 ### Convergencia del DDL de la API con el modelo: se recupera el PR #51 (2026-10-25)
 

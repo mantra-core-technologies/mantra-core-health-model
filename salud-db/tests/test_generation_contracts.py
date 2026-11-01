@@ -25,6 +25,18 @@ class ConcreteIntegrityTests(unittest.TestCase):
             with self.subTest(declaration=declaration), self.assertRaises(ValueError):
                 gen_integrity.concrete_check('insurance', 'insurance_claims', declaration)
 
+    def test_exclude_accepts_only_literal_deferral_clauses(self):
+        decl = ('ex_bed | "care_space_id" WITH =, tstzrange("a", "b", \'[)\') WITH && '
+                '| "is_bed" | DEFERRABLE INITIALLY IMMEDIATE')
+        sql = gen_integrity.exclude_concreto('clinical', 'encounter_locations', decl)
+        self.assertIn('WHERE ("is_bed") DEFERRABLE INITIALLY IMMEDIATE;', sql)
+        plain = gen_integrity.exclude_concreto('clinical', 'encounter_locations',
+                                               'ex_bed | "care_space_id" WITH = | "is_bed"')
+        self.assertTrue(plain.rstrip().endswith('WHERE ("is_bed");'))
+        with self.assertRaises(ValueError):
+            gen_integrity.exclude_concreto('clinical', 'encounter_locations',
+                                           'ex_bed | "care_space_id" WITH = | "is_bed" | NOT VALID')
+
     def test_prose_rules_stay_as_comments_and_list_existing_uniques(self):
         entity = {'name': 'inventory_reservations', 'stereo': 'REFERENCE_ONLY',
                   'owner': ('pharmacy_inventory', 'inventory_reservations'),
@@ -148,6 +160,23 @@ class ExplicitColumnTests(unittest.TestCase):
     def test_scoped_by_accepts_a_single_owner_column(self):
         with self.assertRaises(ValueError):
             gen_ddl.scoped_by({'SCOPED_BY:A', 'SCOPED_BY:B'})
+
+
+class ApplyAllCoversEveryPhaseFileTests(unittest.TestCase):
+    """`SQL/apply_all.sql` es un artefacto generado: un `05_constraints.sql` nuevo que
+    no se regenera deja sus CHECK sin aplicar en una base creada solo desde el runner."""
+
+    def test_apply_all_includes_every_existing_phase_file(self):
+        import gen_apply
+        sql_dir = gen_ddl.REPO / 'SQL'
+        runner = (sql_dir / 'apply_all.sql').read_text(encoding='utf-8')
+        listed = {line[len('\\ir '):].strip() for line in runner.splitlines() if line.startswith('\\ir ')}
+        missing = sorted(f'{module.name}/{phase}'
+                         for module in sql_dir.iterdir()
+                         if module.is_dir() and module.name[:2].isdigit() and module.name != '00_shared'
+                         for phase in gen_apply.PHASES
+                         if (module / phase).exists() and f'{module.name}/{phase}' not in listed)
+        self.assertEqual(missing, [], 'regenerá con: python salud-db/gen_apply.py')
 
 
 if __name__ == '__main__':
