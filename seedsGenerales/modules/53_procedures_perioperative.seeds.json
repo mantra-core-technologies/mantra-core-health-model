@@ -10169,7 +10169,8 @@
             "currency": "BOB",
             "occurred_at": "2026-04-06T06:09:00Z"
           },
-          "created_at": "2026-08-18T12:17:00Z"
+          "created_at": "2026-08-18T12:17:00Z",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9"
         },
         {
           "id": "51a4e11d-e0ad-5af9-8543-95d571a886f2",
@@ -10191,7 +10192,8 @@
             "currency": "BOB",
             "occurred_at": "2026-11-17T19:26:00Z"
           },
-          "created_at": "2026-08-23T12:28:00Z"
+          "created_at": "2026-08-23T12:28:00Z",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9"
         },
         {
           "id": "fb237750-3374-5c6d-b246-e7841366a18e",
@@ -10213,7 +10215,8 @@
             "currency": "BOB",
             "occurred_at": "2026-06-01T08:43:00Z"
           },
-          "created_at": "2026-08-28T12:39:00Z"
+          "created_at": "2026-08-28T12:39:00Z",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0"
         },
         {
           "id": "36baf283-077e-5dac-a08d-cd41f8974476",
@@ -10235,7 +10238,8 @@
             "currency": "BOB",
             "occurred_at": "2026-01-12T21:00:00Z"
           },
-          "created_at": "2026-09-02T12:50:00Z"
+          "created_at": "2026-09-02T12:50:00Z",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a"
         },
         {
           "id": "d3d6c179-7db9-5fb8-b71d-d364e9202d8b",
@@ -10257,7 +10261,8 @@
             "currency": "BOB",
             "occurred_at": "2026-08-23T10:17:00Z"
           },
-          "created_at": "2026-09-07T13:01:00Z"
+          "created_at": "2026-09-07T13:01:00Z",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06"
         },
         {
           "id": "e0922fbc-3abc-5ade-96cd-c57d03bb0189",
@@ -10279,7 +10284,8 @@
             "currency": "BOB",
             "occurred_at": "2026-03-07T23:34:00Z"
           },
-          "created_at": "2026-09-12T13:12:00Z"
+          "created_at": "2026-09-12T13:12:00Z",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1"
         },
         {
           "id": "a1efdc10-846c-59b1-837e-6c046bee1b92",
@@ -10301,7 +10307,8 @@
             "currency": "BOB",
             "occurred_at": "2026-10-18T12:51:00Z"
           },
-          "created_at": "2026-09-17T13:23:00Z"
+          "created_at": "2026-09-17T13:23:00Z",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c"
         },
         {
           "id": "5771d4e1-464a-590c-bad4-c18c7e2401f3",
@@ -10323,7 +10330,8 @@
             "currency": "BOB",
             "occurred_at": "2026-05-02T01:08:00Z"
           },
-          "created_at": "2026-09-22T13:34:00Z"
+          "created_at": "2026-09-22T13:34:00Z",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824"
         },
         {
           "id": "9db3c946-2a68-5d18-97e4-36e6cf981d4a",
@@ -10345,7 +10353,8 @@
             "currency": "BOB",
             "occurred_at": "2026-12-13T14:25:00Z"
           },
-          "created_at": "2026-12-13T14:25:00Z"
+          "created_at": "2026-12-13T14:25:00Z",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9"
         },
         {
           "id": "9d4da48b-5b50-54d1-900e-abeeb8620196",
@@ -10367,7 +10376,8 @@
             "currency": "BOB",
             "occurred_at": "2026-07-24T03:42:00Z"
           },
-          "created_at": "2026-07-24T03:42:00Z"
+          "created_at": "2026-07-24T03:42:00Z",
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9"
         },
         {
           "id": "e2541d37-d716-5c3b-bd13-e9fdc5e26cbd",
@@ -10389,7 +10399,8 @@
             "currency": "BOB",
             "occurred_at": "2026-02-08T16:59:00Z"
           },
-          "created_at": "2026-02-08T16:59:00Z"
+          "created_at": "2026-02-08T16:59:00Z",
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0"
         },
         {
           "id": "7ccdb166-aad2-5f52-a5d5-a55f2d070816",
@@ -10411,7 +10422,8 @@
             "currency": "BOB",
             "occurred_at": "2026-09-19T05:16:00Z"
           },
-          "created_at": "2026-09-19T05:16:00Z"
+          "created_at": "2026-09-19T05:16:00Z",
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a"
         },
         {
           "id": "adcc1d68-d2ae-5ada-8c27-c74a18068fb6",
@@ -10433,7 +10445,8 @@
             "currency": "BOB",
             "occurred_at": "2026-04-03T18:33:00Z"
           },
-          "created_at": "2026-04-03T18:33:00Z"
+          "created_at": "2026-04-03T18:33:00Z",
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06"
         },
         {
           "id": "103dd247-cb33-5182-af08-3088ded9c757",
@@ -10455,7 +10468,8 @@
             "currency": "BOB",
             "occurred_at": "2026-11-14T07:50:00Z"
           },
-          "created_at": "2026-11-14T07:50:00Z"
+          "created_at": "2026-11-14T07:50:00Z",
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1"
         },
         {
           "id": "77531485-f1a5-5994-a577-db0d1539778c",
@@ -10477,7 +10491,8 @@
             "currency": "BOB",
             "occurred_at": "2026-06-25T20:07:00Z"
           },
-          "created_at": "2026-06-25T20:07:00Z"
+          "created_at": "2026-06-25T20:07:00Z",
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c"
         },
         {
           "id": "825eefe1-6786-5d0d-8e0a-89f676320f5f",
@@ -10499,7 +10514,8 @@
             "currency": "BOB",
             "occurred_at": "2026-01-09T09:24:00Z"
           },
-          "created_at": "2026-01-09T09:24:00Z"
+          "created_at": "2026-01-09T09:24:00Z",
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824"
         }
       ],
       "sterility_verification_checks": [

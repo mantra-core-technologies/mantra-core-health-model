@@ -4046,6 +4046,116 @@ def patch_column_rules() -> tuple:
     return defaults, derived
 
 
+# Backfill completo: `UPDATE "s"."t" a SET "c" = b."c" FROM "ps"."pt" b WHERE b."k" = a."fk"` (o al revés).
+PATCH_BACKFILL_FULL_RE = re.compile(
+    r'UPDATE\s+"?([a-z0-9_]+)"?\."?([a-z0-9_]+)"?\s+([a-z_][a-z0-9_]*)\s+'
+    r'SET\s+"?([a-z0-9_]+)"?\s*=\s*([a-z_][a-z0-9_]*)\."?([a-z0-9_]+)"?\s+'
+    r'FROM\s+"?([a-z0-9_]+)"?\."?([a-z0-9_]+)"?\s+([a-z_][a-z0-9_]*)\s+'
+    r'WHERE\s+([a-z_][a-z0-9_]*)\."?([a-z0-9_]+)"?\s*=\s*([a-z_][a-z0-9_]*)\."?([a-z0-9_]+)"?', re.I)
+PATCH_DROP_DEFAULT_RE = re.compile(
+    r'ALTER\s+TABLE\s+(?:ONLY\s+)?"?([a-z0-9_]+)"?\."?([a-z0-9_]+)"?\s+'
+    r'ALTER\s+COLUMN\s+"?([a-z0-9_]+)"?\s+DROP\s+DEFAULT\b', re.I)
+DDL_LITERAL_DEFAULT_RE = re.compile(r'^\s*"([a-z0-9_]+)"\s+[^,]*?\bDEFAULT\s+(true|false|-?\d+)\s*,?\s*$', re.I)
+
+
+def patch_backfills() -> dict:
+    """{schema.tabla.col: (schema.padre, col_del_padre, clave_del_padre, fk_de_la_fila)} de los
+    backfill de `SQL/patches/` que copian una columna desde la fila padre. Si dos patches derivan
+    la misma columna, gana el último en orden de aplicación (es el que deja la base)."""
+    rules = {}
+    for f in sorted((SQL_DIR / "patches").glob("*.sql")):
+        for m in PATCH_BACKFILL_FULL_RE.finditer(f.read_text(encoding="utf-8")):
+            (sch, tab, alias, col, src_alias, src_col, psch, ptab, palias,
+             l_alias, l_col, r_alias, r_col) = m.groups()
+            if src_alias != palias or palias == alias:
+                continue
+            if l_alias == palias and r_alias == alias:
+                pkey, fk = l_col, r_col
+            elif l_alias == alias and r_alias == palias:
+                pkey, fk = r_col, l_col
+            else:
+                continue
+            rules[f"{sch}.{tab}.{col}"] = (f"{psch}.{ptab}", src_col, pkey, fk)
+    return rules
+
+
+def patch_dropped_defaults() -> dict:
+    """{schema.tabla.col: literal} — columnas cuyo DEFAULT del DDL un patch quita después
+    (`ALTER COLUMN … DROP DEFAULT`). En la base quedan NOT NULL sin default, así que la fila
+    tiene que traer el valor; el que corresponde es el que el modelo declara como default."""
+    literals = {}
+    for f in ddl_files():
+        for schema, table, body in CREATE_RE.findall(f.read_text(encoding="utf-8")):
+            for line in body.split("\n"):
+                m = DDL_LITERAL_DEFAULT_RE.match(line)
+                if m and "NOT NULL" in line.upper():
+                    raw = m.group(2).lower()
+                    literals[f"{schema}.{table}.{m.group(1)}"] = (
+                        raw == "true" if raw in ("true", "false") else int(raw))
+    out = {}
+    for f in sorted((SQL_DIR / "patches").glob("*.sql")):
+        for m in PATCH_DROP_DEFAULT_RE.findall(f.read_text(encoding="utf-8")):
+            key = ".".join(m)
+            if key in literals:
+                out[key] = literals[key]
+    return out
+
+
+def phase_patch_derivations(docs) -> dict:
+    """Completa en el paquete lo que los patches resuelven en la base y el loader no puede.
+
+    `load_seeds.py` salta toda fila que no trae una columna NOT NULL sin default. Dos casos
+    las dejaban afuera aunque el valor no es un dato a inventar:
+
+    - columna DERIVADA por un backfill de patch (`patch_backfills`): se copia del padre que
+      el propio patch usa — el tenant de la estancia es el de su encuentro, el del evento de
+      quirófano el de la sala. Sólo si falta (los backfill filtran `… IS NULL`) y si el padre
+      está en el paquete y trae el valor; si no, se deja ausente y el loader avisa.
+    - DEFAULT del modelo que un patch quita (`patch_dropped_defaults`): se escribe ese literal.
+
+    Corre después de las fases de unicidad, que pueden repuntar la FK al padre.
+    """
+    by_id = {}
+    for code, doc in docs.items():
+        schema = module_path(code).stem.split("_", 1)[1].replace(".seeds", "")
+        for section in ("boot", "mock"):
+            for entity, rows in doc.get(section, {}).get("records", {}).items():
+                by_id.setdefault(f"{schema}.{entity}", []).extend(rows)
+    backfills, dropped = patch_backfills(), patch_dropped_defaults()
+    parent_index = {}
+    filled = OrderedDict()
+    for code, doc in docs.items():
+        schema = module_path(code).stem.split("_", 1)[1].replace(".seeds", "")
+        for section in ("boot", "mock"):
+            for entity, rows in doc.get(section, {}).get("records", {}).items():
+                tkey = f"{schema}.{entity}"
+                for key, rule in backfills.items():
+                    if not key.startswith(tkey + ".") or key.count(".") != 2:
+                        continue
+                    col = key.rsplit(".", 1)[1]
+                    parent, pcol, pkey, fk = rule
+                    if (parent, pkey) not in parent_index:
+                        parent_index[(parent, pkey)] = {r.get(pkey): r for r in by_id.get(parent, [])}
+                    index = parent_index[(parent, pkey)]
+                    for row in rows:
+                        if row.get(col) is not None:
+                            continue
+                        value = index.get(row.get(fk), {}).get(pcol)
+                        if value is None:
+                            continue
+                        row[col] = value
+                        filled[key] = filled.get(key, 0) + 1
+                for key, literal in dropped.items():
+                    if not key.startswith(tkey + ".") or key.count(".") != 2:
+                        continue
+                    col = key.rsplit(".", 1)[1]
+                    for row in rows:
+                        if col not in row or row[col] is None:
+                            row[col] = literal
+                            filled[key] = filled.get(key, 0) + 1
+    return filled
+
+
 def phase_notnull(docs, ddl, fks, value_sets) -> dict:
     """Rellena columnas NOT NULL sin default que faltan en filas ya sembradas.
 
@@ -6232,6 +6342,12 @@ def main() -> None:
               "en {} columnas".format(sum(s.values()), len(s)))
         for k, v in sorted(s.items(), key=lambda kv: -kv[1])[:10]:
             print("      {:<48} {:>5}".format(k, v))
+    if run("notnull"):
+        s = phase_patch_derivations(docs)
+        print("[3e] derivadas de patch · {} valores copiados del padre o del default quitado "
+              "en {} columnas".format(sum(s.values()), len(s)))
+        for k, v in s.items():
+            print("      {:<62} {:>5}".format(k, v))
     if run("meta"):
         phase_meta(docs)
         print("[5] metadatos · source_model_version={} · seed_revision={}".format(
