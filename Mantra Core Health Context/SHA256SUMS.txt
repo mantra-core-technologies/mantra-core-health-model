@@ -12,7 +12,7 @@ f78b338e5f22556e2b7ce87f3caa6710348bfd39feae952bd4e9509dd69c3a72 *./docs/archite
 1575326e4d58c1305936822e25989ce25258c4f5d7386ec4ad5db604993354bd *./docs/architecture/nosql-storage-allocation.md
 2ee524374882519bdfb5abfb596f4cf5b577235e4e9e9341bb1dd44ccb4c4cc8 *./docs/architecture/orm-mapping-guide.md
 b1298ff95e7342cf0e5ddc14ecf01a8c6a9b481bd2162a153ff72ed48b2ef8fa *./docs/architecture/patch-v4.0.1-scheduled-campaigns-tracking.md
-62c61068af7c40cd97d0f5d397cfe01d62d76896bb2847619d2a81c09187afa3 *./docs/architecture/physical-materialization.md
+83320494f1eeb26c019a007294ed8fc1e4a5a1ed90324a2fb584e4c5b505ab48 *./docs/architecture/physical-materialization.md
 11ab86dc5a9941b736deb99f7c7dbe1d76cddf6130616e6e2aa81443446bc8bd *./docs/architecture/plan-v4.0.1-scheduled-campaigns-tracking.md
 c3327f106901e72e91feab22c78d24f8e84ff7ed12d4601801e3c649931757a8 *./docs/architecture/procedures-perioperative-model.md
 0fd825299a29b17c7546ed97f696da48e62502acb233fd1eb9d9e5c721c04335 *./docs/architecture/semantic-data-analysis.md
@@ -27,7 +27,7 @@ ba27af699b353d75f41b27debb314584338649f87de16ea21cebbac797b9c23f *./docs/archite
 ea66825089c41332d50f6cd226db2e0fadebd048be9cd5af02658d33c5cb29c9 *./docs/frontend/v3.8-operational-clinical-views.md
 e153a9a29ac769da018ebca705168953593cabf90e923d27618a980e78e9e958 *./docs/validation/nosql-validation-report.md
 b2936da29e2f234cce26f672ca53f779394e9cab128bcabab09dcb0d5e4dc365 *./docs/validation/validation-report.md
-b54c20b9273d16cd07994a0ce26990f3c0bfe336026c18b994b533205343d454 *./model-manifest.yaml
+8a4d00c875f6444fa2544fba2510a98350d761e6b9cafefd39f11a014be05671 *./model-manifest.yaml
 5bd755a02517519c59917eeb8a39dd10fe580cbeaf0eacd26bedecdb2aa62c2d *./modules/diagram_00_platform.puml
 3223ef10fb08b45c429ec7e4a77cb8824d06cf84ab83c8eb028e2d8271e96345 *./modules/diagram_01_iam.puml
 33003e4e867c75115f18de3ca56627c0626ec1ee3865cf325c8d656f2f068bc5 *./modules/diagram_02_common.puml

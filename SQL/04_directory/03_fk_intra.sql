@@ -78,7 +78,7 @@ DO $$ BEGIN
     ALTER TABLE "directory"."affiliation_invitation_uses"
         ADD CONSTRAINT "fk_affiliation_invitation_uses_tenant_id" FOREIGN KEY ("tenant_id")
         REFERENCES "directory"."tenants" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "directory"."affiliation_invitation_uses"

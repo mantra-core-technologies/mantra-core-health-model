@@ -521,21 +521,21 @@ DO $$ BEGIN
     ALTER TABLE "data_catalog"."catalog_stewardships"
         ADD CONSTRAINT "fk_catalog_stewardships_user_id" FOREIGN KEY ("user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "data_catalog"."catalog_stewardships"
         ADD CONSTRAINT "fk_catalog_stewardships_created_by_user_id" FOREIGN KEY ("created_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "data_catalog"."catalog_stewardships"
         ADD CONSTRAINT "fk_catalog_stewardships_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: system_ops.data_domains (requiere schema system_ops)
 DO $$ BEGIN
@@ -549,84 +549,84 @@ DO $$ BEGIN
     ALTER TABLE "data_catalog"."catalog_glossary_terms"
         ADD CONSTRAINT "fk_catalog_glossary_terms_approved_by_user_id" FOREIGN KEY ("approved_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "data_catalog"."catalog_glossary_terms"
         ADD CONSTRAINT "fk_catalog_glossary_terms_created_by_user_id" FOREIGN KEY ("created_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "data_catalog"."catalog_glossary_terms"
         ADD CONSTRAINT "fk_catalog_glossary_terms_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "data_catalog"."catalog_glossary_term_revisions"
         ADD CONSTRAINT "fk_catalog_glossary_term_revisions_author_user_id" FOREIGN KEY ("author_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "data_catalog"."catalog_glossary_term_links"
         ADD CONSTRAINT "fk_catalog_glossary_term_links_created_by_user_id" FOREIGN KEY ("created_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "data_catalog"."quality_rules"
         ADD CONSTRAINT "fk_quality_rules_owner_user_id" FOREIGN KEY ("owner_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "data_catalog"."quality_rules"
         ADD CONSTRAINT "fk_quality_rules_created_by_user_id" FOREIGN KEY ("created_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "data_catalog"."quality_rules"
         ADD CONSTRAINT "fk_quality_rules_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "data_catalog"."quality_rule_runs"
         ADD CONSTRAINT "fk_quality_rule_runs_requested_by_user_id" FOREIGN KEY ("requested_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "data_catalog"."quality_issues"
         ADD CONSTRAINT "fk_quality_issues_acknowledged_by_user_id" FOREIGN KEY ("acknowledged_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "data_catalog"."quality_issues"
         ADD CONSTRAINT "fk_quality_issues_resolved_by_user_id" FOREIGN KEY ("resolved_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "data_catalog"."quality_issue_events"
         ADD CONSTRAINT "fk_quality_issue_events_actor_user_id" FOREIGN KEY ("actor_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: system_ops.data_domains (requiere schema system_ops)
 DO $$ BEGIN
@@ -640,21 +640,21 @@ DO $$ BEGIN
     ALTER TABLE "data_catalog"."catalog_lineage_edges"
         ADD CONSTRAINT "fk_catalog_lineage_edges_approved_by_user_id" FOREIGN KEY ("approved_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "data_catalog"."catalog_lineage_edges"
         ADD CONSTRAINT "fk_catalog_lineage_edges_created_by_user_id" FOREIGN KEY ("created_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "data_catalog"."catalog_lineage_edges"
         ADD CONSTRAINT "fk_catalog_lineage_edges_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: read_models.read_model_definitions (requiere schema read_models)
 DO $$ BEGIN
@@ -675,42 +675,42 @@ DO $$ BEGIN
     ALTER TABLE "data_catalog"."catalog_certifications"
         ADD CONSTRAINT "fk_catalog_certifications_requested_by_user_id" FOREIGN KEY ("requested_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "data_catalog"."catalog_certifications"
         ADD CONSTRAINT "fk_catalog_certifications_certified_by_user_id" FOREIGN KEY ("certified_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "data_catalog"."catalog_certifications"
         ADD CONSTRAINT "fk_catalog_certifications_revoked_by_user_id" FOREIGN KEY ("revoked_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "data_catalog"."catalog_change_acknowledgements"
         ADD CONSTRAINT "fk_catalog_change_acknowledgements_user_id" FOREIGN KEY ("user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "system_ops"."governance_policy_revisions"
         ADD CONSTRAINT "fk_governance_policy_revisions_submitted_by_user_id" FOREIGN KEY ("submitted_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "system_ops"."governance_policy_revisions"
         ADD CONSTRAINT "fk_governance_policy_revisions_decided_by_user_id" FOREIGN KEY ("decided_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- ---- 5. integridad: CHECK de gobierno y UPDATE prohibido (05_constraints.sql de los modulos 67 y 11) ----
 -- ═══ catalog_stewardships ═══
