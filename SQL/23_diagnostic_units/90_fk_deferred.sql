@@ -1,4 +1,4 @@
--- SALUD v4.2.82 · módulo 23 · schema diagnostic_units
+-- SALUD v4.2.83 · módulo 23 · schema diagnostic_units
 -- Generado de diagram_23_diagnostic_units.puml — NO editar a mano.
 
 

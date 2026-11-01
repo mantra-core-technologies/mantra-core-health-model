@@ -1,4 +1,4 @@
--- SALUD v4.2.82 · schema audit · constraints de integridad (módulo 33)
+-- SALUD v4.2.83 · schema audit · constraints de integridad (módulo 33)
 -- Aplicar DESPUÉS de 04_indexes.sql y de SQL/_integrity/00_integrity_functions.sql.
 -- Reglas del módulo 33. Las UK/CHECK/EXCLUDE en prosa quedan como comentario:
 -- el modelo no declara su expresión SQL y no se inventa (temperatura-0).

@@ -1,4 +1,4 @@
-# Matriz de integridad y concurrencia — SALUD v4.2.82 (módulo 33)
+# Matriz de integridad y concurrencia — SALUD v4.2.83 (módulo 33)
 
 El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación cross-dominio. Cada regla se implementa en la **migración de la tabla dueña** (su módulo) y se repite aquí como referencia. Extraído fielmente del `.puml`.
 
@@ -44,6 +44,8 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 
 | Tabla | Estereotipo | Reglas declaradas |
 |-------|-------------|-------------------|
+| `authz.ui_visibility_elements` | `REFERENCE_ONLY` | **CHECK_SQL** ck_ui_visibility_elements_key \| char_length("key") <= 160 AND "key" ~ '^[a-z][a-z0-9-]*(\.[a-z0-9][a-z0-9-]*)*$'; **CHECK_SQL** ck_ui_visibility_elements_kind \| "kind" IN ('MODULE', 'MENU_SECTION', 'SCREEN', 'SECTION', 'WIDGET', 'FIELD', 'ACTION'); **CHECK_SQL** ck_ui_visibility_elements_source \| "source" IN ('CODE', 'ADMIN'); **CHECK_SQL** ck_ui_visibility_elements_status \| "status" IN ('ACTIVE', 'RETIRED'); **CHECK_SQL** ck_ui_visibility_elements_retired \| ("status" = 'RETIRED') = ("retired_at" IS NOT NULL); **CHECK_SQL** ck_ui_visibility_elements_not_own_parent \| "parent_element_id" IS NULL OR "parent_element_id" <> "id" |
+| `authz.ui_visibility_rules` | `REFERENCE_ONLY` | **CHECK_SQL** ck_ui_visibility_rules_effect \| "effect" IN ('SHOW', 'HIDE'); **CHECK_SQL** ck_ui_visibility_rules_subject_type \| "subject_type" IN ('USER', 'TENANT', 'ROLE', 'ORG_TYPE', 'ALL'); **CHECK_SQL** ck_ui_visibility_rules_subject_shape \| ("subject_type" = 'ALL') = ("subject_id" IS NULL); **CHECK_SQL** ck_ui_visibility_rules_subject_id_len \| char_length("subject_id") BETWEEN 1 AND 160; **CHECK_SQL** ck_ui_visibility_rules_validity \| "ended_at" IS NOT NULL OR "valid_from" IS NULL OR "valid_to" IS NULL OR "valid_to" > "valid_from"; **CHECK_SQL** ck_ui_visibility_rules_reason_len \| char_length(btrim("reason")) BETWEEN 10 AND 500; **CHECK_SQL** ck_ui_visibility_rules_ended_has_valid_to \| "ended_at" IS NULL OR "valid_to" IS NOT NULL; **CHECK_SQL** ck_ui_visibility_rules_scope_subject \| "scope_tenant_id" IS NULL OR ("subject_type" IN ('TENANT', 'USER') AND ("subject_type" <> 'TENANT' OR "subject_id" = "scope_tenant_id"::text)) |
 | `authz.permissions` | `REFERENCE_ONLY` | **CHECK_SQL** ck_permissions_approval_needs_sensitivity \| ("approval_mode_concept_id" IS NULL OR "sensitivity_concept_id" IS NOT NULL) |
 
 ### Módulo 17 · `billing`

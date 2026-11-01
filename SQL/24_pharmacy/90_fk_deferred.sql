@@ -1,4 +1,4 @@
--- SALUD v4.2.82 · módulo 24 · schema pharmacy
+-- SALUD v4.2.83 · módulo 24 · schema pharmacy
 -- Generado de diagram_24_pharmacy.puml — NO editar a mano.
 
 
@@ -371,6 +371,13 @@ DO $$ BEGIN
     ALTER TABLE "pharmacy"."pharmacy_product_prices"
         ADD CONSTRAINT "fk_pharmacy_product_prices_recorded_by_user_id" FOREIGN KEY ("recorded_by_user_id")
         REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: integrations.provider_connections (requiere schema integrations)
+DO $$ BEGIN
+    ALTER TABLE "pharmacy"."pharmacy_integration_connections"
+        ADD CONSTRAINT "fk_pharmacy_integration_connections_connection_id" FOREIGN KEY ("connection_id")
+        REFERENCES "integrations"."provider_connections" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
