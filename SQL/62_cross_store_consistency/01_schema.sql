@@ -1,4 +1,4 @@
--- SALUD v4.2.82 · módulo 62 · schema cross_store_consistency
+-- SALUD v4.2.83 · módulo 62 · schema cross_store_consistency
 -- Generado de diagram_62_cross_store_consistency.puml — NO editar a mano.
 
 CREATE SCHEMA IF NOT EXISTS "cross_store_consistency";
