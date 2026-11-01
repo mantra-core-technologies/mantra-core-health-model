@@ -714,6 +714,21 @@ TENANT_TYPE_BACKEND_CONCEPTS = [
 ]
 BACKEND_CONCEPTS += TENANT_TYPE_BACKEND_CONCEPTS
 
+# --- model#105 · agenda de los centros diagnósticos (patch v4.2.39) -----------------
+# `SQL/patches/2026-10-11_v4239_agenda_centros_diagnosticos.sql` crea el recurso agendable,
+# la plantilla publicada y los cupos abiertos de cada centro con estos tres ids fijos. Son
+# conceptos centrales de `concepts.ts` (`RESOURCE_PRACTITIONER`, `TEMPLATE_PUBLISHED`,
+# `SLOT_OPEN`): el `code` almacenado es el `def.code`, no la clave. Sin el espejo, la primera
+# pasada del patch no falla (todavía no hay centros sembrados) pero la segunda, sobre una base
+# con semillas y sin que la API haya arrancado, viola
+# `fk_schedulable_resources_resource_type_concept_id` (y detrás, las FK de plantilla y cupo).
+SCHEDULING_AGENDA_BACKEND_CONCEPTS = [
+    ("scheduling:resource-type:practitioner", "RES_PRACTITIONER", "Practitioner"),
+    ("scheduling:template-status:published", "TPL_PUBLISHED", "Template published"),
+    ("scheduling:slot-status:open", "SLOT_OPEN", "Slot open"),
+]
+BACKEND_CONCEPTS += SCHEDULING_AGENDA_BACKEND_CONCEPTS
+
 # --- v4.2.75 · personal de apoyo (secretaria y otros roles) -------------------------
 # Conceptos NUEVOS de módulo que introducen los módulos 01/04/14/19/29 (columnas
 # `*_concept_id` de support_scope_grants, engagement_*, role_templates, session_policies,
