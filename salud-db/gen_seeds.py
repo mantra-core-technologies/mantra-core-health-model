@@ -5766,6 +5766,41 @@ def phase_f4_case_space_tenant(docs) -> dict:
     return stats
 
 
+def phase_v4283_pharmacy_connection_tenant(docs) -> dict:
+    """model#110 — la conexión de una farmacia con su sistema externo es de SU tenant.
+
+    Con v4.2.83 `pharmacy_integration_connections.connection_id` referencia
+    `integrations.provider_connections`, que tiene `tenant_id`; la farmacia lo tiene en
+    `pharmacies.tenant_id`. La fase 2b (referencias) repara el id roto con cualquier conexión
+    del paquete, sin mirar el tenant, y 2026-11-01_v4283_pharmacy_connection_tenant.sql rechaza
+    el cruce. Acá se reapunta a una conexión del tenant de la farmacia (elección determinista)
+    y, si ese tenant no tiene conexiones en el paquete, `connection_id` queda NULL (la columna
+    es nullable: nulo = sin sistema externo configurado, modo manual). No se cambia la farmacia.
+    """
+    recs = lambda code, sec: docs[code].get(sec, {}).get("records", {})
+    if "24" not in docs or "12" not in docs:
+        return {"conexiones": 0, "reapuntadas": 0, "sin_conexion": 0}
+    pharmacies, conns = {}, {}
+    for sec in ("boot", "mock"):
+        for r in recs("24", sec).get("pharmacies", []):
+            pharmacies[r["id"]] = r
+        for r in recs("12", sec).get("provider_connections", []):
+            conns[r["id"]] = r
+    stats = {"conexiones": 0, "reapuntadas": 0, "sin_conexion": 0}
+    for sec in ("boot", "mock"):
+        for row in recs("24", sec).get("pharmacy_integration_connections", []):
+            tenant = (pharmacies.get(row.get("pharmacy_id")) or {}).get("tenant_id")
+            current = conns.get(row.get("connection_id"))
+            if row.get("connection_id") is None or (current is not None and tenant
+                                                    and current.get("tenant_id") == tenant):
+                continue
+            stats["conexiones"] += 1
+            own = sorted(c["id"] for c in conns.values() if tenant and c.get("tenant_id") == tenant)
+            row["connection_id"] = pick(own, "pharmacy_integration_connections", row["id"])
+            stats["reapuntadas" if own else "sin_conexion"] += 1
+    return stats
+
+
 def phase_v4274_referral_transfer(docs) -> dict:
     """v4.2.74 — datos de traslado en la derivación (Norma Nacional de Referencia y
     Contrarreferencia, MSD Bolivia 2013). Todas las derivaciones mock reciben las columnas
@@ -6076,6 +6111,10 @@ def main() -> None:
         print("[2h] model#102 · casos quirúrgicos con sede/quirófano de otro tenant: {} · {} "
               "reapuntados a su tenant · {} sin espacio (custodio sin sedes)".format(
                   s["casos"], s["reapuntados"], s["sin_espacio"]))
+        s = phase_v4283_pharmacy_connection_tenant(docs)
+        print("[2i] model#110 · conexiones de farmacia con conexión de otro tenant: {} · {} "
+              "reapuntadas a su tenant · {} en NULL (tenant sin conexiones)".format(
+                  s["conexiones"], s["reapuntadas"], s["sin_conexion"]))
     if run("insights"):
         s = phase_v4269_marketing_insights(docs, ddl, uniques)
         print("[2f] v4.2.69 · AloVida Insights · {} value sets · {}".format(

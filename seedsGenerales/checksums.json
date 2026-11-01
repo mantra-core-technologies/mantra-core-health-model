@@ -23,7 +23,7 @@
   "modules/21_deployment.seeds.json": "cf4dd7ebecbd15841fb0f84e2c0d36d62ef20815c1dbc6b76c82aa100712c6cb",
   "modules/22_organization_extensions.seeds.json": "85d3a8cd00d25a3f0a23990a1a283027d9cc88f794f19cb043504c07f9af186d",
   "modules/23_diagnostic_units.seeds.json": "e4e84701e1f46ebe1964aacc5bafcf36b6c63014e58168771c309b7617df4b64",
-  "modules/24_pharmacy.seeds.json": "b37bba630081ce9a6e1b0d7c08422e3678efd92925c1f940cb8b56cad1e3a382",
+  "modules/24_pharmacy.seeds.json": "2f98e78125c8b089f60f6be6e44945bfc52df6eb85dc32a35dc24827264fd4df",
   "modules/25_pharmacy_inventory.seeds.json": "35e211a0428f6dc313e56e6e88dd239fa182a477003f499052a5b0e5a4bb6db5",
   "modules/26_insurance.seeds.json": "79d6a2f0df66f68828929f6638ed6483afd14e4ee60033f7b18ea3bc8aa8ef75",
   "modules/27_identity_assurance.seeds.json": "742444bdf1d3f13aa8434364385ecbe6024a7d44e391ca618cfac38f5bd736b7",
