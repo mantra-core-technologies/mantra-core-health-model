@@ -284,6 +284,8 @@ model:
       sistema externo configurado, modo manual, UC-24-07). Parche
       SQL/patches/2026-10-31_v4283_pharmacy_connection_fk.sql, mismo nombre y contenido que
       en la API (a07d17ac6).
+      Mismo tenant por disparador (farmacia y conexión, con los dos lados del cambio de
+      tenant) en SQL/patches/2026-11-01_v4283_pharmacy_connection_tenant.sql (model#110).
   materialization_note: >-
     v4.0.1 materializado en el ER (fuente: el vault/grafo). Se añadieron 14
     entidades nuevas (marketing.campaign_schedules/dispatches/dispatch_recipients,

@@ -71,6 +71,11 @@ comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_obje
   Con la API anterior y el parche aplicado, un reinicio en modo `safe` recrearía la FK propia; con la API
   nueva y sin el parche, el alta sin `connection_id` falla por el `NOT NULL`.
 - **Sin cambios en `integrations`:** el esquema de ese módulo no se toca.
+- **Mismo tenant (model#110):** `SQL/patches/2026-11-01_v4283_pharmacy_connection_tenant.sql` agrega el disparador
+  `trg_pharmacy_integration_connections_connection_tenant`: un `connection_id` no nulo tiene que ser una conexión del
+  tenant de la farmacia (`pharmacies.tenant_id = provider_connections.tenant_id`); una FK compuesta no se puede porque
+  la fila no lleva `tenant_id`. Dos disparadores más impiden el cruce al cambiar el `tenant_id` de la farmacia o de la
+  conexión. Aborta sin cambios si ya hay cruces. `gen_ddl.py` no expresa disparadores: el parche también va en una base nueva.
 - Fuera del cambio: el cifrado de la clave y las filas de `external_providers` de farmacia.
 
 ### v4.2.82 — Detalle de la orden de estudios (2026-11-01)
