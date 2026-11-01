@@ -87,6 +87,7 @@ psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-10-31_v4281_cargas_masivas
 psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-10-31_v4281_motor_aprobacion.sql      # motor de aprobación único: four_eyes_requests.subject_entity/subject_id + 4 kind nuevos (v4.2.81)
 psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-10-31_secretaria_iniciador_vinculos.sql       # quién inició cada vínculo (v4.2.82)
 psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-01_v4282_service_request_detalle.sql     # detalle de la orden de estudios: +6 columnas en service_requests y service_request_components (v4.2.82)
+psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-10-31_ui_visibility.sql           # visibilidad de la interfaz: authz.ui_visibility_elements y _rules (posterior a v4.2.81; se genera con salud-db/gen_ui_visibility_patch.py)
 ```
 
 Todos son idempotentes (una transacción, re-ejecutables). **Si se vuelve a ejecutar el v4275 después del v4278, hay que volver a

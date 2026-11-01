@@ -1,4 +1,4 @@
-# Reporte de generación SQL — SALUD v4.2.82
+# Reporte de generación SQL — SALUD v4.2.83
 
 Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vistas, stubs de cruce y stores no-SQL (Redis/Mongo/OpenSearch/vector/timeseries) se listan como *saltados*. Graph (61) y Lakehouse (63) SÍ se materializan como tablas PG (catálogo del plano de control). Las FK marcadas *inferidas* se resolvieron por convención cuando el vault no tenía destino.
 
@@ -10,7 +10,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 03 | terminology | 16 | 80 | 0 | 103 | 0 |
 | 04 | directory | 11 | 78 | 12 | 82 | 2 |
 | 05 | profiles | 24 | 166 | 34 | 177 | 0 |
-| 06 | authz | 15 | 104 | 19 | 95 | 0 |
+| 06 | authz | 17 | 110 | 23 | 107 | 0 |
 | 07 | consent | 10 | 81 | 0 | 103 | 0 |
 | 08 | clinical | 30 | 297 | 44 | 329 | 15 |
 | 09 | forms | 16 | 103 | 0 | 113 | 1 |
@@ -28,7 +28,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 21 | deployment _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
 | 22 | organization_extensions | 5 | 51 | 2 | 57 | 0 |
 | 23 | diagnostic_units | 15 | 111 | 38 | 120 | 3 |
-| 24 | pharmacy | 12 | 78 | 10 | 94 | 1 |
+| 24 | pharmacy | 12 | 78 | 10 | 94 | 2 |
 | 25 | pharmacy_inventory | 20 | 144 | 0 | 157 | 8 |
 | 26 | insurance | 33 | 224 | 20 | 244 | 1 |
 | 27 | identity_assurance | 11 | 70 | 1 | 77 | 0 |
@@ -37,7 +37,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 30 | read_models | 13 | 74 | 0 | 89 | 76 |
 | 31 | integration_contracts | 9 | 48 | 1 | 57 | 0 |
 | 32 | workflow | 8 | 49 | 0 | 55 | 9 |
-| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 115 |
+| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 117 |
 | 34 | portal_catalog _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
 | 35 | messaging | 22 | 142 | 0 | 150 | 0 |
 | 36 | qa_lab | 13 | 79 | 0 | 92 | 0 |
@@ -75,7 +75,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 68 | qa_execution | 4 | 14 | 6 | 6 | 0 |
 | 69 | pharma_lab | 31 | 182 | 173 | 182 | 1 |
 | 70 | observability | 12 | 13 | 8 | 39 | 2 |
-| **Σ** | **71** | **1370** | | **853** | | **472** |
+| **Σ** | **71** | **1372** | | **857** | | **475** |
 
 ## Detalle de entidades saltadas y avisos
 
@@ -203,6 +203,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 
 ### 24 · pharmacy
 - `practice_practice_sites` — stub de cruce (tabla real en su módulo dueño)
+- `integrations_provider_connections` — stub de cruce (tabla real en su módulo dueño)
 
 ### 25 · pharmacy_inventory
 - `erp_business_partners` — stub de cruce (tabla real en su módulo dueño)
@@ -367,6 +368,8 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - `system_ops_governance_policy_revisions` — stub de cruce (tabla real en su módulo dueño)
 - `system_ops_bulk_import_batches` — stub de cruce (tabla real en su módulo dueño)
 - `system_ops_bulk_import_batch_rows` — stub de cruce (tabla real en su módulo dueño)
+- `authz_ui_visibility_elements` — stub de cruce (tabla real en su módulo dueño)
+- `authz_ui_visibility_rules` — stub de cruce (tabla real en su módulo dueño)
 - `billing_quotations` — stub de cruce (tabla real en su módulo dueño)
 - `billing_quotation_installments` — stub de cruce (tabla real en su módulo dueño)
 - `medical_groups_groups` — stub de cruce (tabla real en su módulo dueño)
