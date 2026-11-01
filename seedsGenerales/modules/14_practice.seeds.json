@@ -863,7 +863,8 @@
           "updated_at": "2026-02-02T09:02:00Z",
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
-          "row_version": 1
+          "row_version": 1,
+          "tenant_id": "8368b919-b77e-57c7-a5c2-55a69767c622"
         },
         {
           "id": "4fffe538-796d-5599-b776-92a8781d0aec",
@@ -880,7 +881,8 @@
           "updated_at": "2026-02-07T09:14:00Z",
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
-          "row_version": 1
+          "row_version": 1,
+          "tenant_id": "8368b919-b77e-57c7-a5c2-55a69767c622"
         },
         {
           "id": "2b4e4743-9790-5c27-9972-9e38a7c0568c",
@@ -897,7 +899,8 @@
           "updated_at": "2026-02-12T09:26:00Z",
           "created_by_user_id": "b34febe5-f547-58a4-871c-9705d259ce10",
           "updated_by_user_id": "b34febe5-f547-58a4-871c-9705d259ce10",
-          "row_version": 1
+          "row_version": 1,
+          "tenant_id": "38cea556-60d8-5cd6-bf04-fda1c3bd60e9"
         },
         {
           "id": "6786c71e-54b3-5974-addb-a26ffbfcf8ad",
@@ -914,7 +917,8 @@
           "updated_at": "2026-02-17T09:38:00Z",
           "created_by_user_id": "b9bec8f0-d32e-5079-8ec7-ba835d10458e",
           "updated_by_user_id": "b9bec8f0-d32e-5079-8ec7-ba835d10458e",
-          "row_version": 1
+          "row_version": 1,
+          "tenant_id": "2685710f-a035-556e-b099-d05ef89ce61d"
         },
         {
           "id": "5d6c567c-8a03-572d-8fdd-f7139bc76a77",
@@ -931,7 +935,8 @@
           "updated_at": "2026-02-22T09:50:00Z",
           "created_by_user_id": "23cfcb91-648c-5c26-9da1-35ec6c04c142",
           "updated_by_user_id": "23cfcb91-648c-5c26-9da1-35ec6c04c142",
-          "row_version": 1
+          "row_version": 1,
+          "tenant_id": "3d50fab1-fdc6-5a6d-85b9-b8246203296b"
         },
         {
           "id": "16820a13-4213-5d2e-9b5c-813722d90903",
@@ -948,7 +953,8 @@
           "updated_at": "2026-02-27T10:02:00Z",
           "created_by_user_id": "61f19c22-994e-5f45-976e-1a0d0dc66900",
           "updated_by_user_id": "61f19c22-994e-5f45-976e-1a0d0dc66900",
-          "row_version": 1
+          "row_version": 1,
+          "tenant_id": "4cdc6fb2-d927-51c2-9853-6005dcee2222"
         },
         {
           "id": "a59bd07a-1177-506a-97b9-abbd35d7949a",
@@ -965,7 +971,8 @@
           "updated_at": "2026-03-04T10:14:00Z",
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
-          "row_version": 1
+          "row_version": 1,
+          "tenant_id": "b962a4cd-0836-514e-bb7e-4b9fbe9dfb16"
         },
         {
           "id": "159b684a-c175-588e-81fd-95a68806e9b1",
@@ -982,7 +989,8 @@
           "updated_at": "2026-03-09T10:26:00Z",
           "created_by_user_id": "44a7a672-7b66-5f38-a595-69406745da5f",
           "updated_by_user_id": "44a7a672-7b66-5f38-a595-69406745da5f",
-          "row_version": 1
+          "row_version": 1,
+          "tenant_id": "2033cf59-4e74-54b6-91cd-4f62f8a06105"
         },
         {
           "id": "c436540b-62d7-544a-928c-58a583672c38",
@@ -999,7 +1007,8 @@
           "updated_at": "2026-12-13T14:25:00Z",
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
-          "row_version": 1
+          "row_version": 1,
+          "tenant_id": "8368b919-b77e-57c7-a5c2-55a69767c622"
         },
         {
           "id": "6f71b592-be88-5854-a542-a23408ecd12b",
@@ -1016,7 +1025,8 @@
           "updated_at": "2026-07-24T03:42:00Z",
           "created_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
           "updated_by_user_id": "499d0869-90ee-5cdd-9b26-3c32c8518193",
-          "row_version": 1
+          "row_version": 1,
+          "tenant_id": "8368b919-b77e-57c7-a5c2-55a69767c622"
         }
       ],
       "practitioner_role_assignments": [],
@@ -3273,7 +3283,8 @@
           "updated_at": "2026-06-01T08:32:00Z",
           "created_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
           "updated_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
-          "row_version": 1
+          "row_version": 1,
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9"
         },
         {
           "id": "5693d159-a37b-5463-aaac-70b052a954aa",
@@ -3290,7 +3301,8 @@
           "updated_at": "2026-06-06T08:44:00Z",
           "created_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
           "updated_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
-          "row_version": 1
+          "row_version": 1,
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9"
         },
         {
           "id": "87e61351-9513-5e22-9b4b-23e418c99afd",
@@ -3307,7 +3319,8 @@
           "updated_at": "2026-06-11T08:56:00Z",
           "created_by_user_id": "b408997d-9c68-5589-961f-eb5b2aece582",
           "updated_by_user_id": "b408997d-9c68-5589-961f-eb5b2aece582",
-          "row_version": 1
+          "row_version": 1,
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0"
         },
         {
           "id": "10ebec6f-9d64-56da-ae6d-30e5d68d8c08",
@@ -3324,7 +3337,8 @@
           "updated_at": "2026-06-16T09:08:00Z",
           "created_by_user_id": "55224953-7ad5-5e7b-b070-8beb020555d5",
           "updated_by_user_id": "55224953-7ad5-5e7b-b070-8beb020555d5",
-          "row_version": 1
+          "row_version": 1,
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a"
         },
         {
           "id": "810da18f-715c-52f7-8dad-c61e4d45a09d",
@@ -3341,7 +3355,8 @@
           "updated_at": "2026-06-21T09:20:00Z",
           "created_by_user_id": "b8b57fec-d512-5793-b297-c39d389f96b2",
           "updated_by_user_id": "b8b57fec-d512-5793-b297-c39d389f96b2",
-          "row_version": 1
+          "row_version": 1,
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06"
         },
         {
           "id": "4fa56bef-6ee9-59e3-9037-551ba4182b9b",
@@ -3358,7 +3373,8 @@
           "updated_at": "2026-06-26T09:32:00Z",
           "created_by_user_id": "e926fb49-acc4-5184-a3ab-7a8f13540da6",
           "updated_by_user_id": "e926fb49-acc4-5184-a3ab-7a8f13540da6",
-          "row_version": 1
+          "row_version": 1,
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1"
         },
         {
           "id": "596bb3de-a9da-51cd-8bfa-45f00f68279f",
@@ -3375,7 +3391,8 @@
           "updated_at": "2026-07-01T09:44:00Z",
           "created_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
           "updated_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
-          "row_version": 1
+          "row_version": 1,
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c"
         },
         {
           "id": "b11405d8-cbf5-5439-bb7d-a9edf8ad375f",
@@ -3392,7 +3409,8 @@
           "updated_at": "2026-07-06T09:56:00Z",
           "created_by_user_id": "7fc77350-0e92-5d7a-a2fb-e6277505c00e",
           "updated_by_user_id": "7fc77350-0e92-5d7a-a2fb-e6277505c00e",
-          "row_version": 1
+          "row_version": 1,
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824"
         },
         {
           "id": "13651e97-0e9f-5ad4-9fa8-edbcbda62769",
@@ -3409,7 +3427,8 @@
           "updated_at": "2026-12-13T14:25:00Z",
           "created_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
           "updated_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
-          "row_version": 1
+          "row_version": 1,
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9"
         },
         {
           "id": "96c618f4-8330-5280-a1aa-fe2eec9ec6f2",
@@ -3426,7 +3445,8 @@
           "updated_at": "2026-07-24T03:42:00Z",
           "created_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
           "updated_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
-          "row_version": 1
+          "row_version": 1,
+          "tenant_id": "b8b69218-3a17-5500-bfb7-ca3595333ec9"
         },
         {
           "id": "127185d1-4d5f-5f85-89b9-60bffc6696b3",
@@ -3443,7 +3463,8 @@
           "updated_at": "2026-02-08T16:59:00Z",
           "created_by_user_id": "b408997d-9c68-5589-961f-eb5b2aece582",
           "updated_by_user_id": "b408997d-9c68-5589-961f-eb5b2aece582",
-          "row_version": 1
+          "row_version": 1,
+          "tenant_id": "c46da550-2037-57a8-b449-da02ddb328f0"
         },
         {
           "id": "f3c154e1-5d2f-5a46-89dd-8e6057d01a17",
@@ -3460,7 +3481,8 @@
           "updated_at": "2026-09-19T05:16:00Z",
           "created_by_user_id": "55224953-7ad5-5e7b-b070-8beb020555d5",
           "updated_by_user_id": "55224953-7ad5-5e7b-b070-8beb020555d5",
-          "row_version": 1
+          "row_version": 1,
+          "tenant_id": "fa07c27f-7ecc-54ed-b786-169162b3327a"
         },
         {
           "id": "f8d598a6-99fd-5bf4-a165-44b84ba09546",
@@ -3477,7 +3499,8 @@
           "updated_at": "2026-04-03T18:33:00Z",
           "created_by_user_id": "b8b57fec-d512-5793-b297-c39d389f96b2",
           "updated_by_user_id": "b8b57fec-d512-5793-b297-c39d389f96b2",
-          "row_version": 1
+          "row_version": 1,
+          "tenant_id": "bca886a8-7d20-5898-a4ce-b39715587c06"
         },
         {
           "id": "f797ef96-bba7-5831-8c9f-4ac82dc6a95e",
@@ -3494,7 +3517,8 @@
           "updated_at": "2026-11-14T07:50:00Z",
           "created_by_user_id": "e926fb49-acc4-5184-a3ab-7a8f13540da6",
           "updated_by_user_id": "e926fb49-acc4-5184-a3ab-7a8f13540da6",
-          "row_version": 1
+          "row_version": 1,
+          "tenant_id": "e74c097a-c3e2-5ece-937c-29d1afc56ac1"
         },
         {
           "id": "a0586892-df48-5159-a95f-31066d949b18",
@@ -3511,7 +3535,8 @@
           "updated_at": "2026-06-25T20:07:00Z",
           "created_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
           "updated_by_user_id": "6465ecb3-9e7d-5e96-9712-5e44ea4caea6",
-          "row_version": 1
+          "row_version": 1,
+          "tenant_id": "0e3e2399-4ba3-5ce9-96a1-3000a343787c"
         },
         {
           "id": "72ff92f7-24c0-5ae7-8ce8-1a2f434ffaf7",
@@ -3528,7 +3553,8 @@
           "updated_at": "2026-01-09T09:24:00Z",
           "created_by_user_id": "7fc77350-0e92-5d7a-a2fb-e6277505c00e",
           "updated_by_user_id": "7fc77350-0e92-5d7a-a2fb-e6277505c00e",
-          "row_version": 1
+          "row_version": 1,
+          "tenant_id": "ca6596fb-934d-5b3f-b86f-015a39fe1824"
         }
       ],
       "practitioner_role_assignments": [
