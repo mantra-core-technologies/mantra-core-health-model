@@ -1,4 +1,4 @@
--- SALUD v4.2.83 · schema data_catalog · constraints de integridad (módulo 33)
+-- SALUD v4.2.84 · schema data_catalog · constraints de integridad (módulo 33)
 -- Aplicar DESPUÉS de 04_indexes.sql y de SQL/_integrity/00_integrity_functions.sql.
 -- Reglas del módulo 33. Las UK/CHECK/EXCLUDE en prosa quedan como comentario:
 -- el modelo no declara su expresión SQL y no se inventa (temperatura-0).
@@ -109,3 +109,28 @@ ALTER TABLE "data_catalog"."catalog_certifications" ADD CONSTRAINT "ck_catalog_c
 -- CHECK concreto declarado por el modelo (CHECK_SQL).
 ALTER TABLE "data_catalog"."catalog_certifications" DROP CONSTRAINT IF EXISTS "ck_catalog_certifications_target";
 ALTER TABLE "data_catalog"."catalog_certifications" ADD CONSTRAINT "ck_catalog_certifications_target" CHECK ((num_nonnulls("object_id", "read_model_definition_id", "report_definition_id", "kpi_code") = 1));
+
+
+-- ═══ catalog_fit_runs ═══
+--   UPDATE: forbidden
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "data_catalog"."catalog_fit_runs" DROP CONSTRAINT IF EXISTS "ck_catalog_fit_runs_trigger_kind";
+ALTER TABLE "data_catalog"."catalog_fit_runs" ADD CONSTRAINT "ck_catalog_fit_runs_trigger_kind" CHECK ("trigger_kind" IN ('TICK', 'MANUAL'));
+
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "data_catalog"."catalog_fit_runs" DROP CONSTRAINT IF EXISTS "ck_catalog_fit_runs_status";
+ALTER TABLE "data_catalog"."catalog_fit_runs" ADD CONSTRAINT "ck_catalog_fit_runs_status" CHECK ("status" IN ('COMPLETADA', 'FALLIDA'));
+
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "data_catalog"."catalog_fit_runs" DROP CONSTRAINT IF EXISTS "ck_catalog_fit_runs_verdict";
+ALTER TABLE "data_catalog"."catalog_fit_runs" ADD CONSTRAINT "ck_catalog_fit_runs_verdict" CHECK ("verdict" IS NULL OR "verdict" IN ('AJUSTADA', 'CON_AVISOS', 'DESAJUSTADA', 'SIN_DATOS'));
+
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "data_catalog"."catalog_fit_runs" DROP CONSTRAINT IF EXISTS "ck_catalog_fit_runs_outcome_shape";
+ALTER TABLE "data_catalog"."catalog_fit_runs" ADD CONSTRAINT "ck_catalog_fit_runs_outcome_shape" CHECK (("status" = 'COMPLETADA' AND "verdict" IS NOT NULL AND "report_json" IS NOT NULL AND "error_code" IS NULL) OR ("status" = 'FALLIDA' AND "error_code" IS NOT NULL AND "report_json" IS NULL));
+
+-- UPDATE: forbidden → barrera física parcial (DELETE permitido: retención)
+REVOKE UPDATE ON "data_catalog"."catalog_fit_runs" FROM PUBLIC;
+DROP TRIGGER IF EXISTS trg_forbid_update ON "data_catalog"."catalog_fit_runs";
+CREATE TRIGGER trg_forbid_update BEFORE UPDATE ON "data_catalog"."catalog_fit_runs"
+    FOR EACH ROW EXECUTE FUNCTION "integrity"."forbid_mutation"();

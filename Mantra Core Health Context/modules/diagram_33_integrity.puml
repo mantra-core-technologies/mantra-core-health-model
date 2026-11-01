@@ -305,6 +305,18 @@ entity "authz.ui_visibility_rules" as authz_ui_visibility_rules <<REFERENCE_ONLY
   CHECK_SQL : ck_ui_visibility_rules_scope_subject | "scope_tenant_id" IS NULL OR ("subject_type" IN ('TENANT', 'USER') AND ("subject_type" <> 'TENANT' OR "subject_id" = "scope_tenant_id"::text))
 }
 
+' v4.2.84 (sonda de ajuste de la catalogacion, ver D-FIT-1..3 en diagram_67) — data_catalog.catalog_fit_runs es
+' APPEND_ONLY_PURGEABLE: se prohibe UPDATE y NO el DELETE (la API purga por retencion, hoy 30 dias). Los CHECK cierran los
+' vocabularios del contrato de la sonda y la forma del desenlace: COMPLETADA trae veredicto e informe y no error; FALLIDA
+' trae error y no informe.
+entity "data_catalog.catalog_fit_runs" as data_catalog_catalog_fit_runs <<LOG, REFERENCE_ONLY>> {
+  UPDATE : forbidden
+  CHECK_SQL : ck_catalog_fit_runs_trigger_kind | "trigger_kind" IN ('TICK', 'MANUAL')
+  CHECK_SQL : ck_catalog_fit_runs_status | "status" IN ('COMPLETADA', 'FALLIDA')
+  CHECK_SQL : ck_catalog_fit_runs_verdict | "verdict" IS NULL OR "verdict" IN ('AJUSTADA', 'CON_AVISOS', 'DESAJUSTADA', 'SIN_DATOS')
+  CHECK_SQL : ck_catalog_fit_runs_outcome_shape | ("status" = 'COMPLETADA' AND "verdict" IS NOT NULL AND "report_json" IS NOT NULL AND "error_code" IS NULL) OR ("status" = 'FALLIDA' AND "error_code" IS NOT NULL AND "report_json" IS NULL)
+}
+
 inventory_stock_positions --> inventory_ledger_entries : atomic projection
 inventory_reservations --> inventory_ledger_entries : reserve/release
 patient_coverages --> claim_adjudication_versions : adjudication basis

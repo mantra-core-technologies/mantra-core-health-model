@@ -90,6 +90,8 @@ psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-01_v4282_service_reques
 psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-10-31_ui_visibility.sql           # visibilidad de la interfaz: authz.ui_visibility_elements y _rules (posterior a v4.2.81; se genera con salud-db/gen_ui_visibility_patch.py)
 psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-10-31_v4283_pharmacy_connection_fk.sql   # farmacia: connection_id opcional y con FK a integrations.provider_connections (v4.2.83)
 psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-01_v4283_pharmacy_connection_tenant.sql # farmacia: la conexión es del tenant de la farmacia, por disparador (v4.2.83, después del anterior)
+psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-01_catalog_fit_runs.sql              # sonda de ajuste del catálogo: data_catalog.catalog_fit_runs (v4.2.84; en el DDL generado, no-op sobre base nueva)
+psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-01_entity_registry_unique_table.sql    # una fila por tabla en system_ops.entity_registry (v4.2.84; en el DDL generado, no-op sobre base nueva)
 ```
 
 Todos son idempotentes (una transacción, re-ejecutables). **Si se vuelve a ejecutar el v4275 después del v4278, hay que volver a

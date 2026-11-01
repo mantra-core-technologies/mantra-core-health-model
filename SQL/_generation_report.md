@@ -1,4 +1,4 @@
-# Reporte de generación SQL — SALUD v4.2.83
+# Reporte de generación SQL — SALUD v4.2.84
 
 Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vistas, stubs de cruce y stores no-SQL (Redis/Mongo/OpenSearch/vector/timeseries) se listan como *saltados*. Graph (61) y Lakehouse (63) SÍ se materializan como tablas PG (catálogo del plano de control). Las FK marcadas *inferidas* se resolvieron por convención cuando el vault no tenía destino.
 
@@ -15,7 +15,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 08 | clinical | 30 | 297 | 0 | 329 | 15 |
 | 09 | forms | 16 | 103 | 0 | 113 | 1 |
 | 10 | audit | 142 | 602 | 0 | 762 | 1 |
-| 11 | system_ops | 32 | 178 | 0 | 196 | 1 |
+| 11 | system_ops | 32 | 178 | 0 | 197 | 1 |
 | 12 | integrations | 10 | 49 | 0 | 56 | 0 |
 | 13 | geo | 6 | 31 | 0 | 35 | 0 |
 | 14 | practice | 20 | 166 | 0 | 186 | 1 |
@@ -37,7 +37,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 30 | read_models | 13 | 74 | 0 | 89 | 76 |
 | 31 | integration_contracts | 9 | 48 | 0 | 57 | 0 |
 | 32 | workflow | 8 | 49 | 0 | 55 | 9 |
-| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 117 |
+| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 118 |
 | 34 | portal_catalog _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
 | 35 | messaging | 22 | 142 | 0 | 150 | 0 |
 | 36 | qa_lab | 13 | 79 | 0 | 92 | 0 |
@@ -71,11 +71,11 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 64 | audio_assets | 4 | 1 | 0 | 10 | 0 |
 | 65 | surveys | 8 | 42 | 0 | 26 | 0 |
 | 66 | medical_groups | 2 | 14 | 0 | 10 | 0 |
-| 67 | data_catalog | 25 | 89 | 0 | 69 | 3 |
+| 67 | data_catalog | 26 | 89 | 0 | 71 | 3 |
 | 68 | qa_execution | 4 | 14 | 0 | 6 | 0 |
 | 69 | pharma_lab | 31 | 182 | 0 | 182 | 1 |
 | 70 | observability | 12 | 13 | 0 | 39 | 2 |
-| **Σ** | **71** | **1372** | | **0** | | **475** |
+| **Σ** | **71** | **1373** | | **0** | | **476** |
 
 ## Detalle de entidades saltadas y avisos
 
@@ -370,6 +370,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - `system_ops_bulk_import_batch_rows` — stub de cruce (tabla real en su módulo dueño)
 - `authz_ui_visibility_elements` — stub de cruce (tabla real en su módulo dueño)
 - `authz_ui_visibility_rules` — stub de cruce (tabla real en su módulo dueño)
+- `data_catalog_catalog_fit_runs` — stub de cruce (tabla real en su módulo dueño)
 - `billing_quotations` — stub de cruce (tabla real en su módulo dueño)
 - `billing_quotation_installments` — stub de cruce (tabla real en su módulo dueño)
 - `medical_groups_groups` — stub de cruce (tabla real en su módulo dueño)

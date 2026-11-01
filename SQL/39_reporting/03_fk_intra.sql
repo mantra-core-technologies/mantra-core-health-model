@@ -1,4 +1,4 @@
--- SALUD v4.2.83 · módulo 39 · schema reporting
+-- SALUD v4.2.84 · módulo 39 · schema reporting
 -- Generado de diagram_39_reporting.puml — NO editar a mano.
 
 

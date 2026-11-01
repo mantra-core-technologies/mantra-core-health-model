@@ -157,7 +157,10 @@ def generated_property(schema, table, c, registry, puml=None) -> Prop:
         opts = {"fieldName": f"'{c.name}'", **opts}
     if not c.not_null:
         opts = {**opts, "nullable": "true"}
-    if c.default is not None:
+    if c.default == "now()":
+        # DEFAULT_NOW (v4.2.84): es una expresión SQL, no un literal JS; MikroORM la recibe como defaultRaw.
+        opts = {**opts, "defaultRaw": "'now()'"}
+    elif c.default is not None:
         opts = {**opts, "default": c.default}
     bang = "!" if c.not_null else "?"
 

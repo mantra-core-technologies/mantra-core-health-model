@@ -1,6 +1,6 @@
 model:
   name: SALUD
-  version: 4.2.83
+  version: 4.2.84
   status: canonical-polyglot-nosql-health-platform
   generated_at: '2026-10-31'
   design_patches:
@@ -286,6 +286,19 @@ model:
       en la API (a07d17ac6).
       Mismo tenant por disparador (farmacia y conexión, con los dos lados del cambio de
       tenant) en SQL/patches/2026-11-01_v4283_pharmacy_connection_tenant.sql (model#110).
+  - id: patch-v4.2.84-catalog-fit-runs-y-entity-registry-unico
+    role: product-features
+    doc: docs/architecture/physical-materialization.md (v4.2.84)
+    status: materialized-physically
+    summary: >-
+      (1) data_catalog.catalog_fit_runs (módulo 67): desenlace persistente de la sonda de ajuste
+      de la catalogación, append-only purgable (UPDATE prohibido por trigger, 4 CHECK en el módulo 33).
+      Nuevo marcador DEFAULT_NOW en gen_ddl.py (timestamptz → DEFAULT now()). (2) Índice único
+      uq_entity_registry_schema_name_table_name (schema_name, table_name) en system_ops.entity_registry
+      (módulo 11): una fila por tabla, que el ciclo de purga de identidad exige. Ambos ya existían como
+      parches escritos a mano (SQL/patches/2026-11-01_catalog_fit_runs.sql y
+      2026-11-01_entity_registry_unique_table.sql); ahora los trae el DDL generado y los parches
+      quedan como no-op idempotente sobre una base nueva.
   materialization_note: >-
     v4.0.1 materializado en el ER (fuente: el vault/grafo). Se añadieron 14
     entidades nuevas (marketing.campaign_schedules/dispatches/dispatch_recipients,
@@ -298,10 +311,10 @@ model:
   inventory:
     modules_puml: 71
     schemas: 59
-    entity_declarations_total: 3290
-    table_like_elements: 1486
+    entity_declarations_total: 3293
+    table_like_elements: 1488
     view_elements: 81
-    index_sets: 1443
+    index_sets: 1444
     reference_only_stubs: 280
     fk_references: 7880
     note: >-
@@ -348,6 +361,10 @@ model:
       Recontado el 2026-11-01 por model#110 (merge de dev: authz.ui_visibility_elements y
       _rules y v4.2.83, connection_id de farmacia hacia integrations.provider_connections):
       3290 entity / 1486 table_like / 81 vistas / 1443 idx / 7880 FK / 280 ref / 59 schemas
+      (tools/model_inventory.py).
+      Recontado el 2026-11-01 con v4.2.84 (data_catalog.catalog_fit_runs + su index set + su
+      entrada de la matriz del 33; el índice único de entity_registry no cambia el inventario):
+      3293 entity / 1488 table_like / 81 vistas / 1444 idx / 7880 FK / 280 ref / 59 schemas
       (tools/model_inventory.py).
   database: PostgreSQL canonical + governed specialized stores
   rules:
@@ -649,7 +666,7 @@ modules:
   code: integrity
   title: Concurrency, Constraints and Integrity Matrix
   file: modules/diagram_33_integrity.puml
-  table_like_elements: 32
+  table_like_elements: 33
   view_elements: 0
   index_sets: 0
   status: active
@@ -925,9 +942,9 @@ modules:
   code: data_catalog
   title: Data Catalog and Column Governance
   file: modules/diagram_67_data_catalog.puml
-  table_like_elements: 25
+  table_like_elements: 26
   view_elements: 0
-  index_sets: 25
+  index_sets: 26
   status: active
 
 - number: 68

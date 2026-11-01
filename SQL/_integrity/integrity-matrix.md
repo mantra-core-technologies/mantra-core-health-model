@@ -1,4 +1,4 @@
-# Matriz de integridad y concurrencia — SALUD v4.2.83 (módulo 33)
+# Matriz de integridad y concurrencia — SALUD v4.2.84 (módulo 33)
 
 El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación cross-dominio. Cada regla se implementa en la **migración de la tabla dueña** (su módulo) y se repite aquí como referencia. Extraído fielmente del `.puml`.
 
@@ -106,6 +106,7 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 | `data_catalog.catalog_stewardships` | `REFERENCE_ONLY` | **CHECK_SQL** ck_catalog_stewardships_scope \| (("scope_kind" = 'DOMAIN' AND "domain_id" IS NOT NULL AND "object_id" IS NULL) OR ("scope_kind" = 'OBJECT' AND "object_id" IS NOT NULL AND "domain_id" IS NULL)); **CHECK_SQL** ck_catalog_stewardships_holder \| ("user_id" IS NOT NULL OR "team_code" IS NOT NULL); **CHECK_SQL** ck_catalog_stewardships_period \| ("valid_to" IS NULL OR "valid_to" >= "valid_from") |
 | `data_catalog.quality_rules` | `REFERENCE_ONLY` | **CHECK_SQL** ck_quality_rules_threshold \| ("threshold_pct" BETWEEN 0 AND 100) |
 | `data_catalog.catalog_certifications` | `REFERENCE_ONLY` | **CHECK_SQL** ck_catalog_certifications_not_self \| ("certified_by_user_id" IS NULL OR "certified_by_user_id" <> "requested_by_user_id"); **CHECK_SQL** ck_catalog_certifications_target \| (num_nonnulls("object_id", "read_model_definition_id", "report_definition_id", "kpi_code") = 1) |
+| `data_catalog.catalog_fit_runs` | `LOG, REFERENCE_ONLY` | **UPDATE** forbidden; **CHECK_SQL** ck_catalog_fit_runs_trigger_kind \| "trigger_kind" IN ('TICK', 'MANUAL'); **CHECK_SQL** ck_catalog_fit_runs_status \| "status" IN ('COMPLETADA', 'FALLIDA'); **CHECK_SQL** ck_catalog_fit_runs_verdict \| "verdict" IS NULL OR "verdict" IN ('AJUSTADA', 'CON_AVISOS', 'DESAJUSTADA', 'SIN_DATOS'); **CHECK_SQL** ck_catalog_fit_runs_outcome_shape \| ("status" = 'COMPLETADA' AND "verdict" IS NOT NULL AND "report_json" IS NOT NULL AND "error_code" IS NULL) OR ("status" = 'FALLIDA' AND "error_code" IS NOT NULL AND "report_json" IS NULL) |
 
 ### Módulo 29 · `delegated_access`
 

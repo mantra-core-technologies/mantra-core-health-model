@@ -728,6 +728,42 @@ entity "INDEXES · catalog_change_acknowledgements" as idxset_catalog_change_ack
 }
 catalog_change_acknowledgements .. idxset_catalog_change_acknowledgements : indexed by
 
+' ===== v4.2.84 (sonda de ajuste de la catalogacion) =====
+' Fuente: mantra-core-health-api/src/modules/data_catalog/application/fit/README.md y el parche
+' SQL/patches/2026-11-01_catalog_fit_runs.sql (que sigue siendo idempotente y, sobre una base nueva, es no-op).
+' DECISION D-FIT-1 — dato de PLATAFORMA, sin `tenant_id`: la sonda es @TenantAgnostic en la API y 2026-08-05_tenant_rls.sql
+'   activaria RLS en cualquier tabla con esa columna.
+' DECISION D-FIT-2 — APPEND_ONLY_PURGEABLE: solo se inserta el desenlace (COMPLETADA/FALLIDA); las corridas EN_CURSO viven
+'   en la memoria del proceso. UPDATE prohibido por trigger (diagram_33); DELETE queda para la purga por retencion (30 dias).
+'   Por eso no lleva updated_at, row_version ni auditoria de usuario: la fila nunca cambia.
+' DECISION D-FIT-3 — `requested_by_user_id` es uuid simple, sin FK: borrar un usuario no puede quedar bloqueado por el
+'   historial de una sonda. `created_at` lleva DEFAULT now() porque la API inserta con SQL parametrizado sin mandarlo.
+entity catalog_fit_runs {
+  * id : uuid <<PK>>
+  --
+  * source_code : varchar(40) <<DEFAULT_TEXT:primary>>
+  * trigger_kind : varchar(10)
+    requested_by_user_id : uuid
+    idempotency_key : varchar(128)
+  * status : varchar(12)
+  * model_version : varchar(40)
+    verdict : varchar(12)
+    code_fingerprint : varchar(64)
+    deployed_commit : varchar(64)
+    report_json : jsonb
+    error_code : varchar(80)
+  * requested_at : timestamptz
+  * finished_at : timestamptz
+  * created_at : timestamptz <<DEFAULT_NOW>>
+}
+
+entity "INDEXES · catalog_fit_runs" as idxset_catalog_fit_runs <<INDEX_SET>> {
+  PK pk_catalog_fit_runs : (id) UNIQUE BTREE
+  UX ux_data_catalog_fit_runs_idempotency : (trigger_kind, idempotency_key) UNIQUE BTREE WHERE idempotency_key IS NOT NULL
+  IX ix_data_catalog_fit_runs_finished : (source_code, finished_at DESC) BTREE
+}
+catalog_fit_runs .. idxset_catalog_fit_runs : indexed by
+
 catalog_scan_runs ||--o{ catalog_objects
 catalog_scan_runs ||--o{ catalog_columns
 catalog_objects ||--o{ catalog_columns

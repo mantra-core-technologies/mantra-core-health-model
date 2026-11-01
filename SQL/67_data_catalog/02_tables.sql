@@ -1,4 +1,4 @@
--- SALUD v4.2.83 · módulo 67 · schema data_catalog
+-- SALUD v4.2.84 · módulo 67 · schema data_catalog
 -- Generado de diagram_67_data_catalog.puml — NO editar a mano.
 
 
@@ -478,4 +478,23 @@ CREATE TABLE IF NOT EXISTS "data_catalog"."catalog_change_acknowledgements" (
     "reason" text,
     "created_at" timestamptz NOT NULL,
     CONSTRAINT "pk_catalog_change_acknowledgements" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "data_catalog"."catalog_fit_runs" (
+    "id" uuid NOT NULL,
+    "source_code" varchar(40) NOT NULL DEFAULT 'primary',
+    "trigger_kind" varchar(10) NOT NULL,
+    "requested_by_user_id" uuid,
+    "idempotency_key" varchar(128),
+    "status" varchar(12) NOT NULL,
+    "model_version" varchar(40) NOT NULL,
+    "verdict" varchar(12),
+    "code_fingerprint" varchar(64),
+    "deployed_commit" varchar(64),
+    "report_json" jsonb,
+    "error_code" varchar(80),
+    "requested_at" timestamptz NOT NULL,
+    "finished_at" timestamptz NOT NULL,
+    "created_at" timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT "pk_catalog_fit_runs" PRIMARY KEY ("id")
 );
