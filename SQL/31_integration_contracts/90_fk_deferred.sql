@@ -11,7 +11,7 @@ DO $$ BEGIN
     ALTER TABLE "integration_contracts"."integration_contracts"
         ADD CONSTRAINT "fk_integration_contracts_tenant_id" FOREIGN KEY ("tenant_id")
         REFERENCES "directory"."tenants" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: integrations.external_providers (requiere schema integrations)
 DO $$ BEGIN
