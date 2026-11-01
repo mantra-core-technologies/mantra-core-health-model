@@ -1,4 +1,4 @@
--- SALUD v4.2.82 · módulo 28 · schema telemetry
+-- SALUD v4.2.83 · módulo 28 · schema telemetry
 -- Generado de diagram_28_telemetry.puml — NO editar a mano.
 
 
@@ -361,14 +361,14 @@ DO $$ BEGIN
     ALTER TABLE "telemetry"."client_error_events"
         ADD CONSTRAINT "fk_client_error_events_portal_type_concept_id" FOREIGN KEY ("portal_type_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "telemetry"."client_error_events"
         ADD CONSTRAINT "fk_client_error_events_user_id" FOREIGN KEY ("user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.sessions (requiere schema iam)
 DO $$ BEGIN
@@ -382,4 +382,4 @@ DO $$ BEGIN
     ALTER TABLE "telemetry"."client_error_events"
         ADD CONSTRAINT "fk_client_error_events_error_class_concept_id" FOREIGN KEY ("error_class_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;

@@ -1,4 +1,4 @@
--- SALUD v4.2.82 · módulo 31 · schema integration_contracts
+-- SALUD v4.2.83 · módulo 31 · schema integration_contracts
 -- Generado de diagram_31_integration_contracts.puml — NO editar a mano.
 
 
@@ -11,7 +11,7 @@ DO $$ BEGIN
     ALTER TABLE "integration_contracts"."integration_contracts"
         ADD CONSTRAINT "fk_integration_contracts_tenant_id" FOREIGN KEY ("tenant_id")
         REFERENCES "directory"."tenants" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: integrations.external_providers (requiere schema integrations)
 DO $$ BEGIN

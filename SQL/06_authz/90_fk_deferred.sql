@@ -1,4 +1,4 @@
--- SALUD v4.2.82 · módulo 06 · schema authz
+-- SALUD v4.2.83 · módulo 06 · schema authz
 -- Generado de diagram_06_authz.puml — NO editar a mano.
 
 
@@ -56,28 +56,28 @@ DO $$ BEGIN
     ALTER TABLE "authz"."permissions"
         ADD CONSTRAINT "fk_permissions_sensitivity_concept_id" FOREIGN KEY ("sensitivity_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "authz"."permissions"
         ADD CONSTRAINT "fk_permissions_approval_mode_concept_id" FOREIGN KEY ("approval_mode_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "authz"."permissions"
         ADD CONSTRAINT "fk_permissions_purpose_of_use_concept_id" FOREIGN KEY ("purpose_of_use_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "authz"."permissions"
         ADD CONSTRAINT "fk_permissions_legal_basis_concept_id" FOREIGN KEY ("legal_basis_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: directory.tenants (requiere schema directory)
 DO $$ BEGIN
@@ -560,14 +560,14 @@ DO $$ BEGIN
     ALTER TABLE "authz"."care_relationships"
         ADD CONSTRAINT "fk_care_relationships_tenant_id" FOREIGN KEY ("tenant_id")
         REFERENCES "directory"."tenants" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: profiles.patient_profiles (requiere schema profiles)
 DO $$ BEGIN
     ALTER TABLE "authz"."care_relationships"
         ADD CONSTRAINT "fk_care_relationships_patient_profile_id" FOREIGN KEY ("patient_profile_id")
         REFERENCES "profiles"."patient_profiles" ("profile_id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: profiles.health_practitioner_profiles (requiere schema profiles)
 DO $$ BEGIN
@@ -581,116 +581,116 @@ DO $$ BEGIN
     ALTER TABLE "authz"."care_relationships"
         ADD CONSTRAINT "fk_care_relationships_relationship_type_concept_id" FOREIGN KEY ("relationship_type_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "authz"."care_relationships"
         ADD CONSTRAINT "fk_care_relationships_status_concept_id" FOREIGN KEY ("status_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "authz"."care_relationships"
         ADD CONSTRAINT "fk_care_relationships_purpose_concept_id" FOREIGN KEY ("purpose_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "authz"."care_relationships"
         ADD CONSTRAINT "fk_care_relationships_established_by_user_id" FOREIGN KEY ("established_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "authz"."care_relationships"
         ADD CONSTRAINT "fk_care_relationships_created_by_user_id" FOREIGN KEY ("created_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "authz"."care_relationships"
         ADD CONSTRAINT "fk_care_relationships_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: directory.tenants (requiere schema directory)
 DO $$ BEGIN
     ALTER TABLE "authz"."patient_legal_representations"
         ADD CONSTRAINT "fk_patient_legal_representations_tenant_id" FOREIGN KEY ("tenant_id")
         REFERENCES "directory"."tenants" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: profiles.patient_profiles (requiere schema profiles)
 DO $$ BEGIN
     ALTER TABLE "authz"."patient_legal_representations"
         ADD CONSTRAINT "fk_patient_legal_representations_patient_profile_id" FOREIGN KEY ("patient_profile_id")
         REFERENCES "profiles"."patient_profiles" ("profile_id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "authz"."patient_legal_representations"
         ADD CONSTRAINT "fk_patient_legal_representations_representative_user_id" FOREIGN KEY ("representative_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "authz"."patient_legal_representations"
         ADD CONSTRAINT "fk_patient_legal_representations_representation_type_concept_id" FOREIGN KEY ("representation_type_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "authz"."patient_legal_representations"
         ADD CONSTRAINT "fk_patient_legal_representations_status_concept_id" FOREIGN KEY ("status_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "authz"."patient_legal_representations"
         ADD CONSTRAINT "fk_patient_legal_representations_created_by_user_id" FOREIGN KEY ("created_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "authz"."patient_legal_representations"
         ADD CONSTRAINT "fk_patient_legal_representations_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "authz"."ui_visibility_elements"
         ADD CONSTRAINT "fk_ui_visibility_elements_created_by_user_id" FOREIGN KEY ("created_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "authz"."ui_visibility_elements"
         ADD CONSTRAINT "fk_ui_visibility_elements_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "authz"."ui_visibility_rules"
         ADD CONSTRAINT "fk_ui_visibility_rules_created_by_user_id" FOREIGN KEY ("created_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "authz"."ui_visibility_rules"
         ADD CONSTRAINT "fk_ui_visibility_rules_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;

@@ -1,4 +1,4 @@
--- SALUD v4.2.82 · módulo 01 · schema iam
+-- SALUD v4.2.83 · módulo 01 · schema iam
 -- Generado de diagram_01_iam.puml — NO editar a mano.
 
 
@@ -18,61 +18,61 @@ DO $$ BEGIN
     ALTER TABLE "iam"."account_activations"
         ADD CONSTRAINT "fk_account_activations_user_id" FOREIGN KEY ("user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "iam"."account_activations"
         ADD CONSTRAINT "fk_account_activations_legal_representative_user_id" FOREIGN KEY ("legal_representative_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "iam"."account_activations"
         ADD CONSTRAINT "fk_account_activations_created_by_user_id" FOREIGN KEY ("created_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "iam"."account_activations"
         ADD CONSTRAINT "fk_account_activations_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "iam"."email_verifications"
         ADD CONSTRAINT "fk_email_verifications_user_id" FOREIGN KEY ("user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "iam"."email_verifications"
         ADD CONSTRAINT "fk_email_verifications_created_by_user_id" FOREIGN KEY ("created_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "iam"."email_verifications"
         ADD CONSTRAINT "fk_email_verifications_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "iam"."password_resets"
         ADD CONSTRAINT "fk_password_resets_user_id" FOREIGN KEY ("user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "iam"."password_resets"
         ADD CONSTRAINT "fk_password_resets_created_by_user_id" FOREIGN KEY ("created_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "iam"."password_resets"
         ADD CONSTRAINT "fk_password_resets_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "iam"."authentication_credentials"
@@ -270,10 +270,10 @@ DO $$ BEGIN
     ALTER TABLE "iam"."session_policies"
         ADD CONSTRAINT "fk_session_policies_created_by_user_id" FOREIGN KEY ("created_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "iam"."session_policies"
         ADD CONSTRAINT "fk_session_policies_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;

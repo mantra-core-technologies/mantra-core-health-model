@@ -2,7 +2,7 @@
   "package": "SALUD_v4.0_module_seeds_enhanced",
   "seed_revision": "2.8.1-v4.2.50",
   "module_count": 64,
-  "boot_record_count": 84063,
+  "boot_record_count": 84069,
   "mock_record_count": 20207,
   "validation_status": "PASS",
   "mock_production_policy": "hard-fail",
@@ -38,10 +38,10 @@
       "number": 3,
       "code": "terminology",
       "file": "modules/03_terminology.seeds.json",
-      "boot_records": 4779,
+      "boot_records": 4785,
       "mock_records": 180,
-      "line_count": 72701,
-      "sha256": "42b61279843c95ed85c6de4ca42190ea4150ae5736fafc25aec8de3f564a9e9c"
+      "line_count": 72734,
+      "sha256": "64c7f0627b4ae152cc37fda1d2a7a3f66c80dafe09493f76f064807a2adcd7b8"
     },
     {
       "number": 4,
@@ -85,8 +85,8 @@
       "file": "modules/08_clinical.seeds.json",
       "boot_records": 15303,
       "mock_records": 411,
-      "line_count": 237794,
-      "sha256": "8bb3c6c3fbd7d82ca8467831919b793aab2450d93d818afbf862e2bfed416766"
+      "line_count": 237810,
+      "sha256": "6c9956725f21401401ea042fbb22f2bfec9eb84031827216db07d2bff718b45e"
     },
     {
       "number": 9,
@@ -184,8 +184,8 @@
       "file": "modules/19_community.seeds.json",
       "boot_records": 15312,
       "mock_records": 610,
-      "line_count": 347137,
-      "sha256": "997d572fbb0340eff95bd36945bae60bdd9a21d27f07c80016d9ebcc65f80dcf"
+      "line_count": 347169,
+      "sha256": "e2313ce34baa46f450e6baf491cfa3bddba235f059743cb27f5b9f5ee7aedd9b"
     },
     {
       "number": 20,
@@ -230,7 +230,7 @@
       "boot_records": 13693,
       "mock_records": 151,
       "line_count": 249422,
-      "sha256": "f0ae6ff0c4b216731f25f6dcd25f7ef4359d5be1a9937370523328255f5c7d52"
+      "sha256": "2f98e78125c8b089f60f6be6e44945bfc52df6eb85dc32a35dc24827264fd4df"
     },
     {
       "number": 25,
@@ -490,8 +490,8 @@
       "file": "modules/53_procedures_perioperative.seeds.json",
       "boot_records": 0,
       "mock_records": 560,
-      "line_count": 10785,
-      "sha256": "a595b9cd3b2f06dcc4b7cfd0bacd4d113961eb2d584e296144b58cc020263724"
+      "line_count": 10801,
+      "sha256": "2a70b282f5f364c275dbc9406b7e5fce81a25987883667c038282be5a413c3ff"
     },
     {
       "number": 54,

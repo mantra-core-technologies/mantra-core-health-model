@@ -1,4 +1,4 @@
--- SALUD v4.2.82 · módulo 19 · schema community
+-- SALUD v4.2.83 · módulo 19 · schema community
 -- Generado de diagram_19_community.puml — NO editar a mano.
 
 
@@ -210,7 +210,7 @@ DO $$ BEGIN
     ALTER TABLE "community"."chat_auto_replies"
         ADD CONSTRAINT "fk_chat_auto_replies_public_profile_id" FOREIGN KEY ("public_profile_id")
         REFERENCES "community"."public_profiles" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "community"."direct_messages"

@@ -1,4 +1,4 @@
--- SALUD v4.2.82 · módulo 29 · schema delegated_access
+-- SALUD v4.2.83 · módulo 29 · schema delegated_access
 -- Generado de diagram_29_delegated_access.puml — NO editar a mano.
 
 
@@ -30,7 +30,7 @@ DO $$ BEGIN
     ALTER TABLE "delegated_access"."shared_access_link_uses"
         ADD CONSTRAINT "fk_shared_access_link_uses_shared_access_link_id" FOREIGN KEY ("shared_access_link_id")
         REFERENCES "delegated_access"."shared_access_links" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "delegated_access"."delegated_access_grants"

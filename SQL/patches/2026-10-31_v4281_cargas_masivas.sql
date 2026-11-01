@@ -145,14 +145,14 @@ DO $$ BEGIN
     ALTER TABLE "system_ops"."bulk_import_batches"
         ADD CONSTRAINT "fk_bulk_import_batches_tenant_id" FOREIGN KEY ("tenant_id")
         REFERENCES "directory"."tenants" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "system_ops"."bulk_import_batches"
         ADD CONSTRAINT "fk_bulk_import_batches_confirmed_by_user_id" FOREIGN KEY ("confirmed_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- compuesta: system_ops.bulk_import_batches sólo apunta a delegated_access.four_eyes_requests del mismo tenant_id
 DO $$ BEGIN
@@ -166,14 +166,14 @@ DO $$ BEGIN
     ALTER TABLE "system_ops"."bulk_import_batches"
         ADD CONSTRAINT "fk_bulk_import_batches_created_by_user_id" FOREIGN KEY ("created_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "system_ops"."bulk_import_batches"
         ADD CONSTRAINT "fk_bulk_import_batches_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- compuesta: system_ops.bulk_import_batch_rows sólo apunta a system_ops.bulk_import_batches del mismo tenant_id
 DO $$ BEGIN
@@ -187,7 +187,7 @@ DO $$ BEGIN
     ALTER TABLE "system_ops"."bulk_import_batch_rows"
         ADD CONSTRAINT "fk_bulk_import_batch_rows_tenant_id" FOREIGN KEY ("tenant_id")
         REFERENCES "directory"."tenants" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- ---- 5. integridad: contadores y «sin datos personales en una fila cerrada» (SQL/11_system_ops/05_constraints.sql) ----
 -- ═══ bulk_import_batches ═══

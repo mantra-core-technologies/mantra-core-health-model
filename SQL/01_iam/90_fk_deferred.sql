@@ -1,4 +1,4 @@
--- SALUD v4.2.82 · módulo 01 · schema iam
+-- SALUD v4.2.83 · módulo 01 · schema iam
 -- Generado de diagram_01_iam.puml — NO editar a mano.
 
 
@@ -49,7 +49,7 @@ DO $$ BEGIN
     ALTER TABLE "iam"."account_activations"
         ADD CONSTRAINT "fk_account_activations_state_concept_id" FOREIGN KEY ("state_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: authz.patient_legal_representations (requiere schema authz)
 DO $$ BEGIN
@@ -63,14 +63,14 @@ DO $$ BEGIN
     ALTER TABLE "iam"."email_verifications"
         ADD CONSTRAINT "fk_email_verifications_state_concept_id" FOREIGN KEY ("state_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "iam"."password_resets"
         ADD CONSTRAINT "fk_password_resets_state_concept_id" FOREIGN KEY ("state_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
@@ -224,18 +224,18 @@ DO $$ BEGIN
     ALTER TABLE "iam"."session_policies"
         ADD CONSTRAINT "fk_session_policies_tenant_id" FOREIGN KEY ("tenant_id")
         REFERENCES "directory"."tenants" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "iam"."session_policies"
         ADD CONSTRAINT "fk_session_policies_scope_concept_id" FOREIGN KEY ("scope_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "iam"."session_policies"
         ADD CONSTRAINT "fk_session_policies_status_concept_id" FOREIGN KEY ("status_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;

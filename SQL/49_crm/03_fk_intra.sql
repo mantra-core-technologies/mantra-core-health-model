@@ -1,4 +1,4 @@
--- SALUD v4.2.82 · módulo 49 · schema crm
+-- SALUD v4.2.83 · módulo 49 · schema crm
 -- Generado de diagram_49_crm.puml — NO editar a mano.
 
 
@@ -306,7 +306,7 @@ DO $$ BEGIN
     ALTER TABLE "crm"."crm_case_owner_history"
         ADD CONSTRAINT "fk_crm_case_owner_history_crm_case_id" FOREIGN KEY ("crm_case_id")
         REFERENCES "crm"."crm_cases" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "crm"."crm_entitlements"

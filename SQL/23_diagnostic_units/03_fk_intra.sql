@@ -1,4 +1,4 @@
--- SALUD v4.2.82 · módulo 23 · schema diagnostic_units
+-- SALUD v4.2.83 · módulo 23 · schema diagnostic_units
 -- Generado de diagram_23_diagnostic_units.puml — NO editar a mano.
 
 
@@ -96,19 +96,19 @@ DO $$ BEGIN
     ALTER TABLE "diagnostic_units"."unit_medical_visitors"
         ADD CONSTRAINT "fk_unit_medical_visitors_diagnostic_unit_id" FOREIGN KEY ("diagnostic_unit_id")
         REFERENCES "diagnostic_units"."diagnostic_units" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "diagnostic_units"."unit_visit_requests"
         ADD CONSTRAINT "fk_unit_visit_requests_unit_medical_visitor_id" FOREIGN KEY ("unit_medical_visitor_id")
         REFERENCES "diagnostic_units"."unit_medical_visitors" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "diagnostic_units"."unit_visit_requests"
         ADD CONSTRAINT "fk_unit_visit_requests_diagnostic_unit_id" FOREIGN KEY ("diagnostic_unit_id")
         REFERENCES "diagnostic_units"."diagnostic_units" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "diagnostic_units"."unit_visit_requests"
@@ -120,28 +120,28 @@ DO $$ BEGIN
     ALTER TABLE "diagnostic_units"."unit_visit_request_events"
         ADD CONSTRAINT "fk_unit_visit_request_events_unit_visit_request_id" FOREIGN KEY ("unit_visit_request_id")
         REFERENCES "diagnostic_units"."unit_visit_requests" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "diagnostic_units"."unit_visit_records"
         ADD CONSTRAINT "fk_unit_visit_records_unit_visit_request_id" FOREIGN KEY ("unit_visit_request_id")
         REFERENCES "diagnostic_units"."unit_visit_requests" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "diagnostic_units"."unit_visit_records"
         ADD CONSTRAINT "fk_unit_visit_records_unit_medical_visitor_id" FOREIGN KEY ("unit_medical_visitor_id")
         REFERENCES "diagnostic_units"."unit_medical_visitors" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "diagnostic_units"."unit_visit_records"
         ADD CONSTRAINT "fk_unit_visit_records_diagnostic_unit_id" FOREIGN KEY ("diagnostic_unit_id")
         REFERENCES "diagnostic_units"."diagnostic_units" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "diagnostic_units"."unit_visit_ratings"
         ADD CONSTRAINT "fk_unit_visit_ratings_unit_visit_record_id" FOREIGN KEY ("unit_visit_record_id")
         REFERENCES "diagnostic_units"."unit_visit_records" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;

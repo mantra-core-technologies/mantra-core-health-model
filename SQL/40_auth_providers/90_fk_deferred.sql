@@ -1,4 +1,4 @@
--- SALUD v4.2.82 · módulo 40 · schema auth_providers
+-- SALUD v4.2.83 · módulo 40 · schema auth_providers
 -- Generado de diagram_40_auth_providers.puml — NO editar a mano.
 
 

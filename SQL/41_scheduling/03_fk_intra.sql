@@ -1,4 +1,4 @@
--- SALUD v4.2.82 · módulo 41 · schema scheduling
+-- SALUD v4.2.83 · módulo 41 · schema scheduling
 -- Generado de diagram_41_scheduling.puml — NO editar a mano.
 
 
@@ -54,7 +54,7 @@ DO $$ BEGIN
     ALTER TABLE "scheduling"."bookable_slots"
         ADD CONSTRAINT "fk_bookable_slots_practitioner_service_offering_id" FOREIGN KEY ("practitioner_service_offering_id")
         REFERENCES "scheduling"."practitioner_service_offerings" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "scheduling"."slot_holds"
@@ -84,7 +84,7 @@ DO $$ BEGIN
     ALTER TABLE "scheduling"."appointment_bookings"
         ADD CONSTRAINT "fk_appointment_bookings_practitioner_service_offering_id" FOREIGN KEY ("practitioner_service_offering_id")
         REFERENCES "scheduling"."practitioner_service_offerings" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "scheduling"."appointment_bookings"
@@ -144,10 +144,10 @@ DO $$ BEGIN
     ALTER TABLE "scheduling"."appointment_payment_states"
         ADD CONSTRAINT "fk_appointment_payment_states_appointment_booking_id" FOREIGN KEY ("appointment_booking_id")
         REFERENCES "scheduling"."appointment_bookings" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "scheduling"."appointment_payment_receipts"
         ADD CONSTRAINT "fk_appointment_payment_receipts_appointment_booking_id" FOREIGN KEY ("appointment_booking_id")
         REFERENCES "scheduling"."appointment_bookings" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;

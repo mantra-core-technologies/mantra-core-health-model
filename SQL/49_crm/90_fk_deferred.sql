@@ -1,4 +1,4 @@
--- SALUD v4.2.82 · módulo 49 · schema crm
+-- SALUD v4.2.83 · módulo 49 · schema crm
 -- Generado de diagram_49_crm.puml — NO editar a mano.
 
 
@@ -1085,21 +1085,21 @@ DO $$ BEGIN
     ALTER TABLE "crm"."crm_case_owner_history"
         ADD CONSTRAINT "fk_crm_case_owner_history_from_owner_user_id" FOREIGN KEY ("from_owner_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "crm"."crm_case_owner_history"
         ADD CONSTRAINT "fk_crm_case_owner_history_to_owner_user_id" FOREIGN KEY ("to_owner_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "crm"."crm_case_owner_history"
         ADD CONSTRAINT "fk_crm_case_owner_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: directory.tenants (requiere schema directory)
 DO $$ BEGIN

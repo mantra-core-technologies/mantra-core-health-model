@@ -1,4 +1,4 @@
--- SALUD v4.2.82 · módulo 70 · schema observability
+-- SALUD v4.2.83 · módulo 70 · schema observability
 -- Generado de diagram_70_observability.puml — NO editar a mano.
 
 
@@ -7,35 +7,35 @@ DO $$ BEGIN
     ALTER TABLE "observability"."error_groups"
         ADD CONSTRAINT "fk_error_groups_state_concept_id" FOREIGN KEY ("state_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "observability"."error_groups"
         ADD CONSTRAINT "fk_error_groups_assigned_to_user_id" FOREIGN KEY ("assigned_to_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "observability"."error_groups"
         ADD CONSTRAINT "fk_error_groups_resolved_by_user_id" FOREIGN KEY ("resolved_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "observability"."error_groups"
         ADD CONSTRAINT "fk_error_groups_created_by_user_id" FOREIGN KEY ("created_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "observability"."error_groups"
         ADD CONSTRAINT "fk_error_groups_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: platform_ops.service_components (requiere schema platform_ops)
 DO $$ BEGIN
@@ -49,21 +49,21 @@ DO $$ BEGIN
     ALTER TABLE "observability"."alert_rules"
         ADD CONSTRAINT "fk_alert_rules_severity_concept_id" FOREIGN KEY ("severity_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "observability"."alert_rules"
         ADD CONSTRAINT "fk_alert_rules_created_by_user_id" FOREIGN KEY ("created_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "observability"."alert_rules"
         ADD CONSTRAINT "fk_alert_rules_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: platform_ops.health_incidents (requiere schema platform_ops)
 DO $$ BEGIN

@@ -1,4 +1,4 @@
--- SALUD v4.2.82 · módulo 18 · schema clinical_ext
+-- SALUD v4.2.83 · módulo 18 · schema clinical_ext
 -- Generado de diagram_18_clinical_ext.puml — NO editar a mano.
 
 
@@ -18,7 +18,7 @@ DO $$ BEGIN
     ALTER TABLE "clinical_ext"."cds_rule_versions"
         ADD CONSTRAINT "fk_cds_rule_versions_cds_rule_id" FOREIGN KEY ("cds_rule_id")
         REFERENCES "clinical_ext"."cds_rules" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
     ALTER TABLE "clinical_ext"."order_set_items"

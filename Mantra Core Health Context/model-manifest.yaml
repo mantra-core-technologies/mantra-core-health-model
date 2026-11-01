@@ -1,6 +1,6 @@
 model:
   name: SALUD
-  version: 4.2.82
+  version: 4.2.83
   status: canonical-polyglot-nosql-health-platform
   generated_at: '2026-10-31'
   design_patches:
@@ -266,6 +266,26 @@ model:
       ejecutor y disparador de custodio hijo = padre en
       SQL/patches/2026-11-01_v4282_service_request_detalle.sql (escrito primero en la API,
       cb63a0cdc; gen_ddl no los expresa). Las dos entradas v4.2.82 entran juntas por model#102.
+  - id: patch-ui-visibility
+    role: product-features
+    doc: README.md (orden de parches)
+    status: materialized-physically
+    summary: >-
+      Visibilidad de la interfaz: authz.ui_visibility_elements y authz.ui_visibility_rules
+      (módulo 6) y sus reglas del módulo 33. Parche idempotente
+      SQL/patches/2026-10-31_ui_visibility.sql, generado con salud-db/gen_ui_visibility_patch.py.
+  - id: patch-v4.2.83-pharmacy-connection-fk
+    role: product-features
+    doc: docs/architecture/physical-materialization.md (v4.2.83)
+    status: materialized-physically
+    summary: >-
+      pharmacy.pharmacy_integration_connections.connection_id deja de apuntar a su propia
+      tabla y referencia integrations.provider_connections (id); pasa a NULL (nulo = sin
+      sistema externo configurado, modo manual, UC-24-07). Parche
+      SQL/patches/2026-10-31_v4283_pharmacy_connection_fk.sql, mismo nombre y contenido que
+      en la API (a07d17ac6).
+      Mismo tenant por disparador (farmacia y conexión, con los dos lados del cambio de
+      tenant) en SQL/patches/2026-11-01_v4283_pharmacy_connection_tenant.sql (model#110).
   materialization_note: >-
     v4.0.1 materializado en el ER (fuente: el vault/grafo). Se añadieron 14
     entidades nuevas (marketing.campaign_schedules/dispatches/dispatch_recipients,
@@ -278,12 +298,12 @@ model:
   inventory:
     modules_puml: 71
     schemas: 59
-    entity_declarations_total: 3283
-    table_like_elements: 1484
+    entity_declarations_total: 3290
+    table_like_elements: 1486
     view_elements: 81
-    index_sets: 1441
-    reference_only_stubs: 277
-    fk_references: 7874
+    index_sets: 1443
+    reference_only_stubs: 280
+    fk_references: 7880
     note: >-
       Cifras producidas por tools/model_inventory.py (fuente única reproducible:
       clasifica cada `entity` en una sola clase, suma == total). v4.0 base
@@ -325,6 +345,10 @@ model:
       F2–F5 de v4.2.68, admisión crea el vínculo, medicalFacility v4.2.63, admisiones v4.2.67 y
       las dos entradas v4.2.82): 3283 entity / 1484 table_like / 81 vistas / 1441 idx / 7874 FK /
       277 ref / 59 schemas (tools/model_inventory.py).
+      Recontado el 2026-11-01 por model#110 (merge de dev: authz.ui_visibility_elements y
+      _rules y v4.2.83, connection_id de farmacia hacia integrations.provider_connections):
+      3290 entity / 1486 table_like / 81 vistas / 1443 idx / 7880 FK / 280 ref / 59 schemas
+      (tools/model_inventory.py).
   database: PostgreSQL canonical + governed specialized stores
   rules:
     one_puml_per_module: true
@@ -409,9 +433,9 @@ modules:
   code: authz
   title: Authorization, Purpose of Use and Field Masking
   file: modules/diagram_06_authz.puml
-  table_like_elements: 15
+  table_like_elements: 17
   view_elements: 0
-  index_sets: 15
+  index_sets: 17
   status: active
 - number: 7
   code: consent

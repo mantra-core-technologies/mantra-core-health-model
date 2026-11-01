@@ -1,4 +1,4 @@
--- SALUD v4.2.82 · módulo 10 · schema audit
+-- SALUD v4.2.83 · módulo 10 · schema audit
 -- Generado de diagram_10_audit.puml — NO editar a mano.
 
 
@@ -427,7 +427,7 @@ DO $$ BEGIN
     ALTER TABLE "audit"."practice_sites_history"
         ADD CONSTRAINT "fk_practice_sites_history_tenant_id" FOREIGN KEY ("tenant_id")
         REFERENCES "directory"."tenants" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: practice.clinical_units (requiere schema practice)
 DO $$ BEGIN
@@ -462,7 +462,7 @@ DO $$ BEGIN
     ALTER TABLE "audit"."clinical_units_history"
         ADD CONSTRAINT "fk_clinical_units_history_tenant_id" FOREIGN KEY ("tenant_id")
         REFERENCES "directory"."tenants" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: practice.care_spaces (requiere schema practice)
 DO $$ BEGIN
@@ -497,322 +497,322 @@ DO $$ BEGIN
     ALTER TABLE "audit"."care_spaces_history"
         ADD CONSTRAINT "fk_care_spaces_history_tenant_id" FOREIGN KEY ("tenant_id")
         REFERENCES "directory"."tenants" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: procedures_perioperative.operating_room_block_series (requiere schema procedures_perioperative)
 DO $$ BEGIN
     ALTER TABLE "audit"."operating_room_block_series_history"
         ADD CONSTRAINT "fk_operating_room_block_series_history_operating_room__9ea3a62d" FOREIGN KEY ("operating_room_block_series_id")
         REFERENCES "procedures_perioperative"."operating_room_block_series" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."operating_room_block_series_history"
         ADD CONSTRAINT "fk_operating_room_block_series_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "audit"."operating_room_block_series_history"
         ADD CONSTRAINT "fk_operating_room_block_series_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."operating_room_block_series_history"
         ADD CONSTRAINT "fk_operating_room_block_series_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: directory.tenants (requiere schema directory)
 DO $$ BEGIN
     ALTER TABLE "audit"."operating_room_block_series_history"
         ADD CONSTRAINT "fk_operating_room_block_series_history_tenant_id" FOREIGN KEY ("tenant_id")
         REFERENCES "directory"."tenants" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: procedures_perioperative.operating_room_blocks (requiere schema procedures_perioperative)
 DO $$ BEGIN
     ALTER TABLE "audit"."operating_room_blocks_history"
         ADD CONSTRAINT "fk_operating_room_blocks_history_operating_room_block_id" FOREIGN KEY ("operating_room_block_id")
         REFERENCES "procedures_perioperative"."operating_room_blocks" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."operating_room_blocks_history"
         ADD CONSTRAINT "fk_operating_room_blocks_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "audit"."operating_room_blocks_history"
         ADD CONSTRAINT "fk_operating_room_blocks_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."operating_room_blocks_history"
         ADD CONSTRAINT "fk_operating_room_blocks_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: directory.tenants (requiere schema directory)
 DO $$ BEGIN
     ALTER TABLE "audit"."operating_room_blocks_history"
         ADD CONSTRAINT "fk_operating_room_blocks_history_tenant_id" FOREIGN KEY ("tenant_id")
         REFERENCES "directory"."tenants" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: clinical.encounter_locations (requiere schema clinical)
 DO $$ BEGIN
     ALTER TABLE "audit"."encounter_locations_history"
         ADD CONSTRAINT "fk_encounter_locations_history_encounter_location_id" FOREIGN KEY ("encounter_location_id")
         REFERENCES "clinical"."encounter_locations" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."encounter_locations_history"
         ADD CONSTRAINT "fk_encounter_locations_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "audit"."encounter_locations_history"
         ADD CONSTRAINT "fk_encounter_locations_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."encounter_locations_history"
         ADD CONSTRAINT "fk_encounter_locations_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: directory.tenants (requiere schema directory)
 DO $$ BEGIN
     ALTER TABLE "audit"."encounter_locations_history"
         ADD CONSTRAINT "fk_encounter_locations_history_tenant_id" FOREIGN KEY ("tenant_id")
         REFERENCES "directory"."tenants" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: clinical.placement_incidents (requiere schema clinical)
 DO $$ BEGIN
     ALTER TABLE "audit"."placement_incidents_history"
         ADD CONSTRAINT "fk_placement_incidents_history_placement_incident_id" FOREIGN KEY ("placement_incident_id")
         REFERENCES "clinical"."placement_incidents" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."placement_incidents_history"
         ADD CONSTRAINT "fk_placement_incidents_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "audit"."placement_incidents_history"
         ADD CONSTRAINT "fk_placement_incidents_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."placement_incidents_history"
         ADD CONSTRAINT "fk_placement_incidents_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: directory.tenants (requiere schema directory)
 DO $$ BEGIN
     ALTER TABLE "audit"."placement_incidents_history"
         ADD CONSTRAINT "fk_placement_incidents_history_tenant_id" FOREIGN KEY ("tenant_id")
         REFERENCES "directory"."tenants" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: practice.care_space_blocks (requiere schema practice)
 DO $$ BEGIN
     ALTER TABLE "audit"."care_space_blocks_history"
         ADD CONSTRAINT "fk_care_space_blocks_history_care_space_block_id" FOREIGN KEY ("care_space_block_id")
         REFERENCES "practice"."care_space_blocks" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."care_space_blocks_history"
         ADD CONSTRAINT "fk_care_space_blocks_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "audit"."care_space_blocks_history"
         ADD CONSTRAINT "fk_care_space_blocks_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."care_space_blocks_history"
         ADD CONSTRAINT "fk_care_space_blocks_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: directory.tenants (requiere schema directory)
 DO $$ BEGIN
     ALTER TABLE "audit"."care_space_blocks_history"
         ADD CONSTRAINT "fk_care_space_blocks_history_tenant_id" FOREIGN KEY ("tenant_id")
         REFERENCES "directory"."tenants" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: practice.cleaning_orders (requiere schema practice)
 DO $$ BEGIN
     ALTER TABLE "audit"."cleaning_orders_history"
         ADD CONSTRAINT "fk_cleaning_orders_history_cleaning_order_id" FOREIGN KEY ("cleaning_order_id")
         REFERENCES "practice"."cleaning_orders" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."cleaning_orders_history"
         ADD CONSTRAINT "fk_cleaning_orders_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "audit"."cleaning_orders_history"
         ADD CONSTRAINT "fk_cleaning_orders_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."cleaning_orders_history"
         ADD CONSTRAINT "fk_cleaning_orders_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: directory.tenants (requiere schema directory)
 DO $$ BEGIN
     ALTER TABLE "audit"."cleaning_orders_history"
         ADD CONSTRAINT "fk_cleaning_orders_history_tenant_id" FOREIGN KEY ("tenant_id")
         REFERENCES "directory"."tenants" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: practice.care_space_category_periods (requiere schema practice)
 DO $$ BEGIN
     ALTER TABLE "audit"."care_space_category_periods_history"
         ADD CONSTRAINT "fk_care_space_category_periods_history_care_space_cate_9048acce" FOREIGN KEY ("care_space_category_period_id")
         REFERENCES "practice"."care_space_category_periods" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."care_space_category_periods_history"
         ADD CONSTRAINT "fk_care_space_category_periods_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "audit"."care_space_category_periods_history"
         ADD CONSTRAINT "fk_care_space_category_periods_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."care_space_category_periods_history"
         ADD CONSTRAINT "fk_care_space_category_periods_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: directory.tenants (requiere schema directory)
 DO $$ BEGIN
     ALTER TABLE "audit"."care_space_category_periods_history"
         ADD CONSTRAINT "fk_care_space_category_periods_history_tenant_id" FOREIGN KEY ("tenant_id")
         REFERENCES "directory"."tenants" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: billing.space_tariffs (requiere schema billing)
 DO $$ BEGIN
     ALTER TABLE "audit"."space_tariffs_history"
         ADD CONSTRAINT "fk_space_tariffs_history_space_tariff_id" FOREIGN KEY ("space_tariff_id")
         REFERENCES "billing"."space_tariffs" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."space_tariffs_history"
         ADD CONSTRAINT "fk_space_tariffs_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "audit"."space_tariffs_history"
         ADD CONSTRAINT "fk_space_tariffs_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."space_tariffs_history"
         ADD CONSTRAINT "fk_space_tariffs_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: directory.tenants (requiere schema directory)
 DO $$ BEGIN
     ALTER TABLE "audit"."space_tariffs_history"
         ADD CONSTRAINT "fk_space_tariffs_history_tenant_id" FOREIGN KEY ("tenant_id")
         REFERENCES "directory"."tenants" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: billing.charge_captures (requiere schema billing)
 DO $$ BEGIN
     ALTER TABLE "audit"."charge_captures_history"
         ADD CONSTRAINT "fk_charge_captures_history_charge_capture_id" FOREIGN KEY ("charge_capture_id")
         REFERENCES "billing"."charge_captures" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."charge_captures_history"
         ADD CONSTRAINT "fk_charge_captures_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "audit"."charge_captures_history"
         ADD CONSTRAINT "fk_charge_captures_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."charge_captures_history"
         ADD CONSTRAINT "fk_charge_captures_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: directory.tenants (requiere schema directory)
 DO $$ BEGIN
     ALTER TABLE "audit"."charge_captures_history"
         ADD CONSTRAINT "fk_charge_captures_history_tenant_id" FOREIGN KEY ("tenant_id")
         REFERENCES "directory"."tenants" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: clinical.diagnostic_reports (requiere schema clinical)
 DO $$ BEGIN
@@ -2737,56 +2737,56 @@ DO $$ BEGIN
     ALTER TABLE "audit"."insurance_products_history"
         ADD CONSTRAINT "fk_insurance_products_history_insurance_product_id" FOREIGN KEY ("insurance_product_id")
         REFERENCES "insurance"."insurance_products" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."insurance_products_history"
         ADD CONSTRAINT "fk_insurance_products_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "audit"."insurance_products_history"
         ADD CONSTRAINT "fk_insurance_products_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."insurance_products_history"
         ADD CONSTRAINT "fk_insurance_products_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: procedures_perioperative.procedure_cases (requiere schema procedures_perioperative)
 DO $$ BEGIN
     ALTER TABLE "audit"."procedure_cases_history"
         ADD CONSTRAINT "fk_procedure_cases_history_procedure_case_id" FOREIGN KEY ("procedure_case_id")
         REFERENCES "procedures_perioperative"."procedure_cases" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."procedure_cases_history"
         ADD CONSTRAINT "fk_procedure_cases_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "audit"."procedure_cases_history"
         ADD CONSTRAINT "fk_procedure_cases_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."procedure_cases_history"
         ADD CONSTRAINT "fk_procedure_cases_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: ads.ad_sets (requiere schema ads)
 DO $$ BEGIN
@@ -3997,221 +3997,221 @@ DO $$ BEGIN
     ALTER TABLE "audit"."informational_materials_history"
         ADD CONSTRAINT "fk_informational_materials_history_informational_material_id" FOREIGN KEY ("informational_material_id")
         REFERENCES "pharma_lab"."informational_materials" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."informational_materials_history"
         ADD CONSTRAINT "fk_informational_materials_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "audit"."informational_materials_history"
         ADD CONSTRAINT "fk_informational_materials_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."informational_materials_history"
         ADD CONSTRAINT "fk_informational_materials_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: pharma_lab.medical_visitors (requiere schema pharma_lab)
 DO $$ BEGIN
     ALTER TABLE "audit"."medical_visitors_history"
         ADD CONSTRAINT "fk_medical_visitors_history_medical_visitor_id" FOREIGN KEY ("medical_visitor_id")
         REFERENCES "pharma_lab"."medical_visitors" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."medical_visitors_history"
         ADD CONSTRAINT "fk_medical_visitors_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "audit"."medical_visitors_history"
         ADD CONSTRAINT "fk_medical_visitors_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."medical_visitors_history"
         ADD CONSTRAINT "fk_medical_visitors_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: pharma_lab.pharmacovigilance_reports (requiere schema pharma_lab)
 DO $$ BEGIN
     ALTER TABLE "audit"."pharmacovigilance_reports_history"
         ADD CONSTRAINT "fk_pharmacovigilance_reports_history_pharmacovigilance_696f10eb" FOREIGN KEY ("pharmacovigilance_report_id")
         REFERENCES "pharma_lab"."pharmacovigilance_reports" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."pharmacovigilance_reports_history"
         ADD CONSTRAINT "fk_pharmacovigilance_reports_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "audit"."pharmacovigilance_reports_history"
         ADD CONSTRAINT "fk_pharmacovigilance_reports_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."pharmacovigilance_reports_history"
         ADD CONSTRAINT "fk_pharmacovigilance_reports_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: pharma_lab.pharma_labs (requiere schema pharma_lab)
 DO $$ BEGIN
     ALTER TABLE "audit"."pharma_labs_history"
         ADD CONSTRAINT "fk_pharma_labs_history_pharma_lab_id" FOREIGN KEY ("pharma_lab_id")
         REFERENCES "pharma_lab"."pharma_labs" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."pharma_labs_history"
         ADD CONSTRAINT "fk_pharma_labs_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "audit"."pharma_labs_history"
         ADD CONSTRAINT "fk_pharma_labs_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."pharma_labs_history"
         ADD CONSTRAINT "fk_pharma_labs_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: pharma_lab.pharma_lab_staff (requiere schema pharma_lab)
 DO $$ BEGIN
     ALTER TABLE "audit"."pharma_lab_staff_history"
         ADD CONSTRAINT "fk_pharma_lab_staff_history_pharma_lab_staff_id" FOREIGN KEY ("pharma_lab_staff_id")
         REFERENCES "pharma_lab"."pharma_lab_staff" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."pharma_lab_staff_history"
         ADD CONSTRAINT "fk_pharma_lab_staff_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "audit"."pharma_lab_staff_history"
         ADD CONSTRAINT "fk_pharma_lab_staff_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."pharma_lab_staff_history"
         ADD CONSTRAINT "fk_pharma_lab_staff_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: pharma_lab.pharma_products (requiere schema pharma_lab)
 DO $$ BEGIN
     ALTER TABLE "audit"."pharma_products_history"
         ADD CONSTRAINT "fk_pharma_products_history_pharma_product_id" FOREIGN KEY ("pharma_product_id")
         REFERENCES "pharma_lab"."pharma_products" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."pharma_products_history"
         ADD CONSTRAINT "fk_pharma_products_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "audit"."pharma_products_history"
         ADD CONSTRAINT "fk_pharma_products_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."pharma_products_history"
         ADD CONSTRAINT "fk_pharma_products_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: pharma_lab.regulatory_documents (requiere schema pharma_lab)
 DO $$ BEGIN
     ALTER TABLE "audit"."regulatory_documents_history"
         ADD CONSTRAINT "fk_regulatory_documents_history_regulatory_document_id" FOREIGN KEY ("regulatory_document_id")
         REFERENCES "pharma_lab"."regulatory_documents" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."regulatory_documents_history"
         ADD CONSTRAINT "fk_regulatory_documents_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "audit"."regulatory_documents_history"
         ADD CONSTRAINT "fk_regulatory_documents_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."regulatory_documents_history"
         ADD CONSTRAINT "fk_regulatory_documents_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: pharma_lab.visit_requests (requiere schema pharma_lab)
 DO $$ BEGIN
     ALTER TABLE "audit"."visit_requests_history"
         ADD CONSTRAINT "fk_visit_requests_history_visit_request_id" FOREIGN KEY ("visit_request_id")
         REFERENCES "pharma_lab"."visit_requests" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."visit_requests_history"
         ADD CONSTRAINT "fk_visit_requests_history_operation_concept_id" FOREIGN KEY ("operation_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: iam.users (requiere schema iam)
 DO $$ BEGIN
     ALTER TABLE "audit"."visit_requests_history"
         ADD CONSTRAINT "fk_visit_requests_history_changed_by_user_id" FOREIGN KEY ("changed_by_user_id")
         REFERENCES "iam"."users" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "audit"."visit_requests_history"
         ADD CONSTRAINT "fk_visit_requests_history_change_reason_concept_id" FOREIGN KEY ("change_reason_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;

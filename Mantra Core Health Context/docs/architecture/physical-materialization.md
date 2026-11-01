@@ -49,6 +49,35 @@ comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_obje
 
 ## 3. Estado actual del build
 
+### v4.2.83 — `connection_id` de la conexión de farmacia apunta a la conexión de integraciones y es opcional (2026-10-31)
+
+**Cambio de esquema: 0 tablas, 0 columnas, +1 FK, −1 FK, −1 `NOT NULL`.** Parche nuevo e idempotente:
+`SQL/patches/2026-10-31_v4283_pharmacy_connection_fk.sql` (una transacción). Incluye una migración de datos.
+
+- **`pharmacy.pharmacy_integration_connections.connection_id`** apuntaba a su propia tabla (una heurística de
+  mismo schema en la auditoría de FK del 2026-07-24) y era obligatorio; la API lo rellenaba con el id de la
+  propia fila. Ahora referencia `integrations.provider_connections (id)`, como ya hace
+  `diagnostics.imaging_endpoints.connection_id`, y acepta nulo. Nulo quiere decir que todavía no está
+  configurado el sistema de la farmacia y trabaja en manual (UC-24-07).
+- **Dónde nace:** la nota de la bóveda `FK pharmacy.pharmacy_integration_connections.connection_id` (la leen
+  `gen_ddl.py`, `gen_entities.py` y el catálogo del ORM) y el `.puml` del módulo 24, con un stub
+  `REFERENCE_ONLY` de `integrations.provider_connections` y la arista etiquetada `: connection_id`.
+- **Parche, en orden:** quita la FK propia (solo si todavía apunta a su propia tabla), quita el `NOT NULL`,
+  **pone en nulo `connection_id` donde no hay una conexión válida en `integrations.provider_connections`** y
+  agrega la FK nueva. Las filas no se borran: `pharmacy_external_product_mappings` y
+  `pharmacy_inventory_sync_batches` las referencian por `id` y esos vínculos no cambian. La reversa está
+  comentada en la cabecera del parche y vale mientras ninguna fila apunte a una conexión real.
+- **Orden de despliegue:** el parche se aplica justo antes de arrancar la API que ya no rellena `connection_id`.
+  Con la API anterior y el parche aplicado, un reinicio en modo `safe` recrearía la FK propia; con la API
+  nueva y sin el parche, el alta sin `connection_id` falla por el `NOT NULL`.
+- **Sin cambios en `integrations`:** el esquema de ese módulo no se toca.
+- **Mismo tenant (model#110):** `SQL/patches/2026-11-01_v4283_pharmacy_connection_tenant.sql` agrega el disparador
+  `trg_pharmacy_integration_connections_connection_tenant`: un `connection_id` no nulo tiene que ser una conexión del
+  tenant de la farmacia (`pharmacies.tenant_id = provider_connections.tenant_id`); una FK compuesta no se puede porque
+  la fila no lleva `tenant_id`. Dos disparadores más impiden el cruce al cambiar el `tenant_id` de la farmacia o de la
+  conexión. Aborta sin cambios si ya hay cruces. `gen_ddl.py` no expresa disparadores: el parche también va en una base nueva.
+- Fuera del cambio: el cifrado de la clave y las filas de `external_providers` de farmacia.
+
 ### v4.2.82 — Detalle de la orden de estudios (2026-11-01)
 
 **Cambio de esquema: +6 columnas NULLABLE en `clinical.service_requests`, +1 tabla (`clinical.service_request_components`), +9 FK,

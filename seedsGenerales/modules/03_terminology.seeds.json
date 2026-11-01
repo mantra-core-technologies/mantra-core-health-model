@@ -53,7 +53,7 @@
       "value_set_members",
       "tenant_catalog_policies"
     ],
-    "record_count": 4779,
+    "record_count": 4785,
     "records": {
       "terminology_sources": [
         {
@@ -34565,6 +34565,39 @@
           "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
           "code": "DA_INITIATOR_PRACTITIONER",
           "display": "Initiated by the practitioner",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "a1df879c-4ac6-5a7e-8548-bc04207e92fa",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "RES_PRACTITIONER",
+          "display": "Practitioner",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "b96b14a3-6a0d-5478-b70f-46b89c715dfe",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "TPL_PUBLISHED",
+          "display": "Template published",
+          "abstract": false,
+          "selectable": true,
+          "created_at": "2026-08-17T21:45:00Z",
+          "updated_at": "2026-08-17T21:45:00Z",
+          "row_version": 1
+        },
+        {
+          "id": "10960d55-a26d-51ab-98ef-48b1d64b306b",
+          "code_system_version_id": "ffda3cef-e77a-5002-8709-e79f32e62fb4",
+          "code": "SLOT_OPEN",
+          "display": "Slot open",
           "abstract": false,
           "selectable": true,
           "created_at": "2026-08-17T21:45:00Z",
@@ -69870,7 +69903,7 @@
       }
     ],
     "summary": {
-      "record_count": 4779,
+      "record_count": 4785,
       "entity_count": 10,
       "populated_entity_count": 10,
       "scenario_count": null,

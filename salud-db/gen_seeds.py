@@ -714,6 +714,21 @@ TENANT_TYPE_BACKEND_CONCEPTS = [
 ]
 BACKEND_CONCEPTS += TENANT_TYPE_BACKEND_CONCEPTS
 
+# --- model#105 · agenda de los centros diagnósticos (patch v4.2.39) -----------------
+# `SQL/patches/2026-10-11_v4239_agenda_centros_diagnosticos.sql` crea el recurso agendable,
+# la plantilla publicada y los cupos abiertos de cada centro con estos tres ids fijos. Son
+# conceptos centrales de `concepts.ts` (`RESOURCE_PRACTITIONER`, `TEMPLATE_PUBLISHED`,
+# `SLOT_OPEN`): el `code` almacenado es el `def.code`, no la clave. Sin el espejo, la primera
+# pasada del patch no falla (todavía no hay centros sembrados) pero la segunda, sobre una base
+# con semillas y sin que la API haya arrancado, viola
+# `fk_schedulable_resources_resource_type_concept_id` (y detrás, las FK de plantilla y cupo).
+SCHEDULING_AGENDA_BACKEND_CONCEPTS = [
+    ("scheduling:resource-type:practitioner", "RES_PRACTITIONER", "Practitioner"),
+    ("scheduling:template-status:published", "TPL_PUBLISHED", "Template published"),
+    ("scheduling:slot-status:open", "SLOT_OPEN", "Slot open"),
+]
+BACKEND_CONCEPTS += SCHEDULING_AGENDA_BACKEND_CONCEPTS
+
 # --- v4.2.75 · personal de apoyo (secretaria y otros roles) -------------------------
 # Conceptos NUEVOS de módulo que introducen los módulos 01/04/14/19/29 (columnas
 # `*_concept_id` de support_scope_grants, engagement_*, role_templates, session_policies,
@@ -1160,14 +1175,82 @@ def index_files():
             + sorted((ROOT / "NoSQL").glob("5[89]_*/*.sql")))
 
 
+# El predicado de un índice UNIQUE parcial (`… WHERE is_preferred AND valid_to IS NULL`).
+UNIQUE_WHERE_RE = re.compile(
+    r'CREATE UNIQUE INDEX IF NOT EXISTS "[^"]+" ON "([a-z0-9_]+)"\."([a-z0-9_]+)" \(([^)]*)\)'
+    r'[^;\n]*?\sWHERE\s+([^;\n]+);')
+
+# {(schema.tabla, (col, …)): predicado} de las UK parciales. Lo llena `parse_unique()`; lo leen
+# las fases de desambiguación, que sólo deben comparar las filas que el índice cubre.
+UK_PREDICATES: dict = {}
+
+
 def parse_unique():
-    """{schema.tabla: [(col, …)]} de los índices UNIQUE del DDL."""
+    """{schema.tabla: [(col, …)]} de los índices UNIQUE del DDL.
+
+    Los índices parciales (`WHERE …`) quedan también en `UK_PREDICATES`: dos filas que repiten
+    la clave fuera del predicado NO colisionan en la base (p. ej. dos direcciones del mismo
+    dueño sin `is_preferred`), y desambiguarlas cambiaba datos válidos — model#109.
+    """
     uks = {}
+    UK_PREDICATES.clear()
     for f in index_files():
-        for schema, table, cols in UNIQUE_RE.findall(f.read_text(encoding="utf-8")):
+        text = f.read_text(encoding="utf-8")
+        for schema, table, cols in UNIQUE_RE.findall(text):
             names = tuple(c.strip().strip('"') for c in cols.split(","))
             uks.setdefault(f"{schema}.{table}", []).append(names)
+        for schema, table, cols, where in UNIQUE_WHERE_RE.findall(text):
+            names = tuple(c.strip().strip('"') for c in cols.split(","))
+            UK_PREDICATES[(f"{schema}.{table}", names)] = where.strip()
     return uks
+
+
+_PRED_ATOM_RE = (
+    (re.compile(r'^"?([a-z0-9_]+)"?\s+IS\s+NOT\s+NULL$', re.I), lambda c: (lambda r: r.get(c) is not None)),
+    (re.compile(r'^"?([a-z0-9_]+)"?\s+IS\s+NULL$', re.I), lambda c: (lambda r: r.get(c) is None)),
+    (re.compile(r'^"?([a-z0-9_]+)"?$'), lambda c: (lambda r: r.get(c) is True)),
+)
+_PRED_CMP_RE = re.compile(r"^\"?([a-z0-9_]+)\"?\s*(=|<>|!=)\s*('([^']*)'|true|false)$", re.I)
+_PRED_IN_RE = re.compile(r"^\"?([a-z0-9_]+)\"?\s+IN\s*\(([^)]*)\)$", re.I)
+
+
+def _predicate_atom(atom: str):
+    """Callable(row) -> bool para una condición simple, o None si no se sabe evaluar."""
+    for rx, make in _PRED_ATOM_RE:
+        m = rx.match(atom)
+        if m:
+            return make(m.group(1))
+    m = _PRED_CMP_RE.match(atom)
+    if m:
+        col, op, lit, text = m.groups()
+        val = text if lit.startswith("'") else (lit.lower() == "true")
+        if op == "=":
+            return lambda r: r.get(col) is not None and r.get(col) == val
+        return lambda r: r.get(col) is not None and r.get(col) != val
+    m = _PRED_IN_RE.match(atom)
+    if m and all(v.strip().startswith("'") for v in m.group(2).split(",")):
+        col, vals = m.group(1), {v.strip().strip("'") for v in m.group(2).split(",")}
+        return lambda r: r.get(col) in vals
+    return None
+
+
+def uk_row_filter(tkey: str, uk: tuple):
+    """Filtro de las filas que una UK cubre: la clave sólo colisiona dentro del predicado.
+
+    Sin predicado —o con uno que no se sabe evaluar (una función, un OR)— cubre todas las filas,
+    que es lo conservador: comparar de más nunca deja pasar un 23505. Una columna ausente de la
+    fila se evalúa como NULL (la base le pone su DEFAULT, que en estas columnas es NULL o false).
+    """
+    where = UK_PREDICATES.get((tkey, tuple(uk)))
+    if not where:
+        return None
+    atoms = [a.strip() for a in re.split(r"\s+AND\s+", where, flags=re.I)]
+    if any(re.search(r"\sOR\s", a, re.I) for a in atoms):
+        return None
+    tests = [_predicate_atom(a) for a in atoms]
+    if any(t is None for t in tests):
+        return None
+    return lambda r: all(t(r) for t in tests)
 
 
 # ============================================================ vault (value sets)
@@ -3934,13 +4017,156 @@ def phase_tables(docs, ddl, fks, value_sets, uniques) -> dict:
 
 # ============================================================ fase 3 · NOT NULL ausentes
 
+# Lo que los patches dicen de una columna y el DDL generado no: `ALTER COLUMN "c" SET DEFAULT`
+# (la base le pone el valor) y `UPDATE … SET "c" = <alias>."c" FROM <padre>` (la columna se
+# DERIVA del padre: el tenant de una estancia es el de su encuentro). Ver model#109.
+PATCH_SET_DEFAULT_RE = re.compile(
+    r'ALTER\s+TABLE\s+(?:ONLY\s+)?"?([a-z0-9_]+)"?\."?([a-z0-9_]+)"?\s+'
+    r'ALTER\s+COLUMN\s+"?([a-z0-9_]+)"?\s+SET\s+DEFAULT\b', re.I)
+PATCH_BACKFILL_RE = re.compile(
+    r'UPDATE\s+"?([a-z0-9_]+)"?\."?([a-z0-9_]+)"?\s+[a-z_][a-z0-9_]*\s+'
+    r'SET\s+"?([a-z0-9_]+)"?\s*=\s*[a-z_][a-z0-9_]*\."?[a-z0-9_]+"?\s+FROM\b', re.I)
+
+
+def patch_column_rules() -> tuple:
+    """(con_default, derivadas): `{schema.tabla.columna}` según `SQL/patches/*.sql`.
+
+    `phase_notnull` lee el DDL de `02_tables.sql`, que no trae lo que los patches agregan
+    después: un DEFAULT puesto por patch, o un backfill que calcula la columna desde la fila
+    padre. En los dos casos el generador NO debe inventar el valor: con default la base lo pone,
+    y un valor derivado inventado es de otro padre — el tenant al azar que rellenaba
+    `encounter_locations.tenant_id` hacía abortar `infraestructura_f3` en la segunda pasada
+    («tenant_id distinto al de su encuentro»).
+    """
+    defaults, derived = set(), set()
+    for f in sorted((SQL_DIR / "patches").glob("*.sql")):
+        text = f.read_text(encoding="utf-8")
+        defaults.update(".".join(m) for m in PATCH_SET_DEFAULT_RE.findall(text))
+        derived.update(".".join(m) for m in PATCH_BACKFILL_RE.findall(text))
+    return defaults, derived
+
+
+# Backfill completo: `UPDATE "s"."t" a SET "c" = b."c" FROM "ps"."pt" b WHERE b."k" = a."fk"` (o al revés).
+PATCH_BACKFILL_FULL_RE = re.compile(
+    r'UPDATE\s+"?([a-z0-9_]+)"?\."?([a-z0-9_]+)"?\s+([a-z_][a-z0-9_]*)\s+'
+    r'SET\s+"?([a-z0-9_]+)"?\s*=\s*([a-z_][a-z0-9_]*)\."?([a-z0-9_]+)"?\s+'
+    r'FROM\s+"?([a-z0-9_]+)"?\."?([a-z0-9_]+)"?\s+([a-z_][a-z0-9_]*)\s+'
+    r'WHERE\s+([a-z_][a-z0-9_]*)\."?([a-z0-9_]+)"?\s*=\s*([a-z_][a-z0-9_]*)\."?([a-z0-9_]+)"?', re.I)
+PATCH_DROP_DEFAULT_RE = re.compile(
+    r'ALTER\s+TABLE\s+(?:ONLY\s+)?"?([a-z0-9_]+)"?\."?([a-z0-9_]+)"?\s+'
+    r'ALTER\s+COLUMN\s+"?([a-z0-9_]+)"?\s+DROP\s+DEFAULT\b', re.I)
+DDL_LITERAL_DEFAULT_RE = re.compile(r'^\s*"([a-z0-9_]+)"\s+[^,]*?\bDEFAULT\s+(true|false|-?\d+)\s*,?\s*$', re.I)
+
+
+def patch_backfills() -> dict:
+    """{schema.tabla.col: (schema.padre, col_del_padre, clave_del_padre, fk_de_la_fila)} de los
+    backfill de `SQL/patches/` que copian una columna desde la fila padre. Si dos patches derivan
+    la misma columna, gana el último en orden de aplicación (es el que deja la base)."""
+    rules = {}
+    for f in sorted((SQL_DIR / "patches").glob("*.sql")):
+        for m in PATCH_BACKFILL_FULL_RE.finditer(f.read_text(encoding="utf-8")):
+            (sch, tab, alias, col, src_alias, src_col, psch, ptab, palias,
+             l_alias, l_col, r_alias, r_col) = m.groups()
+            if src_alias != palias or palias == alias:
+                continue
+            if l_alias == palias and r_alias == alias:
+                pkey, fk = l_col, r_col
+            elif l_alias == alias and r_alias == palias:
+                pkey, fk = r_col, l_col
+            else:
+                continue
+            rules[f"{sch}.{tab}.{col}"] = (f"{psch}.{ptab}", src_col, pkey, fk)
+    return rules
+
+
+def patch_dropped_defaults() -> dict:
+    """{schema.tabla.col: literal} — columnas cuyo DEFAULT del DDL un patch quita después
+    (`ALTER COLUMN … DROP DEFAULT`). En la base quedan NOT NULL sin default, así que la fila
+    tiene que traer el valor; el que corresponde es el que el modelo declara como default."""
+    literals = {}
+    for f in ddl_files():
+        for schema, table, body in CREATE_RE.findall(f.read_text(encoding="utf-8")):
+            for line in body.split("\n"):
+                m = DDL_LITERAL_DEFAULT_RE.match(line)
+                if m and "NOT NULL" in line.upper():
+                    raw = m.group(2).lower()
+                    literals[f"{schema}.{table}.{m.group(1)}"] = (
+                        raw == "true" if raw in ("true", "false") else int(raw))
+    out = {}
+    for f in sorted((SQL_DIR / "patches").glob("*.sql")):
+        for m in PATCH_DROP_DEFAULT_RE.findall(f.read_text(encoding="utf-8")):
+            key = ".".join(m)
+            if key in literals:
+                out[key] = literals[key]
+    return out
+
+
+def phase_patch_derivations(docs) -> dict:
+    """Completa en el paquete lo que los patches resuelven en la base y el loader no puede.
+
+    `load_seeds.py` salta toda fila que no trae una columna NOT NULL sin default. Dos casos
+    las dejaban afuera aunque el valor no es un dato a inventar:
+
+    - columna DERIVADA por un backfill de patch (`patch_backfills`): se copia del padre que
+      el propio patch usa — el tenant de la estancia es el de su encuentro, el del evento de
+      quirófano el de la sala. Sólo si falta (los backfill filtran `… IS NULL`) y si el padre
+      está en el paquete y trae el valor; si no, se deja ausente y el loader avisa.
+    - DEFAULT del modelo que un patch quita (`patch_dropped_defaults`): se escribe ese literal.
+
+    Corre después de las fases de unicidad, que pueden repuntar la FK al padre.
+    """
+    by_id = {}
+    for code, doc in docs.items():
+        schema = module_path(code).stem.split("_", 1)[1].replace(".seeds", "")
+        for section in ("boot", "mock"):
+            for entity, rows in doc.get(section, {}).get("records", {}).items():
+                by_id.setdefault(f"{schema}.{entity}", []).extend(rows)
+    backfills, dropped = patch_backfills(), patch_dropped_defaults()
+    parent_index = {}
+    filled = OrderedDict()
+    for code, doc in docs.items():
+        schema = module_path(code).stem.split("_", 1)[1].replace(".seeds", "")
+        for section in ("boot", "mock"):
+            for entity, rows in doc.get(section, {}).get("records", {}).items():
+                tkey = f"{schema}.{entity}"
+                for key, rule in backfills.items():
+                    if not key.startswith(tkey + ".") or key.count(".") != 2:
+                        continue
+                    col = key.rsplit(".", 1)[1]
+                    parent, pcol, pkey, fk = rule
+                    if (parent, pkey) not in parent_index:
+                        parent_index[(parent, pkey)] = {r.get(pkey): r for r in by_id.get(parent, [])}
+                    index = parent_index[(parent, pkey)]
+                    for row in rows:
+                        if row.get(col) is not None:
+                            continue
+                        value = index.get(row.get(fk), {}).get(pcol)
+                        if value is None:
+                            continue
+                        row[col] = value
+                        filled[key] = filled.get(key, 0) + 1
+                for key, literal in dropped.items():
+                    if not key.startswith(tkey + ".") or key.count(".") != 2:
+                        continue
+                    col = key.rsplit(".", 1)[1]
+                    for row in rows:
+                        if col not in row or row[col] is None:
+                            row[col] = literal
+                            filled[key] = filled.get(key, 0) + 1
+    return filled
+
+
 def phase_notnull(docs, ddl, fks, value_sets) -> dict:
     """Rellena columnas NOT NULL sin default que faltan en filas ya sembradas.
 
     Es el defecto que hacía que load_seeds.py saltara el grupo entero de filas
     (insert_records: `missing = required - key_set` → continue) y dejara hijas
     huérfanas, impidiendo crear las FKs.
+
+    No toca las columnas a las que un patch da DEFAULT o deriva del padre
+    (`patch_column_rules`): ahí el valor no es del paquete.
     """
+    patch_defaults, patch_derived = patch_column_rules()
     id_index = build_id_index(docs)
     generic_concepts = [r["id"] for r in docs["03"]["boot"]["records"]["catalog_concepts"]]
     concepts_by_vs = {n: [concept_id(n, c, m) for c in m["codes"]] for n, m in value_sets.items()}
@@ -3956,7 +4182,9 @@ def phase_notnull(docs, ddl, fks, value_sets) -> dict:
                 if not cols or not rows:
                     continue
                 required = [c for c, m in cols.items()
-                            if m["not_null"] and not m["default"] and c in cols]
+                            if m["not_null"] and not m["default"] and c in cols
+                            and f"{tkey}.{c}" not in patch_defaults
+                            and f"{tkey}.{c}" not in patch_derived]
                 for i, row in enumerate(rows):
                     for col in required:
                         lit = COLUMN_LITERALS.get(f"{tkey}.{col}")
@@ -4035,12 +4263,17 @@ def phase_unique(docs, ddl, uniques, fks) -> dict:
             cols = ddl.get(tkey)
             if not uks or not cols:
                 continue
-            boot_rows = doc.get("boot", {}).get("records", {}).get(entity, [])
-            mock_rows = doc.get("mock", {}).get("records", {}).get(entity, [])
-            if not boot_rows or not mock_rows:
+            all_boot = doc.get("boot", {}).get("records", {}).get(entity, [])
+            all_mock = doc.get("mock", {}).get("records", {}).get(entity, [])
+            if not all_boot or not all_mock:
                 continue
             for uk in uks:
                 if not all(c in cols for c in uk):
+                    continue
+                covered = uk_row_filter(tkey, uk)
+                boot_rows = [r for r in all_boot if covered is None or covered(r)]
+                mock_rows = [r for r in all_mock if covered is None or covered(r)]
+                if not boot_rows or not mock_rows:
                     continue
                 # texto: se sufija. uuid: NO se renombra (rompería la FK de la hija);
                 # se reapunta la FK de la fila mock a otro padre.
@@ -4646,8 +4879,13 @@ def phase_unique_within(docs, ddl, uniques, fks) -> dict:
                 cols, uks = ddl.get(tkey), uniques.get(tkey)
                 if not cols or not uks or len(rows) < 2:
                     continue
+                all_rows = rows
                 for uk in uks:
                     if not all(c in cols for c in uk):
+                        continue
+                    covered = uk_row_filter(tkey, uk)
+                    rows = [r for r in all_rows if covered is None or covered(r)]
+                    if len(rows) < 2:
                         continue
                     # se muta una columna que no sea FK (mutarla rompería la referencia)
                     tfks = fks.get(tkey, {})
@@ -5751,6 +5989,41 @@ def phase_f4_case_space_tenant(docs) -> dict:
     return stats
 
 
+def phase_v4283_pharmacy_connection_tenant(docs) -> dict:
+    """model#110 — la conexión de una farmacia con su sistema externo es de SU tenant.
+
+    Con v4.2.83 `pharmacy_integration_connections.connection_id` referencia
+    `integrations.provider_connections`, que tiene `tenant_id`; la farmacia lo tiene en
+    `pharmacies.tenant_id`. La fase 2b (referencias) repara el id roto con cualquier conexión
+    del paquete, sin mirar el tenant, y 2026-11-01_v4283_pharmacy_connection_tenant.sql rechaza
+    el cruce. Acá se reapunta a una conexión del tenant de la farmacia (elección determinista)
+    y, si ese tenant no tiene conexiones en el paquete, `connection_id` queda NULL (la columna
+    es nullable: nulo = sin sistema externo configurado, modo manual). No se cambia la farmacia.
+    """
+    recs = lambda code, sec: docs[code].get(sec, {}).get("records", {})
+    if "24" not in docs or "12" not in docs:
+        return {"conexiones": 0, "reapuntadas": 0, "sin_conexion": 0}
+    pharmacies, conns = {}, {}
+    for sec in ("boot", "mock"):
+        for r in recs("24", sec).get("pharmacies", []):
+            pharmacies[r["id"]] = r
+        for r in recs("12", sec).get("provider_connections", []):
+            conns[r["id"]] = r
+    stats = {"conexiones": 0, "reapuntadas": 0, "sin_conexion": 0}
+    for sec in ("boot", "mock"):
+        for row in recs("24", sec).get("pharmacy_integration_connections", []):
+            tenant = (pharmacies.get(row.get("pharmacy_id")) or {}).get("tenant_id")
+            current = conns.get(row.get("connection_id"))
+            if row.get("connection_id") is None or (current is not None and tenant
+                                                    and current.get("tenant_id") == tenant):
+                continue
+            stats["conexiones"] += 1
+            own = sorted(c["id"] for c in conns.values() if tenant and c.get("tenant_id") == tenant)
+            row["connection_id"] = pick(own, "pharmacy_integration_connections", row["id"])
+            stats["reapuntadas" if own else "sin_conexion"] += 1
+    return stats
+
+
 def phase_v4274_referral_transfer(docs) -> dict:
     """v4.2.74 — datos de traslado en la derivación (Norma Nacional de Referencia y
     Contrarreferencia, MSD Bolivia 2013). Todas las derivaciones mock reciben las columnas
@@ -6061,6 +6334,10 @@ def main() -> None:
         print("[2h] model#102 · casos quirúrgicos con sede/quirófano de otro tenant: {} · {} "
               "reapuntados a su tenant · {} sin espacio (custodio sin sedes)".format(
                   s["casos"], s["reapuntados"], s["sin_espacio"]))
+        s = phase_v4283_pharmacy_connection_tenant(docs)
+        print("[2i] model#110 · conexiones de farmacia con conexión de otro tenant: {} · {} "
+              "reapuntadas a su tenant · {} en NULL (tenant sin conexiones)".format(
+                  s["conexiones"], s["reapuntadas"], s["sin_conexion"]))
     if run("insights"):
         s = phase_v4269_marketing_insights(docs, ddl, uniques)
         print("[2f] v4.2.69 · AloVida Insights · {} value sets · {}".format(
@@ -6104,6 +6381,12 @@ def main() -> None:
               "en {} columnas".format(sum(s.values()), len(s)))
         for k, v in sorted(s.items(), key=lambda kv: -kv[1])[:10]:
             print("      {:<48} {:>5}".format(k, v))
+    if run("notnull"):
+        s = phase_patch_derivations(docs)
+        print("[3e] derivadas de patch · {} valores copiados del padre o del default quitado "
+              "en {} columnas".format(sum(s.values()), len(s)))
+        for k, v in s.items():
+            print("      {:<62} {:>5}".format(k, v))
     if run("meta"):
         phase_meta(docs)
         print("[5] metadatos · source_model_version={} · seed_revision={}".format(

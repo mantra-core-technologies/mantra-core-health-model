@@ -1,43 +1,43 @@
-# Reporte de generación SQL — SALUD v4.2.82
+# Reporte de generación SQL — SALUD v4.2.83
 
 Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vistas, stubs de cruce y stores no-SQL (Redis/Mongo/OpenSearch/vector/timeseries) se listan como *saltados*. Graph (61) y Lakehouse (63) SÍ se materializan como tablas PG (catálogo del plano de control). Las FK marcadas *inferidas* se resolvieron por convención cuando el vault no tenía destino.
 
 | Mód | Schema | Tablas PG | FK | (inferidas) | Índices | Saltadas |
 |-----|--------|-----------|----|-------------|---------|----------|
 | 00 | platform _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
-| 01 | iam | 15 | 80 | 18 | 72 | 0 |
+| 01 | iam | 15 | 80 | 0 | 72 | 0 |
 | 02 | common | 7 | 49 | 0 | 56 | 0 |
 | 03 | terminology | 16 | 80 | 0 | 103 | 0 |
-| 04 | directory | 11 | 78 | 12 | 82 | 2 |
-| 05 | profiles | 24 | 166 | 34 | 177 | 0 |
-| 06 | authz | 15 | 104 | 19 | 95 | 0 |
+| 04 | directory | 11 | 78 | 0 | 82 | 2 |
+| 05 | profiles | 24 | 166 | 0 | 177 | 0 |
+| 06 | authz | 17 | 110 | 0 | 107 | 0 |
 | 07 | consent | 10 | 81 | 0 | 103 | 0 |
-| 08 | clinical | 30 | 297 | 44 | 329 | 15 |
+| 08 | clinical | 30 | 297 | 0 | 329 | 15 |
 | 09 | forms | 16 | 103 | 0 | 113 | 1 |
-| 10 | audit | 142 | 602 | 88 | 762 | 1 |
-| 11 | system_ops | 32 | 178 | 7 | 196 | 1 |
+| 10 | audit | 142 | 602 | 0 | 762 | 1 |
+| 11 | system_ops | 32 | 178 | 0 | 196 | 1 |
 | 12 | integrations | 10 | 49 | 0 | 56 | 0 |
 | 13 | geo | 6 | 31 | 0 | 35 | 0 |
-| 14 | practice | 20 | 166 | 71 | 186 | 1 |
+| 14 | practice | 20 | 166 | 0 | 186 | 1 |
 | 15 | chart | 11 | 71 | 0 | 81 | 2 |
-| 16 | accounting | 45 | 320 | 3 | 375 | 17 |
-| 17 | billing | 26 | 181 | 14 | 204 | 25 |
-| 18 | clinical_ext | 14 | 100 | 6 | 113 | 4 |
-| 19 | community | 44 | 273 | 17 | 288 | 11 |
+| 16 | accounting | 45 | 320 | 0 | 375 | 17 |
+| 17 | billing | 26 | 181 | 0 | 204 | 25 |
+| 18 | clinical_ext | 14 | 100 | 0 | 113 | 4 |
+| 19 | community | 44 | 273 | 0 | 288 | 11 |
 | 20 | diagnostics | 36 | 254 | 0 | 304 | 2 |
 | 21 | deployment _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
-| 22 | organization_extensions | 5 | 51 | 2 | 57 | 0 |
-| 23 | diagnostic_units | 15 | 111 | 38 | 120 | 3 |
-| 24 | pharmacy | 12 | 78 | 10 | 94 | 1 |
+| 22 | organization_extensions | 5 | 51 | 0 | 57 | 0 |
+| 23 | diagnostic_units | 15 | 111 | 0 | 120 | 3 |
+| 24 | pharmacy | 12 | 78 | 0 | 94 | 2 |
 | 25 | pharmacy_inventory | 20 | 144 | 0 | 157 | 8 |
-| 26 | insurance | 33 | 224 | 20 | 244 | 1 |
-| 27 | identity_assurance | 11 | 70 | 1 | 77 | 0 |
-| 28 | telemetry | 15 | 77 | 3 | 95 | 1 |
-| 29 | delegated_access | 27 | 208 | 121 | 237 | 6 |
+| 26 | insurance | 33 | 224 | 0 | 244 | 1 |
+| 27 | identity_assurance | 11 | 70 | 0 | 77 | 0 |
+| 28 | telemetry | 15 | 77 | 0 | 95 | 1 |
+| 29 | delegated_access | 27 | 208 | 0 | 237 | 6 |
 | 30 | read_models | 13 | 74 | 0 | 89 | 76 |
-| 31 | integration_contracts | 9 | 48 | 1 | 57 | 0 |
+| 31 | integration_contracts | 9 | 48 | 0 | 57 | 0 |
 | 32 | workflow | 8 | 49 | 0 | 55 | 9 |
-| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 115 |
+| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 117 |
 | 34 | portal_catalog _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
 | 35 | messaging | 22 | 142 | 0 | 150 | 0 |
 | 36 | qa_lab | 13 | 79 | 0 | 92 | 0 |
@@ -45,7 +45,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 38 | erp | 51 | 429 | 0 | 494 | 14 |
 | 39 | reporting | 12 | 70 | 0 | 86 | 0 |
 | 40 | auth_providers | 9 | 50 | 0 | 58 | 1 |
-| 41 | scheduling | 19 | 143 | 29 | 150 | 7 |
+| 41 | scheduling | 19 | 143 | 0 | 150 | 7 |
 | 42 | payments | 52 | 349 | 0 | 404 | 6 |
 | 43 | ads | 73 | 388 | 0 | 497 | 0 |
 | 44 | health_context | 10 | 53 | 0 | 62 | 0 |
@@ -53,11 +53,11 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 46 | platform_ops | 38 | 214 | 0 | 265 | 0 |
 | 47 | education | 15 | 88 | 0 | 103 | 0 |
 | 48 | automation | 16 | 100 | 0 | 113 | 0 |
-| 49 | crm | 33 | 232 | 4 | 285 | 6 |
-| 50 | marketing | 36 | 168 | 40 | 202 | 0 |
+| 49 | crm | 33 | 232 | 0 | 285 | 6 |
+| 50 | marketing | 36 | 168 | 0 | 202 | 0 |
 | 51 | promotions | 11 | 71 | 0 | 87 | 0 |
 | 52 | health_data | 34 | 178 | 0 | 255 | 9 |
-| 53 | procedures_perioperative | 37 | 245 | 14 | 292 | 13 |
+| 53 | procedures_perioperative | 37 | 245 | 0 | 292 | 13 |
 | 54 | polyglot_storage | 20 | 29 | 0 | 35 | 4 |
 | 55 | document_store _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 18 |
 | 56 | redis_runtime _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 18 |
@@ -69,13 +69,13 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 62 | cross_store_consistency | 20 | 0 | 0 | 43 | 4 |
 | 63 | lakehouse | 18 | 0 | 0 | 42 | 4 |
 | 64 | audio_assets | 4 | 1 | 0 | 10 | 0 |
-| 65 | surveys | 8 | 42 | 5 | 26 | 0 |
+| 65 | surveys | 8 | 42 | 0 | 26 | 0 |
 | 66 | medical_groups | 2 | 14 | 0 | 10 | 0 |
-| 67 | data_catalog | 25 | 89 | 45 | 69 | 3 |
-| 68 | qa_execution | 4 | 14 | 6 | 6 | 0 |
-| 69 | pharma_lab | 31 | 182 | 173 | 182 | 1 |
-| 70 | observability | 12 | 13 | 8 | 39 | 2 |
-| **Σ** | **71** | **1370** | | **853** | | **472** |
+| 67 | data_catalog | 25 | 89 | 0 | 69 | 3 |
+| 68 | qa_execution | 4 | 14 | 0 | 6 | 0 |
+| 69 | pharma_lab | 31 | 182 | 0 | 182 | 1 |
+| 70 | observability | 12 | 13 | 0 | 39 | 2 |
+| **Σ** | **71** | **1372** | | **0** | | **475** |
 
 ## Detalle de entidades saltadas y avisos
 
@@ -203,6 +203,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 
 ### 24 · pharmacy
 - `practice_practice_sites` — stub de cruce (tabla real en su módulo dueño)
+- `integrations_provider_connections` — stub de cruce (tabla real en su módulo dueño)
 
 ### 25 · pharmacy_inventory
 - `erp_business_partners` — stub de cruce (tabla real en su módulo dueño)
@@ -367,6 +368,8 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - `system_ops_governance_policy_revisions` — stub de cruce (tabla real en su módulo dueño)
 - `system_ops_bulk_import_batches` — stub de cruce (tabla real en su módulo dueño)
 - `system_ops_bulk_import_batch_rows` — stub de cruce (tabla real en su módulo dueño)
+- `authz_ui_visibility_elements` — stub de cruce (tabla real en su módulo dueño)
+- `authz_ui_visibility_rules` — stub de cruce (tabla real en su módulo dueño)
 - `billing_quotations` — stub de cruce (tabla real en su módulo dueño)
 - `billing_quotation_installments` — stub de cruce (tabla real en su módulo dueño)
 - `medical_groups_groups` — stub de cruce (tabla real en su módulo dueño)

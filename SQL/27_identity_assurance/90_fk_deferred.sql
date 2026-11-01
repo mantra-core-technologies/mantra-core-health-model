@@ -1,4 +1,4 @@
--- SALUD v4.2.82 · módulo 27 · schema identity_assurance
+-- SALUD v4.2.83 · módulo 27 · schema identity_assurance
 -- Generado de diagram_27_identity_assurance.puml — NO editar a mano.
 
 
@@ -154,7 +154,7 @@ DO $$ BEGIN
     ALTER TABLE "identity_assurance"."identity_verification_cases"
         ADD CONSTRAINT "fk_identity_verification_cases_tenant_id" FOREIGN KEY ("tenant_id")
         REFERENCES "directory"."tenants" ("id");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
