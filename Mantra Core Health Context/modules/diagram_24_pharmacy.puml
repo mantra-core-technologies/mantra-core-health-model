@@ -19,6 +19,9 @@ end note
 entity "practice.practice_sites" as practice_practice_sites <<REFERENCE_ONLY>> {
   * id : uuid <<PK>>
 }
+entity "integrations.provider_connections" as integrations_provider_connections <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
 entity pharmacies {
   * id : uuid <<PK>>
   --
@@ -232,7 +235,7 @@ entity pharmacy_integration_connections {
   --
   * pharmacy_id : uuid <<FK>>
     pharmacy_site_id : uuid <<FK>>
-  * connection_id : uuid <<FK>>
+    connection_id : uuid <<FK>>
   * integration_mode_concept_id : uuid <<FK>>
     inventory_authority_concept_id : uuid <<FK>>
     supports_stock_query : boolean
@@ -275,6 +278,11 @@ pharmacies ||--o{ pharmacy_integration_connections
 ' (`primary_practice_site_id`) no resuelve por convención; mismo destino que
 ' `diagnostic_units.primary_practice_site_id`.
 pharmacies }o--o| practice_practice_sites : primary_practice_site_id
+
+' v4.2.83: la conexión de la farmacia con su sistema externo es la del módulo de
+' integraciones (UC-24-07), no una fila de su propia tabla. Opcional: nulo quiere decir
+' que el sistema de la farmacia todavía no está configurado y trabaja en manual.
+pharmacy_integration_connections }o--o| integrations_provider_connections : connection_id
 pharmacy_products ||--o{ pharmacy_product_identifiers
 pharmacy_price_lists ||--o{ pharmacy_product_prices
 pharmacy_products ||--o{ pharmacy_product_prices

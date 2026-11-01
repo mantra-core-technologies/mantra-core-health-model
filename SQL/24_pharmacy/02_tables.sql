@@ -1,4 +1,4 @@
--- SALUD v4.2.82 · módulo 24 · schema pharmacy
+-- SALUD v4.2.83 · módulo 24 · schema pharmacy
 -- Generado de diagram_24_pharmacy.puml — NO editar a mano.
 
 
@@ -188,7 +188,7 @@ CREATE TABLE IF NOT EXISTS "pharmacy"."pharmacy_integration_connections" (
     "id" uuid NOT NULL,
     "pharmacy_id" uuid NOT NULL,
     "pharmacy_site_id" uuid,
-    "connection_id" uuid NOT NULL,
+    "connection_id" uuid,
     "integration_mode_concept_id" uuid NOT NULL,
     "inventory_authority_concept_id" uuid,
     "supports_stock_query" boolean,

@@ -1,4 +1,4 @@
-# Reporte de generación SQL — SALUD v4.2.82
+# Reporte de generación SQL — SALUD v4.2.83
 
 Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vistas, stubs de cruce y stores no-SQL (Redis/Mongo/OpenSearch/vector/timeseries) se listan como *saltados*. Graph (61) y Lakehouse (63) SÍ se materializan como tablas PG (catálogo del plano de control). Las FK marcadas *inferidas* se resolvieron por convención cuando el vault no tenía destino.
 
@@ -28,7 +28,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 21 | deployment _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
 | 22 | organization_extensions | 5 | 51 | 2 | 57 | 0 |
 | 23 | diagnostic_units | 15 | 111 | 38 | 120 | 3 |
-| 24 | pharmacy | 12 | 78 | 10 | 94 | 1 |
+| 24 | pharmacy | 12 | 78 | 10 | 94 | 2 |
 | 25 | pharmacy_inventory | 20 | 144 | 0 | 157 | 8 |
 | 26 | insurance | 33 | 224 | 20 | 244 | 1 |
 | 27 | identity_assurance | 11 | 70 | 1 | 77 | 0 |
@@ -203,6 +203,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 
 ### 24 · pharmacy
 - `practice_practice_sites` — stub de cruce (tabla real en su módulo dueño)
+- `integrations_provider_connections` — stub de cruce (tabla real en su módulo dueño)
 
 ### 25 · pharmacy_inventory
 - `erp_business_partners` — stub de cruce (tabla real en su módulo dueño)
