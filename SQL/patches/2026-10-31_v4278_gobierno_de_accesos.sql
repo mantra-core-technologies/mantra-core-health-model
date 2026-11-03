@@ -2317,9 +2317,34 @@ DO $$
 DECLARE
     v_atoms integer; v_cats integer; v_sod integer; v_tables integer; v_pol integer;
 BEGIN
-    SELECT count(*) INTO v_atoms FROM authz.permissions WHERE code ~ '^[a-z_]+(\.[a-z_]+){2,3}$';
-    SELECT count(*) INTO v_cats FROM authz.permission_categories WHERE code LIKE 'SUPPORT\_%';
-    SELECT count(*) INTO v_sod FROM delegated_access.sod_rules WHERE tenant_id IS NULL;
+    -- Solo se cuentan las filas que siembra ESTE parche (secciones 7a, 7b y 7e): otros seeds (la API, la demo) pueden
+    -- sumar permisos con la misma forma `modulo.recurso.accion`, categorias o reglas de plataforma, y el parche corre en
+    -- cada despliegue: contar el catalogo entero lo haria fallar por datos ajenos.
+    SELECT count(*) INTO v_atoms FROM authz.permissions WHERE code IN (
+        'agenda.appointment.view', 'agenda.appointment.view.patient_name', 'agenda.appointment.view.patient_phone',
+        'agenda.appointment.view.patient_document', 'agenda.appointment.view.reason', 'agenda.appointment.view.insurance',
+        'agenda.appointment.view.price', 'agenda.appointment.create', 'agenda.appointment.create.overbook', 'agenda.appointment.reschedule',
+        'agenda.appointment.cancel', 'agenda.appointment.confirm', 'agenda.appointment.check_in', 'agenda.appointment.no_show',
+        'agenda.appointment.walk_in', 'agenda.waitlist.manage', 'agenda.reminder.send', 'agenda.block.create', 'agenda.block.remove',
+        'agenda.hours.edit', 'patients.search.exact', 'patients.profile.view_basic', 'patients.profile.view.phone_full',
+        'patients.profile.view.document_full', 'patients.coverage.view', 'patients.profile.register', 'patients.guardian.record',
+        'patients.profile.edit_contact', 'patients.profile.edit_verified', 'patients.profile.merge_request',
+        'patients.clinical.request_temporary_access', 'messages.inbox.view', 'messages.conversation.reply_on_behalf', 'messages.conversation.assign',
+        'messages.conversation.resolve', 'messages.note.create_internal', 'messages.template.use', 'messages.template.manage',
+        'messages.attachment.send', 'messages.broadcast.send', 'billing.invoice.view', 'billing.payment.collect', 'billing.receipt.issue',
+        'billing.receipt.void', 'billing.payment.refund', 'billing.discount.apply', 'billing.cashbox.close', 'reports.agenda.view',
+        'reports.agenda.export', 'reports.billing.view', 'reports.billing.export', 'team.members.view', 'team.invitations.create',
+        'team.requests.decide', 'team.grants.assign', 'team.grants.revoke', 'team.engagement.recertify', 'team.engagement.suspend',
+        'team.engagement.reactivate', 'team.engagement.end', 'team.handover.execute', 'team.campaigns.review', 'team.campaigns.manage',
+        'team.sod.exception.request', 'team.templates.manage', 'team.guardrails.manage', 'team.sod.manage', 'team.sessionpolicy.manage',
+        'audit.activity.view_team', 'audit.activity.view_org', 'audit.activity.export', 'audit.decisions.explain', 'audit.reports.governance.view');
+    SELECT count(*) INTO v_cats FROM authz.permission_categories WHERE code IN (
+        'SUPPORT_AGENDA', 'SUPPORT_PATIENTS', 'SUPPORT_MESSAGING', 'SUPPORT_BILLING', 'SUPPORT_REPORTS', 'SUPPORT_TEAM', 'SUPPORT_AUDIT');
+    SELECT count(*) INTO v_sod FROM delegated_access.sod_rules WHERE tenant_id IS NULL AND id IN (
+        'b25947c7-9ed0-5345-8896-f2088d0186aa', '167e3be5-0125-5522-b737-f1cf0dbdd952', '091d7679-9a72-5c7d-8c36-d94cedc0d385',
+        'f36f83a9-59da-5bb6-b6b1-0fd487a21f0c', '19b22747-8186-5e30-91bf-8d01c0fac74a', 'ad0a3d50-e98f-56ec-905a-de9fe008f38e',
+        '4c597985-64bc-5e15-ab5f-fde3fbf4f4d1', 'e9a28b9e-a09e-56d6-ac31-fd9f5035d5e9', '5ff5d9a4-3b7a-5c8d-b746-873669247e03',
+        'd003dffd-cd20-5ff4-b3d1-43648214c17f', '1a32689a-98d2-5102-a6ff-337e4110f310');
     SELECT count(*) INTO v_tables FROM information_schema.tables WHERE table_schema = 'delegated_access'
        AND table_name IN ('governance_rules', 'sod_rules', 'sod_exceptions', 'four_eyes_requests', 'access_review_campaigns', 'access_review_items', 'lifecycle_cases', 'handover_items', 'patient_restriction_flags', 'access_decision_log', 'grant_usage_stats', 'access_anomalies');
     SELECT count(*) INTO v_pol FROM pg_policies WHERE schemaname = 'delegated_access' AND policyname = 'tenant_isolation'
