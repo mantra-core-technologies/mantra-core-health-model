@@ -32,6 +32,34 @@ entity "practice.care_spaces" as practice_care_spaces <<REFERENCE_ONLY>> { * id 
 entity "practice.clinical_units" as practice_clinical_units <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 entity "iam.users" as iam_users <<REFERENCE_ONLY>> { * id : uuid <<PK>> }
 
+entity report_presentation_templates {
+  * id : uuid <<PK>>
+  --
+  * user_type : varchar(40)
+  * code : varchar(80)
+  * name : varchar(160)
+  * report_kind : varchar(40)
+  * presentation_json : jsonb
+  * is_active : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+note right of report_presentation_templates
+  Global presentation catalog by user/organization audience. Contains column
+  order and labels only: no SQL, formulas, balances or chart-of-accounts edits.
+  Lifecycle changes retain the row and use optimistic row_version control.
+end note
+entity "INDEXES · report_presentation_templates" as idxset_report_presentation_templates <<INDEX_SET>> {
+  PK pk_report_presentation_templates : (id) UNIQUE BTREE
+  UX uq_report_presentation_templates_audience_code : (user_type, code) UNIQUE BTREE
+  IX ix_report_presentation_templates_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_report_presentation_templates_updated_by_user_id : (updated_by_user_id) BTREE
+}
+report_presentation_templates .. idxset_report_presentation_templates : indexed by
+
 entity exchange_rates {
   * id : uuid <<PK>>
   --

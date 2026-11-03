@@ -1,4 +1,4 @@
--- SALUD v4.2.83 · módulo 67 · schema data_catalog
+-- SALUD v4.2.85 · módulo 67 · schema data_catalog
 -- Generado de diagram_67_data_catalog.puml — NO editar a mano.
 
 
@@ -139,3 +139,7 @@ CREATE INDEX IF NOT EXISTS "ix_data_catalog_certifications_requested_by_user_id"
 CREATE UNIQUE INDEX IF NOT EXISTS "ux_data_catalog_change_acknowledgements_event" ON "data_catalog"."catalog_change_acknowledgements" ("change_event_id");
 
 CREATE INDEX IF NOT EXISTS "ix_data_catalog_change_acknowledgements_user_id" ON "data_catalog"."catalog_change_acknowledgements" ("user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_data_catalog_fit_runs_idempotency" ON "data_catalog"."catalog_fit_runs" ("trigger_kind", "idempotency_key") WHERE idempotency_key IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS "ix_data_catalog_fit_runs_finished" ON "data_catalog"."catalog_fit_runs" ("source_code", "finished_at" DESC);

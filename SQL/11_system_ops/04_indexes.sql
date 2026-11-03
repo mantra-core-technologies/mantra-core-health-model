@@ -1,4 +1,4 @@
--- SALUD v4.2.83 · módulo 11 · schema system_ops
+-- SALUD v4.2.85 · módulo 11 · schema system_ops
 -- Generado de diagram_11_system_ops.puml — NO editar a mano.
 
 
@@ -15,6 +15,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS "uq_data_domains_code" ON "system_ops"."data_d
 CREATE INDEX IF NOT EXISTS "ix_data_domains_created_by_user_id" ON "system_ops"."data_domains" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_data_domains_updated_by_user_id" ON "system_ops"."data_domains" ("updated_by_user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_entity_registry_schema_name_table_name" ON "system_ops"."entity_registry" ("schema_name", "table_name");
 
 CREATE INDEX IF NOT EXISTS "ix_entity_registry_domain_id" ON "system_ops"."entity_registry" ("domain_id");
 

@@ -119,7 +119,8 @@ def scoped_by(markers: set[str]) -> str | None:
 
 # Default estructural de versión. Los defaults de negocio sólo se emiten cuando el
 # .puml los declara explícitamente: DEFAULT_TRUE/DEFAULT_FALSE (boolean), DEFAULT_TEXT:<valor> (texto) o,
-# desde v4.2.78, DEFAULT_INT / DEFAULT_UUID / DEFAULT_JSON_INTS (ver `literal_default`).
+# desde v4.2.78, DEFAULT_INT / DEFAULT_UUID / DEFAULT_JSON_INTS (ver `literal_default`) y, desde v4.2.84,
+# DEFAULT_NOW (ver `now_default`).
 #
 # No se infieren defaults de negocio: sólo se conservan los que el modelo declara.
 # `row_version` sigue siendo el default estructural porque es el contador de bloqueo optimista,
@@ -223,14 +224,34 @@ def literal_default(dtype: str, raw: str | None) -> str | None:
     return out
 
 
+# v4.2.84 (sonda de ajuste del catálogo): `DEFAULT_NOW` declara `DEFAULT now()` en una columna timestamptz. Es la
+# única expresión no literal que admite el diagrama y no lleva valor: el marcador es exacto, así que no se cuela SQL.
+# Existe para las tablas que la API escribe con SQL parametrizado sin mandar `created_at` (catalog_fit_runs).
+_NOW_TYPES = ("timestamptz",)
+
+
+def now_default(dtype: str, raw: str | None) -> str | None:
+    """`now()` si la columna declara `DEFAULT_NOW`, sin inferirlo jamás."""
+    declared = [d for d in _declared_markers(raw, "DEFAULT_NOW") if d.upper() == "DEFAULT_NOW"]
+    if not declared:
+        return None
+    if len(declared) != 1:
+        raise ValueError("DEFAULT_NOW se declara una sola vez")
+    if dtype not in _NOW_TYPES:
+        raise ValueError("DEFAULT_NOW requiere una columna timestamptz")
+    return "now()"
+
+
 def declared_default(dtype: str, raw: str | None) -> str | None:
-    """Único default de negocio que declara la columna (booleano, de texto o literal numérico/uuid/json)."""
+    """Único default de negocio que declara la columna (booleano, de texto, literal numérico/uuid/json o now())."""
     boolean = boolean_default(dtype, stereotypes(raw))
     text = text_default(dtype, raw)
     literal = literal_default(dtype, raw)
-    if sum(v is not None for v in (boolean, text, literal)) > 1:
+    now = now_default(dtype, raw)
+    found = [v for v in (boolean, text, literal, now) if v is not None]
+    if len(found) > 1:
         raise ValueError("una columna no puede declarar dos defaults de negocio a la vez")
-    return boolean if boolean is not None else text if text is not None else literal
+    return found[0] if found else None
 
 
 # --- identificadores > 63 bytes --------------------------------------------------

@@ -1,6 +1,22 @@
--- SALUD v4.2.83 · módulo 16 · schema accounting
+-- SALUD v4.2.85 · módulo 16 · schema accounting
 -- Generado de diagram_16_accounting.puml — NO editar a mano.
 
+
+CREATE TABLE IF NOT EXISTS "accounting"."report_presentation_templates" (
+    "id" uuid NOT NULL,
+    "user_type" varchar(40) NOT NULL,
+    "code" varchar(80) NOT NULL,
+    "name" varchar(160) NOT NULL,
+    "report_kind" varchar(40) NOT NULL,
+    "presentation_json" jsonb NOT NULL,
+    "is_active" boolean NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_report_presentation_templates" PRIMARY KEY ("id")
+);
 
 CREATE TABLE IF NOT EXISTS "accounting"."exchange_rates" (
     "id" uuid NOT NULL,

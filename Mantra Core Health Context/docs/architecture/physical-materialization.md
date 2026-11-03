@@ -49,6 +49,33 @@ comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_obje
 
 ## 3. Estado actual del build
 
+### v4.2.85 — Plantillas de presentación contable (2026-11-02)
+
+`accounting.report_presentation_templates` contiene un catálogo global de columnas y rótulos,
+único por `(user_type, code)`, con desactivación lógica y `row_version` para ediciones concurrentes.
+Su contenido no ejecuta SQL ni altera el plan de cuentas o el mayor. Las dos FK de autoría apuntan
+a `iam.users`. La API escribe sólo como SUPERADMIN global y registra la operación en auditoría.
+El parche `2026-11-02_v4285_accounting_report_templates.sql` se reproduce con
+`salud-db/gen_report_templates_patch.py` a partir del DDL generado del módulo 16.
+
+### v4.2.84 — Corridas de la sonda de ajuste del catálogo y una fila por tabla en el registro de entidades (2026-11-01)
+
+**Cambio de esquema: +1 tabla, +3 índices (2 únicos), +4 CHECK, +1 trigger.** Sin parche nuevo: los dos parches escritos a
+mano el 2026-11-01 pasan a estar declarados en el modelo y, sobre una base construida con este DDL, son no-op.
+
+- **`data_catalog.catalog_fit_runs`** (módulo 67, D-FIT-1..3): desenlace de cada corrida de la sonda de ajuste de la
+  catalogación (tick del worker o pedido manual), con el `FitReport` completo en `report_json`. Dato de plataforma, sin
+  `tenant_id`. Append-only purgable: `UPDATE` prohibido por `trg_forbid_update` (módulo 33, `UPDATE : forbidden`), el
+  `DELETE` queda para la purga por retención. 4 CHECK (vocabularios y forma del desenlace) en el módulo 33. Índice único
+  parcial de idempotencia `(trigger_kind, idempotency_key)` e índice de lectura `(source_code, finished_at DESC)`.
+  `created_at` lleva `DEFAULT now()` con el marcador nuevo `DEFAULT_NOW` de `gen_ddl.py` (solo `timestamptz`), porque la
+  API inserta con SQL parametrizado sin mandarlo. Parche equivalente: `SQL/patches/2026-11-01_catalog_fit_runs.sql`
+  (además concede `SELECT, INSERT, DELETE` a `mantra_app` si el rol existe; eso no lo expresa el generador).
+- **`system_ops.entity_registry`** (módulo 11): `uq_entity_registry_schema_name_table_name (schema_name, table_name)`.
+  El ciclo de purga de identidad exige una sola fila por tabla y un alta por API podía duplicar una sembrada; con el índice
+  choca (la API lo traduce a 409). Parche equivalente: `SQL/patches/2026-11-01_entity_registry_unique_table.sql`, que
+  aborta sin tocar nada si la base viva ya tiene duplicados.
+
 ### v4.2.83 — `connection_id` de la conexión de farmacia apunta a la conexión de integraciones y es opcional (2026-10-31)
 
 **Cambio de esquema: 0 tablas, 0 columnas, +1 FK, −1 FK, −1 `NOT NULL`.** Parche nuevo e idempotente:

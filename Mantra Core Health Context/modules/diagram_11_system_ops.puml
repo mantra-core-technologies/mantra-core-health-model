@@ -529,6 +529,7 @@ data_domains .. idxset_data_domains : indexed by
 
 entity "INDEXES · entity_registry" as idxset_entity_registry <<INDEX_SET>> {
   PK pk_entity_registry : (id) UNIQUE BTREE
+  UK uq_entity_registry_schema_name_table_name : (schema_name, table_name) UNIQUE BTREE
   IX ix_entity_registry_domain_id : (domain_id) BTREE
   IX ix_entity_registry_classification_id : (classification_id) BTREE
   IX ix_entity_registry_retention_policy_id : (retention_policy_id) BTREE

@@ -1,6 +1,12 @@
--- SALUD v4.2.83 · módulo 16 · schema accounting
+-- SALUD v4.2.85 · módulo 16 · schema accounting
 -- Generado de diagram_16_accounting.puml — NO editar a mano.
 
+
+CREATE UNIQUE INDEX IF NOT EXISTS "uq_report_presentation_templates_audience_code" ON "accounting"."report_presentation_templates" ("user_type", "code");
+
+CREATE INDEX IF NOT EXISTS "ix_report_presentation_templates_created_by_user_id" ON "accounting"."report_presentation_templates" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_report_presentation_templates_updated_by_user_id" ON "accounting"."report_presentation_templates" ("updated_by_user_id");
 
 CREATE UNIQUE INDEX IF NOT EXISTS "uq_controlling_areas_tenant_id_code" ON "accounting"."controlling_areas" ("tenant_id", "code");
 
