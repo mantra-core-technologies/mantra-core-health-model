@@ -261,6 +261,36 @@ class PatchTests(unittest.TestCase):
             for c in cols:
                 self.assertRegex(self.patch, rf'ALTER TABLE "{schema}"\."{table}"\s+ADD COLUMN IF NOT EXISTS "{c}"', f"{table}.{c}")
 
+    def test_final_check_counts_only_the_rows_seeded_by_the_patch(self):
+        # The patch runs on every deploy, after other seeds (API, demo) may have added permissions with the same
+        # `module.resource.action` shape, categories or platform SoD rules. The final check must count only its own rows.
+        check = self.patch[self.patch.index("-- ---- 10. verificacion final ----"):]
+        quoted = lambda sql: re.findall(r"'([^']+)'", sql)
+
+        def listed(variable):
+            m = re.search(rf"SELECT count\(\*\) INTO {variable} FROM .*? IN \((.*?)\);", check, re.S)
+            self.assertIsNotNone(m, variable)
+            return quoted(m.group(1))
+
+        def seeded(start):
+            """(id, code) of each VALUES row of the INSERT that follows `start`."""
+            body = self.patch[self.patch.index(start):]
+            body = body[:body.index("ON CONFLICT")]
+            return re.findall(r"^\s+\('([0-9a-f-]{36})', (?:NULL, )?'([A-Za-z0-9_.-]+)'", body, re.M)
+
+        gs = gen_seeds()
+        atom_codes = [code for _, code in seeded("-- (b) los 73 atomos")]
+        category_codes = [code for _, code in seeded("-- (a) categorias de permisos (7)")]
+        sod_ids = [row_id for row_id, _ in seeded("-- (e) 11 reglas de segregacion")]
+        self.assertEqual(sorted(listed("v_atoms")), sorted(atom_codes))
+        self.assertEqual(sorted(atom_codes), sorted(a["code"] for a in gs.GOV_ATOMS))
+        self.assertEqual(sorted(listed("v_cats")), sorted(category_codes))
+        self.assertEqual(sorted(category_codes), sorted(code for code, _ in gs.GOV_CATEGORIES))
+        self.assertEqual(sorted(listed("v_sod")), sorted(sod_ids))
+        self.assertEqual(len(sod_ids), len(gs.GOV_SOD_RULES))
+        self.assertNotIn("code ~ ", check)
+        self.assertNotIn("LIKE 'SUPPORT", check)
+
     def test_every_function_pins_search_path_and_revokes_public(self):
         fns = set(self.fn_names)
         for expected in ('"delegated_access"."refresh_effective_support_access"', '"integrity"."support_tenant_consistency"',
