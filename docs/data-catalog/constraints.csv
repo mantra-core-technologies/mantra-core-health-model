@@ -359,6 +359,10 @@ accounting,purchases,fk_purchases_bill_id,FOREIGN KEY,bill_id,FOREIGN KEY (bill_
 accounting,purchases,fk_purchases_status_concept_id,FOREIGN KEY,status_concept_id,FOREIGN KEY (status_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/16_accounting/90_fk_deferred.sql
 accounting,purchases,fk_purchases_created_by_user_id,FOREIGN KEY,created_by_user_id,FOREIGN KEY (created_by_user_id) REFERENCES iam.users (id),SQL/16_accounting/90_fk_deferred.sql
 accounting,purchases,fk_purchases_updated_by_user_id,FOREIGN KEY,updated_by_user_id,FOREIGN KEY (updated_by_user_id) REFERENCES iam.users (id),SQL/16_accounting/90_fk_deferred.sql
+accounting,report_presentation_templates,pk_report_presentation_templates,PRIMARY KEY,id,PRIMARY KEY (id),SQL/16_accounting/02_tables.sql
+accounting,report_presentation_templates,fk_report_presentation_templates_created_by_user_id,FOREIGN KEY,created_by_user_id,FOREIGN KEY (created_by_user_id) REFERENCES iam.users (id),SQL/16_accounting/90_fk_deferred.sql
+accounting,report_presentation_templates,fk_report_presentation_templates_updated_by_user_id,FOREIGN KEY,updated_by_user_id,FOREIGN KEY (updated_by_user_id) REFERENCES iam.users (id),SQL/16_accounting/90_fk_deferred.sql
+accounting,report_presentation_templates,uq_report_presentation_templates_audience_code,UNIQUE INDEX,"""user_type"", ""code""","UNIQUE INDEX (""user_type"", ""code"")",SQL/16_accounting/04_indexes.sql
 accounting,sales,pk_sales,PRIMARY KEY,id,PRIMARY KEY (id),SQL/16_accounting/02_tables.sql
 accounting,sales,fk_sales_transaction_id,FOREIGN KEY,transaction_id,FOREIGN KEY (transaction_id) REFERENCES accounting.journal_transactions (id),SQL/16_accounting/03_fk_intra.sql
 accounting,sales,fk_sales_practice_id,FOREIGN KEY,practice_id,FOREIGN KEY (practice_id) REFERENCES practice.practices (id),SQL/16_accounting/90_fk_deferred.sql
@@ -1796,6 +1800,31 @@ authz,roles,fk_roles_state_concept_id,FOREIGN KEY,state_concept_id,FOREIGN KEY (
 authz,roles,fk_roles_created_by_user_id,FOREIGN KEY,created_by_user_id,FOREIGN KEY (created_by_user_id) REFERENCES iam.users (id),SQL/06_authz/90_fk_deferred.sql
 authz,roles,fk_roles_updated_by_user_id,FOREIGN KEY,updated_by_user_id,FOREIGN KEY (updated_by_user_id) REFERENCES iam.users (id),SQL/06_authz/90_fk_deferred.sql
 authz,service_principals,pk_service_principals,PRIMARY KEY,id,PRIMARY KEY (id),SQL/06_authz/02_tables.sql
+authz,ui_visibility_elements,pk_ui_visibility_elements,PRIMARY KEY,id,PRIMARY KEY (id),SQL/06_authz/02_tables.sql
+authz,ui_visibility_elements,fk_ui_visibility_elements_parent_element_id,FOREIGN KEY,parent_element_id,FOREIGN KEY (parent_element_id) REFERENCES authz.ui_visibility_elements (id),SQL/06_authz/03_fk_intra.sql
+authz,ui_visibility_elements,fk_ui_visibility_elements_created_by_user_id,FOREIGN KEY,created_by_user_id,FOREIGN KEY (created_by_user_id) REFERENCES iam.users (id),SQL/06_authz/90_fk_deferred.sql
+authz,ui_visibility_elements,fk_ui_visibility_elements_updated_by_user_id,FOREIGN KEY,updated_by_user_id,FOREIGN KEY (updated_by_user_id) REFERENCES iam.users (id),SQL/06_authz/90_fk_deferred.sql
+authz,ui_visibility_elements,uq_ui_visibility_elements_key,UNIQUE INDEX,"""key""","UNIQUE INDEX (""key"")",SQL/06_authz/04_indexes.sql
+authz,ui_visibility_elements,ck_ui_visibility_elements_key,CHECK,,"CHECK (char_length(""key"") <= 160 AND ""key"" ~ '^[a-z][a-z0-9-]*(\.[a-z0-9][a-z0-9-]*)*$')",SQL/06_authz/05_constraints.sql
+authz,ui_visibility_elements,ck_ui_visibility_elements_kind,CHECK,,"CHECK (""kind"" IN ('MODULE', 'MENU_SECTION', 'SCREEN', 'SECTION', 'WIDGET', 'FIELD', 'ACTION'))",SQL/06_authz/05_constraints.sql
+authz,ui_visibility_elements,ck_ui_visibility_elements_source,CHECK,,"CHECK (""source"" IN ('CODE', 'ADMIN'))",SQL/06_authz/05_constraints.sql
+authz,ui_visibility_elements,ck_ui_visibility_elements_status,CHECK,,"CHECK (""status"" IN ('ACTIVE', 'RETIRED'))",SQL/06_authz/05_constraints.sql
+authz,ui_visibility_elements,ck_ui_visibility_elements_retired,CHECK,,"CHECK ((""status"" = 'RETIRED') = (""retired_at"" IS NOT NULL))",SQL/06_authz/05_constraints.sql
+authz,ui_visibility_elements,ck_ui_visibility_elements_not_own_parent,CHECK,,"CHECK (""parent_element_id"" IS NULL OR ""parent_element_id"" <> ""id"")",SQL/06_authz/05_constraints.sql
+authz,ui_visibility_rules,pk_ui_visibility_rules,PRIMARY KEY,id,PRIMARY KEY (id),SQL/06_authz/02_tables.sql
+authz,ui_visibility_rules,fk_ui_visibility_rules_element_id,FOREIGN KEY,element_id,FOREIGN KEY (element_id) REFERENCES authz.ui_visibility_elements (id),SQL/06_authz/03_fk_intra.sql
+authz,ui_visibility_rules,fk_ui_visibility_rules_created_by_user_id,FOREIGN KEY,created_by_user_id,FOREIGN KEY (created_by_user_id) REFERENCES iam.users (id),SQL/06_authz/90_fk_deferred.sql
+authz,ui_visibility_rules,fk_ui_visibility_rules_updated_by_user_id,FOREIGN KEY,updated_by_user_id,FOREIGN KEY (updated_by_user_id) REFERENCES iam.users (id),SQL/06_authz/90_fk_deferred.sql
+authz,ui_visibility_rules,uq_ui_visibility_rules_open_subject,UNIQUE INDEX,"""element_id"", ""subject_type"", ""subject_id""","UNIQUE INDEX (""element_id"", ""subject_type"", ""subject_id"") WHERE ended_at IS NULL AND subject_id IS NOT NULL",SQL/06_authz/04_indexes.sql
+authz,ui_visibility_rules,uq_ui_visibility_rules_open_all,UNIQUE INDEX,"""element_id""","UNIQUE INDEX (""element_id"") WHERE ended_at IS NULL AND subject_type = 'ALL'",SQL/06_authz/04_indexes.sql
+authz,ui_visibility_rules,ck_ui_visibility_rules_effect,CHECK,,"CHECK (""effect"" IN ('SHOW', 'HIDE'))",SQL/06_authz/05_constraints.sql
+authz,ui_visibility_rules,ck_ui_visibility_rules_subject_type,CHECK,,"CHECK (""subject_type"" IN ('USER', 'TENANT', 'ROLE', 'ORG_TYPE', 'ALL'))",SQL/06_authz/05_constraints.sql
+authz,ui_visibility_rules,ck_ui_visibility_rules_subject_shape,CHECK,,"CHECK ((""subject_type"" = 'ALL') = (""subject_id"" IS NULL))",SQL/06_authz/05_constraints.sql
+authz,ui_visibility_rules,ck_ui_visibility_rules_subject_id_len,CHECK,,"CHECK (char_length(""subject_id"") BETWEEN 1 AND 160)",SQL/06_authz/05_constraints.sql
+authz,ui_visibility_rules,ck_ui_visibility_rules_validity,CHECK,,"CHECK (""ended_at"" IS NOT NULL OR ""valid_from"" IS NULL OR ""valid_to"" IS NULL OR ""valid_to"" > ""valid_from"")",SQL/06_authz/05_constraints.sql
+authz,ui_visibility_rules,ck_ui_visibility_rules_reason_len,CHECK,,"CHECK (char_length(btrim(""reason"")) BETWEEN 10 AND 500)",SQL/06_authz/05_constraints.sql
+authz,ui_visibility_rules,ck_ui_visibility_rules_ended_has_valid_to,CHECK,,"CHECK (""ended_at"" IS NULL OR ""valid_to"" IS NOT NULL)",SQL/06_authz/05_constraints.sql
+authz,ui_visibility_rules,ck_ui_visibility_rules_scope_subject,CHECK,,"CHECK (""scope_tenant_id"" IS NULL OR (""subject_type"" IN ('TENANT', 'USER') AND (""subject_type"" <> 'TENANT' OR ""subject_id"" = ""scope_tenant_id""::text)))",SQL/06_authz/05_constraints.sql
 authz,user_permission_grants,pk_user_permission_grants,PRIMARY KEY,id,PRIMARY KEY (id),SQL/06_authz/02_tables.sql
 authz,user_permission_grants,fk_user_permission_grants_permission_id,FOREIGN KEY,permission_id,FOREIGN KEY (permission_id) REFERENCES authz.permissions (id),SQL/06_authz/03_fk_intra.sql
 authz,user_permission_grants,fk_user_permission_grants_user_id,FOREIGN KEY,user_id,FOREIGN KEY (user_id) REFERENCES iam.users (id),SQL/06_authz/90_fk_deferred.sql
@@ -3565,6 +3594,12 @@ data_catalog,catalog_evidence_items,pk_catalog_evidence_items,PRIMARY KEY,id,PRI
 data_catalog,catalog_evidence_items,fk_catalog_evidence_items_object_id,FOREIGN KEY,object_id,FOREIGN KEY (object_id) REFERENCES data_catalog.catalog_objects (id),SQL/67_data_catalog/03_fk_intra.sql
 data_catalog,catalog_evidence_items,fk_catalog_evidence_items_column_id,FOREIGN KEY,column_id,FOREIGN KEY (column_id) REFERENCES data_catalog.catalog_columns (id),SQL/67_data_catalog/03_fk_intra.sql
 data_catalog,catalog_evidence_items,fk_catalog_evidence_items_added_by_user_id,FOREIGN KEY,added_by_user_id,FOREIGN KEY (added_by_user_id) REFERENCES iam.users (id),SQL/67_data_catalog/90_fk_deferred.sql
+data_catalog,catalog_fit_runs,pk_catalog_fit_runs,PRIMARY KEY,id,PRIMARY KEY (id),SQL/67_data_catalog/02_tables.sql
+data_catalog,catalog_fit_runs,ux_data_catalog_fit_runs_idempotency,UNIQUE INDEX,"""trigger_kind"", ""idempotency_key""","UNIQUE INDEX (""trigger_kind"", ""idempotency_key"") WHERE idempotency_key IS NOT NULL",SQL/67_data_catalog/04_indexes.sql
+data_catalog,catalog_fit_runs,ck_catalog_fit_runs_trigger_kind,CHECK,,"CHECK (""trigger_kind"" IN ('TICK', 'MANUAL'))",SQL/67_data_catalog/05_constraints.sql
+data_catalog,catalog_fit_runs,ck_catalog_fit_runs_status,CHECK,,"CHECK (""status"" IN ('COMPLETADA', 'FALLIDA'))",SQL/67_data_catalog/05_constraints.sql
+data_catalog,catalog_fit_runs,ck_catalog_fit_runs_verdict,CHECK,,"CHECK (""verdict"" IS NULL OR ""verdict"" IN ('AJUSTADA', 'CON_AVISOS', 'DESAJUSTADA', 'SIN_DATOS'))",SQL/67_data_catalog/05_constraints.sql
+data_catalog,catalog_fit_runs,ck_catalog_fit_runs_outcome_shape,CHECK,,"CHECK ((""status"" = 'COMPLETADA' AND ""verdict"" IS NOT NULL AND ""report_json"" IS NOT NULL AND ""error_code"" IS NULL) OR (""status"" = 'FALLIDA' AND ""error_code"" IS NOT NULL AND ""report_json"" IS NULL))",SQL/67_data_catalog/05_constraints.sql
 data_catalog,catalog_glossary_term_links,pk_catalog_glossary_term_links,PRIMARY KEY,id,PRIMARY KEY (id),SQL/67_data_catalog/02_tables.sql
 data_catalog,catalog_glossary_term_links,fk_catalog_glossary_term_links_term_id,FOREIGN KEY,term_id,FOREIGN KEY (term_id) REFERENCES data_catalog.catalog_glossary_terms (id),SQL/67_data_catalog/03_fk_intra.sql
 data_catalog,catalog_glossary_term_links,fk_catalog_glossary_term_links_object_id,FOREIGN KEY,object_id,FOREIGN KEY (object_id) REFERENCES data_catalog.catalog_objects (id),SQL/67_data_catalog/03_fk_intra.sql
@@ -7436,7 +7471,7 @@ pharmacy,pharmacy_external_product_mappings,fk_pharmacy_external_product_mapping
 pharmacy,pharmacy_integration_connections,pk_pharmacy_integration_connections,PRIMARY KEY,id,PRIMARY KEY (id),SQL/24_pharmacy/02_tables.sql
 pharmacy,pharmacy_integration_connections,fk_pharmacy_integration_connections_pharmacy_id,FOREIGN KEY,pharmacy_id,FOREIGN KEY (pharmacy_id) REFERENCES pharmacy.pharmacies (id),SQL/24_pharmacy/03_fk_intra.sql
 pharmacy,pharmacy_integration_connections,fk_pharmacy_integration_connections_pharmacy_site_id,FOREIGN KEY,pharmacy_site_id,FOREIGN KEY (pharmacy_site_id) REFERENCES pharmacy.pharmacy_sites (id),SQL/24_pharmacy/03_fk_intra.sql
-pharmacy,pharmacy_integration_connections,fk_pharmacy_integration_connections_connection_id,FOREIGN KEY,connection_id,FOREIGN KEY (connection_id) REFERENCES pharmacy.pharmacy_integration_connections (id),SQL/24_pharmacy/03_fk_intra.sql
+pharmacy,pharmacy_integration_connections,fk_pharmacy_integration_connections_connection_id,FOREIGN KEY,connection_id,FOREIGN KEY (connection_id) REFERENCES integrations.provider_connections (id),SQL/24_pharmacy/90_fk_deferred.sql
 pharmacy,pharmacy_integration_connections,fk_pharmacy_integration_connections_integration_mode_concept_id,FOREIGN KEY,integration_mode_concept_id,FOREIGN KEY (integration_mode_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/24_pharmacy/90_fk_deferred.sql
 pharmacy,pharmacy_integration_connections,fk_pharmacy_integration_connections_inventory_authorit_3c66cc96,FOREIGN KEY,inventory_authority_concept_id,FOREIGN KEY (inventory_authority_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/24_pharmacy/90_fk_deferred.sql
 pharmacy,pharmacy_integration_connections,fk_pharmacy_integration_connections_status_concept_id,FOREIGN KEY,status_concept_id,FOREIGN KEY (status_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/24_pharmacy/90_fk_deferred.sql
@@ -9554,6 +9589,7 @@ system_ops,entity_registry,fk_entity_registry_write_policy_id,FOREIGN KEY,write_
 system_ops,entity_registry,fk_entity_registry_state_concept_id,FOREIGN KEY,state_concept_id,FOREIGN KEY (state_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/11_system_ops/90_fk_deferred.sql
 system_ops,entity_registry,fk_entity_registry_created_by_user_id,FOREIGN KEY,created_by_user_id,FOREIGN KEY (created_by_user_id) REFERENCES iam.users (id),SQL/11_system_ops/90_fk_deferred.sql
 system_ops,entity_registry,fk_entity_registry_updated_by_user_id,FOREIGN KEY,updated_by_user_id,FOREIGN KEY (updated_by_user_id) REFERENCES iam.users (id),SQL/11_system_ops/90_fk_deferred.sql
+system_ops,entity_registry,uq_entity_registry_schema_name_table_name,UNIQUE INDEX,"""schema_name"", ""table_name""","UNIQUE INDEX (""schema_name"", ""table_name"")",SQL/11_system_ops/04_indexes.sql
 system_ops,field_registry,pk_field_registry,PRIMARY KEY,id,PRIMARY KEY (id),SQL/11_system_ops/02_tables.sql
 system_ops,field_registry,fk_field_registry_entity_registry_id,FOREIGN KEY,entity_registry_id,FOREIGN KEY (entity_registry_id) REFERENCES system_ops.entity_registry (id),SQL/11_system_ops/03_fk_intra.sql
 system_ops,field_registry,fk_field_registry_classification_id,FOREIGN KEY,classification_id,FOREIGN KEY (classification_id) REFERENCES system_ops.data_classifications (id),SQL/11_system_ops/03_fk_intra.sql

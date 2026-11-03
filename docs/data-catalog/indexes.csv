@@ -569,6 +569,18 @@ authz,care_relationships,ix_care_relationships_patient_profile_id,NO,"""patient_
 authz,care_relationships,ix_care_relationships_practitioner_profile_id,NO,"""practitioner_profile_id""",,SQL/06_authz/04_indexes.sql
 authz,patient_legal_representations,ix_patient_legal_representations_tenant_id,NO,"""tenant_id""",,SQL/06_authz/04_indexes.sql
 authz,patient_legal_representations,ix_patient_legal_representations_patient_profile_id,NO,"""patient_profile_id""",,SQL/06_authz/04_indexes.sql
+authz,ui_visibility_elements,uq_ui_visibility_elements_key,YES,"""key""",,SQL/06_authz/04_indexes.sql
+authz,ui_visibility_elements,ix_ui_visibility_elements_module_kind,NO,"""module_code"", ""kind""",,SQL/06_authz/04_indexes.sql
+authz,ui_visibility_elements,ix_ui_visibility_elements_parent_element_id,NO,"""parent_element_id""",,SQL/06_authz/04_indexes.sql
+authz,ui_visibility_elements,ix_ui_visibility_elements_created_by_user_id,NO,"""created_by_user_id""",,SQL/06_authz/04_indexes.sql
+authz,ui_visibility_elements,ix_ui_visibility_elements_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/06_authz/04_indexes.sql
+authz,ui_visibility_rules,uq_ui_visibility_rules_open_subject,YES,"""element_id"", ""subject_type"", ""subject_id""",WHERE ended_at IS NULL AND subject_id IS NOT NULL,SQL/06_authz/04_indexes.sql
+authz,ui_visibility_rules,uq_ui_visibility_rules_open_all,YES,"""element_id""",WHERE ended_at IS NULL AND subject_type = 'ALL',SQL/06_authz/04_indexes.sql
+authz,ui_visibility_rules,ix_ui_visibility_rules_open_subject,NO,"""subject_type"", ""subject_id""",WHERE ended_at IS NULL,SQL/06_authz/04_indexes.sql
+authz,ui_visibility_rules,ix_ui_visibility_rules_scope_tenant_id,NO,"""scope_tenant_id""",WHERE scope_tenant_id IS NOT NULL,SQL/06_authz/04_indexes.sql
+authz,ui_visibility_rules,ix_ui_visibility_rules_created_at_id,NO,"""created_at"" DESC, ""id"" DESC",,SQL/06_authz/04_indexes.sql
+authz,ui_visibility_rules,ix_ui_visibility_rules_created_by_user_id,NO,"""created_by_user_id""",,SQL/06_authz/04_indexes.sql
+authz,ui_visibility_rules,ix_ui_visibility_rules_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/06_authz/04_indexes.sql
 consent,processing_purposes,uq_processing_purposes_code,YES,"""code""",,SQL/07_consent/04_indexes.sql
 consent,processing_purposes,ix_processing_purposes_purpose_category_concept_id,NO,"""purpose_category_concept_id""",,SQL/07_consent/04_indexes.sql
 consent,processing_purposes,ix_processing_purposes_purpose_of_use_concept_id,NO,"""purpose_of_use_concept_id""",,SQL/07_consent/04_indexes.sql
@@ -1721,6 +1733,7 @@ system_ops,data_classifications,ix_data_classifications_updated_by_user_id,NO,""
 system_ops,data_domains,uq_data_domains_code,YES,"""code""",,SQL/11_system_ops/04_indexes.sql
 system_ops,data_domains,ix_data_domains_created_by_user_id,NO,"""created_by_user_id""",,SQL/11_system_ops/04_indexes.sql
 system_ops,data_domains,ix_data_domains_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/11_system_ops/04_indexes.sql
+system_ops,entity_registry,uq_entity_registry_schema_name_table_name,YES,"""schema_name"", ""table_name""",,SQL/11_system_ops/04_indexes.sql
 system_ops,entity_registry,ix_entity_registry_domain_id,NO,"""domain_id""",,SQL/11_system_ops/04_indexes.sql
 system_ops,entity_registry,ix_entity_registry_classification_id,NO,"""classification_id""",,SQL/11_system_ops/04_indexes.sql
 system_ops,entity_registry,ix_entity_registry_retention_policy_id,NO,"""retention_policy_id""",,SQL/11_system_ops/04_indexes.sql
@@ -2256,6 +2269,9 @@ chart,chart_template_assignments,ix_chart_template_assignments_practitioner_prof
 chart,chart_template_assignments,ix_chart_template_assignments_status_concept_id,NO,"""status_concept_id""",,SQL/15_chart/04_indexes.sql
 chart,chart_template_assignments,ix_chart_template_assignments_created_by_user_id,NO,"""created_by_user_id""",,SQL/15_chart/04_indexes.sql
 chart,chart_template_assignments,ix_chart_template_assignments_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/15_chart/04_indexes.sql
+accounting,report_presentation_templates,uq_report_presentation_templates_audience_code,YES,"""user_type"", ""code""",,SQL/16_accounting/04_indexes.sql
+accounting,report_presentation_templates,ix_report_presentation_templates_created_by_user_id,NO,"""created_by_user_id""",,SQL/16_accounting/04_indexes.sql
+accounting,report_presentation_templates,ix_report_presentation_templates_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/16_accounting/04_indexes.sql
 accounting,controlling_areas,uq_controlling_areas_tenant_id_code,YES,"""tenant_id"", ""code""",,SQL/16_accounting/04_indexes.sql
 accounting,controlling_areas,ix_controlling_areas_tenant_id,NO,"""tenant_id""",,SQL/16_accounting/04_indexes.sql
 accounting,controlling_areas,ix_controlling_areas_operating_currency_concept_id,NO,"""operating_currency_concept_id""",,SQL/16_accounting/04_indexes.sql
@@ -8586,6 +8602,8 @@ data_catalog,catalog_certifications,ix_data_catalog_certifications_report_defini
 data_catalog,catalog_certifications,ix_data_catalog_certifications_requested_by_user_id,NO,"""requested_by_user_id""",,SQL/67_data_catalog/04_indexes.sql
 data_catalog,catalog_change_acknowledgements,ux_data_catalog_change_acknowledgements_event,YES,"""change_event_id""",,SQL/67_data_catalog/04_indexes.sql
 data_catalog,catalog_change_acknowledgements,ix_data_catalog_change_acknowledgements_user_id,NO,"""user_id""",,SQL/67_data_catalog/04_indexes.sql
+data_catalog,catalog_fit_runs,ux_data_catalog_fit_runs_idempotency,YES,"""trigger_kind"", ""idempotency_key""",WHERE idempotency_key IS NOT NULL,SQL/67_data_catalog/04_indexes.sql
+data_catalog,catalog_fit_runs,ix_data_catalog_fit_runs_finished,NO,"""source_code"", ""finished_at"" DESC",,SQL/67_data_catalog/04_indexes.sql
 qa_execution,execution_targets,ux_qa_execution_targets_environment,YES,"""environment_id""",,SQL/68_qa_execution/04_indexes.sql
 qa_execution,execution_plans,ix_qa_execution_plans_status_created,NO,"""status"", ""created_at""",,SQL/68_qa_execution/04_indexes.sql
 qa_execution,execution_plans,ix_qa_execution_plans_run_id,NO,"""run_id""",,SQL/68_qa_execution/04_indexes.sql
