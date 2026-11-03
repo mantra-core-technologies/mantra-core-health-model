@@ -19,7 +19,7 @@ registra como `PENDING_REVIEW`; no se rellena con una frase genérica.
   `04_indexes.sql` y `05_constraints.sql`.
 - Inventario PostgreSQL canónico: los scripts `02_tables.sql` de los módulos. Los archivos de
   `SQL/patches/` son ALTERs/seeds incrementales y no se cuentan como tablas del rebuild canónico.
-- El inventario incluye **1.313 tablas, 18.265 columnas, 7.569 FK y 8.422 índices** en 61 schemas.
+- El inventario incluye **1.374 tablas, 19.282 columnas, 7.890 FK y 8.825 índices** en 62 schemas.
   Estos conteos describen el contenido leído hoy; prevalecen sobre
   los conteos históricos que aún aparecen en algunos encabezados de `SQL/`.
 - Fuera de este catálogo relacional: stores no relacionales de `NoSQL/`, vistas y metadata observada
@@ -30,7 +30,9 @@ registra como `PENDING_REVIEW`; no se rellena con una frase genérica.
 ## Artefactos
 
 `python3 docs/data-catalog/generate_catalog.py` regenera los CSV técnicos sin tocar las narrativas
-curadas:
+curadas. La suite estática comprueba que `tables.csv` cubre todas las tablas
+del DDL y que sus columnas están sincronizadas; un cambio de esquema requiere
+regenerar estos metadatos:
 
 - `tables.csv`: una fila por tabla, incluyendo el motivo de dominio y su estado de revisión.
 - `domains.csv`: volumen de tablas y avance de curaduría por schema.
@@ -59,7 +61,7 @@ esté vacío o su estado sea `PENDING_REVIEW`.
 
 ## Piloto y avance
 
-Las **1.259 tablas** (de 1.313; 54 quedan `PENDING_REVIEW`) tienen un motivo de existencia inicial respaldado por su diagrama de módulo y
+Las **1.280 tablas** (de 1.374; 94 quedan `PENDING_REVIEW`) tienen un motivo de existencia inicial respaldado por su diagrama de módulo y
 quedan con estado `DOMAIN_CURATED_DRAFT`: el motivo es del modelo, no una aprobación del
 responsable de dominio. `domains.csv`
 resume la cobertura por schema y `tables.csv` permite filtrar las narrativas.

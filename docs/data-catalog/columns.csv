@@ -601,6 +601,18 @@ accounting,purchases,12,updated_at,timestamptz,NO,,,,,,SQL/16_accounting/02_tabl
 accounting,purchases,13,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/16_accounting/02_tables.sql
 accounting,purchases,14,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/16_accounting/02_tables.sql
 accounting,purchases,15,row_version,integer,NO,1,,,,,SQL/16_accounting/02_tables.sql
+accounting,report_presentation_templates,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/16_accounting/02_tables.sql
+accounting,report_presentation_templates,2,user_type,varchar(40),NO,,UNIQUE,,,,SQL/16_accounting/02_tables.sql
+accounting,report_presentation_templates,3,code,varchar(80),NO,,UNIQUE,,,,SQL/16_accounting/02_tables.sql
+accounting,report_presentation_templates,4,name,varchar(160),NO,,,,,,SQL/16_accounting/02_tables.sql
+accounting,report_presentation_templates,5,report_kind,varchar(40),NO,,,,,,SQL/16_accounting/02_tables.sql
+accounting,report_presentation_templates,6,presentation_json,jsonb,NO,,,,,,SQL/16_accounting/02_tables.sql
+accounting,report_presentation_templates,7,is_active,boolean,NO,,,,,,SQL/16_accounting/02_tables.sql
+accounting,report_presentation_templates,8,created_at,timestamptz,NO,,,,,,SQL/16_accounting/02_tables.sql
+accounting,report_presentation_templates,9,updated_at,timestamptz,NO,,,,,,SQL/16_accounting/02_tables.sql
+accounting,report_presentation_templates,10,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/16_accounting/02_tables.sql
+accounting,report_presentation_templates,11,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/16_accounting/02_tables.sql
+accounting,report_presentation_templates,12,row_version,integer,NO,1,,,,,SQL/16_accounting/02_tables.sql
 accounting,sales,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/16_accounting/02_tables.sql
 accounting,sales,2,practice_id,uuid,NO,,FOREIGN KEY,practice,practices,id,SQL/16_accounting/02_tables.sql
 accounting,sales,3,transaction_id,uuid,YES,,FOREIGN KEY,accounting,journal_transactions,id,SQL/16_accounting/02_tables.sql
@@ -3491,6 +3503,37 @@ authz,roles,14,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/06_auth
 authz,roles,15,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/06_authz/02_tables.sql
 authz,roles,16,row_version,integer,NO,1,,,,,SQL/06_authz/02_tables.sql
 authz,service_principals,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/06_authz/02_tables.sql
+authz,ui_visibility_elements,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/06_authz/02_tables.sql
+authz,ui_visibility_elements,2,key,varchar(160),NO,,UNIQUE,,,,SQL/06_authz/02_tables.sql
+authz,ui_visibility_elements,3,kind,varchar(20),NO,,,,,,SQL/06_authz/02_tables.sql
+authz,ui_visibility_elements,4,module_code,varchar(80),NO,,,,,,SQL/06_authz/02_tables.sql
+authz,ui_visibility_elements,5,parent_element_id,uuid,YES,,FOREIGN KEY,authz,ui_visibility_elements,id,SQL/06_authz/02_tables.sql
+authz,ui_visibility_elements,6,label,varchar(200),NO,,,,,,SQL/06_authz/02_tables.sql
+authz,ui_visibility_elements,7,description,varchar(500),YES,,,,,,SQL/06_authz/02_tables.sql
+authz,ui_visibility_elements,8,default_visible,boolean,NO,true,,,,,SQL/06_authz/02_tables.sql
+authz,ui_visibility_elements,9,source,varchar(10),NO,,,,,,SQL/06_authz/02_tables.sql
+authz,ui_visibility_elements,10,status,varchar(10),NO,,,,,,SQL/06_authz/02_tables.sql
+authz,ui_visibility_elements,11,retired_at,timestamptz,YES,,,,,,SQL/06_authz/02_tables.sql
+authz,ui_visibility_elements,12,created_at,timestamptz,NO,,,,,,SQL/06_authz/02_tables.sql
+authz,ui_visibility_elements,13,updated_at,timestamptz,NO,,,,,,SQL/06_authz/02_tables.sql
+authz,ui_visibility_elements,14,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/06_authz/02_tables.sql
+authz,ui_visibility_elements,15,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/06_authz/02_tables.sql
+authz,ui_visibility_elements,16,row_version,integer,NO,1,,,,,SQL/06_authz/02_tables.sql
+authz,ui_visibility_rules,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/06_authz/02_tables.sql
+authz,ui_visibility_rules,2,element_id,uuid,NO,,FOREIGN KEY; UNIQUE,authz,ui_visibility_elements,id,SQL/06_authz/02_tables.sql
+authz,ui_visibility_rules,3,effect,varchar(4),NO,,,,,,SQL/06_authz/02_tables.sql
+authz,ui_visibility_rules,4,subject_type,varchar(10),NO,,UNIQUE,,,,SQL/06_authz/02_tables.sql
+authz,ui_visibility_rules,5,subject_id,varchar(160),YES,,UNIQUE,,,,SQL/06_authz/02_tables.sql
+authz,ui_visibility_rules,6,scope_tenant_id,uuid,YES,,,,,,SQL/06_authz/02_tables.sql
+authz,ui_visibility_rules,7,valid_from,timestamptz,YES,,,,,,SQL/06_authz/02_tables.sql
+authz,ui_visibility_rules,8,valid_to,timestamptz,YES,,,,,,SQL/06_authz/02_tables.sql
+authz,ui_visibility_rules,9,ended_at,timestamptz,YES,,,,,,SQL/06_authz/02_tables.sql
+authz,ui_visibility_rules,10,reason,varchar(500),NO,,,,,,SQL/06_authz/02_tables.sql
+authz,ui_visibility_rules,11,created_at,timestamptz,NO,,,,,,SQL/06_authz/02_tables.sql
+authz,ui_visibility_rules,12,updated_at,timestamptz,NO,,,,,,SQL/06_authz/02_tables.sql
+authz,ui_visibility_rules,13,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/06_authz/02_tables.sql
+authz,ui_visibility_rules,14,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/06_authz/02_tables.sql
+authz,ui_visibility_rules,15,row_version,integer,NO,1,,,,,SQL/06_authz/02_tables.sql
 authz,user_permission_grants,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/06_authz/02_tables.sql
 authz,user_permission_grants,2,user_id,uuid,NO,,FOREIGN KEY,iam,users,id,SQL/06_authz/02_tables.sql
 authz,user_permission_grants,3,permission_id,uuid,NO,,FOREIGN KEY,authz,permissions,id,SQL/06_authz/02_tables.sql
@@ -6709,6 +6752,21 @@ data_catalog,catalog_evidence_items,6,excerpt,text,YES,,,,,,SQL/67_data_catalog/
 data_catalog,catalog_evidence_items,7,source_revision,varchar,YES,,,,,,SQL/67_data_catalog/02_tables.sql
 data_catalog,catalog_evidence_items,8,added_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/67_data_catalog/02_tables.sql
 data_catalog,catalog_evidence_items,9,created_at,timestamptz,NO,,,,,,SQL/67_data_catalog/02_tables.sql
+data_catalog,catalog_fit_runs,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/67_data_catalog/02_tables.sql
+data_catalog,catalog_fit_runs,2,source_code,varchar(40),NO,'primary',,,,,SQL/67_data_catalog/02_tables.sql
+data_catalog,catalog_fit_runs,3,trigger_kind,varchar(10),NO,,UNIQUE,,,,SQL/67_data_catalog/02_tables.sql
+data_catalog,catalog_fit_runs,4,requested_by_user_id,uuid,YES,,,,,,SQL/67_data_catalog/02_tables.sql
+data_catalog,catalog_fit_runs,5,idempotency_key,varchar(128),YES,,UNIQUE,,,,SQL/67_data_catalog/02_tables.sql
+data_catalog,catalog_fit_runs,6,status,varchar(12),NO,,,,,,SQL/67_data_catalog/02_tables.sql
+data_catalog,catalog_fit_runs,7,model_version,varchar(40),NO,,,,,,SQL/67_data_catalog/02_tables.sql
+data_catalog,catalog_fit_runs,8,verdict,varchar(12),YES,,,,,,SQL/67_data_catalog/02_tables.sql
+data_catalog,catalog_fit_runs,9,code_fingerprint,varchar(64),YES,,,,,,SQL/67_data_catalog/02_tables.sql
+data_catalog,catalog_fit_runs,10,deployed_commit,varchar(64),YES,,,,,,SQL/67_data_catalog/02_tables.sql
+data_catalog,catalog_fit_runs,11,report_json,jsonb,YES,,,,,,SQL/67_data_catalog/02_tables.sql
+data_catalog,catalog_fit_runs,12,error_code,varchar(80),YES,,,,,,SQL/67_data_catalog/02_tables.sql
+data_catalog,catalog_fit_runs,13,requested_at,timestamptz,NO,,,,,,SQL/67_data_catalog/02_tables.sql
+data_catalog,catalog_fit_runs,14,finished_at,timestamptz,NO,,,,,,SQL/67_data_catalog/02_tables.sql
+data_catalog,catalog_fit_runs,15,created_at,timestamptz,NO,now(),,,,,SQL/67_data_catalog/02_tables.sql
 data_catalog,catalog_glossary_term_links,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/67_data_catalog/02_tables.sql
 data_catalog,catalog_glossary_term_links,2,term_id,uuid,NO,,FOREIGN KEY; UNIQUE,data_catalog,catalog_glossary_terms,id,SQL/67_data_catalog/02_tables.sql
 data_catalog,catalog_glossary_term_links,3,object_id,uuid,NO,,FOREIGN KEY; UNIQUE,data_catalog,catalog_objects,id,SQL/67_data_catalog/02_tables.sql
@@ -14354,7 +14412,7 @@ pharmacy,pharmacy_external_product_mappings,12,row_version,integer,NO,1,,,,,SQL/
 pharmacy,pharmacy_integration_connections,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/24_pharmacy/02_tables.sql
 pharmacy,pharmacy_integration_connections,2,pharmacy_id,uuid,NO,,FOREIGN KEY,pharmacy,pharmacies,id,SQL/24_pharmacy/02_tables.sql
 pharmacy,pharmacy_integration_connections,3,pharmacy_site_id,uuid,YES,,FOREIGN KEY,pharmacy,pharmacy_sites,id,SQL/24_pharmacy/02_tables.sql
-pharmacy,pharmacy_integration_connections,4,connection_id,uuid,NO,,FOREIGN KEY,pharmacy,pharmacy_integration_connections,id,SQL/24_pharmacy/02_tables.sql
+pharmacy,pharmacy_integration_connections,4,connection_id,uuid,YES,,FOREIGN KEY,integrations,provider_connections,id,SQL/24_pharmacy/02_tables.sql
 pharmacy,pharmacy_integration_connections,5,integration_mode_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/24_pharmacy/02_tables.sql
 pharmacy,pharmacy_integration_connections,6,inventory_authority_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/24_pharmacy/02_tables.sql
 pharmacy,pharmacy_integration_connections,7,supports_stock_query,boolean,YES,,,,,,SQL/24_pharmacy/02_tables.sql
@@ -18296,8 +18354,8 @@ system_ops,encryption_keys,16,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users
 system_ops,encryption_keys,17,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/11_system_ops/02_tables.sql
 system_ops,encryption_keys,18,row_version,integer,NO,1,,,,,SQL/11_system_ops/02_tables.sql
 system_ops,entity_registry,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/11_system_ops/02_tables.sql
-system_ops,entity_registry,2,schema_name,varchar,NO,,,,,,SQL/11_system_ops/02_tables.sql
-system_ops,entity_registry,3,table_name,varchar,NO,,,,,,SQL/11_system_ops/02_tables.sql
+system_ops,entity_registry,2,schema_name,varchar,NO,,UNIQUE,,,,SQL/11_system_ops/02_tables.sql
+system_ops,entity_registry,3,table_name,varchar,NO,,UNIQUE,,,,SQL/11_system_ops/02_tables.sql
 system_ops,entity_registry,4,domain_id,uuid,YES,,FOREIGN KEY,system_ops,data_domains,id,SQL/11_system_ops/02_tables.sql
 system_ops,entity_registry,5,classification_id,uuid,YES,,FOREIGN KEY,system_ops,data_classifications,id,SQL/11_system_ops/02_tables.sql
 system_ops,entity_registry,6,is_append_only,boolean,NO,,,,,,SQL/11_system_ops/02_tables.sql

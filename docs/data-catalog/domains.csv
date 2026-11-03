@@ -1,10 +1,10 @@
 schema,table_count,rationale_count,pending_rationale_count,coverage_percent
-accounting,45,42,3,93.3
+accounting,46,42,4,91.3
 ads,73,73,0,100.0
 audio_assets,4,4,0,100.0
 audit,142,140,2,98.6
 auth_providers,9,9,0,100.0
-authz,15,15,0,100.0
+authz,17,15,2,88.2
 automation,16,16,0,100.0
 billing,26,24,2,92.3
 chart,11,11,0,100.0
@@ -15,7 +15,7 @@ community,44,44,0,100.0
 consent,10,10,0,100.0
 crm,33,32,1,97.0
 cross_store_consistency,20,20,0,100.0
-data_catalog,25,8,17,32.0
+data_catalog,26,8,18,30.8
 delegated_access,27,25,2,92.6
 diagnostic_units,15,10,5,66.7
 diagnostics,36,36,0,100.0
