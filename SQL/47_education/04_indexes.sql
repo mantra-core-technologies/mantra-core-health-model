@@ -1,4 +1,4 @@
--- SALUD v4.2.84 · módulo 47 · schema education
+-- SALUD v4.2.85 · módulo 47 · schema education
 -- Generado de diagram_47_education.puml — NO editar a mano.
 
 

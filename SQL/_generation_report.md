@@ -1,4 +1,4 @@
-# Reporte de generación SQL — SALUD v4.2.84
+# Reporte de generación SQL — SALUD v4.2.85
 
 Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vistas, stubs de cruce y stores no-SQL (Redis/Mongo/OpenSearch/vector/timeseries) se listan como *saltados*. Graph (61) y Lakehouse (63) SÍ se materializan como tablas PG (catálogo del plano de control). Las FK marcadas *inferidas* se resolvieron por convención cuando el vault no tenía destino.
 
@@ -20,7 +20,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 13 | geo | 6 | 31 | 0 | 35 | 0 |
 | 14 | practice | 20 | 166 | 0 | 186 | 1 |
 | 15 | chart | 11 | 71 | 0 | 81 | 2 |
-| 16 | accounting | 45 | 320 | 0 | 375 | 17 |
+| 16 | accounting | 46 | 322 | 2 | 378 | 17 |
 | 17 | billing | 26 | 181 | 0 | 204 | 25 |
 | 18 | clinical_ext | 14 | 100 | 0 | 113 | 4 |
 | 19 | community | 44 | 273 | 0 | 288 | 11 |
@@ -75,7 +75,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 68 | qa_execution | 4 | 14 | 0 | 6 | 0 |
 | 69 | pharma_lab | 31 | 182 | 0 | 182 | 1 |
 | 70 | observability | 12 | 13 | 0 | 39 | 2 |
-| **Σ** | **71** | **1373** | | **0** | | **476** |
+| **Σ** | **71** | **1374** | | **2** | | **476** |
 
 ## Detalle de entidades saltadas y avisos
 

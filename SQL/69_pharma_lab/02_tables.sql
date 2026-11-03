@@ -1,4 +1,4 @@
--- SALUD v4.2.84 · módulo 69 · schema pharma_lab
+-- SALUD v4.2.85 · módulo 69 · schema pharma_lab
 -- Generado de diagram_69_pharma_lab.puml — NO editar a mano.
 
 

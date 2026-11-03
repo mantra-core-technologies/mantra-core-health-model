@@ -49,6 +49,15 @@ comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_obje
 
 ## 3. Estado actual del build
 
+### v4.2.85 — Plantillas de presentación contable (2026-11-02)
+
+`accounting.report_presentation_templates` contiene un catálogo global de columnas y rótulos,
+único por `(user_type, code)`, con desactivación lógica y `row_version` para ediciones concurrentes.
+Su contenido no ejecuta SQL ni altera el plan de cuentas o el mayor. Las dos FK de autoría apuntan
+a `iam.users`. La API escribe sólo como SUPERADMIN global y registra la operación en auditoría.
+El parche `2026-11-02_v4285_accounting_report_templates.sql` se reproduce con
+`salud-db/gen_report_templates_patch.py` a partir del DDL generado del módulo 16.
+
 ### v4.2.84 — Corridas de la sonda de ajuste del catálogo y una fila por tabla en el registro de entidades (2026-11-01)
 
 **Cambio de esquema: +1 tabla, +3 índices (2 únicos), +4 CHECK, +1 trigger.** Sin parche nuevo: los dos parches escritos a

@@ -1,4 +1,4 @@
--- SALUD v4.2.84 · módulo 67 · schema data_catalog
+-- SALUD v4.2.85 · módulo 67 · schema data_catalog
 -- Generado de diagram_67_data_catalog.puml — NO editar a mano.
 
 

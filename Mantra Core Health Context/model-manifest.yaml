@@ -1,8 +1,8 @@
 model:
   name: SALUD
-  version: 4.2.84
+  version: 4.2.85
   status: canonical-polyglot-nosql-health-platform
-  generated_at: '2026-10-31'
+  generated_at: '2026-11-02'
   design_patches:
   - id: patch-01-plan-scheduled-campaigns-tracking
     role: normative-master-plan
@@ -299,6 +299,14 @@ model:
       parches escritos a mano (SQL/patches/2026-11-01_catalog_fit_runs.sql y
       2026-11-01_entity_registry_unique_table.sql); ahora los trae el DDL generado y los parches
       quedan como no-op idempotente sobre una base nueva.
+  - id: patch-v4.2.85-accounting-report-presentation-templates
+    role: product-features
+    doc: docs/architecture/physical-materialization.md (v4.2.85)
+    status: materialized-in-er
+    summary: >-
+      Catálogo global de presentación contable por audiencia: accounting.report_presentation_templates,
+      código único por tipo de usuario, columnas/rótulos JSON, desactivación lógica y versión optimista.
+      No modifica cuentas ni asientos. Parche generado desde el DDL del módulo 16.
   materialization_note: >-
     v4.0.1 materializado en el ER (fuente: el vault/grafo). Se añadieron 14
     entidades nuevas (marketing.campaign_schedules/dispatches/dispatch_recipients,

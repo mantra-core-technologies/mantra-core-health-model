@@ -94,6 +94,12 @@ psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-01_catalog_fit_runs.sql
 psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-01_entity_registry_unique_table.sql    # una fila por tabla en system_ops.entity_registry (v4.2.84; en el DDL generado, no-op sobre base nueva)
 ```
 
+El catálogo global de plantillas de presentación contable (v4.2.85) se deriva de
+`diagram_16_accounting.puml`. Su parche incremental se reproduce con
+`python salud-db/gen_report_templates_patch.py` después de regenerar el DDL,
+y se aplica con `psql -v ON_ERROR_STOP=1 -f SQL/patches/2026-11-02_v4285_accounting_report_templates.sql`.
+Contiene columnas y rótulos de reportes; no cambia el plan de cuentas ni el mayor.
+
 Todos son idempotentes (una transacción, re-ejecutables). **Si se vuelve a ejecutar el v4275 después del v4278, hay que volver a
 ejecutar el v4278 y el v4279**: el v4275 restituye las versiones anteriores de `refresh_effective_support_access` (que ya no excluiría un
 `DENY`) y de `integrity.support_tenant_consistency`, y el v4279 (que extiende esta última y reescribe `support_access_allowed`) las deja completas.

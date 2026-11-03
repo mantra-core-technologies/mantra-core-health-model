@@ -1,4 +1,4 @@
--- SALUD v4.2.84 · módulo 68 · schema qa_execution
+-- SALUD v4.2.85 · módulo 68 · schema qa_execution
 -- Generado de diagram_68_qa_execution.puml — NO editar a mano.
 
 

@@ -1,4 +1,4 @@
--- SALUD v4.2.84 · módulo 36 · schema qa_lab
+-- SALUD v4.2.85 · módulo 36 · schema qa_lab
 -- Generado de diagram_36_qa_lab.puml — NO editar a mano.
 
 
