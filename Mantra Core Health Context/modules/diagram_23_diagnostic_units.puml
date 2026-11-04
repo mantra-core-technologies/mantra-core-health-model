@@ -115,7 +115,27 @@ entity diagnostic_study_offerings {
     requires_medical_order : boolean
     requires_prior_authorization : boolean
     home_collection_eligible : boolean
+    specimen_description : text
+    service_category_id : uuid <<FK>>
+  * available : boolean <<DEFAULT_TRUE>>
   * status_concept_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+' + v4.2.87: the lab portal's own grouping of its offerings ("Hematología", "Química"…).
+' Owned by one unit; the name is unique per unit ignoring case (ux_diagnostic_service_categories_unit_name).
+' diagnostic_study_offerings.service_category_id has no ON DELETE action: a category that still has
+' services cannot be deleted. specimen_description is the lab's free-text sample type, independent
+' of specimen_type_concept_id; available is the "available today" switch the public reads honour.
+entity diagnostic_service_categories {
+  * id : uuid <<PK>>
+  --
+  * diagnostic_unit_id : uuid <<FK>>
+  * name : varchar(60)
   * created_at : timestamptz
   * updated_at : timestamptz
     created_by_user_id : uuid <<FK>>
@@ -370,6 +390,9 @@ diagnostic_units ||--o{ diagnostic_unit_sites
 diagnostic_units ||--o{ diagnostic_unit_specialties
 diagnostic_units ||--o{ diagnostic_unit_practitioner_assignments
 diagnostic_units ||--o{ diagnostic_study_offerings
+diagnostic_units ||--o{ diagnostic_service_categories
+diagnostic_service_categories }o--|| diagnostic_units : diagnostic_unit_id
+diagnostic_study_offerings }o--o| diagnostic_service_categories : service_category_id
 diagnostic_units ||--o{ diagnostic_price_schedules
 diagnostic_units ||--o{ diagnostic_unit_accreditations
 diagnostic_unit_sites ||--o{ diagnostic_equipment
@@ -461,6 +484,7 @@ entity "INDEXES · diagnostic_study_offerings" as idxset_diagnostic_study_offeri
   IX ix_diagnostic_study_offerings_modality_concept_id : (modality_concept_id) BTREE
   IX ix_diagnostic_study_offerings_body_site_concept_id : (body_site_concept_id) BTREE
   IX ix_diagnostic_study_offerings_specimen_type_concept_id : (specimen_type_concept_id) BTREE
+  IX ix_diagnostic_study_offerings_service_category_id : (service_category_id) BTREE
   IX ix_diagnostic_study_offerings_status_concept_id : (status_concept_id) BTREE
   IX ix_diagnostic_study_offerings_created_by_user_id : (created_by_user_id) BTREE
   IX ix_diagnostic_study_offerings_updated_by_user_id : (updated_by_user_id) BTREE
@@ -468,6 +492,15 @@ entity "INDEXES · diagnostic_study_offerings" as idxset_diagnostic_study_offeri
 }
 
 diagnostic_study_offerings .. idxset_diagnostic_study_offerings : indexed by
+
+entity "INDEXES · diagnostic_service_categories" as idxset_diagnostic_service_categories <<INDEX_SET>> {
+  PK pk_diagnostic_service_categories : (id) UNIQUE BTREE
+  UX ux_diagnostic_service_categories_unit_name : (diagnostic_unit_id, lower(name)) UNIQUE BTREE
+  IX ix_diagnostic_service_categories_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_diagnostic_service_categories_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+diagnostic_service_categories .. idxset_diagnostic_service_categories : indexed by
 
 entity "INDEXES · diagnostic_study_components" as idxset_diagnostic_study_components <<INDEX_SET>> {
   PK pk_diagnostic_study_components : (id) UNIQUE BTREE

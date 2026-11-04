@@ -49,6 +49,26 @@ comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_obje
 
 ## 3. Estado actual del build
 
+### v4.2.87 — Portal de laboratorio e imagenología (2026-11-04)
+
+**Cambio de esquema: +2 tablas, +3 columnas, +8 índices (más 2 PK), +8 FK.** Issue #116.
+
+- `diagnostic_units.diagnostic_service_categories`: categorías propias de cada unidad, únicas por
+  `(diagnostic_unit_id, lower(name))`. `diagnostic_study_offerings.service_category_id` las referencia sin
+  `ON DELETE`: una categoría con servicios no se borra (la API responde 409).
+- `diagnostic_study_offerings.available` (`NOT NULL DEFAULT true`) es el «disponible hoy»: las lecturas públicas
+  del directorio, la búsqueda por cobertura y la reserva de órdenes sólo ven ofertas con `available = true`.
+  `specimen_description` guarda el tipo de muestra como texto libre del laboratorio; `specimen_type_concept_id`
+  no cambia y es el respaldo de lectura.
+- `diagnostics.service_request_performer_events` (`<<LOG>>`, append-only): la orden es del tenant solicitante y el
+  ejecutor sólo la lee, así que cancelar o rechazar es agregar una fila propia (`custodian_tenant_id` = ejecutor,
+  política `custodian_tenant_isolation` de v4.2.26) con el concepto `PERF_CANCELLED` / `PERF_REJECTED` y el motivo.
+  Un disparador exige que el custodio sea el `performer_tenant_id` de la orden, y otro prohíbe UPDATE/DELETE.
+  Los conceptos viven en la API (`diagnostics/performer-events.concepts.ts`), no en el modelo.
+
+El parche `2026-11-04_v4287_lab_portal_categorias_disponibilidad_eventos.sql` es idempotente, escrito a mano y
+coincide con el DDL generado. v4.2.86 es el parche de RLS de farmacias publicadas, que vive sólo en la API.
+
 ### v4.2.85 — Plantillas de presentación contable (2026-11-02)
 
 `accounting.report_presentation_templates` contiene un catálogo global de columnas y rótulos,

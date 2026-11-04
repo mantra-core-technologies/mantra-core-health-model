@@ -1,4 +1,4 @@
--- SALUD v4.2.85 · módulo 20 · schema diagnostics
+-- SALUD v4.2.87 · módulo 20 · schema diagnostics
 -- Generado de diagram_20_diagnostics.puml — NO editar a mano.
 
 
@@ -609,3 +609,11 @@ CREATE INDEX IF NOT EXISTS "brin_diagnostic_provenance_links_recorded_at" ON "di
 CREATE INDEX IF NOT EXISTS "ix_diagnostic_provenance_target" ON "diagnostics"."diagnostic_provenance_links" ("target_type_concept_id", "target_id", "recorded_at" DESC);
 
 CREATE INDEX IF NOT EXISTS "ix_diagnostic_provenance_source" ON "diagnostics"."diagnostic_provenance_links" ("source_type_concept_id", "source_id");
+
+CREATE INDEX IF NOT EXISTS "ix_service_request_performer_events_service_request_id" ON "diagnostics"."service_request_performer_events" ("service_request_id");
+
+CREATE INDEX IF NOT EXISTS "ix_service_request_performer_events_event_type_concept_id" ON "diagnostics"."service_request_performer_events" ("event_type_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_service_request_performer_events_recorded_by_user_id" ON "diagnostics"."service_request_performer_events" ("recorded_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_service_request_performer_events_tenant_request" ON "diagnostics"."service_request_performer_events" ("custodian_tenant_id", "service_request_id", "recorded_at" DESC);

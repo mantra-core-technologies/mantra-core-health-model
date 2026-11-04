@@ -1,4 +1,4 @@
--- SALUD v4.2.85 · módulo 35 · schema messaging
+-- SALUD v4.2.87 · módulo 35 · schema messaging
 -- Generado de diagram_35_messaging.puml — NO editar a mano.
 
 CREATE SCHEMA IF NOT EXISTS "messaging";

@@ -1,4 +1,4 @@
--- SALUD v4.2.85 · módulo 31 · schema integration_contracts
+-- SALUD v4.2.87 · módulo 31 · schema integration_contracts
 -- Generado de diagram_31_integration_contracts.puml — NO editar a mano.
 
 

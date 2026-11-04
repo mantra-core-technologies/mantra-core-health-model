@@ -1,8 +1,8 @@
 model:
   name: SALUD
-  version: 4.2.85
+  version: 4.2.87
   status: canonical-polyglot-nosql-health-platform
-  generated_at: '2026-11-02'
+  generated_at: '2026-11-04'
   design_patches:
   - id: patch-01-plan-scheduled-campaigns-tracking
     role: normative-master-plan
@@ -307,6 +307,16 @@ model:
       Catálogo global de presentación contable por audiencia: accounting.report_presentation_templates,
       código único por tipo de usuario, columnas/rótulos JSON, desactivación lógica y versión optimista.
       No modifica cuentas ni asientos. Parche generado desde el DDL del módulo 16.
+  - id: patch-v4.2.87-lab-portal-categories-availability-performer-events
+    role: product-features
+    doc: docs/architecture/physical-materialization.md (v4.2.87)
+    status: materialized-in-er
+    summary: >-
+      Portal de laboratorio e imagenología: diagnostic_units.diagnostic_service_categories (categorías por
+      unidad, únicas sin distinguir mayúsculas), diagnostic_study_offerings.service_category_id /
+      available / specimen_description, y diagnostics.service_request_performer_events (desenlace append-only
+      del ejecutor de una orden ajena, con RLS por custodio). El número v4.2.86 es el parche de RLS de
+      farmacias publicadas, que vive sólo en la API. Parche escrito a mano: 2026-11-04_v4287_*.sql.
   materialization_note: >-
     v4.0.1 materializado en el ER (fuente: el vault/grafo). Se añadieron 14
     entidades nuevas (marketing.campaign_schedules/dispatches/dispatch_recipients,

@@ -1,4 +1,4 @@
--- SALUD v4.2.85 · módulo 23 · schema diagnostic_units
+-- SALUD v4.2.87 · módulo 23 · schema diagnostic_units
 -- Generado de diagram_23_diagnostic_units.puml — NO editar a mano.
 
 
@@ -36,6 +36,18 @@ DO $$ BEGIN
     ALTER TABLE "diagnostic_units"."diagnostic_study_offerings"
         ADD CONSTRAINT "fk_diagnostic_study_offerings_diagnostic_unit_site_id" FOREIGN KEY ("diagnostic_unit_site_id")
         REFERENCES "diagnostic_units"."diagnostic_unit_sites" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."diagnostic_study_offerings"
+        ADD CONSTRAINT "fk_diagnostic_study_offerings_service_category_id" FOREIGN KEY ("service_category_id")
+        REFERENCES "diagnostic_units"."diagnostic_service_categories" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "diagnostic_units"."diagnostic_service_categories"
+        ADD CONSTRAINT "fk_diagnostic_service_categories_diagnostic_unit_id" FOREIGN KEY ("diagnostic_unit_id")
+        REFERENCES "diagnostic_units"."diagnostic_units" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN

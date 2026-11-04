@@ -1,4 +1,4 @@
--- SALUD v4.2.85 · módulo 23 · schema diagnostic_units
+-- SALUD v4.2.87 · módulo 23 · schema diagnostic_units
 -- Generado de diagram_23_diagnostic_units.puml — NO editar a mano.
 
 
@@ -80,6 +80,8 @@ CREATE INDEX IF NOT EXISTS "ix_diagnostic_study_offerings_body_site_concept_id" 
 
 CREATE INDEX IF NOT EXISTS "ix_diagnostic_study_offerings_specimen_type_concept_id" ON "diagnostic_units"."diagnostic_study_offerings" ("specimen_type_concept_id");
 
+CREATE INDEX IF NOT EXISTS "ix_diagnostic_study_offerings_service_category_id" ON "diagnostic_units"."diagnostic_study_offerings" ("service_category_id");
+
 CREATE INDEX IF NOT EXISTS "ix_diagnostic_study_offerings_status_concept_id" ON "diagnostic_units"."diagnostic_study_offerings" ("status_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_diagnostic_study_offerings_created_by_user_id" ON "diagnostic_units"."diagnostic_study_offerings" ("created_by_user_id");
@@ -87,6 +89,12 @@ CREATE INDEX IF NOT EXISTS "ix_diagnostic_study_offerings_created_by_user_id" ON
 CREATE INDEX IF NOT EXISTS "ix_diagnostic_study_offerings_updated_by_user_id" ON "diagnostic_units"."diagnostic_study_offerings" ("updated_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "gin_diagnostic_study_offerings_search" ON "diagnostic_units"."diagnostic_study_offerings" USING gin (to_tsvector('simple', (coalesce(display_name, '') || ' ' || coalesce(description, ''))));
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_diagnostic_service_categories_unit_name" ON "diagnostic_units"."diagnostic_service_categories" ("diagnostic_unit_id", lower(name));
+
+CREATE INDEX IF NOT EXISTS "ix_diagnostic_service_categories_created_by_user_id" ON "diagnostic_units"."diagnostic_service_categories" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_diagnostic_service_categories_updated_by_user_id" ON "diagnostic_units"."diagnostic_service_categories" ("updated_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_diagnostic_study_components_parent_offering_id" ON "diagnostic_units"."diagnostic_study_components" ("parent_offering_id");
 

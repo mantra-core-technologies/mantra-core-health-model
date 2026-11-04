@@ -1,4 +1,4 @@
--- SALUD v4.2.85 · módulo 20 · schema diagnostics
+-- SALUD v4.2.87 · módulo 20 · schema diagnostics
 -- Generado de diagram_20_diagnostics.puml — NO editar a mano.
 
 
@@ -247,6 +247,17 @@ CREATE TABLE IF NOT EXISTS "diagnostics"."specimen_parent_links" (
     "quantity_unit_concept_id" uuid,
     "created_at" timestamptz NOT NULL,
     CONSTRAINT "pk_specimen_parent_links" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "diagnostics"."service_request_performer_events" (
+    "id" uuid NOT NULL,
+    "service_request_id" uuid NOT NULL,
+    "custodian_tenant_id" uuid NOT NULL,
+    "event_type_concept_id" uuid NOT NULL,
+    "reason_text" text,
+    "recorded_at" timestamptz NOT NULL,
+    "recorded_by_user_id" uuid NOT NULL,
+    CONSTRAINT "pk_service_request_performer_events" PRIMARY KEY ("id")
 );
 
 CREATE TABLE IF NOT EXISTS "diagnostics"."specimen_collection_events" (
