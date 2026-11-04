@@ -1,4 +1,4 @@
--- SALUD v4.2.85 · módulo 50 · schema marketing
+-- SALUD v4.2.87 · módulo 50 · schema marketing
 -- Generado de diagram_50_marketing.puml — NO editar a mano.
 
 CREATE SCHEMA IF NOT EXISTS "marketing";

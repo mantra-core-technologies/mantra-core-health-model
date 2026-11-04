@@ -1,4 +1,4 @@
--- SALUD v4.2.85 · módulo 26 · schema insurance
+-- SALUD v4.2.87 · módulo 26 · schema insurance
 -- Generado de diagram_26_insurance.puml — NO editar a mano.
 
 

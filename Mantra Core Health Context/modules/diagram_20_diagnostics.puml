@@ -284,6 +284,29 @@ entity "practice.care_spaces" as practice_care_spaces <<REFERENCE_ONLY>> {
 entity "diagnostic_units.diagnostic_equipment" as diagnostic_units_diagnostic_equipment <<REFERENCE_ONLY>> {
   * id : uuid <<PK>>
 }
+' + v4.2.87: the performer's own answer to an order it did not issue. clinical.service_requests belongs to
+' the requester tenant (custodian_tenant_id RLS), so a laboratory or imaging center that cancels or rejects
+' an order cannot write on it: it appends a row here instead, owned by the performer (its own
+' custodian_tenant_id and custodian_tenant_isolation policy, v4.2.26). The newest event of an order is its
+' performer-side outcome (PERF_CANCELLED / PERF_REJECTED); the requester's row is never touched.
+entity "clinical.service_requests" as clinical_service_requests <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity "directory.tenants" as directory_tenants <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity service_request_performer_events <<LOG>> {
+  * id : uuid <<PK>>
+  --
+  * service_request_id : uuid <<FK>>
+  * custodian_tenant_id : uuid <<FK>>
+  * event_type_concept_id : uuid <<FK>>
+    reason_text : text
+  * recorded_at : timestamptz
+  * recorded_by_user_id : uuid <<FK>>
+}
+service_request_performer_events }o--|| clinical_service_requests : service_request_id
+service_request_performer_events }o--|| directory_tenants : custodian_tenant_id
 specimen_collection_events }o--o| practice_care_spaces : collection_care_space_id
 imaging_procedure_steps }o--o| diagnostic_units_diagnostic_equipment : scheduled_equipment_id
 imaging_procedure_steps }o--o| practice_care_spaces : scheduled_care_space_id
@@ -1220,6 +1243,16 @@ entity "INDEXES · diagnostic_provenance_links" as idxset_diagnostic_provenance_
 }
 
 diagnostic_provenance_links .. idxset_diagnostic_provenance_links : indexed by
+
+entity "INDEXES · service_request_performer_events" as idxset_service_request_performer_events <<INDEX_SET>> {
+  PK pk_service_request_performer_events : (id) UNIQUE BTREE
+  IX ix_service_request_performer_events_service_request_id : (service_request_id) BTREE
+  IX ix_service_request_performer_events_event_type_concept_id : (event_type_concept_id) BTREE
+  IX ix_service_request_performer_events_recorded_by_user_id : (recorded_by_user_id) BTREE
+  IX ix_service_request_performer_events_tenant_request : (custodian_tenant_id, service_request_id, recorded_at DESC) BTREE
+}
+
+service_request_performer_events .. idxset_service_request_performer_events : indexed by
 
 }
 

@@ -1,4 +1,4 @@
--- SALUD v4.2.85 · módulo 20 · schema diagnostics
+-- SALUD v4.2.87 · módulo 20 · schema diagnostics
 -- Generado de diagram_20_diagnostics.puml — NO editar a mano.
 
 
@@ -614,6 +614,34 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_specimen_parent_links_quantity_unit_concept_id" FOREIGN KEY ("quantity_unit_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: clinical.service_requests (requiere schema clinical)
+DO $$ BEGIN
+    ALTER TABLE "diagnostics"."service_request_performer_events"
+        ADD CONSTRAINT "fk_service_request_performer_events_service_request_id" FOREIGN KEY ("service_request_id")
+        REFERENCES "clinical"."service_requests" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "diagnostics"."service_request_performer_events"
+        ADD CONSTRAINT "fk_service_request_performer_events_custodian_tenant_id" FOREIGN KEY ("custodian_tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "diagnostics"."service_request_performer_events"
+        ADD CONSTRAINT "fk_service_request_performer_events_event_type_concept_id" FOREIGN KEY ("event_type_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "diagnostics"."service_request_performer_events"
+        ADD CONSTRAINT "fk_service_request_performer_events_recorded_by_user_id" FOREIGN KEY ("recorded_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN

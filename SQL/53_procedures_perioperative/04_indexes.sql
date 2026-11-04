@@ -1,4 +1,4 @@
--- SALUD v4.2.85 · módulo 53 · schema procedures_perioperative
+-- SALUD v4.2.87 · módulo 53 · schema procedures_perioperative
 -- Generado de diagram_53_procedures_perioperative.puml — NO editar a mano.
 
 

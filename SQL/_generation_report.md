@@ -1,4 +1,4 @@
-# Reporte de generación SQL — SALUD v4.2.85
+# Reporte de generación SQL — SALUD v4.2.87
 
 Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vistas, stubs de cruce y stores no-SQL (Redis/Mongo/OpenSearch/vector/timeseries) se listan como *saltados*. Graph (61) y Lakehouse (63) SÍ se materializan como tablas PG (catálogo del plano de control). Las FK marcadas *inferidas* se resolvieron por convención cuando el vault no tenía destino.
 
@@ -24,10 +24,10 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 17 | billing | 26 | 181 | 0 | 204 | 25 |
 | 18 | clinical_ext | 14 | 100 | 0 | 113 | 4 |
 | 19 | community | 44 | 273 | 0 | 288 | 11 |
-| 20 | diagnostics | 36 | 254 | 0 | 304 | 2 |
+| 20 | diagnostics | 37 | 258 | 2 | 308 | 4 |
 | 21 | deployment _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
 | 22 | organization_extensions | 5 | 51 | 0 | 57 | 0 |
-| 23 | diagnostic_units | 15 | 111 | 0 | 120 | 3 |
+| 23 | diagnostic_units | 16 | 115 | 2 | 124 | 3 |
 | 24 | pharmacy | 12 | 78 | 0 | 94 | 2 |
 | 25 | pharmacy_inventory | 20 | 144 | 0 | 157 | 8 |
 | 26 | insurance | 33 | 224 | 0 | 244 | 1 |
@@ -75,7 +75,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 68 | qa_execution | 4 | 14 | 0 | 6 | 0 |
 | 69 | pharma_lab | 31 | 182 | 0 | 182 | 1 |
 | 70 | observability | 12 | 13 | 0 | 39 | 2 |
-| **Σ** | **71** | **1374** | | **2** | | **476** |
+| **Σ** | **71** | **1376** | | **6** | | **478** |
 
 ## Detalle de entidades saltadas y avisos
 
@@ -195,6 +195,8 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 ### 20 · diagnostics
 - `practice_care_spaces` — stub de cruce (tabla real en su módulo dueño)
 - `diagnostic_units_diagnostic_equipment` — stub de cruce (tabla real en su módulo dueño)
+- `clinical_service_requests` — stub de cruce (tabla real en su módulo dueño)
+- `directory_tenants` — stub de cruce (tabla real en su módulo dueño)
 
 ### 23 · diagnostic_units
 - `directory_tenants` — stub de cruce (tabla real en su módulo dueño)
