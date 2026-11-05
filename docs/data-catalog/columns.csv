@@ -17799,6 +17799,7 @@ scheduling,schedulable_resources,13,created_by_user_id,uuid,YES,,FOREIGN KEY,iam
 scheduling,schedulable_resources,14,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/41_scheduling/02_tables.sql
 scheduling,schedulable_resources,15,row_version,integer,NO,1,,,,,SQL/41_scheduling/02_tables.sql
 scheduling,schedulable_resources,16,care_space_id,uuid,YES,,FOREIGN KEY; UNIQUE,practice,care_spaces,id,SQL/41_scheduling/02_tables.sql
+scheduling,schedulable_resources,17,requires_approval,boolean,NO,true,,,,,SQL/41_scheduling/02_tables.sql
 scheduling,schedule_rules,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/41_scheduling/02_tables.sql
 scheduling,schedule_rules,2,schedule_template_id,uuid,NO,,FOREIGN KEY,scheduling,schedule_templates,id,SQL/41_scheduling/02_tables.sql
 scheduling,schedule_rules,3,day_of_week,integer,NO,,,,,,SQL/41_scheduling/02_tables.sql
