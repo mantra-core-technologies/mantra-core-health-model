@@ -105,6 +105,12 @@ desenlaces del ejecutor de una orden) vive en `diagram_23_diagnostic_units.puml`
 incremental es `psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-04_v4287_lab_portal_categorias_disponibilidad_eventos.sql`
 (escrito a mano, idempotente; en el DDL generado, no-op sobre base nueva).
 
+La confirmación de las solicitudes de consulta por agenda (v4.2.88: `scheduling.schedulable_resources.requires_approval`,
+`NOT NULL DEFAULT true`) vive en `diagram_41_scheduling.puml`. Su parche incremental es
+`psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-05_v4288_schedulable_resources_requires_approval.sql`
+(escrito a mano, idempotente; en el DDL generado, no-op sobre base nueva). No cambia ninguna fila de significado:
+toda agenda existente sigue pidiendo que el profesional acepte cada solicitud.
+
 Todos son idempotentes (una transacción, re-ejecutables). **Si se vuelve a ejecutar el v4275 después del v4278, hay que volver a
 ejecutar el v4278 y el v4279**: el v4275 restituye las versiones anteriores de `refresh_effective_support_access` (que ya no excluiría un
 `DENY`) y de `integrity.support_tenant_consistency`, y el v4279 (que extiende esta última y reescribe `support_access_allowed`) las deja completas.

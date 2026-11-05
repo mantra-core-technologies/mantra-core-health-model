@@ -1,0 +1,26 @@
+-- v4.2.88 · scheduling.schedulable_resources.requires_approval (2026-11-05)
+--
+-- Si las solicitudes de consulta que entran por el portal del paciente esperan
+-- que el profesional las acepte. Pedido del cliente: «el doctor debe tener la
+-- opción de autoconfirmar las citas o solicitudes de consulta que le lleguen, o
+-- no». Hasta acá toda solicitud nacía pendiente y se aceptaba una por una; la
+-- única excepción era por servicio (`practitioner_service_offerings.requires_approval`).
+-- Este es el mismo sí/no, por agenda: con `true` la solicitud queda pendiente
+-- hasta que el profesional la acepte; con `false` nace confirmada, con
+-- recordatorios, historial y avisos como si la hubiera aceptado. El cupo de un
+-- servicio sigue mandando con el `requires_approval` de su oferta.
+--
+-- NOT NULL DEFAULT true: toda agenda existente sigue pidiendo aceptación, que
+-- es lo que hacía, y ninguna fila cambia de significado.
+-- `ADD COLUMN … DEFAULT <constante>` no reescribe la tabla en PG 11+.
+--
+-- Lo cambia el propio profesional (PATCH /scheduling/resources/:id) o la
+-- administración de agenda.
+--
+-- Canónico: `Mantra Core Health Context/modules/diagram_41_scheduling.puml`
+-- Generado: `SQL/41_scheduling/02_tables.sql` por `gen_ddl.py`
+--
+-- Idempotente. Reversible:
+--   ALTER TABLE "scheduling"."schedulable_resources" DROP COLUMN IF EXISTS "requires_approval";
+ALTER TABLE "scheduling"."schedulable_resources"
+    ADD COLUMN IF NOT EXISTS "requires_approval" boolean NOT NULL DEFAULT true;
