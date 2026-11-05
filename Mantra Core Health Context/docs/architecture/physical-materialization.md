@@ -49,6 +49,22 @@ comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_obje
 
 ## 3. Estado actual del build
 
+### v4.2.88 — Horario de atención en el alta de organización (2026-11-04)
+
+**Cambio de esquema: +1 tabla, +8 índices (más la PK), +5 FK, +4 CHECK.**
+
+- `directory.tenant_opening_hours`: el horario semanal que el titular declara al dar de alta su
+  organización (aseguradora, laboratorio, imagenología, farmacia, establecimiento médico). Una fila
+  por turno: `day_of_week` ISO (1 = lunes … 7 = domingo), `shift_ordinal` 1 o 2 (el cierre de
+  mediodía son dos turnos), `opens_at` < `closes_at` en `time`. «Abierto las 24 h» es 00:00–24:00.
+- La sede se dice con a lo sumo una columna: `branch_id` (`directory.branches`: farmacia y centro de
+  diagnóstico) o `medical_facility_site_id` (sucursal declarada del establecimiento médico). Las dos
+  en `NULL` son la casa central. Tres índices únicos parciales impiden repetir un turno por sede.
+- No modela turnos que crucen la medianoche: se declaran como dos días. Los turnos de guardia de
+  farmacia siguen en `pharmacy.pharmacy_on_call_shifts` (v4.2.60).
+
+El parche `2026-11-04_v4288_tenant_opening_hours.sql` es idempotente y se copió del DDL generado.
+
 ### v4.2.87 — Portal de laboratorio e imagenología (2026-11-04)
 
 **Cambio de esquema: +2 tablas, +3 columnas, +8 índices (más 2 PK), +8 FK.** Issue #116.

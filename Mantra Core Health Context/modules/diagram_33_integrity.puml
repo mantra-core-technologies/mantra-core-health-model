@@ -733,6 +733,15 @@ entity "directory.tenant_medical_facility_sites" as directory_tenant_medical_fac
   CHECK_SQL : ck_tenant_medical_facility_sites_geo | (("latitude" IS NULL) = ("longitude" IS NULL)) AND ("latitude" IS NULL OR ("latitude" BETWEEN -90 AND 90 AND "longitude" BETWEEN -180 AND 180))
 }
 
+' + v4.2.88 — horario de atención declarado en el alta (modulo 04). Un día ISO, dos turnos como
+' mucho, el cierre después de la apertura y a lo sumo una sede.
+entity "directory.tenant_opening_hours" as directory_tenant_opening_hours <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_tenant_opening_hours_day_of_week | "day_of_week" BETWEEN 1 AND 7
+  CHECK_SQL : ck_tenant_opening_hours_shift_ordinal | "shift_ordinal" BETWEEN 1 AND 2
+  CHECK_SQL : ck_tenant_opening_hours_closes_after_opens | "closes_at" > "opens_at"
+  CHECK_SQL : ck_tenant_opening_hours_one_site | ("branch_id" IS NULL OR "medical_facility_site_id" IS NULL)
+}
+
 ' + v4.2.67 — admisiones de profesionales (modulo 05). La bitacora es append-only: la
 ' resolucion de un alta de medico debe poder reconstruirse tal cual ocurrio, y quien
 ' decide no puede reescribir lo que decidio. UPDATE y DELETE prohibidos (no hay purga:

@@ -1,4 +1,4 @@
--- SALUD v4.2.87 · módulo 04 · schema directory
+-- SALUD v4.2.88 · módulo 04 · schema directory
 -- Generado de diagram_04_directory.puml — NO editar a mano.
 
 
@@ -167,3 +167,19 @@ CREATE UNIQUE INDEX IF NOT EXISTS "ux_tenant_medical_facility_sites_one_headquar
 CREATE INDEX IF NOT EXISTS "ix_tenant_medical_facility_sites_created_by_user_id" ON "directory"."tenant_medical_facility_sites" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_tenant_medical_facility_sites_updated_by_user_id" ON "directory"."tenant_medical_facility_sites" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_tenant_opening_hours_tenant_id" ON "directory"."tenant_opening_hours" ("tenant_id");
+
+CREATE INDEX IF NOT EXISTS "ix_tenant_opening_hours_branch_id" ON "directory"."tenant_opening_hours" ("branch_id");
+
+CREATE INDEX IF NOT EXISTS "ix_tenant_opening_hours_medical_facility_site_id" ON "directory"."tenant_opening_hours" ("medical_facility_site_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_tenant_opening_hours_headquarters_shift" ON "directory"."tenant_opening_hours" ("tenant_id", "day_of_week", "shift_ordinal") WHERE branch_id IS NULL AND medical_facility_site_id IS NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_tenant_opening_hours_branch_shift" ON "directory"."tenant_opening_hours" ("branch_id", "day_of_week", "shift_ordinal") WHERE branch_id IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_tenant_opening_hours_facility_site_shift" ON "directory"."tenant_opening_hours" ("medical_facility_site_id", "day_of_week", "shift_ordinal") WHERE medical_facility_site_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS "ix_tenant_opening_hours_created_by_user_id" ON "directory"."tenant_opening_hours" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_tenant_opening_hours_updated_by_user_id" ON "directory"."tenant_opening_hours" ("updated_by_user_id");

@@ -1,4 +1,4 @@
--- SALUD v4.2.87 · módulo 06 · schema authz
+-- SALUD v4.2.88 · módulo 06 · schema authz
 -- Generado de diagram_06_authz.puml — NO editar a mano.
 
 
