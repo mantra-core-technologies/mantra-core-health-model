@@ -2,7 +2,7 @@
   "package": "SALUD_v4.0_module_seeds_enhanced",
   "seed_revision": "2.8.1-v4.2.50",
   "module_count": 64,
-  "boot_record_count": 84069,
+  "boot_record_count": 84136,
   "mock_record_count": 20207,
   "validation_status": "PASS",
   "mock_production_policy": "hard-fail",
@@ -38,10 +38,10 @@
       "number": 3,
       "code": "terminology",
       "file": "modules/03_terminology.seeds.json",
-      "boot_records": 4785,
+      "boot_records": 4852,
       "mock_records": 180,
-      "line_count": 72734,
-      "sha256": "64c7f0627b4ae152cc37fda1d2a7a3f66c80dafe09493f76f064807a2adcd7b8"
+      "line_count": 73684,
+      "sha256": "5f1d6a15cb706523b9a989d2c0b1b6d26fbbfbe489f2ff1598e5d6baa059cd97"
     },
     {
       "number": 4,
