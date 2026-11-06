@@ -1,4 +1,4 @@
--- SALUD v4.2.91 · módulo 04 · schema directory
+-- SALUD v4.2.92 · módulo 04 · schema directory
 -- Generado de diagram_04_directory.puml — NO editar a mano.
 
 
@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS "directory"."branches" (
     "longitude" numeric,
     "description" text,
     "location_url" varchar(2000),
+    "branch_category" varchar(20) NOT NULL DEFAULT 'default',
     "created_at" timestamptz NOT NULL,
     "updated_at" timestamptz NOT NULL,
     "created_by_user_id" uuid,

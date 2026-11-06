@@ -122,6 +122,12 @@ casa central y cada sucursal) vive en `diagram_04_directory.puml`. Su parche inc
 `psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4290_tenant_opening_hours.sql` (copiado del DDL generado;
 no-op sobre base nueva). Después, volver a correr `SQL/patches/2026-08-05_tenant_rls.sql` para que RLS cubra la tabla.
 
+La categoría de la sede (v4.2.92: `directory.branches.branch_category`, `default` / `head_office` / `branch`, una casa matriz
+por organización) vive en `diagram_04_directory.puml` y su CHECK en `diagram_33_integrity.puml`. Su parche incremental es
+`psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4292_branches_category.sql` (esquema copiado del DDL generado,
+más dos backfills idempotentes: la casa central de las altas viejas y el espejo de las sedes declaradas del establecimiento
+médico).
+
 Cuatro parches de RLS se escribieron primero en la API y viven acá desde el 06/11/2026, para que
 `yarn db:vendor` (que copia `SQL/` con `--delete`) no los borre de `database/SQL`: `2026-11-02_v4284_rls_community_public_read.sql`
 (fichas públicas sin tenant), `2026-11-03_v4286_farmacias_mercado_lectura_paciente.sql` y `2026-11-04_farmacias_mercado_por_id.sql`

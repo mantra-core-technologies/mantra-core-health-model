@@ -49,6 +49,24 @@ comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_obje
 
 ## 3. Estado actual del build
 
+### v4.2.92 — Categoría de la sede en `directory.branches` (2026-11-06)
+
+**Cambio de esquema: +1 columna, +2 índices, +1 CHECK.**
+
+- `directory.branches.branch_category varchar(20) NOT NULL DEFAULT 'default'`: `default` (sin clasificar),
+  `head_office` (casa matriz) o `branch` (sucursal). Con ella la pantalla de Sucursales de toda organización
+  (farmacia, laboratorio, imagenología, establecimiento médico) etiqueta cada sede y la filtra por oleadas.
+- `ux_branches_one_head_office`: a lo sumo una casa matriz por organización. `ix_branches_tenant_id_branch_category`
+  para listar por categoría.
+- Texto con CHECK y no concepto de catálogo, como `tenant_medical_facility_sites.site_kind`: tres valores fijos.
+- El establecimiento médico pasa a tener su registro operativo de sucursales en `directory.branches`, como la
+  farmacia y el laboratorio: el alta lo copia de las sedes declaradas, que siguen en
+  `tenant_medical_facility_sites` como dato DECLARADO para la verificación.
+
+El parche `2026-11-06_v4292_branches_category.sql` copia el esquema del DDL generado y hace dos backfills
+idempotentes (casa matriz de las altas viejas; espejo de las sedes médicas declaradas en organizaciones sin
+sucursales).
+
 ### v4.2.91 — Una encuesta activa por servicio y profesional; procedencia del catálogo estándar (2026-11-06)
 
 **Cambio de esquema: +2 columnas, +1 FK, +4 índices (3 únicos parciales), +1 CHECK, +1 disparador (sólo en el parche).**

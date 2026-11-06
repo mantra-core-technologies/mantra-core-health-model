@@ -1,4 +1,4 @@
--- SALUD v4.2.91 · módulo 66 · schema medical_groups
+-- SALUD v4.2.92 · módulo 66 · schema medical_groups
 -- Generado de diagram_66_medical_groups.puml — NO editar a mano.
 
 

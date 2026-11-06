@@ -746,6 +746,11 @@ entity "diagnostics.report_draft_files" as diagnostics_report_draft_files <<REFE
   CHECK_SQL : ck_report_draft_files_role | "role_code" IN ('DOCUMENT', 'AUDIO', 'ANNEX')
 }
 
+' + v4.2.92 — categoría de la sede (modulo 04): sólo los tres valores que la API conoce.
+entity "directory.branches" as directory_branches <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_branches_branch_category | "branch_category" IN ('default', 'head_office', 'branch')
+}
+
 ' + v4.2.90 — horario de atención declarado en el alta (modulo 04). Un día ISO, dos turnos como
 ' mucho, el cierre después de la apertura y a lo sumo una sede.
 entity "directory.tenant_opening_hours" as directory_tenant_opening_hours <<REFERENCE_ONLY>> {

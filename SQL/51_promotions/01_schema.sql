@@ -1,4 +1,4 @@
--- SALUD v4.2.91 · módulo 51 · schema promotions
+-- SALUD v4.2.92 · módulo 51 · schema promotions
 -- Generado de diagram_51_promotions.puml — NO editar a mano.
 
 CREATE SCHEMA IF NOT EXISTS "promotions";

@@ -56,6 +56,13 @@ entity branches {
   ' parche 2026-10-11_v4243 y en la copia de la API, pero no en el modelo.
     description : text
     location_url : varchar(2000)
+  ' + v4.2.92 — categoría de la sede para etiquetarla y verla por oleadas en la pantalla de
+  ' Sucursales de cualquier organización (farmacia, laboratorio, imagenología, establecimiento
+  ' médico): `default` (sin clasificar, lo que trae toda fila vieja), `head_office` (casa matriz;
+  ' a lo sumo una por organización, la impone ux_branches_one_head_office) o `branch` (sucursal).
+  ' Texto con CHECK y no concepto de catálogo: son tres valores fijos que la API valida, igual
+  ' que `tenant_medical_facility_sites.site_kind`.
+  * branch_category : varchar(20) <<DEFAULT_TEXT:default>>
   * created_at : timestamptz
   * updated_at : timestamptz
     created_by_user_id : uuid <<FK>>
@@ -151,6 +158,8 @@ entity "INDEXES · branches" as idxset_branches <<INDEX_SET>> {
   IX ix_branches_created_by_user_id : (created_by_user_id) BTREE
   IX ix_branches_updated_by_user_id : (updated_by_user_id) BTREE
   IX ix_branches_tenant_id_status_concept_id : (tenant_id, status_concept_id, updated_at DESC) BTREE
+  IX ix_branches_tenant_id_branch_category : (tenant_id, branch_category) BTREE
+  UX ux_branches_one_head_office : (tenant_id) UNIQUE BTREE WHERE branch_category = 'head_office'
   GIN gin_branches_search : to_tsvector('simple', concat_ws(' ', name, code)) GIN
   GIST gist_branches_location : geography_point GIST
 }
