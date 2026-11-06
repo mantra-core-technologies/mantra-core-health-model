@@ -856,6 +856,13 @@ DO $$ BEGIN
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "community"."message_reactions"
+        ADD CONSTRAINT "fk_message_reactions_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 -- destino: terminology.catalog_concepts (requiere schema terminology)
 DO $$ BEGIN
     ALTER TABLE "community"."social_notifications"
