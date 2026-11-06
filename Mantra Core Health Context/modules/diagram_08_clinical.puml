@@ -328,6 +328,17 @@ entity service_requests {
     body_site_concept_id : uuid <<FK>>
     laterality_concept_id : uuid <<FK>>
     contrast_concept_id : uuid <<FK>>
+  ' + v4.2.94 (marca en el modelo 3D del cuerpo y tipo de hueso): lo que el visor 3D devuelve
+  ' al marcar la parte en la orden de imagen. body_structure_uberon es el id de estructura
+  ' UBERON ("UBERON:0002495"); body_mesh_id, el id de malla FMA/BP del GLB que se tocó. Son
+  ' texto de referencia: el formato lo valida la API, no hay FK porque UBERON y las mallas
+  ' no son un catalogo del modelo. bone_type_concept_id es el tipo de hueso (largo, corto,
+  ' plano, irregular, sesamoideo; value set `bone-type`): lo ELIGE el medico, no se deriva de
+  ' la region. Todo NULLABLE y sin backfill; sólo imagen: el CHECK ck_service_requests_
+  ' specimen_xor_imaging (módulo 33) los excluye junto con la muestra de laboratorio.
+    body_structure_uberon : varchar(64)
+    body_mesh_id : varchar(64)
+    bone_type_concept_id : uuid <<FK>>
 }
 
 entity diagnostic_reports {
@@ -1156,6 +1167,8 @@ entity "INDEXES · service_requests" as idxset_service_requests <<INDEX_SET>> {
   IX ix_service_requests_body_site_concept_id : (body_site_concept_id) BTREE
   IX ix_service_requests_laterality_concept_id : (laterality_concept_id) BTREE
   IX ix_service_requests_contrast_concept_id : (contrast_concept_id) BTREE
+  IX ix_service_requests_bone_type_concept_id : (bone_type_concept_id) BTREE
+  IX ix_service_requests_body_structure_uberon : (body_structure_uberon) BTREE
   IX ix_service_requests_requisition_id : (custodian_tenant_id, requisition_id) BTREE
   IX ix_service_requests_performer_inbox : (performer_tenant_id, status_concept_id, created_at, id) BTREE
 }

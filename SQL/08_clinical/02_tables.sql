@@ -1,4 +1,4 @@
--- SALUD v4.2.93 · módulo 08 · schema clinical
+-- SALUD v4.2.94 · módulo 08 · schema clinical
 -- Generado de diagram_08_clinical.puml — NO editar a mano.
 
 
@@ -252,6 +252,9 @@ CREATE TABLE IF NOT EXISTS "clinical"."service_requests" (
     "body_site_concept_id" uuid,
     "laterality_concept_id" uuid,
     "contrast_concept_id" uuid,
+    "body_structure_uberon" varchar(64),
+    "body_mesh_id" varchar(64),
+    "bone_type_concept_id" uuid,
     CONSTRAINT "pk_service_requests" PRIMARY KEY ("id")
 );
 

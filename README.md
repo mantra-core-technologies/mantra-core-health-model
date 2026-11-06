@@ -146,6 +146,12 @@ la asignación igual al de la plantilla (`trg_survey_assignments_owner_from_temp
 `diagram_33_integrity.puml` (`TRIGGER_SQL` + nota `FUNCTION_SQL_<función>`) y sale en `SQL/65_surveys/05_constraints.sql`:
 una base nueva lo tiene con `apply_all.sql`, y el parche queda como incremental para bases vivas.
 
+La marca 3D del cuerpo y el tipo de hueso de la orden de estudio (v4.2.94: `clinical.service_requests.body_structure_uberon`,
+`body_mesh_id` y `bone_type_concept_id`, más la ampliación de `ck_service_requests_specimen_xor_imaging`) viven en
+`diagram_08_clinical.puml` y `diagram_33_integrity.puml`. Su parche es
+`psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4294_service_request_3d_site_bone_type.sql` (idempotente; también
+siembra los cinco conceptos `clinical:BONE_TYPE_*` con su procedencia UBERON). Sobre una base nueva no hace falta para el esquema.
+
 Todos son idempotentes (una transacción, re-ejecutables). **Si se vuelve a ejecutar el v4275 después del v4278, hay que volver a
 ejecutar el v4278 y el v4279**: el v4275 restituye las versiones anteriores de `refresh_effective_support_access` (que ya no excluiría un
 `DENY`) y de `integrity.support_tenant_consistency`, y el v4279 (que extiende esta última y reescribe `support_access_allowed`) las deja completas.
