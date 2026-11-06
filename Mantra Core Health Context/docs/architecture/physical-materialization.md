@@ -49,6 +49,27 @@ comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_obje
 
 ## 3. Estado actual del build
 
+### v4.2.94 — Marca 3D del cuerpo y tipo de hueso en la orden de estudio (2026-11-06)
+
+**Cambio de esquema: +3 columnas, +1 FK, +2 índices, +1 CHECK nuevo y 1 CHECK redefinido.**
+
+- `clinical.service_requests` (v4.2.82 ya traía muestra, modalidad, parte del cuerpo, lateralidad y contraste) suma lo que
+  devuelve el visor 3D del cuerpo y el dato anatómico del hueso: `body_structure_uberon` y `body_mesh_id` (`varchar(64)`,
+  referencia de texto sin FK: UBERON y las mallas del GLB no son un catálogo del modelo; el formato lo valida la API) y
+  `bone_type_concept_id` (FK a `terminology.catalog_concepts`; value set `bone-type`). Todo NULLABLE, sin backfill.
+- `ck_service_requests_specimen_xor_imaging` (módulo 33) se amplía: la muestra de laboratorio excluye también la marca 3D y el
+  tipo de hueso. `ck_service_requests_bone_type_requires_location` exige una ubicación (`body_site_concept_id` o
+  `body_structure_uberon`) para el tipo de hueso.
+- El tipo de hueso lo **elige el médico**: no se deriva de la región (no hay fuente que relacione región con tipo de hueso).
+- Value set `bone-type`: catálogo **interno** de cinco clases de forma ósea (largo, corto, plano, irregular, sesamoideo) con
+  equivalencia a la clase UBERON homónima (`UBERON:0002495`, `0013630`, `0010428`, `0008001`, `0001479`; xref FMA 7474, 7475,
+  7476, 7477, 32672), release UBERON 2026-10-01, CC-BY 3.0. Los conceptos llevan el id que deriva la API de la clave
+  (`clinical:BONE_TYPE_*`) y su procedencia en `terminology.concept_properties` (`provenance`). El parche los siembra; el value set
+  / enum dinámico `bone-type` y sus miembros los materializa la API desde `DYNAMIC_ENUM_CATALOG`, como `specimen-type`.
+- Parche incremental: `SQL/patches/2026-11-06_v4294_service_request_3d_site_bone_type.sql` (idempotente, con plan de recuperación en
+  su cabecera). Cabeceras del SQL: sólo la línea 1 y los bloques de `service_requests`; no se regeneró `gen_ddl` completo porque la
+  bóveda disponible no coincide con la que generó el SQL de dev y arrastraría resoluciones de FK ajenas.
+
 ### v4.2.93 — El disparador del dueño de la asignación de encuesta, en el modelo (2026-11-06)
 
 **Sin cambio de esquema sobre una base con el parche v4.2.91; +1 función y +1 disparador en el DDL base.**

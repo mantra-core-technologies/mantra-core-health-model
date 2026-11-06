@@ -1,0 +1,12 @@
+# Deriva: clinical.service_requests en la base parcheada vs una base creada desde cero con apply_all.sql + apply_deferred.sql de este árbol
+# consulta: columnas (tipo/nulabilidad/default) + constraints (pg_get_constraintdef) + índices (indexdef)
+select 'col' k, column_name||' '||data_type||coalesce('('||character_maximum_length||')','')||' null='||is_nullable||' def='||coalesce(column_default,'') v from information_schema.columns where table_schema='clinical' and table_name='service_requests'
+union all select 'con', conname||' '||pg_get_constraintdef(oid) from pg_constraint where conrelid='clinical.service_requests'::regclass
+union all select 'idx', indexdef from pg_indexes where schemaname='clinical' and tablename='service_requests'
+order by 1,2;
+
+filas comparadas: live=91 fresca=91
+diff: sin diferencias -> DERIVA 0
+
+# Convivencia con la semilla de la API: concepto LONG preinsertado por la "API" (display "Long bone (API)"); el parche no lo pisa
+INSERT 0 0 / 0 / 0 / 4 (conceptos) / 5 (procedencia); display final: Long bone (API)

@@ -1,0 +1,20 @@
+# Casos de CHECK / longitud sobre la base parcheada (transacción con ROLLBACK; session_replication_role=replica sólo para saltar FK ajenas)
+BEGIN
+SET
+CREATE TABLE
+DO
+                        caso                        | esperado | obtenido | veredicto 
+----------------------------------------------------+----------+----------+-----------
+ 01 laboratorio: sólo muestra                       | OK       | OK       | PASS
+ 02 laboratorio + estructura UBERON                 | CHECK    | CHECK    | PASS
+ 03 laboratorio + malla FMA                         | CHECK    | CHECK    | PASS
+ 04 laboratorio + tipo de hueso                     | CHECK    | CHECK    | PASS
+ 05 imagen: región+lateralidad+modalidad+hueso      | OK       | OK       | PASS
+ 06 imagen: sólo UBERON+malla+hueso (sin body_site) | OK       | OK       | PASS
+ 07 tipo de hueso sin ubicación                     | CHECK    | CHECK    | PASS
+ 08 orden sin detalle (todo NULL)                   | OK       | OK       | PASS
+ 09 body_structure_uberon de 65 caracteres          | LEN      | LEN      | PASS
+ 10 body_mesh_id de 64 caracteres                   | OK       | OK       | PASS
+(10 rows)
+
+ROLLBACK
