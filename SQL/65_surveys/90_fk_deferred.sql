@@ -1,4 +1,4 @@
--- SALUD v4.2.91 · módulo 65 · schema surveys
+-- SALUD v4.2.92 · módulo 65 · schema surveys
 -- Generado de diagram_65_surveys.puml — NO editar a mano.
 
 
@@ -91,6 +91,13 @@ DO $$ BEGIN
     ALTER TABLE "surveys"."survey_assignments"
         ADD CONSTRAINT "fk_survey_assignments_tenant_id" FOREIGN KEY ("tenant_id")
         REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: profiles.health_practitioner_profiles (requiere schema profiles)
+DO $$ BEGIN
+    ALTER TABLE "surveys"."survey_assignments"
+        ADD CONSTRAINT "fk_survey_assignments_owner_practitioner_id" FOREIGN KEY ("owner_practitioner_id")
+        REFERENCES "profiles"."health_practitioner_profiles" ("profile_id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: terminology.catalog_concepts (requiere schema terminology)

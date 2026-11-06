@@ -1,5 +1,5 @@
 -- ============================================================================
--- SALUD · patch v4.2.91 · categoría de la sede en directory.branches (módulo 04 directory) sobre BD viva
+-- SALUD · patch v4.2.92 · categoría de la sede en directory.branches (módulo 04 directory) sobre BD viva
 -- Fecha: 2026-11-06
 -- Idempotente (IF NOT EXISTS / DROP CONSTRAINT IF EXISTS / NOT EXISTS en los backfills). UNA sola pasada.
 -- Contexto: gen_ddl.py y gen_integrity.py ya emiten la columna, los índices y el CHECK en SQL/04_directory/
@@ -20,7 +20,7 @@
 --   3. Backfill del registro de sucursales del establecimiento médico: las sedes que declaró en el alta
 --      (directory.tenant_medical_facility_sites) se copian a directory.branches —casa central como
 --      'head_office', sucursales como 'branch'— para las organizaciones que todavía no tienen NINGUNA
---      fila en directory.branches. Es el mismo espejo que la API hace desde v4.2.91 en el alta
+--      fila en directory.branches. Es el mismo espejo que la API hace desde v4.2.92 en el alta
 --      (`TenantTypeProfileService.registerMedicalFacilityBranches`), igual al que ya hacían el alta de
 --      farmacia y la de laboratorio. tenant_medical_facility_sites sigue siendo lo DECLARADO (alimenta la
 --      verificación) y no se toca; directory.branches es el registro operativo que se edita.

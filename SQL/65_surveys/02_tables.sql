@@ -1,4 +1,4 @@
--- SALUD v4.2.91 · módulo 65 · schema surveys
+-- SALUD v4.2.92 · módulo 65 · schema surveys
 -- Generado de diagram_65_surveys.puml — NO editar a mano.
 
 
@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS "surveys"."survey_templates" (
     "owner_practitioner_id" uuid,
     "owner_type_concept_id" uuid,
     "owner_id" uuid,
+    "standard_catalog_code" text,
     "title" text NOT NULL,
     "description" text,
     "status_concept_id" uuid NOT NULL,
@@ -59,6 +60,7 @@ CREATE TABLE IF NOT EXISTS "surveys"."survey_assignments" (
     "id" uuid NOT NULL,
     "survey_version_id" uuid NOT NULL,
     "tenant_id" uuid NOT NULL,
+    "owner_practitioner_id" uuid,
     "target_type_concept_id" uuid NOT NULL,
     "target_id" uuid NOT NULL,
     "active" boolean NOT NULL,

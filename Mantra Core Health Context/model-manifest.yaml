@@ -1,6 +1,6 @@
 model:
   name: SALUD
-  version: 4.2.91
+  version: 4.2.92
   status: canonical-polyglot-nosql-health-platform
   generated_at: '2026-11-06'
   design_patches:
@@ -337,16 +337,28 @@ model:
       por turno (hasta dos por día, día ISO 1..7), para la casa central (sin sede) o una sucursal
       (directory.branches o tenant_medical_facility_sites, a lo sumo una). 24 h = 00:00–24:00. Parche
       copiado del DDL generado: 2026-11-06_v4290_tenant_opening_hours.sql.
-  - id: patch-v4.2.91-branches-category
+  - id: patch-v4.2.91-surveys-service-assignment-owner
     role: product-features
     doc: docs/architecture/physical-materialization.md (v4.2.91)
+    status: materialized-in-er
+    summary: >-
+      Encuestas estandarizadas por servicio (REC 65.9): surveys.survey_assignments.owner_practitioner_id
+      (copia del dueño de la plantilla, FK a health_practitioner_profiles, mantenida por disparador) y
+      uq_survey_assignments_active_service_owner (una asignación SERVICE activa por tenant, servicio y
+      profesional); surveys.survey_templates.standard_catalog_code (entrada STD_* del catálogo de la que
+      se importó, única por tenant y dueño). Parche 2026-11-06_v4291_surveys_encuesta_por_servicio.sql:
+      respalda el dueño, desactiva duplicados (conserva la más nueva) y trae el disparador; se aplica
+      también sobre base nueva.
+  - id: patch-v4.2.92-branches-category
+    role: product-features
+    doc: docs/architecture/physical-materialization.md (v4.2.92)
     status: materialized-in-er
     summary: >-
       Categoría de la sede en directory.branches (branch_category: default | head_office | branch, por
       defecto default) para etiquetar las sucursales de toda organización y verlas por oleadas; a lo sumo
       una casa matriz por organización (ux_branches_one_head_office). Backfill: la casa central de las
       altas de farmacia y laboratorio pasa a head_office y las sedes declaradas del establecimiento médico
-      se copian a directory.branches. Parche: 2026-11-06_v4291_branches_category.sql.
+      se copian a directory.branches. Parche: 2026-11-06_v4292_branches_category.sql.
   materialization_note: >-
     v4.0.1 materializado en el ER (fuente: el vault/grafo). Se añadieron 14
     entidades nuevas (marketing.campaign_schedules/dispatches/dispatch_recipients,

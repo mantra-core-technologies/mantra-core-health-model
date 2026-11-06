@@ -1,4 +1,4 @@
--- SALUD v4.2.91 · módulo 10 · schema audit
+-- SALUD v4.2.92 · módulo 10 · schema audit
 -- Generado de diagram_10_audit.puml — NO editar a mano.
 
 

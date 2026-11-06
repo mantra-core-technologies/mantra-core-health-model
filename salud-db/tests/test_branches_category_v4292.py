@@ -1,7 +1,7 @@
-"""v4.2.91 — categoría de la sede en directory.branches.
+"""v4.2.92 — categoría de la sede en directory.branches.
 
 Sin base de datos: comprueba que el DDL generado (`SQL/04_directory/`) y el parche
-`2026-11-06_v4291_branches_category.sql` declaran la misma columna, los mismos índices y el
+`2026-11-06_v4292_branches_category.sql` declaran la misma columna, los mismos índices y el
 mismo CHECK, y que el parche deja la casa matriz única antes de crear el índice único.
 (Probado además contra PostgreSQL 16: base vieja con datos + parche dos veces = DDL nuevo.)
 """
@@ -11,7 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 MODULE = ROOT / "SQL" / "04_directory"
-PATCH = (ROOT / "SQL" / "patches" / "2026-11-06_v4291_branches_category.sql").read_text(encoding="utf-8")
+PATCH = (ROOT / "SQL" / "patches" / "2026-11-06_v4292_branches_category.sql").read_text(encoding="utf-8")
 COLUMN = '"branch_category" varchar(20) NOT NULL DEFAULT \'default\''
 
 
