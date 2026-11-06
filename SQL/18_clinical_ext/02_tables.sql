@@ -1,4 +1,4 @@
--- SALUD v4.2.90 · módulo 18 · schema clinical_ext
+-- SALUD v4.2.91 · módulo 18 · schema clinical_ext
 -- Generado de diagram_18_clinical_ext.puml — NO editar a mano.
 
 
@@ -96,6 +96,7 @@ CREATE TABLE IF NOT EXISTS "clinical_ext"."referrals" (
     "created_by_user_id" uuid,
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
+    "target_encounter_id" uuid,
     CONSTRAINT "pk_referrals" PRIMARY KEY ("id")
 );
 

@@ -1,4 +1,4 @@
--- SALUD v4.2.90 · módulo 38 · schema erp
+-- SALUD v4.2.91 · módulo 38 · schema erp
 -- Generado de diagram_38_erp.puml — NO editar a mano.
 
 CREATE SCHEMA IF NOT EXISTS "erp";

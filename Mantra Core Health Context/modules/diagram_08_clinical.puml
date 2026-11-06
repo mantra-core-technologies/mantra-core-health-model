@@ -235,6 +235,13 @@ entity conditions {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
+  ' + v4.2.91 (red clínica, franja 1): diferencial resuelto. En un diagnóstico
+  ' DESCARTADO (verificación REFUTED), el diagnóstico que lo reemplazó. Nullable y sin
+  ' backfill: un descarte anterior no declaró reemplazo y reconstruirlo sería fabricar
+  ' un dato clínico. Autorreferencia: la convención por nombre no la resuelve, el
+  ' destino lo da la arista etiquetada. La API valida (422) mismo paciente, que el
+  ' origen esté REFUTED y que no se apunte a sí mismo.
+    replaced_by_condition_id : uuid <<FK>>
 }
 
 entity allergy_intolerances {
@@ -328,6 +335,12 @@ entity service_requests {
     body_site_concept_id : uuid <<FK>>
     laterality_concept_id : uuid <<FK>>
     contrast_concept_id : uuid <<FK>>
+  ' + v4.2.91 (red clínica, franja 1): el diagnóstico para el que se pidió el estudio
+  ' (confirmarlo, descartarlo o seguirlo). Compartir el encuentro no dice cuál de las
+  ' condiciones del paciente motiva la orden. Nullable y sin backfill: hay órdenes sin
+  ' diagnóstico registrado (control, tamizaje). La API valida (422) que la condición
+  ' sea del mismo paciente. FK → clinical.conditions por arista etiquetada.
+    reason_condition_id : uuid <<FK>>
 }
 
 entity diagnostic_reports {
@@ -369,6 +382,9 @@ service_requests }o--o| profiles_health_practitioner_profiles : performer_practi
 service_requests }o--o| practice_practice_sites : suggested_practice_site_id
 service_requests }o--o| practice_care_spaces : suggested_care_space_id
 service_requests }o--o| forms_form_instances : form_instance_id
+' + v4.2.91 (red clínica, franja 1): vínculos orden → diagnóstico y diagnóstico → reemplazo.
+service_requests }o--o| conditions : reason_condition_id
+conditions }o--o| conditions : replaced_by_condition_id
 entity "chart.clinical_note_headers" as chart_clinical_note_headers <<REFERENCE_ONLY>> {
   * id : uuid <<PK>>
 }
@@ -1094,6 +1110,7 @@ entity "INDEXES · conditions" as idxset_conditions <<INDEX_SET>> {
   IX ix_conditions_custodian_tenant_id_updated_at : (custodian_tenant_id, updated_at DESC) BTREE
   IX ix_conditions_patient_profile_id_updated_at : (custodian_tenant_id, patient_profile_id, updated_at DESC) BTREE
   IX ix_conditions_patient_clinical_status : (custodian_tenant_id, patient_profile_id, clinical_status_concept_id, onset_at DESC) BTREE
+  IX ix_conditions_replaced_by_condition_id : (replaced_by_condition_id) BTREE
 }
 
 conditions .. idxset_conditions : indexed by
@@ -1158,6 +1175,7 @@ entity "INDEXES · service_requests" as idxset_service_requests <<INDEX_SET>> {
   IX ix_service_requests_contrast_concept_id : (contrast_concept_id) BTREE
   IX ix_service_requests_requisition_id : (custodian_tenant_id, requisition_id) BTREE
   IX ix_service_requests_performer_inbox : (performer_tenant_id, status_concept_id, created_at, id) BTREE
+  IX ix_service_requests_reason_condition_id : (reason_condition_id) BTREE
 }
 
 service_requests .. idxset_service_requests : indexed by

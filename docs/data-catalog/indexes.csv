@@ -768,6 +768,7 @@ clinical,conditions,ix_conditions_updated_by_user_id,NO,"""updated_by_user_id"""
 clinical,conditions,ix_conditions_custodian_tenant_id_updated_at,NO,"""custodian_tenant_id"", ""updated_at"" DESC",,SQL/08_clinical/04_indexes.sql
 clinical,conditions,ix_conditions_patient_profile_id_updated_at,NO,"""custodian_tenant_id"", ""patient_profile_id"", ""updated_at"" DESC",,SQL/08_clinical/04_indexes.sql
 clinical,conditions,ix_conditions_patient_clinical_status,NO,"""custodian_tenant_id"", ""patient_profile_id"", ""clinical_status_concept_id"", ""onset_at"" DESC",,SQL/08_clinical/04_indexes.sql
+clinical,conditions,ix_conditions_replaced_by_condition_id,NO,"""replaced_by_condition_id""",,SQL/08_clinical/04_indexes.sql
 clinical,allergy_intolerances,ix_allergy_intolerances_custodian_tenant_id,NO,"""custodian_tenant_id""",,SQL/08_clinical/04_indexes.sql
 clinical,allergy_intolerances,ix_allergy_intolerances_patient_profile_id,NO,"""patient_profile_id""",,SQL/08_clinical/04_indexes.sql
 clinical,allergy_intolerances,ix_allergy_intolerances_substance_concept_id,NO,"""substance_concept_id""",,SQL/08_clinical/04_indexes.sql
@@ -814,6 +815,7 @@ clinical,service_requests,ix_service_requests_laterality_concept_id,NO,"""latera
 clinical,service_requests,ix_service_requests_contrast_concept_id,NO,"""contrast_concept_id""",,SQL/08_clinical/04_indexes.sql
 clinical,service_requests,ix_service_requests_requisition_id,NO,"""custodian_tenant_id"", ""requisition_id""",,SQL/08_clinical/04_indexes.sql
 clinical,service_requests,ix_service_requests_performer_inbox,NO,"""performer_tenant_id"", ""status_concept_id"", ""created_at"", ""id""",,SQL/08_clinical/04_indexes.sql
+clinical,service_requests,ix_service_requests_reason_condition_id,NO,"""reason_condition_id""",,SQL/08_clinical/04_indexes.sql
 clinical,diagnostic_reports,ix_diagnostic_reports_custodian_tenant_id,NO,"""custodian_tenant_id""",,SQL/08_clinical/04_indexes.sql
 clinical,diagnostic_reports,ix_diagnostic_reports_patient_profile_id,NO,"""patient_profile_id""",,SQL/08_clinical/04_indexes.sql
 clinical,diagnostic_reports,ix_diagnostic_reports_service_request_id,NO,"""service_request_id""",,SQL/08_clinical/04_indexes.sql
@@ -2856,6 +2858,7 @@ clinical_ext,referrals,ix_referrals_patient_profile_id_updated_at,NO,"""patient_
 clinical_ext,referrals,ix_referrals_target_branch,NO,"""target_branch_id""",,SQL/18_clinical_ext/04_indexes.sql
 clinical_ext,referrals,ix_referrals_requested_service_concept_id,NO,"""requested_service_concept_id""",,SQL/18_clinical_ext/04_indexes.sql
 clinical_ext,referrals,ix_referrals_informed_consent_id,NO,"""informed_consent_id""",,SQL/18_clinical_ext/04_indexes.sql
+clinical_ext,referrals,ix_referrals_target_encounter_id,NO,"""target_encounter_id""",,SQL/18_clinical_ext/04_indexes.sql
 clinical_ext,referrals,uq_referrals_source_encounter_target_specialty,YES,"""source_encounter_id"", ""target_profile_id"", ""specialty_concept_id""",WHERE source_encounter_id IS NOT NULL AND target_profile_id IS NOT NULL AND specialty_concept_id IS NOT NULL,SQL/18_clinical_ext/04_indexes.sql
 clinical_ext,clinical_alerts,ix_clinical_alerts_patient_profile_id,NO,"""patient_profile_id""",,SQL/18_clinical_ext/04_indexes.sql
 clinical_ext,clinical_alerts,ix_clinical_alerts_encounter_id,NO,"""encounter_id""",,SQL/18_clinical_ext/04_indexes.sql

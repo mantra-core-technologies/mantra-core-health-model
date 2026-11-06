@@ -49,6 +49,28 @@ comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_obje
 
 ## 3. Estado actual del build
 
+### v4.2.91 — Red clínica del paciente, franja 1: vínculos (2026-11-06)
+
+**Cambio de esquema: +3 columnas `uuid NULL`, +3 FK, +3 índices. Ninguna tabla nueva.**
+
+El «Recorrido» del expediente pasa a ser una red de nodos por episodio. Las aristas que ya existían
+se reutilizan (`referrals.source_encounter_id`, `conditions.encounter_id`, `service_requests.encounter_id`,
+`medication_requests.indication_condition_id` y `replaced_by_request_id`…); se agregan las tres que faltaban:
+
+- `clinical.service_requests.reason_condition_id` → `clinical.conditions(id)` (`ix_service_requests_reason_condition_id`,
+  `fk_service_requests_reason_condition_id`): el diagnóstico para el que se pidió el estudio (confirmarlo,
+  descartarlo o seguirlo).
+- `clinical_ext.referrals.target_encounter_id` → `clinical.encounters(id)` (`ix_referrals_target_encounter_id`,
+  `fk_referrals_target_encounter_id`, en `90_fk_deferred` por ser entre schemas): la atención en la que el
+  destino recibió al paciente; cierra el par con `source_encounter_id`.
+- `clinical.conditions.replaced_by_condition_id` → `clinical.conditions(id)` (`ix_conditions_replaced_by_condition_id`,
+  `fk_conditions_replaced_by_condition_id`): en un diagnóstico descartado, el que lo reemplazó (diferencial resuelto).
+
+Las FK salen de aristas etiquetadas del `.puml` (stub `clinical.encounters` en el módulo 18), sin nota del vault.
+Sin backfill ni `ON DELETE`. Mismo paciente, «sólo en REFUTED y distinto de sí mismo» y «sólo lo escribe el destino»
+los valida la API (422). El parche `2026-11-06_v4291_red_clinica_vinculos.sql` es idempotente, se copió del DDL
+generado y agrega los `COMMENT ON COLUMN` con el significado clínico.
+
 ### v4.2.90 — Horario de atención en el alta de organización (2026-11-04)
 
 **Cambio de esquema: +1 tabla, +8 índices (más la PK), +5 FK, +4 CHECK.**

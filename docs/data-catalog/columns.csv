@@ -4376,6 +4376,7 @@ clinical,conditions,18,updated_at,timestamptz,NO,,,,,,SQL/08_clinical/02_tables.
 clinical,conditions,19,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
 clinical,conditions,20,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/08_clinical/02_tables.sql
 clinical,conditions,21,row_version,integer,NO,1,,,,,SQL/08_clinical/02_tables.sql
+clinical,conditions,22,replaced_by_condition_id,uuid,YES,,FOREIGN KEY,clinical,conditions,id,SQL/08_clinical/02_tables.sql
 clinical,diagnostic_reports,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/08_clinical/02_tables.sql
 clinical,diagnostic_reports,2,custodian_tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/08_clinical/02_tables.sql
 clinical,diagnostic_reports,3,patient_profile_id,uuid,NO,,FOREIGN KEY,profiles,patient_profiles,profile_id,SQL/08_clinical/02_tables.sql
@@ -4809,6 +4810,7 @@ clinical,service_requests,26,modality_concept_id,uuid,YES,,FOREIGN KEY,terminolo
 clinical,service_requests,27,body_site_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/08_clinical/02_tables.sql
 clinical,service_requests,28,laterality_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/08_clinical/02_tables.sql
 clinical,service_requests,29,contrast_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/08_clinical/02_tables.sql
+clinical,service_requests,30,reason_condition_id,uuid,YES,,FOREIGN KEY,clinical,conditions,id,SQL/08_clinical/02_tables.sql
 clinical,social_history,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/08_clinical/02_tables.sql
 clinical,social_history,2,custodian_tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/08_clinical/02_tables.sql
 clinical,social_history,3,patient_profile_id,uuid,NO,,FOREIGN KEY,profiles,patient_profiles,profile_id,SQL/08_clinical/02_tables.sql
@@ -5060,6 +5062,7 @@ clinical_ext,referrals,54,updated_at,timestamptz,NO,,,,,,SQL/18_clinical_ext/02_
 clinical_ext,referrals,55,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/18_clinical_ext/02_tables.sql
 clinical_ext,referrals,56,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/18_clinical_ext/02_tables.sql
 clinical_ext,referrals,57,row_version,integer,NO,1,,,,,SQL/18_clinical_ext/02_tables.sql
+clinical_ext,referrals,58,target_encounter_id,uuid,YES,,FOREIGN KEY,clinical,encounters,id,SQL/18_clinical_ext/02_tables.sql
 clinical_ext,virtual_encounters,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/18_clinical_ext/02_tables.sql
 clinical_ext,virtual_encounters,2,encounter_id,uuid,NO,,FOREIGN KEY; UNIQUE,clinical,encounters,id,SQL/18_clinical_ext/02_tables.sql
 clinical_ext,virtual_encounters,3,platform_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/18_clinical_ext/02_tables.sql

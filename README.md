@@ -122,6 +122,12 @@ casa central y cada sucursal) vive en `diagram_04_directory.puml`. Su parche inc
 `psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4290_tenant_opening_hours.sql` (copiado del DDL generado;
 no-op sobre base nueva). Después, volver a correr `SQL/patches/2026-08-05_tenant_rls.sql` para que RLS cubra la tabla.
 
+Los vínculos de la red clínica del paciente (v4.2.91: `clinical.service_requests.reason_condition_id`,
+`clinical_ext.referrals.target_encounter_id` y `clinical.conditions.replaced_by_condition_id`, uuid NULL con FK e índice)
+viven en `diagram_08_clinical.puml` y `diagram_18_clinical_ext.puml`. Su parche incremental es
+`psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4291_red_clinica_vinculos.sql` (copiado del DDL generado,
+más los comentarios de columna; no-op sobre base nueva salvo los comentarios). Sin backfill.
+
 Todos son idempotentes (una transacción, re-ejecutables). **Si se vuelve a ejecutar el v4275 después del v4278, hay que volver a
 ejecutar el v4278 y el v4279**: el v4275 restituye las versiones anteriores de `refresh_effective_support_access` (que ya no excluiría un
 `DENY`) y de `integrity.support_tenant_consistency`, y el v4279 (que extiende esta última y reescribe `support_access_allowed`) las deja completas.

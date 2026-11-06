@@ -2293,6 +2293,7 @@ clinical,care_episodes,fk_care_episodes_created_by_user_id,FOREIGN KEY,created_b
 clinical,care_episodes,fk_care_episodes_updated_by_user_id,FOREIGN KEY,updated_by_user_id,FOREIGN KEY (updated_by_user_id) REFERENCES iam.users (id),SQL/08_clinical/90_fk_deferred.sql
 clinical,conditions,pk_conditions,PRIMARY KEY,id,PRIMARY KEY (id),SQL/08_clinical/02_tables.sql
 clinical,conditions,fk_conditions_encounter_id,FOREIGN KEY,encounter_id,FOREIGN KEY (encounter_id) REFERENCES clinical.encounters (id),SQL/08_clinical/03_fk_intra.sql
+clinical,conditions,fk_conditions_replaced_by_condition_id,FOREIGN KEY,replaced_by_condition_id,FOREIGN KEY (replaced_by_condition_id) REFERENCES clinical.conditions (id),SQL/08_clinical/03_fk_intra.sql
 clinical,conditions,fk_conditions_custodian_tenant_id,FOREIGN KEY,custodian_tenant_id,FOREIGN KEY (custodian_tenant_id) REFERENCES directory.tenants (id),SQL/08_clinical/90_fk_deferred.sql
 clinical,conditions,fk_conditions_patient_profile_id,FOREIGN KEY,patient_profile_id,FOREIGN KEY (patient_profile_id) REFERENCES profiles.patient_profiles (profile_id),SQL/08_clinical/90_fk_deferred.sql
 clinical,conditions,fk_conditions_code_concept_id,FOREIGN KEY,code_concept_id,FOREIGN KEY (code_concept_id) REFERENCES terminology.catalog_concepts (id),SQL/08_clinical/90_fk_deferred.sql
@@ -2566,6 +2567,7 @@ clinical,service_request_notes,fk_service_request_notes_created_by_user_id,FOREI
 clinical,service_request_notes,ux_service_request_notes_request_note,UNIQUE INDEX,"""service_request_id"", ""clinical_note_header_id""","UNIQUE INDEX (""service_request_id"", ""clinical_note_header_id"")",SQL/08_clinical/04_indexes.sql
 clinical,service_requests,pk_service_requests,PRIMARY KEY,id,PRIMARY KEY (id),SQL/08_clinical/02_tables.sql
 clinical,service_requests,fk_service_requests_encounter_id,FOREIGN KEY,encounter_id,FOREIGN KEY (encounter_id) REFERENCES clinical.encounters (id),SQL/08_clinical/03_fk_intra.sql
+clinical,service_requests,fk_service_requests_reason_condition_id,FOREIGN KEY,reason_condition_id,FOREIGN KEY (reason_condition_id) REFERENCES clinical.conditions (id),SQL/08_clinical/03_fk_intra.sql
 clinical,service_requests,fk_service_requests_previous_diagnostic_report_id,FOREIGN KEY,previous_diagnostic_report_id,FOREIGN KEY (previous_diagnostic_report_id) REFERENCES clinical.diagnostic_reports (id),SQL/08_clinical/03_fk_intra.sql
 clinical,service_requests,fk_service_requests_custodian_tenant_id,FOREIGN KEY,custodian_tenant_id,FOREIGN KEY (custodian_tenant_id) REFERENCES directory.tenants (id),SQL/08_clinical/90_fk_deferred.sql
 clinical,service_requests,fk_service_requests_patient_profile_id,FOREIGN KEY,patient_profile_id,FOREIGN KEY (patient_profile_id) REFERENCES profiles.patient_profiles (profile_id),SQL/08_clinical/90_fk_deferred.sql
@@ -2714,6 +2716,7 @@ clinical_ext,referrals,fk_referrals_requested_service_concept_id,FOREIGN KEY,req
 clinical_ext,referrals,fk_referrals_informed_consent_id,FOREIGN KEY,informed_consent_id,FOREIGN KEY (informed_consent_id) REFERENCES consent.treatment_informed_consents (id),SQL/18_clinical_ext/90_fk_deferred.sql
 clinical_ext,referrals,fk_referrals_created_by_user_id,FOREIGN KEY,created_by_user_id,FOREIGN KEY (created_by_user_id) REFERENCES iam.users (id),SQL/18_clinical_ext/90_fk_deferred.sql
 clinical_ext,referrals,fk_referrals_updated_by_user_id,FOREIGN KEY,updated_by_user_id,FOREIGN KEY (updated_by_user_id) REFERENCES iam.users (id),SQL/18_clinical_ext/90_fk_deferred.sql
+clinical_ext,referrals,fk_referrals_target_encounter_id,FOREIGN KEY,target_encounter_id,FOREIGN KEY (target_encounter_id) REFERENCES clinical.encounters (id),SQL/18_clinical_ext/90_fk_deferred.sql
 clinical_ext,referrals,ux_referrals_id_patient_target,UNIQUE INDEX,"""id"", ""patient_profile_id"", ""target_tenant_id""","UNIQUE INDEX (""id"", ""patient_profile_id"", ""target_tenant_id"")",SQL/18_clinical_ext/04_indexes.sql
 clinical_ext,referrals,uq_referrals_source_encounter_target_specialty,UNIQUE INDEX,"""source_encounter_id"", ""target_profile_id"", ""specialty_concept_id""","UNIQUE INDEX (""source_encounter_id"", ""target_profile_id"", ""specialty_concept_id"") WHERE source_encounter_id IS NOT NULL AND target_profile_id IS NOT NULL AND specialty_concept_id IS NOT NULL",SQL/18_clinical_ext/04_indexes.sql
 clinical_ext,referrals,ck_referrals_transport_mode,CHECK,,"CHECK (""transport_mode"" IN ('AMBULANCE_BASIC','AMBULANCE_ADVANCED','AIR_AMBULANCE','RIVER','PRIVATE_VEHICLE','PUBLIC_TRANSPORT','ON_FOOT','OTHER'))",SQL/18_clinical_ext/05_constraints.sql
