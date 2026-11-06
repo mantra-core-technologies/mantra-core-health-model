@@ -1,6 +1,6 @@
 model:
   name: SALUD
-  version: 4.2.92
+  version: 4.2.94
   status: canonical-polyglot-nosql-health-platform
   generated_at: '2026-11-06'
   design_patches:
@@ -349,9 +349,30 @@ model:
       se importó, única por tenant y dueño). Parche 2026-11-06_v4291_surveys_encuesta_por_servicio.sql:
       respalda el dueño, desactiva duplicados (conserva la más nueva) y trae el disparador; se aplica
       también sobre base nueva.
-  - id: patch-v4.2.92-red-clinica-vinculos
+  - id: patch-v4.2.92-branches-category
     role: product-features
     doc: docs/architecture/physical-materialization.md (v4.2.92)
+    status: materialized-in-er
+    summary: >-
+      Categoría de la sede en directory.branches (branch_category: default | head_office | branch, por
+      defecto default) para etiquetar las sucursales de toda organización y verlas por oleadas; a lo sumo
+      una casa matriz por organización (ux_branches_one_head_office). Backfill: la casa central de las
+      altas de farmacia y laboratorio pasa a head_office y las sedes declaradas del establecimiento médico
+      se copian a directory.branches. Parche: 2026-11-06_v4292_branches_category.sql.
+  - id: patch-v4.2.93-surveys-owner-trigger-in-model
+    role: integrity-materialization
+    doc: docs/architecture/physical-materialization.md (v4.2.93)
+    status: materialized-in-er
+    summary: >-
+      El disparador trg_survey_assignments_owner_from_template (función
+      integrity.survey_assignment_owner_from_template) pasa del parche v4.2.91 al modelo: diagram_33_integrity.puml
+      lo declara con TRIGGER_SQL y el cuerpo plpgsql en la nota FUNCTION_SQL_survey_assignment_owner_from_template;
+      gen_integrity.py lo emite en SQL/65_surveys/05_constraints.sql, así que una base creada desde cero lo tiene sin
+      el parche. Sin parche nuevo: 2026-11-06_v4291_surveys_encuesta_por_servicio.sql sigue siendo el incremental
+      (idempotente, mismo SQL byte a byte).
+  - id: patch-v4.2.94-red-clinica-vinculos
+    role: product-features
+    doc: docs/architecture/physical-materialization.md (v4.2.94)
     status: materialized-in-er
     summary: >-
       Red clínica del paciente, franja 1: tres vínculos uuid NULL con FK e índice.
@@ -359,7 +380,7 @@ model:
       clinical_ext.referrals.target_encounter_id → clinical.encounters (atención de destino de la derivación) y
       clinical.conditions.replaced_by_condition_id → clinical.conditions (diagnóstico descartado reemplazado por
       este). Sin backfill; mismo paciente, REFUTED y tenant destino los valida la API. Parche copiado del DDL
-      generado, con COMMENT ON COLUMN: 2026-11-06_v4292_red_clinica_vinculos.sql.
+      generado, con COMMENT ON COLUMN: 2026-11-06_v4294_red_clinica_vinculos.sql.
   materialization_note: >-
     v4.0.1 materializado en el ER (fuente: el vault/grafo). Se añadieron 14
     entidades nuevas (marketing.campaign_schedules/dispatches/dispatch_recipients,

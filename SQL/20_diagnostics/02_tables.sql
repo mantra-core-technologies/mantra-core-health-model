@@ -1,4 +1,4 @@
--- SALUD v4.2.92 · módulo 20 · schema diagnostics
+-- SALUD v4.2.94 · módulo 20 · schema diagnostics
 -- Generado de diagram_20_diagnostics.puml — NO editar a mano.
 
 

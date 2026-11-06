@@ -1,4 +1,4 @@
--- SALUD v4.2.92 · módulo 19 · schema community
+-- SALUD v4.2.94 · módulo 19 · schema community
 -- Generado de diagram_19_community.puml — NO editar a mano.
 
 
@@ -239,6 +239,18 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN
     ALTER TABLE "community"."message_receipts"
         ADD CONSTRAINT "fk_message_receipts_recipient_profile_id" FOREIGN KEY ("recipient_profile_id")
+        REFERENCES "community"."public_profiles" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "community"."message_reactions"
+        ADD CONSTRAINT "fk_message_reactions_direct_message_id" FOREIGN KEY ("direct_message_id")
+        REFERENCES "community"."direct_messages" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "community"."message_reactions"
+        ADD CONSTRAINT "fk_message_reactions_profile_id" FOREIGN KEY ("profile_id")
         REFERENCES "community"."public_profiles" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 

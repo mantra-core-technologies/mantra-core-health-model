@@ -1,4 +1,4 @@
--- SALUD v4.2.92 · módulo 19 · schema community
+-- SALUD v4.2.94 · módulo 19 · schema community
 -- Generado de diagram_19_community.puml — NO editar a mano.
 
 
@@ -369,6 +369,12 @@ CREATE INDEX IF NOT EXISTS "ix_message_receipts_recipient_profile_id" ON "commun
 CREATE INDEX IF NOT EXISTS "ix_message_receipts_receipt_type_concept_id" ON "community"."message_receipts" ("receipt_type_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_message_receipts_recorded_by_user_id" ON "community"."message_receipts" ("recorded_by_user_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_message_reactions_message_profile" ON "community"."message_reactions" ("direct_message_id", "profile_id");
+
+CREATE INDEX IF NOT EXISTS "ix_message_reactions_profile_id" ON "community"."message_reactions" ("profile_id");
+
+CREATE INDEX IF NOT EXISTS "ix_message_reactions_created_by_user_id" ON "community"."message_reactions" ("created_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "brin_message_receipts_recorded_at" ON "community"."message_receipts" USING brin ("recorded_at") WITH (pages_per_range=128);
 

@@ -1,4 +1,4 @@
--- SALUD v4.2.92 · módulo 02 · schema common
+-- SALUD v4.2.94 · módulo 02 · schema common
 -- Generado de diagram_02_common.puml — NO editar a mano.
 
 

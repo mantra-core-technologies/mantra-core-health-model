@@ -1,4 +1,4 @@
--- SALUD v4.2.92 · módulo 19 · schema community
+-- SALUD v4.2.94 · módulo 19 · schema community
 -- Generado de diagram_19_community.puml — NO editar a mano.
 
 
@@ -457,6 +457,17 @@ CREATE TABLE IF NOT EXISTS "community"."message_receipts" (
     "recorded_at" timestamptz NOT NULL,
     "recorded_by_user_id" uuid,
     CONSTRAINT "pk_message_receipts" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "community"."message_reactions" (
+    "id" uuid NOT NULL,
+    "direct_message_id" uuid NOT NULL,
+    "profile_id" uuid NOT NULL,
+    "emoji" varchar(32) NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    CONSTRAINT "pk_message_reactions" PRIMARY KEY ("id")
 );
 
 CREATE TABLE IF NOT EXISTS "community"."social_notifications" (

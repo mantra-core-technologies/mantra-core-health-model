@@ -78,6 +78,14 @@ class SurveysServiceOwnerV4291(unittest.TestCase):
         self.assertIn("DROP TRIGGER IF EXISTS trg_survey_assignments_owner_from_template", PATCH)
         self.assertIn("USING ERRCODE = 'check_violation'", PATCH)
 
+    def test_trigger_is_generated_into_the_base_ddl_verbatim(self):
+        # v4.2.93: a database built from scratch (apply_all.sql) has the trigger without the patch.
+        sql = generated("05_constraints.sql")
+        start = sql.index('CREATE OR REPLACE FUNCTION "integrity"."survey_assignment_owner_from_template"()')
+        block = sql[start:sql.index("FOR EACH ROW", start)]
+        self.assertIn("CREATE TRIGGER trg_survey_assignments_owner_from_template", block)
+        self.assertIn(block, PATCH)
+
     def test_patch_is_idempotent(self):
         self.assertNotIn('CREATE INDEX "', PATCH)
         self.assertNotIn('CREATE UNIQUE INDEX "', PATCH)

@@ -235,7 +235,7 @@ entity conditions {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
-  ' + v4.2.92 (red clínica, franja 1): diferencial resuelto. En un diagnóstico
+  ' + v4.2.94 (red clínica, franja 1): diferencial resuelto. En un diagnóstico
   ' DESCARTADO (verificación REFUTED), el diagnóstico que lo reemplazó. Nullable y sin
   ' backfill: un descarte anterior no declaró reemplazo y reconstruirlo sería fabricar
   ' un dato clínico. Autorreferencia: la convención por nombre no la resuelve, el
@@ -335,7 +335,7 @@ entity service_requests {
     body_site_concept_id : uuid <<FK>>
     laterality_concept_id : uuid <<FK>>
     contrast_concept_id : uuid <<FK>>
-  ' + v4.2.92 (red clínica, franja 1): el diagnóstico para el que se pidió el estudio
+  ' + v4.2.94 (red clínica, franja 1): el diagnóstico para el que se pidió el estudio
   ' (confirmarlo, descartarlo o seguirlo). Compartir el encuentro no dice cuál de las
   ' condiciones del paciente motiva la orden. Nullable y sin backfill: hay órdenes sin
   ' diagnóstico registrado (control, tamizaje). La API valida (422) que la condición
@@ -382,7 +382,7 @@ service_requests }o--o| profiles_health_practitioner_profiles : performer_practi
 service_requests }o--o| practice_practice_sites : suggested_practice_site_id
 service_requests }o--o| practice_care_spaces : suggested_care_space_id
 service_requests }o--o| forms_form_instances : form_instance_id
-' + v4.2.92 (red clínica, franja 1): vínculos orden → diagnóstico y diagnóstico → reemplazo.
+' + v4.2.94 (red clínica, franja 1): vínculos orden → diagnóstico y diagnóstico → reemplazo.
 service_requests }o--o| conditions : reason_condition_id
 conditions }o--o| conditions : replaced_by_condition_id
 entity "chart.clinical_note_headers" as chart_clinical_note_headers <<REFERENCE_ONLY>> {

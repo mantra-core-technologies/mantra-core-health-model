@@ -4,10 +4,11 @@
 -- Idempotente (IF NOT EXISTS / DROP ... IF EXISTS / duplicate_object). UNA transacción, re-ejecutable.
 -- Contexto: gen_ddl.py y gen_integrity.py ya emiten las columnas, la FK, los índices y el CHECK en
 -- SQL/65_surveys/ desde que diagram_65_surveys.puml y diagram_33_integrity.puml los declaran; esas
--- sentencias se copiaron de los archivos generados. Lo que el generador NO expresa vive sólo acá:
--- el respaldo de owner_practitioner_id, el disparador que lo mantiene igual al de la plantilla y la
--- desactivación de duplicados. Por eso este patch se aplica TAMBIÉN sobre una base nueva (después de
--- apply_all.sql + apply_deferred.sql): ahí lo generado es no-op y queda el disparador.
+-- sentencias se copiaron de los archivos generados. Desde v4.2.93 el disparador que mantiene
+-- owner_practitioner_id igual al de la plantilla también se genera (TRIGGER_SQL en
+-- diagram_33_integrity.puml → SQL/65_surveys/05_constraints.sql); sobre una base nueva este patch es
+-- no-op. Lo que sólo vive acá es el respaldo de owner_practitioner_id y la desactivación de duplicados
+-- de una base existente.
 -- gen_apply.py no escanea SQL/patches/: no entra en apply_all.sql.
 --
 -- QUÉ CAMBIA.
@@ -86,16 +87,24 @@ CREATE OR REPLACE FUNCTION "integrity"."survey_assignment_owner_from_template"()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public AS $$
 DECLARE
     template_owner uuid;
+    template_tenant uuid;
 BEGIN
-    SELECT t.owner_practitioner_id INTO template_owner
+    -- SECURITY DEFINER bypasses RLS: never trust a version from another tenant and
+    -- never echo the template owner back in an error message.
+    SELECT t.owner_practitioner_id, t.tenant_id INTO template_owner, template_tenant
       FROM surveys.survey_versions v
       JOIN surveys.survey_templates t ON t.id = v.survey_template_id
      WHERE v.id = NEW.survey_version_id;
+    IF NOT FOUND OR template_tenant IS DISTINCT FROM NEW.tenant_id THEN
+        RAISE EXCEPTION 'survey_assignments: la versión % no existe en el tenant de la asignación',
+            NEW.survey_version_id
+            USING ERRCODE = 'foreign_key_violation';
+    END IF;
     IF NEW.owner_practitioner_id IS NULL THEN
         NEW.owner_practitioner_id := template_owner;
     ELSIF NEW.owner_practitioner_id IS DISTINCT FROM template_owner THEN
-        RAISE EXCEPTION 'survey_assignments: owner_practitioner_id (%) no es el dueño de la plantilla de la versión % (%)',
-            NEW.owner_practitioner_id, NEW.survey_version_id, template_owner
+        RAISE EXCEPTION 'survey_assignments: owner_practitioner_id no es el dueño de la plantilla de la versión %',
+            NEW.survey_version_id
             USING ERRCODE = 'check_violation';
     END IF;
     RETURN NEW;

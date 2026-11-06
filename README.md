@@ -122,6 +122,12 @@ casa central y cada sucursal) vive en `diagram_04_directory.puml`. Su parche inc
 `psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4290_tenant_opening_hours.sql` (copiado del DDL generado;
 no-op sobre base nueva). Después, volver a correr `SQL/patches/2026-08-05_tenant_rls.sql` para que RLS cubra la tabla.
 
+La categoría de la sede (v4.2.92: `directory.branches.branch_category`, `default` / `head_office` / `branch`, una casa matriz
+por organización) vive en `diagram_04_directory.puml` y su CHECK en `diagram_33_integrity.puml`. Su parche incremental es
+`psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4292_branches_category.sql` (esquema copiado del DDL generado,
+más dos backfills idempotentes: la casa central de las altas viejas y el espejo de las sedes declaradas del establecimiento
+médico).
+
 Cuatro parches de RLS se escribieron primero en la API y viven acá desde el 06/11/2026, para que
 `yarn db:vendor` (que copia `SQL/` con `--delete`) no los borre de `database/SQL`: `2026-11-02_v4284_rls_community_public_read.sql`
 (fichas públicas sin tenant), `2026-11-03_v4286_farmacias_mercado_lectura_paciente.sql` y `2026-11-04_farmacias_mercado_por_id.sql`
@@ -135,13 +141,15 @@ Las encuestas estandarizadas por servicio (v4.2.91: `surveys.survey_assignments.
 profesional — y `surveys.survey_templates.standard_catalog_code`, la entrada `STD_*` del catálogo de la que se importó)
 viven en `diagram_65_surveys.puml`. Su parche es
 `psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4291_surveys_encuesta_por_servicio.sql` (idempotente;
-desactiva antes los duplicados activos conservando el más nuevo). Se aplica **también sobre base nueva**: trae el
-disparador que mantiene el dueño de la asignación igual al de la plantilla, que el generador no expresa.
+desactiva antes los duplicados activos conservando el más nuevo). Desde v4.2.93 el disparador que mantiene el dueño de
+la asignación igual al de la plantilla (`trg_survey_assignments_owner_from_template`) también lo declara
+`diagram_33_integrity.puml` (`TRIGGER_SQL` + nota `FUNCTION_SQL_<función>`) y sale en `SQL/65_surveys/05_constraints.sql`:
+una base nueva lo tiene con `apply_all.sql`, y el parche queda como incremental para bases vivas.
 
-Los vínculos de la red clínica del paciente (v4.2.92: `clinical.service_requests.reason_condition_id`,
+Los vínculos de la red clínica del paciente (v4.2.94: `clinical.service_requests.reason_condition_id`,
 `clinical_ext.referrals.target_encounter_id` y `clinical.conditions.replaced_by_condition_id`, uuid NULL con FK e índice)
 viven en `diagram_08_clinical.puml` y `diagram_18_clinical_ext.puml`. Su parche incremental es
-`psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4292_red_clinica_vinculos.sql` (copiado del DDL generado,
+`psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4294_red_clinica_vinculos.sql` (copiado del DDL generado,
 más los comentarios de columna; no-op sobre base nueva salvo los comentarios). Sin backfill.
 
 Todos son idempotentes (una transacción, re-ejecutables). **Si se vuelve a ejecutar el v4275 después del v4278, hay que volver a

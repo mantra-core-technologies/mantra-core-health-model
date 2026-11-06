@@ -1,4 +1,4 @@
--- SALUD v4.2.92 · módulo 41 · schema scheduling
+-- SALUD v4.2.94 · módulo 41 · schema scheduling
 -- Generado de diagram_41_scheduling.puml — NO editar a mano.
 
 CREATE SCHEMA IF NOT EXISTS "scheduling";

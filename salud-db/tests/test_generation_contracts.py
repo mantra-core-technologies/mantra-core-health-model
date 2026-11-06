@@ -37,6 +37,23 @@ class ConcreteIntegrityTests(unittest.TestCase):
             gen_integrity.exclude_concreto('clinical', 'encounter_locations',
                                            'ex_bed | "care_space_id" WITH = | "is_bed" | NOT VALID')
 
+    def test_trigger_wraps_the_model_body_and_rejects_invalid_declarations(self):
+        notes = {'FUNCTION_SQL_owner_guard': '  BEGIN\n      RETURN NEW;\n  END'}
+        decl = 'trg_owner | BEFORE INSERT OR UPDATE OF "a" | owner_guard | SECURITY DEFINER'
+        sql = gen_integrity.rule_line('surveys', 'survey_assignments', 'TRIGGER_SQL', decl, notes=notes)
+        self.assertIn('SECURITY DEFINER SET search_path = pg_catalog, public AS $$\nBEGIN\n    RETURN NEW;\nEND $$;', sql)
+        self.assertIn('REVOKE ALL ON FUNCTION "integrity"."owner_guard"() FROM PUBLIC;', sql)
+        self.assertIn('DROP TRIGGER IF EXISTS trg_owner ON "surveys"."survey_assignments";', sql)
+        self.assertIn('    BEFORE INSERT OR UPDATE OF "a" ON "surveys"."survey_assignments"\n'
+                      '    FOR EACH ROW EXECUTE FUNCTION "integrity"."owner_guard"();', sql)
+        plain = gen_integrity.trigger_concreto('s', 't', 'trg_owner | AFTER DELETE | owner_guard', notes)
+        self.assertIn('RETURNS trigger LANGUAGE plpgsql AS $$', plain)
+        for bad in ['trg_owner | BEFORE INSERT', 'trg-owner | BEFORE INSERT | owner_guard',
+                    'trg_owner | INSTEAD OF INSERT | owner_guard', 'trg_owner | BEFORE INSERT | missing_body',
+                    'trg_owner | BEFORE INSERT | owner_guard | SECURITY INVOKER']:
+            with self.subTest(decl=bad), self.assertRaises(ValueError):
+                gen_integrity.trigger_concreto('s', 't', bad, notes)
+
     def test_prose_rules_stay_as_comments_and_list_existing_uniques(self):
         entity = {'name': 'inventory_reservations', 'stereo': 'REFERENCE_ONLY',
                   'owner': ('pharmacy_inventory', 'inventory_reservations'),

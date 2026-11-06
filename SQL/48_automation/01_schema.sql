@@ -1,4 +1,4 @@
--- SALUD v4.2.92 · módulo 48 · schema automation
+-- SALUD v4.2.94 · módulo 48 · schema automation
 -- Generado de diagram_48_automation.puml — NO editar a mano.
 
 CREATE SCHEMA IF NOT EXISTS "automation";

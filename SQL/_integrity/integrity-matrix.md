@@ -1,4 +1,4 @@
-# Matriz de integridad y concurrencia — SALUD v4.2.92 (módulo 33)
+# Matriz de integridad y concurrencia — SALUD v4.2.94 (módulo 33)
 
 El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación cross-dominio. Cada regla se implementa en la **migración de la tabla dueña** (su módulo) y se repite aquí como referencia. Extraído fielmente del `.puml`.
 
@@ -157,6 +157,7 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 | `directory.affiliation_invitations` | `REFERENCE_ONLY` | **CHECK_SQL** ck_affiliation_invitations_uses \| ("max_uses" >= 1 AND "uses_count" >= 0 AND "uses_count" <= "max_uses") |
 | `directory.tenant_medical_facilities` | `REFERENCE_ONLY` | **CHECK_SQL** ck_tenant_medical_facilities_tax_identifier_format \| "tax_identifier_number" ~ '^[0-9][0-9-]{3,19}$'; **CHECK_SQL** ck_tenant_medical_facilities_registration_format \| "health_facility_registration_number" ~ '^[A-Za-z0-9./-]{3,50}$'; **CHECK_SQL** ck_tenant_medical_facilities_director_license \| char_length(btrim("medical_director_license_number")) BETWEEN 3 AND 50 |
 | `directory.tenant_medical_facility_sites` | `REFERENCE_ONLY` | **CHECK_SQL** ck_tenant_medical_facility_sites_kind_ordinal \| ("site_kind" = 'headquarters' AND "ordinal" = 0) OR ("site_kind" = 'branch' AND "ordinal" BETWEEN 1 AND 50); **CHECK_SQL** ck_tenant_medical_facility_sites_address_lines \| cardinality("address_lines") >= 1; **CHECK_SQL** ck_tenant_medical_facility_sites_geo \| (("latitude" IS NULL) = ("longitude" IS NULL)) AND ("latitude" IS NULL OR ("latitude" BETWEEN -90 AND 90 AND "longitude" BETWEEN -180 AND 180)) |
+| `directory.branches` | `REFERENCE_ONLY` | **CHECK_SQL** ck_branches_branch_category \| "branch_category" IN ('default', 'head_office', 'branch') |
 | `directory.tenant_opening_hours` | `REFERENCE_ONLY` | **CHECK_SQL** ck_tenant_opening_hours_day_of_week \| "day_of_week" BETWEEN 1 AND 7; **CHECK_SQL** ck_tenant_opening_hours_shift_ordinal \| "shift_ordinal" BETWEEN 1 AND 2; **CHECK_SQL** ck_tenant_opening_hours_closes_after_opens \| "closes_at" > "opens_at"; **CHECK_SQL** ck_tenant_opening_hours_one_site \| ("branch_id" IS NULL OR "medical_facility_site_id" IS NULL) |
 
 ### Módulo 01 · `iam`
@@ -264,6 +265,7 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 | `surveys.survey_invitations` | `REFERENCE_ONLY` | **CHECK_SQL** ck_survey_invitations_anchor \| ("appointment_booking_id" IS NOT NULL OR "subject_id" IS NOT NULL) AND (("subject_type_concept_id" IS NULL) = ("subject_id" IS NULL)); **CHECK_SQL** ck_survey_invitations_extension_distinct \| "extension_survey_version_id" IS NULL OR "extension_survey_version_id" <> "survey_version_id" |
 | `surveys.survey_invitation_reminders` | `REFERENCE_ONLY` | **CHECK_SQL** ck_survey_invitation_reminders_number \| "reminder_number" >= 1 |
 | `surveys.survey_answers` | `REFERENCE_ONLY` | **CHECK_SQL** ck_survey_answers_single_value \| num_nonnulls("value_text", "value_number", "value_boolean", "value_choices") = 1 |
+| `surveys.survey_assignments` | `REFERENCE_ONLY` | **TRIGGER_SQL** trg_survey_assignments_owner_from_template \| BEFORE INSERT OR UPDATE OF "survey_version_id", "owner_practitioner_id" \| survey_assignment_owner_from_template \| SECURITY DEFINER |
 
 ### Módulo 11 · `system_ops`
 
@@ -291,5 +293,5 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 ## Cómo se materializa
 
 - **`SQL/_integrity/00_integrity_functions.sql`** — schema `integrity` + `forbid_mutation()` (guarda de inmutabilidad).
-- **`SQL/<NN>_<schema>/05_constraints.sql`** — por módulo dueño: guarda concreta para `UPDATE_DELETE: forbidden`, `CHECK_SQL` y `EXCLUDE_SQL`; las UK/CHECK/EXCLUDE en prosa quedan como comentario con la regla textual (el modelo no declara su expresión SQL) y la lista de índices únicos que la tabla ya tiene.
+- **`SQL/<NN>_<schema>/05_constraints.sql`** — por módulo dueño: guarda concreta para `UPDATE_DELETE: forbidden`, `CHECK_SQL`, `EXCLUDE_SQL` y `TRIGGER_SQL` (cuerpo en la nota `FUNCTION_SQL_<función>`); las UK/CHECK/EXCLUDE en prosa quedan como comentario con la regla textual (el modelo no declara su expresión SQL) y la lista de índices únicos que la tabla ya tiene.
 - **Concurrencia** (`LOCK`/`SERIALIZABLE`/`SKIP LOCKED`/outbox) → capa de servicio (MikroORM Unit of Work + retry en `SQLSTATE 40001`), ver orm-mapping-guide §0.
