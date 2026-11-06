@@ -93,6 +93,18 @@ entity schedulable_resources {
   ' care_space_id = resource_ref_id, y ux_schedulable_resources_care_space_active impide
   ' dos recursos ACTIVOS (STATE_ACTIVE) sobre el mismo espacio.
     care_space_id : uuid <<FK>>
+  ' + v4.2.88 (2026-11-05) — si las solicitudes de consulta esperan que el profesional las
+  ' acepte. Pedido del cliente: «el doctor debe tener la opción de autoconfirmar las citas o
+  ' solicitudes de consulta que le lleguen, o no». Hasta acá toda solicitud del paciente nacía
+  ' pendiente y se aceptaba una por una; la única excepción era por servicio
+  ' (`practitioner_service_offerings.requires_approval`). Este es el mismo sí/no, por agenda:
+  ' con `true` la solicitud queda PENDING_CONFIRMATION hasta que el profesional la acepte;
+  ' con `false` nace CONFIRMED —recordatorios, historial y avisos como si la hubiera
+  ' aceptado—. El cupo de un servicio sigue mandando con el `requires_approval` de su oferta.
+  ' Lo cambia el propio profesional (PATCH /scheduling/resources/:id) o la administración de
+  ' agenda. NOT NULL DEFAULT true: toda agenda existente sigue pidiendo aceptación, que es lo
+  ' que hacía.
+  * requires_approval : boolean <<DEFAULT_TRUE>>
 }
 entity schedule_templates {
   * id : uuid <<PK>>

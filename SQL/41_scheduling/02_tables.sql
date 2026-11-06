@@ -1,4 +1,4 @@
--- SALUD v4.2.88 · módulo 41 · schema scheduling
+-- SALUD v4.2.90 · módulo 41 · schema scheduling
 -- Generado de diagram_41_scheduling.puml — NO editar a mano.
 
 
@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS "scheduling"."schedulable_resources" (
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
     "care_space_id" uuid,
+    "requires_approval" boolean NOT NULL DEFAULT true,
     CONSTRAINT "pk_schedulable_resources" PRIMARY KEY ("id")
 );
 

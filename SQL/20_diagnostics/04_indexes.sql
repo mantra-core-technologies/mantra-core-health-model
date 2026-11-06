@@ -1,4 +1,4 @@
--- SALUD v4.2.88 · módulo 20 · schema diagnostics
+-- SALUD v4.2.90 · módulo 20 · schema diagnostics
 -- Generado de diagram_20_diagnostics.puml — NO editar a mano.
 
 
@@ -617,3 +617,22 @@ CREATE INDEX IF NOT EXISTS "ix_service_request_performer_events_event_type_conce
 CREATE INDEX IF NOT EXISTS "ix_service_request_performer_events_recorded_by_user_id" ON "diagnostics"."service_request_performer_events" ("recorded_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_service_request_performer_events_tenant_request" ON "diagnostics"."service_request_performer_events" ("custodian_tenant_id", "service_request_id", "recorded_at" DESC);
+
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_report_drafts_tenant_request" ON "diagnostics"."report_drafts" ("custodian_tenant_id", "service_request_id");
+
+CREATE INDEX IF NOT EXISTS "ix_report_drafts_service_request_id" ON "diagnostics"."report_drafts" ("service_request_id");
+
+CREATE INDEX IF NOT EXISTS "ix_report_drafts_diagnostic_report_id" ON "diagnostics"."report_drafts" ("diagnostic_report_id");
+
+CREATE INDEX IF NOT EXISTS "ix_report_drafts_signer_profile_id" ON "diagnostics"."report_drafts" ("signer_profile_id");
+
+CREATE INDEX IF NOT EXISTS "ix_report_drafts_published_version_id" ON "diagnostics"."report_drafts" ("published_version_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_report_drafts_id_tenant" ON "diagnostics"."report_drafts" ("id", "custodian_tenant_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_report_draft_files_draft_file" ON "diagnostics"."report_draft_files" ("report_draft_id", "file_id");
+
+CREATE INDEX IF NOT EXISTS "ix_report_draft_files_file_id" ON "diagnostics"."report_draft_files" ("file_id");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_report_issuer_settings_tenant" ON "diagnostics"."report_issuer_settings" ("custodian_tenant_id");

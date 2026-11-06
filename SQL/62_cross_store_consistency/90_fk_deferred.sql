@@ -1,3 +1,3 @@
--- SALUD v4.2.88 · módulo 62 · schema cross_store_consistency
+-- SALUD v4.2.90 · módulo 62 · schema cross_store_consistency
 -- Generado de diagram_62_cross_store_consistency.puml — NO editar a mano.
 

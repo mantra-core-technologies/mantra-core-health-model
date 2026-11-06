@@ -1,5 +1,5 @@
 -- ============================================================================
--- SALUD · patch v4.2.88 · horario de atención declarado en el alta de organización (módulo 04 directory) sobre BD viva
+-- SALUD · patch v4.2.90 · horario de atención declarado en el alta de organización (módulo 04 directory) sobre BD viva
 -- Fecha: 2026-11-04
 -- Idempotente (IF NOT EXISTS / DROP CONSTRAINT IF EXISTS / duplicate_object). UNA sola pasada. Sin backfill.
 -- Contexto: gen_ddl.py y gen_integrity.py ya emiten esto en SQL/04_directory/ desde que

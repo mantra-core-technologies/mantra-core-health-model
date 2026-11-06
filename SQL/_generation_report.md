@@ -1,4 +1,4 @@
-# Reporte de generación SQL — SALUD v4.2.88
+# Reporte de generación SQL — SALUD v4.2.90
 
 Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vistas, stubs de cruce y stores no-SQL (Redis/Mongo/OpenSearch/vector/timeseries) se listan como *saltados*. Graph (61) y Lakehouse (63) SÍ se materializan como tablas PG (catálogo del plano de control). Las FK marcadas *inferidas* se resolvieron por convención cuando el vault no tenía destino.
 
@@ -24,7 +24,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 17 | billing | 26 | 181 | 0 | 204 | 25 |
 | 18 | clinical_ext | 14 | 100 | 0 | 113 | 4 |
 | 19 | community | 44 | 273 | 0 | 288 | 11 |
-| 20 | diagnostics | 37 | 258 | 2 | 308 | 4 |
+| 20 | diagnostics | 40 | 275 | 8 | 317 | 7 |
 | 21 | deployment _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
 | 22 | organization_extensions | 5 | 51 | 0 | 57 | 0 |
 | 23 | diagnostic_units | 16 | 115 | 2 | 124 | 3 |
@@ -75,7 +75,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 68 | qa_execution | 4 | 14 | 0 | 6 | 0 |
 | 69 | pharma_lab | 31 | 182 | 0 | 182 | 1 |
 | 70 | observability | 12 | 13 | 0 | 39 | 2 |
-| **Σ** | **71** | **1377** | | **6** | | **479** |
+| **Σ** | **71** | **1380** | | **6** | | **482** |
 
 ## Detalle de entidades saltadas y avisos
 
@@ -197,6 +197,9 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - `diagnostic_units_diagnostic_equipment` — stub de cruce (tabla real en su módulo dueño)
 - `clinical_service_requests` — stub de cruce (tabla real en su módulo dueño)
 - `directory_tenants` — stub de cruce (tabla real en su módulo dueño)
+- `clinical_diagnostic_reports` — stub de cruce (tabla real en su módulo dueño)
+- `profiles_health_practitioner_profiles` — stub de cruce (tabla real en su módulo dueño)
+- `common_files` — stub de cruce (tabla real en su módulo dueño)
 
 ### 23 · diagnostic_units
 - `directory_tenants` — stub de cruce (tabla real en su módulo dueño)

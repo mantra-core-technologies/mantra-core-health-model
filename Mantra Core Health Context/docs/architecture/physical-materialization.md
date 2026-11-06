@@ -49,7 +49,7 @@ comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_obje
 
 ## 3. Estado actual del build
 
-### v4.2.88 — Horario de atención en el alta de organización (2026-11-04)
+### v4.2.90 — Horario de atención en el alta de organización (2026-11-04)
 
 **Cambio de esquema: +1 tabla, +8 índices (más la PK), +5 FK, +4 CHECK.**
 
@@ -63,8 +63,25 @@ comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_obje
 - No modela turnos que crucen la medianoche: se declaran como dos días. Los turnos de guardia de
   farmacia siguen en `pharmacy.pharmacy_on_call_shifts` (v4.2.60).
 
-El parche `2026-11-04_v4288_tenant_opening_hours.sql` es idempotente y se copió del DDL generado.
+El parche `2026-11-06_v4290_tenant_opening_hours.sql` es idempotente y se copió del DDL generado.
 
+### v4.2.89 — Informe diagnóstico redactado (2026-11-05)
+
+**Cambio de esquema: +3 tablas, +9 índices (más 3 PK), +17 FK, +4 CHECK.** Hito H1 de «Conclusión de resultados»;
+la API es `mantra-core-health-api` PR #1358.
+
+- `diagnostics.report_drafts`: un borrador por `(custodian_tenant_id, service_request_id)`. Lo redacta el ejecutor de la
+  orden (laboratorio o imagen) o el médico que la emitió. `body_json` es el documento estructurado y `conclusion_text`
+  su texto plano derivado. Al publicar se escribe la versión FINAL inmutable en `diagnostic_report_versions`
+  (`published_version_id`) y el borrador queda congelado: `ck_report_drafts_published` exige versión, fecha y firmante.
+- `diagnostics.report_draft_files`: documento fuente, audio de respaldo (nunca visible al paciente) y anexos.
+- `diagnostics.report_issuer_settings`: firma, sello y responsable del emisor, uno por tenant.
+- Sin defaults de negocio: la API manda siempre `body_json`, `patient_visibility_code` y `status_code`.
+
+El parche `2026-11-05_v4289_informes_borradores.sql` es idempotente, escrito a mano y coincide con el DDL generado.
+Agrega lo que el generador no expresa: RLS `custodian_tenant_isolation` (ENABLE + FORCE) en las tres tablas, el
+disparador `integrity.report_draft_published_is_final` (un publicado y sus archivos no se tocan) y la FK compuesta
+`fk_report_draft_files_draft_tenant`. v4.2.88 es `requires_approval` de las agendas (módulo 41).
 ### v4.2.87 — Portal de laboratorio e imagenología (2026-11-04)
 
 **Cambio de esquema: +2 tablas, +3 columnas, +8 índices (más 2 PK), +8 FK.** Issue #116.

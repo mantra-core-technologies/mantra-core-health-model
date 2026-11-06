@@ -105,9 +105,21 @@ desenlaces del ejecutor de una orden) vive en `diagram_23_diagnostic_units.puml`
 incremental es `psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-04_v4287_lab_portal_categorias_disponibilidad_eventos.sql`
 (escrito a mano, idempotente; en el DDL generado, no-op sobre base nueva).
 
-El horario de atención del alta de organización (v4.2.88: `directory.tenant_opening_hours`, hasta dos turnos por día para la
+La confirmación de las solicitudes de consulta por agenda (v4.2.88: `scheduling.schedulable_resources.requires_approval`,
+`NOT NULL DEFAULT true`) vive en `diagram_41_scheduling.puml`. Su parche incremental es
+`psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-05_v4288_schedulable_resources_requires_approval.sql`
+(escrito a mano, idempotente; en el DDL generado, no-op sobre base nueva). No cambia ninguna fila de significado:
+toda agenda existente sigue pidiendo que el profesional acepte cada solicitud.
+
+El informe diagnóstico redactado (v4.2.89: `diagnostics.report_drafts`, `report_draft_files` y `report_issuer_settings`;
+el borrador de la conclusión de una orden, sus archivos y la firma y el sello del emisor) vive en `diagram_20_diagnostics.puml`.
+Su parche incremental es `psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-05_v4289_informes_borradores.sql`
+(escrito a mano, idempotente; trae la RLS por custodio, el disparador «publicado = inmutable» y la FK compuesta
+archivo↔borrador del mismo custodio, que el generador no expresa).
+
+El horario de atención del alta de organización (v4.2.90: `directory.tenant_opening_hours`, hasta dos turnos por día para la
 casa central y cada sucursal) vive en `diagram_04_directory.puml`. Su parche incremental es
-`psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-04_v4288_tenant_opening_hours.sql` (copiado del DDL generado;
+`psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4290_tenant_opening_hours.sql` (copiado del DDL generado;
 no-op sobre base nueva). Después, volver a correr `SQL/patches/2026-08-05_tenant_rls.sql` para que RLS cubra la tabla.
 
 Todos son idempotentes (una transacción, re-ejecutables). **Si se vuelve a ejecutar el v4275 después del v4278, hay que volver a

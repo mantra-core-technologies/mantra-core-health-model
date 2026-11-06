@@ -492,8 +492,8 @@ tenants ||--o| tenant_medical_facilities
 tenants ||--o{ tenant_medical_facility_sites
 tenant_medical_facility_sites }o--|| tenant_medical_facilities : medical_facility_id
 
-' ===== v4.2.88 (horario de atención declarado en el alta de organización) =====
-' + v4.2.88 — horario semanal de atención de la casa central y de cada sucursal, DECLARADO por
+' ===== v4.2.90 (horario de atención declarado en el alta de organización) =====
+' + v4.2.90 — horario semanal de atención de la casa central y de cada sucursal, DECLARADO por
 ' el titular en el alta (aseguradora, laboratorio, imagenología, farmacia, establecimiento médico).
 ' Una fila por turno: hasta dos turnos por día (`shift_ordinal` 1..2) para el cierre de mediodía.
 ' La sede se dice con a lo sumo una de dos columnas: `branch_id` (directory.branches: farmacia y

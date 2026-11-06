@@ -307,6 +307,82 @@ entity service_request_performer_events <<LOG>> {
 }
 service_request_performer_events }o--|| clinical_service_requests : service_request_id
 service_request_performer_events }o--|| directory_tenants : custodian_tenant_id
+' + v4.2.89: the written report of one order (H1, «Conclusión de resultados»). The laboratory or imaging
+' center that performs an order, or the practitioner who issued it, drafts the conclusion here and publishes it.
+' Publishing writes the immutable FINAL row in diagnostic_report_versions (published_version_id) and freezes the
+' draft: a PUBLISHED draft and its files are never updated or deleted (trigger in the v4.2.89 patch). One draft per
+' (custodian_tenant_id, service_request_id). body_json is the structured document {version, blocks[]}; the plain
+' conclusion_text is derived from it. Values the API always sends, so no business defaults are declared.
+entity "clinical.diagnostic_reports" as clinical_diagnostic_reports <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity "profiles.health_practitioner_profiles" as profiles_health_practitioner_profiles <<REFERENCE_ONLY>> {
+  * profile_id : uuid <<PK>>
+}
+entity "common.files" as common_files <<REFERENCE_ONLY>> {
+  * id : uuid <<PK>>
+}
+entity report_drafts {
+  * id : uuid <<PK>>
+  --
+  * custodian_tenant_id : uuid <<FK>>
+  * service_request_id : uuid <<FK>>
+    diagnostic_report_id : uuid <<FK>>
+  * body_json : jsonb
+    conclusion_text : text
+    signer_profile_id : uuid <<FK>>
+  * patient_visibility_code : varchar(8)
+  * status_code : varchar(10)
+    published_version_id : uuid <<FK>>
+    published_at : timestamptz
+    published_by_user_id : uuid <<FK>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+' Files of a draft: the source document (PDF/Word), the original audio (kept as backup, never shown to the
+' patient) and annexes. custodian_tenant_id repeats the draft's so RLS filters without a join; a composite FK in
+' the patch keeps both equal.
+entity report_draft_files {
+  * id : uuid <<PK>>
+  --
+  * report_draft_id : uuid <<FK>>
+  * custodian_tenant_id : uuid <<FK>>
+  * file_id : uuid <<FK>>
+  * role_code : varchar(10)
+  * ordinal : integer <<DEFAULT_INT:0>>
+  * created_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+}
+' Signature, seal and responsible person of the organization that issues reports (the «firma del laboratorio» on
+' the official PDF). One row per tenant.
+entity report_issuer_settings {
+  * id : uuid <<PK>>
+  --
+  * custodian_tenant_id : uuid <<FK>>
+    signature_file_id : uuid <<FK>>
+    seal_file_id : uuid <<FK>>
+    responsible_name : varchar(120)
+    responsible_title : varchar(120)
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+report_drafts }o--|| directory_tenants : custodian_tenant_id
+report_drafts }o--|| clinical_service_requests : service_request_id
+report_drafts }o--o| clinical_diagnostic_reports : diagnostic_report_id
+report_drafts }o--o| profiles_health_practitioner_profiles : signer_profile_id
+report_drafts }o--o| diagnostic_report_versions : published_version_id
+report_draft_files }o--|| report_drafts : report_draft_id
+report_draft_files }o--|| directory_tenants : custodian_tenant_id
+report_draft_files }o--|| common_files : file_id
+report_issuer_settings }o--|| directory_tenants : custodian_tenant_id
+report_issuer_settings }o--o| common_files : signature_file_id
+report_issuer_settings }o--o| common_files : seal_file_id
 specimen_collection_events }o--o| practice_care_spaces : collection_care_space_id
 imaging_procedure_steps }o--o| diagnostic_units_diagnostic_equipment : scheduled_equipment_id
 imaging_procedure_steps }o--o| practice_care_spaces : scheduled_care_space_id
@@ -1253,6 +1329,33 @@ entity "INDEXES · service_request_performer_events" as idxset_service_request_p
 }
 
 service_request_performer_events .. idxset_service_request_performer_events : indexed by
+
+entity "INDEXES · report_drafts" as idxset_report_drafts <<INDEX_SET>> {
+  PK pk_report_drafts : (id) UNIQUE BTREE
+  UX ux_report_drafts_tenant_request : (custodian_tenant_id, service_request_id) UNIQUE BTREE
+  IX ix_report_drafts_service_request_id : (service_request_id) BTREE
+  IX ix_report_drafts_diagnostic_report_id : (diagnostic_report_id) BTREE
+  IX ix_report_drafts_signer_profile_id : (signer_profile_id) BTREE
+  IX ix_report_drafts_published_version_id : (published_version_id) BTREE
+  UX ux_report_drafts_id_tenant : (id, custodian_tenant_id) UNIQUE BTREE
+}
+
+report_drafts .. idxset_report_drafts : indexed by
+
+entity "INDEXES · report_draft_files" as idxset_report_draft_files <<INDEX_SET>> {
+  PK pk_report_draft_files : (id) UNIQUE BTREE
+  UX ux_report_draft_files_draft_file : (report_draft_id, file_id) UNIQUE BTREE
+  IX ix_report_draft_files_file_id : (file_id) BTREE
+}
+
+report_draft_files .. idxset_report_draft_files : indexed by
+
+entity "INDEXES · report_issuer_settings" as idxset_report_issuer_settings <<INDEX_SET>> {
+  PK pk_report_issuer_settings : (id) UNIQUE BTREE
+  UX ux_report_issuer_settings_tenant : (custodian_tenant_id) UNIQUE BTREE
+}
+
+report_issuer_settings .. idxset_report_issuer_settings : indexed by
 
 }
 

@@ -1,7 +1,7 @@
-"""v4.2.88 — horario de atención declarado en el alta de organización.
+"""v4.2.90 — horario de atención declarado en el alta de organización.
 
 Sin base de datos: comprueba que el DDL generado (`SQL/04_directory/`) y el parche
-`2026-11-04_v4288_tenant_opening_hours.sql` declaran lo mismo, y que la tabla trae los
+`2026-11-06_v4290_tenant_opening_hours.sql` declaran lo mismo, y que la tabla trae los
 límites que el alta necesita (día ISO, dos turnos, cierre después de la apertura, una sede).
 """
 import re
@@ -11,7 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SQL = ROOT / "SQL"
 MODULE = SQL / "04_directory"
-PATCH = (SQL / "patches" / "2026-11-04_v4288_tenant_opening_hours.sql").read_text(encoding="utf-8")
+PATCH = (SQL / "patches" / "2026-11-06_v4290_tenant_opening_hours.sql").read_text(encoding="utf-8")
 TABLE = "tenant_opening_hours"
 
 
