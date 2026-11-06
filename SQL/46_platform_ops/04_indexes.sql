@@ -1,4 +1,4 @@
--- SALUD v4.2.95 · módulo 46 · schema platform_ops
+-- SALUD v4.2.97 · módulo 46 · schema platform_ops
 -- Generado de diagram_46_platform_ops.puml — NO editar a mano.
 
 

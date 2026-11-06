@@ -810,4 +810,26 @@ entity "profiles.practitioner_admissions" as profiles_practitioner_admissions <<
 entity "profiles.admission_requirements" as profiles_admission_requirements <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_admission_requirements_item_range | (COALESCE("min_items", 0) >= 0 AND ("max_items" IS NULL OR "max_items" >= COALESCE("min_items", 0)))
 }
+' + v4.2.97 — script de preguntas y preguntas frecuentes del profesional (modulo 09, REC 09.1 y
+' 09.2). Largos del contrato con la API y el front; el titulo y los textos no pueden ser solo
+' espacios. position es unico por lista con UNIQUE_SQL diferible: reordenar intercambia
+' posiciones y un indice unico no se puede diferir. La violacion sigue siendo 23505.
+entity "forms.question_scripts" as forms_question_scripts <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_question_scripts_title | char_length(btrim("title")) >= 1 AND char_length("title") <= 160
+  CHECK_SQL : ck_question_scripts_status | "status" IN ('active', 'archived')
+}
+entity "forms.question_script_items" as forms_question_script_items <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_question_script_items_question_text | char_length(btrim("question_text")) >= 1 AND char_length("question_text") <= 500
+  CHECK_SQL : ck_question_script_items_answer_type | "answer_type" IN ('free_text', 'yes_no', 'single_choice', 'multiple_choice', 'number', 'date')
+  CHECK_SQL : ck_question_script_items_position | "position" >= 0
+  ' options: arreglo JSON de textos no vacios; con dos o mas en las de opcion. jsonb_path_exists es IMMUTABLE.
+  CHECK_SQL : ck_question_script_items_options | ("options" IS NULL OR (jsonb_typeof("options") = 'array' AND NOT jsonb_path_exists("options", '$[*] ? (@.type() != "string" || @ like_regex "^ *$")'))) AND ("answer_type" NOT IN ('single_choice', 'multiple_choice') OR ("options" IS NOT NULL AND jsonb_array_length("options") >= 2))
+  UNIQUE_SQL : uq_question_script_items_script_position | "script_id", "position" | DEFERRABLE INITIALLY IMMEDIATE
+}
+entity "forms.faq_entries" as forms_faq_entries <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_faq_entries_question | char_length(btrim("question")) >= 1 AND char_length("question") <= 300
+  CHECK_SQL : ck_faq_entries_answer | char_length(btrim("answer")) >= 1 AND char_length("answer") <= 4000
+  CHECK_SQL : ck_faq_entries_position | "position" >= 0
+  UNIQUE_SQL : uq_faq_entries_owner_position | "owner_practitioner_id", "position" | DEFERRABLE INITIALLY IMMEDIATE
+}
 @enduml

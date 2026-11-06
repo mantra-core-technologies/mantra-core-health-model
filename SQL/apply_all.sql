@@ -120,6 +120,8 @@
 \ir 09_forms/03_fk_intra.sql
 \echo >>> 09_forms/04_indexes.sql
 \ir 09_forms/04_indexes.sql
+\echo >>> 09_forms/05_constraints.sql
+\ir 09_forms/05_constraints.sql
 
 -- ═══ módulo 10_audit ═══
 \echo >>> 10_audit/01_schema.sql

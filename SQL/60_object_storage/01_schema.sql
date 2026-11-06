@@ -1,4 +1,4 @@
--- SALUD v4.2.95 · módulo 60 · schema object_storage
+-- SALUD v4.2.97 · módulo 60 · schema object_storage
 -- Generado de diagram_60_object_storage.puml — NO editar a mano.
 
 CREATE SCHEMA IF NOT EXISTS "object_storage";

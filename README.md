@@ -158,6 +158,12 @@ viven en `diagram_08_clinical.puml` y `diagram_18_clinical_ext.puml`. Su parche 
 `psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4295_red_clinica_vinculos.sql` (copiado del DDL generado,
 más los comentarios de columna; no-op sobre base nueva salvo los comentarios). Sin backfill.
 
+El script de preguntas y las preguntas frecuentes del profesional (v4.2.97: `forms.question_scripts`,
+`forms.question_script_items` y `forms.faq_entries`, dueño `owner_practitioner_id` → `profiles.health_practitioner_profiles`)
+viven en `diagram_09_forms.puml` y sus CHECK y UNIQUE diferibles en `diagram_33_integrity.puml`. Su parche incremental es
+`psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4297_forms_guion_preguntas_y_faq.sql` (copiado del DDL generado,
+más comentarios y `GRANT` a `mantra_app`; no-op sobre base nueva salvo eso). Tablas nuevas, sin backfill.
+
 Todos son idempotentes (una transacción, re-ejecutables). **Si se vuelve a ejecutar el v4275 después del v4278, hay que volver a
 ejecutar el v4278 y el v4279**: el v4275 restituye las versiones anteriores de `refresh_effective_support_access` (que ya no excluiría un
 `DENY`) y de `integrity.support_tenant_consistency`, y el v4279 (que extiende esta última y reescribe `support_access_allowed`) las deja completas.
