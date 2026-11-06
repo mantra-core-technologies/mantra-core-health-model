@@ -1,4 +1,4 @@
--- SALUD v4.2.89 · módulo 04 · schema directory
+-- SALUD v4.2.90 · módulo 04 · schema directory
 -- Generado de diagram_04_directory.puml — NO editar a mano.
 
 
@@ -217,4 +217,21 @@ CREATE TABLE IF NOT EXISTS "directory"."tenant_medical_facility_sites" (
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
     CONSTRAINT "pk_tenant_medical_facility_sites" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "directory"."tenant_opening_hours" (
+    "id" uuid NOT NULL,
+    "tenant_id" uuid NOT NULL,
+    "branch_id" uuid,
+    "medical_facility_site_id" uuid,
+    "day_of_week" smallint NOT NULL,
+    "shift_ordinal" smallint NOT NULL,
+    "opens_at" time NOT NULL,
+    "closes_at" time NOT NULL,
+    "created_at" timestamptz NOT NULL,
+    "updated_at" timestamptz NOT NULL,
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_tenant_opening_hours" PRIMARY KEY ("id")
 );

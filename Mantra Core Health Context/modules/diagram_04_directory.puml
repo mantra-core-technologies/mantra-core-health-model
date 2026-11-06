@@ -492,4 +492,47 @@ tenants ||--o| tenant_medical_facilities
 tenants ||--o{ tenant_medical_facility_sites
 tenant_medical_facility_sites }o--|| tenant_medical_facilities : medical_facility_id
 
+' ===== v4.2.90 (horario de atención declarado en el alta de organización) =====
+' + v4.2.90 — horario semanal de atención de la casa central y de cada sucursal, DECLARADO por
+' el titular en el alta (aseguradora, laboratorio, imagenología, farmacia, establecimiento médico).
+' Una fila por turno: hasta dos turnos por día (`shift_ordinal` 1..2) para el cierre de mediodía.
+' La sede se dice con a lo sumo una de dos columnas: `branch_id` (directory.branches: farmacia y
+' centro de diagnóstico) o `medical_facility_site_id` (sucursal declarada del establecimiento
+' médico). Las dos en NULL = casa central de la organización. «Abierto las 24 h» es 00:00–24:00
+' (el tipo `time` admite 24:00). Sin turnos nocturnos que crucen la medianoche: se parten en dos días.
+' `day_of_week` es ISO-8601: 1 = lunes … 7 = domingo. `tenant_id` se repite para que RLS filtre sin join.
+entity tenant_opening_hours {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+    branch_id : uuid <<FK>>
+    medical_facility_site_id : uuid <<FK>>
+  * day_of_week : smallint
+  * shift_ordinal : smallint
+  * opens_at : time
+  * closes_at : time
+  * created_at : timestamptz
+  * updated_at : timestamptz
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity "INDEXES · tenant_opening_hours" as idxset_tenant_opening_hours <<INDEX_SET>> {
+  PK pk_tenant_opening_hours : (id) UNIQUE BTREE
+  IX ix_tenant_opening_hours_tenant_id : (tenant_id) BTREE
+  IX ix_tenant_opening_hours_branch_id : (branch_id) BTREE
+  IX ix_tenant_opening_hours_medical_facility_site_id : (medical_facility_site_id) BTREE
+  UX ux_tenant_opening_hours_headquarters_shift : (tenant_id, day_of_week, shift_ordinal) UNIQUE BTREE WHERE branch_id IS NULL AND medical_facility_site_id IS NULL
+  UX ux_tenant_opening_hours_branch_shift : (branch_id, day_of_week, shift_ordinal) UNIQUE BTREE WHERE branch_id IS NOT NULL
+  UX ux_tenant_opening_hours_facility_site_shift : (medical_facility_site_id, day_of_week, shift_ordinal) UNIQUE BTREE WHERE medical_facility_site_id IS NOT NULL
+  IX ix_tenant_opening_hours_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_tenant_opening_hours_updated_by_user_id : (updated_by_user_id) BTREE
+}
+tenant_opening_hours .. idxset_tenant_opening_hours : indexed by
+
+tenants ||--o{ tenant_opening_hours
+tenant_opening_hours }o--o| branches : branch_id
+tenant_opening_hours }o--o| tenant_medical_facility_sites : medical_facility_site_id
+
 @enduml

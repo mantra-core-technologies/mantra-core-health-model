@@ -1,4 +1,4 @@
--- SALUD v4.2.89 · módulo 04 · schema directory
+-- SALUD v4.2.90 · módulo 04 · schema directory
 -- Generado de diagram_04_directory.puml — NO editar a mano.
 
 
@@ -433,5 +433,19 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN
     ALTER TABLE "directory"."tenant_medical_facility_sites"
         ADD CONSTRAINT "fk_tenant_medical_facility_sites_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "directory"."tenant_opening_hours"
+        ADD CONSTRAINT "fk_tenant_opening_hours_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "directory"."tenant_opening_hours"
+        ADD CONSTRAINT "fk_tenant_opening_hours_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;

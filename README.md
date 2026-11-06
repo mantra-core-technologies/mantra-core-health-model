@@ -117,6 +117,11 @@ Su parche incremental es `psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-
 (escrito a mano, idempotente; trae la RLS por custodio, el disparador «publicado = inmutable» y la FK compuesta
 archivo↔borrador del mismo custodio, que el generador no expresa).
 
+El horario de atención del alta de organización (v4.2.90: `directory.tenant_opening_hours`, hasta dos turnos por día para la
+casa central y cada sucursal) vive en `diagram_04_directory.puml`. Su parche incremental es
+`psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4290_tenant_opening_hours.sql` (copiado del DDL generado;
+no-op sobre base nueva). Después, volver a correr `SQL/patches/2026-08-05_tenant_rls.sql` para que RLS cubra la tabla.
+
 Todos son idempotentes (una transacción, re-ejecutables). **Si se vuelve a ejecutar el v4275 después del v4278, hay que volver a
 ejecutar el v4278 y el v4279**: el v4275 restituye las versiones anteriores de `refresh_effective_support_access` (que ya no excluiría un
 `DENY`) y de `integrity.support_tenant_consistency`, y el v4279 (que extiende esta última y reescribe `support_access_allowed`) las deja completas.

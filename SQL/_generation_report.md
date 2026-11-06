@@ -1,4 +1,4 @@
-# Reporte de generación SQL — SALUD v4.2.89
+# Reporte de generación SQL — SALUD v4.2.90
 
 Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vistas, stubs de cruce y stores no-SQL (Redis/Mongo/OpenSearch/vector/timeseries) se listan como *saltados*. Graph (61) y Lakehouse (63) SÍ se materializan como tablas PG (catálogo del plano de control). Las FK marcadas *inferidas* se resolvieron por convención cuando el vault no tenía destino.
 
@@ -8,7 +8,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 01 | iam | 15 | 80 | 0 | 72 | 0 |
 | 02 | common | 7 | 49 | 0 | 56 | 0 |
 | 03 | terminology | 16 | 80 | 0 | 103 | 0 |
-| 04 | directory | 11 | 78 | 0 | 82 | 2 |
+| 04 | directory | 12 | 83 | 0 | 90 | 2 |
 | 05 | profiles | 24 | 166 | 0 | 177 | 0 |
 | 06 | authz | 17 | 110 | 0 | 107 | 0 |
 | 07 | consent | 10 | 81 | 0 | 103 | 0 |
@@ -37,7 +37,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 30 | read_models | 13 | 74 | 0 | 89 | 76 |
 | 31 | integration_contracts | 9 | 48 | 0 | 57 | 0 |
 | 32 | workflow | 8 | 49 | 0 | 55 | 9 |
-| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 118 |
+| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 119 |
 | 34 | portal_catalog _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
 | 35 | messaging | 22 | 142 | 0 | 150 | 0 |
 | 36 | qa_lab | 13 | 79 | 0 | 92 | 0 |
@@ -75,7 +75,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 68 | qa_execution | 4 | 14 | 0 | 6 | 0 |
 | 69 | pharma_lab | 31 | 182 | 0 | 182 | 1 |
 | 70 | observability | 12 | 13 | 0 | 39 | 2 |
-| **Σ** | **71** | **1379** | | **6** | | **481** |
+| **Σ** | **71** | **1380** | | **6** | | **482** |
 
 ## Detalle de entidades saltadas y avisos
 
@@ -440,6 +440,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - `delegated_access_access_anomalies` — stub de cruce (tabla real en su módulo dueño)
 - `directory_tenant_medical_facilities` — stub de cruce (tabla real en su módulo dueño)
 - `directory_tenant_medical_facility_sites` — stub de cruce (tabla real en su módulo dueño)
+- `directory_tenant_opening_hours` — stub de cruce (tabla real en su módulo dueño)
 - `profiles_practitioner_admission_events` — stub de cruce (tabla real en su módulo dueño)
 - `profiles_practitioner_admissions` — stub de cruce (tabla real en su módulo dueño)
 - `profiles_admission_requirements` — stub de cruce (tabla real en su módulo dueño)

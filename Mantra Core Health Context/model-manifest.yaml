@@ -1,6 +1,6 @@
 model:
   name: SALUD
-  version: 4.2.89
+  version: 4.2.90
   status: canonical-polyglot-nosql-health-platform
   generated_at: '2026-11-06'
   design_patches:
@@ -328,6 +328,15 @@ model:
       diagnostics.report_issuer_settings (firma, sello y responsable del emisor). RLS por custodio y disparador
       de inmutabilidad en el parche. v4.2.88 es requires_approval de agendas (módulo 41). Parche escrito a
       mano: 2026-11-05_v4289_informes_borradores.sql.
+  - id: patch-v4.2.90-tenant-opening-hours
+    role: product-features
+    doc: docs/architecture/physical-materialization.md (v4.2.90)
+    status: materialized-in-er
+    summary: >-
+      Horario de atención declarado en el alta de organización: directory.tenant_opening_hours, una fila
+      por turno (hasta dos por día, día ISO 1..7), para la casa central (sin sede) o una sucursal
+      (directory.branches o tenant_medical_facility_sites, a lo sumo una). 24 h = 00:00–24:00. Parche
+      copiado del DDL generado: 2026-11-06_v4290_tenant_opening_hours.sql.
   materialization_note: >-
     v4.0.1 materializado en el ER (fuente: el vault/grafo). Se añadieron 14
     entidades nuevas (marketing.campaign_schedules/dispatches/dispatch_recipients,
