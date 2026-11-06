@@ -1,4 +1,4 @@
--- SALUD v4.2.92 · módulo 24 · schema pharmacy
+-- SALUD v4.2.93 · módulo 24 · schema pharmacy
 -- Generado de diagram_24_pharmacy.puml — NO editar a mano.
 
 

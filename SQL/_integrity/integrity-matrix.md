@@ -1,4 +1,4 @@
-# Matriz de integridad y concurrencia — SALUD v4.2.92 (módulo 33)
+# Matriz de integridad y concurrencia — SALUD v4.2.93 (módulo 33)
 
 El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación cross-dominio. Cada regla se implementa en la **migración de la tabla dueña** (su módulo) y se repite aquí como referencia. Extraído fielmente del `.puml`.
 
@@ -265,6 +265,7 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 | `surveys.survey_invitations` | `REFERENCE_ONLY` | **CHECK_SQL** ck_survey_invitations_anchor \| ("appointment_booking_id" IS NOT NULL OR "subject_id" IS NOT NULL) AND (("subject_type_concept_id" IS NULL) = ("subject_id" IS NULL)); **CHECK_SQL** ck_survey_invitations_extension_distinct \| "extension_survey_version_id" IS NULL OR "extension_survey_version_id" <> "survey_version_id" |
 | `surveys.survey_invitation_reminders` | `REFERENCE_ONLY` | **CHECK_SQL** ck_survey_invitation_reminders_number \| "reminder_number" >= 1 |
 | `surveys.survey_answers` | `REFERENCE_ONLY` | **CHECK_SQL** ck_survey_answers_single_value \| num_nonnulls("value_text", "value_number", "value_boolean", "value_choices") = 1 |
+| `surveys.survey_assignments` | `REFERENCE_ONLY` | **TRIGGER_SQL** trg_survey_assignments_owner_from_template \| BEFORE INSERT OR UPDATE OF "survey_version_id", "owner_practitioner_id" \| survey_assignment_owner_from_template \| SECURITY DEFINER |
 
 ### Módulo 11 · `system_ops`
 
@@ -292,5 +293,5 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 ## Cómo se materializa
 
 - **`SQL/_integrity/00_integrity_functions.sql`** — schema `integrity` + `forbid_mutation()` (guarda de inmutabilidad).
-- **`SQL/<NN>_<schema>/05_constraints.sql`** — por módulo dueño: guarda concreta para `UPDATE_DELETE: forbidden`, `CHECK_SQL` y `EXCLUDE_SQL`; las UK/CHECK/EXCLUDE en prosa quedan como comentario con la regla textual (el modelo no declara su expresión SQL) y la lista de índices únicos que la tabla ya tiene.
+- **`SQL/<NN>_<schema>/05_constraints.sql`** — por módulo dueño: guarda concreta para `UPDATE_DELETE: forbidden`, `CHECK_SQL`, `EXCLUDE_SQL` y `TRIGGER_SQL` (cuerpo en la nota `FUNCTION_SQL_<función>`); las UK/CHECK/EXCLUDE en prosa quedan como comentario con la regla textual (el modelo no declara su expresión SQL) y la lista de índices únicos que la tabla ya tiene.
 - **Concurrencia** (`LOCK`/`SERIALIZABLE`/`SKIP LOCKED`/outbox) → capa de servicio (MikroORM Unit of Work + retry en `SQLSTATE 40001`), ver orm-mapping-guide §0.

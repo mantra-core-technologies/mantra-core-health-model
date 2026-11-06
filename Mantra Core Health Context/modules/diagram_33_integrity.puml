@@ -406,6 +406,38 @@ entity "surveys.survey_answers" as surveys_survey_answers <<REFERENCE_ONLY>> {
   ' SURV-02 (REC 65.3): exactamente una columna value_* con valor.
   CHECK_SQL : ck_survey_answers_single_value | num_nonnulls("value_text", "value_number", "value_boolean", "value_choices") = 1
 }
+entity "surveys.survey_assignments" as surveys_survey_assignments <<REFERENCE_ONLY>> {
+  ' v4.2.93 (REC 65.9): el dueno de la asignacion es el de la plantilla de su version. Un CHECK no
+  ' alcanza otra tabla: disparador que lo completa si llega NULL y rechaza (check_violation) otro valor.
+  ' SECURITY DEFINER para leer la plantilla aunque el RLS del que escribe no la deje ver.
+  TRIGGER_SQL : trg_survey_assignments_owner_from_template | BEFORE INSERT OR UPDATE OF "survey_version_id", "owner_practitioner_id" | survey_assignment_owner_from_template | SECURITY DEFINER
+}
+note as FUNCTION_SQL_survey_assignment_owner_from_template
+  DECLARE
+      template_owner uuid;
+      template_tenant uuid;
+  BEGIN
+      -- SECURITY DEFINER bypasses RLS: never trust a version from another tenant and
+      -- never echo the template owner back in an error message.
+      SELECT t.owner_practitioner_id, t.tenant_id INTO template_owner, template_tenant
+        FROM surveys.survey_versions v
+        JOIN surveys.survey_templates t ON t.id = v.survey_template_id
+       WHERE v.id = NEW.survey_version_id;
+      IF NOT FOUND OR template_tenant IS DISTINCT FROM NEW.tenant_id THEN
+          RAISE EXCEPTION 'survey_assignments: la versión % no existe en el tenant de la asignación',
+              NEW.survey_version_id
+              USING ERRCODE = 'foreign_key_violation';
+      END IF;
+      IF NEW.owner_practitioner_id IS NULL THEN
+          NEW.owner_practitioner_id := template_owner;
+      ELSIF NEW.owner_practitioner_id IS DISTINCT FROM template_owner THEN
+          RAISE EXCEPTION 'survey_assignments: owner_practitioner_id no es el dueño de la plantilla de la versión %',
+              NEW.survey_version_id
+              USING ERRCODE = 'check_violation';
+      END IF;
+      RETURN NEW;
+  END
+end note
 entity "clinical_ext.cds_rule_versions" as clinical_ext_cds_rule_versions <<REFERENCE_ONLY>> {
   ' CE-03: las instantaneas de una regla CDS no se editan. UPDATE prohibido; DELETE queda libre
   ' (igual que data_access_log) para no atar la limpieza de la integracion.

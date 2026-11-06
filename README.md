@@ -141,8 +141,10 @@ Las encuestas estandarizadas por servicio (v4.2.91: `surveys.survey_assignments.
 profesional — y `surveys.survey_templates.standard_catalog_code`, la entrada `STD_*` del catálogo de la que se importó)
 viven en `diagram_65_surveys.puml`. Su parche es
 `psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4291_surveys_encuesta_por_servicio.sql` (idempotente;
-desactiva antes los duplicados activos conservando el más nuevo). Se aplica **también sobre base nueva**: trae el
-disparador que mantiene el dueño de la asignación igual al de la plantilla, que el generador no expresa.
+desactiva antes los duplicados activos conservando el más nuevo). Desde v4.2.93 el disparador que mantiene el dueño de
+la asignación igual al de la plantilla (`trg_survey_assignments_owner_from_template`) también lo declara
+`diagram_33_integrity.puml` (`TRIGGER_SQL` + nota `FUNCTION_SQL_<función>`) y sale en `SQL/65_surveys/05_constraints.sql`:
+una base nueva lo tiene con `apply_all.sql`, y el parche queda como incremental para bases vivas.
 
 Todos son idempotentes (una transacción, re-ejecutables). **Si se vuelve a ejecutar el v4275 después del v4278, hay que volver a
 ejecutar el v4278 y el v4279**: el v4275 restituye las versiones anteriores de `refresh_effective_support_access` (que ya no excluiría un

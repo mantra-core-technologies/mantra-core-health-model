@@ -49,6 +49,21 @@ comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_obje
 
 ## 3. Estado actual del build
 
+### v4.2.93 — El disparador del dueño de la asignación de encuesta, en el modelo (2026-11-06)
+
+**Sin cambio de esquema sobre una base con el parche v4.2.91; +1 función y +1 disparador en el DDL base.**
+
+- `trg_survey_assignments_owner_from_template` y su función `integrity.survey_assignment_owner_from_template()`
+  (v4.2.91) vivían sólo en el parche, así que una base creada desde cero con `apply_all.sql` no los tenía. Ahora los
+  declara `diagram_33_integrity.puml` y `gen_integrity.py` los emite en `SQL/65_surveys/05_constraints.sql`.
+- Mecanismo nuevo del generador, a la par de `CHECK_SQL` y `EXCLUDE_SQL`:
+  `TRIGGER_SQL : <trigger> | <BEFORE|AFTER eventos> | <función> [| SECURITY DEFINER]`, con el cuerpo plpgsql
+  (`DECLARE … END`) en la nota `FUNCTION_SQL_<función>` del módulo 33. El generador sólo envuelve el cuerpo en
+  `integrity.<función>()` (con `SECURITY DEFINER` fija `search_path` y revoca el EXECUTE público) y crea el
+  disparador de fila; no compone ninguna sentencia del cuerpo (temperatura-0).
+- El SQL emitido es byte a byte el del parche `2026-11-06_v4291_surveys_encuesta_por_servicio.sql`, que sigue siendo
+  el incremental para bases vivas (idempotente; sobre una base nueva ya no hace falta para el disparador).
+
 ### v4.2.92 — Categoría de la sede en `directory.branches` (2026-11-06)
 
 **Cambio de esquema: +1 columna, +2 índices, +1 CHECK.**

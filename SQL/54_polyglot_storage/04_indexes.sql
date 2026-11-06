@@ -1,4 +1,4 @@
--- SALUD v4.2.92 · módulo 54 · schema polyglot_storage
+-- SALUD v4.2.93 · módulo 54 · schema polyglot_storage
 -- Generado de diagram_54_polyglot_storage.puml — NO editar a mano.
 
 
