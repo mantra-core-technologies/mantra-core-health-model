@@ -1,5 +1,5 @@
 -- ============================================================================
--- SALUD · patch v4.2.94 · red clínica del paciente, franja 1: vínculos (módulos 08 clinical y 18 clinical_ext) sobre BD viva
+-- SALUD · patch v4.2.95 · red clínica del paciente, franja 1: vínculos (módulos 08 clinical y 18 clinical_ext) sobre BD viva
 -- Fecha: 2026-11-06
 -- Idempotente (ADD COLUMN IF NOT EXISTS / CREATE INDEX IF NOT EXISTS / FK bajo duplicate_object).
 -- UNA sola transacción, re-ejecutable. SIN backfill.

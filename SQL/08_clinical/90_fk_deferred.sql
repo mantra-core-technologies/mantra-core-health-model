@@ -1,4 +1,4 @@
--- SALUD v4.2.94 · módulo 08 · schema clinical
+-- SALUD v4.2.95 · módulo 08 · schema clinical
 -- Generado de diagram_08_clinical.puml — NO editar a mano.
 
 
@@ -804,6 +804,13 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN
     ALTER TABLE "clinical"."service_requests"
         ADD CONSTRAINT "fk_service_requests_contrast_concept_id" FOREIGN KEY ("contrast_concept_id")
+        REFERENCES "terminology"."catalog_concepts" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: terminology.catalog_concepts (requiere schema terminology)
+DO $$ BEGIN
+    ALTER TABLE "clinical"."service_requests"
+        ADD CONSTRAINT "fk_service_requests_bone_type_concept_id" FOREIGN KEY ("bone_type_concept_id")
         REFERENCES "terminology"."catalog_concepts" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 

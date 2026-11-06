@@ -146,10 +146,16 @@ la asignación igual al de la plantilla (`trg_survey_assignments_owner_from_temp
 `diagram_33_integrity.puml` (`TRIGGER_SQL` + nota `FUNCTION_SQL_<función>`) y sale en `SQL/65_surveys/05_constraints.sql`:
 una base nueva lo tiene con `apply_all.sql`, y el parche queda como incremental para bases vivas.
 
-Los vínculos de la red clínica del paciente (v4.2.94: `clinical.service_requests.reason_condition_id`,
+La marca 3D del cuerpo y el tipo de hueso de la orden de estudio (v4.2.94: `clinical.service_requests.body_structure_uberon`,
+`body_mesh_id` y `bone_type_concept_id`, más la ampliación de `ck_service_requests_specimen_xor_imaging`) viven en
+`diagram_08_clinical.puml` y `diagram_33_integrity.puml`. Su parche es
+`psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4294_service_request_3d_site_bone_type.sql` (idempotente; también
+siembra los cinco conceptos `clinical:BONE_TYPE_*` con su procedencia UBERON). Sobre una base nueva no hace falta para el esquema.
+
+Los vínculos de la red clínica del paciente (v4.2.95: `clinical.service_requests.reason_condition_id`,
 `clinical_ext.referrals.target_encounter_id` y `clinical.conditions.replaced_by_condition_id`, uuid NULL con FK e índice)
 viven en `diagram_08_clinical.puml` y `diagram_18_clinical_ext.puml`. Su parche incremental es
-`psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4294_red_clinica_vinculos.sql` (copiado del DDL generado,
+`psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4295_red_clinica_vinculos.sql` (copiado del DDL generado,
 más los comentarios de columna; no-op sobre base nueva salvo los comentarios). Sin backfill.
 
 Todos son idempotentes (una transacción, re-ejecutables). **Si se vuelve a ejecutar el v4275 después del v4278, hay que volver a

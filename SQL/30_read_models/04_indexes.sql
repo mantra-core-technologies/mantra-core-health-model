@@ -1,4 +1,4 @@
--- SALUD v4.2.94 · módulo 30 · schema read_models
+-- SALUD v4.2.95 · módulo 30 · schema read_models
 -- Generado de diagram_30_read_models.puml — NO editar a mano.
 
 

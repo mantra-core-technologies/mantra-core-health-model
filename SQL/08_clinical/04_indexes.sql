@@ -1,4 +1,4 @@
--- SALUD v4.2.94 · módulo 08 · schema clinical
+-- SALUD v4.2.95 · módulo 08 · schema clinical
 -- Generado de diagram_08_clinical.puml — NO editar a mano.
 
 
@@ -295,6 +295,10 @@ CREATE INDEX IF NOT EXISTS "ix_service_requests_body_site_concept_id" ON "clinic
 CREATE INDEX IF NOT EXISTS "ix_service_requests_laterality_concept_id" ON "clinical"."service_requests" ("laterality_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_service_requests_contrast_concept_id" ON "clinical"."service_requests" ("contrast_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_service_requests_bone_type_concept_id" ON "clinical"."service_requests" ("bone_type_concept_id");
+
+CREATE INDEX IF NOT EXISTS "ix_service_requests_body_structure_uberon" ON "clinical"."service_requests" ("body_structure_uberon");
 
 CREATE INDEX IF NOT EXISTS "ix_service_requests_requisition_id" ON "clinical"."service_requests" ("custodian_tenant_id", "requisition_id");
 

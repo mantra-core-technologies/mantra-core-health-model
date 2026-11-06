@@ -1,6 +1,6 @@
 model:
   name: SALUD
-  version: 4.2.94
+  version: 4.2.95
   status: canonical-polyglot-nosql-health-platform
   generated_at: '2026-11-06'
   design_patches:
@@ -370,9 +370,22 @@ model:
       gen_integrity.py lo emite en SQL/65_surveys/05_constraints.sql, así que una base creada desde cero lo tiene sin
       el parche. Sin parche nuevo: 2026-11-06_v4291_surveys_encuesta_por_servicio.sql sigue siendo el incremental
       (idempotente, mismo SQL byte a byte).
-  - id: patch-v4.2.94-red-clinica-vinculos
+  - id: patch-v4.2.94-service-request-3d-site-bone-type
     role: product-features
     doc: docs/architecture/physical-materialization.md (v4.2.94)
+    status: materialized-in-er
+    summary: >-
+      La orden de estudio de imagen guarda la marca hecha en el modelo 3D del cuerpo y el tipo de hueso:
+      clinical.service_requests.body_structure_uberon y body_mesh_id (varchar(64), referencia sin FK) y
+      bone_type_concept_id (FK a terminology.catalog_concepts; value set bone-type: largo, corto, plano,
+      irregular, sesamoideo, clasificación anatómica de UBERON/FMA). Las columnas de muestra, modalidad,
+      parte del cuerpo, lateralidad y contraste ya venían en v4.2.82. ck_service_requests_specimen_xor_imaging
+      se amplía a las tres columnas nuevas; ck_service_requests_bone_type_requires_location exige ubicación.
+      Parche 2026-11-06_v4294_service_request_3d_site_bone_type.sql: siembra los cinco conceptos del tipo
+      de hueso (ids derivados de la clave, con procedencia en terminology.concept_properties).
+  - id: patch-v4.2.95-red-clinica-vinculos
+    role: product-features
+    doc: docs/architecture/physical-materialization.md (v4.2.95)
     status: materialized-in-er
     summary: >-
       Red clínica del paciente, franja 1: tres vínculos uuid NULL con FK e índice.
@@ -380,7 +393,7 @@ model:
       clinical_ext.referrals.target_encounter_id → clinical.encounters (atención de destino de la derivación) y
       clinical.conditions.replaced_by_condition_id → clinical.conditions (diagnóstico descartado reemplazado por
       este). Sin backfill; mismo paciente, REFUTED y tenant destino los valida la API. Parche copiado del DDL
-      generado, con COMMENT ON COLUMN: 2026-11-06_v4294_red_clinica_vinculos.sql.
+      generado, con COMMENT ON COLUMN: 2026-11-06_v4295_red_clinica_vinculos.sql.
   materialization_note: >-
     v4.0.1 materializado en el ER (fuente: el vault/grafo). Se añadieron 14
     entidades nuevas (marketing.campaign_schedules/dispatches/dispatch_recipients,

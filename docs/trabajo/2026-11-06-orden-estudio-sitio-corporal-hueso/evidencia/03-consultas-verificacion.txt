@@ -1,0 +1,68 @@
+# Consultas de verificación (97.7.4): conteos, huérfanos, duplicados, nulos
+-- conceptos bone-type (esperado 5)
+             code             |    display     |                  id                  
+------------------------------+----------------+--------------------------------------
+ clinical:BONE_TYPE_FLAT      | Flat bone      | bc930351-dbba-5ac5-bf01-d78909c21559
+ clinical:BONE_TYPE_IRREGULAR | Irregular bone | 043dfefa-d354-515e-b618-cc79a2bf1aab
+ clinical:BONE_TYPE_LONG      | Long bone      | c5977762-07fa-55dd-8c0e-fc5358ac72ec
+ clinical:BONE_TYPE_SESAMOID  | Sesamoid bone  | 27274b9b-5495-5cce-8fa7-3be82a22b7d2
+ clinical:BONE_TYPE_SHORT     | Short bone     | f02120f7-c5d1-5747-8dcc-f2ade3d18cd4
+(5 rows)
+
+-- procedencia: una fila provenance por concepto (esperado 5) y datos clave
+             code             |     uberon     |    fma    |    rel     |    lic    |   kind   
+------------------------------+----------------+-----------+------------+-----------+----------
+ clinical:BONE_TYPE_FLAT      | UBERON:0010428 | FMA:7476  | 2026-10-01 | CC-BY 3.0 | internal
+ clinical:BONE_TYPE_IRREGULAR | UBERON:0008001 | FMA:7477  | 2026-10-01 | CC-BY 3.0 | internal
+ clinical:BONE_TYPE_LONG      | UBERON:0002495 | FMA:7474  | 2026-10-01 | CC-BY 3.0 | internal
+ clinical:BONE_TYPE_SESAMOID  | UBERON:0001479 | FMA:32672 | 2026-10-01 | CC-BY 3.0 | internal
+ clinical:BONE_TYPE_SHORT     | UBERON:0013630 | FMA:7475  | 2026-10-01 | CC-BY 3.0 | internal
+(5 rows)
+
+-- duplicados de code (esperado 0 filas)
+ code | count 
+------+-------
+(0 rows)
+
+-- propiedades huérfanas (esperado 0)
+ count 
+-------
+     0
+(1 row)
+
+-- propiedades duplicadas por (concepto, property_code) (esperado 0 filas)
+ concept_id | property_code | count 
+------------+---------------+-------
+(0 rows)
+
+-- nulos indebidos en conceptos (esperado 0)
+ count 
+-------
+     0
+(1 row)
+
+-- cadena de terminología (1/1/1)
+ src | cs | csv 
+-----+----+-----
+   1 |  1 |   1
+(1 row)
+
+-- FK/CHECK/índices nuevos
+                     conname                     | convalidated 
+-------------------------------------------------+--------------
+ ck_service_requests_bone_type_requires_location | t
+ ck_service_requests_specimen_xor_imaging        | t
+ fk_service_requests_bone_type_concept_id        | t
+(3 rows)
+
+                 indexname                 
+-------------------------------------------
+ ix_service_requests_body_structure_uberon
+ ix_service_requests_bone_type_concept_id
+(2 rows)
+
+ columnas 
+----------
+       32
+(1 row)
+

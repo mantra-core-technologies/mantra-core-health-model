@@ -1,0 +1,44 @@
+# Parche v4.2.94 sobre una base "viva" creada con el SQL de origin/dev (PostgreSQL 16.15, base descartable)
+## 1a corrida
+BEGIN
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+DO
+ALTER TABLE
+ALTER TABLE
+psql:SQL/patches/2026-11-06_v4294_service_request_3d_site_bone_type.sql:96: NOTICE:  constraint "ck_service_requests_bone_type_requires_location" of relation "service_requests" does not exist, skipping
+ALTER TABLE
+ALTER TABLE
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 5
+INSERT 0 5
+psql:SQL/patches/2026-11-06_v4294_service_request_3d_site_bone_type.sql:181: NOTICE:  v4.2.94 aplicado: marca 3D y tipo de hueso en clinical.service_requests; 5 conceptos bone-type con procedencia.
+DO
+COMMIT
+
+## 2a corrida (idempotencia: INSERT 0 0 en las cinco semillas)
+BEGIN
+psql:SQL/patches/2026-11-06_v4294_service_request_3d_site_bone_type.sql:71: NOTICE:  column "body_structure_uberon" of relation "service_requests" already exists, skipping
+psql:SQL/patches/2026-11-06_v4294_service_request_3d_site_bone_type.sql:71: NOTICE:  column "body_mesh_id" of relation "service_requests" already exists, skipping
+psql:SQL/patches/2026-11-06_v4294_service_request_3d_site_bone_type.sql:71: NOTICE:  column "bone_type_concept_id" of relation "service_requests" already exists, skipping
+ALTER TABLE
+psql:SQL/patches/2026-11-06_v4294_service_request_3d_site_bone_type.sql:74: NOTICE:  relation "ix_service_requests_bone_type_concept_id" already exists, skipping
+CREATE INDEX
+psql:SQL/patches/2026-11-06_v4294_service_request_3d_site_bone_type.sql:75: NOTICE:  relation "ix_service_requests_body_structure_uberon" already exists, skipping
+CREATE INDEX
+DO
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+INSERT 0 0
+INSERT 0 0
+INSERT 0 0
+INSERT 0 0
+INSERT 0 0
+psql:SQL/patches/2026-11-06_v4294_service_request_3d_site_bone_type.sql:181: NOTICE:  v4.2.94 aplicado: marca 3D y tipo de hueso en clinical.service_requests; 5 conceptos bone-type con procedencia.
+DO
+COMMIT

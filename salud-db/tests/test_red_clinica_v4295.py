@@ -1,7 +1,7 @@
-"""v4.2.94 — red clínica del paciente, franja 1: tres vínculos nuevos.
+"""v4.2.95 — red clínica del paciente, franja 1: tres vínculos nuevos.
 
 Sin base de datos: comprueba que el DDL generado (`SQL/08_clinical/`, `SQL/18_clinical_ext/`)
-y el parche `2026-11-06_v4294_red_clinica_vinculos.sql` declaran las mismas columnas, FK e
+y el parche `2026-11-06_v4295_red_clinica_vinculos.sql` declaran las mismas columnas, FK e
 índices, que cada FK apunta a su destino y que el parche es una sola transacción idempotente.
 """
 import re
@@ -10,7 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SQL = ROOT / "SQL"
-PATCH = (SQL / "patches" / "2026-11-06_v4294_red_clinica_vinculos.sql").read_text(encoding="utf-8")
+PATCH = (SQL / "patches" / "2026-11-06_v4295_red_clinica_vinculos.sql").read_text(encoding="utf-8")
 
 # (módulo, schema, tabla, columna, schema destino, tabla destino, archivo de la FK)
 LINKS = (
@@ -39,7 +39,7 @@ def fk_stmt(col_table: str, col: str, schema: str, dst_schema: str, dst_table: s
             f'        REFERENCES "{dst_schema}"."{dst_table}" ("id");\n')
 
 
-class RedClinicaV4294(unittest.TestCase):
+class RedClinicaV4295(unittest.TestCase):
     def test_columns_are_nullable_uuid_in_ddl_and_patch(self):
         for module, schema, table, col, *_ in LINKS:
             body = table_body(generated(module, "02_tables.sql"), schema, table)

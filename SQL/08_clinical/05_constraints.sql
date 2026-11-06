@@ -1,4 +1,4 @@
--- SALUD v4.2.94 · schema clinical · constraints de integridad (módulo 33)
+-- SALUD v4.2.95 · schema clinical · constraints de integridad (módulo 33)
 -- Aplicar DESPUÉS de 04_indexes.sql y de SQL/_integrity/00_integrity_functions.sql.
 -- Reglas del módulo 33. Las UK/CHECK/EXCLUDE en prosa quedan como comentario:
 -- el modelo no declara su expresión SQL y no se inventa (temperatura-0).
@@ -14,7 +14,7 @@ ALTER TABLE "clinical"."service_requests" ADD CONSTRAINT "ck_service_requests_ov
 
 -- CHECK concreto declarado por el modelo (CHECK_SQL).
 ALTER TABLE "clinical"."service_requests" DROP CONSTRAINT IF EXISTS "ck_service_requests_specimen_xor_imaging";
-ALTER TABLE "clinical"."service_requests" ADD CONSTRAINT "ck_service_requests_specimen_xor_imaging" CHECK (("specimen_type_concept_id" IS NULL OR ("modality_concept_id" IS NULL AND "body_site_concept_id" IS NULL AND "laterality_concept_id" IS NULL AND "contrast_concept_id" IS NULL)));
+ALTER TABLE "clinical"."service_requests" ADD CONSTRAINT "ck_service_requests_specimen_xor_imaging" CHECK (("specimen_type_concept_id" IS NULL OR ("modality_concept_id" IS NULL AND "body_site_concept_id" IS NULL AND "laterality_concept_id" IS NULL AND "contrast_concept_id" IS NULL AND "body_structure_uberon" IS NULL AND "body_mesh_id" IS NULL AND "bone_type_concept_id" IS NULL)));
 
 -- CHECK concreto declarado por el modelo (CHECK_SQL).
 ALTER TABLE "clinical"."service_requests" DROP CONSTRAINT IF EXISTS "ck_service_requests_laterality_requires_site";
@@ -23,6 +23,10 @@ ALTER TABLE "clinical"."service_requests" ADD CONSTRAINT "ck_service_requests_la
 -- CHECK concreto declarado por el modelo (CHECK_SQL).
 ALTER TABLE "clinical"."service_requests" DROP CONSTRAINT IF EXISTS "ck_service_requests_contrast_requires_modality";
 ALTER TABLE "clinical"."service_requests" ADD CONSTRAINT "ck_service_requests_contrast_requires_modality" CHECK (("contrast_concept_id" IS NULL OR "modality_concept_id" IS NOT NULL));
+
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "clinical"."service_requests" DROP CONSTRAINT IF EXISTS "ck_service_requests_bone_type_requires_location";
+ALTER TABLE "clinical"."service_requests" ADD CONSTRAINT "ck_service_requests_bone_type_requires_location" CHECK (("bone_type_concept_id" IS NULL OR "body_site_concept_id" IS NOT NULL OR "body_structure_uberon" IS NOT NULL));
 
 
 -- ═══ received_services ═══

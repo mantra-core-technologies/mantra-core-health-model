@@ -235,7 +235,7 @@ entity conditions {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
-  ' + v4.2.94 (red clínica, franja 1): diferencial resuelto. En un diagnóstico
+  ' + v4.2.95 (red clínica, franja 1): diferencial resuelto. En un diagnóstico
   ' DESCARTADO (verificación REFUTED), el diagnóstico que lo reemplazó. Nullable y sin
   ' backfill: un descarte anterior no declaró reemplazo y reconstruirlo sería fabricar
   ' un dato clínico. Autorreferencia: la convención por nombre no la resuelve, el
@@ -335,7 +335,18 @@ entity service_requests {
     body_site_concept_id : uuid <<FK>>
     laterality_concept_id : uuid <<FK>>
     contrast_concept_id : uuid <<FK>>
-  ' + v4.2.94 (red clínica, franja 1): el diagnóstico para el que se pidió el estudio
+  ' + v4.2.94 (marca en el modelo 3D del cuerpo y tipo de hueso): lo que el visor 3D devuelve
+  ' al marcar la parte en la orden de imagen. body_structure_uberon es el id de estructura
+  ' UBERON ("UBERON:0002495"); body_mesh_id, el id de malla FMA/BP del GLB que se tocó. Son
+  ' texto de referencia: el formato lo valida la API, no hay FK porque UBERON y las mallas
+  ' no son un catalogo del modelo. bone_type_concept_id es el tipo de hueso (largo, corto,
+  ' plano, irregular, sesamoideo; value set `bone-type`): lo ELIGE el medico, no se deriva de
+  ' la region. Todo NULLABLE y sin backfill; sólo imagen: el CHECK ck_service_requests_
+  ' specimen_xor_imaging (módulo 33) los excluye junto con la muestra de laboratorio.
+    body_structure_uberon : varchar(64)
+    body_mesh_id : varchar(64)
+    bone_type_concept_id : uuid <<FK>>
+  ' + v4.2.95 (red clínica, franja 1): el diagnóstico para el que se pidió el estudio
   ' (confirmarlo, descartarlo o seguirlo). Compartir el encuentro no dice cuál de las
   ' condiciones del paciente motiva la orden. Nullable y sin backfill: hay órdenes sin
   ' diagnóstico registrado (control, tamizaje). La API valida (422) que la condición
@@ -382,7 +393,7 @@ service_requests }o--o| profiles_health_practitioner_profiles : performer_practi
 service_requests }o--o| practice_practice_sites : suggested_practice_site_id
 service_requests }o--o| practice_care_spaces : suggested_care_space_id
 service_requests }o--o| forms_form_instances : form_instance_id
-' + v4.2.94 (red clínica, franja 1): vínculos orden → diagnóstico y diagnóstico → reemplazo.
+' + v4.2.95 (red clínica, franja 1): vínculos orden → diagnóstico y diagnóstico → reemplazo.
 service_requests }o--o| conditions : reason_condition_id
 conditions }o--o| conditions : replaced_by_condition_id
 entity "chart.clinical_note_headers" as chart_clinical_note_headers <<REFERENCE_ONLY>> {
@@ -1173,6 +1184,8 @@ entity "INDEXES · service_requests" as idxset_service_requests <<INDEX_SET>> {
   IX ix_service_requests_body_site_concept_id : (body_site_concept_id) BTREE
   IX ix_service_requests_laterality_concept_id : (laterality_concept_id) BTREE
   IX ix_service_requests_contrast_concept_id : (contrast_concept_id) BTREE
+  IX ix_service_requests_bone_type_concept_id : (bone_type_concept_id) BTREE
+  IX ix_service_requests_body_structure_uberon : (body_structure_uberon) BTREE
   IX ix_service_requests_requisition_id : (custodian_tenant_id, requisition_id) BTREE
   IX ix_service_requests_performer_inbox : (performer_tenant_id, status_concept_id, created_at, id) BTREE
   IX ix_service_requests_reason_condition_id : (reason_condition_id) BTREE

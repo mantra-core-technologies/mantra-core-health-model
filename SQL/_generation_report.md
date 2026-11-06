@@ -1,4 +1,4 @@
-# Reporte de generación SQL — SALUD v4.2.94
+# Reporte de generación SQL — SALUD v4.2.95
 
 Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vistas, stubs de cruce y stores no-SQL (Redis/Mongo/OpenSearch/vector/timeseries) se listan como *saltados*. Graph (61) y Lakehouse (63) SÍ se materializan como tablas PG (catálogo del plano de control). Las FK marcadas *inferidas* se resolvieron por convención cuando el vault no tenía destino.
 
@@ -12,7 +12,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 05 | profiles | 24 | 166 | 0 | 177 | 0 |
 | 06 | authz | 17 | 110 | 0 | 107 | 0 |
 | 07 | consent | 10 | 81 | 0 | 103 | 0 |
-| 08 | clinical | 30 | 299 | 0 | 331 | 15 |
+| 08 | clinical | 30 | 300 | 0 | 333 | 15 |
 | 09 | forms | 16 | 103 | 0 | 113 | 1 |
 | 10 | audit | 142 | 602 | 0 | 762 | 1 |
 | 11 | system_ops | 32 | 178 | 0 | 197 | 1 |
