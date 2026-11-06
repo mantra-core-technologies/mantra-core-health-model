@@ -111,6 +111,12 @@ La confirmación de las solicitudes de consulta por agenda (v4.2.88: `scheduling
 (escrito a mano, idempotente; en el DDL generado, no-op sobre base nueva). No cambia ninguna fila de significado:
 toda agenda existente sigue pidiendo que el profesional acepte cada solicitud.
 
+El informe diagnóstico redactado (v4.2.89: `diagnostics.report_drafts`, `report_draft_files` y `report_issuer_settings`;
+el borrador de la conclusión de una orden, sus archivos y la firma y el sello del emisor) vive en `diagram_20_diagnostics.puml`.
+Su parche incremental es `psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-05_v4289_informes_borradores.sql`
+(escrito a mano, idempotente; trae la RLS por custodio, el disparador «publicado = inmutable» y la FK compuesta
+archivo↔borrador del mismo custodio, que el generador no expresa).
+
 Todos son idempotentes (una transacción, re-ejecutables). **Si se vuelve a ejecutar el v4275 después del v4278, hay que volver a
 ejecutar el v4278 y el v4279**: el v4275 restituye las versiones anteriores de `refresh_effective_support_access` (que ya no excluiría un
 `DENY`) y de `integrity.support_tenant_consistency`, y el v4279 (que extiende esta última y reescribe `support_access_allowed`) las deja completas.

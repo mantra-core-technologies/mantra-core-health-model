@@ -1,4 +1,4 @@
-# Matriz de integridad y concurrencia — SALUD v4.2.84 (módulo 33)
+# Matriz de integridad y concurrencia — SALUD v4.2.89 (módulo 33)
 
 El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación cross-dominio. Cada regla se implementa en la **migración de la tabla dueña** (su módulo) y se repite aquí como referencia. Extraído fielmente del `.puml`.
 
@@ -142,6 +142,13 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 |-------|-------------|-------------------|
 | `diagnostic_study_prices` | `VERSIONED, REFERENCE_ONLY` | **UK** schedule + offering + version; **EXCLUDE** no overlapping active effective periods; **CHECK** amounts >= 0 |
 | `diagnostic_units.diagnostic_equipment` | `REFERENCE_ONLY` | **CHECK_SQL** ck_diagnostic_equipment_ae_title \| "ae_title" IS NULL OR ("ae_title" ~ '^[\x20-\x7E]{1,16}$' AND btrim("ae_title") <> '' AND "ae_title" !~ '\\') |
+
+### Módulo 20 · `diagnostics`
+
+| Tabla | Estereotipo | Reglas declaradas |
+|-------|-------------|-------------------|
+| `diagnostics.report_drafts` | `REFERENCE_ONLY` | **CHECK_SQL** ck_report_drafts_visibility \| "patient_visibility_code" IN ('VISIBLE', 'HELD'); **CHECK_SQL** ck_report_drafts_status \| "status_code" IN ('DRAFT', 'PUBLISHED'); **CHECK_SQL** ck_report_drafts_published \| "status_code" = 'DRAFT' OR ("published_version_id" IS NOT NULL AND "published_at" IS NOT NULL AND "signer_profile_id" IS NOT NULL) |
+| `diagnostics.report_draft_files` | `REFERENCE_ONLY` | **CHECK_SQL** ck_report_draft_files_role \| "role_code" IN ('DOCUMENT', 'AUDIO', 'ANNEX') |
 
 ### Módulo 04 · `directory`
 
