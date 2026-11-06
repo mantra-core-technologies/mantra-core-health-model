@@ -122,6 +122,12 @@ casa central y cada sucursal) vive en `diagram_04_directory.puml`. Su parche inc
 `psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4290_tenant_opening_hours.sql` (copiado del DDL generado;
 no-op sobre base nueva). Después, volver a correr `SQL/patches/2026-08-05_tenant_rls.sql` para que RLS cubra la tabla.
 
+La categoría de la sede (v4.2.91: `directory.branches.branch_category`, `default` / `head_office` / `branch`, una casa matriz
+por organización) vive en `diagram_04_directory.puml` y su CHECK en `diagram_33_integrity.puml`. Su parche incremental es
+`psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4291_branches_category.sql` (esquema copiado del DDL generado,
+más dos backfills idempotentes: la casa central de las altas viejas y el espejo de las sedes declaradas del establecimiento
+médico).
+
 Todos son idempotentes (una transacción, re-ejecutables). **Si se vuelve a ejecutar el v4275 después del v4278, hay que volver a
 ejecutar el v4278 y el v4279**: el v4275 restituye las versiones anteriores de `refresh_effective_support_access` (que ya no excluiría un
 `DENY`) y de `integrity.support_tenant_consistency`, y el v4279 (que extiende esta última y reescribe `support_access_allowed`) las deja completas.

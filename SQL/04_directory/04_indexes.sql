@@ -1,4 +1,4 @@
--- SALUD v4.2.90 · módulo 04 · schema directory
+-- SALUD v4.2.91 · módulo 04 · schema directory
 -- Generado de diagram_04_directory.puml — NO editar a mano.
 
 
@@ -39,6 +39,10 @@ CREATE INDEX IF NOT EXISTS "ix_branches_created_by_user_id" ON "directory"."bran
 CREATE INDEX IF NOT EXISTS "ix_branches_updated_by_user_id" ON "directory"."branches" ("updated_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_branches_tenant_id_status_concept_id" ON "directory"."branches" ("tenant_id", "status_concept_id", "updated_at" DESC);
+
+CREATE INDEX IF NOT EXISTS "ix_branches_tenant_id_branch_category" ON "directory"."branches" ("tenant_id", "branch_category");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "ux_branches_one_head_office" ON "directory"."branches" ("tenant_id") WHERE branch_category = 'head_office';
 
 CREATE INDEX IF NOT EXISTS "gin_branches_search" ON "directory"."branches" USING gin (to_tsvector('simple', (coalesce(name, '') || ' ' || coalesce(code, ''))));
 
