@@ -49,7 +49,7 @@ comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_obje
 
 ## 3. Estado actual del build
 
-### v4.2.91 — Red clínica del paciente, franja 1: vínculos (2026-11-06)
+### v4.2.92 — Red clínica del paciente, franja 1: vínculos (2026-11-06)
 
 **Cambio de esquema: +3 columnas `uuid NULL`, +3 FK, +3 índices. Ninguna tabla nueva.**
 
@@ -68,8 +68,32 @@ se reutilizan (`referrals.source_encounter_id`, `conditions.encounter_id`, `serv
 
 Las FK salen de aristas etiquetadas del `.puml` (stub `clinical.encounters` en el módulo 18), sin nota del vault.
 Sin backfill ni `ON DELETE`. Mismo paciente, «sólo en REFUTED y distinto de sí mismo» y «sólo lo escribe el destino»
-los valida la API (422). El parche `2026-11-06_v4291_red_clinica_vinculos.sql` es idempotente, se copió del DDL
+los valida la API (422). El parche `2026-11-06_v4292_red_clinica_vinculos.sql` es idempotente, se copió del DDL
 generado y agrega los `COMMENT ON COLUMN` con el significado clínico.
+
+### v4.2.91 — Una encuesta activa por servicio y profesional; procedencia del catálogo estándar (2026-11-06)
+
+**Cambio de esquema: +2 columnas, +1 FK, +4 índices (3 únicos parciales), +1 CHECK, +1 disparador (sólo en el parche).**
+REC 65.9 de `diagram_65_surveys.puml`.
+
+- `surveys.survey_assignments.owner_practitioner_id` (nullable, FK a `profiles.health_practitioner_profiles.profile_id`):
+  copia del `owner_practitioner_id` de la plantilla de la versión asignada; `NULL` para plantillas de sistema o de
+  dueño tipado. Hace falta porque el destino SERVICE es `billing.service_catalog.id`, que comparten todos los
+  profesionales que ofrecen el servicio, y un índice único no alcanza otra tabla. El disparador
+  `trg_survey_assignments_owner_from_template` (función `integrity.survey_assignment_owner_from_template`) lo
+  completa si llega `NULL` y rechaza un valor distinto del de la plantilla.
+- `uq_survey_assignments_active_service_owner`: `(tenant_id, target_type_concept_id, target_id, owner_practitioner_id)`
+  `WHERE active AND owner_practitioner_id IS NOT NULL AND target_type_concept_id = SURVEY_TARGET_SERVICE`. Cambiar la
+  encuesta de un servicio es desactivar la vigente y después insertar la nueva, en la misma transacción (el índice
+  no es diferible). Los demás tipos de destino conservan `uq_survey_assignments_active_target`.
+- `surveys.survey_templates.standard_catalog_code` (text, nullable): la entrada `STD_*` del catálogo estándar de la
+  que se materializó la plantilla. Única por tenant y dueño (`uq_survey_templates_practitioner_catalog_code`,
+  `uq_survey_templates_party_catalog_code`), así que la importación es idempotente;
+  `ck_survey_templates_standard_catalog_code` exige `^STD_[A-Z0-9_]+$`.
+
+El parche `2026-11-06_v4291_surveys_encuesta_por_servicio.sql` es idempotente: respalda el dueño desde la plantilla,
+desactiva las asignaciones SERVICE activas repetidas (conserva la más nueva) antes de crear el índice y trae el
+disparador, que el generador no expresa; por eso se aplica también sobre una base nueva.
 
 ### v4.2.90 — Horario de atención en el alta de organización (2026-11-04)
 

@@ -387,6 +387,8 @@ entity "accounting.practitioner_simple_transactions" as accounting_practitioner_
 entity "surveys.survey_templates" as surveys_survey_templates <<REFERENCE_ONLY>> {
   ' CAN-SURVEY-001 (REC 65.6): un solo dueno por plantilla — el profesional, o el par tipado.
   CHECK_SQL : ck_survey_templates_single_owner | ("owner_practitioner_id" IS NOT NULL AND "owner_type_concept_id" IS NULL AND "owner_id" IS NULL) OR ("owner_practitioner_id" IS NULL AND "owner_type_concept_id" IS NOT NULL AND "owner_id" IS NOT NULL)
+  ' v4.2.91 (REC 65.9): el codigo del catalogo estandar del que se importo la plantilla.
+  CHECK_SQL : ck_survey_templates_standard_catalog_code | "standard_catalog_code" IS NULL OR "standard_catalog_code" ~ '^STD_[A-Z0-9_]+$'
 }
 entity "surveys.survey_versions" as surveys_survey_versions <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_survey_versions_max_reminders | ("max_reminders" IS NULL OR "max_reminders" >= 0)

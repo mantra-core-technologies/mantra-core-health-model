@@ -1,4 +1,4 @@
-# Reporte de generación SQL — SALUD v4.2.91
+# Reporte de generación SQL — SALUD v4.2.92
 
 Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vistas, stubs de cruce y stores no-SQL (Redis/Mongo/OpenSearch/vector/timeseries) se listan como *saltados*. Graph (61) y Lakehouse (63) SÍ se materializan como tablas PG (catálogo del plano de control). Las FK marcadas *inferidas* se resolvieron por convención cuando el vault no tenía destino.
 
@@ -69,13 +69,13 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 62 | cross_store_consistency | 20 | 0 | 0 | 43 | 4 |
 | 63 | lakehouse | 18 | 0 | 0 | 42 | 4 |
 | 64 | audio_assets | 4 | 1 | 0 | 10 | 0 |
-| 65 | surveys | 8 | 42 | 0 | 26 | 0 |
+| 65 | surveys | 8 | 43 | 0 | 30 | 1 |
 | 66 | medical_groups | 2 | 14 | 0 | 10 | 0 |
 | 67 | data_catalog | 26 | 89 | 0 | 71 | 3 |
 | 68 | qa_execution | 4 | 14 | 0 | 6 | 0 |
 | 69 | pharma_lab | 31 | 182 | 0 | 182 | 1 |
 | 70 | observability | 12 | 13 | 0 | 39 | 2 |
-| **Σ** | **71** | **1380** | | **6** | | **483** |
+| **Σ** | **71** | **1380** | | **6** | | **484** |
 
 ## Detalle de entidades saltadas y avisos
 
@@ -652,6 +652,9 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - `health_data_ingestion_batches` — stub de cruce (tabla real en su módulo dueño)
 - `health_data_deidentification_runs` — stub de cruce (tabla real en su módulo dueño)
 - `common_files` — stub de cruce (tabla real en su módulo dueño)
+
+### 65 · surveys
+- `profiles_health_practitioner_profiles` — stub de cruce (tabla real en su módulo dueño)
 
 ### 67 · data_catalog
 - `system_ops_data_domains` — stub de cruce (tabla real en su módulo dueño)

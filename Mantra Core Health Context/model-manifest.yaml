@@ -1,6 +1,6 @@
 model:
   name: SALUD
-  version: 4.2.91
+  version: 4.2.92
   status: canonical-polyglot-nosql-health-platform
   generated_at: '2026-11-06'
   design_patches:
@@ -337,9 +337,21 @@ model:
       por turno (hasta dos por día, día ISO 1..7), para la casa central (sin sede) o una sucursal
       (directory.branches o tenant_medical_facility_sites, a lo sumo una). 24 h = 00:00–24:00. Parche
       copiado del DDL generado: 2026-11-06_v4290_tenant_opening_hours.sql.
-  - id: patch-v4.2.91-red-clinica-vinculos
+  - id: patch-v4.2.91-surveys-service-assignment-owner
     role: product-features
     doc: docs/architecture/physical-materialization.md (v4.2.91)
+    status: materialized-in-er
+    summary: >-
+      Encuestas estandarizadas por servicio (REC 65.9): surveys.survey_assignments.owner_practitioner_id
+      (copia del dueño de la plantilla, FK a health_practitioner_profiles, mantenida por disparador) y
+      uq_survey_assignments_active_service_owner (una asignación SERVICE activa por tenant, servicio y
+      profesional); surveys.survey_templates.standard_catalog_code (entrada STD_* del catálogo de la que
+      se importó, única por tenant y dueño). Parche 2026-11-06_v4291_surveys_encuesta_por_servicio.sql:
+      respalda el dueño, desactiva duplicados (conserva la más nueva) y trae el disparador; se aplica
+      también sobre base nueva.
+  - id: patch-v4.2.92-red-clinica-vinculos
+    role: product-features
+    doc: docs/architecture/physical-materialization.md (v4.2.92)
     status: materialized-in-er
     summary: >-
       Red clínica del paciente, franja 1: tres vínculos uuid NULL con FK e índice.
@@ -347,7 +359,7 @@ model:
       clinical_ext.referrals.target_encounter_id → clinical.encounters (atención de destino de la derivación) y
       clinical.conditions.replaced_by_condition_id → clinical.conditions (diagnóstico descartado reemplazado por
       este). Sin backfill; mismo paciente, REFUTED y tenant destino los valida la API. Parche copiado del DDL
-      generado, con COMMENT ON COLUMN: 2026-11-06_v4291_red_clinica_vinculos.sql.
+      generado, con COMMENT ON COLUMN: 2026-11-06_v4292_red_clinica_vinculos.sql.
   materialization_note: >-
     v4.0.1 materializado en el ER (fuente: el vault/grafo). Se añadieron 14
     entidades nuevas (marketing.campaign_schedules/dispatches/dispatch_recipients,

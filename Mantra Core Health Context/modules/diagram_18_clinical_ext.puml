@@ -128,7 +128,7 @@ entity referrals {
     created_by_user_id : uuid <<FK>>
     updated_by_user_id : uuid <<FK>>
   * row_version : integer
-  ' + v4.2.91 (red clínica, franja 1): la atención en la que el destino recibió al
+  ' + v4.2.92 (red clínica, franja 1): la atención en la que el destino recibió al
   ' paciente derivado; cierra el par con source_encounter_id. Nullable y sin backfill:
   ' la derivación pendiente, rechazada o externa no tiene atención de destino. Sólo la
   ' escribe el tenant destino al aceptar o registrar la llegada; la API valida (422)
@@ -145,7 +145,7 @@ entity "consent.treatment_informed_consents" as consent_treatment_informed_conse
 }
 referrals }o--o| directory_branches : target_branch_id
 referrals }o--o| consent_treatment_informed_consents : informed_consent_id
-' + v4.2.91 (red clínica, franja 1): atención de destino de la derivación, en su módulo dueño.
+' + v4.2.92 (red clínica, franja 1): atención de destino de la derivación, en su módulo dueño.
 entity "clinical.encounters" as clinical_encounters <<REFERENCE_ONLY>> {
   * id : uuid <<PK>>
 }

@@ -122,10 +122,26 @@ casa central y cada sucursal) vive en `diagram_04_directory.puml`. Su parche inc
 `psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4290_tenant_opening_hours.sql` (copiado del DDL generado;
 no-op sobre base nueva). Después, volver a correr `SQL/patches/2026-08-05_tenant_rls.sql` para que RLS cubra la tabla.
 
-Los vínculos de la red clínica del paciente (v4.2.91: `clinical.service_requests.reason_condition_id`,
+Cuatro parches de RLS se escribieron primero en la API y viven acá desde el 06/11/2026, para que
+`yarn db:vendor` (que copia `SQL/` con `--delete`) no los borre de `database/SQL`: `2026-11-02_v4284_rls_community_public_read.sql`
+(fichas públicas sin tenant), `2026-11-03_v4286_farmacias_mercado_lectura_paciente.sql` y `2026-11-04_farmacias_mercado_por_id.sql`
+(farmacias publicadas para el paciente) y `2026-11-04_v4287_conversaciones_directas_rls.sql` (conversaciones directas sin tenant).
+Son copia exacta de los de la API; un parche de RLS nuevo se escribe acá y se vendoriza.
+`2026-11-06_conversaciones_directas_acotadas.sql` reemplaza la política amplia del v4287: las conversaciones sin tenant
+sólo pueden ser directas (sin grupo), no se borran bajo un tenant, y ninguna conversación cambia de tenant ni de grupo.
+
+Las encuestas estandarizadas por servicio (v4.2.91: `surveys.survey_assignments.owner_practitioner_id` con el índice
+único parcial `uq_survey_assignments_active_service_owner` — una asignación SERVICE activa por tenant, servicio y
+profesional — y `surveys.survey_templates.standard_catalog_code`, la entrada `STD_*` del catálogo de la que se importó)
+viven en `diagram_65_surveys.puml`. Su parche es
+`psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4291_surveys_encuesta_por_servicio.sql` (idempotente;
+desactiva antes los duplicados activos conservando el más nuevo). Se aplica **también sobre base nueva**: trae el
+disparador que mantiene el dueño de la asignación igual al de la plantilla, que el generador no expresa.
+
+Los vínculos de la red clínica del paciente (v4.2.92: `clinical.service_requests.reason_condition_id`,
 `clinical_ext.referrals.target_encounter_id` y `clinical.conditions.replaced_by_condition_id`, uuid NULL con FK e índice)
 viven en `diagram_08_clinical.puml` y `diagram_18_clinical_ext.puml`. Su parche incremental es
-`psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4291_red_clinica_vinculos.sql` (copiado del DDL generado,
+`psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4292_red_clinica_vinculos.sql` (copiado del DDL generado,
 más los comentarios de columna; no-op sobre base nueva salvo los comentarios). Sin backfill.
 
 Todos son idempotentes (una transacción, re-ejecutables). **Si se vuelve a ejecutar el v4275 después del v4278, hay que volver a
