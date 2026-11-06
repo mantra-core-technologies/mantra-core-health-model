@@ -4,10 +4,11 @@
 -- Idempotente (IF NOT EXISTS / DROP ... IF EXISTS / duplicate_object). UNA transacción, re-ejecutable.
 -- Contexto: gen_ddl.py y gen_integrity.py ya emiten las columnas, la FK, los índices y el CHECK en
 -- SQL/65_surveys/ desde que diagram_65_surveys.puml y diagram_33_integrity.puml los declaran; esas
--- sentencias se copiaron de los archivos generados. Lo que el generador NO expresa vive sólo acá:
--- el respaldo de owner_practitioner_id, el disparador que lo mantiene igual al de la plantilla y la
--- desactivación de duplicados. Por eso este patch se aplica TAMBIÉN sobre una base nueva (después de
--- apply_all.sql + apply_deferred.sql): ahí lo generado es no-op y queda el disparador.
+-- sentencias se copiaron de los archivos generados. Desde v4.2.93 el disparador que mantiene
+-- owner_practitioner_id igual al de la plantilla también se genera (TRIGGER_SQL en
+-- diagram_33_integrity.puml → SQL/65_surveys/05_constraints.sql); sobre una base nueva este patch es
+-- no-op. Lo que sólo vive acá es el respaldo de owner_practitioner_id y la desactivación de duplicados
+-- de una base existente.
 -- gen_apply.py no escanea SQL/patches/: no entra en apply_all.sql.
 --
 -- QUÉ CAMBIA.
