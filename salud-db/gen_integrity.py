@@ -9,13 +9,14 @@ materializa en:
 
 Temperatura-0: el módulo 33 declara las reglas de forma SEMI-concreta (columnas lógicas y
 CHECK/EXCLUDE en prosa). Se genera concreto SOLO lo mecánico (guardas de inmutabilidad para
-UPDATE_DELETE: forbidden). CHECK_SQL y EXCLUDE_SQL materializan expresiones concretas
-declaradas por el modelo; UK/CHECK/EXCLUDE en prosa salen como comentario con la regla
+UPDATE_DELETE: forbidden). CHECK_SQL, EXCLUDE_SQL y TRIGGER_SQL materializan SQL concreto
+declarado por el modelo; UK/CHECK/EXCLUDE en prosa salen como comentario con la regla
 textual, porque el modelo no declara su expresión SQL y completarla sería adivinar.
 """
 from __future__ import annotations
 import re
 import sys
+import textwrap
 from pathlib import Path
 
 import gen_ddl
@@ -158,7 +159,7 @@ def unique_indexes(sch, tbl):
     return pat.findall(path.read_text(encoding="utf-8"))
 
 
-def rule_line(sch, tbl, k, v, concrete=()):
+def rule_line(sch, tbl, k, v, concrete=(), notes=None):
     """Una regla de la matriz como línea de 05_constraints (comentario o SQL concreto)."""
     if k in ("PK", "VERSION"):
         return f"--   {k}: {v}  (ya en 02_tables/04_indexes)"
@@ -171,6 +172,8 @@ def rule_line(sch, tbl, k, v, concrete=()):
         return concrete_check(sch, tbl, v)
     if k == "EXCLUDE_SQL":
         return exclude_concreto(sch, tbl, v)
+    if k == "TRIGGER_SQL":
+        return trigger_concreto(sch, tbl, v, notes or {})
     return f"--   {k}: {v}"
 
 
@@ -233,13 +236,60 @@ def exclude_concreto(schema, table, decl):
 
 DEFERRAL_CLAUSES = ("DEFERRABLE INITIALLY IMMEDIATE", "DEFERRABLE INITIALLY DEFERRED")
 
+IDENT = re.compile(r"[a-z_][a-z0-9_]*")
+TRIGGER_TIMING = re.compile(r"(BEFORE|AFTER) (INSERT|UPDATE|DELETE)\b.*")
 
-def entity_block(e):
+
+def trigger_concreto(schema, table, decl, notes):
+    """Un disparador de fila cuya función y cuerpo declara el MODELO, no el generador.
+
+    Para invariantes que un CHECK no alcanza porque miran otra tabla (v4.2.93: el dueño
+    de una asignación de encuesta es el de su plantilla). Formato, separado por `|`:
+
+        <trigger> | <BEFORE|AFTER eventos> | <función> [| SECURITY DEFINER]
+
+    El cuerpo plpgsql (DECLARE … END) es la nota `FUNCTION_SQL_<función>` del módulo 33;
+    acá sólo se lo envuelve en `integrity.<función>()`. Temperatura-0: el generador no
+    compone ninguna sentencia del cuerpo. `SECURITY DEFINER` (única frase aceptada) fija
+    `search_path` y revoca el EXECUTE público, para leer filas que el RLS del que escribe
+    no deja ver.
+    """
+    partes = [p.strip() for p in decl.split("|")]
+    if len(partes) not in (3, 4):
+        raise ValueError(f"TRIGGER_SQL inválido en {schema}.{table}: trigger | eventos | función")
+    trigger, timing, function = partes[:3]
+    definer = partes[3].upper() if len(partes) == 4 else None
+    for name in (trigger, function):
+        if not IDENT.fullmatch(name) or len(name) > 63:
+            raise ValueError(f"TRIGGER_SQL inválido en {schema}.{table}: identificador {name!r}")
+    if not TRIGGER_TIMING.fullmatch(timing):
+        raise ValueError(f"TRIGGER_SQL inválido en {schema}.{table}: eventos {timing!r}")
+    if definer not in (None, "SECURITY DEFINER"):
+        raise ValueError(f"TRIGGER_SQL inválido en {schema}.{table}: {partes[3]!r}")
+    body = notes.get(f"FUNCTION_SQL_{function}")
+    if not body or not body.strip():
+        raise ValueError(f"TRIGGER_SQL en {schema}.{table}: falta la nota FUNCTION_SQL_{function}")
+    body = textwrap.dedent(body).strip("\n")
+    fn = f'"integrity"."{function}"()'
+    security = " SECURITY DEFINER SET search_path = pg_catalog, public" if definer else ""
+    t = f'"{schema}"."{table}"'
+    return ("-- Disparador concreto declarado por el modelo (TRIGGER_SQL + FUNCTION_SQL_).\n"
+            f"CREATE OR REPLACE FUNCTION {fn}\n"
+            f"RETURNS trigger LANGUAGE plpgsql{security} AS $$\n"
+            f"{body} $$;\n"
+            f"REVOKE ALL ON FUNCTION {fn} FROM PUBLIC;\n\n"
+            f"DROP TRIGGER IF EXISTS {trigger} ON {t};\n"
+            f"CREATE TRIGGER {trigger}\n"
+            f"    {timing} ON {t}\n"
+            f"    FOR EACH ROW EXECUTE FUNCTION {fn};\n")
+
+
+def entity_block(e, notes=None):
     """Las líneas de 05_constraints de una entidad de la matriz, guard incluido."""
     sch, tbl = e["owner"]
     lines = [f"\n-- ═══ {tbl} ═══"]
     concrete = {k for k, _ in e["rules"] if k.endswith("_SQL")}
-    lines += [rule_line(sch, tbl, k, v, concrete) for k, v in e["rules"]]
+    lines += [rule_line(sch, tbl, k, v, concrete, notes) for k, v in e["rules"]]
     uniques = unique_indexes(sch, tbl) if any(k == "UK" for k, _ in e["rules"]) else []
     if uniques:
         lines.append(f"--   índices únicos que la tabla ya tiene en 04_indexes: {', '.join(uniques)}")
@@ -256,7 +306,7 @@ def entity_block(e):
     return lines
 
 
-def write_constraints(ents):
+def write_constraints(ents, notes=None):
     by_schema: dict[str, list] = {}
     for e in ents:
         if e["owner"]:
@@ -272,11 +322,11 @@ def write_constraints(ents):
                "-- Aplicar DESPUÉS de 04_indexes.sql y de SQL/_integrity/00_integrity_functions.sql.\n"
                "-- Reglas del módulo 33. Las UK/CHECK/EXCLUDE en prosa quedan como comentario:\n"
                "-- el modelo no declara su expresión SQL y no se inventa (temperatura-0).\n"
-               "-- CHECK_SQL y EXCLUDE_SQL sí se materializan con la expresión del modelo.\n"]
+               "-- CHECK_SQL, EXCLUDE_SQL y TRIGGER_SQL sí se materializan con el SQL del modelo.\n"]
         if has_exclude:
             out.append("CREATE EXTENSION IF NOT EXISTS btree_gist;  -- requerido por EXCLUDE\n")
         for e in group:
-            out.extend(entity_block(e))
+            out.extend(entity_block(e, notes))
         (folder / "05_constraints.sql").write_text("\n".join(out).rstrip() + "\n", encoding="utf-8")
         print(f"[{folder.name}] 05_constraints.sql · {len(group)} entidades"
               + (" · btree_gist" if has_exclude else ""))
@@ -320,7 +370,8 @@ def write_matrix_doc(ents, rels, notes):
           "- **`SQL/_integrity/00_integrity_functions.sql`** — schema `integrity` + "
           "`forbid_mutation()` (guarda de inmutabilidad).",
           "- **`SQL/<NN>_<schema>/05_constraints.sql`** — por módulo dueño: guarda concreta "
-          "para `UPDATE_DELETE: forbidden`, `CHECK_SQL` y `EXCLUDE_SQL`; las UK/CHECK/EXCLUDE en "
+          "para `UPDATE_DELETE: forbidden`, `CHECK_SQL`, `EXCLUDE_SQL` y `TRIGGER_SQL` (cuerpo en la "
+          "nota `FUNCTION_SQL_<función>`); las UK/CHECK/EXCLUDE en "
           "prosa quedan como comentario con la regla textual (el modelo no declara su "
           "expresión SQL) y la lista de índices únicos que la tabla ya tiene.",
           "- **Concurrencia** (`LOCK`/`SERIALIZABLE`/`SKIP LOCKED`/outbox) → capa de servicio "
@@ -339,7 +390,7 @@ def main():
     ents, rels, notes = parse_module33()
     resolve_owners(ents, registry)
     write_functions()
-    write_constraints(ents)
+    write_constraints(ents, notes)
     write_matrix_doc(ents, rels, notes)
 
 

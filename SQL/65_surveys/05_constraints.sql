@@ -1,8 +1,8 @@
--- SALUD v4.2.92 · schema surveys · constraints de integridad (módulo 33)
+-- SALUD v4.2.93 · schema surveys · constraints de integridad (módulo 33)
 -- Aplicar DESPUÉS de 04_indexes.sql y de SQL/_integrity/00_integrity_functions.sql.
 -- Reglas del módulo 33. Las UK/CHECK/EXCLUDE en prosa quedan como comentario:
 -- el modelo no declara su expresión SQL y no se inventa (temperatura-0).
--- CHECK_SQL y EXCLUDE_SQL sí se materializan con la expresión del modelo.
+-- CHECK_SQL, EXCLUDE_SQL y TRIGGER_SQL sí se materializan con el SQL del modelo.
 
 
 -- ═══ survey_templates ═══
@@ -41,3 +41,31 @@ ALTER TABLE "surveys"."survey_invitation_reminders" ADD CONSTRAINT "ck_survey_in
 -- CHECK concreto declarado por el modelo (CHECK_SQL).
 ALTER TABLE "surveys"."survey_answers" DROP CONSTRAINT IF EXISTS "ck_survey_answers_single_value";
 ALTER TABLE "surveys"."survey_answers" ADD CONSTRAINT "ck_survey_answers_single_value" CHECK (num_nonnulls("value_text", "value_number", "value_boolean", "value_choices") = 1);
+
+
+-- ═══ survey_assignments ═══
+-- Disparador concreto declarado por el modelo (TRIGGER_SQL + FUNCTION_SQL_).
+CREATE OR REPLACE FUNCTION "integrity"."survey_assignment_owner_from_template"()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public AS $$
+DECLARE
+    template_owner uuid;
+BEGIN
+    SELECT t.owner_practitioner_id INTO template_owner
+      FROM surveys.survey_versions v
+      JOIN surveys.survey_templates t ON t.id = v.survey_template_id
+     WHERE v.id = NEW.survey_version_id;
+    IF NEW.owner_practitioner_id IS NULL THEN
+        NEW.owner_practitioner_id := template_owner;
+    ELSIF NEW.owner_practitioner_id IS DISTINCT FROM template_owner THEN
+        RAISE EXCEPTION 'survey_assignments: owner_practitioner_id (%) no es el dueño de la plantilla de la versión % (%)',
+            NEW.owner_practitioner_id, NEW.survey_version_id, template_owner
+            USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION "integrity"."survey_assignment_owner_from_template"() FROM PUBLIC;
+
+DROP TRIGGER IF EXISTS trg_survey_assignments_owner_from_template ON "surveys"."survey_assignments";
+CREATE TRIGGER trg_survey_assignments_owner_from_template
+    BEFORE INSERT OR UPDATE OF "survey_version_id", "owner_practitioner_id" ON "surveys"."survey_assignments"
+    FOR EACH ROW EXECUTE FUNCTION "integrity"."survey_assignment_owner_from_template"();

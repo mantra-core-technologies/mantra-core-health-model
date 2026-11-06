@@ -1,4 +1,4 @@
--- SALUD v4.2.92 · módulo 49 · schema crm
+-- SALUD v4.2.93 · módulo 49 · schema crm
 -- Generado de diagram_49_crm.puml — NO editar a mano.
 
 CREATE SCHEMA IF NOT EXISTS "crm";

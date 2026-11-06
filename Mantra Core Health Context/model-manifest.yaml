@@ -1,6 +1,6 @@
 model:
   name: SALUD
-  version: 4.2.92
+  version: 4.2.93
   status: canonical-polyglot-nosql-health-platform
   generated_at: '2026-11-06'
   design_patches:
@@ -359,6 +359,17 @@ model:
       una casa matriz por organización (ux_branches_one_head_office). Backfill: la casa central de las
       altas de farmacia y laboratorio pasa a head_office y las sedes declaradas del establecimiento médico
       se copian a directory.branches. Parche: 2026-11-06_v4292_branches_category.sql.
+  - id: patch-v4.2.93-surveys-owner-trigger-in-model
+    role: integrity-materialization
+    doc: docs/architecture/physical-materialization.md (v4.2.93)
+    status: materialized-in-er
+    summary: >-
+      El disparador trg_survey_assignments_owner_from_template (función
+      integrity.survey_assignment_owner_from_template) pasa del parche v4.2.91 al modelo: diagram_33_integrity.puml
+      lo declara con TRIGGER_SQL y el cuerpo plpgsql en la nota FUNCTION_SQL_survey_assignment_owner_from_template;
+      gen_integrity.py lo emite en SQL/65_surveys/05_constraints.sql, así que una base creada desde cero lo tiene sin
+      el parche. Sin parche nuevo: 2026-11-06_v4291_surveys_encuesta_por_servicio.sql sigue siendo el incremental
+      (idempotente, mismo SQL byte a byte).
   materialization_note: >-
     v4.0.1 materializado en el ER (fuente: el vault/grafo). Se añadieron 14
     entidades nuevas (marketing.campaign_schedules/dispatches/dispatch_recipients,
