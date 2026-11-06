@@ -1,4 +1,4 @@
--- SALUD v4.2.87 · módulo 20 · schema diagnostics
+-- SALUD v4.2.89 · módulo 20 · schema diagnostics
 -- Generado de diagram_20_diagnostics.puml — NO editar a mano.
 
 
@@ -78,6 +78,18 @@ DO $$ BEGIN
     ALTER TABLE "diagnostics"."specimen_identifiers"
         ADD CONSTRAINT "fk_specimen_identifiers_specimen_id" FOREIGN KEY ("specimen_id")
         REFERENCES "diagnostics"."specimens" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "diagnostics"."report_drafts"
+        ADD CONSTRAINT "fk_report_drafts_published_version_id" FOREIGN KEY ("published_version_id")
+        REFERENCES "diagnostics"."diagnostic_report_versions" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "diagnostics"."report_draft_files"
+        ADD CONSTRAINT "fk_report_draft_files_report_draft_id" FOREIGN KEY ("report_draft_id")
+        REFERENCES "diagnostics"."report_drafts" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN

@@ -1,4 +1,4 @@
--- SALUD v4.2.87 · módulo 20 · schema diagnostics
+-- SALUD v4.2.89 · módulo 20 · schema diagnostics
 -- Generado de diagram_20_diagnostics.puml — NO editar a mano.
 
 
@@ -640,6 +640,111 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención
 DO $$ BEGIN
     ALTER TABLE "diagnostics"."service_request_performer_events"
         ADD CONSTRAINT "fk_service_request_performer_events_recorded_by_user_id" FOREIGN KEY ("recorded_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "diagnostics"."report_drafts"
+        ADD CONSTRAINT "fk_report_drafts_custodian_tenant_id" FOREIGN KEY ("custodian_tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: clinical.service_requests (requiere schema clinical)
+DO $$ BEGIN
+    ALTER TABLE "diagnostics"."report_drafts"
+        ADD CONSTRAINT "fk_report_drafts_service_request_id" FOREIGN KEY ("service_request_id")
+        REFERENCES "clinical"."service_requests" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: clinical.diagnostic_reports (requiere schema clinical)
+DO $$ BEGIN
+    ALTER TABLE "diagnostics"."report_drafts"
+        ADD CONSTRAINT "fk_report_drafts_diagnostic_report_id" FOREIGN KEY ("diagnostic_report_id")
+        REFERENCES "clinical"."diagnostic_reports" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: profiles.health_practitioner_profiles (requiere schema profiles)
+DO $$ BEGIN
+    ALTER TABLE "diagnostics"."report_drafts"
+        ADD CONSTRAINT "fk_report_drafts_signer_profile_id" FOREIGN KEY ("signer_profile_id")
+        REFERENCES "profiles"."health_practitioner_profiles" ("profile_id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "diagnostics"."report_drafts"
+        ADD CONSTRAINT "fk_report_drafts_published_by_user_id" FOREIGN KEY ("published_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "diagnostics"."report_drafts"
+        ADD CONSTRAINT "fk_report_drafts_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "diagnostics"."report_drafts"
+        ADD CONSTRAINT "fk_report_drafts_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "diagnostics"."report_draft_files"
+        ADD CONSTRAINT "fk_report_draft_files_custodian_tenant_id" FOREIGN KEY ("custodian_tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: common.files (requiere schema common)
+DO $$ BEGIN
+    ALTER TABLE "diagnostics"."report_draft_files"
+        ADD CONSTRAINT "fk_report_draft_files_file_id" FOREIGN KEY ("file_id")
+        REFERENCES "common"."files" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "diagnostics"."report_draft_files"
+        ADD CONSTRAINT "fk_report_draft_files_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: directory.tenants (requiere schema directory)
+DO $$ BEGIN
+    ALTER TABLE "diagnostics"."report_issuer_settings"
+        ADD CONSTRAINT "fk_report_issuer_settings_custodian_tenant_id" FOREIGN KEY ("custodian_tenant_id")
+        REFERENCES "directory"."tenants" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: common.files (requiere schema common)
+DO $$ BEGIN
+    ALTER TABLE "diagnostics"."report_issuer_settings"
+        ADD CONSTRAINT "fk_report_issuer_settings_signature_file_id" FOREIGN KEY ("signature_file_id")
+        REFERENCES "common"."files" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: common.files (requiere schema common)
+DO $$ BEGIN
+    ALTER TABLE "diagnostics"."report_issuer_settings"
+        ADD CONSTRAINT "fk_report_issuer_settings_seal_file_id" FOREIGN KEY ("seal_file_id")
+        REFERENCES "common"."files" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "diagnostics"."report_issuer_settings"
+        ADD CONSTRAINT "fk_report_issuer_settings_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "diagnostics"."report_issuer_settings"
+        ADD CONSTRAINT "fk_report_issuer_settings_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
 

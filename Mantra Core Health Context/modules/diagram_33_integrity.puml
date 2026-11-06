@@ -733,6 +733,17 @@ entity "directory.tenant_medical_facility_sites" as directory_tenant_medical_fac
   CHECK_SQL : ck_tenant_medical_facility_sites_geo | (("latitude" IS NULL) = ("longitude" IS NULL)) AND ("latitude" IS NULL OR ("latitude" BETWEEN -90 AND 90 AND "longitude" BETWEEN -180 AND 180))
 }
 
+' + v4.2.89 — informe redactado (modulo 20). Visibilidad y estado cerrados, un publicado lleva su versión,
+' su fecha y su firmante, y el rol de cada archivo del borrador.
+entity "diagnostics.report_drafts" as diagnostics_report_drafts <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_report_drafts_visibility | "patient_visibility_code" IN ('VISIBLE', 'HELD')
+  CHECK_SQL : ck_report_drafts_status | "status_code" IN ('DRAFT', 'PUBLISHED')
+  CHECK_SQL : ck_report_drafts_published | "status_code" = 'DRAFT' OR ("published_version_id" IS NOT NULL AND "published_at" IS NOT NULL AND "signer_profile_id" IS NOT NULL)
+}
+entity "diagnostics.report_draft_files" as diagnostics_report_draft_files <<REFERENCE_ONLY>> {
+  CHECK_SQL : ck_report_draft_files_role | "role_code" IN ('DOCUMENT', 'AUDIO', 'ANNEX')
+}
+
 ' + v4.2.67 — admisiones de profesionales (modulo 05). La bitacora es append-only: la
 ' resolucion de un alta de medico debe poder reconstruirse tal cual ocurrio, y quien
 ' decide no puede reescribir lo que decidio. UPDATE y DELETE prohibidos (no hay purga:
