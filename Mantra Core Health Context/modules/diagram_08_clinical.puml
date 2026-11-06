@@ -352,6 +352,17 @@ entity service_requests {
   ' diagnóstico registrado (control, tamizaje). La API valida (422) que la condición
   ' sea del mismo paciente. FK → clinical.conditions por arista etiquetada.
     reason_condition_id : uuid <<FK>>
+  ' + v4.2.96 (orden registrada por el centro): el laboratorio o centro de imagen carga en su
+  ' portal la orden que el paciente trae en papel o pide en el mostrador. No hay encuentro ni
+  ' profesional de la plataforma que la pida: el centro es solicitante-custodio y ejecutor a la
+  ' vez (performer_tenant_id = custodian_tenant_id). Quien la firmó en papel queda como texto
+  ' (nombre y matrícula, ambos opcionales: un estudio a pedido del paciente no tiene médico).
+  ' registered_by_performer distingue estas órdenes de las de un médico, porque solo estas puede
+  ' editarlas el centro. Las filas anteriores son todas de un solicitante: false es el dato
+  ' real, no un relleno. CHECK en el módulo 33.
+  * registered_by_performer : boolean <<DEFAULT_FALSE>>
+    external_requester_name : varchar(200)
+    external_requester_license : varchar(64)
 }
 
 entity diagnostic_reports {

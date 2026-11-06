@@ -55,6 +55,11 @@ entity service_requests <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_service_requests_laterality_requires_site | ("laterality_concept_id" IS NULL OR "body_site_concept_id" IS NOT NULL)
   CHECK_SQL : ck_service_requests_contrast_requires_modality | ("contrast_concept_id" IS NULL OR "modality_concept_id" IS NOT NULL)
   CHECK_SQL : ck_service_requests_bone_type_requires_location | ("bone_type_concept_id" IS NULL OR "body_site_concept_id" IS NOT NULL OR "body_structure_uberon" IS NOT NULL)
+  ' v4.2.96 — orden registrada por el centro: el solicitante externo (texto) sólo existe en esas
+  ' órdenes, y esas órdenes no tienen encuentro ni solicitante de la plataforma y las custodia el
+  ' propio ejecutor.
+  CHECK_SQL : ck_service_requests_external_requester_only_when_registered | ("registered_by_performer" OR ("external_requester_name" IS NULL AND "external_requester_license" IS NULL))
+  CHECK_SQL : ck_service_requests_registered_by_performer_shape | (NOT "registered_by_performer" OR ("encounter_id" IS NULL AND "requester_profile_id" IS NULL AND "performer_tenant_id" IS NOT NULL AND "performer_tenant_id" = "custodian_tenant_id"))
 }
 entity received_services <<REFERENCE_ONLY>> {
   CHECK_SQL : ck_received_services_has_source | ("source_procedure_id" IS NOT NULL OR "source_immunization_id" IS NOT NULL OR "procedure_case_id" IS NOT NULL)

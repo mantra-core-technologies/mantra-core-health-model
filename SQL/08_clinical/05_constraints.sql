@@ -1,4 +1,4 @@
--- SALUD v4.2.95 · schema clinical · constraints de integridad (módulo 33)
+-- SALUD v4.2.96 · schema clinical · constraints de integridad (módulo 33)
 -- Aplicar DESPUÉS de 04_indexes.sql y de SQL/_integrity/00_integrity_functions.sql.
 -- Reglas del módulo 33. Las UK/CHECK/EXCLUDE en prosa quedan como comentario:
 -- el modelo no declara su expresión SQL y no se inventa (temperatura-0).
@@ -27,6 +27,14 @@ ALTER TABLE "clinical"."service_requests" ADD CONSTRAINT "ck_service_requests_co
 -- CHECK concreto declarado por el modelo (CHECK_SQL).
 ALTER TABLE "clinical"."service_requests" DROP CONSTRAINT IF EXISTS "ck_service_requests_bone_type_requires_location";
 ALTER TABLE "clinical"."service_requests" ADD CONSTRAINT "ck_service_requests_bone_type_requires_location" CHECK (("bone_type_concept_id" IS NULL OR "body_site_concept_id" IS NOT NULL OR "body_structure_uberon" IS NOT NULL));
+
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "clinical"."service_requests" DROP CONSTRAINT IF EXISTS "ck_service_requests_external_requester_only_when_registered";
+ALTER TABLE "clinical"."service_requests" ADD CONSTRAINT "ck_service_requests_external_requester_only_when_registered" CHECK (("registered_by_performer" OR ("external_requester_name" IS NULL AND "external_requester_license" IS NULL)));
+
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "clinical"."service_requests" DROP CONSTRAINT IF EXISTS "ck_service_requests_registered_by_performer_shape";
+ALTER TABLE "clinical"."service_requests" ADD CONSTRAINT "ck_service_requests_registered_by_performer_shape" CHECK ((NOT "registered_by_performer" OR ("encounter_id" IS NULL AND "requester_profile_id" IS NULL AND "performer_tenant_id" IS NOT NULL AND "performer_tenant_id" = "custodian_tenant_id")));
 
 
 -- ═══ received_services ═══
