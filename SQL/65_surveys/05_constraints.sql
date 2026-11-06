@@ -1,4 +1,4 @@
--- SALUD v4.2.90 · schema surveys · constraints de integridad (módulo 33)
+-- SALUD v4.2.91 · schema surveys · constraints de integridad (módulo 33)
 -- Aplicar DESPUÉS de 04_indexes.sql y de SQL/_integrity/00_integrity_functions.sql.
 -- Reglas del módulo 33. Las UK/CHECK/EXCLUDE en prosa quedan como comentario:
 -- el modelo no declara su expresión SQL y no se inventa (temperatura-0).
@@ -9,6 +9,10 @@
 -- CHECK concreto declarado por el modelo (CHECK_SQL).
 ALTER TABLE "surveys"."survey_templates" DROP CONSTRAINT IF EXISTS "ck_survey_templates_single_owner";
 ALTER TABLE "surveys"."survey_templates" ADD CONSTRAINT "ck_survey_templates_single_owner" CHECK (("owner_practitioner_id" IS NOT NULL AND "owner_type_concept_id" IS NULL AND "owner_id" IS NULL) OR ("owner_practitioner_id" IS NULL AND "owner_type_concept_id" IS NOT NULL AND "owner_id" IS NOT NULL));
+
+-- CHECK concreto declarado por el modelo (CHECK_SQL).
+ALTER TABLE "surveys"."survey_templates" DROP CONSTRAINT IF EXISTS "ck_survey_templates_standard_catalog_code";
+ALTER TABLE "surveys"."survey_templates" ADD CONSTRAINT "ck_survey_templates_standard_catalog_code" CHECK ("standard_catalog_code" IS NULL OR "standard_catalog_code" ~ '^STD_[A-Z0-9_]+$');
 
 
 -- ═══ survey_versions ═══

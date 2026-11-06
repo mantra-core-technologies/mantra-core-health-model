@@ -130,6 +130,14 @@ Son copia exacta de los de la API; un parche de RLS nuevo se escribe acá y se v
 `2026-11-06_conversaciones_directas_acotadas.sql` reemplaza la política amplia del v4287: las conversaciones sin tenant
 sólo pueden ser directas (sin grupo), no se borran bajo un tenant, y ninguna conversación cambia de tenant ni de grupo.
 
+Las encuestas estandarizadas por servicio (v4.2.91: `surveys.survey_assignments.owner_practitioner_id` con el índice
+único parcial `uq_survey_assignments_active_service_owner` — una asignación SERVICE activa por tenant, servicio y
+profesional — y `surveys.survey_templates.standard_catalog_code`, la entrada `STD_*` del catálogo de la que se importó)
+viven en `diagram_65_surveys.puml`. Su parche es
+`psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4291_surveys_encuesta_por_servicio.sql` (idempotente;
+desactiva antes los duplicados activos conservando el más nuevo). Se aplica **también sobre base nueva**: trae el
+disparador que mantiene el dueño de la asignación igual al de la plantilla, que el generador no expresa.
+
 Todos son idempotentes (una transacción, re-ejecutables). **Si se vuelve a ejecutar el v4275 después del v4278, hay que volver a
 ejecutar el v4278 y el v4279**: el v4275 restituye las versiones anteriores de `refresh_effective_support_access` (que ya no excluiría un
 `DENY`) y de `integrity.support_tenant_consistency`, y el v4279 (que extiende esta última y reescribe `support_access_allowed`) las deja completas.
