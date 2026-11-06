@@ -122,6 +122,12 @@ casa central y cada sucursal) vive en `diagram_04_directory.puml`. Su parche inc
 `psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4290_tenant_opening_hours.sql` (copiado del DDL generado;
 no-op sobre base nueva). Después, volver a correr `SQL/patches/2026-08-05_tenant_rls.sql` para que RLS cubra la tabla.
 
+Cuatro parches de RLS se escribieron primero en la API y viven acá desde el 06/11/2026, para que
+`yarn db:vendor` (que copia `SQL/` con `--delete`) no los borre de `database/SQL`: `2026-11-02_v4284_rls_community_public_read.sql`
+(fichas públicas sin tenant), `2026-11-03_v4286_farmacias_mercado_lectura_paciente.sql` y `2026-11-04_farmacias_mercado_por_id.sql`
+(farmacias publicadas para el paciente) y `2026-11-04_v4287_conversaciones_directas_rls.sql` (conversaciones directas sin tenant).
+Son copia exacta de los de la API; un parche de RLS nuevo se escribe acá y se vendoriza.
+
 Las encuestas estandarizadas por servicio (v4.2.91: `surveys.survey_assignments.owner_practitioner_id` con el índice
 único parcial `uq_survey_assignments_active_service_owner` — una asignación SERVICE activa por tenant, servicio y
 profesional — y `surveys.survey_templates.standard_catalog_code`, la entrada `STD_*` del catálogo de la que se importó)
