@@ -1,0 +1,2 @@
+# deriva: columnas y constraints de clinical.service_requests — dev+parche vs base desde la rama
+SIN DIFERENCIAS (69 líneas comparadas)

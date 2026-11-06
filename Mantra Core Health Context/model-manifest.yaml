@@ -394,6 +394,17 @@ model:
       clinical.conditions.replaced_by_condition_id → clinical.conditions (diagnóstico descartado reemplazado por
       este). Sin backfill; mismo paciente, REFUTED y tenant destino los valida la API. Parche copiado del DDL
       generado, con COMMENT ON COLUMN: 2026-11-06_v4295_red_clinica_vinculos.sql.
+  - id: patch-v4.2.96-service-request-registered-by-performer
+    role: product-features
+    doc: docs/architecture/physical-materialization.md (v4.2.96)
+    status: materialized-in-er
+    summary: >-
+      El laboratorio o centro de imagen registra en su portal la orden que el paciente trae en papel o pide en el
+      mostrador. clinical.service_requests suma registered_by_performer (boolean NOT NULL DEFAULT false),
+      external_requester_name (varchar(200)) y external_requester_license (varchar(64)).
+      ck_service_requests_external_requester_only_when_registered limita el solicitante externo a esas órdenes;
+      ck_service_requests_registered_by_performer_shape exige que no tengan encuentro ni solicitante de la plataforma
+      y que las custodie el ejecutor. Parche 2026-11-06_v4296_service_request_registered_by_performer.sql.
   - id: patch-v4.2.97-forms-guion-preguntas-y-faq
     role: product-features
     doc: docs/architecture/physical-materialization.md (v4.2.97)

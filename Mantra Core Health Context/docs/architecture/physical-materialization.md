@@ -75,6 +75,20 @@ Sin `tenant_id` ni RLS por fila, igual que `dynamic_field_definitions` y las dem
 hace la API. El parche `2026-11-06_v4297_forms_guion_preguntas_y_faq.sql` es idempotente, se copió del DDL generado y agrega
 `COMMENT ON` y el `GRANT` DML a `mantra_app`.
 
+### v4.2.96 — Orden registrada por el centro ejecutor (2026-11-06)
+
+**Cambio de esquema: +3 columnas y +2 CHECK; sin FK ni índices nuevos.**
+
+- `clinical.service_requests` suma `registered_by_performer` (`boolean NOT NULL DEFAULT false`), `external_requester_name`
+  (`varchar(200)`) y `external_requester_license` (`varchar(64)`): el laboratorio o centro de imagen carga la orden que el
+  paciente trae en papel o pide en el mostrador, sin encuentro ni profesional de la plataforma. El centro es custodio y ejecutor.
+- `ck_service_requests_external_requester_only_when_registered` (módulo 33): el solicitante externo sólo existe en esas órdenes.
+- `ck_service_requests_registered_by_performer_shape`: esas órdenes no tienen `encounter_id` ni `requester_profile_id` y
+  `performer_tenant_id = custodian_tenant_id`.
+- `DEFAULT false` no es backfill inventado: toda fila previa la creó un solicitante de la plataforma.
+- Parche incremental: `SQL/patches/2026-11-06_v4296_service_request_registered_by_performer.sql`. Cabeceras del SQL: línea 1 y el
+  bloque de `service_requests`, a mano como en v4.2.94 (la bóveda disponible no regenera `gen_ddl` sin arrastrar FK ajenas).
+
 ### v4.2.95 — Red clínica del paciente, franja 1: vínculos (2026-11-06)
 
 **Cambio de esquema: +3 columnas `uuid NULL`, +3 FK, +3 índices. Ninguna tabla nueva.**

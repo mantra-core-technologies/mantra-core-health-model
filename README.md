@@ -158,6 +158,12 @@ viven en `diagram_08_clinical.puml` y `diagram_18_clinical_ext.puml`. Su parche 
 `psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4295_red_clinica_vinculos.sql` (copiado del DDL generado,
 más los comentarios de columna; no-op sobre base nueva salvo los comentarios). Sin backfill.
 
+La orden registrada por el centro ejecutor (v4.2.96: `clinical.service_requests.registered_by_performer`,
+`external_requester_name` y `external_requester_license`, más dos CHECK) vive en `diagram_08_clinical.puml` y
+`diagram_33_integrity.puml`. Su parche es
+`psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4296_service_request_registered_by_performer.sql` (idempotente;
+`DEFAULT false` es el dato real de toda fila anterior). Sobre una base nueva no hace falta para el esquema.
+
 El script de preguntas y las preguntas frecuentes del profesional (v4.2.97: `forms.question_scripts`,
 `forms.question_script_items` y `forms.faq_entries`, dueño `owner_practitioner_id` → `profiles.health_practitioner_profiles`)
 viven en `diagram_09_forms.puml` y sus CHECK y UNIQUE diferibles en `diagram_33_integrity.puml`. Su parche incremental es
