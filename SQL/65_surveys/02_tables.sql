@@ -73,6 +73,7 @@ CREATE TABLE IF NOT EXISTS "surveys"."survey_assignments" (
 CREATE TABLE IF NOT EXISTS "surveys"."survey_invitations" (
     "id" uuid NOT NULL,
     "survey_version_id" uuid NOT NULL,
+    "extension_survey_version_id" uuid,
     "survey_assignment_id" uuid NOT NULL,
     "tenant_id" uuid NOT NULL,
     "patient_profile_id" uuid NOT NULL,

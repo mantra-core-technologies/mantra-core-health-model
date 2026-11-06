@@ -30,6 +30,8 @@ CREATE INDEX IF NOT EXISTS "ix_survey_invitations_tenant_id" ON "surveys"."surve
 
 CREATE INDEX IF NOT EXISTS "ix_survey_invitations_subject" ON "surveys"."survey_invitations" ("subject_type_concept_id", "subject_id");
 
+CREATE INDEX IF NOT EXISTS "ix_survey_invitations_extension_version" ON "surveys"."survey_invitations" ("extension_survey_version_id");
+
 CREATE UNIQUE INDEX IF NOT EXISTS "uq_survey_invitations_booking_version" ON "surveys"."survey_invitations" ("appointment_booking_id", "survey_version_id");
 
 CREATE UNIQUE INDEX IF NOT EXISTS "uq_survey_invitation_reminders_number" ON "surveys"."survey_invitation_reminders" ("survey_invitation_id", "reminder_number");

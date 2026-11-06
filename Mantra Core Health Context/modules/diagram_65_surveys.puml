@@ -100,6 +100,7 @@ entity survey_invitations {
   * id : uuid <<PK>>
   --
   * survey_version_id : uuid <<FK>>
+    extension_survey_version_id : uuid <<FK>>
   * survey_assignment_id : uuid <<FK>>
   * tenant_id : uuid <<FK>>
   * patient_profile_id : uuid <<FK>>
@@ -163,6 +164,7 @@ survey_templates ||--o{ survey_versions
 survey_versions ||--o{ survey_questions
 survey_versions ||--o{ survey_assignments
 survey_versions ||--o{ survey_invitations
+survey_invitations }o--o| survey_versions : extension_survey_version_id
 survey_invitations ||--o{ survey_invitation_reminders
 survey_assignments ||--o{ survey_invitations
 survey_invitations ||--o{ survey_responses
@@ -259,6 +261,25 @@ the cap (NULL means no reminders). The cap is a service rule: a check that compa
 a count against another table is not expressible as a CHECK.
 end note
 
+note as REC_BASE_SURVEYS_diagram_65_surveys
+  REC 65.8 — THE SYSTEM BASE SURVEY AND THE PRACTITIONER EXTENSION (F3, v4.2.67)
+Each tenant has, per kind, one SYSTEM-OWNED template: the base survey of consultations
+and the base survey of services. It is a survey_templates row with
+owner_practitioner_id NULL and the typed owner (owner_type_concept_id =
+SURVEY_SYSTEM_BASE_CONSULTATION or SURVEY_SYSTEM_BASE_SERVICE, owner_id = tenant_id), so
+ck_survey_templates_single_owner already admits it. Its questions are defined in the API
+code (a versioned constant) and written with deterministic ids, lazily and idempotently;
+nobody edits them through the API. Its assignment uses target_type
+SURVEY_TARGET_SYSTEM_BASE, because survey_invitations.survey_assignment_id stays NOT NULL.
+A patient gets ONE invitation per completed booking: survey_version_id is the base
+version and extension_survey_version_id (nullable) is the practitioner's own published
+version, if one applies. The patient answers the union, base questions first. The
+extension must differ from the base version (ck_survey_invitations_extension_distinct).
+Responses and answers keep pointing at the invitation and at the question, so no other
+table changes. The column is nullable on purpose: invitations issued before this version
+and invitations without a practitioner survey carry no extension.
+end note
+
 package "Physical Indexes" {
 entity "INDEXES · survey_templates" as idxset_survey_templates <<INDEX_SET>> {
   PK pk_survey_templates : (id) UNIQUE BTREE
@@ -300,6 +321,7 @@ entity "INDEXES · survey_invitations" as idxset_survey_invitations <<INDEX_SET>
   IX ix_survey_invitations_assignment : (survey_assignment_id) BTREE
   IX ix_survey_invitations_tenant_id : (tenant_id) BTREE
   IX ix_survey_invitations_subject : (subject_type_concept_id, subject_id) BTREE
+  IX ix_survey_invitations_extension_version : (extension_survey_version_id) BTREE
   UK uq_survey_invitations_booking_version : (appointment_booking_id, survey_version_id) UNIQUE BTREE
 }
 
