@@ -127,6 +127,8 @@ Cuatro parches de RLS se escribieron primero en la API y viven acá desde el 06/
 (fichas públicas sin tenant), `2026-11-03_v4286_farmacias_mercado_lectura_paciente.sql` y `2026-11-04_farmacias_mercado_por_id.sql`
 (farmacias publicadas para el paciente) y `2026-11-04_v4287_conversaciones_directas_rls.sql` (conversaciones directas sin tenant).
 Son copia exacta de los de la API; un parche de RLS nuevo se escribe acá y se vendoriza.
+`2026-11-06_conversaciones_directas_acotadas.sql` reemplaza la política amplia del v4287: las conversaciones sin tenant
+sólo pueden ser directas (sin grupo), no se borran bajo un tenant, y ninguna conversación cambia de tenant ni de grupo.
 
 Todos son idempotentes (una transacción, re-ejecutables). **Si se vuelve a ejecutar el v4275 después del v4278, hay que volver a
 ejecutar el v4278 y el v4279**: el v4275 restituye las versiones anteriores de `refresh_effective_support_access` (que ya no excluiría un
