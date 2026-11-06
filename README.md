@@ -128,6 +128,12 @@ por organización) vive en `diagram_04_directory.puml` y su CHECK en `diagram_33
 más dos backfills idempotentes: la casa central de las altas viejas y el espejo de las sedes declaradas del establecimiento
 médico).
 
+Cuatro parches de RLS se escribieron primero en la API y viven acá desde el 06/11/2026, para que
+`yarn db:vendor` (que copia `SQL/` con `--delete`) no los borre de `database/SQL`: `2026-11-02_v4284_rls_community_public_read.sql`
+(fichas públicas sin tenant), `2026-11-03_v4286_farmacias_mercado_lectura_paciente.sql` y `2026-11-04_farmacias_mercado_por_id.sql`
+(farmacias publicadas para el paciente) y `2026-11-04_v4287_conversaciones_directas_rls.sql` (conversaciones directas sin tenant).
+Son copia exacta de los de la API; un parche de RLS nuevo se escribe acá y se vendoriza.
+
 Todos son idempotentes (una transacción, re-ejecutables). **Si se vuelve a ejecutar el v4275 después del v4278, hay que volver a
 ejecutar el v4278 y el v4279**: el v4275 restituye las versiones anteriores de `refresh_effective_support_access` (que ya no excluiría un
 `DENY`) y de `integrity.support_tenant_consistency`, y el v4279 (que extiende esta última y reescribe `support_access_allowed`) las deja completas.
