@@ -1,4 +1,4 @@
--- SALUD v4.2.94 · módulo 28 · schema telemetry
+-- SALUD v4.2.95 · módulo 28 · schema telemetry
 -- Generado de diagram_28_telemetry.puml — NO editar a mano.
 
 

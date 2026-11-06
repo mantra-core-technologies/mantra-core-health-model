@@ -1,4 +1,4 @@
--- SALUD v4.2.94 · módulo 70 · schema observability
+-- SALUD v4.2.95 · módulo 70 · schema observability
 -- Generado de diagram_70_observability.puml — NO editar a mano.
 
 

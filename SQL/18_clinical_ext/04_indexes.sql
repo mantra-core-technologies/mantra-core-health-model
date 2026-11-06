@@ -1,4 +1,4 @@
--- SALUD v4.2.94 · módulo 18 · schema clinical_ext
+-- SALUD v4.2.95 · módulo 18 · schema clinical_ext
 -- Generado de diagram_18_clinical_ext.puml — NO editar a mano.
 
 
@@ -71,6 +71,8 @@ CREATE INDEX IF NOT EXISTS "ix_referrals_target_branch" ON "clinical_ext"."refer
 CREATE INDEX IF NOT EXISTS "ix_referrals_requested_service_concept_id" ON "clinical_ext"."referrals" ("requested_service_concept_id");
 
 CREATE INDEX IF NOT EXISTS "ix_referrals_informed_consent_id" ON "clinical_ext"."referrals" ("informed_consent_id");
+
+CREATE INDEX IF NOT EXISTS "ix_referrals_target_encounter_id" ON "clinical_ext"."referrals" ("target_encounter_id");
 
 CREATE UNIQUE INDEX IF NOT EXISTS "uq_referrals_source_encounter_target_specialty" ON "clinical_ext"."referrals" ("source_encounter_id", "target_profile_id", "specialty_concept_id") WHERE source_encounter_id IS NOT NULL AND target_profile_id IS NOT NULL AND specialty_concept_id IS NOT NULL;
 

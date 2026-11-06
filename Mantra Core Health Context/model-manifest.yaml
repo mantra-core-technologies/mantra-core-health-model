@@ -1,6 +1,6 @@
 model:
   name: SALUD
-  version: 4.2.94
+  version: 4.2.95
   status: canonical-polyglot-nosql-health-platform
   generated_at: '2026-11-06'
   design_patches:
@@ -383,6 +383,17 @@ model:
       se amplía a las tres columnas nuevas; ck_service_requests_bone_type_requires_location exige ubicación.
       Parche 2026-11-06_v4294_service_request_3d_site_bone_type.sql: siembra los cinco conceptos del tipo
       de hueso (ids derivados de la clave, con procedencia en terminology.concept_properties).
+  - id: patch-v4.2.95-red-clinica-vinculos
+    role: product-features
+    doc: docs/architecture/physical-materialization.md (v4.2.95)
+    status: materialized-in-er
+    summary: >-
+      Red clínica del paciente, franja 1: tres vínculos uuid NULL con FK e índice.
+      clinical.service_requests.reason_condition_id → clinical.conditions (diagnóstico que motiva el estudio),
+      clinical_ext.referrals.target_encounter_id → clinical.encounters (atención de destino de la derivación) y
+      clinical.conditions.replaced_by_condition_id → clinical.conditions (diagnóstico descartado reemplazado por
+      este). Sin backfill; mismo paciente, REFUTED y tenant destino los valida la API. Parche copiado del DDL
+      generado, con COMMENT ON COLUMN: 2026-11-06_v4295_red_clinica_vinculos.sql.
   materialization_note: >-
     v4.0.1 materializado en el ER (fuente: el vault/grafo). Se añadieron 14
     entidades nuevas (marketing.campaign_schedules/dispatches/dispatch_recipients,

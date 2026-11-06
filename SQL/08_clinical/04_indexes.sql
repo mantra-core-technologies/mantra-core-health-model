@@ -1,4 +1,4 @@
--- SALUD v4.2.94 · módulo 08 · schema clinical
+-- SALUD v4.2.95 · módulo 08 · schema clinical
 -- Generado de diagram_08_clinical.puml — NO editar a mano.
 
 
@@ -206,6 +206,8 @@ CREATE INDEX IF NOT EXISTS "ix_conditions_patient_profile_id_updated_at" ON "cli
 
 CREATE INDEX IF NOT EXISTS "ix_conditions_patient_clinical_status" ON "clinical"."conditions" ("custodian_tenant_id", "patient_profile_id", "clinical_status_concept_id", "onset_at" DESC);
 
+CREATE INDEX IF NOT EXISTS "ix_conditions_replaced_by_condition_id" ON "clinical"."conditions" ("replaced_by_condition_id");
+
 CREATE INDEX IF NOT EXISTS "ix_allergy_intolerances_custodian_tenant_id" ON "clinical"."allergy_intolerances" ("custodian_tenant_id");
 
 CREATE INDEX IF NOT EXISTS "ix_allergy_intolerances_patient_profile_id" ON "clinical"."allergy_intolerances" ("patient_profile_id");
@@ -301,6 +303,8 @@ CREATE INDEX IF NOT EXISTS "ix_service_requests_body_structure_uberon" ON "clini
 CREATE INDEX IF NOT EXISTS "ix_service_requests_requisition_id" ON "clinical"."service_requests" ("custodian_tenant_id", "requisition_id");
 
 CREATE INDEX IF NOT EXISTS "ix_service_requests_performer_inbox" ON "clinical"."service_requests" ("performer_tenant_id", "status_concept_id", "created_at", "id");
+
+CREATE INDEX IF NOT EXISTS "ix_service_requests_reason_condition_id" ON "clinical"."service_requests" ("reason_condition_id");
 
 CREATE INDEX IF NOT EXISTS "ix_diagnostic_reports_custodian_tenant_id" ON "clinical"."diagnostic_reports" ("custodian_tenant_id");
 

@@ -1,4 +1,4 @@
--- SALUD v4.2.94 · módulo 08 · schema clinical
+-- SALUD v4.2.95 · módulo 08 · schema clinical
 -- Generado de diagram_08_clinical.puml — NO editar a mano.
 
 
@@ -39,6 +39,12 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
+    ALTER TABLE "clinical"."conditions"
+        ADD CONSTRAINT "fk_conditions_replaced_by_condition_id" FOREIGN KEY ("replaced_by_condition_id")
+        REFERENCES "clinical"."conditions" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
     ALTER TABLE "clinical"."allergy_intolerances"
         ADD CONSTRAINT "fk_allergy_intolerances_encounter_id" FOREIGN KEY ("encounter_id")
         REFERENCES "clinical"."encounters" ("id");
@@ -60,6 +66,12 @@ DO $$ BEGIN
     ALTER TABLE "clinical"."service_requests"
         ADD CONSTRAINT "fk_service_requests_previous_diagnostic_report_id" FOREIGN KEY ("previous_diagnostic_report_id")
         REFERENCES "clinical"."diagnostic_reports" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "clinical"."service_requests"
+        ADD CONSTRAINT "fk_service_requests_reason_condition_id" FOREIGN KEY ("reason_condition_id")
+        REFERENCES "clinical"."conditions" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN

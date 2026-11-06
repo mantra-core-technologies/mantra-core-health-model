@@ -1,3 +1,3 @@
--- SALUD v4.2.94 · módulo 61 · schema graph_intelligence
+-- SALUD v4.2.95 · módulo 61 · schema graph_intelligence
 -- Generado de diagram_61_graph_intelligence.puml — NO editar a mano.
 

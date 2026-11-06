@@ -1,4 +1,4 @@
--- SALUD v4.2.94 · módulo 18 · schema clinical_ext
+-- SALUD v4.2.95 · módulo 18 · schema clinical_ext
 -- Generado de diagram_18_clinical_ext.puml — NO editar a mano.
 
 
@@ -210,6 +210,13 @@ DO $$ BEGIN
     ALTER TABLE "clinical_ext"."referrals"
         ADD CONSTRAINT "fk_referrals_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: clinical.encounters (requiere schema clinical)
+DO $$ BEGIN
+    ALTER TABLE "clinical_ext"."referrals"
+        ADD CONSTRAINT "fk_referrals_target_encounter_id" FOREIGN KEY ("target_encounter_id")
+        REFERENCES "clinical"."encounters" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- destino: profiles.patient_profiles (requiere schema profiles)
