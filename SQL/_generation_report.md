@@ -1,4 +1,4 @@
-# Reporte de generación SQL — SALUD v4.2.96
+# Reporte de generación SQL — SALUD v4.2.97
 
 Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vistas, stubs de cruce y stores no-SQL (Redis/Mongo/OpenSearch/vector/timeseries) se listan como *saltados*. Graph (61) y Lakehouse (63) SÍ se materializan como tablas PG (catálogo del plano de control). Las FK marcadas *inferidas* se resolvieron por convención cuando el vault no tenía destino.
 
@@ -13,7 +13,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 06 | authz | 17 | 110 | 0 | 107 | 0 |
 | 07 | consent | 10 | 81 | 0 | 103 | 0 |
 | 08 | clinical | 30 | 300 | 0 | 333 | 15 |
-| 09 | forms | 16 | 103 | 0 | 113 | 1 |
+| 09 | forms | 19 | 112 | 6 | 122 | 2 |
 | 10 | audit | 142 | 602 | 0 | 762 | 1 |
 | 11 | system_ops | 32 | 178 | 0 | 197 | 1 |
 | 12 | integrations | 10 | 49 | 0 | 56 | 0 |
@@ -37,7 +37,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 30 | read_models | 13 | 74 | 0 | 89 | 76 |
 | 31 | integration_contracts | 9 | 48 | 0 | 57 | 0 |
 | 32 | workflow | 8 | 49 | 0 | 55 | 9 |
-| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 119 |
+| 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 122 |
 | 34 | portal_catalog _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 0 |
 | 35 | messaging | 22 | 142 | 0 | 150 | 0 |
 | 36 | qa_lab | 13 | 79 | 0 | 92 | 0 |
@@ -75,7 +75,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 | 68 | qa_execution | 4 | 14 | 0 | 6 | 0 |
 | 69 | pharma_lab | 31 | 182 | 0 | 182 | 1 |
 | 70 | observability | 12 | 13 | 0 | 39 | 2 |
-| **Σ** | **71** | **1380** | | **6** | | **484** |
+| **Σ** | **71** | **1383** | | **12** | | **488** |
 
 ## Detalle de entidades saltadas y avisos
 
@@ -110,6 +110,7 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 
 ### 09 · forms
 - `resource_fields_view` — vista (sin SELECT en el .puml)
+- `profiles_health_practitioner_profiles` — stub de cruce (tabla real en su módulo dueño)
 
 ### 10 · audit
 - `iam_sessions` — stub de cruce (tabla real en su módulo dueño)
@@ -445,6 +446,9 @@ Generado fielmente desde los `.puml`. Solo se emiten tablas PostgreSQL; las vist
 - `profiles_practitioner_admission_events` — stub de cruce (tabla real en su módulo dueño)
 - `profiles_practitioner_admissions` — stub de cruce (tabla real en su módulo dueño)
 - `profiles_admission_requirements` — stub de cruce (tabla real en su módulo dueño)
+- `forms_question_scripts` — stub de cruce (tabla real en su módulo dueño)
+- `forms_question_script_items` — stub de cruce (tabla real en su módulo dueño)
+- `forms_faq_entries` — stub de cruce (tabla real en su módulo dueño)
 
 ### 35 · messaging
 - ⚠ índice 'uq_adapter_inbound_events_provider_id' omitido: columna(s) inexistente(s) ['received_time_bucket'] en adapter_inbound_events (¿tipo no-SQL descartado? requiere PostGIS)

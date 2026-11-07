@@ -1,4 +1,4 @@
--- SALUD v4.2.96 · módulo 09 · schema forms
+-- SALUD v4.2.97 · módulo 09 · schema forms
 -- Generado de diagram_09_forms.puml — NO editar a mano.
 
 
@@ -138,4 +138,10 @@ DO $$ BEGIN
     ALTER TABLE "forms"."extension_target_policies"
         ADD CONSTRAINT "fk_extension_target_policies_definition_set_id" FOREIGN KEY ("definition_set_id")
         REFERENCES "forms"."field_definition_sets" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "forms"."question_script_items"
+        ADD CONSTRAINT "fk_question_script_items_script_id" FOREIGN KEY ("script_id")
+        REFERENCES "forms"."question_scripts" ("id") ON DELETE CASCADE;
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;

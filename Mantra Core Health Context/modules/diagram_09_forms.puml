@@ -395,6 +395,99 @@ field_definition_set_versions ||--o{ field_schema_migrations : from
 field_definition_set_versions ||--o{ field_schema_migrations : to
 field_definition_sets ||--o{ extension_target_policies
 
+' ------------------------------------------------------------------------------
+' v4.2.97 — SCRIPT DE PREGUNTAS Y PREGUNTAS FRECUENTES DEL PROFESIONAL
+' Dos herramientas del medico que no son campos dinamicos de un recurso: un guion
+' ordenado de preguntas que el medico usa durante la atencion (question_scripts +
+' question_script_items) y las preguntas y respuestas frecuentes que publica para
+' sus pacientes (faq_entries). Ver REC 09.1 y REC 09.2 abajo y, para los CHECK y
+' los UNIQUE diferibles, el modulo 33.
+' ------------------------------------------------------------------------------
+entity "profiles.health_practitioner_profiles" as profiles_health_practitioner_profiles <<REFERENCE_ONLY>> {
+  * profile_id : uuid <<PK>>
+}
+
+entity question_scripts {
+  * id : uuid <<PK>>
+  --
+  * owner_practitioner_id : uuid <<FK>>
+  * title : text
+    description : text
+    specialty_code : text
+  * status : text <<DEFAULT_TEXT:active>>
+  * created_at : timestamptz <<DEFAULT_NOW>>
+  * updated_at : timestamptz <<DEFAULT_NOW>>
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity question_script_items {
+  * id : uuid <<PK>>
+  --
+  * script_id : uuid <<FK, ON_DELETE_CASCADE>>
+  * position : integer
+  * question_text : text
+    help_text : text
+  * answer_type : text
+    options : jsonb
+  * required : boolean <<DEFAULT_FALSE>>
+  * created_at : timestamptz <<DEFAULT_NOW>>
+  * updated_at : timestamptz <<DEFAULT_NOW>>
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+entity faq_entries {
+  * id : uuid <<PK>>
+  --
+  * owner_practitioner_id : uuid <<FK>>
+  * question : text
+  * answer : text
+    category : text
+  * position : integer
+  * is_published : boolean <<DEFAULT_FALSE>>
+  * created_at : timestamptz <<DEFAULT_NOW>>
+  * updated_at : timestamptz <<DEFAULT_NOW>>
+    created_by_user_id : uuid <<FK>>
+    updated_by_user_id : uuid <<FK>>
+  * row_version : integer
+}
+
+question_script_items }o--|| question_scripts : script_id
+question_scripts }o--|| profiles_health_practitioner_profiles : owner_practitioner_id
+faq_entries }o--|| profiles_health_practitioner_profiles : owner_practitioner_id
+
+note as REC_QUESTION_SCRIPTS_diagram_09_forms
+  REC 09.1 — EL GUION DE PREGUNTAS ES DEL PROFESIONAL, NO DE UN RECURSO (v4.2.97)
+question_scripts es un guion ordenado que el medico consulta durante la atencion.
+No es un field_definition_set: no extiende ningun recurso ni guarda valores; las
+respuestas, si el medico las registra, van a la nota clinica. El dueno es
+owner_practitioner_id (profiles.health_practitioner_profiles.profile_id), el mismo
+destino que surveys.survey_templates. status es 'active' o 'archived'
+(ck_question_scripts_status): archivar oculta el guion sin perder sus items.
+Los items se borran con el guion (ON DELETE CASCADE). position es unico por guion
+con un UNIQUE DEFERRABLE INITIALLY IMMEDIATE (uq_question_script_items_script_position):
+reordenar en una sola sentencia funciona y, si la API reordena en varias, usa
+SET CONSTRAINTS ... DEFERRED. answer_type es un codigo cerrado
+(free_text, yes_no, single_choice, multiple_choice, number, date) y no un concepto
+del catalogo, por contrato con la API y el front. options es un arreglo JSON de
+textos: obligatorio con dos o mas opciones en single_choice y multiple_choice
+(ck_question_script_items_options).
+Sin tenant_id ni RLS por fila, igual que las tablas vecinas de este modulo: la
+autorizacion por dueno la hace la API.
+end note
+
+note as REC_FAQ_ENTRIES_diagram_09_forms
+  REC 09.2 — PREGUNTAS FRECUENTES QUE EL PROFESIONAL PUBLICA (v4.2.97)
+faq_entries son pares pregunta/respuesta que el medico escribe para sus pacientes.
+Nacen sin publicar (is_published false); solo las publicadas se leen fuera del
+panel del medico. position ordena la lista del profesional y es unico por dueno
+con un UNIQUE DEFERRABLE INITIALLY IMMEDIATE (uq_faq_entries_owner_position), por
+la misma razon que REC 09.1. category es texto libre opcional para agrupar.
+end note
+
 note as FUTURE_TARGETS_diagram_09b_extensibility_governance
   HIGH-PROBABILITY FUTURE TARGETS
   Patient profiles; practitioner profiles; practitioner specialties;
@@ -624,6 +717,33 @@ entity "INDEXES · extension_target_policies" as idxset_extension_target_policie
 }
 
 extension_target_policies .. idxset_extension_target_policies : indexed by
+
+entity "INDEXES · question_scripts" as idxset_question_scripts <<INDEX_SET>> {
+  PK pk_question_scripts : (id) UNIQUE BTREE
+  IX ix_question_scripts_owner_practitioner_id : (owner_practitioner_id, status, updated_at DESC) BTREE
+  IX ix_question_scripts_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_question_scripts_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+question_scripts .. idxset_question_scripts : indexed by
+
+entity "INDEXES · question_script_items" as idxset_question_script_items <<INDEX_SET>> {
+  PK pk_question_script_items : (id) UNIQUE BTREE
+  IX ix_question_script_items_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_question_script_items_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+question_script_items .. idxset_question_script_items : indexed by
+
+entity "INDEXES · faq_entries" as idxset_faq_entries <<INDEX_SET>> {
+  PK pk_faq_entries : (id) UNIQUE BTREE
+  IX ix_faq_entries_owner_practitioner_id : (owner_practitioner_id) BTREE
+  IX ix_faq_entries_owner_published : (owner_practitioner_id, position) BTREE WHERE is_published = true
+  IX ix_faq_entries_created_by_user_id : (created_by_user_id) BTREE
+  IX ix_faq_entries_updated_by_user_id : (updated_by_user_id) BTREE
+}
+
+faq_entries .. idxset_faq_entries : indexed by
 }
 
 

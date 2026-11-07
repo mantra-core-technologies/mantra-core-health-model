@@ -1,4 +1,4 @@
-# Matriz de integridad y concurrencia — SALUD v4.2.96 (módulo 33)
+# Matriz de integridad y concurrencia — SALUD v4.2.97 (módulo 33)
 
 El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación cross-dominio. Cada regla se implementa en la **migración de la tabla dueña** (su módulo) y se repite aquí como referencia. Extraído fielmente del `.puml`.
 
@@ -159,6 +159,14 @@ El módulo 33 (`integrity`) **no posee tablas**: es una matriz de verificación 
 | `directory.tenant_medical_facility_sites` | `REFERENCE_ONLY` | **CHECK_SQL** ck_tenant_medical_facility_sites_kind_ordinal \| ("site_kind" = 'headquarters' AND "ordinal" = 0) OR ("site_kind" = 'branch' AND "ordinal" BETWEEN 1 AND 50); **CHECK_SQL** ck_tenant_medical_facility_sites_address_lines \| cardinality("address_lines") >= 1; **CHECK_SQL** ck_tenant_medical_facility_sites_geo \| (("latitude" IS NULL) = ("longitude" IS NULL)) AND ("latitude" IS NULL OR ("latitude" BETWEEN -90 AND 90 AND "longitude" BETWEEN -180 AND 180)) |
 | `directory.branches` | `REFERENCE_ONLY` | **CHECK_SQL** ck_branches_branch_category \| "branch_category" IN ('default', 'head_office', 'branch') |
 | `directory.tenant_opening_hours` | `REFERENCE_ONLY` | **CHECK_SQL** ck_tenant_opening_hours_day_of_week \| "day_of_week" BETWEEN 1 AND 7; **CHECK_SQL** ck_tenant_opening_hours_shift_ordinal \| "shift_ordinal" BETWEEN 1 AND 2; **CHECK_SQL** ck_tenant_opening_hours_closes_after_opens \| "closes_at" > "opens_at"; **CHECK_SQL** ck_tenant_opening_hours_one_site \| ("branch_id" IS NULL OR "medical_facility_site_id" IS NULL) |
+
+### Módulo 09 · `forms`
+
+| Tabla | Estereotipo | Reglas declaradas |
+|-------|-------------|-------------------|
+| `forms.question_scripts` | `REFERENCE_ONLY` | **CHECK_SQL** ck_question_scripts_title \| char_length(btrim("title")) >= 1 AND char_length("title") <= 160; **CHECK_SQL** ck_question_scripts_status \| "status" IN ('active', 'archived') |
+| `forms.question_script_items` | `REFERENCE_ONLY` | **CHECK_SQL** ck_question_script_items_question_text \| char_length(btrim("question_text")) >= 1 AND char_length("question_text") <= 500; **CHECK_SQL** ck_question_script_items_answer_type \| "answer_type" IN ('free_text', 'yes_no', 'single_choice', 'multiple_choice', 'number', 'date'); **CHECK_SQL** ck_question_script_items_position \| "position" >= 0; **CHECK_SQL** ck_question_script_items_options \| ("options" IS NULL OR (jsonb_typeof("options") = 'array' AND NOT jsonb_path_exists("options", '$[*] ? (@.type() != "string" \|\| @ like_regex "^ *$")'))) AND ("answer_type" NOT IN ('single_choice', 'multiple_choice') OR ("options" IS NOT NULL AND jsonb_array_length("options") >= 2)); **UNIQUE_SQL** uq_question_script_items_script_position \| "script_id", "position" \| DEFERRABLE INITIALLY IMMEDIATE |
+| `forms.faq_entries` | `REFERENCE_ONLY` | **CHECK_SQL** ck_faq_entries_question \| char_length(btrim("question")) >= 1 AND char_length("question") <= 300; **CHECK_SQL** ck_faq_entries_answer \| char_length(btrim("answer")) >= 1 AND char_length("answer") <= 4000; **CHECK_SQL** ck_faq_entries_position \| "position" >= 0; **UNIQUE_SQL** uq_faq_entries_owner_position \| "owner_practitioner_id", "position" \| DEFERRABLE INITIALLY IMMEDIATE |
 
 ### Módulo 01 · `iam`
 

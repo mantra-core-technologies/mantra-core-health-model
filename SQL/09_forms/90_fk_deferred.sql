@@ -1,4 +1,4 @@
--- SALUD v4.2.96 · módulo 09 · schema forms
+-- SALUD v4.2.97 · módulo 09 · schema forms
 -- Generado de diagram_09_forms.puml — NO editar a mano.
 
 
@@ -565,3 +565,59 @@ DO $$ BEGIN
         ADD CONSTRAINT "fk_extension_target_policies_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
         REFERENCES "iam"."users" ("id");
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: profiles.health_practitioner_profiles (requiere schema profiles)
+DO $$ BEGIN
+    ALTER TABLE "forms"."question_scripts"
+        ADD CONSTRAINT "fk_question_scripts_owner_practitioner_id" FOREIGN KEY ("owner_practitioner_id")
+        REFERENCES "profiles"."health_practitioner_profiles" ("profile_id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "forms"."question_scripts"
+        ADD CONSTRAINT "fk_question_scripts_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "forms"."question_scripts"
+        ADD CONSTRAINT "fk_question_scripts_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "forms"."question_script_items"
+        ADD CONSTRAINT "fk_question_script_items_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "forms"."question_script_items"
+        ADD CONSTRAINT "fk_question_script_items_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: profiles.health_practitioner_profiles (requiere schema profiles)
+DO $$ BEGIN
+    ALTER TABLE "forms"."faq_entries"
+        ADD CONSTRAINT "fk_faq_entries_owner_practitioner_id" FOREIGN KEY ("owner_practitioner_id")
+        REFERENCES "profiles"."health_practitioner_profiles" ("profile_id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "forms"."faq_entries"
+        ADD CONSTRAINT "fk_faq_entries_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+
+-- destino: iam.users (requiere schema iam)
+DO $$ BEGIN
+    ALTER TABLE "forms"."faq_entries"
+        ADD CONSTRAINT "fk_faq_entries_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+        REFERENCES "iam"."users" ("id");
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)

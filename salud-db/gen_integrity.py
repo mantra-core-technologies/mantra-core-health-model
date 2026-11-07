@@ -9,7 +9,7 @@ materializa en:
 
 Temperatura-0: el módulo 33 declara las reglas de forma SEMI-concreta (columnas lógicas y
 CHECK/EXCLUDE en prosa). Se genera concreto SOLO lo mecánico (guardas de inmutabilidad para
-UPDATE_DELETE: forbidden). CHECK_SQL, EXCLUDE_SQL y TRIGGER_SQL materializan SQL concreto
+UPDATE_DELETE: forbidden). CHECK_SQL, EXCLUDE_SQL, UNIQUE_SQL y TRIGGER_SQL materializan SQL concreto
 declarado por el modelo; UK/CHECK/EXCLUDE en prosa salen como comentario con la regla
 textual, porque el modelo no declara su expresión SQL y completarla sería adivinar.
 """
@@ -172,6 +172,8 @@ def rule_line(sch, tbl, k, v, concrete=(), notes=None):
         return concrete_check(sch, tbl, v)
     if k == "EXCLUDE_SQL":
         return exclude_concreto(sch, tbl, v)
+    if k == "UNIQUE_SQL":
+        return unique_concreto(sch, tbl, v)
     if k == "TRIGGER_SQL":
         return trigger_concreto(sch, tbl, v, notes or {})
     return f"--   {k}: {v}"
@@ -235,6 +237,40 @@ def exclude_concreto(schema, table, decl):
 
 
 DEFERRAL_CLAUSES = ("DEFERRABLE INITIALLY IMMEDIATE", "DEFERRABLE INITIALLY DEFERRED")
+
+
+def unique_concreto(schema, table, decl):
+    """Un UNIQUE como constraint de tabla, con columnas y diferimiento que declara el MODELO.
+
+    Los UK de un INDEX_SET salen como `CREATE UNIQUE INDEX` en 04_indexes y un índice no se
+    puede diferir. `UNIQUE_SQL` existe (v4.2.97) para la unicidad que una transacción legítima
+    atraviesa en un estado intermedio: reordenar las filas de una lista con `position` único
+    (guion de preguntas, preguntas frecuentes) intercambia posiciones. Formato, separado por `|`:
+
+        <nombre> | <columnas entre comillas, separadas por coma> [| DEFERRABLE INITIALLY IMMEDIATE|DEFERRED]
+
+    Sin cuarta parte sale un UNIQUE inmediato. A diferencia de un EXCLUDE, la violación es
+    23505 (unique_violation), la misma que ya traduce la API. Temperatura-0: el generador no
+    compone columnas; valida sólo que sean identificadores entre comillas.
+    """
+    partes = [p.strip() for p in decl.split("|")]
+    if len(partes) not in (2, 3):
+        raise ValueError(f"UNIQUE_SQL inválido en {schema}.{table}: nombre | columnas [| diferimiento]")
+    nombre, columnas = partes[0], partes[1]
+    if not IDENT.fullmatch(nombre) or len(nombre.encode("utf-8")) > 63:
+        raise ValueError(f"UNIQUE_SQL inválido en {schema}.{table}: nombre de constraint {nombre!r}")
+    cols = [c.strip() for c in columnas.split(",")]
+    if not cols or not all(re.fullmatch(r'"[a-z_][a-z0-9_]*"', c) for c in cols):
+        raise ValueError(f"UNIQUE_SQL inválido en {schema}.{table}: columnas {columnas!r}")
+    diferido = partes[2].upper() if len(partes) == 3 and partes[2] else None
+    if diferido and diferido not in DEFERRAL_CLAUSES:
+        raise ValueError(f"UNIQUE_SQL inválido en {schema}.{table}: diferimiento {partes[2]!r}")
+    defer = f" {diferido}" if diferido else ""
+    t = f'"{schema}"."{table}"'
+    return (f"-- UNIQUE concreto declarado por el modelo (UNIQUE_SQL).\n"
+            f"ALTER TABLE {t} DROP CONSTRAINT IF EXISTS \"{nombre}\";\n"
+            f"ALTER TABLE {t} ADD CONSTRAINT \"{nombre}\"\n"
+            f"    UNIQUE ({', '.join(cols)}){defer};\n")
 
 IDENT = re.compile(r"[a-z_][a-z0-9_]*")
 TRIGGER_TIMING = re.compile(r"(BEFORE|AFTER) (INSERT|UPDATE|DELETE)\b.*")

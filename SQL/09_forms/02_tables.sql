@@ -1,4 +1,4 @@
--- SALUD v4.2.96 · módulo 09 · schema forms
+-- SALUD v4.2.97 · módulo 09 · schema forms
 -- Generado de diagram_09_forms.puml — NO editar a mano.
 
 
@@ -316,4 +316,52 @@ CREATE TABLE IF NOT EXISTS "forms"."extension_target_policies" (
     "updated_by_user_id" uuid,
     "row_version" integer NOT NULL DEFAULT 1,
     CONSTRAINT "pk_extension_target_policies" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "forms"."question_scripts" (
+    "id" uuid NOT NULL,
+    "owner_practitioner_id" uuid NOT NULL,
+    "title" text NOT NULL,
+    "description" text,
+    "specialty_code" text,
+    "status" text NOT NULL DEFAULT 'active',
+    "created_at" timestamptz NOT NULL DEFAULT now(),
+    "updated_at" timestamptz NOT NULL DEFAULT now(),
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_question_scripts" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "forms"."question_script_items" (
+    "id" uuid NOT NULL,
+    "script_id" uuid NOT NULL,
+    "position" integer NOT NULL,
+    "question_text" text NOT NULL,
+    "help_text" text,
+    "answer_type" text NOT NULL,
+    "options" jsonb,
+    "required" boolean NOT NULL DEFAULT false,
+    "created_at" timestamptz NOT NULL DEFAULT now(),
+    "updated_at" timestamptz NOT NULL DEFAULT now(),
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_question_script_items" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "forms"."faq_entries" (
+    "id" uuid NOT NULL,
+    "owner_practitioner_id" uuid NOT NULL,
+    "question" text NOT NULL,
+    "answer" text NOT NULL,
+    "category" text,
+    "position" integer NOT NULL,
+    "is_published" boolean NOT NULL DEFAULT false,
+    "created_at" timestamptz NOT NULL DEFAULT now(),
+    "updated_at" timestamptz NOT NULL DEFAULT now(),
+    "created_by_user_id" uuid,
+    "updated_by_user_id" uuid,
+    "row_version" integer NOT NULL DEFAULT 1,
+    CONSTRAINT "pk_faq_entries" PRIMARY KEY ("id")
 );

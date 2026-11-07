@@ -1,4 +1,4 @@
--- SALUD v4.2.96 · módulo 09 · schema forms
+-- SALUD v4.2.97 · módulo 09 · schema forms
 -- Generado de diagram_09_forms.puml — NO editar a mano.
 
 
@@ -227,3 +227,21 @@ CREATE INDEX IF NOT EXISTS "ix_extension_target_policies_created_by_user_id" ON 
 CREATE INDEX IF NOT EXISTS "ix_extension_target_policies_updated_by_user_id" ON "forms"."extension_target_policies" ("updated_by_user_id");
 
 CREATE INDEX IF NOT EXISTS "ix_extension_target_policies_tenant_id_status_concept_id" ON "forms"."extension_target_policies" ("tenant_id", "status_concept_id", "updated_at" DESC);
+
+CREATE INDEX IF NOT EXISTS "ix_question_scripts_owner_practitioner_id" ON "forms"."question_scripts" ("owner_practitioner_id", "status", "updated_at" DESC);
+
+CREATE INDEX IF NOT EXISTS "ix_question_scripts_created_by_user_id" ON "forms"."question_scripts" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_question_scripts_updated_by_user_id" ON "forms"."question_scripts" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_question_script_items_created_by_user_id" ON "forms"."question_script_items" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_question_script_items_updated_by_user_id" ON "forms"."question_script_items" ("updated_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_faq_entries_owner_practitioner_id" ON "forms"."faq_entries" ("owner_practitioner_id");
+
+CREATE INDEX IF NOT EXISTS "ix_faq_entries_owner_published" ON "forms"."faq_entries" ("owner_practitioner_id", "position") WHERE is_published = true;
+
+CREATE INDEX IF NOT EXISTS "ix_faq_entries_created_by_user_id" ON "forms"."faq_entries" ("created_by_user_id");
+
+CREATE INDEX IF NOT EXISTS "ix_faq_entries_updated_by_user_id" ON "forms"."faq_entries" ("updated_by_user_id");

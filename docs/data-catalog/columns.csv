@@ -9432,6 +9432,18 @@ forms,extension_target_policies,12,updated_at,timestamptz,NO,,,,,,SQL/09_forms/0
 forms,extension_target_policies,13,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/09_forms/02_tables.sql
 forms,extension_target_policies,14,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/09_forms/02_tables.sql
 forms,extension_target_policies,15,row_version,integer,NO,1,,,,,SQL/09_forms/02_tables.sql
+forms,faq_entries,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/09_forms/02_tables.sql
+forms,faq_entries,2,owner_practitioner_id,uuid,NO,,FOREIGN KEY,profiles,health_practitioner_profiles,profile_id,SQL/09_forms/02_tables.sql
+forms,faq_entries,3,question,text,NO,,,,,,SQL/09_forms/02_tables.sql
+forms,faq_entries,4,answer,text,NO,,,,,,SQL/09_forms/02_tables.sql
+forms,faq_entries,5,category,text,YES,,,,,,SQL/09_forms/02_tables.sql
+forms,faq_entries,6,position,integer,NO,,,,,,SQL/09_forms/02_tables.sql
+forms,faq_entries,7,is_published,boolean,NO,false,,,,,SQL/09_forms/02_tables.sql
+forms,faq_entries,8,created_at,timestamptz,NO,now(),,,,,SQL/09_forms/02_tables.sql
+forms,faq_entries,9,updated_at,timestamptz,NO,now(),,,,,SQL/09_forms/02_tables.sql
+forms,faq_entries,10,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/09_forms/02_tables.sql
+forms,faq_entries,11,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/09_forms/02_tables.sql
+forms,faq_entries,12,row_version,integer,NO,1,,,,,SQL/09_forms/02_tables.sql
 forms,field_assignments,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/09_forms/02_tables.sql
 forms,field_assignments,2,field_id,uuid,NO,,FOREIGN KEY,forms,dynamic_field_definitions,id,SQL/09_forms/02_tables.sql
 forms,field_assignments,3,target_resource_concept_id,uuid,NO,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/09_forms/02_tables.sql
@@ -9623,6 +9635,30 @@ forms,form_instances,9,updated_at,timestamptz,NO,,,,,,SQL/09_forms/02_tables.sql
 forms,form_instances,10,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/09_forms/02_tables.sql
 forms,form_instances,11,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/09_forms/02_tables.sql
 forms,form_instances,12,row_version,integer,NO,1,,,,,SQL/09_forms/02_tables.sql
+forms,question_script_items,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/09_forms/02_tables.sql
+forms,question_script_items,2,script_id,uuid,NO,,FOREIGN KEY,forms,question_scripts,id,SQL/09_forms/02_tables.sql
+forms,question_script_items,3,position,integer,NO,,,,,,SQL/09_forms/02_tables.sql
+forms,question_script_items,4,question_text,text,NO,,,,,,SQL/09_forms/02_tables.sql
+forms,question_script_items,5,help_text,text,YES,,,,,,SQL/09_forms/02_tables.sql
+forms,question_script_items,6,answer_type,text,NO,,,,,,SQL/09_forms/02_tables.sql
+forms,question_script_items,7,options,jsonb,YES,,,,,,SQL/09_forms/02_tables.sql
+forms,question_script_items,8,required,boolean,NO,false,,,,,SQL/09_forms/02_tables.sql
+forms,question_script_items,9,created_at,timestamptz,NO,now(),,,,,SQL/09_forms/02_tables.sql
+forms,question_script_items,10,updated_at,timestamptz,NO,now(),,,,,SQL/09_forms/02_tables.sql
+forms,question_script_items,11,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/09_forms/02_tables.sql
+forms,question_script_items,12,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/09_forms/02_tables.sql
+forms,question_script_items,13,row_version,integer,NO,1,,,,,SQL/09_forms/02_tables.sql
+forms,question_scripts,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/09_forms/02_tables.sql
+forms,question_scripts,2,owner_practitioner_id,uuid,NO,,FOREIGN KEY,profiles,health_practitioner_profiles,profile_id,SQL/09_forms/02_tables.sql
+forms,question_scripts,3,title,text,NO,,,,,,SQL/09_forms/02_tables.sql
+forms,question_scripts,4,description,text,YES,,,,,,SQL/09_forms/02_tables.sql
+forms,question_scripts,5,specialty_code,text,YES,,,,,,SQL/09_forms/02_tables.sql
+forms,question_scripts,6,status,text,NO,'active',,,,,SQL/09_forms/02_tables.sql
+forms,question_scripts,7,created_at,timestamptz,NO,now(),,,,,SQL/09_forms/02_tables.sql
+forms,question_scripts,8,updated_at,timestamptz,NO,now(),,,,,SQL/09_forms/02_tables.sql
+forms,question_scripts,9,created_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/09_forms/02_tables.sql
+forms,question_scripts,10,updated_by_user_id,uuid,YES,,FOREIGN KEY,iam,users,id,SQL/09_forms/02_tables.sql
+forms,question_scripts,11,row_version,integer,NO,1,,,,,SQL/09_forms/02_tables.sql
 geo,geofence_events,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/13_geo/02_tables.sql
 geo,geofence_events,2,geofence_id,uuid,NO,,FOREIGN KEY,geo,geofences,id,SQL/13_geo/02_tables.sql
 geo,geofence_events,3,tracked_subject_id,uuid,NO,,FOREIGN KEY,geo,tracked_subjects,id,SQL/13_geo/02_tables.sql

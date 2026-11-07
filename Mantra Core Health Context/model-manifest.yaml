@@ -1,6 +1,6 @@
 model:
   name: SALUD
-  version: 4.2.96
+  version: 4.2.97
   status: canonical-polyglot-nosql-health-platform
   generated_at: '2026-11-06'
   design_patches:
@@ -405,6 +405,18 @@ model:
       ck_service_requests_external_requester_only_when_registered limita el solicitante externo a esas órdenes;
       ck_service_requests_registered_by_performer_shape exige que no tengan encuentro ni solicitante de la plataforma
       y que las custodie el ejecutor. Parche 2026-11-06_v4296_service_request_registered_by_performer.sql.
+  - id: patch-v4.2.97-forms-guion-preguntas-y-faq
+    role: product-features
+    doc: docs/architecture/physical-materialization.md (v4.2.97)
+    status: materialized-in-er
+    summary: >-
+      Script de preguntas y preguntas frecuentes del profesional (módulo 09 forms, REC 09.1 y 09.2): tres
+      tablas nuevas. forms.question_scripts (guion; dueño owner_practitioner_id → profiles.health_practitioner_profiles,
+      status active|archived), forms.question_script_items (preguntas del guion, ON DELETE CASCADE, answer_type cerrado,
+      options arreglo de textos con ≥ 2 en las de opción) y forms.faq_entries (pregunta/respuesta, is_published).
+      position único por lista con UNIQUE DEFERRABLE INITIALLY IMMEDIATE, declarado con el nuevo UNIQUE_SQL del módulo 33
+      (gen_integrity.py). Sin tenant_id ni RLS, como las tablas vecinas de forms: el dueño lo autoriza la API.
+      Parche copiado del DDL generado, con COMMENT ON y GRANT: 2026-11-06_v4297_forms_guion_preguntas_y_faq.sql.
   materialization_note: >-
     v4.0.1 materializado en el ER (fuente: el vault/grafo). Se añadieron 14
     entidades nuevas (marketing.campaign_schedules/dispatches/dispatch_recipients,

@@ -1107,6 +1107,15 @@ forms,extension_target_policies,ix_extension_target_policies_status_concept_id,N
 forms,extension_target_policies,ix_extension_target_policies_created_by_user_id,NO,"""created_by_user_id""",,SQL/09_forms/04_indexes.sql
 forms,extension_target_policies,ix_extension_target_policies_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/09_forms/04_indexes.sql
 forms,extension_target_policies,ix_extension_target_policies_tenant_id_status_concept_id,NO,"""tenant_id"", ""status_concept_id"", ""updated_at"" DESC",,SQL/09_forms/04_indexes.sql
+forms,question_scripts,ix_question_scripts_owner_practitioner_id,NO,"""owner_practitioner_id"", ""status"", ""updated_at"" DESC",,SQL/09_forms/04_indexes.sql
+forms,question_scripts,ix_question_scripts_created_by_user_id,NO,"""created_by_user_id""",,SQL/09_forms/04_indexes.sql
+forms,question_scripts,ix_question_scripts_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/09_forms/04_indexes.sql
+forms,question_script_items,ix_question_script_items_created_by_user_id,NO,"""created_by_user_id""",,SQL/09_forms/04_indexes.sql
+forms,question_script_items,ix_question_script_items_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/09_forms/04_indexes.sql
+forms,faq_entries,ix_faq_entries_owner_practitioner_id,NO,"""owner_practitioner_id""",,SQL/09_forms/04_indexes.sql
+forms,faq_entries,ix_faq_entries_owner_published,NO,"""owner_practitioner_id"", ""position""",WHERE is_published = true,SQL/09_forms/04_indexes.sql
+forms,faq_entries,ix_faq_entries_created_by_user_id,NO,"""created_by_user_id""",,SQL/09_forms/04_indexes.sql
+forms,faq_entries,ix_faq_entries_updated_by_user_id,NO,"""updated_by_user_id""",,SQL/09_forms/04_indexes.sql
 audit,audit_log,ix_audit_log_user_id,NO,"""user_id""",,SQL/10_audit/04_indexes.sql
 audit,audit_log,ix_audit_log_tenant_id,NO,"""tenant_id""",,SQL/10_audit/04_indexes.sql
 audit,audit_log,ix_audit_log_branch_id,NO,"""branch_id""",,SQL/10_audit/04_indexes.sql

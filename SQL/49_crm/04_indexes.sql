@@ -1,4 +1,4 @@
--- SALUD v4.2.96 · módulo 49 · schema crm
+-- SALUD v4.2.97 · módulo 49 · schema crm
 -- Generado de diagram_49_crm.puml — NO editar a mano.
 
 

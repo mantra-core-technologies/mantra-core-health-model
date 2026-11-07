@@ -49,6 +49,32 @@ comentados como `OMITIDO`. FK envueltas en `DO … EXCEPTION WHEN duplicate_obje
 
 ## 3. Estado actual del build
 
+### v4.2.97 — Script de preguntas y preguntas frecuentes del profesional (2026-11-06)
+
+**Cambio de esquema: +3 tablas en `forms`, +9 FK (1 intra, 8 entre schemas), +9 índices, +9 CHECK, +2 UNIQUE diferibles.**
+
+Dos herramientas del médico que no existían (REC 09.1 y 09.2 en `diagram_09_forms.puml`):
+
+- `forms.question_scripts` — guion ordenado de preguntas para la atención. `owner_practitioner_id` NOT NULL →
+  `profiles.health_practitioner_profiles(profile_id)` (el mismo destino que `surveys.survey_templates`), `title` 1..160,
+  `status` `active|archived` (DEFAULT `'active'`), `specialty_code` texto opcional sin FK.
+- `forms.question_script_items` — preguntas del guion. `script_id` → `question_scripts(id)` **ON DELETE CASCADE**,
+  `question_text` 1..500, `answer_type` `free_text|yes_no|single_choice|multiple_choice|number|date`, `options` arreglo
+  JSON de textos no vacíos (obligatorio con ≥ 2 en `single_choice`/`multiple_choice`), `required` DEFAULT false.
+- `forms.faq_entries` — preguntas y respuestas frecuentes que el médico publica. `question` 1..300, `answer` 1..4000,
+  `category` opcional, `is_published` DEFAULT false.
+
+`position` es único por lista (`uq_question_script_items_script_position`, `uq_faq_entries_owner_position`) con un
+**UNIQUE DEFERRABLE INITIALLY IMMEDIATE**: reordenar intercambia posiciones. Un índice único no se puede diferir, así que
+el módulo 33 gana `UNIQUE_SQL : <nombre> | <columnas> [| DEFERRABLE …]`, que `gen_integrity.py` materializa en
+`05_constraints.sql` (primer `05_constraints.sql` de `forms`; `gen_apply.py` lo suma a `apply_all.sql`). La violación sigue
+siendo 23505. `created_at`/`updated_at` con DEFAULT `now()` y `row_version` DEFAULT 1, como el resto.
+
+Sin `tenant_id` ni RLS por fila, igual que `dynamic_field_definitions` y las demás tablas de `forms` sin tenant: la política
+`tenant_isolation` no las alcanza y la autorización por dueño (y que fuera del panel sólo se lean las FAQ publicadas) la
+hace la API. El parche `2026-11-06_v4297_forms_guion_preguntas_y_faq.sql` es idempotente, se copió del DDL generado y agrega
+`COMMENT ON` y el `GRANT` DML a `mantra_app`.
+
 ### v4.2.96 — Orden registrada por el centro ejecutor (2026-11-06)
 
 **Cambio de esquema: +3 columnas y +2 CHECK; sin FK ni índices nuevos.**
