@@ -1,4 +1,4 @@
--- SALUD v4.2.95 · módulo 19 · schema community
+-- SALUD v4.2.96 · módulo 19 · schema community
 -- Generado de diagram_19_community.puml — NO editar a mano.
 
 

@@ -4814,6 +4814,9 @@ clinical,service_requests,30,body_structure_uberon,varchar(64),YES,,,,,,SQL/08_c
 clinical,service_requests,31,body_mesh_id,varchar(64),YES,,,,,,SQL/08_clinical/02_tables.sql
 clinical,service_requests,32,bone_type_concept_id,uuid,YES,,FOREIGN KEY,terminology,catalog_concepts,id,SQL/08_clinical/02_tables.sql
 clinical,service_requests,33,reason_condition_id,uuid,YES,,FOREIGN KEY,clinical,conditions,id,SQL/08_clinical/02_tables.sql
+clinical,service_requests,34,registered_by_performer,boolean,NO,false,,,,,SQL/08_clinical/02_tables.sql
+clinical,service_requests,35,external_requester_name,varchar(200),YES,,,,,,SQL/08_clinical/02_tables.sql
+clinical,service_requests,36,external_requester_license,varchar(64),YES,,,,,,SQL/08_clinical/02_tables.sql
 clinical,social_history,1,id,uuid,NO,,PRIMARY KEY,,,,SQL/08_clinical/02_tables.sql
 clinical,social_history,2,custodian_tenant_id,uuid,NO,,FOREIGN KEY,directory,tenants,id,SQL/08_clinical/02_tables.sql
 clinical,social_history,3,patient_profile_id,uuid,NO,,FOREIGN KEY,profiles,patient_profiles,profile_id,SQL/08_clinical/02_tables.sql

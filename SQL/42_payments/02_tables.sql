@@ -1,4 +1,4 @@
--- SALUD v4.2.95 · módulo 42 · schema payments
+-- SALUD v4.2.96 · módulo 42 · schema payments
 -- Generado de diagram_42_payments.puml — NO editar a mano.
 
 

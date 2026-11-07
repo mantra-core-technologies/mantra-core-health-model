@@ -1,0 +1,30 @@
+# parche v4.2.96 sobre base creada desde el modelo de dev (7910c26), dos veces
+## corrida 1
+BEGIN
+ALTER TABLE
+psql:/home/user/mantra-core-health-model/SQL/patches/2026-11-06_v4296_service_request_registered_by_performer.sql:47: NOTICE:  constraint "ck_service_requests_external_requester_only_when_registered" of relation "service_requests" does not exist, skipping
+ALTER TABLE
+ALTER TABLE
+psql:/home/user/mantra-core-health-model/SQL/patches/2026-11-06_v4296_service_request_registered_by_performer.sql:50: NOTICE:  constraint "ck_service_requests_registered_by_performer_shape" of relation "service_requests" does not exist, skipping
+ALTER TABLE
+ALTER TABLE
+COMMENT
+COMMENT
+COMMENT
+COMMIT
+exit=0
+## corrida 2
+BEGIN
+psql:/home/user/mantra-core-health-model/SQL/patches/2026-11-06_v4296_service_request_registered_by_performer.sql:45: NOTICE:  column "registered_by_performer" of relation "service_requests" already exists, skipping
+psql:/home/user/mantra-core-health-model/SQL/patches/2026-11-06_v4296_service_request_registered_by_performer.sql:45: NOTICE:  column "external_requester_name" of relation "service_requests" already exists, skipping
+psql:/home/user/mantra-core-health-model/SQL/patches/2026-11-06_v4296_service_request_registered_by_performer.sql:45: NOTICE:  column "external_requester_license" of relation "service_requests" already exists, skipping
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+COMMENT
+COMMENT
+COMMENT
+COMMIT
+exit=0

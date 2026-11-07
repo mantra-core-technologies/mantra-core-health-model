@@ -158,6 +158,12 @@ viven en `diagram_08_clinical.puml` y `diagram_18_clinical_ext.puml`. Su parche 
 `psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4295_red_clinica_vinculos.sql` (copiado del DDL generado,
 más los comentarios de columna; no-op sobre base nueva salvo los comentarios). Sin backfill.
 
+La orden registrada por el centro ejecutor (v4.2.96: `clinical.service_requests.registered_by_performer`,
+`external_requester_name` y `external_requester_license`, más dos CHECK) vive en `diagram_08_clinical.puml` y
+`diagram_33_integrity.puml`. Su parche es
+`psql -v ON_ERROR_STOP=1 -d <base> -f SQL/patches/2026-11-06_v4296_service_request_registered_by_performer.sql` (idempotente;
+`DEFAULT false` es el dato real de toda fila anterior). Sobre una base nueva no hace falta para el esquema.
+
 Todos son idempotentes (una transacción, re-ejecutables). **Si se vuelve a ejecutar el v4275 después del v4278, hay que volver a
 ejecutar el v4278 y el v4279**: el v4275 restituye las versiones anteriores de `refresh_effective_support_access` (que ya no excluiría un
 `DENY`) y de `integrity.support_tenant_consistency`, y el v4279 (que extiende esta última y reescribe `support_access_allowed`) las deja completas.
